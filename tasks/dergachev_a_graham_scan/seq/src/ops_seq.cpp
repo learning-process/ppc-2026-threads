@@ -1,12 +1,28 @@
 #include "dergachev_a_graham_scan/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <cmath>
 #include <vector>
 
 #include "dergachev_a_graham_scan/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace dergachev_a_graham_scan {
+
+namespace {
+
+double CrossProduct(const Point &o, const Point &a, const Point &b) {
+  return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+}
+
+double DistSquared(const Point &a, const Point &b) {
+  double dx = a.x - b.x;
+  double dy = a.y - b.y;
+  return dx * dx + dy * dy;
+}
+
+const double kPi = std::acos(-1.0);
+
+}  // namespace
 
 DergachevAGrahamScanSEQ::DergachevAGrahamScanSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -14,47 +30,91 @@ DergachevAGrahamScanSEQ::DergachevAGrahamScanSEQ(const InType &in) {
   GetOutput() = 0;
 }
 
+void DergachevAGrahamScanSEQ::SetPoints(const std::vector<Point> &pts) {
+  points_ = pts;
+  custom_points_ = true;
+}
+
+std::vector<Point> DergachevAGrahamScanSEQ::GetHull() const {
+  return hull_;
+}
+
 bool DergachevAGrahamScanSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return GetInput() >= 0;
 }
 
 bool DergachevAGrahamScanSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  hull_.clear();
+  if (!custom_points_) {
+    int n = GetInput();
+    if (n <= 0) {
+      points_.clear();
+      return true;
+    }
+    points_.resize(n);
+    double step = 2.0 * kPi / n;
+    for (int i = 0; i < n; i++) {
+      points_[i] = {std::cos(step * i), std::sin(step * i)};
+    }
+  }
+  return true;
 }
 
 bool DergachevAGrahamScanSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
+  hull_.clear();
+  std::vector<Point> pts = points_;
+  int n = static_cast<int>(pts.size());
+
+  if (n <= 1) {
+    hull_ = pts;
+    return true;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  bool all_same = true;
+  for (int i = 1; i < n; i++) {
+    if (pts[i].x != pts[0].x || pts[i].y != pts[0].y) {
+      all_same = false;
+      break;
     }
   }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
+  if (all_same) {
+    hull_.push_back(pts[0]);
+    return true;
   }
 
-  if (counter != 0) {
-    GetOutput() /= counter;
+  int pivot_idx = 0;
+  for (int i = 1; i < n; i++) {
+    if (pts[i].y < pts[pivot_idx].y || (pts[i].y == pts[pivot_idx].y && pts[i].x < pts[pivot_idx].x)) {
+      pivot_idx = i;
+    }
   }
-  return GetOutput() > 0;
+  std::swap(pts[0], pts[pivot_idx]);
+  Point pivot = pts[0];
+
+  std::sort(pts.begin() + 1, pts.end(), [&pivot](const Point &a, const Point &b) {
+    double cross = CrossProduct(pivot, a, b);
+    if (cross > 0.0) {
+      return true;
+    }
+    if (cross < 0.0) {
+      return false;
+    }
+    return DistSquared(pivot, a) < DistSquared(pivot, b);
+  });
+
+  for (const auto &p : pts) {
+    while (hull_.size() > 1 && CrossProduct(hull_[hull_.size() - 2], hull_.back(), p) <= 0.0) {
+      hull_.pop_back();
+    }
+    hull_.push_back(p);
+  }
+
+  return true;
 }
 
 bool DergachevAGrahamScanSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  GetOutput() = static_cast<int>(hull_.size());
+  return true;
 }
 
 }  // namespace dergachev_a_graham_scan

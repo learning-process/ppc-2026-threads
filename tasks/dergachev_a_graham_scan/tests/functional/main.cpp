@@ -1,15 +1,10 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
+#include <memory>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "dergachev_a_graham_scan/all/include/ops_all.hpp"
@@ -31,27 +26,8 @@ class DergachevAGrahamScanFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_dergachev_a_graham_scan), "pic.ppm");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    input_data_ = std::get<0>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -72,20 +48,161 @@ TEST_P(DergachevAGrahamScanFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 5> kTestParam = {std::make_tuple(3, "circle_3"), std::make_tuple(5, "circle_5"),
+                                            std::make_tuple(10, "circle_10"), std::make_tuple(20, "circle_20"),
+                                            std::make_tuple(50, "circle_50")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<NesterovATestTaskALL, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan),
-                   ppc::util::AddFuncTask<NesterovATestTaskOMP, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan),
-                   ppc::util::AddFuncTask<DergachevAGrahamScanSEQ, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan),
-                   ppc::util::AddFuncTask<NesterovATestTaskSTL, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan),
-                   ppc::util::AddFuncTask<NesterovATestTaskTBB, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<NesterovATestTaskALL, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan),
+    ppc::util::AddFuncTask<NesterovATestTaskOMP, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan),
+    ppc::util::AddFuncTask<DergachevAGrahamScanSEQ, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan),
+    ppc::util::AddFuncTask<NesterovATestTaskSTL, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan),
+    ppc::util::AddFuncTask<NesterovATestTaskTBB, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = DergachevAGrahamScanFuncTests::PrintFuncTestName<DergachevAGrahamScanFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(PicMatrixTests, DergachevAGrahamScanFuncTests, kGtestValues, kPerfTestName);
+
+TEST(DergachevAGrahamScanSeq, EmptyInput) {
+  auto task = std::make_shared<DergachevAGrahamScanSEQ>(0);
+  ASSERT_TRUE(task->Validation());
+  ASSERT_TRUE(task->PreProcessing());
+  ASSERT_TRUE(task->Run());
+  ASSERT_TRUE(task->PostProcessing());
+  EXPECT_EQ(task->GetOutput(), 0);
+}
+
+TEST(DergachevAGrahamScanSeq, SinglePoint) {
+  std::vector<Point> pts = {{5.0, 3.0}};
+  auto task = std::make_shared<DergachevAGrahamScanSEQ>(static_cast<int>(pts.size()));
+  task->SetPoints(pts);
+  ASSERT_TRUE(task->Validation());
+  ASSERT_TRUE(task->PreProcessing());
+  ASSERT_TRUE(task->Run());
+  ASSERT_TRUE(task->PostProcessing());
+  EXPECT_EQ(task->GetOutput(), 1);
+}
+
+TEST(DergachevAGrahamScanSeq, TwoDistinctPoints) {
+  std::vector<Point> pts = {{0.0, 0.0}, {3.0, 4.0}};
+  auto task = std::make_shared<DergachevAGrahamScanSEQ>(static_cast<int>(pts.size()));
+  task->SetPoints(pts);
+  ASSERT_TRUE(task->Validation());
+  ASSERT_TRUE(task->PreProcessing());
+  ASSERT_TRUE(task->Run());
+  ASSERT_TRUE(task->PostProcessing());
+  EXPECT_EQ(task->GetOutput(), 2);
+}
+
+TEST(DergachevAGrahamScanSeq, CollinearPoints) {
+  std::vector<Point> pts = {{0.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}, {3.0, 0.0}, {4.0, 0.0}};
+  auto task = std::make_shared<DergachevAGrahamScanSEQ>(static_cast<int>(pts.size()));
+  task->SetPoints(pts);
+  ASSERT_TRUE(task->Validation());
+  ASSERT_TRUE(task->PreProcessing());
+  ASSERT_TRUE(task->Run());
+  ASSERT_TRUE(task->PostProcessing());
+  EXPECT_EQ(task->GetOutput(), 2);
+}
+
+TEST(DergachevAGrahamScanSeq, TrianglePoints) {
+  std::vector<Point> pts = {{0.0, 0.0}, {4.0, 0.0}, {2.0, 3.0}};
+  auto task = std::make_shared<DergachevAGrahamScanSEQ>(static_cast<int>(pts.size()));
+  task->SetPoints(pts);
+  ASSERT_TRUE(task->Validation());
+  ASSERT_TRUE(task->PreProcessing());
+  ASSERT_TRUE(task->Run());
+  ASSERT_TRUE(task->PostProcessing());
+  EXPECT_EQ(task->GetOutput(), 3);
+  auto hull = task->GetHull();
+  EXPECT_EQ(static_cast<int>(hull.size()), 3);
+}
+
+TEST(DergachevAGrahamScanSeq, SquarePoints) {
+  std::vector<Point> pts = {{0.0, 0.0}, {4.0, 0.0}, {4.0, 4.0}, {0.0, 4.0}};
+  auto task = std::make_shared<DergachevAGrahamScanSEQ>(static_cast<int>(pts.size()));
+  task->SetPoints(pts);
+  ASSERT_TRUE(task->Validation());
+  ASSERT_TRUE(task->PreProcessing());
+  ASSERT_TRUE(task->Run());
+  ASSERT_TRUE(task->PostProcessing());
+  EXPECT_EQ(task->GetOutput(), 4);
+}
+
+TEST(DergachevAGrahamScanSeq, SquareWithInteriorPoint) {
+  std::vector<Point> pts = {{0.0, 0.0}, {4.0, 0.0}, {4.0, 4.0}, {0.0, 4.0}, {2.0, 2.0}};
+  auto task = std::make_shared<DergachevAGrahamScanSEQ>(static_cast<int>(pts.size()));
+  task->SetPoints(pts);
+  ASSERT_TRUE(task->Validation());
+  ASSERT_TRUE(task->PreProcessing());
+  ASSERT_TRUE(task->Run());
+  ASSERT_TRUE(task->PostProcessing());
+  EXPECT_EQ(task->GetOutput(), 4);
+}
+
+TEST(DergachevAGrahamScanSeq, AllIdenticalPoints) {
+  std::vector<Point> pts = {{3.0, 3.0}, {3.0, 3.0}, {3.0, 3.0}, {3.0, 3.0}, {3.0, 3.0}};
+  auto task = std::make_shared<DergachevAGrahamScanSEQ>(static_cast<int>(pts.size()));
+  task->SetPoints(pts);
+  ASSERT_TRUE(task->Validation());
+  ASSERT_TRUE(task->PreProcessing());
+  ASSERT_TRUE(task->Run());
+  ASSERT_TRUE(task->PostProcessing());
+  EXPECT_EQ(task->GetOutput(), 1);
+}
+
+TEST(DergachevAGrahamScanSeq, NegativeInput) {
+  auto task = std::make_shared<DergachevAGrahamScanSEQ>(-1);
+  EXPECT_FALSE(task->Validation());
+  task->PreProcessing();
+  task->Run();
+  task->PostProcessing();
+}
+
+TEST(DergachevAGrahamScanSeq, PointOnBoundary) {
+  std::vector<Point> pts = {{0.0, 0.0}, {4.0, 0.0}, {2.0, 0.0}, {4.0, 4.0}, {0.0, 4.0}};
+  auto task = std::make_shared<DergachevAGrahamScanSEQ>(static_cast<int>(pts.size()));
+  task->SetPoints(pts);
+  ASSERT_TRUE(task->Validation());
+  ASSERT_TRUE(task->PreProcessing());
+  ASSERT_TRUE(task->Run());
+  ASSERT_TRUE(task->PostProcessing());
+  EXPECT_EQ(task->GetOutput(), 4);
+}
+
+TEST(DergachevAGrahamScanSeq, VerticalCollinear) {
+  std::vector<Point> pts = {{0.0, 0.0}, {0.0, 1.0}, {0.0, 2.0}, {0.0, 5.0}};
+  auto task = std::make_shared<DergachevAGrahamScanSEQ>(static_cast<int>(pts.size()));
+  task->SetPoints(pts);
+  ASSERT_TRUE(task->Validation());
+  ASSERT_TRUE(task->PreProcessing());
+  ASSERT_TRUE(task->Run());
+  ASSERT_TRUE(task->PostProcessing());
+  EXPECT_EQ(task->GetOutput(), 2);
+}
+
+TEST(DergachevAGrahamScanSeq, LargeCircle) {
+  auto task = std::make_shared<DergachevAGrahamScanSEQ>(1000);
+  ASSERT_TRUE(task->Validation());
+  ASSERT_TRUE(task->PreProcessing());
+  ASSERT_TRUE(task->Run());
+  ASSERT_TRUE(task->PostProcessing());
+  EXPECT_EQ(task->GetOutput(), 1000);
+}
+
+TEST(DergachevAGrahamScanSeq, HexagonWithCenter) {
+  std::vector<Point> pts = {{2.0, 0.0},    {1.0, 1.73},  {-1.0, 1.73}, {-2.0, 0.0},
+                            {-1.0, -1.73}, {1.0, -1.73}, {0.0, 0.0}};
+  auto task = std::make_shared<DergachevAGrahamScanSEQ>(static_cast<int>(pts.size()));
+  task->SetPoints(pts);
+  ASSERT_TRUE(task->Validation());
+  ASSERT_TRUE(task->PreProcessing());
+  ASSERT_TRUE(task->Run());
+  ASSERT_TRUE(task->PostProcessing());
+  EXPECT_EQ(task->GetOutput(), 6);
+}
 
 }  // namespace
 

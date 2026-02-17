@@ -11,7 +11,7 @@
 namespace dergachev_a_graham_scan {
 
 class DergachevAGrahamScanPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 200;
+  const int kCount_ = 500000;
   InType input_data_{};
 
   void SetUp() override {
