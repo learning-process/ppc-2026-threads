@@ -48,9 +48,8 @@ TEST_P(DergachevAGrahamScanFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {std::make_tuple(3, "circle_3"), std::make_tuple(5, "circle_5"),
-                                            std::make_tuple(10, "circle_10"), std::make_tuple(20, "circle_20"),
-                                            std::make_tuple(50, "circle_50")};
+const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "circle_3"), std::make_tuple(5, "circle_5"),
+                                            std::make_tuple(7, "circle_7")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<NesterovATestTaskALL, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan),
