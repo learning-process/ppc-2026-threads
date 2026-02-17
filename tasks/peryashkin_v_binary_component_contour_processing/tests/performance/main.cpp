@@ -23,8 +23,7 @@ BinaryImage MakePattern(int w, int h, int step) {
   for (int y = 0; y < h; ++y) {
     for (int x = 0; x < w; ++x) {
       const bool on = ((x / step) % 2 == 0) && ((y / step) % 2 == 0);
-      img.data[static_cast<std::size_t>(y) * static_cast<std::size_t>(w) + static_cast<std::size_t>(x)] =
-          on ? 1 : 0;
+      img.data[static_cast<std::size_t>(y) * static_cast<std::size_t>(w) + static_cast<std::size_t>(x)] = on ? 1 : 0;
     }
   }
   return img;
@@ -41,7 +40,7 @@ class PeryashkinVRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType,
     input_data_ = MakePattern(512, 512, 8);
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     // Не делаем строгую проверку формы в perf — только “не развалилось”
     return true && (!output_data.empty() || output_data.empty());
   }
@@ -57,9 +56,8 @@ TEST_P(PeryashkinVRunPerfTestThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, PeryashkinVBinaryComponentContourProcessingSEQ>(
-        PPC_SETTINGS_peryashkin_v_binary_component_contour_processing);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, PeryashkinVBinaryComponentContourProcessingSEQ>(
+    PPC_SETTINGS_peryashkin_v_binary_component_contour_processing);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

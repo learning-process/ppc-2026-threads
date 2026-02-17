@@ -11,7 +11,7 @@ class PeryashkinVBinaryComponentContourProcessingSEQ : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit PeryashkinVBinaryComponentContourProcessingSEQ(const InType& in);
+  explicit PeryashkinVBinaryComponentContourProcessingSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
