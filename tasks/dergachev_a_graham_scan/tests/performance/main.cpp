@@ -34,8 +34,7 @@ TEST_P(DergachevAGrahamScanPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NesterovATestTaskALL, NesterovATestTaskOMP, DergachevAGrahamScanSEQ,
-                                NesterovATestTaskSTL, NesterovATestTaskTBB>(PPC_SETTINGS_dergachev_a_graham_scan);
+    ppc::util::MakeAllPerfTasks<InType, DergachevAGrahamScanSEQ>(PPC_SETTINGS_dergachev_a_graham_scan);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
