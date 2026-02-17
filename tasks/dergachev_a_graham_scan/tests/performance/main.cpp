@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 
-#include "dergachev_a_graham_scan/all/include/ops_all.hpp"
+// #include "dergachev_a_graham_scan/all/include/ops_all.hpp"
 #include "dergachev_a_graham_scan/common/include/common.hpp"
-#include "dergachev_a_graham_scan/omp/include/ops_omp.hpp"
+// #include "dergachev_a_graham_scan/omp/include/ops_omp.hpp"
 #include "dergachev_a_graham_scan/seq/include/ops_seq.hpp"
-#include "dergachev_a_graham_scan/stl/include/ops_stl.hpp"
-#include "dergachev_a_graham_scan/tbb/include/ops_tbb.hpp"
+// #include "dergachev_a_graham_scan/stl/include/ops_stl.hpp"
+// #include "dergachev_a_graham_scan/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace dergachev_a_graham_scan {
@@ -34,7 +34,9 @@ TEST_P(DergachevAGrahamScanPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, DergachevAGrahamScanSEQ>(PPC_SETTINGS_dergachev_a_graham_scan);
+    ppc::util::MakeAllPerfTasks<InType, /* NesterovATestTaskALL, NesterovATestTaskOMP, */ DergachevAGrahamScanSEQ
+                                /* , NesterovATestTaskSTL, NesterovATestTaskTBB */>(
+        PPC_SETTINGS_dergachev_a_graham_scan);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
