@@ -24,7 +24,7 @@ double DistSquared(const Point &a, const Point &b) {
 const double kPi = std::acos(-1.0);
 
 bool AllPointsSame(const std::vector<Point> &pts) {
-  for (int i = 1; i < static_cast<int>(pts.size()); i++) {
+  for (int i = 1; std::cmp_less(i, pts.size()); i++) {
     if (pts[i].x != pts[0].x || pts[i].y != pts[0].y) {
       return false;
     }
@@ -34,7 +34,7 @@ bool AllPointsSame(const std::vector<Point> &pts) {
 
 int FindPivotIndex(const std::vector<Point> &pts) {
   int pivot_idx = 0;
-  for (int i = 1; i < static_cast<int>(pts.size()); i++) {
+  for (int i = 1; std::cmp_less(i, pts.size()); i++) {
     if (pts[i].y < pts[pivot_idx].y || (pts[i].y == pts[pivot_idx].y && pts[i].x < pts[pivot_idx].x)) {
       pivot_idx = i;
     }
