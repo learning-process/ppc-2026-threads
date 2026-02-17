@@ -20,7 +20,7 @@ class DergachevAGrahamScanSEQ : public BaseTask {
   explicit DergachevAGrahamScanSEQ(const InType &in);
 
   void SetPoints(const std::vector<Point> &pts);
-  std::vector<Point> GetHull() const;
+  [[nodiscard]] std::vector<Point> GetHull() const;
 
  private:
   bool ValidationImpl() override;
