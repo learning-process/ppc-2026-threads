@@ -115,7 +115,7 @@ const std::array<TestType, 48> kTestParam = []() {
     arr[i] = std::make_tuple(i, kStaticTestCases[i].name);
   }
   return arr;
-}();  // NOLINT
+}();  
 
 const auto kTestTasksList =
     ppc::util::AddFuncTask<SosninaATestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_sosnina_a_radix_simple_merge);

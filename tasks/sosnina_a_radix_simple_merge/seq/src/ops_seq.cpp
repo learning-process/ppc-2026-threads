@@ -69,7 +69,7 @@ void SimpleMerge(const std::vector<int> &left, const std::vector<int> &right, st
   }
 }
 
-}  // namespace
+}  
 
 SosninaATestTaskSEQ::SosninaATestTaskSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
