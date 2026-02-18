@@ -21,21 +21,21 @@ namespace otcheskov_s_contrast_lin_stretch {
 namespace {
 
 std::vector<uint8_t> CreateLowContrastImage(size_t size, uint8_t low = 100, uint8_t range = 50) {
-    std::vector<uint8_t> image(size * size);
-    for (size_t row = 0; row < size; ++row) {
-        for (size_t col = 0; col < size; ++col) {
-            uint8_t value = low + (row + col) % range;
-            image[row * size + col] = value;
-        }
+  std::vector<uint8_t> image(size * size);
+  for (size_t row = 0; row < size; ++row) {
+    for (size_t col = 0; col < size; ++col) {
+      uint8_t value = low + (row + col) % range;
+      image[row * size + col] = value;
     }
-    return image;
+  }
+  return image;
 }
 
 std::vector<uint8_t> LoadGrayscaleImage(const std::string &img_path) {
   int width, height, channels_in_file;
   auto *data = stbi_load(img_path.c_str(), &width, &height, &channels_in_file, STBI_grey);
   if (data == nullptr) {
-      throw std::runtime_error("Failed to load image '" + img_path + "': " + std::string(stbi_failure_reason()));
+    throw std::runtime_error("Failed to load image '" + img_path + "': " + std::string(stbi_failure_reason()));
   }
   std::vector<uint8_t> img_data(data, data + static_cast<ptrdiff_t>(width * height));
   stbi_image_free(data);
@@ -50,6 +50,7 @@ class OtcheskovSContrastLinStretchValidationTestsThreads
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<0>(test_param) + "_" + std::to_string(std::get<1>(test_param));
   }
+
  protected:
   bool CheckTestOutputData(OutType &output_data) final {
     return output_data.empty();
@@ -109,8 +110,7 @@ class OtcheskovSContrastLinStretchFuncTestsThreads : public ppc::util::BaseRunFu
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    auto [min_it, max_it] =
-      std::minmax_element(output_data.begin(), output_data.end());
+    auto [min_it, max_it] = std::minmax_element(output_data.begin(), output_data.end());
     if (*min_it == *max_it) {
       return true;
     }
@@ -151,8 +151,7 @@ class OtcheskovSContrastLinStretchRealTestsThreads : public ppc::util::BaseRunFu
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    auto [min_it, max_it] =
-      std::minmax_element(output_data.begin(), output_data.end());
+    auto [min_it, max_it] = std::minmax_element(output_data.begin(), output_data.end());
 
     return (*min_it == 0 && *max_it == 255);
   }
@@ -170,23 +169,18 @@ namespace {
 const std::array<TestType, 1> kTestValidParam = {{{"empty_data", 0}}};
 
 const std::array<TestType, 5> kTestFuncParam = {
-    {{"image_1x1", 1},
-     {"image_2x2", 2},
-     {"image_3x3", 3},
-     {"image_100x100", 100},
-     {"image_10000x10000", 10000}}};
-
+    {{"image_1x1", 1}, {"image_2x2", 2}, {"image_3x3", 3}, {"image_100x100", 100}, {"image_10000x10000", 10000}}};
 
 const std::array<TestType, 1> kTestRealParam = {{{"grayimg.jpg", 0}}};
 
-const auto kTestValidTasksList = 
-    std::tuple_cat(ppc::util::AddFuncTask<OtcheskovSContrastLinStretchSEQ, InType>(kTestValidParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch));
+const auto kTestValidTasksList = std::tuple_cat(ppc::util::AddFuncTask<OtcheskovSContrastLinStretchSEQ, InType>(
+    kTestValidParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch));
 
-const auto kTestFuncTasksList = 
-    std::tuple_cat(ppc::util::AddFuncTask<OtcheskovSContrastLinStretchSEQ, InType>(kTestFuncParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch));
+const auto kTestFuncTasksList = std::tuple_cat(ppc::util::AddFuncTask<OtcheskovSContrastLinStretchSEQ, InType>(
+    kTestFuncParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch));
 
-const auto kTestRealTasksList = 
-    std::tuple_cat(ppc::util::AddFuncTask<OtcheskovSContrastLinStretchSEQ, InType>(kTestRealParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch));
+const auto kTestRealTasksList = std::tuple_cat(ppc::util::AddFuncTask<OtcheskovSContrastLinStretchSEQ, InType>(
+    kTestRealParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch));
 
 const auto kGtestValidValues = ppc::util::ExpandToValues(kTestValidTasksList);
 const auto kGtestFuncValues = ppc::util::ExpandToValues(kTestFuncTasksList);
@@ -195,11 +189,11 @@ const auto kGtestRealValues = ppc::util::ExpandToValues(kTestRealTasksList);
 const auto kValidFuncTestName = OtcheskovSContrastLinStretchValidationTestsThreads::PrintFuncTestName<
     OtcheskovSContrastLinStretchValidationTestsThreads>;
 
-const auto kFuncTestName = OtcheskovSContrastLinStretchFuncTestsThreads::PrintFuncTestName<
-    OtcheskovSContrastLinStretchFuncTestsThreads>;
+const auto kFuncTestName =
+    OtcheskovSContrastLinStretchFuncTestsThreads::PrintFuncTestName<OtcheskovSContrastLinStretchFuncTestsThreads>;
 
-const auto kRealTestName = OtcheskovSContrastLinStretchRealTestsThreads::PrintFuncTestName<
-    OtcheskovSContrastLinStretchRealTestsThreads>;
+const auto kRealTestName =
+    OtcheskovSContrastLinStretchRealTestsThreads::PrintFuncTestName<OtcheskovSContrastLinStretchRealTestsThreads>;
 
 TEST_P(OtcheskovSContrastLinStretchValidationTestsThreads, ContrastLinStretchValidation) {
   ExecuteTest(GetParam());
@@ -216,11 +210,11 @@ TEST_P(OtcheskovSContrastLinStretchRealTestsThreads, ContrastLinStretchReal) {
 INSTANTIATE_TEST_SUITE_P(ContrastLinStretchValidation, OtcheskovSContrastLinStretchValidationTestsThreads,
                          kGtestValidValues, kValidFuncTestName);
 
-INSTANTIATE_TEST_SUITE_P(ContrastLinStretchFunc, OtcheskovSContrastLinStretchFuncTestsThreads,
-                         kGtestFuncValues, kFuncTestName);
+INSTANTIATE_TEST_SUITE_P(ContrastLinStretchFunc, OtcheskovSContrastLinStretchFuncTestsThreads, kGtestFuncValues,
+                         kFuncTestName);
 
-INSTANTIATE_TEST_SUITE_P(ContrastLinStretchReal, OtcheskovSContrastLinStretchRealTestsThreads,
-                         kGtestRealValues, kRealTestName);
+INSTANTIATE_TEST_SUITE_P(ContrastLinStretchReal, OtcheskovSContrastLinStretchRealTestsThreads, kGtestRealValues,
+                         kRealTestName);
 
 }  // namespace
 

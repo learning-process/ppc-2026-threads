@@ -29,10 +29,10 @@ bool OtcheskovSContrastLinStretchSEQ::RunImpl() {
     return false;
   }
 
-  const InType& input = GetInput();
-  OutType& output = GetOutput();
+  const InType &input = GetInput();
+  OutType &output = GetOutput();
 
-  auto [min_it, max_it] =  std::minmax_element(input.begin(), input.end());
+  auto [min_it, max_it] = std::minmax_element(input.begin(), input.end());
   uint8_t min_val = *min_it;
   uint8_t max_val = *max_it;
 

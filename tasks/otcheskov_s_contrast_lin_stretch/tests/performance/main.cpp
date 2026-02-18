@@ -10,14 +10,14 @@
 namespace otcheskov_s_contrast_lin_stretch {
 namespace {
 std::vector<uint8_t> CreateLowContrastImage(size_t size, uint8_t low = 100, uint8_t range = 50) {
-    std::vector<uint8_t> image(size * size);
-    for (size_t row = 0; row < size; ++row) {
-        for (size_t col = 0; col < size; ++col) {
-            uint8_t value = low + (row + col) % range;
-            image[row * size + col] = value;
-        }
+  std::vector<uint8_t> image(size * size);
+  for (size_t row = 0; row < size; ++row) {
+    for (size_t col = 0; col < size; ++col) {
+      uint8_t value = low + (row + col) % range;
+      image[row * size + col] = value;
     }
-    return image;
+  }
+  return image;
 }
 
 }  // namespace
@@ -38,8 +38,7 @@ class OtcheskovSContrastLinStretchPerfTests : public ppc::util::BaseRunPerfTests
   }
 
   bool CheckTestOutputData(OutType &output_img) final {
-    auto [min_it, max_it] =
-      std::minmax_element(output_img.begin(), output_img.end());
+    auto [min_it, max_it] = std::minmax_element(output_img.begin(), output_img.end());
     if (*min_it == *max_it) {
       return true;
     }
