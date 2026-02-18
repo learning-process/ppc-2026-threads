@@ -16,8 +16,6 @@ namespace peryashkin_v_binary_component_contour_processing {
 
 namespace {
 
-// ---- Helpers (локально в cpp, чтобы не плодить API) ----
-
 inline bool InBounds(int x, int y, int w, int h) {
   return x >= 0 && y >= 0 && x < w && y < h;
 }
@@ -59,16 +57,13 @@ inline std::vector<Point> ConvexHullMonotonicChain(std::vector<Point> pts) {
     upper.push_back(p);
   }
 
-  // склейка без дубликатов концов
   lower.pop_back();
   upper.pop_back();
   lower.insert(lower.end(), upper.begin(), upper.end());
 
-  // коллинеарный случай => вернутся 2 крайние точки (это ок для курса)
   return lower;
 }
 
-// 4-связные компоненты по value==1
 inline std::vector<std::vector<Point>> ExtractComponents4(const BinaryImage &img) {
   const int w = img.width;
   const int h = img.height;
@@ -135,8 +130,6 @@ inline OutType SolveSEQ(const BinaryImage &img) {
 
 }  // namespace
 
-// ---- Task methods ----
-
 PeryashkinVBinaryComponentContourProcessingSEQ::PeryashkinVBinaryComponentContourProcessingSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -158,7 +151,6 @@ bool PeryashkinVBinaryComponentContourProcessingSEQ::PreProcessingImpl() {
 }
 
 bool PeryashkinVBinaryComponentContourProcessingSEQ::RunImpl() {
-  // Защита от запуска на невалидном
   if (!ValidationImpl()) {
     return false;
   }

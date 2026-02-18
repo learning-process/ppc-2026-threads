@@ -1,4 +1,3 @@
-// tasks/peryashkin_v_binary_component_contour_processing/tests/performance/main.cpp
 #include <gtest/gtest.h>
 
 #include <cstddef>
@@ -19,7 +18,6 @@ BinaryImage MakePattern(int w, int h, int step) {
   img.height = h;
   img.data.assign(static_cast<std::size_t>(w) * static_cast<std::size_t>(h), 0);
 
-  // детерминированный “шахматный”/полосатый паттерн компонент
   for (int y = 0; y < h; ++y) {
     for (int x = 0; x < w; ++x) {
       const bool on = ((x / step) % 2 == 0) && ((y / step) % 2 == 0);
@@ -35,13 +33,10 @@ class PeryashkinVRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType,
   InType input_data_{};
 
   void SetUp() override {
-    // размеры не подвисающие, но уже “ощутимые”
-    // small/medium/large инфраструктура PPC обычно прогонит сама в разных режимах (task/pipeline)
     input_data_ = MakePattern(512, 512, 8);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Не делаем строгую проверку формы в perf — только “не развалилось”
     return true && (!output_data.empty() || output_data.empty());
   }
 
