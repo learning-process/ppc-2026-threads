@@ -15,7 +15,8 @@ class SosninaARunPerfTestRadixSort : public ppc::util::BaseRunPerfTests<InType, 
   InType input_data_;
 
   void SetUp() override {
-    std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
+    std::random_device rd;
+    std::mt19937 gen(rd());
     std::uniform_int_distribution<int> dist(-100000, 100000);
 
     input_data_.resize(kCount);
