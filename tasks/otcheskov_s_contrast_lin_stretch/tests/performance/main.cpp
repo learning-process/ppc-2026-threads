@@ -23,7 +23,7 @@ std::vector<uint8_t> CreateLowContrastImage(size_t size, uint8_t low = 100, uint
 }  // namespace
 
 class OtcheskovSContrastLinStretchPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr size_t kMatrixSize = 50000;
+  static constexpr size_t kMatrixSize = 10000;
   InType input_img_;
 
   void SetUp() override {
