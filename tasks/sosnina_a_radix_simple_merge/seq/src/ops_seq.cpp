@@ -25,7 +25,7 @@ void RadixSortLSD(std::vector<int> &data, std::vector<int> &buffer) {
   for (int pass = 0; pass < kNumPasses; ++pass) {
     std::vector<int> count(kRadixSize + 1, 0);
 
-    for (size_t i = 0; i < data.size(); ++i) {  // NOLINT(modernize-loop-convert)
+    for (size_t i = 0; i < data.size(); ++i) {
       auto digit = static_cast<uint8_t>((static_cast<uint32_t>(data[i]) >> (pass * kRadixBits)) & 0xFF);
       ++count[digit + 1];
     }
@@ -34,7 +34,7 @@ void RadixSortLSD(std::vector<int> &data, std::vector<int> &buffer) {
       count[i] += count[i - 1];
     }
 
-    for (size_t i = 0; i < data.size(); ++i) {  // NOLINT(modernize-loop-convert)
+    for (size_t i = 0; i < data.size(); ++i) {
       auto digit = static_cast<uint8_t>((static_cast<uint32_t>(data[i]) >> (pass * kRadixBits)) & 0xFF);
       buffer[count[digit]++] = data[i];
     }
