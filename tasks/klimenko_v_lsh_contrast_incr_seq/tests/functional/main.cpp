@@ -4,7 +4,6 @@
 #include <array>
 #include <cstddef>
 #include <string>
-#include <utility>
 
 #include "klimenko_v_lsh_contrast_incr_seq/common/include/common.hpp"
 #include "klimenko_v_lsh_contrast_incr_seq/seq/include/ops_seq.hpp"
