@@ -17,6 +17,8 @@ class GaseninLDjstraSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+  InType FindMinDist(const std::vector<InType> &dist, const std::vector<bool> &visited);
+  void RelaxEdges(InType u, std::vector<InType> &dist, const std::vector<bool> &visited);
 };
 
 }  // namespace gasenin_l_djstra

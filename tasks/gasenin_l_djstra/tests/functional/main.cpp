@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
+// #include <stb/stb_image.h>
 
+/*
 #include <algorithm>
 #include <array>
 #include <cstddef>
@@ -11,15 +12,17 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-
-#include "gasenin_l_djstra/all/include/ops_all.hpp"
+*/
+#include <array>
+#include <tuple>
+// #include "gasenin_l_djstra/all/include/ops_all.hpp"
 #include "gasenin_l_djstra/common/include/common.hpp"
-#include "gasenin_l_djstra/omp/include/ops_omp.hpp"
+// #include "gasenin_l_djstra/omp/include/ops_omp.hpp"
 #include "gasenin_l_djstra/seq/include/ops_seq.hpp"
-#include "gasenin_l_djstra/stl/include/ops_stl.hpp"
-#include "gasenin_l_djstra/tbb/include/ops_tbb.hpp"
+// #include "gasenin_l_djstra/stl/include/ops_stl.hpp"
+// #include "gasenin_l_djstra/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
+// #include "util/include/util.hpp"
 
 namespace gasenin_l_djstra {
 

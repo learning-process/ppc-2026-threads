@@ -21,42 +21,53 @@ bool GaseninLDjstraSEQ::PreProcessingImpl() {
   return true;
 }
 
+InType GaseninLDjstraSEQ::FindMinDist(const std::vector<InType> &dist, const std::vector<bool> &visited) {
+  InType n = static_cast<InType>(dist.size());
+  InType min_dist = std::numeric_limits<InType>::max();
+  InType u = -1;
+  for (InType i = 0; i < n; ++i) {
+    if (!visited[i] && dist[i] < min_dist) {
+      min_dist = dist[i];
+      u = i;
+    }
+  }
+  return u;
+}
+
+void GaseninLDjstraSEQ::RelaxEdges(InType u, std::vector<InType> &dist, const std::vector<bool> &visited) {
+  InType n = static_cast<InType>(dist.size());
+  for (InType vert = 0; vert < n; ++vert) {
+    if (!visited[vert] && u != vert) {
+      InType weight = (u > vert) ? (u - vert) : (vert - u);
+      if (dist[u] != std::numeric_limits<InType>::max() && dist[u] + weight < dist[vert]) {
+        dist[vert] = dist[u] + weight;
+      }
+    }
+  }
+}
+
 bool GaseninLDjstraSEQ::RunImpl() {
   InType n = GetInput();
   if (n == 0) {
     return false;
   }
-  const InType INF = std::numeric_limits<InType>::max();
-  std::vector<InType> dist(n, INF);
+
+  const InType kInf = std::numeric_limits<InType>::max();
+  std::vector<InType> dist(n, kInf);
   std::vector<bool> visited(n, false);
   dist[0] = 0;
 
   for (int count = 0; count < n; ++count) {
-    InType u = -1;
-    InType min_dist = INF;
-    for (int i = 0; i < n; ++i) {
-      if (!visited[i] && dist[i] < min_dist) {
-        min_dist = dist[i];
-        u = i;
-      }
-    }
+    InType u = FindMinDist(dist, visited);
     if (u == -1) {
       break;
     }
     visited[u] = true;
-
-    for (int v = 0; v < n; ++v) {
-      if (!visited[v] && u != v) {
-        InType weight = (u > v) ? (u - v) : (v - u);
-        if (dist[u] != INF && dist[u] + weight < dist[v]) {
-          dist[v] = dist[u] + weight;
-        }
-      }
-    }
+    RelaxEdges(u, dist, visited);
   }
 
   InType sum = 0;
-  for (int i = 0; i < n; ++i) {
+  for (InType i = 0; i < n; ++i) {
     sum += dist[i];
   }
   GetOutput() = sum;
