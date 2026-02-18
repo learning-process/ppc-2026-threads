@@ -1,25 +1,34 @@
 #include <gtest/gtest.h>
 
-#include "example_threads/all/include/ops_all.hpp"
-#include "example_threads/common/include/common.hpp"
-#include "example_threads/omp/include/ops_omp.hpp"
-#include "example_threads/seq/include/ops_seq.hpp"
-#include "example_threads/stl/include/ops_stl.hpp"
-#include "example_threads/tbb/include/ops_tbb.hpp"
+#include <random>
+#include <vector>
+
+#include "sosnina_a_radix_simple_merge/common/include/common.hpp"
+#include "sosnina_a_radix_simple_merge/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
-namespace nesterov_a_test_task_threads {
+namespace sosnina_a_radix_simple_merge {
 
-class ExampleRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 200;
-  InType input_data_{};
+class SosninaARunPerfTestRadixSort : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  static constexpr size_t kCount_ = 100000;
+  InType input_data_;
 
   void SetUp() override {
-    input_data_ = kCount_;
+    std::mt19937 gen(42);
+    std::uniform_int_distribution<int> dist(-100000, 100000);
+
+    input_data_.resize(kCount_);
+    for (size_t i = 0; i < kCount_; ++i) {
+      input_data_[i] = dist(gen);
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    if (output_data.size() != input_data_.size()) {
+      return false;
+    }
+    return std::is_sorted(output_data.begin(), output_data.end());
   }
 
   InType GetTestInputData() final {
@@ -27,22 +36,21 @@ class ExampleRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Out
   }
 };
 
-TEST_P(ExampleRunPerfTestThreads, RunPerfModes) {
+TEST_P(SosninaARunPerfTestRadixSort, RunPerfRadixSort) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NesterovATestTaskALL, NesterovATestTaskOMP, NesterovATestTaskSEQ,
-                                NesterovATestTaskSTL, NesterovATestTaskTBB>(PPC_SETTINGS_example_threads);
+    ppc::util::MakeAllPerfTasks<InType, SosninaATestTaskSEQ>(PPC_SETTINGS_sosnina_a_radix_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = ExampleRunPerfTestThreads::CustomPerfTestName;
+const auto kPerfTestName = SosninaARunPerfTestRadixSort::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ExampleRunPerfTestThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RadixSortPerfTests, SosninaARunPerfTestRadixSort, kGtestValues, kPerfTestName);
 
 }  // namespace
 
-}  // namespace nesterov_a_test_task_threads
+}  // namespace sosnina_a_radix_simple_merge

@@ -1,60 +1,113 @@
-#include "example_threads/seq/include/ops_seq.hpp"
+#include "sosnina_a_radix_simple_merge/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <cstdint>
 #include <vector>
 
-#include "example_threads/common/include/common.hpp"
+#include "sosnina_a_radix_simple_merge/common/include/common.hpp"
 #include "util/include/util.hpp"
 
-namespace nesterov_a_test_task_threads {
+namespace sosnina_a_radix_simple_merge {
 
-NesterovATestTaskSEQ::NesterovATestTaskSEQ(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput() = 0;
-}
+namespace {
 
-bool NesterovATestTaskSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
-}
+constexpr int kRadixBits = 8;
+constexpr int kRadixSize = 1 << kRadixBits;
+constexpr int kNumPasses = sizeof(int) / sizeof(uint8_t);
+constexpr uint32_t kSignFlip = 0x80000000U;
 
-bool NesterovATestTaskSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
-}
+void RadixSortLSD(std::vector<int> &data, std::vector<int> &buffer) {
+  for (size_t i = 0; i < data.size(); ++i) {
+    buffer[i] = static_cast<int>(static_cast<uint32_t>(data[i]) ^ kSignFlip);
+  }
+  std::swap(data, buffer);
 
-bool NesterovATestTaskSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
+  for (int pass = 0; pass < kNumPasses; ++pass) {
+    std::vector<int> count(kRadixSize + 1, 0);
+
+    for (size_t i = 0; i < data.size(); ++i) {
+      uint8_t digit = static_cast<uint8_t>((static_cast<uint32_t>(data[i]) >> (pass * kRadixBits)) & 0xFF);
+      ++count[digit + 1];
+    }
+
+    for (int i = 1; i <= kRadixSize; ++i) {
+      count[i] += count[i - 1];
+    }
+
+    for (size_t i = 0; i < data.size(); ++i) {
+      uint8_t digit = static_cast<uint8_t>((static_cast<uint32_t>(data[i]) >> (pass * kRadixBits)) & 0xFF);
+      buffer[count[digit]++] = data[i];
+    }
+
+    std::swap(data, buffer);
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  for (size_t i = 0; i < data.size(); ++i) {
+    data[i] = static_cast<int>(static_cast<uint32_t>(data[i]) ^ kSignFlip);
+  }
+}
+
+void SimpleMerge(const std::vector<int> &left, const std::vector<int> &right, std::vector<int> &result) {
+  size_t i = 0;
+  size_t j = 0;
+  size_t k = 0;
+
+  while (i < left.size() && j < right.size()) {
+    if (left[i] <= right[j]) {
+      result[k++] = left[i++];
+    } else {
+      result[k++] = right[j++];
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
+  while (i < left.size()) {
+    result[k++] = left[i++];
   }
 
-  if (counter != 0) {
-    GetOutput() /= counter;
+  while (j < right.size()) {
+    result[k++] = right[j++];
   }
-  return GetOutput() > 0;
 }
 
-bool NesterovATestTaskSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+}  // namespace
+
+SosninaATestTaskSEQ::SosninaATestTaskSEQ(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = in;
 }
 
-}  // namespace nesterov_a_test_task_threads
+bool SosninaATestTaskSEQ::ValidationImpl() {
+  return !GetInput().empty();
+}
+
+bool SosninaATestTaskSEQ::PreProcessingImpl() {
+  GetOutput() = GetInput();
+  return true;
+}
+
+bool SosninaATestTaskSEQ::RunImpl() {
+  std::vector<int> &data = GetOutput();
+  if (data.size() <= 1) {
+    return true;
+  }
+
+  size_t mid = data.size() / 2;
+  std::vector<int> left_part(data.begin(), data.begin() + static_cast<std::ptrdiff_t>(mid));
+  std::vector<int> right_part(data.begin() + static_cast<std::ptrdiff_t>(mid), data.end());
+  std::vector<int> left_buffer(left_part.size());
+  std::vector<int> right_buffer(right_part.size());
+
+  RadixSortLSD(left_part, left_buffer);
+  RadixSortLSD(right_part, right_buffer);
+
+  SimpleMerge(left_part, right_part, data);
+
+  return std::is_sorted(data.begin(), data.end());
+}
+
+bool SosninaATestTaskSEQ::PostProcessingImpl() {
+  return !GetOutput().empty();
+}
+
+}  // namespace sosnina_a_radix_simple_merge

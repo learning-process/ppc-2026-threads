@@ -2,14 +2,15 @@
 
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "task/include/task.hpp"
 
-namespace nesterov_a_test_task_threads {
+namespace sosnina_a_radix_simple_merge {
 
-using InType = int;
-using OutType = int;
-using TestType = std::tuple<int, std::string>;
+using InType = std::vector<int>;
+using OutType = std::vector<int>;
+using TestType = std::tuple<size_t, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace nesterov_a_test_task_threads
+}  // namespace sosnina_a_radix_simple_merge
