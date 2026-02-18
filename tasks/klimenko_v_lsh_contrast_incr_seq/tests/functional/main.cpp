@@ -34,9 +34,9 @@ class KlimenkoVRunFuncTestsLSH : public ppc::util::BaseRunFuncTests<InType, OutT
       return false;
     }
 
-    auto minmax = std::minmax_element(input_data_.begin(), input_data_.end());
-    int min_val = *minmax.first;
-    int max_val = *minmax.second;
+    auto minmax = std::ranges::minmax_element(input_data_);
+    int min_val = *minmax.min;
+    int max_val = *minmax.max;
 
     if (max_val == min_val) {
       return output_data == input_data_;
