@@ -1,11 +1,11 @@
 #include "sosnina_a_radix_simple_merge/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
 #include "sosnina_a_radix_simple_merge/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace sosnina_a_radix_simple_merge {
 
@@ -25,8 +25,8 @@ void RadixSortLSD(std::vector<int> &data, std::vector<int> &buffer) {
   for (int pass = 0; pass < kNumPasses; ++pass) {
     std::vector<int> count(kRadixSize + 1, 0);
 
-    for (size_t i = 0; i < data.size(); ++i) {
-      uint8_t digit = static_cast<uint8_t>((static_cast<uint32_t>(data[i]) >> (pass * kRadixBits)) & 0xFF);
+    for (size_t i = 0; i < data.size(); ++i) {  // NOLINT(modernize-loop-convert)
+      auto digit = static_cast<uint8_t>((static_cast<uint32_t>(data[i]) >> (pass * kRadixBits)) & 0xFF);
       ++count[digit + 1];
     }
 
@@ -34,16 +34,16 @@ void RadixSortLSD(std::vector<int> &data, std::vector<int> &buffer) {
       count[i] += count[i - 1];
     }
 
-    for (size_t i = 0; i < data.size(); ++i) {
-      uint8_t digit = static_cast<uint8_t>((static_cast<uint32_t>(data[i]) >> (pass * kRadixBits)) & 0xFF);
+    for (size_t i = 0; i < data.size(); ++i) {  // NOLINT(modernize-loop-convert)
+      auto digit = static_cast<uint8_t>((static_cast<uint32_t>(data[i]) >> (pass * kRadixBits)) & 0xFF);
       buffer[count[digit]++] = data[i];
     }
 
     std::swap(data, buffer);
   }
 
-  for (size_t i = 0; i < data.size(); ++i) {
-    data[i] = static_cast<int>(static_cast<uint32_t>(data[i]) ^ kSignFlip);
+  for (int &elem : data) {
+    elem = static_cast<int>(static_cast<uint32_t>(elem) ^ kSignFlip);
   }
 }
 
@@ -103,7 +103,7 @@ bool SosninaATestTaskSEQ::RunImpl() {
 
   SimpleMerge(left_part, right_part, data);
 
-  return std::is_sorted(data.begin(), data.end());
+  return std::ranges::is_sorted(data);
 }
 
 bool SosninaATestTaskSEQ::PostProcessingImpl() {

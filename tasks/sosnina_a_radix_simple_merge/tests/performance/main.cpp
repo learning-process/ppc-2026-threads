@@ -1,25 +1,25 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <cstddef>
 #include <random>
-#include <vector>
 
 #include "sosnina_a_radix_simple_merge/common/include/common.hpp"
 #include "sosnina_a_radix_simple_merge/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace sosnina_a_radix_simple_merge {
 
 class SosninaARunPerfTestRadixSort : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr size_t kCount_ = 100000;
+  static constexpr size_t kCount = 100000;
   InType input_data_;
 
   void SetUp() override {
-    std::mt19937 gen(42);
+    std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
     std::uniform_int_distribution<int> dist(-100000, 100000);
 
-    input_data_.resize(kCount_);
-    for (size_t i = 0; i < kCount_; ++i) {
+    input_data_.resize(kCount);
+    for (size_t i = 0; i < kCount; ++i) {
       input_data_[i] = dist(gen);
     }
   }
@@ -28,7 +28,7 @@ class SosninaARunPerfTestRadixSort : public ppc::util::BaseRunPerfTests<InType, 
     if (output_data.size() != input_data_.size()) {
       return false;
     }
-    return std::is_sorted(output_data.begin(), output_data.end());
+    return std::ranges::is_sorted(output_data);
   }
 
   InType GetTestInputData() final {
