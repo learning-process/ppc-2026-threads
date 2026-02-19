@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "peryashkin_v_binary_component_contour_processing/common/include/common.hpp"
@@ -28,96 +29,68 @@ BinaryImage MakeEmpty(int w, int h) {
   return img;
 }
 
-void Set(BinaryImage &img, int x, int y, uint8_t v = 1) {
+void Set(BinaryImage &img, int x, int y, std::uint8_t v = 1) {
   img.data[(static_cast<std::size_t>(y) * static_cast<std::size_t>(img.width)) + static_cast<std::size_t>(x)] = v;
-}
-
-BinaryImage BuildCaseEmpty() {
-  return MakeEmpty(5, 4);
-}
-
-BinaryImage BuildCasePoint() {
-  auto im = MakeEmpty(5, 5);
-  Set(im, 2, 2, 1);
-  return im;
-}
-
-BinaryImage BuildCaseLine() {
-  auto im = MakeEmpty(7, 5);
-  for (int x_pos = 1; x_pos <= 5; ++x_pos) {
-    Set(im, x_pos, 2, 1);
-  }
-  return im;
-}
-
-BinaryImage BuildCaseSquare() {
-  auto im = MakeEmpty(6, 6);
-  for (int y_pos = 2; y_pos <= 4; ++y_pos) {
-    for (int x_pos = 2; x_pos <= 4; ++x_pos) {
-      Set(im, x_pos, y_pos, 1);
-    }
-  }
-  return im;
-}
-
-BinaryImage BuildCaseTwoComponents() {
-  auto im = MakeEmpty(8, 6);
-  Set(im, 1, 1);
-  Set(im, 2, 1);
-  Set(im, 1, 2);
-  Set(im, 2, 2);
-  for (int y_pos = 3; y_pos <= 5; ++y_pos) {
-    Set(im, 6, y_pos);
-    Set(im, 7, y_pos);
-  }
-  return im;
-}
-
-BinaryImage BuildCaseHole() {
-  auto im = MakeEmpty(7, 7);
-  for (int x_pos = 1; x_pos <= 5; ++x_pos) {
-    Set(im, x_pos, 1);
-    Set(im, x_pos, 5);
-  }
-  for (int y_pos = 1; y_pos <= 5; ++y_pos) {
-    Set(im, 1, y_pos);
-    Set(im, 5, y_pos);
-  }
-  return im;
-}
-
-BinaryImage BuildCaseTouchBorder() {
-  auto im = MakeEmpty(5, 5);
-  for (int y_pos = 0; y_pos <= 2; ++y_pos) {
-    for (int x_pos = 0; x_pos <= 1; ++x_pos) {
-      Set(im, x_pos, y_pos, 1);
-    }
-  }
-  return im;
 }
 
 BinaryImage BuildCase(int id) {
   switch (id) {
     case 0: {
-      return BuildCaseEmpty();
+      return MakeEmpty(5, 4);
     }
     case 1: {
-      return BuildCasePoint();
+      auto im = MakeEmpty(5, 5);
+      Set(im, 2, 2, 1);
+      return im;
     }
     case 2: {
-      return BuildCaseLine();
+      auto im = MakeEmpty(7, 5);
+      for (int xx = 1; xx <= 5; ++xx) {
+        Set(im, xx, 2, 1);
+      }
+      return im;
     }
     case 3: {
-      return BuildCaseSquare();
+      auto im = MakeEmpty(6, 6);
+      for (int yy = 2; yy <= 4; ++yy) {
+        for (int xx = 2; xx <= 4; ++xx) {
+          Set(im, xx, yy, 1);
+        }
+      }
+      return im;
     }
     case 4: {
-      return BuildCaseTwoComponents();
+      auto im = MakeEmpty(8, 6);
+      Set(im, 1, 1);
+      Set(im, 2, 1);
+      Set(im, 1, 2);
+      Set(im, 2, 2);
+      for (int yy = 3; yy <= 5; ++yy) {
+        Set(im, 6, yy);
+        Set(im, 7, yy);
+      }
+      return im;
     }
     case 5: {
-      return BuildCaseHole();
+      auto im = MakeEmpty(7, 7);
+      for (int xx = 1; xx <= 5; ++xx) {
+        Set(im, xx, 1);
+        Set(im, xx, 5);
+      }
+      for (int yy = 1; yy <= 5; ++yy) {
+        Set(im, 1, yy);
+        Set(im, 5, yy);
+      }
+      return im;
     }
     case 6: {
-      return BuildCaseTouchBorder();
+      auto im = MakeEmpty(5, 5);
+      for (int yy = 0; yy <= 2; ++yy) {
+        for (int xx = 0; xx <= 1; ++xx) {
+          Set(im, xx, yy, 1);
+        }
+      }
+      return im;
     }
     default:
       return MakeEmpty(1, 1);
@@ -142,7 +115,7 @@ class PeryashkinVRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType
     if (input_data_.data.empty()) {
       return false;
     }
-    if (std::all_of(input_data_.data.begin(), input_data_.data.end(), [](uint8_t v) { return v == 0; })) {
+    if (std::ranges::all_of(input_data_.data, [](std::uint8_t v) { return v == 0; })) {
       return output_data.empty();
     }
     return !output_data.empty();

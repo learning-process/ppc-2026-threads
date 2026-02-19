@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "peryashkin_v_binary_component_contour_processing/common/include/common.hpp"
@@ -18,10 +19,10 @@ BinaryImage MakePattern(int w, int h, int step) {
   img.height = h;
   img.data.assign(static_cast<std::size_t>(w) * static_cast<std::size_t>(h), 0);
 
-  for (int y_pos = 0; y_pos < h; ++y_pos) {
-    for (int x_pos = 0; x_pos < w; ++x_pos) {
-      const bool on = ((x_pos / step) % 2 == 0) && ((y_pos / step) % 2 == 0);
-      img.data[(static_cast<std::size_t>(y_pos) * static_cast<std::size_t>(w)) + static_cast<std::size_t>(x_pos)] =
+  for (int yy = 0; yy < h; ++yy) {
+    for (int xx = 0; xx < w; ++xx) {
+      const bool on = ((xx / step) % 2 == 0) && ((yy / step) % 2 == 0);
+      img.data[(static_cast<std::size_t>(yy) * static_cast<std::size_t>(w)) + static_cast<std::size_t>(xx)] =
           on ? 1 : 0;
     }
   }
