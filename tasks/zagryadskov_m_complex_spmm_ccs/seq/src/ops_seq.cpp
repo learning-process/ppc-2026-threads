@@ -58,8 +58,8 @@ void ZagryadskovMComplexSpMMCCSSEQ::SpMM(const CCS &a, const CCS &b, CCS &c) {
 }
 
 bool ZagryadskovMComplexSpMMCCSSEQ::ValidationImpl() {
-  const CCS& a = std::get<0>(GetInput());
-  const CCS& b = std::get<1>(GetInput());
+  const CCS &a = std::get<0>(GetInput());
+  const CCS &b = std::get<1>(GetInput());
   return a.n == b.m;
 }
 
