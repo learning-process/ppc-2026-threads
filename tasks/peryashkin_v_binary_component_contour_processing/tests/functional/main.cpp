@@ -4,6 +4,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <ranges>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -134,7 +135,7 @@ class PeryashkinVRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType
     if (input_data_.data.empty()) {
       return false;
     }
-    if (std::all_of(input_data_.data.begin(), input_data_.data.end(), [](std::uint8_t v) { return v == 0; })) {
+    if (std::ranges::all_of(input_data_.data, [](std::uint8_t v) { return v == 0; })) {
       return output_data.empty();
     }
     return !output_data.empty();
