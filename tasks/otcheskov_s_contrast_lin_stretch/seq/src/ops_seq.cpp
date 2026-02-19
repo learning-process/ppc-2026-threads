@@ -37,7 +37,7 @@ bool OtcheskovSContrastLinStretchSEQ::RunImpl() {
   uint8_t max_val = *max_it;
 
   if (min_val == max_val) {
-    std::ranges::fill(output.begin(), output.end(), 0);
+    output = input;
     return true;
   }
 

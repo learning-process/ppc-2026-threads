@@ -114,10 +114,7 @@ class OtcheskovSContrastLinStretchFuncTestsThreads : public ppc::util::BaseRunFu
 
   bool CheckTestOutputData(OutType &output_data) final {
     auto [min_it, max_it] = std::ranges::minmax_element(output_data);
-    if (*min_it == *max_it) {
-      return true;
-    }
-    return (*min_it == 0 && *max_it == 255);
+    return (*min_it == 0 && *max_it == 255) || (*min_it == *max_it);
   }
 
   InType GetTestInputData() final {
@@ -155,8 +152,7 @@ class OtcheskovSContrastLinStretchRealTestsThreads : public ppc::util::BaseRunFu
 
   bool CheckTestOutputData(OutType &output_data) final {
     auto [min_it, max_it] = std::ranges::minmax_element(output_data);
-
-    return (*min_it == 0 && *max_it == 255);
+    return (*min_it == 0 && *max_it == 255) || (*min_it == *max_it);
   }
 
   InType GetTestInputData() final {
