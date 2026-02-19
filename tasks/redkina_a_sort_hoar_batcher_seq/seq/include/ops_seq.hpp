@@ -2,6 +2,7 @@
 #pragma once
 
 #include "redkina_a_sort_hoar_batcher_seq/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace redkina_a_sort_hoar_batcher_seq {
 

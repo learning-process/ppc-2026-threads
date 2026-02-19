@@ -2,7 +2,9 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
+#include <initializer_list>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -51,7 +53,7 @@ class RedkinaASortHoarBatcherFuncTests : public ppc::util::BaseRunFuncTests<InTy
 namespace {
 
 std::vector<int> MakeVector(std::initializer_list<int> list) {
-  return std::vector<int>(list);
+  return {list};
 }
 
 const std::array<TestType, 23> kTestCases = {{std::make_tuple(1, MakeVector({})),
@@ -79,7 +81,7 @@ const std::array<TestType, 23> kTestCases = {{std::make_tuple(1, MakeVector({}))
                                               std::make_tuple(23, [] {
   std::vector<int> v;
   v.reserve(20);
-  const int values[] = {0, 1, 7, 8, 9};
+  std::array<int, 5> values = {0, 1, 7, 8, 9};
   for (int i = 0; i < 20; ++i) {
     v.push_back(values[i % 5]);
   }
