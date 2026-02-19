@@ -5,9 +5,9 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <ranges>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "peryashkin_v_binary_component_contour_processing/common/include/common.hpp"
@@ -33,65 +33,86 @@ void Set(BinaryImage &img, int x, int y, std::uint8_t v = 1) {
   img.data[(static_cast<std::size_t>(y) * static_cast<std::size_t>(img.width)) + static_cast<std::size_t>(x)] = v;
 }
 
+BinaryImage Case0() {
+  return MakeEmpty(5, 4);
+}
+
+BinaryImage Case1() {
+  auto im = MakeEmpty(5, 5);
+  Set(im, 2, 2, 1);
+  return im;
+}
+
+BinaryImage Case2() {
+  auto im = MakeEmpty(7, 5);
+  for (int xx = 1; xx <= 5; ++xx) {
+    Set(im, xx, 2, 1);
+  }
+  return im;
+}
+
+BinaryImage Case3() {
+  auto im = MakeEmpty(6, 6);
+  for (int yy = 2; yy <= 4; ++yy) {
+    for (int xx = 2; xx <= 4; ++xx) {
+      Set(im, xx, yy, 1);
+    }
+  }
+  return im;
+}
+
+BinaryImage Case4() {
+  auto im = MakeEmpty(8, 6);
+  Set(im, 1, 1);
+  Set(im, 2, 1);
+  Set(im, 1, 2);
+  Set(im, 2, 2);
+  for (int yy = 3; yy <= 5; ++yy) {
+    Set(im, 6, yy);
+    Set(im, 7, yy);
+  }
+  return im;
+}
+
+BinaryImage Case5() {
+  auto im = MakeEmpty(7, 7);
+  for (int xx = 1; xx <= 5; ++xx) {
+    Set(im, xx, 1);
+    Set(im, xx, 5);
+  }
+  for (int yy = 1; yy <= 5; ++yy) {
+    Set(im, 1, yy);
+    Set(im, 5, yy);
+  }
+  return im;
+}
+
+BinaryImage Case6() {
+  auto im = MakeEmpty(5, 5);
+  for (int yy = 0; yy <= 2; ++yy) {
+    for (int xx = 0; xx <= 1; ++xx) {
+      Set(im, xx, yy, 1);
+    }
+  }
+  return im;
+}
+
 BinaryImage BuildCase(int id) {
   switch (id) {
-    case 0: {
-      return MakeEmpty(5, 4);
-    }
-    case 1: {
-      auto im = MakeEmpty(5, 5);
-      Set(im, 2, 2, 1);
-      return im;
-    }
-    case 2: {
-      auto im = MakeEmpty(7, 5);
-      for (int xx = 1; xx <= 5; ++xx) {
-        Set(im, xx, 2, 1);
-      }
-      return im;
-    }
-    case 3: {
-      auto im = MakeEmpty(6, 6);
-      for (int yy = 2; yy <= 4; ++yy) {
-        for (int xx = 2; xx <= 4; ++xx) {
-          Set(im, xx, yy, 1);
-        }
-      }
-      return im;
-    }
-    case 4: {
-      auto im = MakeEmpty(8, 6);
-      Set(im, 1, 1);
-      Set(im, 2, 1);
-      Set(im, 1, 2);
-      Set(im, 2, 2);
-      for (int yy = 3; yy <= 5; ++yy) {
-        Set(im, 6, yy);
-        Set(im, 7, yy);
-      }
-      return im;
-    }
-    case 5: {
-      auto im = MakeEmpty(7, 7);
-      for (int xx = 1; xx <= 5; ++xx) {
-        Set(im, xx, 1);
-        Set(im, xx, 5);
-      }
-      for (int yy = 1; yy <= 5; ++yy) {
-        Set(im, 1, yy);
-        Set(im, 5, yy);
-      }
-      return im;
-    }
-    case 6: {
-      auto im = MakeEmpty(5, 5);
-      for (int yy = 0; yy <= 2; ++yy) {
-        for (int xx = 0; xx <= 1; ++xx) {
-          Set(im, xx, yy, 1);
-        }
-      }
-      return im;
-    }
+    case 0:
+      return Case0();
+    case 1:
+      return Case1();
+    case 2:
+      return Case2();
+    case 3:
+      return Case3();
+    case 4:
+      return Case4();
+    case 5:
+      return Case5();
+    case 6:
+      return Case6();
     default:
       return MakeEmpty(1, 1);
   }
