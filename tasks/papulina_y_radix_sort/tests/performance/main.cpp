@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <random>
-#include <ranges>
 #include <vector>
 
 #include "papulina_y_radix_sort/common/include/common.hpp"
