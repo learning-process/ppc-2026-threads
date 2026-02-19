@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <random>
-#include <vector>
 
 #include "redkina_a_sort_hoar_batcher_seq/common/include/common.hpp"
 #include "redkina_a_sort_hoar_batcher_seq/seq/include/ops_seq.hpp"

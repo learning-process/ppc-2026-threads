@@ -81,9 +81,19 @@ const std::array<TestType, 23> kTestCases = {{std::make_tuple(1, MakeVector({}))
                                               std::make_tuple(23, [] {
   std::vector<int> v;
   v.reserve(20);
-  std::array<int, 5> values = {0, 1, 7, 8, 9};
   for (int i = 0; i < 20; ++i) {
-    v.push_back(values[i % 5]);
+    int remainder = i % 5;
+    if (remainder == 0) {
+      v.push_back(0);
+    } else if (remainder == 1) {
+      v.push_back(1);
+    } else if (remainder == 2) {
+      v.push_back(7);
+    } else if (remainder == 3) {
+      v.push_back(8);
+    } else {
+      v.push_back(9);
+    }
   }
   return v;
 }())}};
