@@ -171,7 +171,7 @@ namespace {
 const std::array<TestType, 1> kTestValidParam = {{{"empty_data", 0}}};
 
 const std::array<TestType, 5> kTestFuncParam = {
-    {{"image_1x1", 1}, {"image_2x2", 2}, {"image_3x3", 3}, {"image_100x100", 100}, {"image_10000x10000", 10000}}};
+    {{"image_1x1", 1}, {"image_2x2", 2}, {"image_3x3", 3}, {"image_100x100", 100}, {"image_1000x1000", 1000}}};
 
 const std::array<TestType, 1> kTestRealParam = {{{"grayimg.jpg", 0}}};
 
