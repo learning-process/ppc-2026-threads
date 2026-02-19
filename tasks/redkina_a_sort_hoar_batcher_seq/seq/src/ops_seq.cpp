@@ -111,7 +111,7 @@ void HybridSort(std::vector<int> &arr, int left, int right) {
 
   std::vector<int> merged = OddEvenMerge(left_part, right_part);
 
-  std::copy(merged.begin(), merged.end(), arr.begin() + left);
+  std::ranges::copy(merged, arr.begin() + left);
 }
 
 }  // namespace

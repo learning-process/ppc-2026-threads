@@ -30,7 +30,7 @@ class RedkinaASortHoarBatcherPerfTests : public ppc::util::BaseRunPerfTests<InTy
     if (output_data.size() != input_data_.size()) {
       return false;
     }
-    if (!std::is_sorted(output_data.begin(), output_data.end())) {  // NOLINT
+    if (!std::ranges::is_sorted(output_data)) {
       return false;
     }
     return true;

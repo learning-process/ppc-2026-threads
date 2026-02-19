@@ -29,14 +29,14 @@ class RedkinaASortHoarBatcherFuncTests : public ppc::util::BaseRunFuncTests<InTy
     if (output_data.size() != input_data_.size()) {
       return false;
     }
-    if (!std::is_sorted(output_data.begin(), output_data.end())) {
+    if (!std::ranges::is_sorted(output_data)) {
       return false;
     }
 
     std::vector<int> input_copy = input_data_;
     std::vector<int> output_copy = output_data;
-    std::sort(input_copy.begin(), input_copy.end());    // NOLINT
-    std::sort(output_copy.begin(), output_copy.end());  // NOLINT
+    std::ranges::sort(input_copy);
+    std::ranges::sort(output_copy);
     return input_copy == output_copy;
   }
 
