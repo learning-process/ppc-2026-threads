@@ -1,7 +1,7 @@
 #pragma once
 
-#include "zenin_a_radix_sort_double_batcher_merge_seq/common/include/common.hpp"
 #include "task/include/task.hpp"
+#include "zenin_a_radix_sort_double_batcher_merge_seq/common/include/common.hpp"
 
 namespace zenin_a_radix_sort_double_batcher_merge_seq {
 
@@ -17,6 +17,10 @@ class ZeninARadixSortDoubleBatcherMerge_SEQSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  static uint64_t PackDouble(double v) noexcept;
+  static double UnpackDouble(uint64_t k) noexcept;
+  static void LSDRadixSort(std::vector<double> &array);
 };
 
 }  // namespace zenin_a_radix_sort_double_batcher_merge_seq
