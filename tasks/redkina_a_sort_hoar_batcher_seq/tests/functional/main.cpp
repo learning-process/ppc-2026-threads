@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cstddef>
 #include <initializer_list>
 #include <string>
 #include <tuple>
@@ -23,7 +22,7 @@ class RedkinaASortHoarBatcherFuncTests : public ppc::util::BaseRunFuncTests<InTy
 
  protected:
   void SetUp() override {
-    auto params = std::get<2>(GetParam());  // индекс 2 соответствует TestType
+    auto params = std::get<2>(GetParam());
     input_data_ = std::get<1>(params);
   }
 
