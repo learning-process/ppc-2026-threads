@@ -7,6 +7,8 @@
 #include <utility>
 #include <vector>
 
+#include "redkina_a_sort_hoar_batcher_seq/common/include/common.hpp"
+
 namespace redkina_a_sort_hoar_batcher_seq {
 
 namespace {
