@@ -7,16 +7,12 @@
 #include <tuple>
 #include <vector>
 
-#include "dergachev_a_graham_scan/all/include/ops_all.hpp"
-#include "dergachev_a_graham_scan/common/include/common.hpp"
-#include "dergachev_a_graham_scan/omp/include/ops_omp.hpp"
-#include "dergachev_a_graham_scan/seq/include/ops_seq.hpp"
-#include "dergachev_a_graham_scan/stl/include/ops_stl.hpp"
-#include "dergachev_a_graham_scan/tbb/include/ops_tbb.hpp"
+#include "dergachev_a_graham_scan_seq/common/include/common.hpp"
+#include "dergachev_a_graham_scan_seq/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace dergachev_a_graham_scan {
+namespace dergachev_a_graham_scan_seq {
 
 class DergachevAGrahamScanFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -52,11 +48,7 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "circle_3"), std:
                                             std::make_tuple(7, "circle_7")};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<NesterovATestTaskALL, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan),
-    ppc::util::AddFuncTask<NesterovATestTaskOMP, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan),
-    ppc::util::AddFuncTask<DergachevAGrahamScanSEQ, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan),
-    ppc::util::AddFuncTask<NesterovATestTaskSTL, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan),
-    ppc::util::AddFuncTask<NesterovATestTaskTBB, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan));
+    ppc::util::AddFuncTask<DergachevAGrahamScanSEQ, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan_seq));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -180,4 +172,4 @@ TEST(DergachevAGrahamScanSeq, HexagonWithCenter) {
 
 }  // namespace
 
-}  // namespace dergachev_a_graham_scan
+}  // namespace dergachev_a_graham_scan_seq

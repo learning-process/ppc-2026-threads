@@ -1,13 +1,13 @@
-#include "dergachev_a_graham_scan/seq/include/ops_seq.hpp"
+#include "dergachev_a_graham_scan_seq/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <utility>
 #include <vector>
 
-#include "dergachev_a_graham_scan/common/include/common.hpp"
+#include "dergachev_a_graham_scan_seq/common/include/common.hpp"
 
-namespace dergachev_a_graham_scan {
+namespace dergachev_a_graham_scan_seq {
 
 namespace {
 
@@ -128,4 +128,4 @@ bool DergachevAGrahamScanSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace dergachev_a_graham_scan
+}  // namespace dergachev_a_graham_scan_seq

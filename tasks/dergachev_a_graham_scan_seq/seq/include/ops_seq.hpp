@@ -2,10 +2,10 @@
 
 #include <vector>
 
-#include "dergachev_a_graham_scan/common/include/common.hpp"
+#include "dergachev_a_graham_scan_seq/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace dergachev_a_graham_scan {
+namespace dergachev_a_graham_scan_seq {
 
 struct Point {
   double x;
@@ -33,4 +33,4 @@ class DergachevAGrahamScanSEQ : public BaseTask {
   bool custom_points_ = false;
 };
 
-}  // namespace dergachev_a_graham_scan
+}  // namespace dergachev_a_graham_scan_seq
