@@ -1,20 +1,23 @@
 #pragma once
 
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
 #include <string>
 #include <tuple>
+#include <vector>
 
-#include "crs.hpp"
 #include "task/include/task.hpp"
 
 namespace guseva_crs {
 
 struct CRS {
-  size_t nz{};
-  size_t nrows{};
-  size_t ncols{};
+  std::size_t nz{};
+  std::size_t nrows{};
+  std::size_t ncols{};
   std::vector<double> values;
-  std::vector<size_t> cols;
-  std::vector<size_t> row_ptrs;
+  std::vector<std::size_t> cols;
+  std::vector<std::size_t> row_ptrs;
 };
 
 using InType = std::tuple<CRS, CRS>;

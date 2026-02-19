@@ -6,7 +6,6 @@
 #include <string>
 #include <tuple>
 
-#include "guseva_crs/all/include/ops_all.hpp"
 #include "guseva_crs/common/include/common.hpp"
 #include "guseva_crs/common/include/test_reader.hpp"
 #include "guseva_crs/seq/include/ops_seq.hpp"

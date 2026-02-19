@@ -1,32 +1,35 @@
 #pragma once
 
+#include <cstddef>
 #include <fstream>
+#include <string>
 #include <tuple>
+#include <vector>
 
 #include "common.hpp"
 
 namespace guseva_crs {
 
 inline CRS ReadCRSFromFile(std::ifstream &file) {
-  size_t nz = 0;
-  size_t nrows = 0;
-  size_t ncols = 0;
+  std::size_t nz = 0;
+  std::size_t nrows = 0;
+  std::size_t ncols = 0;
   std::vector<double> values;
-  std::vector<size_t> cols;
-  std::vector<size_t> row_ptrs;
+  std::vector<std::size_t> cols;
+  std::vector<std::size_t> row_ptrs;
   file >> nz >> nrows >> ncols;
   double tmp = {};
-  for (size_t i = 0; i < nz; i++) {
+  for (std::size_t i = 0; i < nz; i++) {
     file >> tmp;
     values.push_back(tmp);
   }
-  size_t second_tmp = 0;
-  for (size_t i = 0; i < nz; i++) {
+  std::size_t second_tmp = 0;
+  for (std::size_t i = 0; i < nz; i++) {
     file >> second_tmp;
     cols.push_back(second_tmp);
   }
 
-  for (size_t i = 0; i < nrows + 1; i++) {
+  for (std::size_t i = 0; i < nrows + 1; i++) {
     file >> second_tmp;
     row_ptrs.push_back(second_tmp);
   }

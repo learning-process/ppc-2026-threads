@@ -1,8 +1,8 @@
 #pragma once
 
-#include "crs.hpp"
-#include "common.hpp"
+#include <cstddef>
 
+#include "common.hpp"
 namespace guseva_crs {
 
 class Multiplier {
@@ -18,16 +18,16 @@ class Multiplier {
     transposed.row_ptrs.resize(transposed.nrows + 1, 0);
     transposed.values.resize(a.nz, 0);
     transposed.cols.resize(a.nz, 0);
-    for (size_t i = 0; i < a.nz; i++) {
+    for (std::size_t i = 0; i < a.nz; i++) {
       transposed.row_ptrs[a.cols[i] + 1]++;
     }
-    size_t row = 0;
-    for (size_t i = 1; i <= transposed.nrows; i++) {
+    std::size_t row = 0;
+    for (std::size_t i = 1; i <= transposed.nrows; i++) {
       auto tmp = transposed.row_ptrs[i];
       transposed.row_ptrs[i] = row;
       row += tmp;
     }
-    for (size_t i = 0; i < a.nrows; i++) {
+    for (std::size_t i = 0; i < a.nrows; i++) {
       auto j1 = a.row_ptrs[i];
       auto j2 = a.row_ptrs[i + 1];
       auto col = i;

@@ -1,12 +1,17 @@
 #pragma once
-#include "guseva_crs/common/include/crs.hpp"
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <vector>
+
+#include "guseva_crs/common/include/common.hpp"
 #include "guseva_crs/common/include/multiplier.hpp"
 
 namespace guseva_crs {
 
 class MultiplierSeq : public Multiplier {
  public:
-  CRS Multiply(const CRS &a, const CRS &b) const override {
+  [[nodiscard]] CRS Multiply(const CRS &a, const CRS &b) const override {
     CRS result;
     result.nrows = a.nrows;
     result.ncols = b.ncols;
@@ -14,21 +19,21 @@ class MultiplierSeq : public Multiplier {
 
     auto bt = this->Transpose(b);
     double sum = 0;
-    size_t nz = 0;
+    std::size_t nz = 0;
 
     std::vector<int> temp(a.nrows, -1);
-    for (size_t i = 0; i < a.nrows; i++) {
-      memset(temp.data(), -1, a.nrows * sizeof(int));
-      size_t ind1 = a.row_ptrs[i];
-      size_t ind2 = a.row_ptrs[i + 1];
-      for (size_t j = ind1; j < ind2; j++) {
+    for (std::size_t i = 0; i < a.nrows; i++) {
+      std::ranges::fill(temp, -1);
+      std::size_t ind1 = a.row_ptrs[i];
+      std::size_t ind2 = a.row_ptrs[i + 1];
+      for (std::size_t j = ind1; j < ind2; j++) {
         temp[a.cols[j]] = static_cast<int>(j);
       }
-      for (size_t j = 0; j < bt.nrows; j++) {
+      for (std::size_t j = 0; j < bt.nrows; j++) {
         sum = 0;
-        size_t ind3 = bt.row_ptrs[j];
-        size_t ind4 = bt.row_ptrs[j + 1];
-        for (size_t k = ind3; k < ind4; k++) {
+        std::size_t ind3 = bt.row_ptrs[j];
+        std::size_t ind4 = bt.row_ptrs[j + 1];
+        for (std::size_t k = ind3; k < ind4; k++) {
           int aind = temp[bt.cols[k]];
           if (aind != -1) {
             sum += a.values[aind] * bt.values[k];
