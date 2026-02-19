@@ -1,10 +1,10 @@
 #include "peryashkin_v_binary_component_contour_processing/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <queue>
+#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -28,12 +28,11 @@ inline std::vector<Point> ConvexHullMonotonicChain(std::vector<Point> pts) {
     return {};
   }
 
-  std::sort(pts.begin(), pts.end(),
-            [](const Point &a, const Point &b) { return (a.x < b.x) || ((a.x == b.x) && (a.y < b.y)); });
+  std::ranges::sort(pts, [](const Point &a, const Point &b) { return (a.x < b.x) || ((a.x == b.x) && (a.y < b.y)); });
 
-  pts.erase(
-      std::unique(pts.begin(), pts.end(), [](const Point &a, const Point &b) { return (a.x == b.x) && (a.y == b.y); }),
-      pts.end());
+  const auto uniq =
+      std::ranges::unique(pts, [](const Point &a, const Point &b) { return (a.x == b.x) && (a.y == b.y); });
+  pts.erase(uniq.begin(), pts.end());
 
   if (pts.size() == 1) {
     return pts;
@@ -64,9 +63,6 @@ inline std::vector<Point> ConvexHullMonotonicChain(std::vector<Point> pts) {
   return lower;
 }
 
-constexpr std::array<int, 4> kDx = {1, -1, 0, 0};
-constexpr std::array<int, 4> kDy = {0, 0, 1, -1};
-
 inline std::vector<std::vector<Point>> ExtractComponents4(const BinaryImage &img) {
   const int w = img.width;
   const int h = img.height;
@@ -81,6 +77,37 @@ inline std::vector<std::vector<Point>> ExtractComponents4(const BinaryImage &img
 
   std::queue<Point> q;
 
+  const auto bfs = [&](int sx, int sy) -> std::vector<Point> {
+    std::vector<Point> pts;
+    pts.reserve(128);
+
+    q.push(Point{.x = sx, .y = sy});
+
+    while (!q.empty()) {
+      const Point p = q.front();
+      q.pop();
+      pts.push_back(p);
+
+      const auto try_push = [&](int nx, int ny) {
+        if (!InBounds(nx, ny, w, h)) {
+          return;
+        }
+        const std::size_t nid = idx(nx, ny);
+        if ((img.data[nid] == 1) && (vis[nid] == 0U)) {
+          vis[nid] = 1U;
+          q.push(Point{.x = nx, .y = ny});
+        }
+      };
+
+      try_push(p.x + 1, p.y);
+      try_push(p.x - 1, p.y);
+      try_push(p.x, p.y + 1);
+      try_push(p.x, p.y - 1);
+    }
+
+    return pts;
+  };
+
   for (int yy = 0; yy < h; ++yy) {
     for (int xx = 0; xx < w; ++xx) {
       const std::size_t id = idx(xx, yy);
@@ -89,31 +116,7 @@ inline std::vector<std::vector<Point>> ExtractComponents4(const BinaryImage &img
       }
 
       vis[id] = 1U;
-      q.push(Point{xx, yy});
-
-      std::vector<Point> pts;
-      pts.reserve(128);
-
-      while (!q.empty()) {
-        const Point p = q.front();
-        q.pop();
-        pts.push_back(p);
-
-        for (int dir = 0; dir < 4; ++dir) {
-          const int nx = p.x + kDx[static_cast<std::size_t>(dir)];
-          const int ny = p.y + kDy[static_cast<std::size_t>(dir)];
-          if (!InBounds(nx, ny, w, h)) {
-            continue;
-          }
-          const std::size_t nid = idx(nx, ny);
-          if ((img.data[nid] == 1) && (vis[nid] == 0U)) {
-            vis[nid] = 1U;
-            q.push(Point{nx, ny});
-          }
-        }
-      }
-
-      comps.push_back(std::move(pts));
+      comps.push_back(bfs(xx, yy));
     }
   }
 
