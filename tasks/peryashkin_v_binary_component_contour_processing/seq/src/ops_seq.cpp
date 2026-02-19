@@ -1,4 +1,3 @@
-// tasks/peryashkin_v_binary_component_contour_processing/seq/src/ops_seq.cpp
 #include "peryashkin_v_binary_component_contour_processing/seq/include/ops_seq.hpp"
 
 #include <algorithm>
@@ -6,7 +5,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <queue>
-#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -30,10 +28,12 @@ inline std::vector<Point> ConvexHullMonotonicChain(std::vector<Point> pts) {
     return {};
   }
 
-  std::ranges::sort(pts, [](const Point &a, const Point &b) { return (a.x < b.x) || ((a.x == b.x) && (a.y < b.y)); });
+  std::sort(pts.begin(), pts.end(),
+            [](const Point &a, const Point &b) { return (a.x < b.x) || ((a.x == b.x) && (a.y < b.y)); });
 
-  auto uniq = std::ranges::unique(pts, [](const Point &a, const Point &b) { return (a.x == b.x) && (a.y == b.y); });
-  pts.erase(uniq.begin(), uniq.end());
+  pts.erase(
+      std::unique(pts.begin(), pts.end(), [](const Point &a, const Point &b) { return (a.x == b.x) && (a.y == b.y); }),
+      pts.end());
 
   if (pts.size() == 1) {
     return pts;
@@ -61,67 +61,58 @@ inline std::vector<Point> ConvexHullMonotonicChain(std::vector<Point> pts) {
   lower.pop_back();
   upper.pop_back();
   lower.insert(lower.end(), upper.begin(), upper.end());
-
   return lower;
 }
 
-struct GridIndex {
-  int w{};
-  int h{};
-
-  std::size_t operator()(int x, int y) const {
-    return (static_cast<std::size_t>(y) * static_cast<std::size_t>(w)) + static_cast<std::size_t>(x);
-  }
-};
-
-static constexpr std::array<int, 4> kDx = {1, -1, 0, 0};
-static constexpr std::array<int, 4> kDy = {0, 0, 1, -1};
-
-inline void ExploreComponentBfs(const BinaryImage &img, GridIndex index, std::vector<std::uint8_t> &vis, int sx, int sy,
-                                std::vector<Point> &out_pts) {
-  std::queue<Point> q;
-
-  const std::size_t sid = index(sx, sy);
-  vis[sid] = 1U;
-  q.push(Point{.x = sx, .y = sy});
-
-  while (!q.empty()) {
-    const Point p = q.front();
-    q.pop();
-    out_pts.push_back(p);
-
-    for (int dir = 0; dir < 4; ++dir) {
-      const int nx = p.x + kDx.at(static_cast<std::size_t>(dir));
-      const int ny = p.y + kDy.at(static_cast<std::size_t>(dir));
-      if (!InBounds(nx, ny, index.w, index.h)) {
-        continue;
-      }
-      const std::size_t nid = index(nx, ny);
-      if ((img.data[nid] == 1) && (vis[nid] == 0U)) {
-        vis[nid] = 1U;
-        q.push(Point{.x = nx, .y = ny});
-      }
-    }
-  }
-}
+constexpr std::array<int, 4> kDx = {1, -1, 0, 0};
+constexpr std::array<int, 4> kDy = {0, 0, 1, -1};
 
 inline std::vector<std::vector<Point>> ExtractComponents4(const BinaryImage &img) {
-  const GridIndex index{.w = img.width, .h = img.height};
-  const std::size_t n = static_cast<std::size_t>(index.w) * static_cast<std::size_t>(index.h);
+  const int w = img.width;
+  const int h = img.height;
+  const std::size_t n = static_cast<std::size_t>(w) * static_cast<std::size_t>(h);
 
-  std::vector<std::uint8_t> vis(n, 0U);
+  std::vector<std::uint8_t> vis(n, 0);
   std::vector<std::vector<Point>> comps;
 
-  for (int yy = 0; yy < index.h; ++yy) {
-    for (int xx = 0; xx < index.w; ++xx) {
-      const std::size_t id = index(xx, yy);
+  const auto idx = [w](int x, int y) -> std::size_t {
+    return (static_cast<std::size_t>(y) * static_cast<std::size_t>(w)) + static_cast<std::size_t>(x);
+  };
+
+  std::queue<Point> q;
+
+  for (int yy = 0; yy < h; ++yy) {
+    for (int xx = 0; xx < w; ++xx) {
+      const std::size_t id = idx(xx, yy);
       if ((img.data[id] == 0) || (vis[id] != 0U)) {
         continue;
       }
 
+      vis[id] = 1U;
+      q.push(Point{xx, yy});
+
       std::vector<Point> pts;
       pts.reserve(128);
-      ExploreComponentBfs(img, index, vis, xx, yy, pts);
+
+      while (!q.empty()) {
+        const Point p = q.front();
+        q.pop();
+        pts.push_back(p);
+
+        for (int dir = 0; dir < 4; ++dir) {
+          const int nx = p.x + kDx[static_cast<std::size_t>(dir)];
+          const int ny = p.y + kDy[static_cast<std::size_t>(dir)];
+          if (!InBounds(nx, ny, w, h)) {
+            continue;
+          }
+          const std::size_t nid = idx(nx, ny);
+          if ((img.data[nid] == 1) && (vis[nid] == 0U)) {
+            vis[nid] = 1U;
+            q.push(Point{nx, ny});
+          }
+        }
+      }
+
       comps.push_back(std::move(pts));
     }
   }
@@ -165,6 +156,7 @@ bool PeryashkinVBinaryComponentContourProcessingSEQ::RunImpl() {
   if (!ValidationImpl()) {
     return false;
   }
+
   local_out_ = SolveSEQ(GetInput());
   return true;
 }
