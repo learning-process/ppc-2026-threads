@@ -23,7 +23,7 @@ class RedkinaASortHoarBatcherFuncTests : public ppc::util::BaseRunFuncTests<InTy
 
  protected:
   void SetUp() override {
-    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    auto params = std::get<2>(GetParam());  // индекс 2 соответствует TestType
     input_data_ = std::get<1>(params);
   }
 

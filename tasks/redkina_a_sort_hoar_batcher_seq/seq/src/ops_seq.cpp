@@ -33,23 +33,27 @@ int Partition(std::vector<int> &arr, int left, int right, int pivot) {
   return j;
 }
 
+void ProcessOneIteration(std::vector<int> &arr, int l, int r, std::stack<std::pair<int, int>> &stack) {
+  if (l >= r) {
+    return;
+  }
+  int pivot = arr[(l + r) / 2];
+  int j = Partition(arr, l, r, pivot);
+  if (l < j) {
+    stack.emplace(l, j);
+  }
+  if (j + 1 < r) {
+    stack.emplace(j + 1, r);
+  }
+}
+
 void QuickSortIterative(std::vector<int> &arr, int left, int right) {
   std::stack<std::pair<int, int>> stack;
   stack.emplace(left, right);
   while (!stack.empty()) {
     auto [l, r] = stack.top();
     stack.pop();
-    if (l >= r) {
-      continue;
-    }
-    int pivot = arr[(l + r) / 2];
-    int j = Partition(arr, l, r, pivot);
-    if (l < j) {
-      stack.emplace(l, j);
-    }
-    if (j + 1 < r) {
-      stack.emplace(j + 1, r);
-    }
+    ProcessOneIteration(arr, l, r, stack);
   }
 }
 
@@ -88,7 +92,7 @@ void FinalCompare(std::vector<int> &arr) {
   }
 }
 
-std::vector<int> OddEvenMerge(const std::vector<int> &left, const std::vector<int> &right) {
+std::vector<int> HandleBaseCases(const std::vector<int> &left, const std::vector<int> &right) {
   if (left.empty()) {
     return right;
   }
@@ -100,6 +104,14 @@ std::vector<int> OddEvenMerge(const std::vector<int> &left, const std::vector<in
       return {left[0], right[0]};
     }
     return {right[0], left[0]};
+  }
+  return {};
+}
+
+std::vector<int> OddEvenMerge(const std::vector<int> &left, const std::vector<int> &right) {
+  std::vector<int> base = HandleBaseCases(left, right);
+  if (!base.empty()) {
+    return base;
   }
 
   std::vector<int> left_even;
@@ -117,25 +129,52 @@ std::vector<int> OddEvenMerge(const std::vector<int> &left, const std::vector<in
   return result;
 }
 
+struct SortRange {
+  int left;
+  int right;
+  int stage;  // 0 = need split, 1 = need merge after left done, 2 = need merge after both done
+};
+
 void HybridSort(std::vector<int> &arr, int left, int right) {
-  int len = right - left;
-  if (len <= 1) {
-    return;
+  std::stack<SortRange> stack;
+  stack.push({left, right, 0});
+  while (!stack.empty()) {
+    SortRange &top = stack.top();
+    int l = top.left;
+    int r = top.right;
+    int len = r - l;
+
+    if (len <= 1) {
+      stack.pop();
+      continue;
+    }
+
+    if (len <= kQuickSortThreshold) {
+      QuickSortIterative(arr, l, r - 1);
+      stack.pop();
+      continue;
+    }
+
+    if (top.stage == 0) {
+      // first visit: split and push left half
+      int mid = l + (len / 2);
+      top.stage = 1;
+      stack.push({l, mid, 0});
+    } else if (top.stage == 1) {
+      // after left half done, push right half
+      int mid = l + (len / 2);
+      top.stage = 2;
+      stack.push({mid, r, 0});
+    } else {
+      // both halves done, merge
+      int mid = l + (len / 2);
+      std::vector<int> left_part(arr.begin() + l, arr.begin() + mid);
+      std::vector<int> right_part(arr.begin() + mid, arr.begin() + r);
+      std::vector<int> merged = OddEvenMerge(left_part, right_part);
+      std::ranges::copy(merged, arr.begin() + l);
+      stack.pop();
+    }
   }
-  if (len <= kQuickSortThreshold) {
-    QuickSortIterative(arr, left, right - 1);
-    return;
-  }
-  int mid = left + (len / 2);
-  HybridSort(arr, left, mid);
-  HybridSort(arr, mid, right);
-
-  std::vector<int> left_part(arr.begin() + left, arr.begin() + mid);
-  std::vector<int> right_part(arr.begin() + mid, arr.begin() + right);
-
-  std::vector<int> merged = OddEvenMerge(left_part, right_part);
-
-  std::ranges::copy(merged, arr.begin() + left);
 }
 
 }  // namespace
