@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <random>
+#include <ranges>
 #include <vector>
 
 #include "papulina_y_radix_sort/common/include/common.hpp"
@@ -24,7 +25,7 @@ class PapulinaYRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, O
       input_data_[i] = dist(gen);
     }
     expected_result_ = input_data_;
-    std::sort(expected_result_.begin(), expected_result_.end());
+    std::ranges::sort(expected_result_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

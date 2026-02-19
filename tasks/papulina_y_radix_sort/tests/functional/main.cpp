@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <ranges>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -26,7 +27,7 @@ class PapulinaYRunFuncTestThreads : public ppc::util::BaseRunFuncTests<InType, O
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_ = std::get<0>(params);
     expected_result_ = std::get<0>(params);
-    std::sort(expected_result_.begin(), expected_result_.end());
+    std::ranges::sort(expected_result_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

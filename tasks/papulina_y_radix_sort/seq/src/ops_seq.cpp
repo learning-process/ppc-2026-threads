@@ -46,7 +46,7 @@ void PapulinaYRadixSortSEQ::SortByByte(uint64_t *bytes, uint64_t *out, int byte,
   std::array<int, 256> counter = {0};
 
   for (int i = 0; i < size; i++) {
-    int index = byte_view[8 * i + byte];
+    int index = byte_view[(8 * i) + byte];
     *(counter.data() + index) += 1;
   }
   int tmp = 0;
@@ -65,7 +65,7 @@ void PapulinaYRadixSortSEQ::SortByByte(uint64_t *bytes, uint64_t *out, int byte,
     tmp += a;
   }
   for (int i = 0; i < size; i++) {
-    int index = byte_view[8 * i + byte];
+    int index = byte_view[(8 * i) + byte];
     out[*(counter.data() + index)] = bytes[i];
     *(counter.data() + index) += 1;
   }
