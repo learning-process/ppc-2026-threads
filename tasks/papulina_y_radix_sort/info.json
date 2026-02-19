@@ -1,10 +1,9 @@
 {
   "student": {
-    "first_name": "Юлия",
-    "group_number": "3823Б1ФИ3",
-    "last_name": "Папулина",
-    "middle_name": "Андреевна",
+    "first_name": "\u042e\u043b\u0438\u044f",
+    "group_number": "3823\u04111\u0424\u04183",
+    "last_name": "\u041f\u0430\u043f\u0443\u043b\u0438\u043d\u0430",
+    "middle_name": "\u0410\u043d\u0434\u0440\u0435\u0435\u0432\u043d\u0430",
     "task_number": "19"
   }
 }
-
