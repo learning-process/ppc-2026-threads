@@ -3,6 +3,7 @@
 
 #include <tuple>
 #include <vector>
+
 #include "task/include/task.hpp"
 
 namespace redkina_a_sort_hoar_batcher_seq {

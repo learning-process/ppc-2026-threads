@@ -2,7 +2,8 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <array>
+#include <cstddef>
+#include <string>
 #include <tuple>
 #include <vector>
 
@@ -12,33 +13,36 @@
 
 namespace redkina_a_sort_hoar_batcher_seq {
 
-class RedkinaASortHoarBatcherFuncTests
-    : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class RedkinaASortHoarBatcherFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType& test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_size" +
-           std::to_string(std::get<1>(test_param).size());
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::to_string(std::get<0>(test_param)) + "_size" + std::to_string(std::get<1>(test_param).size());
   }
 
  protected:
   void SetUp() override {
-    auto params = std::get<static_cast<std::size_t>(
-        ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_ = std::get<1>(params);
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
-    if (output_data.size() != input_data_.size()) return false;
-    if (!std::is_sorted(output_data.begin(), output_data.end())) return false;
+  bool CheckTestOutputData(OutType &output_data) final {
+    if (output_data.size() != input_data_.size()) {
+      return false;
+    }
+    if (!std::is_sorted(output_data.begin(), output_data.end())) {
+      return false;
+    }
 
     std::vector<int> input_copy = input_data_;
     std::vector<int> output_copy = output_data;
-    std::sort(input_copy.begin(), input_copy.end());
-    std::sort(output_copy.begin(), output_copy.end());
+    std::sort(input_copy.begin(), input_copy.end());    // NOLINT
+    std::sort(output_copy.begin(), output_copy.end());  // NOLINT
     return input_copy == output_copy;
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
  private:
   InType input_data_;
@@ -50,37 +54,37 @@ std::vector<int> MakeVector(std::initializer_list<int> list) {
   return std::vector<int>(list);
 }
 
-const std::array<TestType, 23> kTestCases = {{
-    std::make_tuple(1, MakeVector({})),
-    std::make_tuple(2, MakeVector({0})),
-    std::make_tuple(3, MakeVector({7})),
-    std::make_tuple(4, MakeVector({0, 1})),
-    std::make_tuple(5, MakeVector({7, 8})),
-    std::make_tuple(6, MakeVector({1, 0})),
-    std::make_tuple(7, MakeVector({9, 7})),
-    std::make_tuple(8, MakeVector({0, 1, 7})),
-    std::make_tuple(9, MakeVector({0, 7, 1})),
-    std::make_tuple(10, MakeVector({1, 0, 7})),
-    std::make_tuple(11, MakeVector({1, 7, 0})),
-    std::make_tuple(12, MakeVector({7, 0, 1})),
-    std::make_tuple(13, MakeVector({7, 1, 0})),
-    std::make_tuple(14, MakeVector({7, 8, 9})),
-    std::make_tuple(15, MakeVector({9, 8, 7})),
-    std::make_tuple(16, MakeVector({7, 9, 8})),
-    std::make_tuple(17, MakeVector({0, 0, 1, 1, 7, 7})),
-    std::make_tuple(18, MakeVector({7, 7, 7, 7})),
-    std::make_tuple(19, MakeVector({8, 8, 7, 7, 9, 9})),
-    std::make_tuple(20, MakeVector({0, 1, 7, 8, 9, 0, 1, 7, 8, 9})),
-    std::make_tuple(21, MakeVector({9, 8, 7, 1, 0, 9, 8, 7, 1, 0})),
-    std::make_tuple(22, MakeVector({7, 8, 9, 0, 1, 7, 8, 9, 0, 1})),
-    std::make_tuple(23, [] {
-        std::vector<int> v;
-        for (int i = 0; i < 20; ++i) {
-            v.push_back(i % 5 == 0 ? 0 : (i % 5 == 1 ? 1 : (i % 5 == 2 ? 7 : (i % 5 == 3 ? 8 : 9))));
-        }
-        return v;
-    }())
-}};
+const std::array<TestType, 23> kTestCases = {{std::make_tuple(1, MakeVector({})),
+                                              std::make_tuple(2, MakeVector({0})),
+                                              std::make_tuple(3, MakeVector({7})),
+                                              std::make_tuple(4, MakeVector({0, 1})),
+                                              std::make_tuple(5, MakeVector({7, 8})),
+                                              std::make_tuple(6, MakeVector({1, 0})),
+                                              std::make_tuple(7, MakeVector({9, 7})),
+                                              std::make_tuple(8, MakeVector({0, 1, 7})),
+                                              std::make_tuple(9, MakeVector({0, 7, 1})),
+                                              std::make_tuple(10, MakeVector({1, 0, 7})),
+                                              std::make_tuple(11, MakeVector({1, 7, 0})),
+                                              std::make_tuple(12, MakeVector({7, 0, 1})),
+                                              std::make_tuple(13, MakeVector({7, 1, 0})),
+                                              std::make_tuple(14, MakeVector({7, 8, 9})),
+                                              std::make_tuple(15, MakeVector({9, 8, 7})),
+                                              std::make_tuple(16, MakeVector({7, 9, 8})),
+                                              std::make_tuple(17, MakeVector({0, 0, 1, 1, 7, 7})),
+                                              std::make_tuple(18, MakeVector({7, 7, 7, 7})),
+                                              std::make_tuple(19, MakeVector({8, 8, 7, 7, 9, 9})),
+                                              std::make_tuple(20, MakeVector({0, 1, 7, 8, 9, 0, 1, 7, 8, 9})),
+                                              std::make_tuple(21, MakeVector({9, 8, 7, 1, 0, 9, 8, 7, 1, 0})),
+                                              std::make_tuple(22, MakeVector({7, 8, 9, 0, 1, 7, 8, 9, 0, 1})),
+                                              std::make_tuple(23, [] {
+  std::vector<int> v;
+  v.reserve(20);
+  const int values[] = {0, 1, 7, 8, 9};
+  for (int i = 0; i < 20; ++i) {
+    v.push_back(values[i % 5]);
+  }
+  return v;
+}())}};
 
 const auto kTestTasksList = ppc::util::AddFuncTask<RedkinaASortHoarBatcherSEQ, InType>(
     kTestCases, PPC_SETTINGS_redkina_a_sort_hoar_batcher_seq);
@@ -89,8 +93,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kTestName = RedkinaASortHoarBatcherFuncTests::PrintFuncTestName<RedkinaASortHoarBatcherFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(SortHoarBatcherTests, RedkinaASortHoarBatcherFuncTests,
-                         kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(SortHoarBatcherTests, RedkinaASortHoarBatcherFuncTests, kGtestValues, kTestName);
 
 TEST_P(RedkinaASortHoarBatcherFuncTests, SortCheck) {
   ExecuteTest(GetParam());
