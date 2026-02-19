@@ -1,7 +1,7 @@
+// tasks/peryashkin_v_binary_component_contour_processing/tests/performance/main.cpp
 #include <gtest/gtest.h>
 
 #include <cstddef>
-#include <cstdint>
 #include <vector>
 
 #include "peryashkin_v_binary_component_contour_processing/common/include/common.hpp"
@@ -18,10 +18,11 @@ BinaryImage MakePattern(int w, int h, int step) {
   img.height = h;
   img.data.assign(static_cast<std::size_t>(w) * static_cast<std::size_t>(h), 0);
 
-  for (int y = 0; y < h; ++y) {
-    for (int x = 0; x < w; ++x) {
-      const bool on = ((x / step) % 2 == 0) && ((y / step) % 2 == 0);
-      img.data[static_cast<std::size_t>(y) * static_cast<std::size_t>(w) + static_cast<std::size_t>(x)] = on ? 1 : 0;
+  for (int y_pos = 0; y_pos < h; ++y_pos) {
+    for (int x_pos = 0; x_pos < w; ++x_pos) {
+      const bool on = ((x_pos / step) % 2 == 0) && ((y_pos / step) % 2 == 0);
+      img.data[(static_cast<std::size_t>(y_pos) * static_cast<std::size_t>(w)) + static_cast<std::size_t>(x_pos)] =
+          on ? 1 : 0;
     }
   }
   return img;
@@ -37,7 +38,8 @@ class PeryashkinVRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType,
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return true && (!output_data.empty() || output_data.empty());
+    (void)output_data;
+    return true;
   }
 
   InType GetTestInputData() final {

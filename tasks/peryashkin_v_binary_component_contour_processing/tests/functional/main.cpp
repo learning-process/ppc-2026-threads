@@ -1,12 +1,12 @@
 // tasks/peryashkin_v_binary_component_contour_processing/tests/functional/main.cpp
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "peryashkin_v_binary_component_contour_processing/common/include/common.hpp"
@@ -16,7 +16,6 @@
 
 namespace peryashkin_v_binary_component_contour_processing {
 
-// TestType в PPC обычно tuple<something, string>
 using TestType = std::tuple<int, std::string>;
 
 namespace {
@@ -30,68 +29,95 @@ BinaryImage MakeEmpty(int w, int h) {
 }
 
 void Set(BinaryImage &img, int x, int y, uint8_t v = 1) {
-  img.data[static_cast<std::size_t>(y) * static_cast<std::size_t>(img.width) + static_cast<std::size_t>(x)] = v;
+  img.data[(static_cast<std::size_t>(y) * static_cast<std::size_t>(img.width)) + static_cast<std::size_t>(x)] = v;
 }
 
-// Набор детерминированных кейсов по id
+BinaryImage BuildCaseEmpty() {
+  return MakeEmpty(5, 4);
+}
+
+BinaryImage BuildCasePoint() {
+  auto im = MakeEmpty(5, 5);
+  Set(im, 2, 2, 1);
+  return im;
+}
+
+BinaryImage BuildCaseLine() {
+  auto im = MakeEmpty(7, 5);
+  for (int x_pos = 1; x_pos <= 5; ++x_pos) {
+    Set(im, x_pos, 2, 1);
+  }
+  return im;
+}
+
+BinaryImage BuildCaseSquare() {
+  auto im = MakeEmpty(6, 6);
+  for (int y_pos = 2; y_pos <= 4; ++y_pos) {
+    for (int x_pos = 2; x_pos <= 4; ++x_pos) {
+      Set(im, x_pos, y_pos, 1);
+    }
+  }
+  return im;
+}
+
+BinaryImage BuildCaseTwoComponents() {
+  auto im = MakeEmpty(8, 6);
+  Set(im, 1, 1);
+  Set(im, 2, 1);
+  Set(im, 1, 2);
+  Set(im, 2, 2);
+  for (int y_pos = 3; y_pos <= 5; ++y_pos) {
+    Set(im, 6, y_pos);
+    Set(im, 7, y_pos);
+  }
+  return im;
+}
+
+BinaryImage BuildCaseHole() {
+  auto im = MakeEmpty(7, 7);
+  for (int x_pos = 1; x_pos <= 5; ++x_pos) {
+    Set(im, x_pos, 1);
+    Set(im, x_pos, 5);
+  }
+  for (int y_pos = 1; y_pos <= 5; ++y_pos) {
+    Set(im, 1, y_pos);
+    Set(im, 5, y_pos);
+  }
+  return im;
+}
+
+BinaryImage BuildCaseTouchBorder() {
+  auto im = MakeEmpty(5, 5);
+  for (int y_pos = 0; y_pos <= 2; ++y_pos) {
+    for (int x_pos = 0; x_pos <= 1; ++x_pos) {
+      Set(im, x_pos, y_pos, 1);
+    }
+  }
+  return im;
+}
+
 BinaryImage BuildCase(int id) {
   switch (id) {
-    case 0: {  // пустое
-      return MakeEmpty(5, 4);
+    case 0: {
+      return BuildCaseEmpty();
     }
-    case 1: {  // точка
-      auto im = MakeEmpty(5, 5);
-      Set(im, 2, 2, 1);
-      return im;
+    case 1: {
+      return BuildCasePoint();
     }
-    case 2: {  // линия
-      auto im = MakeEmpty(7, 5);
-      for (int x = 1; x <= 5; ++x) {
-        Set(im, x, 2, 1);
-      }
-      return im;
+    case 2: {
+      return BuildCaseLine();
     }
-    case 3: {  // квадрат 3x3
-      auto im = MakeEmpty(6, 6);
-      for (int y = 2; y <= 4; ++y) {
-        for (int x = 2; x <= 4; ++x) {
-          Set(im, x, y, 1);
-        }
-      }
-      return im;
+    case 3: {
+      return BuildCaseSquare();
     }
-    case 4: {  // 2 компоненты
-      auto im = MakeEmpty(8, 6);
-      Set(im, 1, 1);
-      Set(im, 2, 1);
-      Set(im, 1, 2);
-      Set(im, 2, 2);
-      for (int y = 3; y <= 5; ++y) {
-        Set(im, 6, y);
-        Set(im, 7, y);
-      }
-      return im;
+    case 4: {
+      return BuildCaseTwoComponents();
     }
-    case 5: {  // “дырка” (кольцо 5x5)
-      auto im = MakeEmpty(7, 7);
-      for (int x = 1; x <= 5; ++x) {
-        Set(im, x, 1);
-        Set(im, x, 5);
-      }
-      for (int y = 1; y <= 5; ++y) {
-        Set(im, 1, y);
-        Set(im, 5, y);
-      }
-      return im;
+    case 5: {
+      return BuildCaseHole();
     }
-    case 6: {  // касается границы
-      auto im = MakeEmpty(5, 5);
-      for (int y = 0; y <= 2; ++y) {
-        for (int x = 0; x <= 1; ++x) {
-          Set(im, x, y, 1);
-        }
-      }
-      return im;
+    case 6: {
+      return BuildCaseTouchBorder();
     }
     default:
       return MakeEmpty(1, 1);
@@ -113,15 +139,12 @@ class PeryashkinVRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Здесь проверяем инварианты, не “рандом”
-    // 1) детерминированность: для пустого => 0 компонент
     if (input_data_.data.empty()) {
       return false;
     }
     if (std::all_of(input_data_.data.begin(), input_data_.data.end(), [](uint8_t v) { return v == 0; })) {
       return output_data.empty();
     }
-    // 2) для непустых кейсов — хотя бы 1 hull
     return !output_data.empty();
   }
 
@@ -157,18 +180,16 @@ INSTANTIATE_TEST_SUITE_P(FuncTests, PeryashkinVRunFuncTestsThreads, kGtestValues
 
 }  // namespace
 
-// ---- Доп. unit-тесты для покрытия веток Validation/edge ----
-
-TEST(PeryashkinVBinaryComponentContourProcessingSEQ_Unit, ValidationFailsOnBadSizes) {
+TEST(PeryashkinVBinaryComponentContourProcessingSEQUnit, ValidationFailsOnBadSizes) {
   BinaryImage bad;
   bad.width = 4;
   bad.height = 4;
-  bad.data.assign(3, 1);  // неверный размер
+  bad.data.assign(3, 1);
   PeryashkinVBinaryComponentContourProcessingSEQ task(bad);
   EXPECT_FALSE(task.Validation());
 }
 
-TEST(PeryashkinVBinaryComponentContourProcessingSEQ_Unit, ValidationFailsOnNonPositiveDims) {
+TEST(PeryashkinVBinaryComponentContourProcessingSEQUnit, ValidationFailsOnNonPositiveDims) {
   BinaryImage bad;
   bad.width = 0;
   bad.height = 5;
@@ -177,15 +198,15 @@ TEST(PeryashkinVBinaryComponentContourProcessingSEQ_Unit, ValidationFailsOnNonPo
   EXPECT_FALSE(task.Validation());
 }
 
-TEST(PeryashkinVBinaryComponentContourProcessingSEQ_Unit, PipelineReturnsFalseIfInvalid) {
+TEST(PeryashkinVBinaryComponentContourProcessingSEQUnit, PipelineReturnsFalseIfInvalid) {
   BinaryImage bad;
   bad.width = 3;
   bad.height = 3;
   bad.data.assign(1, 1);
   PeryashkinVBinaryComponentContourProcessingSEQ task(bad);
   EXPECT_FALSE(task.Validation());
-  EXPECT_TRUE(task.PreProcessing());  // PreProcessing не обязан падать
-  EXPECT_FALSE(task.Run());           // RunImpl проверяет валидность
+  EXPECT_TRUE(task.PreProcessing());
+  EXPECT_FALSE(task.Run());
 }
 
 }  // namespace peryashkin_v_binary_component_contour_processing

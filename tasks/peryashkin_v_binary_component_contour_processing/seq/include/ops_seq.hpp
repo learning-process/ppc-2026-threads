@@ -19,7 +19,7 @@ class PeryashkinVBinaryComponentContourProcessingSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  OutType local_out_{};
+  OutType local_out_;
 };
 
 }  // namespace peryashkin_v_binary_component_contour_processing
