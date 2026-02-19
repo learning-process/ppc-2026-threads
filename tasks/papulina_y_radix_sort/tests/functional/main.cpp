@@ -48,18 +48,28 @@ TEST_P(PapulinaYRunFuncTestThreads, RadixSortTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 7> kTestParam = {std::make_tuple(std::vector<double>{5.0, 1.2, 0.0, 3.0, 2.0, 0.2}, "test1"), 
-std::make_tuple(std::vector<double>{-5.0, -1.2, 0.0, -3.0, -2.0, -0.2}, "test2"),
-std::make_tuple(std::vector<double>{5.0, -1.2, 0.0, 3.0, -2.0, 0.2}, "test3"),
-std::make_tuple(std::vector<double>{10.0, 9.1234, -3.45667, -5.6578, 8.13154, 7.09876, 0.0, 0.12454, -0.1232}, "test4"),
-std::make_tuple(std::vector<double>{5.55555, 5.55554,5.55553,5.555545,5.555551,5.555556}, "test5"),
-std::make_tuple(std::vector<double>{0.00000001,0.000000011,0.000000011,0.0000000112,0.00000001112,0.00000001111,0.00000001111,}, "test6"),
-std::make_tuple(std::vector<double>(10,  0.123456789), "test7")
-};
+const std::array<TestType, 7> kTestParam = {
+    std::make_tuple(std::vector<double>{5.0, 1.2, 0.0, 3.0, 2.0, 0.2}, "test1"),
+    std::make_tuple(std::vector<double>{-5.0, -1.2, 0.0, -3.0, -2.0, -0.2}, "test2"),
+    std::make_tuple(std::vector<double>{5.0, -1.2, 0.0, 3.0, -2.0, 0.2}, "test3"),
+    std::make_tuple(std::vector<double>{10.0, 9.1234, -3.45667, -5.6578, 8.13154, 7.09876, 0.0, 0.12454, -0.1232},
+                    "test4"),
+    std::make_tuple(std::vector<double>{5.55555, 5.55554, 5.55553, 5.555545, 5.555551, 5.555556}, "test5"),
+    std::make_tuple(
+        std::vector<double>{
+            0.00000001,
+            0.000000011,
+            0.000000011,
+            0.0000000112,
+            0.00000001112,
+            0.00000001111,
+            0.00000001111,
+        },
+        "test6"),
+    std::make_tuple(std::vector<double>(10, 0.123456789), "test7")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<PapulinaYRadixSortSEQ, InType>(kTestParam, PPC_SETTINGS_papulina_y_radix_sort)
-);
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<PapulinaYRadixSortSEQ, InType>(kTestParam, PPC_SETTINGS_papulina_y_radix_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

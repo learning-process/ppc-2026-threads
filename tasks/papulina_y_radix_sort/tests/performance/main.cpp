@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <random>
-#include <vector> 
+#include <vector>
 
 #include "papulina_y_radix_sort/common/include/common.hpp"
 #include "papulina_y_radix_sort/seq/include/ops_seq.hpp"
@@ -20,8 +20,8 @@ class PapulinaYRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, O
     std::mt19937_64 gen(rd());
     std::normal_distribution<double> dist(-1000.0, 1000.0);
     input_data_ = std::vector<double>(kCount_);
-    for(int i=0; i<kCount_; i++){
-      input_data_[i]=dist(gen);
+    for (int i = 0; i < kCount_; i++) {
+      input_data_[i] = dist(gen);
     }
     expected_result_ = input_data_;
     std::sort(expected_result_.begin(), expected_result_.end());
