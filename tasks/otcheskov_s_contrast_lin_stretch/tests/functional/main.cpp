@@ -31,7 +31,7 @@ std::vector<uint8_t> CreateLowContrastImage(size_t size, uint8_t low = 100, uint
 }
 
 std::vector<uint8_t> LoadGrayscaleImage(const std::string &img_path) {
-  int width = 0; 
+  int width = 0;
   int height = 0;
   int channels_in_file = 0;
 
