@@ -126,7 +126,8 @@ class PeryashkinVRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType
 
  protected:
   void SetUp() override {
-    const TestType params = std::get<1>(GetParam());
+    // GetParam() is: (task_factory, test_name_string, TestType)
+    const TestType params = std::get<2>(GetParam());
     input_data_ = BuildCase(std::get<0>(params));
   }
 
