@@ -5,11 +5,10 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <numeric>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "otcheskov_s_contrast_lin_stretch/common/include/common.hpp"
@@ -24,15 +23,18 @@ std::vector<uint8_t> CreateLowContrastImage(size_t size, uint8_t low = 100, uint
   std::vector<uint8_t> image(size * size);
   for (size_t row = 0; row < size; ++row) {
     for (size_t col = 0; col < size; ++col) {
-      uint8_t value = low + (row + col) % range;
-      image[row * size + col] = value;
+      uint8_t value = low + ((row + col) % range);
+      image[(row * size) + col] = value;
     }
   }
   return image;
 }
 
 std::vector<uint8_t> LoadGrayscaleImage(const std::string &img_path) {
-  int width, height, channels_in_file;
+  int width = 0; 
+  int height = 0;
+  int channels_in_file = 0;
+
   auto *data = stbi_load(img_path.c_str(), &width, &height, &channels_in_file, STBI_grey);
   if (data == nullptr) {
     throw std::runtime_error("Failed to load image '" + img_path + "': " + std::string(stbi_failure_reason()));
@@ -110,7 +112,7 @@ class OtcheskovSContrastLinStretchFuncTestsThreads : public ppc::util::BaseRunFu
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    auto [min_it, max_it] = std::minmax_element(output_data.begin(), output_data.end());
+    auto [min_it, max_it] = std::ranges::minmax_element(output_data);
     if (*min_it == *max_it) {
       return true;
     }
@@ -151,7 +153,7 @@ class OtcheskovSContrastLinStretchRealTestsThreads : public ppc::util::BaseRunFu
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    auto [min_it, max_it] = std::minmax_element(output_data.begin(), output_data.end());
+    auto [min_it, max_it] = std::ranges::minmax_element(output_data);
 
     return (*min_it == 0 && *max_it == 255);
   }

@@ -1,11 +1,10 @@
 #include "otcheskov_s_contrast_lin_stretch/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <numeric>
+#include <cstddef>
 #include <vector>
 
 #include "otcheskov_s_contrast_lin_stretch/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace otcheskov_s_contrast_lin_stretch {
 
@@ -32,12 +31,12 @@ bool OtcheskovSContrastLinStretchSEQ::RunImpl() {
   const InType &input = GetInput();
   OutType &output = GetOutput();
 
-  auto [min_it, max_it] = std::minmax_element(input.begin(), input.end());
+  auto [min_it, max_it] = std::ranges::minmax_element(input);
   uint8_t min_val = *min_it;
   uint8_t max_val = *max_it;
 
   if (min_val == max_val) {
-    std::fill(output.begin(), output.end(), 0);
+    std::ranges::fill(output.begin(), output.end(), 0);
     return true;
   }
 

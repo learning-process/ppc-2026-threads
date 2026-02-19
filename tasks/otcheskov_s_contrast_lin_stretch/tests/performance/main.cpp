@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <random>
+#include <vector>
 
 #include "otcheskov_s_contrast_lin_stretch/common/include/common.hpp"
 #include "otcheskov_s_contrast_lin_stretch/seq/include/ops_seq.hpp"
@@ -13,8 +15,8 @@ std::vector<uint8_t> CreateLowContrastImage(size_t size, uint8_t low = 100, uint
   std::vector<uint8_t> image(size * size);
   for (size_t row = 0; row < size; ++row) {
     for (size_t col = 0; col < size; ++col) {
-      uint8_t value = low + (row + col) % range;
-      image[row * size + col] = value;
+      uint8_t value = low + ((row + col) % range);
+      image[(row * size) + col] = value;
     }
   }
   return image;
@@ -37,8 +39,8 @@ class OtcheskovSContrastLinStretchPerfTests : public ppc::util::BaseRunPerfTests
     input_img_ = CreateLowContrastImage(kMatrixSize, low, range);
   }
 
-  bool CheckTestOutputData(OutType &output_img) final {
-    auto [min_it, max_it] = std::minmax_element(output_img.begin(), output_img.end());
+  bool CheckTestOutputData(OutType &output_data) final {
+    auto [min_it, max_it] = std::ranges::minmax_element(output_data);
     if (*min_it == *max_it) {
       return true;
     }
