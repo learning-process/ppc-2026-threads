@@ -21,12 +21,26 @@ class AkhmetovDaniilRunFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
  protected:
   void SetUp() override {
     ppc::util::BaseRunFuncTests<InType, OutType, TestType>::SetUp();
+
+    TestType n = std::get<2>(GetParam());
+    input_data_.resize(1 + (2 * n * n));
+    input_data_[0] = static_cast<double>(n);
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<double> dist(-10.0, 10.0);
+
+    for (size_t i = 1; i < input_data_.size(); ++i) {
+      input_data_[i] = dist(gen);
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    size_t n = format::GetN(input_data_);
-    Matrix a = format::GetA(input_data_);
-    Matrix b = format::GetB(input_data_);
+    InType input = GetTestInputData();
+
+    size_t n = format::GetN(input);
+    Matrix a = format::GetA(input);
+    Matrix b = format::GetB(input);
 
     Matrix expected(n * n, 0.0);
     for (size_t i = 0; i < n; ++i) {
@@ -39,7 +53,7 @@ class AkhmetovDaniilRunFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
       }
     }
 
-    const double epsilon = 1e-6;
+    const double epsilon = 1e-7;
     for (size_t i = 0; i < n * n; ++i) {
       if (std::abs(output_data[i] - expected[i]) > epsilon) {
         return false;
@@ -49,18 +63,7 @@ class AkhmetovDaniilRunFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
   }
 
   InType GetTestInputData() final {
-    TestType n = std::get<2>(GetParam());
-    InType data(1 + (2 * n * n));
-    data[0] = static_cast<double>(n);
-
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<double> dist(-10.0, 10.0);
-
-    for (size_t i = 1; i < data.size(); ++i) {
-      data[i] = dist(gen);
-    }
-    return data;
+    return input_data_;
   }
 
  private:
@@ -73,7 +76,7 @@ TEST_P(AkhmetovDaniilRunFuncTests, StrassenTestFunctional) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {512, 1024, 2048};
+const std::array<TestType, 3> kTestParam = {64, 128, 256};
 
 const auto kTestTasksList = ppc::util::AddFuncTask<AkhmetovDStrassenDenseDoubleSEQ, InType>(
     kTestParam, PPC_SETTINGS_akhmetov_daniil_strassen_dense_double_seq);

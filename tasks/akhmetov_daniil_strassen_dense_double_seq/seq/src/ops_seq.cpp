@@ -49,6 +49,20 @@ Matrix StandardMultiply(const Matrix &a, const Matrix &b, size_t size) {
   return c;
 }
 
+inline void Add(const Matrix &a, const Matrix &b, Matrix &c) {
+  const size_t n = a.size();
+  for (size_t i = 0; i < n; ++i) {
+    c[i] = a[i] + b[i];
+  }
+}
+
+inline void Sub(const Matrix &a, const Matrix &b, Matrix &c) {
+  const size_t n = a.size();
+  for (size_t i = 0; i < n; ++i) {
+    c[i] = a[i] - b[i];
+  }
+}
+
 void SplitMatrix(const Matrix &src, Matrix &a11, Matrix &a12, Matrix &a21, Matrix &a22, size_t size, size_t half) {
   for (size_t i = 0; i < half; ++i) {
     for (size_t j = 0; j < half; ++j) {
@@ -95,84 +109,70 @@ Matrix StrassenMultiply(const Matrix &a, const Matrix &b, size_t size) {
     return StandardMultiply(a, b, size);
   }
 
-  size_t half = size / 2;
-  size_t half2 = half * half;
+  const size_t half = size / 2;
+  const size_t block_size = half * half;
 
-  Matrix a11(half2);
-  Matrix a12(half2);
-  Matrix a21(half2);
-  Matrix a22(half2);
-
-  Matrix b11(half2);
-  Matrix b12(half2);
-  Matrix b21(half2);
-  Matrix b22(half2);
+  Matrix a11(block_size);
+  Matrix a12(block_size);
+  Matrix a21(block_size);
+  Matrix a22(block_size);
+  Matrix b11(block_size);
+  Matrix b12(block_size);
+  Matrix b21(block_size);
+  Matrix b22(block_size);
 
   SplitMatrix(a, a11, a12, a21, a22, size, half);
   SplitMatrix(b, b11, b12, b21, b22, size, half);
 
-  Matrix temp1(half2);
-  Matrix temp2(half2);
+  Matrix temp_a(block_size);
+  Matrix temp_b(block_size);
 
-  for (size_t i = 0; i < half2; ++i) {
-    temp1[i] = b12[i] - b22[i];
-  }
-  Matrix p1 = StrassenMultiply(a11, temp1, half);
+  // M1 = (A11 + A22)(B11 + B22)
+  Add(a11, a22, temp_a);
+  Add(b11, b22, temp_b);
+  Matrix m1 = StrassenMultiply(temp_a, temp_b, half);
 
-  for (size_t i = 0; i < half2; ++i) {
-    temp1[i] = a11[i] + a12[i];
-  }
-  Matrix p2 = StrassenMultiply(temp1, b22, half);
+  // M2 = (A21 + A22)B11
+  Add(a21, a22, temp_a);
+  Matrix m2 = StrassenMultiply(temp_a, b11, half);
 
-  for (size_t i = 0; i < half2; ++i) {
-    temp1[i] = a21[i] + a22[i];
-  }
-  Matrix p3 = StrassenMultiply(temp1, b11, half);
+  // M3 = A11(B12 - B22)
+  Sub(b12, b22, temp_b);
+  Matrix m3 = StrassenMultiply(a11, temp_b, half);
 
-  for (size_t i = 0; i < half2; ++i) {
-    temp1[i] = b21[i] - b11[i];
-  }
-  Matrix p4 = StrassenMultiply(a22, temp1, half);
+  // M4 = A22(B21 - B11)
+  Sub(b21, b11, temp_b);
+  Matrix m4 = StrassenMultiply(a22, temp_b, half);
 
-  for (size_t i = 0; i < half2; ++i) {
-    temp1[i] = a11[i] + a22[i];
-  }
-  for (size_t i = 0; i < half2; ++i) {
-    temp2[i] = b11[i] + b22[i];
-  }
-  Matrix p5 = StrassenMultiply(temp1, temp2, half);
+  // M5 = (A11 + A12)B22
+  Add(a11, a12, temp_a);
+  Matrix m5 = StrassenMultiply(temp_a, b22, half);
 
-  for (size_t i = 0; i < half2; ++i) {
-    temp1[i] = a12[i] - a22[i];
-  }
-  for (size_t i = 0; i < half2; ++i) {
-    temp2[i] = b21[i] + b22[i];
-  }
-  Matrix p6 = StrassenMultiply(temp1, temp2, half);
+  // M6 = (A21 - A11)(B11 + B12)
+  Sub(a21, a11, temp_a);
+  Add(b11, b12, temp_b);
+  Matrix m6 = StrassenMultiply(temp_a, temp_b, half);
 
-  for (size_t i = 0; i < half2; ++i) {
-    temp1[i] = a11[i] - a21[i];
-  }
-  for (size_t i = 0; i < half2; ++i) {
-    temp2[i] = b11[i] + b12[i];
-  }
-  Matrix p7 = StrassenMultiply(temp1, temp2, half);
+  // M7 = (A12 - A22)(B21 + B22)
+  Sub(a12, a22, temp_a);
+  Add(b21, b22, temp_b);
+  Matrix m7 = StrassenMultiply(temp_a, temp_b, half);
 
-  Matrix c11(half2);
-  Matrix c12(half2);
-  Matrix c21(half2);
-  Matrix c22(half2);
+  Matrix c11(block_size);
+  Matrix c12(block_size);
+  Matrix c21(block_size);
+  Matrix c22(block_size);
 
-  for (size_t i = 0; i < half2; ++i) {
-    c11[i] = p5[i] + p4[i] - p2[i] + p6[i];
-    c12[i] = p1[i] + p2[i];
-    c21[i] = p3[i] + p4[i];
-    c22[i] = p5[i] + p1[i] - p3[i] - p7[i];
+  for (size_t i = 0; i < block_size; ++i) {
+    c11[i] = m1[i] + m4[i] - m5[i] + m7[i];
+    c12[i] = m3[i] + m5[i];
+    c21[i] = m2[i] + m4[i];
+    c22[i] = m1[i] - m2[i] + m3[i] + m6[i];
   }
 
-  Matrix c(size * size);
-  MergeMatrix(c, c11, c12, c21, c22, size, half);
-  return c;
+  Matrix result(size * size);
+  MergeMatrix(result, c11, c12, c21, c22, size, half);
+  return result;
 }
 
 }  // namespace
@@ -181,9 +181,9 @@ bool AkhmetovDStrassenDenseDoubleSEQ::RunImpl() {
   const auto &input = GetInput();
   auto &output = GetOutput();
 
-  size_t n = format::GetN(input);
-  Matrix a = format::GetA(input);
-  Matrix b = format::GetB(input);
+  const size_t n = format::GetN(input);
+  const Matrix a = format::GetA(input);
+  const Matrix b = format::GetB(input);
 
   if (n <= kThreshold) {
     output = StandardMultiply(a, b, n);
@@ -201,12 +201,13 @@ bool AkhmetovDStrassenDenseDoubleSEQ::RunImpl() {
 
   Matrix result_padded = StrassenMultiply(a_padded, b_padded, new_n);
 
-  output.resize(n * n);
+  output.assign(n * n, 0.0);
   for (size_t i = 0; i < n; ++i) {
     for (size_t j = 0; j < n; ++j) {
       output[(i * n) + j] = result_padded[(i * new_n) + j];
     }
   }
+
   return true;
 }
 
