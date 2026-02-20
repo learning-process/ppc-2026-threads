@@ -51,7 +51,7 @@ void CountingSortByByte(std::vector<int> &arr, size_t byte_index) {
 
   for (size_t i = n; i > 0; i--) {
     size_t idx = i - 1;
-    unsigned int raw_val = static_cast<unsigned int>(arr[idx]);
+    auto raw_val = static_cast<unsigned int>(arr[idx]);
     unsigned int byte_val = (raw_val >> shift) & 0xFF;
 
     if (byte_index == sizeof(int) - 1) {

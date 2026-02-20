@@ -17,7 +17,8 @@ class BaldinARadixSortPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
 
     input_data_.resize(sz);
 
-    std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
+    std::random_device rd;
+    std::mt19937 gen(rd());
     std::uniform_int_distribution<int> dist(INT_MIN, INT_MAX);
 
     for (auto &val : input_data_) {

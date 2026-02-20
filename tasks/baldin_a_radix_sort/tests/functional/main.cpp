@@ -52,7 +52,9 @@ TEST_P(BaldinARadixSortFuncTests, RadixSortTest) {
 
 std::vector<int> GenRandomVector(size_t size, int min_val, int max_val) {
   std::vector<int> res(size);
-  std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
+
+  std::random_device rd;
+  std::mt19937 gen(rd());
   std::uniform_int_distribution<int> dist(min_val, max_val);
   for (auto &val : res) {
     val = dist(gen);
