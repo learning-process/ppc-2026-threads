@@ -1,11 +1,10 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "batushin_i_incr_contrast_with_lhs/common/include/common.hpp"
 #include "batushin_i_incr_contrast_with_lhs/seq/include/ops_seq.hpp"

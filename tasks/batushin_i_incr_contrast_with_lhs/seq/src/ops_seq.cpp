@@ -1,10 +1,12 @@
 #include "batushin_i_incr_contrast_with_lhs/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <utility>
 #include <vector>
 
 #include "batushin_i_incr_contrast_with_lhs/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace batushin_i_incr_contrast_with_lhs {
 
@@ -27,12 +29,8 @@ unsigned char NormalizePixel(unsigned char pixel, unsigned char min_val, double 
   double normalized = static_cast<double>(pixel - min_val) * scale_factor;
   normalized = std::floor(normalized + 0.5);
 
-  if (normalized < 0.0) {
-    normalized = 0.0;
-  }
-  if (normalized > 255.0) {
-    normalized = 255.0;
-  }
+  normalized = std::max(normalized, 0.0);
+  normalized = std::min(normalized, 255.0);
 
   return static_cast<unsigned char>(normalized);
 }
@@ -46,12 +44,8 @@ std::pair<unsigned char, unsigned char> FindMinMax(const std::vector<unsigned ch
   unsigned char maximum = data[0];
 
   for (size_t idx = 1; idx < data.size(); ++idx) {
-    if (data[idx] < minimum) {
-      minimum = data[idx];
-    }
-    if (data[idx] > maximum) {
-      maximum = data[idx];
-    }
+    minimum = std::min(minimum, data[idx]);
+    maximum = std::max(maximum, data[idx]);
   }
 
   return {minimum, maximum};

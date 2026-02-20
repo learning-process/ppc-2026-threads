@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+
 #include "batushin_i_incr_contrast_with_lhs/common/include/common.hpp"
 #include "batushin_i_incr_contrast_with_lhs/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
