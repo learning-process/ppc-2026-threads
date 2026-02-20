@@ -68,7 +68,7 @@ const std::array<TestType, 3> kTestParam = {TestType{InType{8.8}, OutType{8.8}, 
                                             TestType{InType{}, OutType{}, "Empty"},
                                             TestType{InType{6.6, 3.3}, OutType{3.3, 6.6}, "ReverseTwo"}};
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ZeninARadixSortDoubleBatcherMerge_SEQSEQ, InType>(
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ZeninARadixSortDoubleBatcherMergeSeqseq, InType>(
     kTestParam, PPC_SETTINGS_zenin_a_radix_sort_double_batcher_merge_seq));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

@@ -5,26 +5,26 @@
 #include <cstring>
 #include <vector>
 
-#include "util/include/util.hpp"
+// #include "util/include/util.hpp"
 #include "zenin_a_radix_sort_double_batcher_merge_seq/common/include/common.hpp"
 
 namespace zenin_a_radix_sort_double_batcher_merge_seq {
 
-ZeninARadixSortDoubleBatcherMerge_SEQSEQ::ZeninARadixSortDoubleBatcherMerge_SEQSEQ(const InType &in) {
+ZeninARadixSortDoubleBatcherMergeSeqseq::ZeninARadixSortDoubleBatcherMergeSeqseq(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};
 }
 
-bool ZeninARadixSortDoubleBatcherMerge_SEQSEQ::ValidationImpl() {
+bool ZeninARadixSortDoubleBatcherMergeSeqseq::ValidationImpl() {
   return true;
 }
 
-bool ZeninARadixSortDoubleBatcherMerge_SEQSEQ::PreProcessingImpl() {
+bool ZeninARadixSortDoubleBatcherMergeSeqseq::PreProcessingImpl() {
   return true;
 }
 
-uint64_t ZeninARadixSortDoubleBatcherMerge_SEQSEQ::PackDouble(double v) noexcept {
+uint64_t ZeninARadixSortDoubleBatcherMergeSeqseq::PackDouble(double v) noexcept {
   uint64_t bits = 0ULL;
   std::memcpy(&bits, &v, sizeof(bits));
   if ((bits & (1ULL << 63)) != 0ULL) {
@@ -35,7 +35,7 @@ uint64_t ZeninARadixSortDoubleBatcherMerge_SEQSEQ::PackDouble(double v) noexcept
   return bits;
 }
 
-double ZeninARadixSortDoubleBatcherMerge_SEQSEQ::UnpackDouble(uint64_t k) noexcept {
+double ZeninARadixSortDoubleBatcherMergeSeqseq::UnpackDouble(uint64_t k) noexcept {
   if ((k & (1ULL << 63)) != 0ULL) {
     k ^= (1ULL << 63);
   } else {
@@ -46,7 +46,7 @@ double ZeninARadixSortDoubleBatcherMerge_SEQSEQ::UnpackDouble(uint64_t k) noexce
   return v;
 }
 
-void ZeninARadixSortDoubleBatcherMerge_SEQSEQ::LSDRadixSort(std::vector<double> &arr) {
+void ZeninARadixSortDoubleBatcherMergeSeqseq::LSDRadixSort(std::vector<double> &arr) {
   const std::size_t n = arr.size();
   if (n <= 1U) {
     return;
@@ -96,14 +96,14 @@ void ZeninARadixSortDoubleBatcherMerge_SEQSEQ::LSDRadixSort(std::vector<double> 
   }
 }
 
-bool ZeninARadixSortDoubleBatcherMerge_SEQSEQ::RunImpl() {
+bool ZeninARadixSortDoubleBatcherMergeSeqseq::RunImpl() {
   std::vector<double> data = GetInput();
   LSDRadixSort(data);
   GetOutput() = data;
   return true;
 }
 
-bool ZeninARadixSortDoubleBatcherMerge_SEQSEQ::PostProcessingImpl() {
+bool ZeninARadixSortDoubleBatcherMergeSeqseq::PostProcessingImpl() {
   return true;
 }
 

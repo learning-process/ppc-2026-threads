@@ -16,7 +16,7 @@ namespace zenin_a_radix_sort_double_batcher_merge_seq {
 
 class ZeninARadixSortDoubleBatcherMergePerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 1000000;
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
     std::random_device rd;
@@ -54,7 +54,7 @@ TEST_P(ZeninARadixSortDoubleBatcherMergePerfTestsThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZeninARadixSortDoubleBatcherMerge_SEQSEQ>(
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZeninARadixSortDoubleBatcherMergeSeqseq>(
     PPC_SETTINGS_zenin_a_radix_sort_double_batcher_merge_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

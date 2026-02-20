@@ -1,16 +1,19 @@
 #pragma once
 
+#include <cstdint>
+#include <vector>
+
 #include "task/include/task.hpp"
 #include "zenin_a_radix_sort_double_batcher_merge_seq/common/include/common.hpp"
 
 namespace zenin_a_radix_sort_double_batcher_merge_seq {
 
-class ZeninARadixSortDoubleBatcherMerge_SEQSEQ : public BaseTask {
+class ZeninARadixSortDoubleBatcherMergeSeqseq : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit ZeninARadixSortDoubleBatcherMerge_SEQSEQ(const InType &in);
+  explicit ZeninARadixSortDoubleBatcherMergeSeqseq(const InType &in);
 
  private:
   bool ValidationImpl() override;
