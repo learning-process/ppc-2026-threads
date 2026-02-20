@@ -2,14 +2,15 @@
 
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "task/include/task.hpp"
 
-namespace nesterov_a_test_task_threads {
+namespace lukin_i_ench_contr_lin_hist {
 
-using InType = int;
-using OutType = int;
-using TestType = std::tuple<int, std::string>;
+using InType = std::vector<unsigned char>;
+using OutType = std::vector<unsigned char>;
+using TestType = int;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace nesterov_a_test_task_threads
+}  // namespace lukin_i_ench_contr_lin_hist

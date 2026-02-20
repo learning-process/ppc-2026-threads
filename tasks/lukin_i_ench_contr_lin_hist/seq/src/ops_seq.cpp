@@ -1,60 +1,57 @@
-#include "example_threads/seq/include/ops_seq.hpp"
+#include "lukin_i_ench_contr_lin_hist/seq/include/ops_seq.hpp"
 
 #include <numeric>
 #include <vector>
 
-#include "example_threads/common/include/common.hpp"
+#include "lukin_i_ench_contr_lin_hist/common/include/common.hpp"
 #include "util/include/util.hpp"
 
-namespace nesterov_a_test_task_threads {
+namespace lukin_i_ench_contr_lin_hist {
 
-NesterovATestTaskSEQ::NesterovATestTaskSEQ(const InType &in) {
+LukinITestTaskSEQ::LukinITestTaskSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = OutType(GetInput().size());
 }
 
-bool NesterovATestTaskSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+bool LukinITestTaskSEQ::ValidationImpl() {
+  return !(GetInput().empty());
 }
 
-bool NesterovATestTaskSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+bool LukinITestTaskSEQ::PreProcessingImpl() {
+  return true;
 }
 
-bool NesterovATestTaskSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
+bool LukinITestTaskSEQ::RunImpl() {
+  unsigned char min = 255;
+  unsigned char max = 0;
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  for (const auto &elem : GetInput())  // Поиск максимума и минимума
+  {
+    if (elem > max) {
+      max = elem;
+    }
+    if (elem < min) {
+      min = elem;
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
+  if (max == min)  // Однотонное изображение
+  {
+    GetOutput() = GetInput();
+    return true;
   }
 
-  if (counter != 0) {
-    GetOutput() /= counter;
+  float scale = 255.0f / (max - min);
+  for (int i = 0; i < static_cast<int>(GetInput().size()); i++) {  // Линейное растяжение
+    GetOutput()[i] = static_cast<unsigned char>((GetInput()[i] - min) * scale);
   }
-  return GetOutput() > 0;
+
+  return true;
 }
 
-bool NesterovATestTaskSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+bool LukinITestTaskSEQ::PostProcessingImpl() {
+  return true;
 }
 
-}  // namespace nesterov_a_test_task_threads
+}  // namespace lukin_i_ench_contr_lin_hist
