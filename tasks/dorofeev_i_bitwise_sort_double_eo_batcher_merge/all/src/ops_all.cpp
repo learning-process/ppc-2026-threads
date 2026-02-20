@@ -1,4 +1,5 @@
 #include "dorofeev_i_bitwise_sort_double_eo_batcher_merge/all/include/ops_all.hpp"
+#include "dorofeev_i_bitwise_sort_double_eo_batcher_merge/common/include/common.hpp"
 
 namespace dorofeev_i_bitwise_sort_double_eo_batcher_merge {
 
@@ -7,9 +8,17 @@ DorofeevIBitwiseSortDoubleEOBatcherMergeALL::DorofeevIBitwiseSortDoubleEOBatcher
   GetInput() = in;
 }
 
-bool DorofeevIBitwiseSortDoubleEOBatcherMergeALL::ValidationImpl() { return true; }
-bool DorofeevIBitwiseSortDoubleEOBatcherMergeALL::PreProcessingImpl() { return true; }
-bool DorofeevIBitwiseSortDoubleEOBatcherMergeALL::RunImpl() { return true; }
-bool DorofeevIBitwiseSortDoubleEOBatcherMergeALL::PostProcessingImpl() { return true; }
+bool DorofeevIBitwiseSortDoubleEOBatcherMergeALL::ValidationImpl() {
+  return true;
+}
+bool DorofeevIBitwiseSortDoubleEOBatcherMergeALL::PreProcessingImpl() {
+  return true;
+}
+bool DorofeevIBitwiseSortDoubleEOBatcherMergeALL::RunImpl() {
+  return true;
+}
+bool DorofeevIBitwiseSortDoubleEOBatcherMergeALL::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace dorofeev_i_bitwise_sort_double_eo_batcher_merge

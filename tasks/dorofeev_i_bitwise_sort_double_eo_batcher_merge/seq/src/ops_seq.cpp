@@ -1,6 +1,10 @@
 #include "dorofeev_i_bitwise_sort_double_eo_batcher_merge/seq/include/ops_seq.hpp"
 
+#include <cmath>
+
+#include "dorofeev_i_bitwise_sort_double_eo_batcher_merge/common/include/common.hpp"
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
 #include <limits>
 #include <vector>
@@ -11,12 +15,12 @@ namespace {
 
 // Преобразование double в uint64_t с сохранением порядка сортировки
 uint64_t DoubleToUint(double d) {
-  uint64_t u;
+  uint64_t u = 0;
   std::memcpy(&u, &d, sizeof(double));
   if ((u & 0x8000000000000000ULL) != 0) {
-    u = ~u; // Инвертируем все биты для отрицательных
+    u = ~u;  // Инвертируем все биты для отрицательных
   } else {
-    u |= 0x8000000000000000ULL; // Инвертируем только знаковый бит для положительных
+    u |= 0x8000000000000000ULL;  // Инвертируем только знаковый бит для положительных
   }
   return u;
 }
@@ -28,15 +32,17 @@ double UintToDouble(uint64_t u) {
   } else {
     u = ~u;
   }
-  double d;
+  double d = NAN;
   std::memcpy(&d, &u, sizeof(double));
   return d;
 }
 
 // Поразрядная сортировка подмассива
-void RadixSortDouble(std::vector<double>& arr) {
-  if (arr.empty()) return;
-  
+void RadixSortDouble(std::vector<double> &arr) {
+  if (arr.empty()) {
+    return;
+  }
+
   std::vector<uint64_t> uarr(arr.size());
   for (size_t i = 0; i < arr.size(); ++i) {
     uarr[i] = DoubleToUint(arr[i]);
@@ -63,7 +69,7 @@ void RadixSortDouble(std::vector<double>& arr) {
 }
 
 // Четно-нечетное слияние Бэтчера
-void OddEvenMerge(std::vector<double>& arr, int l, int n, int step) {
+void OddEvenMerge(std::vector<double> &arr, int l, int n, int step) {
   int m = step * 2;
   if (m < n) {
     OddEvenMerge(arr, l, n, m);
@@ -88,7 +94,7 @@ DorofeevIBitwiseSortDoubleEOBatcherMergeSEQ::DorofeevIBitwiseSortDoubleEOBatcher
 }
 
 bool DorofeevIBitwiseSortDoubleEOBatcherMergeSEQ::ValidationImpl() {
-  return true; // Сортировка пустого массива тоже валидна
+  return true;  // Сортировка пустого массива тоже валидна
 }
 
 bool DorofeevIBitwiseSortDoubleEOBatcherMergeSEQ::PreProcessingImpl() {
@@ -97,14 +103,18 @@ bool DorofeevIBitwiseSortDoubleEOBatcherMergeSEQ::PreProcessingImpl() {
 }
 
 bool DorofeevIBitwiseSortDoubleEOBatcherMergeSEQ::RunImpl() {
-  if (local_data_.empty()) return true;
+  if (local_data_.empty()) {
+    return true;
+  }
 
   size_t original_size = local_data_.size();
-  
+
   // Добиваем до ближайшей степени двойки
   size_t pow2 = 1;
-  while (pow2 < original_size) pow2 *= 2;
-  
+  while (pow2 < original_size) {
+    pow2 *= 2;
+  }
+
   if (pow2 > original_size) {
     local_data_.resize(pow2, std::numeric_limits<double>::max());
   }
@@ -117,8 +127,8 @@ bool DorofeevIBitwiseSortDoubleEOBatcherMergeSEQ::RunImpl() {
   RadixSortDouble(left);
   RadixSortDouble(right);
 
-  std::copy(left.begin(), left.end(), local_data_.begin());
-  std::copy(right.begin(), right.end(), local_data_.begin() + mid);
+  std::ranges::copy(left, local_data_.begin());
+  std::ranges::copy(right, local_data_.begin() + mid);
 
   OddEvenMerge(local_data_, 0, pow2, 1);
 
