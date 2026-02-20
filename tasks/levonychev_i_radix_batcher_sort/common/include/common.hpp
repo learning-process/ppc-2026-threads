@@ -7,8 +7,8 @@
 
 namespace levonychev_i_radix_batcher_sort {
 
-using InType = int;
-using OutType = int;
+using InType = std::vector<int>;
+using OutType = std::vector<int>;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
