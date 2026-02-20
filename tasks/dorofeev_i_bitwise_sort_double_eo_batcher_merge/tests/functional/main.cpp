@@ -23,14 +23,10 @@ class DorofeevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
 
  protected:
   void SetUp() override {
-    // 1. Достаем НАШ кортеж параметров из обертки фреймворка
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-
-    // 2. И уже из нашего кортежа берем размер массива (нулевой элемент)
     int size = std::get<0>(params);
 
-    // Настраиваем генератор случайных чисел
-    std::mt19937 gen(42);  // Фиксированный сид для стабильности тестов
+    std::mt19937 gen(static_cast<unsigned int>(size));
     std::uniform_real_distribution<double> dist(-1000.0, 1000.0);
 
     input_data_.resize(size);

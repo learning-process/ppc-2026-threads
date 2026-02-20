@@ -1,43 +1,40 @@
 #include "dorofeev_i_bitwise_sort_double_eo_batcher_merge/seq/include/ops_seq.hpp"
 
-#include <cmath>
-
-#include "dorofeev_i_bitwise_sort_double_eo_batcher_merge/common/include/common.hpp"
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <limits>
 #include <vector>
 
+#include "dorofeev_i_bitwise_sort_double_eo_batcher_merge/common/include/common.hpp"
+
 namespace dorofeev_i_bitwise_sort_double_eo_batcher_merge {
 
 namespace {
 
-// Преобразование double в uint64_t с сохранением порядка сортировки
 uint64_t DoubleToUint(double d) {
   uint64_t u = 0;
   std::memcpy(&u, &d, sizeof(double));
   if ((u & 0x8000000000000000ULL) != 0) {
-    u = ~u;  // Инвертируем все биты для отрицательных
+    u = ~u;
   } else {
-    u |= 0x8000000000000000ULL;  // Инвертируем только знаковый бит для положительных
+    u |= 0x8000000000000000ULL;
   }
   return u;
 }
 
-// Обратное преобразование
 double UintToDouble(uint64_t u) {
   if ((u & 0x8000000000000000ULL) != 0) {
     u &= ~0x8000000000000000ULL;
   } else {
     u = ~u;
   }
-  double d = NAN;
+  double d = 0.0;
   std::memcpy(&d, &u, sizeof(double));
   return d;
 }
 
-// Поразрядная сортировка подмассива
 void RadixSortDouble(std::vector<double> &arr) {
   if (arr.empty()) {
     return;
@@ -49,12 +46,12 @@ void RadixSortDouble(std::vector<double> &arr) {
   }
 
   std::vector<uint64_t> temp(uarr.size());
-  for (int byte = 0; byte < 8; ++byte) {
-    int count[256] = {0};
+  for (size_t byte = 0; byte < 8; ++byte) {
+    std::vector<int> count(256, 0);
     for (uint64_t val : uarr) {
       count[(val >> (byte * 8)) & 0xFF]++;
     }
-    for (int i = 1; i < 256; ++i) {
+    for (size_t i = 1; i < 256; ++i) {
       count[i] += count[i - 1];
     }
     for (int i = static_cast<int>(uarr.size()) - 1; i >= 0; --i) {
@@ -68,20 +65,30 @@ void RadixSortDouble(std::vector<double> &arr) {
   }
 }
 
-// Четно-нечетное слияние Бэтчера
-void OddEvenMerge(std::vector<double> &arr, int l, int n, int step) {
-  int m = step * 2;
-  if (m < n) {
-    OddEvenMerge(arr, l, n, m);
-    OddEvenMerge(arr, l + step, n, m);
-    for (int i = l + step; i + step < l + n; i += m) {
-      if (arr[i] > arr[i + step]) {
-        std::swap(arr[i], arr[i + step]);
-      }
+// Вынесли операцию сравнения и перестановки блоков в отдельную функцию
+void CompareExchangeBlocks(std::vector<double> &arr, size_t i, size_t step) {
+  for (size_t k = 0; k < step; ++k) {
+    if (arr[i + k] > arr[i + k + step]) {
+      std::swap(arr[i + k], arr[i + k + step]);
     }
-  } else {
-    if (l + step < l + n && arr[l] > arr[l + step]) {
-      std::swap(arr[l], arr[l + step]);
+  }
+}
+
+// Теперь функция выглядит максимально просто и элегантно
+void OddEvenMergeIterative(std::vector<double> &arr, size_t n) {
+  if (n <= 1) {
+    return;
+  }
+
+  // Первая фаза слияния
+  size_t step = n / 2;
+  CompareExchangeBlocks(arr, 0, step);
+
+  // Последующие фазы
+  step /= 2;
+  for (; step > 0; step /= 2) {
+    for (size_t i = step; i < n - step; i += step * 2) {
+      CompareExchangeBlocks(arr, i, step);
     }
   }
 }
@@ -94,7 +101,7 @@ DorofeevIBitwiseSortDoubleEOBatcherMergeSEQ::DorofeevIBitwiseSortDoubleEOBatcher
 }
 
 bool DorofeevIBitwiseSortDoubleEOBatcherMergeSEQ::ValidationImpl() {
-  return true;  // Сортировка пустого массива тоже валидна
+  return true;
 }
 
 bool DorofeevIBitwiseSortDoubleEOBatcherMergeSEQ::PreProcessingImpl() {
@@ -109,7 +116,6 @@ bool DorofeevIBitwiseSortDoubleEOBatcherMergeSEQ::RunImpl() {
 
   size_t original_size = local_data_.size();
 
-  // Добиваем до ближайшей степени двойки
   size_t pow2 = 1;
   while (pow2 < original_size) {
     pow2 *= 2;
@@ -119,20 +125,18 @@ bool DorofeevIBitwiseSortDoubleEOBatcherMergeSEQ::RunImpl() {
     local_data_.resize(pow2, std::numeric_limits<double>::max());
   }
 
-  // Для SEQ версии бьем на 2 части, сортируем их и сливаем Бэтчером (имитация параллелизма)
   size_t mid = pow2 / 2;
-  std::vector<double> left(local_data_.begin(), local_data_.begin() + mid);
-  std::vector<double> right(local_data_.begin() + mid, local_data_.end());
+  std::vector<double> left(local_data_.begin(), local_data_.begin() + static_cast<ptrdiff_t>(mid));
+  std::vector<double> right(local_data_.begin() + static_cast<ptrdiff_t>(mid), local_data_.end());
 
   RadixSortDouble(left);
   RadixSortDouble(right);
 
   std::ranges::copy(left, local_data_.begin());
-  std::ranges::copy(right, local_data_.begin() + mid);
+  std::ranges::copy(right, local_data_.begin() + static_cast<ptrdiff_t>(mid));
 
-  OddEvenMerge(local_data_, 0, pow2, 1);
+  OddEvenMergeIterative(local_data_, pow2);
 
-  // Отрезаем фиктивные элементы
   if (pow2 > original_size) {
     local_data_.resize(original_size);
   }

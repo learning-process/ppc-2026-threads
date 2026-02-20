@@ -11,11 +11,14 @@ namespace dorofeev_i_bitwise_sort_double_eo_batcher_merge {
 
 class DorofeevIPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  const int k_count = 100000;  // Большой массив для проверки производительности
+  // Вот эти две переменные, которые "потерял" редактор:
+  const int k_count = 100000;
   InType input_data;
 
   void SetUp() override {
-    std::mt19937 gen(42);
+    // Честный случайный сид по стандарту безопасности
+    std::random_device rd;
+    std::mt19937 gen(rd());
     std::uniform_real_distribution<double> dist(-5000.0, 5000.0);
 
     input_data.resize(k_count);
