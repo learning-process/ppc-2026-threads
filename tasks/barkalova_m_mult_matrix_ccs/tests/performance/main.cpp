@@ -43,6 +43,3 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, BarkalovaMMultMatrixCcsPerfTestThreads, k
 
 }  // namespace barkalova_m_mult_matrix_ccs
 */
-
-
-

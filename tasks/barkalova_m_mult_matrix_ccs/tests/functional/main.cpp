@@ -89,7 +89,6 @@ INSTANTIATE_TEST_SUITE_P(PicMatrixTests, BarkalovaMMultMatrixCcsFuncTestsThreads
 }  // namespace barkalova_m_mult_matrix_ccs
 */
 
-
 /*
 #include <gtest/gtest.h>
 
@@ -121,29 +120,29 @@ class BarkalovaMMultMatrixCcsFixedTest : public ppc::util::BaseRunFuncTests<InTy
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_case = std::get<0>(params);
-    
+
     // Создаем матрицы с известными значениями в зависимости от тестового случая
     CCSMatrix A, B;
-    
+
     switch(test_case) {
       case 1: {
         // Тест 1: Простое умножение (2x2) * (2x2)
         // A = [1+2i, 0    ; 0,    3+4i]
         // B = [5+6i, 0    ; 0,    7+8i]
         // Результат: [(1+2i)(5+6i), 0; 0, (3+4i)(7+8i)]
-        
+
         A = CCSMatrix(2, 2);
         A.values = {Complex(1.0, 2.0), Complex(3.0, 4.0)};
         A.row_indices = {0, 1};
         A.col_ptrs = {0, 1, 2};
         A.nnz = 2;
-        
+
         B = CCSMatrix(2, 2);
         B.values = {Complex(5.0, 6.0), Complex(7.0, 8.0)};
         B.row_indices = {0, 1};
         B.col_ptrs = {0, 1, 2};
         B.nnz = 2;
-        
+
         // Ожидаемый результат
         expected_result_ = CCSMatrix(2, 2);
         expected_result_.values = {
@@ -155,24 +154,24 @@ class BarkalovaMMultMatrixCcsFixedTest : public ppc::util::BaseRunFuncTests<InTy
         expected_result_.nnz = 2;
         break;
       }
-      
+
       case 2: {
         // Тест 2: Умножение с разными размерностями (2x3) * (3x2)
         // A = [1+1i, 2+2i, 0    ; 0,    3+3i, 4+4i]
         // B = [5+5i, 0    ; 6+6i, 7+7i ; 0,    8+8i]
-        
+
         A = CCSMatrix(2, 3);
         A.values = {Complex(1.0, 1.0), Complex(2.0, 2.0), Complex(3.0, 3.0), Complex(4.0, 4.0)};
         A.row_indices = {0, 0, 1, 1};
         A.col_ptrs = {0, 2, 3, 4};
         A.nnz = 4;
-        
+
         B = CCSMatrix(3, 2);
         B.values = {Complex(5.0, 5.0), Complex(6.0, 6.0), Complex(7.0, 7.0), Complex(8.0, 8.0)};
         B.row_indices = {0, 1, 1, 2};
         B.col_ptrs = {0, 1, 4};
         B.nnz = 4;
-        
+
         // Ожидаемый результат: C[0][0] = (1+i)*(5+i5) + (2+2i)*(6+6i) = (10i) + (24i) = 34i
         // C[0][1] = (2+2i)*(7+7i) = 28i
         // C[1][0] = (3+3i)*(6+6i) = 36i
@@ -189,48 +188,48 @@ class BarkalovaMMultMatrixCcsFixedTest : public ppc::util::BaseRunFuncTests<InTy
         expected_result_.nnz = 4;
         break;
       }
-      
+
       case 3: {
         // Тест 3: Умножение с нулевым результатом
         // A = [1+2i, 0    ; 3+4i, 0]
         // B = [0,    5+6i; 0,    7+8i]
-        
+
         A = CCSMatrix(2, 2);
         A.values = {Complex(1.0, 2.0), Complex(3.0, 4.0)};
         A.row_indices = {0, 1};
         A.col_ptrs = {0, 2, 2};
         A.nnz = 2;
-        
+
         B = CCSMatrix(2, 2);
         B.values = {Complex(5.0, 6.0), Complex(7.0, 8.0)};
         B.row_indices = {1, 0};
         B.col_ptrs = {0, 0, 2};
         B.nnz = 2;
-        
+
         // Результат должен быть нулевой матрицей (нет пересечений ненулевых элементов)
         expected_result_ = CCSMatrix(2, 2);
         expected_result_.col_ptrs = {0, 0, 0};
         expected_result_.nnz = 0;
         break;
       }
-      
+
       case 4: {
         // Тест 4: Умножение с частичным перекрытием
         // A = [1+1i, 2+2i, 0    ; 0,    3+3i, 4+4i]
         // B = [5+5i, 0    ; 6+6i, 0    ; 7+7i, 8+8i]
-        
+
         A = CCSMatrix(2, 3);
         A.values = {Complex(1.0, 1.0), Complex(2.0, 2.0), Complex(3.0, 3.0), Complex(4.0, 4.0)};
         A.row_indices = {0, 0, 1, 1};
         A.col_ptrs = {0, 2, 3, 4};
         A.nnz = 4;
-        
+
         B = CCSMatrix(3, 2);
         B.values = {Complex(5.0, 5.0), Complex(6.0, 6.0), Complex(7.0, 7.0), Complex(8.0, 8.0)};
         B.row_indices = {0, 1, 2, 2};
         B.col_ptrs = {0, 2, 4};
         B.nnz = 4;
-        
+
         // Ожидаемый результат с частичным перекрытием
         expected_result_ = CCSMatrix(2, 2);
         expected_result_.values = {
@@ -244,11 +243,11 @@ class BarkalovaMMultMatrixCcsFixedTest : public ppc::util::BaseRunFuncTests<InTy
         expected_result_.nnz = 4;
         break;
       }
-      
+
       default:
         throw std::runtime_error("Unknown test case");
     }
-    
+
     input_data_ = std::make_pair(A, B);
   }
 
@@ -257,39 +256,39 @@ class BarkalovaMMultMatrixCcsFixedTest : public ppc::util::BaseRunFuncTests<InTy
     if (output_data.rows != expected_result_.rows || output_data.cols != expected_result_.cols) {
       return false;
     }
-    
+
     // Проверяем количество ненулевых элементов
     if (output_data.nnz != expected_result_.nnz) {
       return false;
     }
-    
+
     // Если результат нулевой, проверяем пустые векторы
     if (expected_result_.nnz == 0) {
       return output_data.values.empty() && output_data.row_indices.empty();
     }
-    
+
     // Проверяем структуру col_ptrs
     if (output_data.col_ptrs.size() != expected_result_.col_ptrs.size()) {
       return false;
     }
-    
+
     for (size_t i = 0; i < output_data.col_ptrs.size(); ++i) {
       if (output_data.col_ptrs[i] != expected_result_.col_ptrs[i]) {
         return false;
       }
     }
-    
+
     // Проверяем индексы строк
     if (output_data.row_indices.size() != expected_result_.row_indices.size()) {
       return false;
     }
-    
+
     for (size_t i = 0; i < output_data.row_indices.size(); ++i) {
       if (output_data.row_indices[i] != expected_result_.row_indices[i]) {
         return false;
       }
     }
-    
+
     // Проверяем значения с учетом погрешности
     const double eps = 1e-10;
     for (size_t i = 0; i < output_data.values.size(); ++i) {
@@ -298,7 +297,7 @@ class BarkalovaMMultMatrixCcsFixedTest : public ppc::util::BaseRunFuncTests<InTy
         return false;
       }
     }
-    
+
     return true;
   }
 
@@ -327,7 +326,8 @@ const std::array<TestType, 4> kFixedTestParams = {
 };
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsSEQ, InType>(kFixedTestParams, PPC_SETTINGS_barkalova_m_mult_matrix_ccs));
+    ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsSEQ, InType>(kFixedTestParams,
+PPC_SETTINGS_barkalova_m_mult_matrix_ccs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -339,7 +339,6 @@ INSTANTIATE_TEST_SUITE_P(FixedMatrixTests, BarkalovaMMultMatrixCcsFixedTest, kGt
 
 }  // namespace barkalova_m_mult_matrix_ccs
 */
-
 
 #include <gtest/gtest.h>
 
@@ -362,8 +361,7 @@ namespace barkalova_m_mult_matrix_ccs {
 class BarkalovaMMultMatrixCcsFixedTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + 
-           std::to_string(std::get<1>(test_param)) + "_" +
+    return std::to_string(std::get<0>(test_param)) + "_" + std::to_string(std::get<1>(test_param)) + "_" +
            std::to_string(std::get<2>(test_param));
   }
 
@@ -371,10 +369,10 @@ class BarkalovaMMultMatrixCcsFixedTest : public ppc::util::BaseRunFuncTests<InTy
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_case = std::get<0>(params);
-    
+
     CCSMatrix A, B;
-    
-    switch(test_case) {
+
+    switch (test_case) {
       case 1: {
         // Тест 1: Простейшие диагональные матрицы 2x2
         A = CCSMatrix(2, 2);
@@ -382,13 +380,13 @@ class BarkalovaMMultMatrixCcsFixedTest : public ppc::util::BaseRunFuncTests<InTy
         A.row_indices = {0, 1};
         A.col_ptrs = {0, 1, 2};
         A.nnz = 2;
-        
+
         B = CCSMatrix(2, 2);
         B.values = {Complex(2.0, 0.0), Complex(2.0, 0.0)};
         B.row_indices = {0, 1};
         B.col_ptrs = {0, 1, 2};
         B.nnz = 2;
-        
+
         expected_result_ = CCSMatrix(2, 2);
         expected_result_.values = {Complex(2.0, 0.0), Complex(2.0, 0.0)};
         expected_result_.row_indices = {0, 1};
@@ -396,39 +394,39 @@ class BarkalovaMMultMatrixCcsFixedTest : public ppc::util::BaseRunFuncTests<InTy
         expected_result_.nnz = 2;
         break;
       }
-      
+
       case 2: {
         // Тест 2: Матрицы 2x2 с разными значениями
         // A = [1, 2; 3, 4] в CCS формате
         A = CCSMatrix(2, 2);
-        A.values = {Complex(1.0, 0.0), Complex(3.0, 0.0),    // столбец 0: строки 0,1
-                    Complex(2.0, 0.0), Complex(4.0, 0.0)};   // столбец 1: строки 0,1
+        A.values = {Complex(1.0, 0.0), Complex(3.0, 0.0),   // столбец 0: строки 0,1
+                    Complex(2.0, 0.0), Complex(4.0, 0.0)};  // столбец 1: строки 0,1
         A.row_indices = {0, 1, 0, 1};
         A.col_ptrs = {0, 2, 4};
         A.nnz = 4;
-        
+
         // B = [5, 6; 7, 8] в CCS формате
         B = CCSMatrix(2, 2);
-        B.values = {Complex(5.0, 0.0), Complex(7.0, 0.0),    // столбец 0: строки 0,1
-                    Complex(6.0, 0.0), Complex(8.0, 0.0)};   // столбец 1: строки 0,1
+        B.values = {Complex(5.0, 0.0), Complex(7.0, 0.0),   // столбец 0: строки 0,1
+                    Complex(6.0, 0.0), Complex(8.0, 0.0)};  // столбец 1: строки 0,1
         B.row_indices = {0, 1, 0, 1};
         B.col_ptrs = {0, 2, 4};
         B.nnz = 4;
-        
+
         // Результат: C = A * B
         // C[0][0] = 1*5 + 2*7 = 5 + 14 = 19
         // C[0][1] = 1*6 + 2*8 = 6 + 16 = 22
         // C[1][0] = 3*5 + 4*7 = 15 + 28 = 43
         // C[1][1] = 3*6 + 4*8 = 18 + 32 = 50
         expected_result_ = CCSMatrix(2, 2);
-        expected_result_.values = {Complex(19.0, 0.0), Complex(43.0, 0.0),    // столбец 0
-                                   Complex(22.0, 0.0), Complex(50.0, 0.0)};   // столбец 1
+        expected_result_.values = {Complex(19.0, 0.0), Complex(43.0, 0.0),   // столбец 0
+                                   Complex(22.0, 0.0), Complex(50.0, 0.0)};  // столбец 1
         expected_result_.row_indices = {0, 1, 0, 1};
         expected_result_.col_ptrs = {0, 2, 4};
         expected_result_.nnz = 4;
         break;
       }
-      
+
       case 3: {
         // Тест 3: Умножение с нулевым результатом
         // A = [1, 0; 2, 0] - ненулевые только в первом столбце
@@ -437,14 +435,14 @@ class BarkalovaMMultMatrixCcsFixedTest : public ppc::util::BaseRunFuncTests<InTy
         A.row_indices = {0, 1};
         A.col_ptrs = {0, 2, 2};  // первый столбец: 2 элемента, второй: 0
         A.nnz = 2;
-        
+
         // B = [0, 3; 0, 4] - ненулевые только во втором столбце
         B = CCSMatrix(2, 2);
         B.values = {Complex(3.0, 0.0), Complex(4.0, 0.0)};
         B.row_indices = {0, 1};  // оба элемента во втором столбце
         B.col_ptrs = {0, 0, 2};  // первый столбец: 0, второй: 2
         B.nnz = 2;
-        
+
         // Результат должен быть нулевой матрицей
         expected_result_ = CCSMatrix(2, 2);
         expected_result_.col_ptrs = {0, 0, 0};
@@ -453,7 +451,7 @@ class BarkalovaMMultMatrixCcsFixedTest : public ppc::util::BaseRunFuncTests<InTy
         expected_result_.nnz = 0;
         break;
       }
-      
+
       case 4: {
         // Тест 4: Прямоугольные матрицы 2x3 * 3x2
         // A: 2x3
@@ -461,23 +459,23 @@ class BarkalovaMMultMatrixCcsFixedTest : public ppc::util::BaseRunFuncTests<InTy
         // столбец 1: [0]=2, [1]=5
         // столбец 2: [0]=3, [1]=6
         A = CCSMatrix(2, 3);
-        A.values = {Complex(1.0, 0.0), Complex(4.0, 0.0),    // столбец 0
-                    Complex(2.0, 0.0), Complex(5.0, 0.0),    // столбец 1
-                    Complex(3.0, 0.0), Complex(6.0, 0.0)};   // столбец 2
+        A.values = {Complex(1.0, 0.0), Complex(4.0, 0.0),   // столбец 0
+                    Complex(2.0, 0.0), Complex(5.0, 0.0),   // столбец 1
+                    Complex(3.0, 0.0), Complex(6.0, 0.0)};  // столбец 2
         A.row_indices = {0, 1, 0, 1, 0, 1};
         A.col_ptrs = {0, 2, 4, 6};
         A.nnz = 6;
-        
+
         // B: 3x2
         // столбец 0: [0]=7, [1]=9, [2]=11
         // столбец 1: [0]=8, [1]=10, [2]=12
         B = CCSMatrix(3, 2);
-        B.values = {Complex(7.0, 0.0), Complex(9.0, 0.0), Complex(11.0, 0.0),   // столбец 0
-                    Complex(8.0, 0.0), Complex(10.0, 0.0), Complex(12.0, 0.0)}; // столбец 1
+        B.values = {Complex(7.0, 0.0), Complex(9.0, 0.0),  Complex(11.0, 0.0),   // столбец 0
+                    Complex(8.0, 0.0), Complex(10.0, 0.0), Complex(12.0, 0.0)};  // столбец 1
         B.row_indices = {0, 1, 2, 0, 1, 2};
         B.col_ptrs = {0, 3, 6};
         B.nnz = 6;
-        
+
         // Результат: C = A * B (2x2)
         // C[0][0] = 1*7 + 2*9 + 3*11 = 7 + 18 + 33 = 58
         // C[0][1] = 1*8 + 2*10 + 3*12 = 8 + 20 + 36 = 64
@@ -491,73 +489,73 @@ class BarkalovaMMultMatrixCcsFixedTest : public ppc::util::BaseRunFuncTests<InTy
         expected_result_.nnz = 4;
         break;
       }
-      
+
       default:
         throw std::runtime_error("Unknown test case");
     }
-    
+
     input_data_ = std::make_pair(A, B);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     // Проверяем размерность
     if (output_data.rows != expected_result_.rows || output_data.cols != expected_result_.cols) {
-      std::cout << "Dimension mismatch: got (" << output_data.rows << "x" << output_data.cols 
-                << "), expected (" << expected_result_.rows << "x" << expected_result_.cols << ")" << std::endl;
+      std::cout << "Dimension mismatch: got (" << output_data.rows << "x" << output_data.cols << "), expected ("
+                << expected_result_.rows << "x" << expected_result_.cols << ")" << std::endl;
       return false;
     }
-    
+
     // Проверяем количество ненулевых элементов
     if (output_data.nnz != expected_result_.nnz) {
       std::cout << "NNZ mismatch: got " << output_data.nnz << ", expected " << expected_result_.nnz << std::endl;
       return false;
     }
-    
+
     // Если результат нулевой, проверяем пустые векторы
     if (expected_result_.nnz == 0) {
       return output_data.values.empty() && output_data.row_indices.empty();
     }
-    
+
     // Проверяем структуру col_ptrs
     if (output_data.col_ptrs.size() != expected_result_.col_ptrs.size()) {
       std::cout << "col_ptrs size mismatch" << std::endl;
       return false;
     }
-    
+
     for (size_t i = 0; i < output_data.col_ptrs.size(); ++i) {
       if (output_data.col_ptrs[i] != expected_result_.col_ptrs[i]) {
-        std::cout << "col_ptrs[" << i << "] mismatch: got " << output_data.col_ptrs[i] 
-                  << ", expected " << expected_result_.col_ptrs[i] << std::endl;
+        std::cout << "col_ptrs[" << i << "] mismatch: got " << output_data.col_ptrs[i] << ", expected "
+                  << expected_result_.col_ptrs[i] << std::endl;
         return false;
       }
     }
-    
+
     // Проверяем индексы строк
     if (output_data.row_indices.size() != expected_result_.row_indices.size()) {
       std::cout << "row_indices size mismatch" << std::endl;
       return false;
     }
-    
+
     for (size_t i = 0; i < output_data.row_indices.size(); ++i) {
       if (output_data.row_indices[i] != expected_result_.row_indices[i]) {
-        std::cout << "row_indices[" << i << "] mismatch: got " << output_data.row_indices[i] 
-                  << ", expected " << expected_result_.row_indices[i] << std::endl;
+        std::cout << "row_indices[" << i << "] mismatch: got " << output_data.row_indices[i] << ", expected "
+                  << expected_result_.row_indices[i] << std::endl;
         return false;
       }
     }
-    
+
     // Проверяем значения с учетом погрешности
     const double eps = 1e-10;
     for (size_t i = 0; i < output_data.values.size(); ++i) {
       if (std::abs(output_data.values[i].real() - expected_result_.values[i].real()) > eps ||
           std::abs(output_data.values[i].imag() - expected_result_.values[i].imag()) > eps) {
-        std::cout << "Value[" << i << "] mismatch: got (" << output_data.values[i].real() 
-                  << "," << output_data.values[i].imag() << "), expected (" 
-                  << expected_result_.values[i].real() << "," << expected_result_.values[i].imag() << ")" << std::endl;
+        std::cout << "Value[" << i << "] mismatch: got (" << output_data.values[i].real() << ","
+                  << output_data.values[i].imag() << "), expected (" << expected_result_.values[i].real() << ","
+                  << expected_result_.values[i].imag() << ")" << std::endl;
         return false;
       }
     }
-    
+
     return true;
   }
 
@@ -584,8 +582,8 @@ const std::array<TestType, 4> kFixedTestParams = {
     std::make_tuple(4, 0, 0)   // прямоугольные
 };
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsSEQ, InType>(kFixedTestParams, PPC_SETTINGS_barkalova_m_mult_matrix_ccs));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsSEQ, InType>(
+    kFixedTestParams, PPC_SETTINGS_barkalova_m_mult_matrix_ccs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

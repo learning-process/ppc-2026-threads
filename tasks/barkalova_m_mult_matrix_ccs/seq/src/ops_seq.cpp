@@ -60,7 +60,6 @@ bool BarkalobaMMultMatrixCcsSEQ::PostProcessingImpl() {
 }  // namespace barkalova_m_mult_matrix_ccs
 */
 
-
 #include "barkalova_m_mult_matrix_ccs/seq/include/ops_seq.hpp"
 
 #include <algorithm>
