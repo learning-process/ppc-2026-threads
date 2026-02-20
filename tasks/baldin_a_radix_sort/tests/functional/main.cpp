@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
-#include <numeric>
 #include <random>
 #include <stdexcept>
 #include <string>
