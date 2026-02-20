@@ -1,11 +1,13 @@
 #include "zagryadskov_m_complex_spmm_ccs/omp/include/ops_omp.hpp"
 
+#include <omp.h>
+
 #include <atomic>
 #include <numeric>
 #include <vector>
 
-#include "zagryadskov_m_complex_spmm_ccs/common/include/common.hpp"
 #include "util/include/util.hpp"
+#include "zagryadskov_m_complex_spmm_ccs/common/include/common.hpp"
 
 namespace zagryadskov_m_complex_spmm_ccs {
 
@@ -22,44 +24,68 @@ void ZagryadskovMComplexSpMMCCSOMP::SpMM(const CCS &a, const CCS &b, CCS &c) {
   c.row_ind.clear();
   c.values.clear();
   std::complex<double> zero(0.0, 0.0);
-  std::vector<int> rows;
-  std::vector<int> marker(a.m, -1);
-  std::vector<std::complex<double>> acc(a.m);
   const double eps = 1e-14;
+  const int num_threads = ppc::util::GetNumThreads();
 
-  for (int j = 0; j < b.n; ++j) {
-    rows.clear();
+  std::vector<std::vector<int>> t_row_ind(num_threads);
+  std::vector<std::vector<std::complex<double>>> t_values(num_threads);
+  std::vector<std::vector<int>> t_col_ptr(num_threads);
 
-    for (int k = b.col_ptr[j]; k < b.col_ptr[j + 1]; ++k) {
-      std::complex<double> tmpval = b.values[k];
-      int btmpind = b.row_ind[k];
+#pragma omp parallel
+  {
+    int tid = omp_get_thread_num();
+    int jstart = (tid * b.n) / num_threads;
+    int jend = ((tid + 1) * b.n) / num_threads;
 
-      for (int zp = a.col_ptr[btmpind]; zp < a.col_ptr[btmpind + 1]; ++zp) {
-        int atmpind = a.row_ind[zp];
-        acc[atmpind] += tmpval * a.values[zp];
-        if (marker[atmpind] != j) {
-          rows.push_back(atmpind);
-          marker[atmpind] = j;
+    t_col_ptr[tid].assign(jend - jstart + 1, 0);
+
+    std::vector<int> rows;
+    std::vector<int> marker(a.m, -1);
+    std::vector<std::complex<double>> acc(a.m, zero);
+
+    for (int j = jstart; j < jend; ++j) {
+      rows.clear();
+
+      for (int k = b.col_ptr[j]; k < b.col_ptr[j + 1]; ++k) {
+        std::complex<double> tmpval = b.values[k];
+        int btmpind = b.row_ind[k];
+
+        for (int zp = a.col_ptr[btmpind]; zp < a.col_ptr[btmpind + 1]; ++zp) {
+          int atmpind = a.row_ind[zp];
+          acc[atmpind] += tmpval * a.values[zp];
+          if (marker[atmpind] != j) {
+            rows.push_back(atmpind);
+            marker[atmpind] = j;
+          }
         }
       }
-    }
 
-    for (int tmpind : rows) {
-      if (std::abs(acc[tmpind]) > eps) {
-        c.values.push_back(acc[tmpind]);
-        c.row_ind.push_back(tmpind);
-        ++c.col_ptr[j + 1];
+      for (int tmpind : rows) {
+        if (std::abs(acc[tmpind]) > eps) {
+          t_values[tid].push_back(acc[tmpind]);
+          t_row_ind[tid].push_back(tmpind);
+          ++t_col_ptr[tid][j - jstart + 1];
+        }
+        acc[tmpind] = zero;
       }
-      acc[tmpind] = zero;
+    }
+  }
+  for (int tid = 0; tid < num_threads; ++tid) {
+    int jstart = (tid * b.n) / num_threads;
+    int jend = ((tid + 1) * b.n) / num_threads;
+
+    for (int j = jstart; j < jend; ++j) {
+      c.col_ptr[j + 1] = c.col_ptr[j] + t_col_ptr[tid][j - jstart + 1];
     }
 
-    c.col_ptr[j + 1] += c.col_ptr[j];
+    c.row_ind.insert(c.row_ind.end(), t_row_ind[tid].begin(), t_row_ind[tid].end());
+    c.values.insert(c.values.end(), t_values[tid].begin(), t_values[tid].end());
   }
 }
 
 bool ZagryadskovMComplexSpMMCCSOMP::ValidationImpl() {
-  const CCS& a = std::get<0>(GetInput());
-  const CCS& b = std::get<1>(GetInput());
+  const CCS &a = std::get<0>(GetInput());
+  const CCS &b = std::get<1>(GetInput());
   return a.n == b.m;
 }
 
@@ -68,25 +94,25 @@ bool ZagryadskovMComplexSpMMCCSOMP::PreProcessingImpl() {
 }
 
 bool ZagryadskovMComplexSpMMCCSOMP::RunImpl() {
-//   for (InType i = 0; i < GetInput(); i++) {
-//     for (InType j = 0; j < GetInput(); j++) {
-//       for (InType k = 0; k < GetInput(); k++) {
-//         std::vector<InType> tmp(i + j + k, 1);
-//         GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-//         GetOutput() -= i + j + k;
-//       }
-//     }
-//   }
+  //   for (InType i = 0; i < GetInput(); i++) {
+  //     for (InType j = 0; j < GetInput(); j++) {
+  //       for (InType k = 0; k < GetInput(); k++) {
+  //         std::vector<InType> tmp(i + j + k, 1);
+  //         GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
+  //         GetOutput() -= i + j + k;
+  //       }
+  //     }
+  //   }
 
-//   const int num_threads = ppc::util::GetNumThreads();
-//   GetOutput() *= num_threads;
+  //   const int num_threads = ppc::util::GetNumThreads();
+  //   GetOutput() *= num_threads;
 
-//   std::atomic<int> counter(0);
-// #pragma omp parallel default(none) shared(counter) num_threads(ppc::util::GetNumThreads())
-//   counter++;
+  //   std::atomic<int> counter(0);
+  // #pragma omp parallel default(none) shared(counter) num_threads(ppc::util::GetNumThreads())
+  //   counter++;
 
-//   GetOutput() /= counter;
-//   return GetOutput() > 0;
+  //   GetOutput() /= counter;
+  //   return GetOutput() > 0;
 
   const CCS &a = std::get<0>(GetInput());
   const CCS &b = std::get<1>(GetInput());

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "zagryadskov_m_complex_spmm_ccs/common/include/common.hpp"
 #include "task/include/task.hpp"
+#include "zagryadskov_m_complex_spmm_ccs/common/include/common.hpp"
 
 namespace zagryadskov_m_complex_spmm_ccs {
 

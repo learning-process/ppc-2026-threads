@@ -14,7 +14,7 @@
 #include "util/include/util.hpp"
 #include "zagryadskov_m_complex_spmm_ccs/common/include/common.hpp"
 #include "zagryadskov_m_complex_spmm_ccs/seq/include/ops_seq.hpp"
-#include "zagryadskov_m_complex_spmm_ccs/seq/include/ops_omp.hpp"
+#include "zagryadskov_m_complex_spmm_ccs/omp/include/ops_omp.hpp"
 
 namespace zagryadskov_m_complex_spmm_ccs {
 

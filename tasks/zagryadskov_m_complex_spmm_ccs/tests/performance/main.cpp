@@ -11,7 +11,7 @@
 #include "util/include/perf_test_util.hpp"
 #include "zagryadskov_m_complex_spmm_ccs/common/include/common.hpp"
 #include "zagryadskov_m_complex_spmm_ccs/seq/include/ops_seq.hpp"
-#include "zagryadskov_m_complex_spmm_ccs/seq/include/ops_omp.hpp"
+#include "zagryadskov_m_complex_spmm_ccs/omp/include/ops_omp.hpp"
 
 namespace zagryadskov_m_complex_spmm_ccs {
 
@@ -20,7 +20,7 @@ class ZagryadskovMRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType
   OutType test_result_;
 
   void SetUp() override {
-    int dim = 50000;
+    int dim = 20000;
     int seed = 0;
     CCS &a = std::get<0>(input_data_);
     CCS &b = std::get<1>(input_data_);
