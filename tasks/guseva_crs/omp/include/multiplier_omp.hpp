@@ -26,8 +26,6 @@ class MultiplierOmp : public Multiplier {
   [[nodiscard]] CRS Multiply(const CRS &a, const CRS &b) const override {
     std::size_t n = a.nrows;
     std::size_t i = 0;
-    std::size_t j = 0;
-    std::size_t k = 0;
 
     auto bt = this->Transpose(b);
 
@@ -35,8 +33,10 @@ class MultiplierOmp : public Multiplier {
     std::vector<std::vector<double>> values(n);
     std::vector<std::size_t> row_index(n + 1, 0);
 
-#pragma omp parallel shared(n, a, bt, columns, values, row_index) private(i, j, k) default(none)
+#pragma omp parallel shared(n, a, bt, columns, values, row_index) private(i) default(none)
     {
+      std::size_t j = 0;
+      std::size_t k = 0;
       std::vector<int> temp(n);
 #pragma omp for private(j, k)
       for (i = 0; i < n; i++) {
