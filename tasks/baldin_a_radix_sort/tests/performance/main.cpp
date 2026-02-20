@@ -9,10 +9,10 @@
 namespace baldin_a_radix_sort {
 
 class BaldinARadixSortPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
-
-  const int sz = 10'000'000;
+protected:
   void SetUp() override {
+    const int sz = 10'000'000;
+
     input_data_.resize(sz);
 
     std::mt19937 gen(42);
@@ -30,6 +30,8 @@ class BaldinARadixSortPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
   InType GetTestInputData() final {
     return input_data_;
   }
+private:
+  InType input_data_;
 };
 
 TEST_P(BaldinARadixSortPerfTests, RunPerfModes) {
