@@ -2,12 +2,11 @@
 
 #include <algorithm>
 #include <array>
-#include <cstdint>
+#include <climits>
+#include <cstddef>
 #include <random>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "baldin_a_radix_sort/common/include/common.hpp"
@@ -29,7 +28,7 @@ class BaldinARadixSortFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
     input_data_ = std::get<1>(params);
 
     ref_data_ = input_data_;
-    std::sort(ref_data_.begin(), ref_data_.end());
+    std::ranges::sort(ref_data_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -53,7 +52,7 @@ TEST_P(BaldinARadixSortFuncTests, RadixSortTest) {
 
 std::vector<int> GenRandomVector(size_t size, int min_val, int max_val) {
   std::vector<int> res(size);
-  std::mt19937 gen(42);
+  std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
   std::uniform_int_distribution<int> dist(min_val, max_val);
   for (auto &val : res) {
     val = dist(gen);

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <climits>
 #include <random>
 
 #include "baldin_a_radix_sort/common/include/common.hpp"
@@ -16,7 +17,7 @@ class BaldinARadixSortPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
 
     input_data_.resize(sz);
 
-    std::mt19937 gen(42);
+    std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
     std::uniform_int_distribution<int> dist(INT_MIN, INT_MAX);
 
     for (auto &val : input_data_) {
@@ -25,7 +26,7 @@ class BaldinARadixSortPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::is_sorted(output_data.begin(), output_data.end());
+    return std::ranges::is_sorted(output_data);
   }
 
   InType GetTestInputData() final {

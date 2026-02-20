@@ -1,10 +1,9 @@
 #include "baldin_a_radix_sort/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <cstddef>
 #include <vector>
 
 #include "baldin_a_radix_sort/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace baldin_a_radix_sort {
 
@@ -24,7 +23,7 @@ bool BaldinARadixSortSEQ::PreProcessingImpl() {
 }
 
 namespace {
-void countingSortByByte(std::vector<int> &arr, int byteIndex) {
+void CountingSortByByte(std::vector<int> &arr, size_t byte_index) {
   size_t n = arr.size();
   if (n == 0) {
     return;
@@ -33,17 +32,17 @@ void countingSortByByte(std::vector<int> &arr, int byteIndex) {
   std::vector<int> output(n);
   std::vector<int> count(256, 0);
 
-  int shift = static_cast<int>(byteIndex) * 8;
+  size_t shift = byte_index * 8;
 
   for (size_t i = 0; i < n; i++) {
-    unsigned int rawVal = static_cast<unsigned int>(arr[i]);
-    unsigned int byteVal = (rawVal >> shift) & 0xFF;
+    auto raw_val = static_cast<unsigned int>(arr[i]);
+    unsigned int byte_val = (raw_val >> shift) & 0xFF;
 
-    if (byteIndex == sizeof(int) - 1) {
-      byteVal ^= 128;
+    if (byte_index == sizeof(int) - 1) {
+      byte_val ^= 128;
     }
 
-    count[byteVal]++;
+    count[byte_val]++;
   }
 
   for (int i = 1; i < 256; i++) {
@@ -52,15 +51,15 @@ void countingSortByByte(std::vector<int> &arr, int byteIndex) {
 
   for (size_t i = n; i > 0; i--) {
     size_t idx = i - 1;
-    unsigned int rawVal = static_cast<unsigned int>(arr[idx]);
-    unsigned int byteVal = (rawVal >> shift) & 0xFF;
+    unsigned int raw_val = static_cast<unsigned int>(arr[idx]);
+    unsigned int byte_val = (raw_val >> shift) & 0xFF;
 
-    if (byteIndex == sizeof(int) - 1) {
-      byteVal ^= 128;
+    if (byte_index == sizeof(int) - 1) {
+      byte_val ^= 128;
     }
 
-    output[count[byteVal] - 1] = arr[idx];
-    count[byteVal]--;
+    output[count[byte_val] - 1] = arr[idx];
+    count[byte_val]--;
   }
 
   arr = output;
@@ -68,8 +67,8 @@ void countingSortByByte(std::vector<int> &arr, int byteIndex) {
 }  // namespace
 
 bool BaldinARadixSortSEQ::RunImpl() {
-  for (size_t byteIndex = 0; byteIndex < sizeof(int); byteIndex++) {
-    countingSortByByte(GetOutput(), byteIndex);
+  for (size_t byte_index = 0; byte_index < sizeof(int); byte_index++) {
+    CountingSortByByte(GetOutput(), byte_index);
   }
   return true;
 }
