@@ -22,11 +22,11 @@ bool LevonychevIRadixBatcherSortSEQ::PreProcessingImpl() {
 }
 
 bool LevonychevIRadixBatcherSortSEQ::RunImpl() {
-  
   GetOutput() = GetInput();
   std::sort(GetOutput().begin(), GetOutput().end());
-  for (const auto& i : GetOutput())
+  for (const auto &i : GetOutput()) {
     std::cout << i << ' ';
+  }
   std::cout << std::endl;
   return true;
 }

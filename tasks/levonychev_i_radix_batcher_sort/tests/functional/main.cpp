@@ -25,8 +25,7 @@ class LevonychevIRadixBatcherSortRunFuncTestsThreads : public ppc::util::BaseRun
   }
 
  protected:
-  void SetUp() override {
-  }
+  void SetUp() override {}
 
   bool CheckTestOutputData(OutType &output_data) final {
     return output_data.size() > 0;
@@ -48,14 +47,16 @@ TEST_P(LevonychevIRadixBatcherSortRunFuncTestsThreads, RadixBatcherSortTests) {
 
 const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<LevonychevIRadixBatcherSortSEQ, InType>(kTestParam, PPC_SETTINGS_levonychev_i_radix_batcher_sort));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LevonychevIRadixBatcherSortSEQ, InType>(
+    kTestParam, PPC_SETTINGS_levonychev_i_radix_batcher_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = LevonychevIRadixBatcherSortRunFuncTestsThreads::PrintFuncTestName<LevonychevIRadixBatcherSortRunFuncTestsThreads>;
+const auto kPerfTestName =
+    LevonychevIRadixBatcherSortRunFuncTestsThreads::PrintFuncTestName<LevonychevIRadixBatcherSortRunFuncTestsThreads>;
 
-INSTANTIATE_TEST_SUITE_P(RadixBatcherSortTests, LevonychevIRadixBatcherSortRunFuncTestsThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RadixBatcherSortTests, LevonychevIRadixBatcherSortRunFuncTestsThreads, kGtestValues,
+                         kPerfTestName);
 
 }  // namespace
 

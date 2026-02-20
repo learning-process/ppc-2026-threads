@@ -9,8 +9,7 @@ namespace levonychev_i_radix_batcher_sort {
 class LevonychevIRadixBatcherSortRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_{};
 
-  void SetUp() override {
-  }
+  void SetUp() override {}
 
   bool CheckTestOutputData(OutType &output_data) final {
     return output_data.size() > 0;
