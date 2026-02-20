@@ -5,12 +5,12 @@
 #include <array>
 #include <cstdint>
 #include <numeric>
+#include <random>
 #include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <random>
 
 #include "baldin_a_radix_sort/common/include/common.hpp"
 #include "baldin_a_radix_sort/seq/include/ops_seq.hpp"
@@ -54,27 +54,30 @@ TEST_P(BaldinARadixSortFuncTests, RadixSortTest) {
 }
 
 std::vector<int> GenRandomVector(size_t size, int min_val, int max_val) {
-    std::vector<int> res(size);
-    std::mt19937 gen(42);
-    std::uniform_int_distribution<int> dist(min_val, max_val);
-    for (auto& val : res) val = dist(gen);
-    return res;
+  std::vector<int> res(size);
+  std::mt19937 gen(42);
+  std::uniform_int_distribution<int> dist(min_val, max_val);
+  for (auto &val : res) {
+    val = dist(gen);
+  }
+
+  return res;
 }
 
-const std::array<TestType, 13> kTestParam = {  std::make_tuple("Empty", std::vector<int>{}),
-                                              std::make_tuple("Single_Element", std::vector<int>{42}),
-                                              std::make_tuple("Already_Sorted", std::vector<int>{1, 2, 3, 4, 5, 10, 20}),
-                                              std::make_tuple("Reverse_Sorted", std::vector<int>{50, 40, 30, 20, 10, 5, 1}),
-                                              std::make_tuple("Duplicates", std::vector<int>{5, 1, 5, 2, 1, 5, 5}),
-                                              std::make_tuple("Negative_Only", std::vector<int>{-10, -50, -1, -100, -2}),
-                                              std::make_tuple("Mixed_Sign", std::vector<int>{-10, 50, -1, 0, 100, -200, 5}),
-                                              std::make_tuple("Max_Min_Int", std::vector<int>{INT_MAX, INT_MIN, 0, -1, 1}), 
-                                              std::make_tuple("All_Zeros", std::vector<int>{0, 0, 0, 0, 0}),
-                                              std::make_tuple("Alternating_Signs", std::vector<int>{1, -1, 2, -2, 3, -3}),
-                                              std::make_tuple("Random_Small_Range", GenRandomVector(100, -10, 10)),
-                                              std::make_tuple("Random_Large_Numbers", std::vector<int>{1000000, -1000000, 500000, -999999, 12345678}),
-                                              std::make_tuple("Random_100_Elements", GenRandomVector(100, -1000, 1000))
-                                          };
+const std::array<TestType, 13> kTestParam = {
+    std::make_tuple("Empty", std::vector<int>{}),
+    std::make_tuple("Single_Element", std::vector<int>{42}),
+    std::make_tuple("Already_Sorted", std::vector<int>{1, 2, 3, 4, 5, 10, 20}),
+    std::make_tuple("Reverse_Sorted", std::vector<int>{50, 40, 30, 20, 10, 5, 1}),
+    std::make_tuple("Duplicates", std::vector<int>{5, 1, 5, 2, 1, 5, 5}),
+    std::make_tuple("Negative_Only", std::vector<int>{-10, -50, -1, -100, -2}),
+    std::make_tuple("Mixed_Sign", std::vector<int>{-10, 50, -1, 0, 100, -200, 5}),
+    std::make_tuple("Max_Min_Int", std::vector<int>{INT_MAX, INT_MIN, 0, -1, 1}),
+    std::make_tuple("All_Zeros", std::vector<int>{0, 0, 0, 0, 0}),
+    std::make_tuple("Alternating_Signs", std::vector<int>{1, -1, 2, -2, 3, -3}),
+    std::make_tuple("Random_Small_Range", GenRandomVector(100, -10, 10)),
+    std::make_tuple("Random_Large_Numbers", std::vector<int>{1000000, -1000000, 500000, -999999, 12345678}),
+    std::make_tuple("Random_100_Elements", GenRandomVector(100, -1000, 1000))};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<BaldinARadixSortSEQ, InType>(kTestParam, PPC_SETTINGS_baldin_a_radix_sort));

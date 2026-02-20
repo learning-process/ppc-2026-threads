@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
-#include <random>
+
 #include <algorithm>
+#include <random>
 
 #include "baldin_a_radix_sort/common/include/common.hpp"
 #include "baldin_a_radix_sort/seq/include/ops_seq.hpp"
@@ -9,17 +10,17 @@
 namespace baldin_a_radix_sort {
 
 class BaldinARadixSortPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-protected:
+ protected:
   void SetUp() override {
     const int sz = 10'000'000;
 
     input_data_.resize(sz);
 
     std::mt19937 gen(42);
-    std::uniform_int_distribution<int> dist(INT_MIN, INT_MAX); 
+    std::uniform_int_distribution<int> dist(INT_MIN, INT_MAX);
 
-    for(auto& val : input_data_) {
-        val = dist(gen);
+    for (auto &val : input_data_) {
+      val = dist(gen);
     }
   }
 
@@ -30,7 +31,8 @@ protected:
   InType GetTestInputData() final {
     return input_data_;
   }
-private:
+
+ private:
   InType input_data_;
 };
 
@@ -40,8 +42,7 @@ TEST_P(BaldinARadixSortPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, BaldinARadixSortSEQ>(PPC_SETTINGS_baldin_a_radix_sort);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, BaldinARadixSortSEQ>(PPC_SETTINGS_baldin_a_radix_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
