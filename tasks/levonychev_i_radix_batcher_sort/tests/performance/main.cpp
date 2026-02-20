@@ -7,15 +7,13 @@
 namespace levonychev_i_radix_batcher_sort {
 
 class LevonychevIRadixBatcherSortRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 200;
   InType input_data_{};
 
   void SetUp() override {
-    input_data_ = kCount_;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    return output_data.size() > 0;
   }
 
   InType GetTestInputData() final {

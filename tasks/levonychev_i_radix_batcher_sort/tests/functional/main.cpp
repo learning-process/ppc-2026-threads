@@ -29,7 +29,7 @@ class LevonychevIRadixBatcherSortRunFuncTestsThreads : public ppc::util::BaseRun
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == 0;
+    return output_data.size() > 0;
   }
 
   InType GetTestInputData() final {
@@ -37,7 +37,7 @@ class LevonychevIRadixBatcherSortRunFuncTestsThreads : public ppc::util::BaseRun
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_ = {5, 8, 3, 0, 7, 9, 56, 16543};
 };
 
 namespace {

@@ -11,23 +11,28 @@ namespace levonychev_i_radix_batcher_sort {
 LevonychevIRadixBatcherSortSEQ::LevonychevIRadixBatcherSortSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
 }
 
 bool LevonychevIRadixBatcherSortSEQ::ValidationImpl() {
-  return GetInput() >= 0 || GetInput() < 0;
+  return true;
 }
 
 bool LevonychevIRadixBatcherSortSEQ::PreProcessingImpl() {
-  return GetOutput() == 0;
+  return true;
 }
 
 bool LevonychevIRadixBatcherSortSEQ::RunImpl() {
-  return GetOutput() == 0;
+  
+  GetOutput() = GetInput();
+  std::sort(GetOutput().begin(), GetOutput().end());
+  for (const auto& i : GetOutput())
+    std::cout << i << ' ';
+  std::cout << std::endl;
+  return true;
 }
 
 bool LevonychevIRadixBatcherSortSEQ::PostProcessingImpl() {
-  return GetOutput() == 0;
+  return true;
 }
 
 }  // namespace levonychev_i_radix_batcher_sort
