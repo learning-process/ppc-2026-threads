@@ -16,6 +16,49 @@ ZagryadskovMComplexSpMMCCSOMP::ZagryadskovMComplexSpMMCCSOMP(const InType &in) {
   GetOutput() = CCS();
 }
 
+void ZagryadskovMComplexSpMMCCSOMP::SpMMkernel(const CCS &a, const CCS &b, const std::complex<double> &zero,
+                                               const double eps, const int num_threads,
+                                               std::vector<std::vector<int>> &t_row_ind,
+                                               std::vector<std::vector<std::complex<double>>> &t_values,
+                                               std::vector<std::vector<int>> &t_col_ptr) {
+  int tid = omp_get_thread_num();
+  int jstart = (tid * b.n) / num_threads;
+  int jend = ((tid + 1) * b.n) / num_threads;
+
+  t_col_ptr[tid].assign(jend - jstart + 1, 0);
+
+  std::vector<int> rows;
+  std::vector<int> marker(a.m, -1);
+  std::vector<std::complex<double>> acc(a.m, zero);
+
+  for (int j = jstart; j < jend; ++j) {
+    rows.clear();
+
+    for (int k = b.col_ptr[j]; k < b.col_ptr[j + 1]; ++k) {
+      std::complex<double> tmpval = b.values[k];
+      int btmpind = b.row_ind[k];
+
+      for (int zp = a.col_ptr[btmpind]; zp < a.col_ptr[btmpind + 1]; ++zp) {
+        int atmpind = a.row_ind[zp];
+        acc[atmpind] += tmpval * a.values[zp];
+        if (marker[atmpind] != j) {
+          rows.push_back(atmpind);
+          marker[atmpind] = j;
+        }
+      }
+    }
+
+    for (int tmpind : rows) {
+      if (std::abs(acc[tmpind]) > eps) {
+        t_values[tid].push_back(acc[tmpind]);
+        t_row_ind[tid].push_back(tmpind);
+        ++t_col_ptr[tid][j - jstart + 1];
+      }
+      acc[tmpind] = zero;
+    }
+  }
+}
+
 void ZagryadskovMComplexSpMMCCSOMP::SpMM(const CCS &a, const CCS &b, CCS &c) {
   c.m = a.m;
   c.n = b.n;
@@ -33,42 +76,7 @@ void ZagryadskovMComplexSpMMCCSOMP::SpMM(const CCS &a, const CCS &b, CCS &c) {
 #pragma omp parallel default(none) shared(zero, eps, num_threads, t_row_ind, t_values, t_col_ptr, a, b) \
     num_threads(ppc::util::GetNumThreads())
   {
-    int tid = omp_get_thread_num();
-    int jstart = (tid * b.n) / num_threads;
-    int jend = ((tid + 1) * b.n) / num_threads;
-
-    t_col_ptr[tid].assign(jend - jstart + 1, 0);
-
-    std::vector<int> rows;
-    std::vector<int> marker(a.m, -1);
-    std::vector<std::complex<double>> acc(a.m, zero);
-
-    for (int j = jstart; j < jend; ++j) {
-      rows.clear();
-
-      for (int k = b.col_ptr[j]; k < b.col_ptr[j + 1]; ++k) {
-        std::complex<double> tmpval = b.values[k];
-        int btmpind = b.row_ind[k];
-
-        for (int zp = a.col_ptr[btmpind]; zp < a.col_ptr[btmpind + 1]; ++zp) {
-          int atmpind = a.row_ind[zp];
-          acc[atmpind] += tmpval * a.values[zp];
-          if (marker[atmpind] != j) {
-            rows.push_back(atmpind);
-            marker[atmpind] = j;
-          }
-        }
-      }
-
-      for (int tmpind : rows) {
-        if (std::abs(acc[tmpind]) > eps) {
-          t_values[tid].push_back(acc[tmpind]);
-          t_row_ind[tid].push_back(tmpind);
-          ++t_col_ptr[tid][j - jstart + 1];
-        }
-        acc[tmpind] = zero;
-      }
-    }
+    SpMMkernel(a, b, zero, eps, num_threads, t_row_ind, t_values, t_col_ptr);
   }
   for (int tid = 0; tid < num_threads; ++tid) {
     int jstart = (tid * b.n) / num_threads;
