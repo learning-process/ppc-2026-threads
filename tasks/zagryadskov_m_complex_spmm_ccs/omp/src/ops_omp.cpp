@@ -2,6 +2,7 @@
 
 #include <omp.h>
 
+#include <cmath>
 #include <complex>
 #include <vector>
 
@@ -16,9 +17,8 @@ ZagryadskovMComplexSpMMCCSOMP::ZagryadskovMComplexSpMMCCSOMP(const InType &in) {
   GetOutput() = CCS();
 }
 
-void ZagryadskovMComplexSpMMCCSOMP::SpMMkernel(const CCS &a, const CCS &b, const std::complex<double> &zero,
-                                               const double eps, const int num_threads,
-                                               std::vector<std::vector<int>> &t_row_ind,
+void ZagryadskovMComplexSpMMCCSOMP::SpMMkernel(const CCS &a, const CCS &b, const std::complex<double> &zero, double eps,
+                                               int num_threads, std::vector<std::vector<int>> &t_row_ind,
                                                std::vector<std::vector<std::complex<double>>> &t_values,
                                                std::vector<std::vector<int>> &t_col_ptr) {
   int tid = omp_get_thread_num();
