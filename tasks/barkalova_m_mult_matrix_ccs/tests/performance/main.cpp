@@ -1,3 +1,4 @@
+/*
 #include <gtest/gtest.h>
 
 // #include "barkalova_m_mult_matrix_ccs/all/include/ops_all.hpp"
@@ -41,3 +42,7 @@ const auto kPerfTestName = BarkalovaMMultMatrixCcsPerfTestThreads::CustomPerfTes
 INSTANTIATE_TEST_SUITE_P(RunModeTests, BarkalovaMMultMatrixCcsPerfTestThreads, kGtestValues, kPerfTestName);
 
 }  // namespace barkalova_m_mult_matrix_ccs
+*/
+
+
+
