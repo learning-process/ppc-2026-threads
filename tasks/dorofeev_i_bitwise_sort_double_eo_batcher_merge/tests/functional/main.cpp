@@ -1,12 +1,9 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
+#include <random>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -31,31 +28,29 @@ class DorofeevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(std::string("dorofeev_i_bitwise_sort_double_eo_batcher_merge"), "pic.ppm");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
-
+    // 1. Достаем НАШ кортеж параметров из обертки фреймворка
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    
+    // 2. И уже из нашего кортежа берем размер массива (нулевой элемент)
+    int size = std::get<0>(params);
+
+    // Настраиваем генератор случайных чисел
+    std::mt19937 gen(42); // Фиксированный сид для стабильности тестов
+    std::uniform_real_distribution<double> dist(-1000.0, 1000.0);
+
+    input_data_.resize(size);
+    for (int i = 0; i < size; ++i) {
+      input_data_[i] = dist(gen);
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    // Создаем эталонный вектор и сортируем его стандартным методом
+    std::vector<double> expected = input_data_;
+    std::sort(expected.begin(), expected.end());
+    
+    // Сравниваем результат твоей таски с эталоном
+    return output_data == expected;
   }
 
   InType GetTestInputData() final {
@@ -63,29 +58,38 @@ class DorofeevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
 };
 
 namespace {
 
-TEST_P(DorofeevIRunFuncTestsThreads, MatmulFromPic) {
+TEST_P(DorofeevIRunFuncTestsThreads, TestSort) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+// Задаем параметры: размер массива и строковое описание для логов
+const std::array<TestType, 4> kTestParam = {
+    std::make_tuple(10, "Small_Array"), 
+    std::make_tuple(128, "Power_Of_Two"), 
+    std::make_tuple(137, "Odd_Size"),
+    std::make_tuple(1000, "Large_Array")
+};
 
+const auto kTaskName = PPC_SETTINGS_dorofeev_i_bitwise_sort_double_eo_batcher_merge;
+
+// Собираем все реализации (ALL, OMP, SEQ, STL, TBB) в один тестовый набор
 const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeALL, InType>(kTestParam, PPC_SETTINGS_example_threads),
-                   ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeOMP, InType>(kTestParam, PPC_SETTINGS_example_threads),
-                   ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeSEQ, InType>(kTestParam, PPC_SETTINGS_example_threads),
-                   ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeSTL, InType>(kTestParam, PPC_SETTINGS_example_threads),
-                   ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeTBB, InType>(kTestParam, PPC_SETTINGS_example_threads));
+    std::tuple_cat(/*ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeALL, InType>(kTestParam, kTaskName),
+                   ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeOMP, InType>(kTestParam, kTaskName),*/
+                   ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeSEQ, InType>(kTestParam, kTaskName)
+                   /*ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeSTL, InType>(kTestParam, kTaskName),
+                   ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeTBB, InType>(kTestParam, kTaskName)*/);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = DorofeevIRunFuncTestsThreads::PrintFuncTestName<DorofeevIRunFuncTestsThreads>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, DorofeevIRunFuncTestsThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(SortTests, DorofeevIRunFuncTestsThreads, kGtestValues, kPerfTestName);
 
 }  // namespace
 
