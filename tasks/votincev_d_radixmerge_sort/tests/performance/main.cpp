@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <vector>
+#include <cstdint>
 
 #include "util/include/perf_test_util.hpp"
 #include "votincev_d_radixmerge_sort/common/include/common.hpp"
@@ -43,6 +43,7 @@ class VotincevDRadixMergeSortRunPerfTestsProcesses : public ppc::util::BaseRunPe
   }
 };
 
+namespace {
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, VotincevDRadixMergeSortSEQ>(PPC_SETTINGS_votincev_d_radixmerge_sort);
 
@@ -54,5 +55,7 @@ TEST_P(VotincevDRadixMergeSortRunPerfTestsProcesses, RunPerfModes) {
 }
 
 INSTANTIATE_TEST_SUITE_P(RunPerf, VotincevDRadixMergeSortRunPerfTestsProcesses, kGtestValues, kPerfTestName);
+
+}  // namespace
 
 }  // namespace votincev_d_radixmerge_sort
