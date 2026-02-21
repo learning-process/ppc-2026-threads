@@ -55,19 +55,9 @@ bool LevonychevIRadixBatcherSortSEQ::PreProcessingImpl() {
 bool LevonychevIRadixBatcherSortSEQ::RunImpl() {
   GetOutput() = GetInput();
 
-  for (const auto &i : GetOutput()) {
-    std::cout << i << ' ';
-  }
-  std::cout << std::endl;
-
   for (size_t i = 0; i < sizeof(int); ++i) {
     CountingSort(GetOutput(), i);
   }
-
-  for (const auto &i : GetOutput()) {
-    std::cout << i << ' ';
-  }
-  std::cout << std::endl;
 
   return true;
 }

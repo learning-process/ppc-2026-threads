@@ -7,9 +7,22 @@
 namespace levonychev_i_radix_batcher_sort {
 
 class LevonychevIRadixBatcherSortRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_ = {170, 45, 75, 90, 2, 24, 802, 66};
+  InType input_data_ = {};
 
-  void SetUp() override {}
+  void SetUp() override {
+    const int a = 1664525;
+    const int c = 1013904223;
+    const int m = INT32_MAX;
+    int seed = 15;
+    const int size = 10'000'000;
+    input_data_.clear();
+    input_data_.resize(size);
+
+    for (int i = 0; i < size; ++i) {
+      seed = (a * seed + c) % m;
+      input_data_[i] = seed % 2000 - 1000;
+    }
+  }
 
   bool CheckTestOutputData(OutType &output_data) final {
     return !output_data.empty();
