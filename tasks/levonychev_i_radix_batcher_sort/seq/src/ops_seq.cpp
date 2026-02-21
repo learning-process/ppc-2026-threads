@@ -61,7 +61,7 @@ bool LevonychevIRadixBatcherSortSEQ::RunImpl() {
   }
   std::cout << std::endl;
 
-  for (int32_t i = 0; i < sizeof(int); ++i) {
+  for (int i = 0; i < sizeof(int); ++i) {
     CountingSort(GetOutput(), i);
   }
 
