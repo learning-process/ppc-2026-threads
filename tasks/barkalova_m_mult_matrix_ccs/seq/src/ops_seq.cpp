@@ -59,7 +59,7 @@ bool BarkalobaMMultMatrixCcsSEQ::PostProcessingImpl() {
 
 }  // namespace barkalova_m_mult_matrix_ccs
 */
-
+/*
 #include "barkalova_m_mult_matrix_ccs/seq/include/ops_seq.hpp"
 
 #include <algorithm>
@@ -79,82 +79,45 @@ BarkalovaMMultMatrixCcsSEQ::BarkalovaMMultMatrixCcsSEQ(const InType &in) {
 bool BarkalovaMMultMatrixCcsSEQ::ValidationImpl() {
   const auto &[A, B] = GetInput();
 
-  // Проверка размеров матриц
-  if (A.rows <= 0 || A.cols <= 0 || B.rows <= 0 || B.cols <= 0) {
+  // Базовая проверка (обязательно)
+  if (A.rows <= 0 || A.cols <= 0 || B.rows <= 0 || B.cols <= 0 || A.cols != B.rows) {
     return false;
   }
 
-  // Проверка согласованности размерностей для умножения
-  if (A.cols != B.rows) {
+  // Проверка структуры (критично для безопасности)
+  if (A.col_ptrs.size() != static_cast<size_t>(A.cols) + 1 || 
+      B.col_ptrs.size() != static_cast<size_t>(B.cols) + 1) {
     return false;
   }
 
-  // Проверка корректности структуры CCS
-  if (A.col_ptrs.size() != static_cast<size_t>(A.cols) + 1 || B.col_ptrs.size() != static_cast<size_t>(B.cols) + 1) {
+  // Проверка целостности данных
+  if (A.row_indices.size() != A.values.size() || 
+      B.row_indices.size() != B.values.size()) {
     return false;
   }
 
-  if (A.row_indices.size() != A.values.size() || B.row_indices.size() != B.values.size()) {
+  // Проверка базовых указателей
+  if (A.col_ptrs.empty() || A.col_ptrs[0] != 0 || 
+      B.col_ptrs.empty() || B.col_ptrs[0] != 0) {
     return false;
   }
 
-  // Проверка, что первый указатель столбцов равен 0
-  if ((!A.col_ptrs.empty() && A.col_ptrs[0] != 0) || (!B.col_ptrs.empty() && B.col_ptrs[0] != 0)) {
-    return false;
+  // Проверка индексов строк (чтобы избежать выхода за границы)
+  for (int idx : A.row_indices) {
+    if (idx < 0 || idx >= A.rows) return false;
   }
-
-  // Проверка корректности указателей столбцов (неубывающая последовательность)
-  for (size_t j = 0; j < A.col_ptrs.size() - 1; ++j) {
-    if (A.col_ptrs[j] > A.col_ptrs[j + 1]) {
-      return false;
-    }
-  }
-
-  for (size_t j = 0; j < B.col_ptrs.size() - 1; ++j) {
-    if (B.col_ptrs[j] > B.col_ptrs[j + 1]) {
-      return false;
-    }
-  }
-
-  // Проверка индексов строк в допустимых пределах
-  for (size_t i = 0; i < A.row_indices.size(); ++i) {
-    if (A.row_indices[i] < 0 || A.row_indices[i] >= A.rows) {
-      return false;
-    }
-  }
-
-  for (size_t i = 0; i < B.row_indices.size(); ++i) {
-    if (B.row_indices[i] < 0 || B.row_indices[i] >= B.rows) {
-      return false;
-    }
-  }
-
-  // Проверка упорядоченности индексов строк в каждом столбце
-  for (int j = 0; j < A.cols; ++j) {
-    for (int p = A.col_ptrs[j]; p < A.col_ptrs[j + 1] - 1; ++p) {
-      if (A.row_indices[p] >= A.row_indices[p + 1]) {
-        return false;
-      }
-    }
-  }
-
-  for (int j = 0; j < B.cols; ++j) {
-    for (int p = B.col_ptrs[j]; p < B.col_ptrs[j + 1] - 1; ++p) {
-      if (B.row_indices[p] >= B.row_indices[p + 1]) {
-        return false;
-      }
-    }
+  for (int idx : B.row_indices) {
+    if (idx < 0 || idx >= B.rows) return false;
   }
 
   return true;
 }
 
 bool BarkalovaMMultMatrixCcsSEQ::PreProcessingImpl() {
-  // Очищаем результат перед вычислениями
-  GetOutput() = CCSMatrix();  // так ли и обязаткльно ли это надо писать
   return true;
 }
-
+//это было у меня написано
+/*
 void BarkalovaMMultMatrixCcsSEQ::TransposeMatrix(const CCSMatrix &src, CCSMatrix &dst) {
   // Устанавливаем размеры транспонированной матрицы
   dst.rows = src.cols;
@@ -201,7 +164,7 @@ void BarkalovaMMultMatrixCcsSEQ::TransposeMatrix(const CCSMatrix &src, CCSMatrix
       Complex val = src.values[ip];
 
       int pos = dst.col_ptrs[row] + current_pos[row];
-      if (pos >= src.nnz) {
+      if (pos >= dst.nnz) {
         continue;  // Проверка границ
       }
 
@@ -212,6 +175,65 @@ void BarkalovaMMultMatrixCcsSEQ::TransposeMatrix(const CCSMatrix &src, CCSMatrix
   }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+void BarkalovaMMultMatrixCcsSEQ::TransposeMatrix(const CCSMatrix &src, CCSMatrix &dst) {
+  // Устанавливаем размеры транспонированной матрицы
+  dst.rows = src.cols;
+  dst.cols = src.rows;
+  dst.nnz = src.nnz;
+
+  if (src.nnz == 0) {
+    dst.col_ptrs.assign(dst.cols + 1, 0);
+    dst.values.clear();
+    dst.row_indices.clear();
+    return;
+  }
+
+  // Подсчет количества элементов в каждой строке исходной матрицы
+  // (это будут столбцы транспонированной матрицы)
+  std::vector<int> row_count(dst.cols, 0);  // dst.cols = src.rows
+  for (int i = 0; i < src.nnz; ++i) {
+    int row = src.row_indices[i];
+    row_count[row]++;
+  }
+
+  // Построение col_ptrs для транспонированной матрицы
+  dst.col_ptrs.resize(dst.cols + 1);
+  dst.col_ptrs[0] = 0;
+  for (int i = 0; i < dst.cols; ++i) {
+    dst.col_ptrs[i + 1] = dst.col_ptrs[i] + row_count[i];
+  }
+
+  // Временный массив для отслеживания текущих позиций
+  std::vector<int> current_pos(dst.cols, 0);
+  dst.values.resize(src.nnz);
+  dst.row_indices.resize(src.nnz);
+
+  // Заполнение values и row_indices для транспонированной матрицы
+  for (int col = 0; col < src.cols; ++col) {
+    for (int ip = src.col_ptrs[col]; ip < src.col_ptrs[col + 1]; ++ip) {
+      int row = src.row_indices[ip];
+      Complex val = src.values[ip];
+
+      int pos = dst.col_ptrs[row] + current_pos[row];
+      dst.values[pos] = val;
+      dst.row_indices[pos] = col;  // col становится индексом строки в транспонированной
+      current_pos[row]++;
+    }
+  }
+}
+//изначально было написано вот так, но вроде есть ошибка, у власовой через маркеры сделано
+/*
 void BarkalovaMMultMatrixCcsSEQ::MultiplyMatrices(const CCSMatrix &a, const CCSMatrix &b, CCSMatrix &c) {
   // Транспонируем первую матрицу
   CCSMatrix at;
@@ -265,6 +287,58 @@ void BarkalovaMMultMatrixCcsSEQ::MultiplyMatrices(const CCSMatrix &a, const CCSM
   // Устанавливаем последний указатель
   c.col_ptrs[c.cols] = static_cast<int>(c.values.size());
   c.nnz = static_cast<int>(c.values.size());
+} 
+
+
+
+
+
+
+void BarkalovaMMultMatrixCcsSEQ::MultiplyMatrices(const CCSMatrix &a, const CCSMatrix &b, CCSMatrix &c) {
+  // Транспонируем A для эффективного доступа к строкам
+  CCSMatrix at;
+  TransposeMatrix(a, at);
+
+  // Инициализация результата
+  c.rows = a.rows;
+  c.cols = b.cols;
+  c.col_ptrs.clear();
+  c.col_ptrs.push_back(0);
+  c.values.clear();
+  c.row_indices.clear();
+
+  // Для каждого столбца j матрицы B
+  for (int j = 0; j < b.cols; ++j) {
+    // Временный вектор для текущего столбца результата
+    std::vector<Complex> column(c.rows, Complex(0.0, 0.0));
+
+    // Для каждого ненулевого элемента в столбце j матрицы B
+    for (int kp = b.col_ptrs[j]; kp < b.col_ptrs[j + 1]; ++kp) {
+      int k = b.row_indices[kp];  // индекс строки в B
+      Complex b_val = b.values[kp];
+
+      // В транспонированной матрице at столбец k содержит элементы строки k исходной A
+      for (int ip = at.col_ptrs[k]; ip < at.col_ptrs[k + 1]; ++ip) {
+        int i = at.row_indices[ip];  // индекс строки в A
+        Complex a_val = at.values[ip];
+        
+        // Накапливаем результат для позиции (i, j)
+        column[i] += a_val * b_val;
+      }
+    }
+
+    // Сохраняем ненулевые элементы текущего столбца
+    for (int i = 0; i < c.rows; ++i) {
+      if (std::norm(column[i]) > kEpsilon) {
+        c.values.push_back(column[i]);
+        c.row_indices.push_back(i);
+      }
+    }
+
+    c.col_ptrs.push_back(static_cast<int>(c.values.size()));
+  }
+
+  c.nnz = static_cast<int>(c.values.size());
 }
 
 bool BarkalovaMMultMatrixCcsSEQ::RunImpl() {
@@ -290,6 +364,203 @@ bool BarkalovaMMultMatrixCcsSEQ::PostProcessingImpl() {
   }
 
   return true;
+}
+
+}  // namespace barkalova_m_mult_matrix_ccs
+*/
+
+
+
+
+//как у власовой
+#include "barkalova_m_mult_matrix_ccs/seq/include/ops_seq.hpp"
+
+#include <cmath>
+#include <cstddef>
+#include <exception>
+#include <vector>
+#include <complex>
+
+#include "barkalova_m_mult_matrix_ccs/common/include/common.hpp"
+
+namespace barkalova_m_mult_matrix_ccs {
+
+namespace {
+constexpr double kEpsilon = 1e-10;
+}  // namespace
+
+BarkalovaMMultMatrixCcsSEQ::BarkalovaMMultMatrixCcsSEQ(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = CCSMatrix{};
+}
+
+bool BarkalovaMMultMatrixCcsSEQ::ValidationImpl() {
+  const auto &[A, B] = GetInput();
+
+  // Базовая проверка размерностей
+  if (A.rows <= 0 || A.cols <= 0 || B.rows <= 0 || B.cols <= 0 || A.cols != B.rows) {
+    return false;
+  }
+
+  // Проверка структуры CCS
+  if (A.col_ptrs.size() != static_cast<size_t>(A.cols) + 1 || 
+      B.col_ptrs.size() != static_cast<size_t>(B.cols) + 1) {
+    return false;
+  }
+
+  // Проверка целостности данных
+  if (A.row_indices.size() != A.values.size() || 
+      B.row_indices.size() != B.values.size()) {
+    return false;
+  }
+
+  // Проверка, что col_ptrs не пустые и начинаются с 0
+  if (A.col_ptrs.empty() || A.col_ptrs[0] != 0 || 
+      B.col_ptrs.empty() || B.col_ptrs[0] != 0) {
+    return false;
+  }
+
+  // Проверка, что col_ptrs монотонно возрастают
+  for (size_t i = 0; i < A.col_ptrs.size() - 1; ++i) {
+    if (A.col_ptrs[i] > A.col_ptrs[i + 1]) return false;
+  }
+  for (size_t i = 0; i < B.col_ptrs.size() - 1; ++i) {
+    if (B.col_ptrs[i] > B.col_ptrs[i + 1]) return false;
+  }
+
+  // Проверка индексов строк (только если есть ненулевые элементы)
+  for (int idx : A.row_indices) {
+    if (idx < 0 || idx >= A.rows) return false;
+  }
+  for (int idx : B.row_indices) {
+    if (idx < 0 || idx >= B.rows) return false;
+  }
+
+  // Проверка, что количество ненулевых элементов соответствует col_ptrs
+  if (A.nnz != static_cast<int>(A.values.size()) || 
+      B.nnz != static_cast<int>(B.values.size())) {
+    return false;
+  }
+  
+  if (A.nnz != A.col_ptrs.back() || B.nnz != B.col_ptrs.back()) {
+    return false;
+  }
+
+  return true;
+}
+
+bool BarkalovaMMultMatrixCcsSEQ::PreProcessingImpl() {
+  return true;
+}
+
+void BarkalovaMMultMatrixCcsSEQ::TransposeMatrix(const CCSMatrix &a, CCSMatrix &at) {
+  at.rows = a.cols;
+  at.cols = a.rows;
+  at.nnz = a.nnz;
+
+  if (a.nnz == 0) {
+    at.values.clear();
+    at.row_indices.clear();
+    at.col_ptrs.assign(at.cols + 1, 0);
+    return;
+  }
+
+  std::vector<int> row_count(at.cols, 0);
+  for (int i = 0; i < a.nnz; i++) {
+    row_count[a.row_indices[i]]++;
+  }
+
+  at.col_ptrs.resize(at.cols + 1);
+  at.col_ptrs[0] = 0;
+  for (int i = 0; i < at.cols; i++) {
+    at.col_ptrs[i + 1] = at.col_ptrs[i] + row_count[i];
+  }
+
+  at.values.resize(a.nnz);
+  at.row_indices.resize(a.nnz);
+
+  std::vector<int> current_pos(at.cols, 0); 
+  for (int col = 0; col < a.cols; col++) {
+    for (int i = a.col_ptrs[col]; i < a.col_ptrs[col + 1]; i++) {
+      int row = a.row_indices[i];
+      Complex val = a.values[i];
+
+      int pos = at.col_ptrs[row] + current_pos[row];
+      at.values[pos] = val;
+      at.row_indices[pos] = col;
+      current_pos[row]++;
+    }
+  }
+}
+
+namespace {
+
+void ProcessColumnSEQ(const CCSMatrix &at, const CCSMatrix &b, int col_index, 
+                      std::vector<Complex> &temp_row, std::vector<int> &row_marker,
+                      std::vector<Complex> &res_val, std::vector<int> &res_row_ind) {
+  for (int k = b.col_ptrs[col_index]; k < b.col_ptrs[col_index + 1]; k++) {
+    int row_b = b.row_indices[k];
+    Complex val_b = b.values[k];
+
+    for (int idx = at.col_ptrs[row_b]; idx < at.col_ptrs[row_b + 1]; idx++) {
+      int row_a = at.row_indices[idx];
+      Complex val_a = at.values[idx];
+
+      if (row_marker[row_a] != col_index) {
+        row_marker[row_a] = col_index;
+        temp_row[row_a] = val_a * val_b;
+      } else {
+        temp_row[row_a] += val_a * val_b;
+      }
+    }
+  }
+
+  for (size_t i = 0; i < temp_row.size(); i++) {
+    if (row_marker[i] == col_index && std::norm(temp_row[i]) > kEpsilon) {
+      res_val.push_back(temp_row[i]);
+      res_row_ind.push_back(static_cast<int>(i));
+    }
+  }
+}
+
+}  // namespace
+
+void BarkalovaMMultMatrixCcsSEQ::MultiplyMatrices(const CCSMatrix &a, const CCSMatrix &b, CCSMatrix &c) {
+  CCSMatrix at;
+  TransposeMatrix(a, at);
+
+  c.rows = a.rows;
+  c.cols = b.cols;
+  c.col_ptrs.push_back(0);
+
+  std::vector<Complex> temp_row(c.rows, Complex(0.0, 0.0));
+  std::vector<int> row_marker(c.rows, -1);
+
+  for (int j = 0; j < b.cols; j++) {
+    ProcessColumnSEQ(at, b, j, temp_row, row_marker, c.values, c.row_indices);
+    c.col_ptrs.push_back(static_cast<int>(c.values.size()));
+  }
+
+  c.nnz = static_cast<int>(c.values.size());
+}
+
+bool BarkalovaMMultMatrixCcsSEQ::RunImpl() {
+  const auto &[a, b] = GetInput();
+
+  try {
+    CCSMatrix c;
+    MultiplyMatrices(a, b, c);
+    GetOutput() = c;
+    return true;
+  } catch (const std::exception &) {
+    return false;
+  }
+}
+
+bool BarkalovaMMultMatrixCcsSEQ::PostProcessingImpl() {
+  const auto &c = GetOutput();
+  return c.rows > 0 && c.cols > 0 && c.col_ptrs.size() == static_cast<size_t>(c.cols) + 1;
 }
 
 }  // namespace barkalova_m_mult_matrix_ccs

@@ -15,6 +15,8 @@ using BaseTask = ppc::task::Task<InType, OutType>;
 }  // namespace barkalova_m_mult_matrix_ccs
 */
 
+
+/*
 #pragma once
 
 #include <complex>
@@ -38,34 +40,53 @@ struct CCSMatrix {
   int cols = 0;                  // количество столбцов
   int nnz = 0;                   // количество ненулевых элементов
 
-  CCSMatrix() = default;
+  //CCSMatrix() = default;
 
-  CCSMatrix(int r, int c) : rows(r), cols(c) {
-    col_ptrs.resize(cols + 1, 0);
-  }
-
-  // Очистка матрицы
-  void Clear() {
-    values.clear();
-    row_indices.clear();
-    col_ptrs.assign(cols + 1, 0);
-    nnz = 0;
-  }
-
-  // Проверка на пустоту
-  bool Empty() const {
-    return values.empty();
-  }
-
-  // Количество ненулевых элементов - ИМЕННО ТАК, КАК В ТЕСТАХ!
-  size_t nonZeros() const {
-    return values.size();
-  }
+  //CCSMatrix(int r, int c) : rows(r), cols(c) {
+    //col_ptrs.resize(cols + 1, 0);
+  //}
 };
 
 using InType = std::pair<CCSMatrix, CCSMatrix>;
 using OutType = CCSMatrix;
 using TestType = std::tuple<int, int, int>;  // rows, inner_dim, cols
 using BaseTask = ppc::task::Task<InType, OutType>;
+
+}  // namespace barkalova_m_mult_matrix_ccs
+*/
+
+//как у власовой
+#pragma once
+
+#include <complex>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+
+#include "task/include/task.hpp"
+
+namespace barkalova_m_mult_matrix_ccs {
+
+using Complex = std::complex<double>;
+
+struct CCSMatrix {
+  std::vector<Complex> values;
+  std::vector<int> row_indices;
+  std::vector<int> col_ptrs;
+  int rows = 0;
+  int cols = 0;
+  int nnz = 0;
+};
+
+using InType = std::pair<CCSMatrix, CCSMatrix>;
+using OutType = CCSMatrix;
+using TestType = std::tuple<int, std::string>;
+using BaseTask = ppc::task::Task<InType, OutType>;
+
+CCSMatrix GenerateRandomSparseMatrix(int rows, int cols, double density);
+bool CompareMatrices(const CCSMatrix &a, const CCSMatrix &b, double epsilon = 1e-10);
+
+void TransposeMatrixCCS(const CCSMatrix &a, CCSMatrix &at);
 
 }  // namespace barkalova_m_mult_matrix_ccs
