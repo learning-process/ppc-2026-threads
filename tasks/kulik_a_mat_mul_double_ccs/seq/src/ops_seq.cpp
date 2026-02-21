@@ -3,6 +3,8 @@
 #include <numeric>
 #include <vector>
 #include <tuple>
+#include <cstddef>
+#include <algorithm>
 
 #include "example_threads/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -30,8 +32,39 @@ bool KulikAMatMulDoubleCcsSEQ::RunImpl() {
   OutType &c = GetOutput();
   c.n = a.n;
   c.m = b.m;
-  c.col_ind.resize(c.m + 1, 0);
-
+  c.col_ind.resize(c.m + 1, 0); //
+  std::vector<double> accum(a.n, 0.0); //
+  std::vector<bool> nz_elem_rows(a.n, false); //
+  std::vector<size_t> nnz_rows;
+  for (size_t j = 0; j < b.m; ++j) {
+    c.col_ind[j] = c.value.size();
+    for (size_t k = b.col_ind[j]; k < b.col_ind[j + 1]; ++k) {
+      size_t ind = b.row[k];
+      double b_val = b.value[k];
+      for (size_t z = A.col_ind[ind]; z < A.col_ind[ind + 1]; ++z) {
+        size_t i = a.row[z];
+        double a_val = a.value[z];
+        accum[i] += a_val * b_val;
+        if (!nz_elem_rows[i]) {
+          nz_elem_rows[i] = true;
+          nnz_rows.push_back(i);
+        }
+      }
+    }
+    std::sort(nnz_rows.begin(), nnz_rows.end());
+    for (size_t i = 0; i < nnz_rows.size(); ++i) {
+      size_t temp = nnz_rows[i];
+      if (accum[temp] != 0.0) {
+        c.row.push_back(temp);
+        c.value.push_back(accum[temp]);
+      }
+      accum[temp] = 0.0;
+      nz_elem_rows[temp] = false;
+    }
+    nnz_rows.clear();
+  }
+  c.nz = c.value.size();
+  c.col_ind[b.m] = c.nz;
 
   return true;
 }
