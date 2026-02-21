@@ -2,12 +2,11 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <numeric>
 #include <tuple>
 #include <vector>
+#include <ranges>
 
 #include "kulik_a_mat_mul_double_ccs/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace kulik_a_mat_mul_double_ccs {
 
@@ -43,9 +42,9 @@ bool KulikAMatMulDoubleCcsSEQ::RunImpl() {
     for (size_t k = b.col_ind[j]; k < b.col_ind[j + 1]; ++k) {
       size_t ind = b.row[k];
       double b_val = b.value[k];
-      for (size_t z = a.col_ind[ind]; z < a.col_ind[ind + 1]; ++z) {
-        size_t i = a.row[z];
-        double a_val = a.value[z];
+      for (size_t zc = a.col_ind[ind]; zc < a.col_ind[ind + 1]; ++zc) {
+        size_t i = a.row[zc];
+        double a_val = a.value[zc];
         accum[i] += a_val * b_val;
         if (!nz_elem_rows[i]) {
           nz_elem_rows[i] = true;
@@ -53,15 +52,14 @@ bool KulikAMatMulDoubleCcsSEQ::RunImpl() {
         }
       }
     }
-    std::sort(nnz_rows.begin(), nnz_rows.end());
-    for (size_t i = 0; i < nnz_rows.size(); ++i) {
-      size_t temp = nnz_rows[i];
-      if (accum[temp] != 0.0) {
-        c.row.push_back(temp);
-        c.value.push_back(accum[temp]);
+    std::ranges::sort(nnz_rows);;
+    for (size_t i : nnz_rows) {
+      if (accum[i] != 0.0) {
+        c.row.push_back(i);
+        c.value.push_back(accum[i]);
       }
-      accum[temp] = 0.0;
-      nz_elem_rows[temp] = false;
+      accum[i] = 0.0;
+      nz_elem_rows[i] = false;
     }
     nnz_rows.clear();
   }

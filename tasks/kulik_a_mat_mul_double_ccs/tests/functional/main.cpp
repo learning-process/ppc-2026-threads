@@ -1,18 +1,14 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
 #include <fstream>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
+#include <ios>
 
 #include "kulik_a_mat_mul_double_ccs/common/include/common.hpp"
 #include "kulik_a_mat_mul_double_ccs/seq/include/ops_seq.hpp"
@@ -73,8 +69,9 @@ class KulikARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
     std::vector<double> value{1, 35, 42, 5, 27, 32, 64, 28, 2, 20, 70, 36};
     std::vector<size_t> row{0, 3, 5, 3, 5, 1, 3, 5, 0, 1, 3, 5};
     std::vector<size_t> col_ind{0, 1, 3, 5, 8, 9, 12};
-    bool f1, f2, f3;
-    f1 = true;
+    bool f1 = true;
+    bool f2 = true;
+    bool f3 = true;
     for (size_t i = 0; i < value.size(); ++i) {
       if (std::abs(output_data.value[i] - value[i]) > 1e-12) {
         f1 = false;

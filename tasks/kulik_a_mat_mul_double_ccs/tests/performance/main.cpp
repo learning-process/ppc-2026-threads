@@ -1,9 +1,12 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
-#include <fstream>
 #include <random>
-#include <string>
+#include <cstddef>
+#include <algorithm>
+#include <vector>
+#include <ranges>
+#include <tuple>
 
 #include "kulik_a_mat_mul_double_ccs/common/include/common.hpp"
 #include "kulik_a_mat_mul_double_ccs/seq/include/ops_seq.hpp"
@@ -12,10 +15,11 @@
 namespace kulik_a_mat_mul_double_ccs {
 
 class KulikARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
 
   void SetUp() override {
-    size_t n = 20000, m = 20000, k = 20000;  // Размеры матриц (n x k) и (k x m)
+    size_t n = 20000; 
+    size_t m = 20000; 
+    size_t k = 20000;  // Размеры матриц (n x k) и (k x m)
     size_t nnz_per_col = 50;                 // кол-во ненулевых элементов в столбце
     size_t band_width = 175;                 // ленточная матрица для лучшей локальности данных
 
@@ -27,17 +31,16 @@ class KulikARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutT
       mat.row.reserve(cols * nnz_per_col);
       mat.value.reserve(cols * nnz_per_col);
 
-      std::mt19937 gen(42);
+      std::random_device rd;
+      std::mt19937 gen(rd());
       std::uniform_real_distribution<double> dist_val(-10.0, 10.0);
 
       for (size_t j = 0; j < cols; ++j) {
         mat.col_ind[j] = mat.row.size();
-        size_t min_r;
+        size_t min_r = 0;
         if (j >= band_width) {
           min_r = j - band_width;
-        } else {
-          min_r = 0;
-        }
+        } 
         size_t max_r = std::min(rows - 1, j + band_width);
 
         std::vector<size_t> current_rows;
@@ -46,14 +49,13 @@ class KulikARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutT
         std::uniform_int_distribution<size_t> dist_row(min_r, max_r);
         while (current_rows.size() < nnz_per_col) {
           size_t r = dist_row(gen);
-          if (std::find(current_rows.begin(), current_rows.end(), r) == current_rows.end()) {
+          if (std::ranges::find(current_rows, r) == current_rows.end()) {
             current_rows.push_back(r);
           }
         }
-        std::sort(current_rows.begin(), current_rows.end());
-        for (size_t row = 0; row < current_rows.size(); ++row) {
-          size_t temp = current_rows[row];
-          mat.row.push_back(temp);
+        std::ranges::sort(current_rows);
+        for (size_t row : current_rows) {
+          mat.row.push_back(row);
           mat.value.push_back(dist_val(gen));
         }
       }
@@ -79,9 +81,9 @@ class KulikARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutT
       double xj = x[j];
       size_t start = b.col_ind[j];
       size_t end = b.col_ind[j + 1];
-      for (size_t p = start; p < end; ++p) {
-        size_t i = b.row[p];
-        y[i] += b.value[p] * xj;
+      for (size_t pc = start; pc < end; ++pc) {
+        size_t i = b.row[pc];
+        y[i] += b.value[pc] * xj;
       }
     }
     std::vector<double> res1(a.m, 0.0);
@@ -89,9 +91,9 @@ class KulikARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutT
       double yj = y[j];
       size_t start = a.col_ind[j];
       size_t end = a.col_ind[j + 1];
-      for (size_t p = start; p < end; ++p) {
-        size_t i = a.row[p];
-        res1[i] += a.value[p] * yj;
+      for (size_t pc = start; pc < end; ++pc) {
+        size_t i = a.row[pc];
+        res1[i] += a.value[pc] * yj;
       }
     }
     std::vector<double> res2(output_data.m, 0.0);
@@ -99,9 +101,9 @@ class KulikARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutT
       double xj = x[j];
       size_t start = output_data.col_ind[j];
       size_t end = output_data.col_ind[j + 1];
-      for (size_t p = start; p < end; ++p) {
-        size_t i = output_data.row[p];
-        res2[i] += output_data.value[p] * xj;
+      for (size_t pc = start; pc < end; ++pc) {
+        size_t i = output_data.row[pc];
+        res2[i] += output_data.value[pc] * xj;
       }
     }
     for (size_t i = 0; i < output_data.n; ++i) {
