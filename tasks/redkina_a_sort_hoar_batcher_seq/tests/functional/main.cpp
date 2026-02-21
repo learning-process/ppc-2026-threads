@@ -22,7 +22,7 @@ class RedkinaASortHoarBatcherFuncTests : public ppc::util::BaseRunFuncTests<InTy
 
  protected:
   void SetUp() override {
-    auto params = std::get<2>(GetParam());
+    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_ = std::get<1>(params);
   }
 
@@ -34,11 +34,9 @@ class RedkinaASortHoarBatcherFuncTests : public ppc::util::BaseRunFuncTests<InTy
       return false;
     }
 
-    std::vector<int> input_copy = input_data_;
-    std::vector<int> output_copy = output_data;
-    std::ranges::sort(input_copy);
-    std::ranges::sort(output_copy);
-    return input_copy == output_copy;
+    std::vector<int> expected = input_data_;
+    std::ranges::sort(expected);
+    return output_data == expected;
   }
 
   InType GetTestInputData() final {
