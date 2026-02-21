@@ -57,7 +57,7 @@ std::vector<int> GenRandomVector(size_t size, int min_val, int max_val) {
   unsigned int cur_val = 42;
 
   for (auto &val : res) {
-    cur_val = a * cur_val + c;
+    cur_val = (a * cur_val) + c;
     int range = max_val - min_val + 1;
     val = min_val + static_cast<int>(cur_val % static_cast<unsigned int>(range));
   }
