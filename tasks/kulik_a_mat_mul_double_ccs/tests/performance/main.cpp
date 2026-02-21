@@ -15,59 +15,64 @@ class KulikARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutT
   InType input_data_{};
 
   void SetUp() override {
-    std::string bin = ".bin";
-    std::string temp1 = "matrix_perf_a";
-    std::string temp2 = "matrix_perf_b";
-    std::string filename_a = temp1 + bin;
-    std::string filename_b = temp2 + bin;
+  size_t n = 20000, m = 20000, k = 20000; // Размеры матриц (n x k) и (k x m)
+  size_t nnz_per_col = 50; // кол-во ненулевых элементов в столбце
+  size_t band_width = 175; // ленточная матрица для лучшей локальности данных
 
-    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_kulik_a_mat_mul_double_ccs, filename_a);
-    std::ifstream filestream(abs_path, std::ios::in | std::ios::binary);
-    CCS matrix_perf_a;
-    filestream.read(reinterpret_cast<char *>(&matrix_perf_a.n), sizeof(size_t));
-    filestream.read(reinterpret_cast<char *>(&matrix_perf_a.m), sizeof(size_t));
-    filestream.read(reinterpret_cast<char *>(&matrix_perf_a.nz), sizeof(size_t));
-    matrix_perf_a.col_ind.resize(matrix_perf_a.m + 1);
-    matrix_perf_a.row.resize(matrix_perf_a.nz);
-    matrix_perf_a.value.resize(matrix_perf_a.nz);
-    filestream.read(reinterpret_cast<char *>(matrix_perf_a.col_ind.data()),
-                    static_cast<std::streamsize>(matrix_perf_a.col_ind.size() * sizeof(size_t)));
-    filestream.read(reinterpret_cast<char *>(matrix_perf_a.row.data()),
-                    static_cast<std::streamsize>(matrix_perf_a.row.size() * sizeof(size_t)));
-    filestream.read(reinterpret_cast<char *>(matrix_perf_a.value.data()),
-                    static_cast<std::streamsize>(matrix_perf_a.value.size() * sizeof(double)));
+  auto generate_ccs = [&](size_t rows, size_t cols) {
+    CCS mat;
+    mat.n = rows; mat.m = cols;
+    mat.col_ind.assign(cols + 1, 0);
+    mat.row.reserve(cols * nnz_per_col);
+    mat.value.reserve(cols * nnz_per_col);
 
-    filestream.close();
-    abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_kulik_a_mat_mul_double_ccs, filename_b);
-    std::ifstream filestream2(abs_path, std::ios::in | std::ios::binary);
-    CCS matrix_perf_b;
-    filestream2.read(reinterpret_cast<char *>(&matrix_perf_b.n), sizeof(size_t));
-    filestream2.read(reinterpret_cast<char *>(&matrix_perf_b.m), sizeof(size_t));
-    filestream2.read(reinterpret_cast<char *>(&matrix_perf_b.nz), sizeof(size_t));
-    matrix_perf_b.col_ind.resize(matrix_perf_b.m + 1);
-    matrix_perf_b.row.resize(matrix_perf_b.nz);
-    matrix_perf_b.value.resize(matrix_perf_b.nz);
-    filestream2.read(reinterpret_cast<char *>(matrix_perf_b.col_ind.data()),
-                     static_cast<std::streamsize>(matrix_perf_b.col_ind.size() * sizeof(size_t)));
-    filestream2.read(reinterpret_cast<char *>(matrix_perf_b.row.data()),
-                     static_cast<std::streamsize>(matrix_perf_b.row.size() * sizeof(size_t)));
-    filestream2.read(reinterpret_cast<char *>(matrix_perf_b.value.data()),
-                     static_cast<std::streamsize>(matrix_perf_b.value.size() * sizeof(double)));
+    std::mt19937 gen(42); 
+    std::uniform_real_distribution<double> dist_val(-10.0, 10.0);
 
-    filestream2.close();
-    input_data_ = std::make_tuple(matrix_perf_a, matrix_perf_b);
-  }
+    for (size_t j = 0; j < cols; ++j) {
+      mat.col_ind[j] = mat.row.size();
+      size_t min_r;
+      if (j >= band_width) {
+        min_r = j - band_width;
+      }
+      else min_r = 0;
+      size_t max_r = std::min(rows - 1, j + band_width);
+      
+      std::vector<size_t> current_rows;
+      current_rows.push_back(j % rows); 
+      
+      std::uniform_int_distribution<size_t> dist_row(min_r, max_r);
+      while (current_rows.size() < nnz_per_col) {
+        size_t r = dist_row(gen);
+        if (std::find(current_rows.begin(), current_rows.end(), r) == current_rows.end()) {
+          current_rows.push_back(r);
+        }
+      }
+      std::sort(current_rows.begin(), current_rows.end());
+      for (size_t row = 0; row < current_rows.size(); ++row) {
+        size_t temp = current_rows[row];
+        mat.row.push_back(temp);
+        mat.value.push_back(dist_val(gen));
+      }
+    }
+    mat.col_ind[cols] = mat.row.size();
+    mat.nz = mat.row.size();
+    return mat;
+  };
+
+  input_data_ = std::make_tuple(generate_ccs(n, k), generate_ccs(k, m));
+}
   bool CheckTestOutputData(OutType &output_data) final {
     const auto &a = std::get<0>(input_data_);
     const auto &b = std::get<1>(input_data_);
-    std::vector<double> x(20000);
+    std::vector<double> x(b.m);
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<double> dis(0.0, 1.0);
     for (auto &val : x) {
       val = dis(gen);
     }
-    std::vector<double> y(20000, 0.0);
+    std::vector<double> y(b.n, 0.0);
     for (size_t j = 0; j < b.m; ++j) {
       double xj = x[j];
       size_t start = b.col_ind[j];
@@ -77,7 +82,7 @@ class KulikARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutT
         y[i] += b.value[p] * xj;
       }
     }
-    std::vector<double> res1(20000, 0.0);
+    std::vector<double> res1(a.m, 0.0);
     for (size_t j = 0; j < a.m; ++j) {
       double yj = y[j];
       size_t start = a.col_ind[j];
@@ -87,7 +92,7 @@ class KulikARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutT
         res1[i] += a.value[p] * yj;
       }
     }
-    std::vector<double> res2(20000, 0.0);
+    std::vector<double> res2(output_data.m, 0.0);
     for (size_t j = 0; j < output_data.m; ++j) {
       double xj = x[j];
       size_t start = output_data.col_ind[j];
@@ -97,7 +102,7 @@ class KulikARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutT
         res2[i] += output_data.value[p] * xj;
       }
     }
-    for (size_t i = 0; i < 20000; ++i) {
+    for (size_t i = 0; i < output_data.n; ++i) {
       if (std::abs(res1[i] - res2[i]) > 1e-10) {
         return false;
       }
