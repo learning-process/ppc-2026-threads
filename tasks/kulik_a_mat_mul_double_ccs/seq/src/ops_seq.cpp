@@ -2,9 +2,9 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <ranges>
 #include <tuple>
 #include <vector>
-#include <ranges>
 
 #include "kulik_a_mat_mul_double_ccs/common/include/common.hpp"
 
@@ -52,7 +52,8 @@ bool KulikAMatMulDoubleCcsSEQ::RunImpl() {
         }
       }
     }
-    std::ranges::sort(nnz_rows);;
+    std::ranges::sort(nnz_rows);
+    ;
     for (size_t i : nnz_rows) {
       if (accum[i] != 0.0) {
         c.row.push_back(i);
