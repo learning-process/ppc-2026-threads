@@ -30,9 +30,11 @@ bool KulikAMatMulDoubleCcsSEQ::RunImpl() {
   const auto &a = std::get<0>(GetInput());
   const auto &b = std::get<1>(GetInput());
   OutType &c = GetOutput();
+  c.value.clear();
+  c.row.clear();
   c.n = a.n;
   c.m = b.m;
-  c.col_ind.resize(c.m + 1, 0); //
+  c.col_ind.assign(c.m + 1, 0); //
   std::vector<double> accum(a.n, 0.0); //
   std::vector<bool> nz_elem_rows(a.n, false); //
   std::vector<size_t> nnz_rows;
