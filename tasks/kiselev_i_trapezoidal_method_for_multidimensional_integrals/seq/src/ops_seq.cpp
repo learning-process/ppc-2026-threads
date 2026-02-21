@@ -16,20 +16,18 @@ KiselevITestTaskSEQ::KiselevITestTaskSEQ(const InType &in) {
 }
 
 bool KiselevITestTaskSEQ::ValidationImpl() {
-  const auto &in = GetInput();
-
-  if (in.left_bounds.empty()) {
-    return false;
-  }
-  if (in.left_bounds.size() != 2) {
-    return false;
-  }
-  if (in.left_bounds.size() != in.right_bounds.size()) {
-    return false;
-  }
-  if (in.left_bounds.size() != in.step_n_size.size()) {
-    return false;
-  }
+  // if (in.left_bounds.empty()) {
+  //   return false;
+  // }
+  // if (in.left_bounds.size() != 2) {
+  //   return false;
+  // }
+  // if (in.left_bounds.size() != in.right_bounds.size()) {
+  //   return false;
+  // }
+  // if (in.left_bounds.size() != in.step_n_size.size()) {
+  //   return false;
+  // }
   return true;
 }
 
@@ -77,12 +75,17 @@ double KiselevITestTaskSEQ::ComputeIntegral(const std::vector<int> &steps) {
 bool KiselevITestTaskSEQ::RunImpl() {
   std::vector<int> steps = GetInput().step_n_size;
   double epsilon = GetInput().epsilon;
+
+  const auto &in = GetInput();
+  if (in.left_bounds.size() != 2 || in.right_bounds.size() != 2 || in.step_n_size.size() != 2) {
+    GetOutput() = 0.0;
+    return true;
+  }
   if (epsilon <= 0.0) {
     GetOutput() = ComputeIntegral(steps);
     return true;
   }
 
-  // первое вычисление
   double prev = ComputeIntegral(steps);
   double current = prev;
 
@@ -90,7 +93,6 @@ bool KiselevITestTaskSEQ::RunImpl() {
   const int max_iter = 5;
 
   while (iter < max_iter) {
-    // уточняем сетку
     for (auto &s : steps) {
       s *= 2;
     }

@@ -59,7 +59,6 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         expected_value_ = (14.0 / 3.0);
         break;
 
-      // ----- x + y -----
       case 5:
         input_data_ = {{0, 0}, {1, 1}, {150, 150}, 4};
         expected_value_ = 1.0;
@@ -80,7 +79,6 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         expected_value_ = 3.0;
         break;
 
-      // ----- sin(x)cos(y) -----
       case 9:
         input_data_ = {{0, 0}, {2 * kPi, 2 * kPi}, {600, 600}, 1};
         expected_value_ = 0.0;
@@ -101,32 +99,26 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         expected_value_ = 0.0;
         break;
 
-        // ----- cos(x-y) -----
-
       case 13:
         input_data_ = {{0, 0}, {kPi, kPi}, {300, 300}, 2};
         expected_value_ = 2 * kPi;
         break;
 
-      // [0, π/2] × [0, π/2]
       case 14:
         input_data_ = {{0, 0}, {kPi / 2, kPi / 2}, {300, 300}, 2};
         expected_value_ = (kPi / 2) * (1 - 0) + (kPi / 2) * (1 - 0);  // π
         break;
 
-      // [0,1] × [0,1]
       case 15:
         input_data_ = {{0, 0}, {1, 1}, {200, 200}, 2};
         expected_value_ = (1) * (std::cos(0) - std::cos(1)) + (1) * (std::sin(1) - std::sin(0));
         break;
 
-      // [-1,1] × [-1,1]
       case 16:
         input_data_ = {{-1, -1}, {1, 1}, {300, 300}, 2};
         expected_value_ = (2) * (std::cos(-1) - std::cos(1)) + (2) * (std::sin(1) - std::sin(-1));
         break;
 
-      // ----- exp(x+y) -----
       case 17:
         input_data_ = {{0, 0}, {1, 1}, {200, 200}, 3};
         expected_value_ = (std::exp(1) - 1) * (std::exp(1) - 1);
@@ -162,12 +154,10 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
   double expected_value_;
 };
 
-// ОБЯЗАТЕЛЬНЫЙ TEST_P
 TEST_P(KiselevIRunFuncTestsThreads, IntegralCorrectness) {
   ExecuteTest(GetParam());
 }
 
-// Параметры тестов (int + имя)
 const std::array<TestType, 21> kTestParam = {
     std::make_tuple(0, "sq1"),    std::make_tuple(1, "sq2"),    std::make_tuple(2, "sq3"),
     std::make_tuple(3, "sq4"),    std::make_tuple(4, "sq5"),    std::make_tuple(5, "lin1"),
