@@ -24,7 +24,7 @@ struct CCS {
 
 using InType = std::tuple<CCS, CCS>;
 using OutType = CCS;
-using TestType = std::tuple<int, std::string>;
+using TestType = std::tuple<std::string, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace kulik_a_mat_mul_double_ccs

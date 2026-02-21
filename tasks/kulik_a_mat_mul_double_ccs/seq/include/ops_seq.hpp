@@ -1,6 +1,6 @@
 #pragma once
 
-#include "example_threads/common/include/common.hpp"
+#include "kulik_a_mat_mul_double_ccs/common/include/common.hpp"
 #include "task/include/task.hpp"
 
 namespace kulik_a_mat_mul_double_ccs {

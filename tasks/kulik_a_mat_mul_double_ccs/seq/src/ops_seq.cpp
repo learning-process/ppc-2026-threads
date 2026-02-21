@@ -1,4 +1,4 @@
-#include "example_threads/seq/include/ops_seq.hpp"
+#include "kulik_a_mat_mul_double_ccs/seq/include/ops_seq.hpp"
 
 #include <numeric>
 #include <vector>
@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <algorithm>
 
-#include "example_threads/common/include/common.hpp"
+#include "kulik_a_mat_mul_double_ccs/common/include/common.hpp"
 #include "util/include/util.hpp"
 
 namespace kulik_a_mat_mul_double_ccs {
