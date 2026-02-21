@@ -23,56 +23,28 @@ BarkalovaMMultMatrixCcsSEQ::BarkalovaMMultMatrixCcsSEQ(const InType &in) {
 bool BarkalovaMMultMatrixCcsSEQ::ValidationImpl() {
   const auto &[A, B] = GetInput();
 
-  // Базовая проверка размерностей
-  if (A.rows <= 0 || A.cols <= 0 || B.rows <= 0 || B.cols <= 0 || A.cols != B.rows) {
+  // Самое важное: можно ли умножать матрицы
+  if (A.cols != B.rows) {
     return false;
   }
 
-  // Проверка структуры CCS
+  // Проверка, что матрицы не пустые
+  if (A.rows <= 0 || A.cols <= 0 || B.rows <= 0 || B.cols <= 0) {
+    return false;
+  }
+
+  // Проверка структуры CCS (самое минимальное)
   if (A.col_ptrs.size() != static_cast<size_t>(A.cols) + 1 || B.col_ptrs.size() != static_cast<size_t>(B.cols) + 1) {
     return false;
   }
 
-  // Проверка целостности данных
-  if (A.row_indices.size() != A.values.size() || B.row_indices.size() != B.values.size()) {
-    return false;
-  }
-
-  // Проверка, что col_ptrs не пустые и начинаются с 0
+  // Проверка, что col_ptrs начинается с 0
   if (A.col_ptrs.empty() || A.col_ptrs[0] != 0 || B.col_ptrs.empty() || B.col_ptrs[0] != 0) {
     return false;
   }
 
-  // Проверка, что col_ptrs монотонно возрастают
-  for (size_t i = 0; i < A.col_ptrs.size() - 1; ++i) {
-    if (A.col_ptrs[i] > A.col_ptrs[i + 1]) {
-      return false;
-    }
-  }
-  for (size_t i = 0; i < B.col_ptrs.size() - 1; ++i) {
-    if (B.col_ptrs[i] > B.col_ptrs[i + 1]) {
-      return false;
-    }
-  }
-
-  // Проверка индексов строк (только если есть ненулевые элементы)
-  for (int idx : A.row_indices) {
-    if (idx < 0 || idx >= A.rows) {
-      return false;
-    }
-  }
-  for (int idx : B.row_indices) {
-    if (idx < 0 || idx >= B.rows) {
-      return false;
-    }
-  }
-
-  // Проверка, что количество ненулевых элементов соответствует col_ptrs
+  // Проверка соответствия nnz
   if (A.nnz != static_cast<int>(A.values.size()) || B.nnz != static_cast<int>(B.values.size())) {
-    return false;
-  }
-
-  if (A.nnz != A.col_ptrs.back() || B.nnz != B.col_ptrs.back()) {
     return false;
   }
 

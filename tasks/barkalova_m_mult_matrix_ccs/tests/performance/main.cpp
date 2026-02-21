@@ -46,10 +46,8 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, BarkalovaMMultMatrixCcsPerfTestThreads, k
 
 #include <gtest/gtest.h>
 
-#include <complex>
 #include <cstddef>
-#include <cstdlib>
-#include <ctime>
+#include <random>
 #include <utility>
 #include <vector>
 
@@ -59,18 +57,18 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, BarkalovaMMultMatrixCcsPerfTestThreads, k
 
 namespace barkalova_m_mult_matrix_ccs {
 
-static CCSMatrix GenerateRandomCCSMatrix(int rows, int cols, double density) {
+namespace {
+
+CCSMatrix GenerateRandomCCSMatrix(int rows, int cols, double density) {
   CCSMatrix matrix;
   matrix.rows = rows;
   matrix.cols = cols;
   matrix.col_ptrs.resize(cols + 1, 0);
 
-  // Инициализируем генератор случайных чисел
-  static bool seeded = false;
-  if (!seeded) {
-    std::srand(static_cast<unsigned>(std::time(nullptr)));
-    seeded = true;
-  }
+  static std::random_device rd;
+  static std::mt19937 gen(rd());
+  static std::uniform_real_distribution<double> dist(0.0, 1.0);
+  static std::uniform_real_distribution<double> value_dist(0.1, 10.0);
 
   std::vector<int> col_counts(cols, 0);
   std::vector<std::vector<Complex>> col_values(cols);
@@ -78,19 +76,18 @@ static CCSMatrix GenerateRandomCCSMatrix(int rows, int cols, double density) {
 
   int total_nnz = 0;
 
-  for (int col = 0; col < cols; col++) {
-    for (int row = 0; row < rows; row++) {
-      // Генерируем случайное число от 0 до 1
-      double random_value = static_cast<double>(std::rand()) / RAND_MAX;
+  for (int col = 0; col < cols; ++col) {
+    for (int row = 0; row < rows; ++row) {
+      double random_value = dist(gen);
 
       if (random_value < density) {
-        double real = static_cast<double>(std::rand()) / RAND_MAX * 9.9 + 0.1;
-        double imag = static_cast<double>(std::rand()) / RAND_MAX * 9.9 + 0.1;
+        double real = value_dist(gen);
+        double imag = value_dist(gen);
 
         col_values[col].emplace_back(real, imag);
         col_rows[col].push_back(row);
-        col_counts[col]++;
-        total_nnz++;
+        ++col_counts[col];
+        ++total_nnz;
       }
     }
   }
@@ -102,11 +99,11 @@ static CCSMatrix GenerateRandomCCSMatrix(int rows, int cols, double density) {
   int current_index = 0;
   matrix.col_ptrs[0] = 0;
 
-  for (int col = 0; col < cols; col++) {
-    for (int i = 0; i < col_counts[col]; i++) {
+  for (int col = 0; col < cols; ++col) {
+    for (int i = 0; i < col_counts[col]; ++i) {
       matrix.values[current_index] = col_values[col][i];
       matrix.row_indices[current_index] = col_rows[col][i];
-      current_index++;
+      ++current_index;
     }
     matrix.col_ptrs[col + 1] = current_index;
   }
@@ -114,20 +111,22 @@ static CCSMatrix GenerateRandomCCSMatrix(int rows, int cols, double density) {
   return matrix;
 }
 
+}  // namespace
+
 class BarkalovaMMultMatrixCcsPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
     int size = 2000;
     double density = 0.01;
 
-    a_ = GenerateRandomCCSMatrix(size, size, density);
-    b_ = GenerateRandomCCSMatrix(size, size, density);
+    matrix_a_ = GenerateRandomCCSMatrix(size, size, density);
+    matrix_b_ = GenerateRandomCCSMatrix(size, size, density);
 
-    input_data_ = std::make_pair(a_, b_);
+    input_data_ = std::make_pair(matrix_a_, matrix_b_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.rows != a_.rows || output_data.cols != b_.cols) {
+    if (output_data.rows != matrix_a_.rows || output_data.cols != matrix_b_.cols) {
       return false;
     }
 
@@ -149,7 +148,8 @@ class BarkalovaMMultMatrixCcsPerfTest : public ppc::util::BaseRunPerfTests<InTyp
   }
 
  private:
-  CCSMatrix a_, b_;
+  CCSMatrix matrix_a_;
+  CCSMatrix matrix_b_;
   InType input_data_;
 };
 

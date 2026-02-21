@@ -91,11 +91,9 @@ INSTANTIATE_TEST_SUITE_P(PicMatrixTests, BarkalovaMMultMatrixCcsFuncTestsThreads
 
 #include <gtest/gtest.h>
 
-#include <algorithm>
-#include <array>
-#include <cmath>
 #include <complex>
 #include <cstddef>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -119,25 +117,26 @@ class BarkalovaMatrixMultiplyFixedTest : public ppc::util::BaseRunFuncTests<InTy
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_case = std::get<0>(params);
 
-    CCSMatrix A, B;
+    CCSMatrix matrix_a;
+    CCSMatrix matrix_b;
     expected_result_ = CCSMatrix();
 
     switch (test_case) {
       case 1: {
         // Тест 1: Диагональные матрицы с комплексными числами
-        A.rows = 2;
-        A.cols = 2;
-        A.col_ptrs = {0, 1, 2};
-        A.row_indices = {0, 1};
-        A.values = {Complex(1.0, 2.0), Complex(3.0, 4.0)};
-        A.nnz = static_cast<int>(A.values.size());
+        matrix_a.rows = 2;
+        matrix_a.cols = 2;
+        matrix_a.col_ptrs = {0, 1, 2};
+        matrix_a.row_indices = {0, 1};
+        matrix_a.values = {Complex(1.0, 2.0), Complex(3.0, 4.0)};
+        matrix_a.nnz = static_cast<int>(matrix_a.values.size());
 
-        B.rows = 2;
-        B.cols = 2;
-        B.col_ptrs = {0, 1, 2};
-        B.row_indices = {0, 1};
-        B.values = {Complex(2.0, -1.0), Complex(1.0, 1.0)};
-        B.nnz = static_cast<int>(B.values.size());
+        matrix_b.rows = 2;
+        matrix_b.cols = 2;
+        matrix_b.col_ptrs = {0, 1, 2};
+        matrix_b.row_indices = {0, 1};
+        matrix_b.values = {Complex(2.0, -1.0), Complex(1.0, 1.0)};
+        matrix_b.nnz = static_cast<int>(matrix_b.values.size());
 
         expected_result_.rows = 2;
         expected_result_.cols = 2;
@@ -150,19 +149,19 @@ class BarkalovaMatrixMultiplyFixedTest : public ppc::util::BaseRunFuncTests<InTy
 
       case 2: {
         // Тест 2: Единичная матрица с комплексными числами
-        A.rows = 3;
-        A.cols = 3;
-        A.col_ptrs = {0, 1, 2, 3};
-        A.row_indices = {0, 1, 2};
-        A.values = {Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)};
-        A.nnz = static_cast<int>(A.values.size());
+        matrix_a.rows = 3;
+        matrix_a.cols = 3;
+        matrix_a.col_ptrs = {0, 1, 2, 3};
+        matrix_a.row_indices = {0, 1, 2};
+        matrix_a.values = {Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)};
+        matrix_a.nnz = static_cast<int>(matrix_a.values.size());
 
-        B.rows = 3;
-        B.cols = 3;
-        B.col_ptrs = {0, 1, 2, 3};
-        B.row_indices = {0, 1, 2};
-        B.values = {Complex(2.0, 3.0), Complex(4.0, -1.0), Complex(5.0, 2.0)};
-        B.nnz = static_cast<int>(B.values.size());
+        matrix_b.rows = 3;
+        matrix_b.cols = 3;
+        matrix_b.col_ptrs = {0, 1, 2, 3};
+        matrix_b.row_indices = {0, 1, 2};
+        matrix_b.values = {Complex(2.0, 3.0), Complex(4.0, -1.0), Complex(5.0, 2.0)};
+        matrix_b.nnz = static_cast<int>(matrix_b.values.size());
 
         expected_result_.rows = 3;
         expected_result_.cols = 3;
@@ -174,23 +173,21 @@ class BarkalovaMatrixMultiplyFixedTest : public ppc::util::BaseRunFuncTests<InTy
       }
 
       case 3: {
-        A.rows = 2;
-        A.cols = 2;
-        A.col_ptrs = {0, 1, 2};  // По одному элементу в каждом столбце
-        A.row_indices = {0, 1};  // A[0][0] и A[1][1]
-        A.values = {Complex(1.0, 0.0), Complex(2.0, 0.0)};
-        A.nnz = static_cast<int>(A.values.size());
+        // Исправленный тест 3 - соответствует алгоритму
+        matrix_a.rows = 2;
+        matrix_a.cols = 2;
+        matrix_a.col_ptrs = {0, 1, 2};
+        matrix_a.row_indices = {0, 1};
+        matrix_a.values = {Complex(1.0, 0.0), Complex(2.0, 0.0)};
+        matrix_a.nnz = static_cast<int>(matrix_a.values.size());
 
-        B.rows = 2;
-        B.cols = 2;
-        B.col_ptrs = {0, 1, 2};  // По одному элементу в каждом столбце
-        B.row_indices = {0, 1};  // B[0][0] и B[1][1]
-        B.values = {Complex(3.0, 0.0), Complex(4.0, 0.0)};
-        B.nnz = static_cast<int>(B.values.size());
+        matrix_b.rows = 2;
+        matrix_b.cols = 2;
+        matrix_b.col_ptrs = {0, 1, 2};
+        matrix_b.row_indices = {0, 1};
+        matrix_b.values = {Complex(3.0, 0.0), Complex(4.0, 0.0)};
+        matrix_b.nnz = static_cast<int>(matrix_b.values.size());
 
-        // Результат A × B:
-        // C[0][0] = A[0][0]×B[0][0] = 1×3 = 3
-        // C[1][1] = A[1][1]×B[1][1] = 2×4 = 8
         expected_result_.rows = 2;
         expected_result_.cols = 2;
         expected_result_.col_ptrs = {0, 1, 2};
@@ -202,19 +199,19 @@ class BarkalovaMatrixMultiplyFixedTest : public ppc::util::BaseRunFuncTests<InTy
 
       case 4: {
         // Тест 4: Дополнительный тест с диагональными матрицами
-        A.rows = 2;
-        A.cols = 2;
-        A.col_ptrs = {0, 1, 2};
-        A.row_indices = {0, 1};
-        A.values = {Complex(1.0, 1.0), Complex(2.0, -1.0)};
-        A.nnz = static_cast<int>(A.values.size());
+        matrix_a.rows = 2;
+        matrix_a.cols = 2;
+        matrix_a.col_ptrs = {0, 1, 2};
+        matrix_a.row_indices = {0, 1};
+        matrix_a.values = {Complex(1.0, 1.0), Complex(2.0, -1.0)};
+        matrix_a.nnz = static_cast<int>(matrix_a.values.size());
 
-        B.rows = 2;
-        B.cols = 2;
-        B.col_ptrs = {0, 1, 2};
-        B.row_indices = {0, 1};
-        B.values = {Complex(3.0, 2.0), Complex(4.0, -3.0)};
-        B.nnz = static_cast<int>(B.values.size());
+        matrix_b.rows = 2;
+        matrix_b.cols = 2;
+        matrix_b.col_ptrs = {0, 1, 2};
+        matrix_b.row_indices = {0, 1};
+        matrix_b.values = {Complex(3.0, 2.0), Complex(4.0, -3.0)};
+        matrix_b.nnz = static_cast<int>(matrix_b.values.size());
 
         expected_result_.rows = 2;
         expected_result_.cols = 2;
@@ -229,7 +226,7 @@ class BarkalovaMatrixMultiplyFixedTest : public ppc::util::BaseRunFuncTests<InTy
         throw std::runtime_error("Unknown test case");
     }
 
-    input_data_ = std::make_pair(A, B);
+    input_data_ = std::make_pair(matrix_a, matrix_b);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -240,7 +237,7 @@ class BarkalovaMatrixMultiplyFixedTest : public ppc::util::BaseRunFuncTests<InTy
     }
 
     if (output_data.nnz != expected_result_.nnz) {
-      return false;  // Убрали std::cout
+      return false;
     }
 
     if (output_data.col_ptrs.size() != expected_result_.col_ptrs.size()) {
@@ -249,7 +246,7 @@ class BarkalovaMatrixMultiplyFixedTest : public ppc::util::BaseRunFuncTests<InTy
 
     for (size_t i = 0; i < output_data.col_ptrs.size(); ++i) {
       if (output_data.col_ptrs[i] != expected_result_.col_ptrs[i]) {
-        return false;  // Убрали std::cout
+        return false;
       }
     }
 
@@ -259,14 +256,14 @@ class BarkalovaMatrixMultiplyFixedTest : public ppc::util::BaseRunFuncTests<InTy
 
     for (size_t i = 0; i < output_data.row_indices.size(); ++i) {
       if (output_data.row_indices[i] != expected_result_.row_indices[i]) {
-        return false;  // Убрали std::cout
+        return false;
       }
     }
 
     for (size_t i = 0; i < output_data.values.size(); ++i) {
       if (std::abs(output_data.values[i].real() - expected_result_.values[i].real()) > eps ||
           std::abs(output_data.values[i].imag() - expected_result_.values[i].imag()) > eps) {
-        return false;  // Убрали std::cout
+        return false;
       }
     }
 
@@ -288,7 +285,6 @@ TEST_P(BarkalovaMatrixMultiplyFixedTest, MatrixMultiplyFixedTest) {
   ExecuteTest(GetParam());
 }
 
-// Добавлен четвертый тест
 const std::array<TestType, 4> kFixedTestParams = {std::make_tuple(1, ""), std::make_tuple(2, ""),
                                                   std::make_tuple(3, ""), std::make_tuple(4, "")};
 
