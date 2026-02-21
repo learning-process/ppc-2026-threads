@@ -41,7 +41,7 @@ bool KulikAMatMulDoubleCcsSEQ::RunImpl() {
     for (size_t k = b.col_ind[j]; k < b.col_ind[j + 1]; ++k) {
       size_t ind = b.row[k];
       double b_val = b.value[k];
-      for (size_t z = A.col_ind[ind]; z < A.col_ind[ind + 1]; ++z) {
+      for (size_t z = a.col_ind[ind]; z < a.col_ind[ind + 1]; ++z) {
         size_t i = a.row[z];
         double a_val = a.value[z];
         accum[i] += a_val * b_val;
@@ -70,8 +70,7 @@ bool KulikAMatMulDoubleCcsSEQ::RunImpl() {
 }
 
 bool KulikAMatMulDoubleCcsSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace kulik_a_mat_mul_double_ccs
