@@ -46,40 +46,46 @@ void PerfectShuffle(std::vector<int> &array, size_t left, size_t right) {
 }
 
 void Merge(std::vector<int> &array, size_t left, size_t right) {
-  if (right == left + 1) {
+  size_t segment = right - left + 1;
+
+  if (segment < 2) {
+    return;
+  }
+
+  if (segment == 2) {
     CompareExchange(array[left], array[right]);
     return;
   }
 
-  if (right < left + 2) {
-    return;
+  for (size_t merge_step = segment; merge_step > 2; merge_step /= 2) {
+    for (size_t start = left; start <= right; start += merge_step) {
+      PerfectUnshuffle(array, start, start + merge_step - 1);
+    }
   }
 
-  size_t middle = (left + right) / 2;
-
-  PerfectUnshuffle(array, left, right);
-
-  Merge(array, left, middle);
-  Merge(array, middle + 1, right);
-
-  PerfectShuffle(array, left, right);
-
-  for (size_t i = left + 1; i < right; i += 2) {
+  for (size_t i = left; i <= right; i += 2) {
     CompareExchange(array[i], array[i + 1]);
+  }
+
+  for (size_t merge_step = 4; merge_step <= segment; merge_step *= 2) {
+    for (size_t start = left; start <= right; start += merge_step) {
+      PerfectShuffle(array, start, start + merge_step - 1);
+
+      for (size_t i = start + 1; i < start + merge_step - 1; i += 2) {
+        CompareExchange(array[i], array[i + 1]);
+      }
+    }
   }
 }
 
 void OddEvenMergesort(std::vector<int> &array, size_t left, size_t right) {
-  if (right <= left) {
-    return;
+  size_t segment = right - left + 1;
+
+  for (size_t size = 2; size <= segment; size *= 2) {
+    for (size_t start = left; start + size - 1 <= right; start += size) {
+      Merge(array, start, start + size - 1);
+    }
   }
-
-  size_t middle = left + ((right - left) / 2);
-
-  OddEvenMergesort(array, left, middle);
-  OddEvenMergesort(array, middle + 1, right);
-
-  Merge(array, left, right);
 }
 
 void SortWithPadding(std::vector<int> &array, size_t size, size_t power) {
