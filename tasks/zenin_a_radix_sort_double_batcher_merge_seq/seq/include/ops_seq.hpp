@@ -21,9 +21,9 @@ class ZeninARadixSortDoubleBatcherMergeSeqseq : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
+  static void LSDRadixSort(std::vector<double> &array);
   static uint64_t PackDouble(double v) noexcept;
   static double UnpackDouble(uint64_t k) noexcept;
-  static void LSDRadixSort(std::vector<double> &arr);
 };
 
 }  // namespace zenin_a_radix_sort_double_batcher_merge_seq

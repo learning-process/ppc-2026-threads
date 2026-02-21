@@ -46,8 +46,8 @@ double ZeninARadixSortDoubleBatcherMergeSeqseq::UnpackDouble(uint64_t k) noexcep
   return v;
 }
 
-void ZeninARadixSortDoubleBatcherMergeSeqseq::LSDRadixSort(std::vector<double> &arr) {
-  const std::size_t n = arr.size();
+void ZeninARadixSortDoubleBatcherMergeSeqseq::LSDRadixSort(std::vector<double> &array) {
+  const std::size_t n = array.size();
   if (n <= 1U) {
     return;
   }
@@ -59,7 +59,7 @@ void ZeninARadixSortDoubleBatcherMergeSeqseq::LSDRadixSort(std::vector<double> &
   std::vector<uint64_t> keys;
   keys.resize(n);
   for (std::size_t i = 0; i < n; ++i) {
-    keys[i] = PackDouble(arr[i]);
+    keys[i] = PackDouble(array[i]);
   }
 
   std::vector<uint64_t> tmp_keys;
@@ -84,15 +84,15 @@ void ZeninARadixSortDoubleBatcherMergeSeqseq::LSDRadixSort(std::vector<double> &
       auto d = static_cast<std::size_t>((keys[i] >> shift) & (kBuckets - 1));
       std::size_t pos = cnt[d]++;
       tmp_keys[pos] = keys[i];
-      tmp_vals[pos] = arr[i];
+      tmp_vals[pos] = array[i];
     }
 
     keys.swap(tmp_keys);
-    arr.swap(tmp_vals);
+    array.swap(tmp_vals);
   }
 
   for (std::size_t i = 0; i < n; ++i) {
-    arr[i] = UnpackDouble(keys[i]);
+    array[i] = UnpackDouble(keys[i]);
   }
 }
 

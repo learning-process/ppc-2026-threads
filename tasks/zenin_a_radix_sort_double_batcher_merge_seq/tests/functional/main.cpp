@@ -63,7 +63,7 @@ TEST_P(ZeninARadixSortDoubleBatcherMergeFuncTestsThreads, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 10> kTestParam = {
+const std::array<TestType, 11> kTestParam = {
     TestType{InType{8.8}, OutType{8.8}, "Single"},
     TestType{InType{}, OutType{}, "Empty"},
     TestType{InType{6.6, 3.3}, OutType{3.3, 6.6}, "ReverseTwo"},
@@ -73,7 +73,9 @@ const std::array<TestType, 10> kTestParam = {
     TestType{InType{1e-20, 5e-6, 3e-12, 2e-3, 4e-9}, OutType{1e-20, 3e-12, 4e-9, 5e-6, 2e-3}, "Small"},
     TestType{InType{-8.0, -2.0, 0.5, 8.0, 9.0}, OutType{-8.0, -2.0, 0.5, 8.0, 9.0}, "Sorted"},
     TestType{InType{-3.3, 6.6, -10.9, 0.0, 2.2, -1.1}, OutType{-10.9, -3.3, -1.1, 0.0, 2.2, 6.6}, "DifferentSigns"},
-    TestType{InType{7.7, 3.3, 7.7, 3.3, 7.7}, OutType{3.3, 3.3, 7.7, 7.7, 7.7}, "Duplicates"}};
+    TestType{InType{7.7, 3.3, 7.7, 3.3, 7.7}, OutType{3.3, 3.3, 7.7, 7.7, 7.7}, "Duplicates"},
+    TestType{InType{36.6, 25.5, 10.0, 8.9, 6.7, 4.5, 2.2}, OutType{2.2, 4.5, 6.7, 8.9, 10.0, 25.5, 36.6},
+             "ReverseSeven"}};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ZeninARadixSortDoubleBatcherMergeSeqseq, InType>(
     kTestParam, PPC_SETTINGS_zenin_a_radix_sort_double_batcher_merge_seq));
