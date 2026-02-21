@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <climits>
-#include <random>
 
 #include "baldin_a_radix_sort/common/include/common.hpp"
 #include "baldin_a_radix_sort/seq/include/ops_seq.hpp"
@@ -17,12 +16,11 @@ class BaldinARadixSortPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
 
     input_data_.resize(sz);
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist(INT_MIN, INT_MAX);
+    unsigned int cur_val = 42;
 
     for (auto &val : input_data_) {
-      val = dist(gen);
+      cur_val = 1664525 * cur_val + 1013904223;
+      val = static_cast<int>(cur_val);
     }
   }
 

@@ -4,7 +4,6 @@
 #include <array>
 #include <climits>
 #include <cstddef>
-#include <random>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -53,11 +52,14 @@ TEST_P(BaldinARadixSortFuncTests, RadixSortTest) {
 std::vector<int> GenRandomVector(size_t size, int min_val, int max_val) {
   std::vector<int> res(size);
 
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_int_distribution<int> dist(min_val, max_val);
+  const unsigned int a = 1103515245;
+  const unsigned int c = 12345;
+  unsigned int cur_val = 42;
+
   for (auto &val : res) {
-    val = dist(gen);
+    cur_val = a * cur_val + c;
+    int range = max_val - min_val + 1;
+    val = min_val + static_cast<int>(cur_val % static_cast<unsigned int>(range));
   }
 
   return res;
