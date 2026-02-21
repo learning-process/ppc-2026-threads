@@ -1,6 +1,7 @@
 #include "levonychev_i_radix_batcher_sort/seq/include/ops_seq.hpp"
 
 #include <cstddef>
+#include <ranges>
 #include <vector>
 
 #include "levonychev_i_radix_batcher_sort/common/include/common.hpp"
@@ -32,14 +33,14 @@ void LevonychevIRadixBatcherSortSEQ::CountingSort(InType &arr, size_t byte_index
     count[i] += count[i - 1];
   }
 
-  for (auto it = arr.rbegin(); it != arr.rend(); ++it) {
-    int value_of_byte = (*it >> (byte_index * 8ULL)) & 0xFF;
+  for (int &val : std::ranges::reverse_view(arr)) {
+    int value_of_byte = (val >> (byte_index * 8ULL)) & 0xFF;
 
     if (is_last_byte) {
       value_of_byte ^= 0x80;
     }
 
-    result[--count[value_of_byte]] = *it;
+    result[--count[value_of_byte]] = val;
   }
   arr = result;
 }
