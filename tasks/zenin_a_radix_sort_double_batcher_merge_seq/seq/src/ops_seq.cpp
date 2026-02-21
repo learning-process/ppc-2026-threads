@@ -1,5 +1,6 @@
 #include "zenin_a_radix_sort_double_batcher_merge_seq/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -25,7 +26,8 @@ bool ZeninARadixSortDoubleBatcherMergeSeqseq::PreProcessingImpl() {
   return true;
 }
 
-void ZeninARadixSortDoubleBatcherMergeSeqseq::BatcherOddEvenMerge(std::vector<double> &array, int lo, int hi,
+void ZeninARadixSortDoubleBatcherMergeSeqseq::BatcherOddEvenMerge(std::vector<double> &array, int lo,
+                                                                  int hi,  // NOLINT(misc-no-recursion)
                                                                   int step) {
   int dist = step * 2;
   if (dist < hi - lo) {
@@ -62,8 +64,8 @@ void ZeninARadixSortDoubleBatcherMergeSeqseq::BatcherMergeSort(std::vector<doubl
   LSDRadixSort(left);
   LSDRadixSort(right);
 
-  std::copy(left.begin(), left.end(), array.begin());
-  std::copy(right.begin(), right.end(), array.begin() + mid);
+  std::ranges::copy(left.begin(), left.end(), array.begin());
+  std::ranges::copy(right.begin(), right.end(), array.begin() + mid);
 
   BatcherOddEvenMerge(array, 0, n, 1);
   array.resize(n);
