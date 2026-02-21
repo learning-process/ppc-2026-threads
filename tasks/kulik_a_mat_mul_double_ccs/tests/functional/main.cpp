@@ -76,7 +76,7 @@ class KulikARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
     bool f1, f2, f3;
     f1 = true;
     for (size_t i = 0; i < value.size(); ++i) {
-      if (abs(output_data.value[i] - value[i]) > 1e-12)
+      if (std::abs(output_data.value[i] - value[i]) > 1e-12)
         f1 = false;
     }
     f2 = (output_data.row == row);

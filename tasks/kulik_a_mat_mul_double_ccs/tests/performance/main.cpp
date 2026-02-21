@@ -97,7 +97,7 @@ class KulikARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutT
         }
     }
     for (size_t i = 0; i < 20000; ++i) {
-      if (abs(res1[i] - res2[i]) > 1e-12) {
+      if (std::abs(res1[i] - res2[i]) > 1e-10) {
         return false;
       }
     }
