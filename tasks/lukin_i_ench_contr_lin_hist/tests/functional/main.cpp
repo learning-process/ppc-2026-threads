@@ -32,8 +32,8 @@ class LukinIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    auto min_it = std::min(input_data_.begin(), input_data_.end());
-    auto max_it = std::max(input_data_.begin(), input_data_.end());
+    auto min_it = std::min_element(input_data_.begin(), input_data_.end());
+    auto max_it = std::max_element(input_data_.begin(), input_data_.end());
 
     unsigned char min = *min_it;
     unsigned char max = *max_it;
