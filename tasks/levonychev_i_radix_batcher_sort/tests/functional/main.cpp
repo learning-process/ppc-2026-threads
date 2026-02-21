@@ -36,7 +36,7 @@ class LevonychevIRadixBatcherSortRunFuncTestsThreads : public ppc::util::BaseRun
   }
 
  private:
-  InType input_data_ = {5, 8, 3, 0, 7, 9, 56, 16543};
+  InType input_data_ = {-170, 45, 75, -90, 2, 24, -802, 66};
 };
 
 namespace {

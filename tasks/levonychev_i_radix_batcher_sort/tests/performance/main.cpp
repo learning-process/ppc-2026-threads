@@ -7,7 +7,7 @@
 namespace levonychev_i_radix_batcher_sort {
 
 class LevonychevIRadixBatcherSortRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+  InType input_data_ = {170, 45, 75, 90, 2, 24, 802, 66};
 
   void SetUp() override {}
 

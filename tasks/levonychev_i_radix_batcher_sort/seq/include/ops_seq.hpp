@@ -17,6 +17,7 @@ class LevonychevIRadixBatcherSortSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+  static void CountingSort(InType &arr, int32_t byte_index);
 };
 
 }  // namespace levonychev_i_radix_batcher_sort
