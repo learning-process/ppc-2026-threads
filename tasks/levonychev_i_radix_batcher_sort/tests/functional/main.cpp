@@ -8,6 +8,7 @@
 #include "levonychev_i_radix_batcher_sort/common/include/common.hpp"
 #include "levonychev_i_radix_batcher_sort/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace levonychev_i_radix_batcher_sort {
 
@@ -46,7 +47,7 @@ class LevonychevIRadixBatcherSortRunFuncTestsThreads : public ppc::util::BaseRun
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
 };
 
 namespace {

@@ -32,14 +32,14 @@ void LevonychevIRadixBatcherSortSEQ::CountingSort(InType &arr, size_t byte_index
     count[i] += count[i - 1];
   }
 
-  for (int i = arr.size() - 1; i >= 0; --i) {
-    int value_of_byte = (arr[i] >> (byte_index * 8ULL)) & 0xFF;
+  for (auto it = arr.rbegin(); it != arr.rend(); ++it) {
+    int value_of_byte = (*it >> (byte_index * 8ULL)) & 0xFF;
 
     if (is_last_byte) {
       value_of_byte ^= 0x80;
     }
 
-    result[--count[value_of_byte]] = arr[i];
+    result[--count[value_of_byte]] = *it;
   }
   arr = result;
 }

@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <cstdint>
+
 #include "levonychev_i_radix_batcher_sort/common/include/common.hpp"
 #include "levonychev_i_radix_batcher_sort/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
@@ -7,7 +9,7 @@
 namespace levonychev_i_radix_batcher_sort {
 
 class LevonychevIRadixBatcherSortRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_ = {};
+  InType input_data_;
 
   void SetUp() override {
     const int a = 1664525;
@@ -20,7 +22,7 @@ class LevonychevIRadixBatcherSortRunPerfTestsThreads : public ppc::util::BaseRun
 
     for (int i = 0; i < size; ++i) {
       seed = (a * seed + c) % m;
-      input_data_[i] = seed % 2000 - 1000;
+      input_data_[i] = (seed % 2000) - 1000;
     }
   }
 
