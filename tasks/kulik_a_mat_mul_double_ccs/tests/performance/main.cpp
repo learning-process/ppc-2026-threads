@@ -15,6 +15,8 @@
 namespace kulik_a_mat_mul_double_ccs {
 
 class KulikARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  InType input_data_;
+
   void SetUp() override {
     size_t n = 20000;
     size_t m = 20000;
