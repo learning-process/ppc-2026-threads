@@ -1,4 +1,3 @@
-// func_tests.cpp
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -23,7 +22,6 @@ class RedkinaASortHoarBatcherFuncTests : public ppc::util::BaseRunFuncTests<InTy
 
  protected:
   void SetUp() override {
-    // Извлекаем TestType из кортежа, возвращаемого GetParam(), используя правильный индекс
     auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_ = std::get<1>(params);
   }

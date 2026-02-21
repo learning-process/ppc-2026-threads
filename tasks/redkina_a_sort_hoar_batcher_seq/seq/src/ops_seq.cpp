@@ -1,4 +1,3 @@
-// ops_seq.cpp
 #include "redkina_a_sort_hoar_batcher_seq/seq/include/ops_seq.hpp"
 
 #include <algorithm>
@@ -14,67 +13,28 @@ namespace redkina_a_sort_hoar_batcher_seq {
 namespace {
 constexpr int kQuickSortThreshold = 16;
 
-void SplitEvenOdd(const std::vector<int> &src, std::vector<int> &even, std::vector<int> &odd) {
-  even.clear();
-  odd.clear();
-  for (size_t i = 0; i < src.size(); ++i) {
-    if (i % 2 == 0) {
-      even.push_back(src[i]);
-    } else {
-      odd.push_back(src[i]);
-    }
-  }
-}
-
-std::vector<int> Interleave(const std::vector<int> &even, const std::vector<int> &odd) {
+// Функция обычного слияния двух отсортированных векторов (итеративная, без рекурсии)
+std::vector<int> MergeSorted(const std::vector<int> &left, const std::vector<int> &right) {
   std::vector<int> result;
-  const size_t max_size = std::max(even.size(), odd.size());
-  result.reserve(even.size() + odd.size());
-  for (size_t i = 0; i < max_size; ++i) {
-    if (i < even.size()) {
-      result.push_back(even[i]);
-    }
-    if (i < odd.size()) {
-      result.push_back(odd[i]);
-    }
-  }
-  return result;
-}
-
-void FinalCompare(std::vector<int> &arr) {
-  for (size_t i = 1; i + 1 < arr.size(); i += 2) {
-    if (arr[i] > arr[i + 1]) {
-      std::swap(arr[i], arr[i + 1]);
+  result.reserve(left.size() + right.size());
+  size_t i = 0, j = 0;
+  while (i < left.size() && j < right.size()) {
+    if (left[i] <= right[j]) {
+      result.push_back(left[i]);
+      ++i;
+    } else {
+      result.push_back(right[j]);
+      ++j;
     }
   }
-}
-
-inline std::vector<int> OddEvenMerge(const std::vector<int> &left, const std::vector<int> &right) {
-  if (left.empty()) {
-    return right;
+  while (i < left.size()) {
+    result.push_back(left[i]);
+    ++i;
   }
-  if (right.empty()) {
-    return left;
+  while (j < right.size()) {
+    result.push_back(right[j]);
+    ++j;
   }
-  if (left.size() == 1 && right.size() == 1) {
-    if (left[0] <= right[0]) {
-      return {left[0], right[0]};
-    }
-    return {right[0], left[0]};
-  }
-
-  std::vector<int> left_even;
-  std::vector<int> left_odd;
-  std::vector<int> right_even;
-  std::vector<int> right_odd;
-  SplitEvenOdd(left, left_even, left_odd);
-  SplitEvenOdd(right, right_even, right_odd);
-
-  std::vector<int> merged_even = OddEvenMerge(left_even, right_even);
-  std::vector<int> merged_odd = OddEvenMerge(left_odd, right_odd);
-
-  std::vector<int> result = Interleave(merged_even, merged_odd);
-  FinalCompare(result);
   return result;
 }
 
@@ -116,7 +76,8 @@ void HybridSort(std::vector<int> &arr, const int left, const int right) {
       const int mid = l + (len / 2);
       std::vector<int> left_part(arr.begin() + l, arr.begin() + mid);
       std::vector<int> right_part(arr.begin() + mid, arr.begin() + r);
-      std::vector<int> merged = OddEvenMerge(left_part, right_part);
+      // Используем обычное слияние вместо рекурсивной сети Бэтчера
+      std::vector<int> merged = MergeSorted(left_part, right_part);
       std::ranges::copy(merged, arr.begin() + l);
       stack.pop();
     }
