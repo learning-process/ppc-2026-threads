@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <vector>
 
 // #include "util/include/util.hpp"
@@ -22,6 +23,50 @@ bool ZeninARadixSortDoubleBatcherMergeSeqseq::ValidationImpl() {
 
 bool ZeninARadixSortDoubleBatcherMergeSeqseq::PreProcessingImpl() {
   return true;
+}
+
+void ZeninARadixSortDoubleBatcherMergeSeqseq::BatcherOddEvenMerge(std::vector<double> &array, int lo, int hi,
+                                                                  int step) {
+  int dist = step * 2;
+  if (dist < hi - lo) {
+    BatcherOddEvenMerge(array, lo, hi, dist);
+    BatcherOddEvenMerge(array, lo + step, hi, dist);
+    for (int i = lo + step; i + step < hi; i += dist) {
+      if (array[i] > array[i + step]) {
+        std::swap(array[i], array[i + step]);
+      }
+    }
+  } else {
+    if (lo + step < hi && array[lo] > array[lo + step]) {
+      std::swap(array[lo], array[lo + step]);
+    }
+  }
+}
+
+void ZeninARadixSortDoubleBatcherMergeSeqseq::BatcherMergeSort(std::vector<double> &array) {
+  int n = static_cast<int>(array.size());
+  if (n <= 1) {
+    return;
+  }
+
+  int padded_n = 1;
+  while (padded_n < n) {
+    padded_n <<= 1;
+  }
+  array.resize(padded_n, std::numeric_limits<double>::max());
+  int mid = padded_n / 2;
+
+  std::vector<double> left(array.begin(), array.begin() + mid);
+  std::vector<double> right(array.begin() + mid, array.end());
+
+  LSDRadixSort(left);
+  LSDRadixSort(right);
+
+  std::copy(left.begin(), left.end(), array.begin());
+  std::copy(right.begin(), right.end(), array.begin() + mid);
+
+  BatcherOddEvenMerge(array, 0, n, 1);
+  array.resize(n);
 }
 
 uint64_t ZeninARadixSortDoubleBatcherMergeSeqseq::PackDouble(double v) noexcept {
@@ -98,7 +143,7 @@ void ZeninARadixSortDoubleBatcherMergeSeqseq::LSDRadixSort(std::vector<double> &
 
 bool ZeninARadixSortDoubleBatcherMergeSeqseq::RunImpl() {
   std::vector<double> data = GetInput();
-  LSDRadixSort(data);
+  BatcherMergeSort(data);
   GetOutput() = data;
   return true;
 }
