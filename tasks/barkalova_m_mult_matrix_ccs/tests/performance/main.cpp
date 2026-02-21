@@ -59,7 +59,7 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, BarkalovaMMultMatrixCcsPerfTestThreads, k
 
 namespace barkalova_m_mult_matrix_ccs {
 
-CCSMatrix GenerateRandomCCSMatrix(int rows, int cols, double density) {
+static CCSMatrix GenerateRandomCCSMatrix(int rows, int cols, double density) {
   CCSMatrix matrix;
   matrix.rows = rows;
   matrix.cols = cols;
