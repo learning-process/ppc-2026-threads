@@ -1,10 +1,9 @@
 #include "levonychev_i_radix_batcher_sort/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <cstddef>
 #include <vector>
 
 #include "levonychev_i_radix_batcher_sort/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace levonychev_i_radix_batcher_sort {
 
@@ -46,7 +45,7 @@ void LevonychevIRadixBatcherSortSEQ::CountingSort(InType &arr, size_t byte_index
 }
 
 bool LevonychevIRadixBatcherSortSEQ::ValidationImpl() {
-  return true;
+  return !GetInput().empty();
 }
 
 bool LevonychevIRadixBatcherSortSEQ::PreProcessingImpl() {

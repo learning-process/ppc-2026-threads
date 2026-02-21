@@ -1,20 +1,13 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
-#include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "levonychev_i_radix_batcher_sort/common/include/common.hpp"
 #include "levonychev_i_radix_batcher_sort/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace levonychev_i_radix_batcher_sort {
 
@@ -28,7 +21,7 @@ class LevonychevIRadixBatcherSortRunFuncTestsThreads : public ppc::util::BaseRun
   void SetUp() override {}
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data.size() > 0;
+    return !output_data.empty();
   }
 
   InType GetTestInputData() final {

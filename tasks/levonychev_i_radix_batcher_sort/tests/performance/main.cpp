@@ -12,7 +12,7 @@ class LevonychevIRadixBatcherSortRunPerfTestsThreads : public ppc::util::BaseRun
   void SetUp() override {}
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data.size() > 0;
+    return !output_data.empty();
   }
 
   InType GetTestInputData() final {
