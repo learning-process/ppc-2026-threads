@@ -116,7 +116,7 @@ bool BarkalovaMMultMatrixCcsSEQ::ValidationImpl() {
 bool BarkalovaMMultMatrixCcsSEQ::PreProcessingImpl() {
   return true;
 }
-//это было у меня написано
+это было у меня написано
 /*
 void BarkalovaMMultMatrixCcsSEQ::TransposeMatrix(const CCSMatrix &src, CCSMatrix &dst) {
   // Устанавливаем размеры транспонированной матрицы
@@ -232,7 +232,7 @@ void BarkalovaMMultMatrixCcsSEQ::TransposeMatrix(const CCSMatrix &src, CCSMatrix
     }
   }
 }
-//изначально было написано вот так, но вроде есть ошибка, у власовой через маркеры сделано
+изначально было написано вот так, но вроде есть ошибка, у власовой через маркеры сделано
 /*
 void BarkalovaMMultMatrixCcsSEQ::MultiplyMatrices(const CCSMatrix &a, const CCSMatrix &b, CCSMatrix &c) {
   // Транспонируем первую матрицу
