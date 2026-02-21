@@ -49,7 +49,7 @@ void FinalCompare(std::vector<int> &arr) {
   }
 }
 
-std::vector<int> OddEvenMerge(const std::vector<int> &left, const std::vector<int> &right) {
+inline std::vector<int> OddEvenMerge(const std::vector<int> &left, const std::vector<int> &right) {
   if (left.empty()) {
     return right;
   }
