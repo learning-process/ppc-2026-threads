@@ -9,43 +9,39 @@
 
 namespace shemetov_d_odd_even_mergesort {
 
-namespace {
-
-void CompareExchange(int &a, int &b) {
+void ShemetovDOddEvenMergeSortSEQ::CompareExchange(int &a, int &b) {
   if (a > b) {
     std::swap(a, b);
   }
 }
 
-void PerfectUnshuffle(std::vector<int> &array, size_t left, size_t right) {
+void ShemetovDOddEvenMergeSortSEQ::PerfectUnshuffle(std::vector<int> &array, size_t left, size_t right) {
   size_t middle = (left + right) / 2;
-  std::vector<int> temp_array(array.size());
 
   for (size_t i = left, j = 0; i < right; i += 2, j += 1) {
-    temp_array[left + j] = array[i];
-    temp_array[middle + j + 1] = array[i + 1];
+    this->buffer_[left + j] = array[i];
+    this->buffer_[middle + j + 1] = array[i + 1];
   }
 
   for (size_t i = left; i <= right; i += 1) {
-    array[i] = temp_array[i];
+    array[i] = this->buffer_[i];
   }
 }
 
-void PerfectShuffle(std::vector<int> &array, size_t left, size_t right) {
+void ShemetovDOddEvenMergeSortSEQ::PerfectShuffle(std::vector<int> &array, size_t left, size_t right) {
   size_t middle = (left + right) / 2;
-  std::vector<int> temp_array(array.size());
 
   for (size_t i = left, j = 0; i < right; i += 2, j += 1) {
-    temp_array[i] = array[left + j];
-    temp_array[i + 1] = array[middle + j + 1];
+    this->buffer_[i] = array[left + j];
+    this->buffer_[i + 1] = array[middle + j + 1];
   }
 
   for (size_t i = left; i <= right; i += 1) {
-    array[i] = temp_array[i];
+    array[i] = this->buffer_[i];
   }
 }
 
-void Merge(std::vector<int> &array, size_t left, size_t right) {
+void ShemetovDOddEvenMergeSortSEQ::Merge(std::vector<int> &array, size_t left, size_t right) {
   size_t segment = right - left + 1;
 
   if (segment < 2) {
@@ -78,7 +74,7 @@ void Merge(std::vector<int> &array, size_t left, size_t right) {
   }
 }
 
-void OddEvenMergesort(std::vector<int> &array, size_t left, size_t right) {
+void ShemetovDOddEvenMergeSortSEQ::OddEvenMergesort(std::vector<int> &array, size_t left, size_t right) {
   size_t segment = right - left + 1;
 
   for (size_t size = 2; size <= segment; size *= 2) {
@@ -88,7 +84,7 @@ void OddEvenMergesort(std::vector<int> &array, size_t left, size_t right) {
   }
 }
 
-void SortWithPadding(std::vector<int> &array, size_t size, size_t power) {
+void ShemetovDOddEvenMergeSortSEQ::SortWithPadding(std::vector<int> &array, size_t size, size_t power) {
   if (power == size) {
     OddEvenMergesort(array, 0, power - 1);
     return;
@@ -106,8 +102,6 @@ void SortWithPadding(std::vector<int> &array, size_t size, size_t power) {
     array[i] = temp_array[i];
   }
 }
-
-}  // namespace
 
 ShemetovDOddEvenMergeSortSEQ::ShemetovDOddEvenMergeSortSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -131,6 +125,8 @@ bool ShemetovDOddEvenMergeSortSEQ::PreProcessingImpl() {
   while (power_ < size_) {
     power_ *= 2;
   }
+
+  buffer_.assign(power_, 0);
 
   return true;
 }

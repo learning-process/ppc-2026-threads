@@ -79,16 +79,19 @@ TEST_P(ShemetovDRunFuncTestsThreads, OddEvenMergeSortFuncTest) {
   RunOddEvenMergeSortTest(std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()));
 }
 
-const std::array<TestType, 10> kTestParam = {TestType{0, {}},
-                                             TestType{1, {0}},
-                                             TestType{2, {1, 0}},
-                                             TestType{3, {1, -1, 0}},
-                                             TestType{4, {-100000, -3, 0, 7}},
-                                             TestType{5, {-12, -12, -12, -12, -12}},
-                                             TestType{7, {0, 6, 1, 5, 2, 4, 3}},
-                                             TestType{8, {10, -1, 3, 0, 0, 4, 5, 9}},
-                                             TestType{11, {-5, 4, 5, -7, 7, 89, 12, 15, 0, 10, 11}},
-                                             TestType{16, {0, 15, 1, 14, 2, 13, 3, 12, 4, 11, 5, 10, 6, 9, 7, 8}}};
+const std::array<TestType, 12> kTestParam = {
+    TestType{0, {}},
+    TestType{1, {0}},
+    TestType{2, {1, 0}},
+    TestType{3, {1, -1, 0}},
+    TestType{4, {4, 3, 2, 1}},
+    TestType{5, {-12, -12, -12, -12, -12}},
+    TestType{7, {0, 6, 1, 5, 2, 4, 3}},
+    TestType{8, {10, -1, 3, 0, 0, 4, 5, 9}},
+    TestType{11, {-5, 4, 5, -7, 7, 89, 12, 15, 0, 10, 11}},
+    TestType{16, {0, 15, 1, 14, 2, 13, 3, 12, 4, 11, 5, 10, 6, 9, 7, 8}},
+    TestType{17, {-1, -2, -3, -4, -5, -6, -7, -8, 0, 8, 7, 6, 5, 4, 3, 2, 1}},
+    TestType{18, {17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0}}};
 
 const auto kTestTasksList = ppc::util::AddFuncTask<ShemetovDOddEvenMergeSortSEQ, InType>(
     kTestParam, PPC_SETTINGS_shemetov_d_odd_even_mergesort_seq);
