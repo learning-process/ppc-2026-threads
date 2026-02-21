@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>  // добавлено для std::size_t
 #include <initializer_list>
 #include <string>
 #include <tuple>
