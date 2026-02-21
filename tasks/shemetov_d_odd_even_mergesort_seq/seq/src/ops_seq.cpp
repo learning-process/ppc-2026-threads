@@ -45,7 +45,6 @@ void PerfectShuffle(std::vector<int> &array, size_t left, size_t right) {
   }
 }
 
-// NOLINTNEXTLINE(misc-no-recursion)
 void Merge(std::vector<int> &array, size_t left, size_t right) {
   if (right == left + 1) {
     CompareExchange(array[left], array[right]);
@@ -70,7 +69,6 @@ void Merge(std::vector<int> &array, size_t left, size_t right) {
   }
 }
 
-// NOLINTNEXTLINE(misc-no-recursion)
 void OddEvenMergesort(std::vector<int> &array, size_t left, size_t right) {
   if (right <= left) {
     return;
