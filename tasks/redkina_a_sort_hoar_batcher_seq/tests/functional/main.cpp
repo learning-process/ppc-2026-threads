@@ -11,7 +11,7 @@
 #include "redkina_a_sort_hoar_batcher_seq/common/include/common.hpp"
 #include "redkina_a_sort_hoar_batcher_seq/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"  // добавлено для ppc::util::GTestParamIndex
+#include "util/include/util.hpp"
 
 namespace redkina_a_sort_hoar_batcher_seq {
 

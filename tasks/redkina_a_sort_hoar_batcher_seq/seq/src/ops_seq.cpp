@@ -12,7 +12,6 @@ namespace redkina_a_sort_hoar_batcher_seq {
 namespace {
 constexpr int kQuickSortThreshold = 16;
 
-// Функция обычного слияния двух отсортированных векторов (итеративная, без рекурсии)
 std::vector<int> MergeSorted(const std::vector<int> &left, const std::vector<int> &right) {
   std::vector<int> result;
   result.reserve(left.size() + right.size());
@@ -41,7 +40,7 @@ std::vector<int> MergeSorted(const std::vector<int> &left, const std::vector<int
 struct SortRange {
   int left;
   int right;
-  int stage;  // 0 = need split, 1 = need merge after left done, 2 = need merge after both done
+  int stage;
 };
 
 void HybridSort(std::vector<int> &arr, const int left, const int right) {
@@ -76,7 +75,6 @@ void HybridSort(std::vector<int> &arr, const int left, const int right) {
       const int mid = l + (len / 2);
       std::vector<int> left_part(arr.begin() + l, arr.begin() + mid);
       std::vector<int> right_part(arr.begin() + mid, arr.begin() + r);
-      // Используем обычное слияние вместо рекурсивной сети Бэтчера
       std::vector<int> merged = MergeSorted(left_part, right_part);
       std::ranges::copy(merged, arr.begin() + l);
       stack.pop();
