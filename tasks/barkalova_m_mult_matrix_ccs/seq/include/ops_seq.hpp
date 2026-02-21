@@ -22,7 +22,6 @@ class BarkalobaMMultMatrixCcsSEQ : public BaseTask {
 }  // namespace barkalova_m_mult_matrix_ccs
 */
 
-
 /*
 #pragma once
 
@@ -55,8 +54,7 @@ class BarkalovaMMultMatrixCcsSEQ : public BaseTask {
 }  // namespace barkalova_m_mult_matrix_ccs
 */
 
-
-//как у власовой
+// как у власовой
 #pragma once
 
 #include "barkalova_m_mult_matrix_ccs/common/include/common.hpp"
