@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <stack>
-#include <utility>
 #include <vector>
 
 #include "redkina_a_sort_hoar_batcher_seq/common/include/common.hpp"
@@ -17,7 +16,8 @@ constexpr int kQuickSortThreshold = 16;
 std::vector<int> MergeSorted(const std::vector<int> &left, const std::vector<int> &right) {
   std::vector<int> result;
   result.reserve(left.size() + right.size());
-  size_t i = 0, j = 0;
+  size_t i = 0;
+  size_t j = 0;
   while (i < left.size() && j < right.size()) {
     if (left[i] <= right[j]) {
       result.push_back(left[i]);
