@@ -22,8 +22,8 @@ bool LukinITestTaskSEQ::PreProcessingImpl() {
 }
 
 bool LukinITestTaskSEQ::RunImpl() {
-  auto min_it = std::min_element(GetInput().begin(), GetInput().end());
-  auto max_it = std::max_element(GetInput().begin(), GetInput().end());
+  auto min_it = std::ranges::min_element(GetInput().begin(), GetInput().end());
+  auto max_it = std::ranges::max_element(GetInput().begin(), GetInput().end());
 
   unsigned char min = *min_it;
   unsigned char max = *max_it;

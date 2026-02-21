@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 
 #include "lukin_i_ench_contr_lin_hist/common/include/common.hpp"
@@ -22,8 +23,8 @@ class LukinIPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    auto min_it = std::min_element(input_data_.begin(), input_data_.end());
-    auto max_it = std::max_element(input_data_.begin(), input_data_.end());
+    auto min_it = std::ranges::min_element(input_data_.begin(), input_data_.end());
+    auto max_it = std::ranges::max_element(input_data_.begin(), input_data_.end());
 
     unsigned char min = *min_it;
     unsigned char max = *max_it;
@@ -33,7 +34,7 @@ class LukinIPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType
     int size = static_cast<int>(input_data_.size());
 
     for (int i = 0; i < size; i++) {
-      unsigned char expected_value = static_cast<unsigned char>(static_cast<float>(input_data_[i] - min) * scale);
+      auto expected_value = static_cast<unsigned char>(static_cast<float>(input_data_[i] - min) * scale);
       if (output_data[i] != expected_value) {
         return false;
       }
