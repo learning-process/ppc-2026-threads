@@ -3,16 +3,16 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
 #include <numeric>
 #include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <fstream>
-#include <cmath>
 
 #include "kulik_a_mat_mul_double_ccs/common/include/common.hpp"
 #include "kulik_a_mat_mul_double_ccs/seq/include/ops_seq.hpp"
@@ -29,45 +29,45 @@ class KulikARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
 
  protected:
   void SetUp() override {
-  TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-  std::string filename_a = std::get<0>(params) + ".bin";
-  std::string filename_b = std::get<1>(params) + ".bin";
-  std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_kulik_a_mat_mul_double_ccs, filename_a);
-   std::ifstream filestream(abs_path, std::ios::in | std::ios::binary);
-  CCS matrix_test_a;
-  filestream.read(reinterpret_cast<char*>(&matrix_test_a.n), sizeof(size_t));
-  filestream.read(reinterpret_cast<char*>(&matrix_test_a.m), sizeof(size_t));
-  filestream.read(reinterpret_cast<char*>(&matrix_test_a.nz), sizeof(size_t));
-  matrix_test_a.col_ind.resize(matrix_test_a.m + 1);
-  matrix_test_a.row.resize(matrix_test_a.nz);
-  matrix_test_a.value.resize(matrix_test_a.nz);
-  filestream.read(reinterpret_cast<char*>(matrix_test_a.col_ind.data()), 
-                  static_cast<std::streamsize>(matrix_test_a.col_ind.size() * sizeof(size_t)));
-  filestream.read(reinterpret_cast<char*>(matrix_test_a.row.data()), 
-                  static_cast<std::streamsize>(matrix_test_a.row.size() * sizeof(size_t)));
-  filestream.read(reinterpret_cast<char*>(matrix_test_a.value.data()), 
-                  static_cast<std::streamsize>(matrix_test_a.value.size() * sizeof(double)));
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    std::string filename_a = std::get<0>(params) + ".bin";
+    std::string filename_b = std::get<1>(params) + ".bin";
+    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_kulik_a_mat_mul_double_ccs, filename_a);
+    std::ifstream filestream(abs_path, std::ios::in | std::ios::binary);
+    CCS matrix_test_a;
+    filestream.read(reinterpret_cast<char *>(&matrix_test_a.n), sizeof(size_t));
+    filestream.read(reinterpret_cast<char *>(&matrix_test_a.m), sizeof(size_t));
+    filestream.read(reinterpret_cast<char *>(&matrix_test_a.nz), sizeof(size_t));
+    matrix_test_a.col_ind.resize(matrix_test_a.m + 1);
+    matrix_test_a.row.resize(matrix_test_a.nz);
+    matrix_test_a.value.resize(matrix_test_a.nz);
+    filestream.read(reinterpret_cast<char *>(matrix_test_a.col_ind.data()),
+                    static_cast<std::streamsize>(matrix_test_a.col_ind.size() * sizeof(size_t)));
+    filestream.read(reinterpret_cast<char *>(matrix_test_a.row.data()),
+                    static_cast<std::streamsize>(matrix_test_a.row.size() * sizeof(size_t)));
+    filestream.read(reinterpret_cast<char *>(matrix_test_a.value.data()),
+                    static_cast<std::streamsize>(matrix_test_a.value.size() * sizeof(double)));
 
-  filestream.close();
-  abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_kulik_a_mat_mul_double_ccs, filename_b);
-   std::ifstream filestream2(abs_path, std::ios::in | std::ios::binary);
-  CCS matrix_test_b;
-  filestream2.read(reinterpret_cast<char*>(&matrix_test_b.n), sizeof(size_t));
-  filestream2.read(reinterpret_cast<char*>(&matrix_test_b.m), sizeof(size_t));
-  filestream2.read(reinterpret_cast<char*>(&matrix_test_b.nz), sizeof(size_t));
-  matrix_test_b.col_ind.resize(matrix_test_b.m + 1);
-  matrix_test_b.row.resize(matrix_test_b.nz);
-  matrix_test_b.value.resize(matrix_test_b.nz);
-  filestream2.read(reinterpret_cast<char*>(matrix_test_b.col_ind.data()), 
-                  static_cast<std::streamsize>(matrix_test_b.col_ind.size() * sizeof(size_t)));
-  filestream2.read(reinterpret_cast<char*>(matrix_test_b.row.data()), 
-                  static_cast<std::streamsize>(matrix_test_b.row.size() * sizeof(size_t)));
-  filestream2.read(reinterpret_cast<char*>(matrix_test_b.value.data()), 
-                  static_cast<std::streamsize>(matrix_test_b.value.size() * sizeof(double)));
+    filestream.close();
+    abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_kulik_a_mat_mul_double_ccs, filename_b);
+    std::ifstream filestream2(abs_path, std::ios::in | std::ios::binary);
+    CCS matrix_test_b;
+    filestream2.read(reinterpret_cast<char *>(&matrix_test_b.n), sizeof(size_t));
+    filestream2.read(reinterpret_cast<char *>(&matrix_test_b.m), sizeof(size_t));
+    filestream2.read(reinterpret_cast<char *>(&matrix_test_b.nz), sizeof(size_t));
+    matrix_test_b.col_ind.resize(matrix_test_b.m + 1);
+    matrix_test_b.row.resize(matrix_test_b.nz);
+    matrix_test_b.value.resize(matrix_test_b.nz);
+    filestream2.read(reinterpret_cast<char *>(matrix_test_b.col_ind.data()),
+                     static_cast<std::streamsize>(matrix_test_b.col_ind.size() * sizeof(size_t)));
+    filestream2.read(reinterpret_cast<char *>(matrix_test_b.row.data()),
+                     static_cast<std::streamsize>(matrix_test_b.row.size() * sizeof(size_t)));
+    filestream2.read(reinterpret_cast<char *>(matrix_test_b.value.data()),
+                     static_cast<std::streamsize>(matrix_test_b.value.size() * sizeof(double)));
 
-  filestream2.close();
-  input_data_ = std::make_tuple(matrix_test_a, matrix_test_b);
-}
+    filestream2.close();
+    input_data_ = std::make_tuple(matrix_test_a, matrix_test_b);
+  }
 
   bool CheckTestOutputData(OutType &output_data) final {
     std::vector<double> value{1, 35, 42, 5, 27, 32, 64, 28, 2, 20, 70, 36};
@@ -76,8 +76,9 @@ class KulikARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
     bool f1, f2, f3;
     f1 = true;
     for (size_t i = 0; i < value.size(); ++i) {
-      if (std::abs(output_data.value[i] - value[i]) > 1e-12)
+      if (std::abs(output_data.value[i] - value[i]) > 1e-12) {
         f1 = false;
+      }
     }
     f2 = (output_data.row == row);
     f3 = (output_data.col_ind == col_ind);
@@ -100,8 +101,8 @@ TEST_P(KulikARunFuncTestsThreads, MatmulFromPic) {
 
 const std::array<TestType, 1> kTestParam = {std::make_tuple(std::string("matrix_test"), std::string("matrix_test"))};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<KulikAMatMulDoubleCcsSEQ, InType>(kTestParam, PPC_SETTINGS_kulik_a_mat_mul_double_ccs));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<KulikAMatMulDoubleCcsSEQ, InType>(kTestParam, PPC_SETTINGS_kulik_a_mat_mul_double_ccs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -111,4 +112,4 @@ INSTANTIATE_TEST_SUITE_P(PicMatrixTests, KulikARunFuncTestsThreads, kGtestValues
 
 }  // namespace
 
-}  // kulik_a_mat_mul_double_ccs
+}  // namespace kulik_a_mat_mul_double_ccs

@@ -1,10 +1,10 @@
 #include "kulik_a_mat_mul_double_ccs/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <vector>
-#include <tuple>
-#include <cstddef>
 #include <algorithm>
+#include <cstddef>
+#include <numeric>
+#include <tuple>
+#include <vector>
 
 #include "kulik_a_mat_mul_double_ccs/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -34,9 +34,9 @@ bool KulikAMatMulDoubleCcsSEQ::RunImpl() {
   c.row.clear();
   c.n = a.n;
   c.m = b.m;
-  c.col_ind.assign(c.m + 1, 0); //
-  std::vector<double> accum(a.n, 0.0); //
-  std::vector<bool> nz_elem_rows(a.n, false); //
+  c.col_ind.assign(c.m + 1, 0);                //
+  std::vector<double> accum(a.n, 0.0);         //
+  std::vector<bool> nz_elem_rows(a.n, false);  //
   std::vector<size_t> nnz_rows;
   for (size_t j = 0; j < b.m; ++j) {
     c.col_ind[j] = c.value.size();
