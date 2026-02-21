@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "kiselev_i_trapezoidal_method_for_multidimensional_integrals/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -17,6 +19,8 @@ class KiselevITestTaskSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+  double ComputeIntegral(const std::vector<int> &steps);
+  double FunctionTypeChoose(int type_x, double x, double y);
 };
 
 }  // namespace kiselev_i_trapezoidal_method_for_multidimensional_integrals

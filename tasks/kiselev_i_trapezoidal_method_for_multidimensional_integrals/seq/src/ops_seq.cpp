@@ -1,5 +1,6 @@
 #include "kiselev_i_trapezoidal_method_for_multidimensional_integrals/seq/include/ops_seq.hpp"
 
+#include <cmath>
 #include <numeric>
 #include <vector>
 
@@ -15,46 +16,101 @@ KiselevITestTaskSEQ::KiselevITestTaskSEQ(const InType &in) {
 }
 
 bool KiselevITestTaskSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  const auto &in = GetInput();
+
+  if (in.left_bounds.empty()) {
+    return false;
+  }
+  if (in.left_bounds.size() != 2) {
+    return false;
+  }
+  if (in.left_bounds.size() != in.right_bounds.size()) {
+    return false;
+  }
+  if (in.left_bounds.size() != in.step_n_size.size()) {
+    return false;
+  }
+  return true;
 }
 
 bool KiselevITestTaskSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  GetOutput() = 0.0;
+  return true;
 }
 
-bool KiselevITestTaskSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
+double KiselevITestTaskSEQ::FunctionTypeChoose(int type_f, double x, double y) {
+  switch (type_f) {
+    case 0:
+      return x * x + y * y;
+    case 1:
+      return std::sin(x) * std::cos(y);
+    case 2:
+      return std::sin(x) + std::cos(y);
+    case 3:
+      return std::exp(x + y);
+    default:
+      return x + y;
   }
+}
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+double KiselevITestTaskSEQ::ComputeIntegral(const std::vector<int> &steps) {
+  double result = 0.0;
+
+  double hx = (GetInput().right_bounds[0] - GetInput().left_bounds[0]) / steps[0];
+  double hy = (GetInput().right_bounds[1] - GetInput().left_bounds[1]) / steps[1];
+
+  for (int i = 0; i <= steps[0]; i++) {
+    double x = GetInput().left_bounds[0] + i * hx;
+    double wx = (i == 0 || i == steps[0]) ? 0.5 : 1.0;
+
+    for (int j = 0; j <= steps[1]; j++) {
+      double y = GetInput().left_bounds[1] + j * hy;
+      double wy = (j == 0 || j == steps[1]) ? 0.5 : 1.0;
+
+      result += wx * wy * FunctionTypeChoose(GetInput().type_function, x, y);
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
+  return result * hx * hy;
+}
 
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
+bool KiselevITestTaskSEQ::RunImpl() {
+  std::vector<int> steps = GetInput().step_n_size;
+  double epsilon = GetInput().epsilon;
+  if (epsilon <= 0.0) {
+    GetOutput() = ComputeIntegral(steps);
+    return true;
   }
 
-  if (counter != 0) {
-    GetOutput() /= counter;
+  // первое вычисление
+  double prev = ComputeIntegral(steps);
+  double current = prev;
+
+  int iter = 0;
+  const int max_iter = 5;
+
+  while (iter < max_iter) {
+    // уточняем сетку
+    for (auto &s : steps) {
+      s *= 2;
+    }
+
+    current = ComputeIntegral(steps);
+
+    if (std::abs(current - prev) < epsilon) {
+      break;
+    }
+
+    prev = current;
+    iter++;
   }
-  return GetOutput() > 0;
+
+  GetOutput() = current;
+  return true;
 }
 
 bool KiselevITestTaskSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace kiselev_i_trapezoidal_method_for_multidimensional_integrals
