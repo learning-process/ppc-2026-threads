@@ -26,21 +26,26 @@ bool ZeninARadixSortDoubleBatcherMergeSeqseq::PreProcessingImpl() {
   return true;
 }
 
-void ZeninARadixSortDoubleBatcherMergeSeqseq::BatcherOddEvenMerge(std::vector<double> &array, int lo,
-                                                                  int hi,  // NOLINT(misc-no-recursion)
-                                                                  int step) {
-  int dist = step * 2;
-  if (dist < hi - lo) {
-    BatcherOddEvenMerge(array, lo, hi, dist);
-    BatcherOddEvenMerge(array, lo + step, hi, dist);
-    for (int i = lo + step; i + step < hi; i += dist) {
-      if (array[i] > array[i + step]) {
-        std::swap(array[i], array[i + step]);
-      }
+void ZeninARadixSortDoubleBatcherMergeSeqseq::BlocksComparing(std::vector<double> &arr, size_t i, size_t step) {
+  for (size_t k = 0; k < step; ++k) {
+    if (arr[i + k] > arr[i + k + step]) {
+      std::swap(arr[i + k], arr[i + k + step]);
     }
-  } else {
-    if (lo + step < hi && array[lo] > array[lo + step]) {
-      std::swap(array[lo], array[lo + step]);
+  }
+}
+
+void ZeninARadixSortDoubleBatcherMergeSeqseq::BatcherOddEvenMerge(std::vector<double> &arr, size_t n) {
+  if (n <= 1) {
+    return;
+  }
+
+  size_t step = n / 2;
+  BlocksComparing(arr, 0, step);
+
+  step /= 2;
+  for (; step > 0; step /= 2) {
+    for (size_t i = step; i < n - step; i += step * 2) {
+      BlocksComparing(arr, i, step);
     }
   }
 }
@@ -67,7 +72,7 @@ void ZeninARadixSortDoubleBatcherMergeSeqseq::BatcherMergeSort(std::vector<doubl
   std::ranges::copy(left.begin(), left.end(), array.begin());
   std::ranges::copy(right.begin(), right.end(), array.begin() + mid);
 
-  BatcherOddEvenMerge(array, 0, n, 1);
+  BatcherOddEvenMerge(array, static_cast<size_t>(padded_n));
   array.resize(n);
 }
 
