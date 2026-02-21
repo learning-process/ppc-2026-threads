@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 #include <fstream>
+#include <cmath>
 
 #include "kulik_a_mat_mul_double_ccs/common/include/common.hpp"
 #include "kulik_a_mat_mul_double_ccs/seq/include/ops_seq.hpp"
@@ -73,10 +74,14 @@ class KulikARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
     std::vector<size_t> row{0, 3, 5, 3, 5, 1, 3, 5, 0, 1, 3, 5};
     std::vector<size_t> col_ind{0, 1, 3, 5, 8, 9, 12};
     bool f1, f2, f3;
-    f1 = (output_data.value == value);
+    f1 = true;
+    for (size_t i = 0; i < value.size(); ++i) {
+      if (abs(output_data.value[i] - value[i]) > 1e-12)
+        f1 = false;
+    }
     f2 = (output_data.row == row);
     f3 = (output_data.col_ind == col_ind);
-    return f1 && f2 && f3;
+    return (f1 && f2 && f3);
   }
 
   InType GetTestInputData() final {

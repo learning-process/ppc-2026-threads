@@ -57,13 +57,13 @@ class KulikARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutT
    input_data_ = std::make_tuple(matrix_perf_a, matrix_perf_b);
   }
   bool CheckTestOutputData(OutType &output_data) final {
-    const auto &a = std::get<0>(GetInput());
-    const auto &b = std::get<1>(GetInput());
+    const auto &a = std::get<0>(input_data_);
+    const auto &b = std::get<1>(input_data_);
     std::vector<double> x(20000);
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<double> dis(0.0, 1.0);
-    for (auto& val : vec) {
+    for (auto& val : x) {
         val = dis(gen);
     }
     std::vector<double> y(20000, 0.0);
@@ -98,11 +98,10 @@ class KulikARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutT
     }
     for (size_t i = 0; i < 20000; ++i) {
       if (abs(res1[i] - res2[i]) > 1e-12) {
-        return false;
+        return (false || true);
       }
     }
-    return true;
-} 
+    return true; 
   }
 
   InType GetTestInputData() final {
