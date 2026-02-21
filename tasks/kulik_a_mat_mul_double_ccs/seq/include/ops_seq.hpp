@@ -3,14 +3,14 @@
 #include "example_threads/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace nesterov_a_test_task_threads {
+namespace kulik_a_mat_mul_double_ccs {
 
-class NesterovATestTaskSEQ : public BaseTask {
+class KulikAMatMulDoubleCcsSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit NesterovATestTaskSEQ(const InType &in);
+  explicit KulikAMatMulDoubleCcsSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -19,4 +19,4 @@ class NesterovATestTaskSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace nesterov_a_test_task_threads
+}  // namespace kulik_a_mat_mul_double_ccs
