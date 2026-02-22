@@ -11,13 +11,9 @@ namespace redkina_a_integral_simpson_seq {
 
 namespace {
 
-void EvaluatePoint(const std::vector<double>& a,
-                   const std::vector<double>& h,
-                   const std::vector<int>& n,
-                   const std::vector<int>& indices,
-                   const std::function<double(const std::vector<double>&)>& func,
-                   std::vector<double>& point,
-                   double& sum) {
+void EvaluatePoint(const std::vector<double> &a, const std::vector<double> &h, const std::vector<int> &n,
+                   const std::vector<int> &indices, const std::function<double(const std::vector<double> &)> &func,
+                   std::vector<double> &point, double &sum) {
   size_t dim = a.size();
   double w_prod = 1.0;
   for (size_t dim_idx = 0; dim_idx < dim; ++dim_idx) {
@@ -37,7 +33,7 @@ void EvaluatePoint(const std::vector<double>& a,
   sum += w_prod * func(point);
 }
 
-bool AdvanceIndices(std::vector<int>& indices, const std::vector<int>& n) {
+bool AdvanceIndices(std::vector<int> &indices, const std::vector<int> &n) {
   int dim = static_cast<int>(indices.size());
   int d = dim - 1;
   while (d >= 0 && indices[d] == n[d]) {
@@ -67,8 +63,12 @@ bool RedkinaAIntegralSimpsonSEQ::ValidationImpl() {
   }
 
   for (size_t i = 0; i < dim; ++i) {
-    if (in.a[i] >= in.b[i]) return false;
-    if (in.n[i] <= 0 || in.n[i] % 2 != 0) return false;
+    if (in.a[i] >= in.b[i]) {
+      return false;
+    }
+    if (in.n[i] <= 0 || in.n[i] % 2 != 0) {
+      return false;
+    }
   }
 
   return static_cast<bool>(in.func);
