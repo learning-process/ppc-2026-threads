@@ -1,9 +1,9 @@
 #pragma once
 
+#include <vector>
+
 #include "orehov_n_jarvis_pass_seq/common/include/common.hpp"
 #include "task/include/task.hpp"
-
-#include <vector>
 
 namespace orehov_n_jarvis_pass_seq {
 
@@ -19,7 +19,7 @@ class OrehovNJarvisPassSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  
+
   [[nodiscard]] static double CheckLeft(Point a, Point b, Point c);
   [[nodiscard]] Point FindFirstElem() const;
   [[nodiscard]] static double Distance(Point a, Point b);

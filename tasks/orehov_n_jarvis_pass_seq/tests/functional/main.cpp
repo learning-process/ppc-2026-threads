@@ -6,7 +6,6 @@
 #include <tuple>
 #include <vector>
 
-
 #include "orehov_n_jarvis_pass_seq/common/include/common.hpp"
 #include "orehov_n_jarvis_pass_seq/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
@@ -23,7 +22,7 @@ class OrehovNJarvisPassSEQFuncTests : public ppc::util::BaseRunFuncTests<InType,
  protected:
   void SetUp() override {
     TestType param = std::get<static_cast<int>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    if (param == 1){
+    if (param == 1) {
       input_data_.emplace_back(0, 0);
       input_data_.emplace_back(1, 0);
       input_data_.emplace_back(3, 0);
@@ -37,11 +36,11 @@ class OrehovNJarvisPassSEQFuncTests : public ppc::util::BaseRunFuncTests<InType,
       test_res_.emplace_back(4, 2);
       test_res_.emplace_back(3, 0);
     }
-    if (param == 2){
+    if (param == 2) {
       input_data_.emplace_back(0, 0);
       test_res_.emplace_back(0, 0);
     }
-    if (param == 3){
+    if (param == 3) {
       input_data_.emplace_back(0, 0);
       input_data_.emplace_back(1, 0);
       test_res_.emplace_back(0, 0);
