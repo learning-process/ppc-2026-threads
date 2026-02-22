@@ -99,8 +99,8 @@ bool SafronovMMultiplicationMatrixBlockSchemeCannon::RunImpl() {
   int size_block = std::get<0>(in);
   const auto &matrix_a = std::get<1>(in);
   const auto &matrix_b = std::get<2>(in);
-  int N = static_cast<int>(matrix_a.size());
-  int columns_blocks = N / size_block;
+  int n = static_cast<int>(matrix_a.size());
+  int columns_blocks = n / size_block;
   std::vector<std::vector<std::vector<std::vector<double>>>> matrix_blocks_a(
       columns_blocks,
       std::vector<std::vector<std::vector<double>>>(
@@ -125,9 +125,10 @@ bool SafronovMMultiplicationMatrixBlockSchemeCannon::RunImpl() {
       }
     }
   }
-  AlgorithmCannon(matrix_blocks_a, matrix_blocks_b, matrix_blocks_c, size_block, columns_blocks);
+  SafronovMMultiplicationMatrixBlockSchemeCannon::AlgorithmCannon(matrix_blocks_a, matrix_blocks_b, matrix_blocks_c,
+                                                                  size_block, columns_blocks);
 
-  std::vector<std::vector<double>> matrix_c(N, std::vector<double>(N));
+  std::vector<std::vector<double>> matrix_c(n, std::vector<double>(n));
   SafronovMMultiplicationMatrixBlockSchemeCannon::FillingResultingMatrix(matrix_blocks_c, matrix_c, size_block,
                                                                          columns_blocks);
   GetOutput() = std::move(matrix_c);

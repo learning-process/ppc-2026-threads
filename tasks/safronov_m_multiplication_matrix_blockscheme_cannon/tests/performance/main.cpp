@@ -18,9 +18,9 @@ class SafronovMMultiplicationMatrixBlockSchemeCannonPerfTests : public ppc::util
   void SetUp() override {
     int size_block = 64;
     std::vector<std::vector<double>> matrix_a(kCount_, std::vector<double>(kCount_, 2.0));
-    std::vector<std::vector<double>> matrixB(kCount_, std::vector<double>(kCount_, 3.0));
+    std::vector<std::vector<double>> matrix_b(kCount_, std::vector<double>(kCount_, 3.0));
 
-    input_data_ = std::make_tuple(size_block, matrix_a, matrixB);
+    input_data_ = std::make_tuple(size_block, matrix_a, matrix_b);
     res_ = std::vector<std::vector<double>>(kCount_, std::vector<double>(kCount_, 6144.0));
   }
 
