@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <cstddef>
 #include <functional>
 #include <vector>
 
@@ -13,15 +14,12 @@ namespace redkina_a_integral_simpson_seq {
 class RedkinaAIntegralSimpsonPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   void SetUp() override {
-    // Функция Гаусса в трёхмерном кубе
-    auto func = [](const std::vector<double> &x) { return std::exp(-(x[0] * x[0] + x[1] * x[1] + x[2] * x[2])); };
+    auto func = [](const std::vector<double> &x) { return std::exp(-((x[0] * x[0]) + (x[1] * x[1]) + (x[2] * x[2]))); };
     std::vector<double> a = {-1.0, -1.0, -1.0};
     std::vector<double> b = {1.0, 1.0, 1.0};
-    // Разбиение 200 по каждому измерению даёт 201^3 ≈ 8.1 млн узлов.
-    // Время выполнения должно составлять несколько секунд (1–10 с) на современном CPU.
     std::vector<int> n = {200, 200, 200};
 
-    input_data_ = InputData{func, a, b, n};
+    input_data_ = InputData{std::move(func), std::move(a), std::move(b), std::move(n)};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

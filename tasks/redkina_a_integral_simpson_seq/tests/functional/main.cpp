@@ -2,14 +2,16 @@
 
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <functional>
+#include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "redkina_a_integral_simpson_seq/common/include/common.hpp"
 #include "redkina_a_integral_simpson_seq/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace redkina_a_integral_simpson_seq {
 
@@ -18,6 +20,8 @@ class RedkinaAIntegralSimpsonFuncTests : public ppc::util::BaseRunFuncTests<InTy
   static std::string PrintTestParam(const TestType &test_param) {
     return "id_" + std::to_string(std::get<0>(test_param));
   }
+
+  RedkinaAIntegralSimpsonFuncTests() : expected_(0.0) {}
 
  protected:
   void SetUp() override {
@@ -42,8 +46,14 @@ class RedkinaAIntegralSimpsonFuncTests : public ppc::util::BaseRunFuncTests<InTy
 
 namespace {
 
-const double kPi = 3.14159265358979323846;
-const double kE = 2.718281828459045;
+// Константы с использованием C++20 numbers, если доступно, иначе оставляем литералы с NOLINT
+#ifdef __cpp_lib_numbers
+const double kPi = std::numbers::pi;
+const double kE = std::numbers::e;
+#else
+const double kPi = 3.14159265358979323846;  // NOLINT
+const double kE = 2.718281828459045;        // NOLINT
+#endif
 
 InputData MakeInput(std::function<double(const std::vector<double> &)> func, std::vector<double> a,
                     std::vector<double> b, std::vector<int> n) {
@@ -75,7 +85,7 @@ const std::array<TestType, 20> kTestCases = {
                                std::vector<double>{0.0}, std::vector<double>{1.0}, std::vector<int>{2}),
                      0.25),
 
-     // 1D: x^4 (полином 4 степени, нужно много разбиений)
+     // 1D: x^4
      std::make_tuple(5,
                      MakeInput([](const std::vector<double> &x) { return x[0] * x[0] * x[0] * x[0]; },
                                std::vector<double>{0.0}, std::vector<double>{1.0}, std::vector<int>{200}),
@@ -107,13 +117,13 @@ const std::array<TestType, 20> kTestCases = {
 
      // 2D: x^2 + y
      std::make_tuple(10,
-                     MakeInput([](const std::vector<double> &x) { return x[0] * x[0] + x[1]; },
+                     MakeInput([](const std::vector<double> &x) { return (x[0] * x[0]) + x[1]; },
                                std::vector<double>{0.0, 0.0}, std::vector<double>{1.0, 1.0}, std::vector<int>{2, 2}),
                      5.0 / 6.0),
 
      // 2D: x*y^2
      std::make_tuple(11,
-                     MakeInput([](const std::vector<double> &x) { return x[0] * x[1] * x[1]; },
+                     MakeInput([](const std::vector<double> &x) { return x[0] * (x[1] * x[1]); },
                                std::vector<double>{0.0, 0.0}, std::vector<double>{1.0, 1.0}, std::vector<int>{2, 2}),
                      1.0 / 6.0),
 
@@ -158,21 +168,22 @@ const std::array<TestType, 20> kTestCases = {
                    std::vector<double>{1.0, 1.0, 1.0}, std::vector<int>{2, 2, 2}),
          0.125),
 
-     // 3D: x^2 + y^2 + z^2 на [0,1]^3 (полином степени 2, точен при n=2)
+     // 3D: x^2 + y^2 + z^2 на [0,1]^3
      std::make_tuple(
          18,
-         MakeInput([](const std::vector<double> &x) { return x[0] * x[0] + x[1] * x[1] + x[2] * x[2]; },
+         MakeInput([](const std::vector<double> &x) { return (x[0] * x[0]) + (x[1] * x[1]) + (x[2] * x[2]); },
                    std::vector<double>{0.0, 0.0, 0.0}, std::vector<double>{1.0, 1.0, 1.0}, std::vector<int>{2, 2, 2}),
          1.0),
 
-     // 3D: x^2 + y^2 + z^2 на [-1,1]^3 (полином, точен при n=2, но для проверки оставим n=4)
-     std::make_tuple(19,
-                     MakeInput([](const std::vector<double> &x) { return x[0] * x[0] + x[1] * x[1] + x[2] * x[2]; },
-                               std::vector<double>{-1.0, -1.0, -1.0}, std::vector<double>{1.0, 1.0, 1.0},
-                               std::vector<int>{2, 2, 2}),  // можно 2, так как полином 2 степени
-                     8.0),
+     // 3D: x^2 + y^2 + z^2 на [-1,1]^3
+     std::make_tuple(
+         19,
+         MakeInput([](const std::vector<double> &x) { return (x[0] * x[0]) + (x[1] * x[1]) + (x[2] * x[2]); },
+                   std::vector<double>{-1.0, -1.0, -1.0}, std::vector<double>{1.0, 1.0, 1.0},
+                   std::vector<int>{2, 2, 2}),
+         8.0),
 
-     // 3D: sin(x)*cos(y)*exp(z) (не полином, нужно много разбиений)
+     // 3D: sin(x)*cos(y)*exp(z)
      std::make_tuple(
          20,
          MakeInput([](const std::vector<double> &x) { return std::sin(x[0]) * std::cos(x[1]) * std::exp(x[2]); },

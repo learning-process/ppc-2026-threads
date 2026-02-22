@@ -1,5 +1,9 @@
 #pragma once
 
+#include <cstddef>
+#include <functional>
+#include <vector>
+
 #include "redkina_a_integral_simpson_seq/common/include/common.hpp"
 #include "task/include/task.hpp"
 

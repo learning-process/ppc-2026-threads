@@ -9,6 +9,48 @@
 
 namespace redkina_a_integral_simpson_seq {
 
+namespace {
+
+// Вычисление произведения весов Симпсона и значения функции в точке
+void EvaluatePoint(const std::vector<double> &a, const std::vector<double> &h, const std::vector<int> &n,
+                   const std::vector<int> &indices, const std::function<double(const std::vector<double> &)> &func,
+                   std::vector<double> &point, double &sum) {
+  size_t dim = a.size();
+  double w_prod = 1.0;
+  for (size_t dim_idx = 0; dim_idx < dim; ++dim_idx) {
+    int idx = indices[dim_idx];
+    point[dim_idx] = a[dim_idx] + static_cast<double>(idx) * h[dim_idx];
+
+    int w = 0;
+    if (idx == 0 || idx == n[dim_idx]) {
+      w = 1;
+    } else if (idx % 2 == 1) {
+      w = 4;
+    } else {
+      w = 2;
+    }
+    w_prod *= static_cast<double>(w);
+  }
+  sum += w_prod * func(point);
+}
+
+// Переход к следующей комбинации индексов (аналог многомерного счётчика)
+bool AdvanceIndices(std::vector<int> &indices, const std::vector<int> &n) {
+  int dim = static_cast<int>(indices.size());
+  int d = dim - 1;
+  while (d >= 0 && indices[d] == n[d]) {
+    indices[d] = 0;
+    --d;
+  }
+  if (d < 0) {
+    return false;  // все комбинации исчерпаны
+  }
+  ++indices[d];
+  return true;
+}
+
+}  // namespace
+
 RedkinaAIntegralSimpsonSEQ::RedkinaAIntegralSimpsonSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -31,11 +73,8 @@ bool RedkinaAIntegralSimpsonSEQ::ValidationImpl() {
     }
   }
 
-  if (!in.func) {
-    return false;
-  }
-
-  return true;
+  // Проверка наличия функции
+  return static_cast<bool>(in.func);
 }
 
 bool RedkinaAIntegralSimpsonSEQ::PreProcessingImpl() {
@@ -57,7 +96,7 @@ bool RedkinaAIntegralSimpsonSEQ::RunImpl() {
     h[i] = (b_[i] - a_[i]) / static_cast<double>(n_[i]);
   }
 
-  // Произведение шагов (h1 * h2 * ... * hd)
+  // Произведение шагов
   double h_prod = 1.0;
   for (size_t i = 0; i < dim; ++i) {
     h_prod *= h[i];
@@ -66,42 +105,13 @@ bool RedkinaAIntegralSimpsonSEQ::RunImpl() {
   std::vector<double> point(dim);
   double sum = 0.0;
 
-  // Массив текущих индексов по каждому измерению
+  // Начальные индексы – все нули
   std::vector<int> indices(dim, 0);
 
-  // Итеративный перебор всех узлов сетки (многомерный счётчик)
-  while (true) {
-    // Вычисление координат точки и произведения весов Симпсона
-    double w_prod = 1.0;
-    for (size_t d = 0; d < dim; ++d) {
-      int idx = indices[d];
-      point[d] = a_[d] + static_cast<double>(idx) * h[d];
-
-      // Вес Симпсона для данного индекса
-      int w = 0;
-      if (idx == 0 || idx == n_[d]) {
-        w = 1;
-      } else if (idx % 2 == 1) {
-        w = 4;
-      } else {
-        w = 2;
-      }
-      w_prod *= static_cast<double>(w);
-    }
-
-    sum += w_prod * func_(point);
-
-    // Переход к следующей комбинации индексов (как в счётчике с переменным основанием)
-    int d = static_cast<int>(dim) - 1;
-    while (d >= 0 && indices[d] == n_[d]) {
-      indices[d] = 0;
-      --d;
-    }
-    if (d < 0) {
-      break;  // все комбинации перебраны
-    }
-    ++indices[d];
-  }
+  // Перебор всех узлов сетки
+  do {
+    EvaluatePoint(a_, h, n_, indices, func_, point, sum);
+  } while (AdvanceIndices(indices, n_));
 
   // Знаменатель: 3^dim
   double denominator = 1.0;
