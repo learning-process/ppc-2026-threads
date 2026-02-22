@@ -18,8 +18,8 @@ class LopatinASobelOperatorSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  std::size_t h_ = 0; // height
-  std::size_t w_ = 0; // width
+  std::size_t h_ = 0;  // height
+  std::size_t w_ = 0;  // width
 };
 
 }  // namespace lopatin_a_sobel_operator

@@ -7,13 +7,13 @@
 namespace lopatin_a_sobel_operator {
 
 class LopatinARunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+  InType input_data_;
+  OutType output_chekup_data_{};
 
-  void SetUp() override {
-  }
+  void SetUp() override {}
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return !output_data.empty();
+    return output_data == output_chekup_data_;
   }
 
   InType GetTestInputData() final {
