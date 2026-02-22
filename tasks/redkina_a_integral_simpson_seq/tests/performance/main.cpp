@@ -1,0 +1,56 @@
+#include <gtest/gtest.h>
+
+#include <cmath>
+#include <functional>
+#include <vector>
+
+#include "redkina_a_integral_simpson_seq/common/include/common.hpp"
+#include "redkina_a_integral_simpson_seq/seq/include/ops_seq.hpp"
+#include "util/include/perf_test_util.hpp"
+
+namespace redkina_a_integral_simpson_seq {
+
+class RedkinaAIntegralSimpsonPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+ public:
+  void SetUp() override {
+    // Функция Гаусса в трёхмерном кубе
+    auto func = [](const std::vector<double> &x) { return std::exp(-(x[0] * x[0] + x[1] * x[1] + x[2] * x[2])); };
+    std::vector<double> a = {-1.0, -1.0, -1.0};
+    std::vector<double> b = {1.0, 1.0, 1.0};
+    // Разбиение 200 по каждому измерению даёт 201^3 ≈ 8.1 млн узлов.
+    // Время выполнения должно составлять несколько секунд (1–10 с) на современном CPU.
+    std::vector<int> n = {200, 200, 200};
+
+    input_data_ = InputData{func, a, b, n};
+  }
+
+  bool CheckTestOutputData(OutType &output_data) final {
+    return std::isfinite(output_data);
+  }
+
+  InType GetTestInputData() final {
+    return input_data_;
+  }
+
+ private:
+  InType input_data_;
+};
+
+TEST_P(RedkinaAIntegralSimpsonPerfTests, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
+
+namespace {
+
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, RedkinaAIntegralSimpsonSEQ>(PPC_SETTINGS_redkina_a_integral_simpson_seq);
+
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+
+const auto kPerfTestName = RedkinaAIntegralSimpsonPerfTests::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(RunModeTests, RedkinaAIntegralSimpsonPerfTests, kGtestValues, kPerfTestName);
+
+}  // namespace
+
+}  // namespace redkina_a_integral_simpson_seq
