@@ -93,7 +93,7 @@ const std::array<TestType, 8> kTestParam = {
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<SafronovMMultiplicationMatrixBlockSchemeCannon, InType>(
-        kTestParam, PPC_SETTINGS_safronov_m_multiplication_matrix_blocksscheme_cannon));
+        kTestParam, PPC_SETTINGS_safronov_m_multiplication_matrix_blockscheme_cannon));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

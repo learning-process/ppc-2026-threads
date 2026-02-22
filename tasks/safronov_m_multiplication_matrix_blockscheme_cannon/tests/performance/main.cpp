@@ -18,9 +18,9 @@ class SafronovMMultiplicationMatrixBlockSchemeCannonPerfTests : public ppc::util
   void SetUp() override {
     int size_block = 64;
     std::vector<std::vector<double>> matrix_a(kCount_, std::vector<double>(kCount_, 2.0));
-    std::vector<std::vector<double>> matrix_b(kCount_, std::vector<double>(kCount_, 3.0));
+    std::vector<std::vector<double>> matrixB(kCount_, std::vector<double>(kCount_, 3.0));
 
-    input_data_ = std::make_tuple(size_block, matrix_a, matrix_b);
+    input_data_ = std::make_tuple(size_block, matrix_a, matrixB);
     res_ = std::vector<std::vector<double>>(kCount_, std::vector<double>(kCount_, 6144.0));
   }
 
@@ -50,7 +50,7 @@ TEST_P(SafronovMMultiplicationMatrixBlockSchemeCannonPerfTests, MultiplicationMa
 namespace {
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SafronovMMultiplicationMatrixBlockSchemeCannon>(
-    PPC_SETTINGS_safronov_m_multiplication_matrix_blocksscheme_cannon);
+    PPC_SETTINGS_safronov_m_multiplication_matrix_blockscheme_cannon);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
