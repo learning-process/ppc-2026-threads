@@ -32,9 +32,9 @@ class ZayalovAComplexSparseMatrMultPerfTest : public ppc::util::BaseRunPerfTests
     input_data_ = std::make_tuple(matr1, matr2);
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
-    Sparse_matrix& matr1 = std::get<0>(input_data_);
-    Sparse_matrix& matr2 = std::get<1>(input_data_);
+  bool CheckTestOutputData(OutType &output_data) final {
+    Sparse_matrix &matr1 = std::get<0>(input_data_);
+    Sparse_matrix &matr2 = std::get<1>(input_data_);
     size_t n = matr1.height;
     size_t m = matr1.width;
     size_t k = matr2.width;

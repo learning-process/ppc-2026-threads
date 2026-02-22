@@ -30,7 +30,7 @@ struct Complex {
   Complex operator+(Complex other) {
     return Complex(re + other.re, im + other.im);
   }
-  Complex& operator+=(Complex other) {
+  Complex &operator+=(Complex other) {
     re += other.re;
     im += other.im;
     return *this;
@@ -60,7 +60,7 @@ struct Sparse_matrix {
   size_t count() {
     return val.size();
   }
-  Sparse_matrix operator*(Sparse_matrix& matr_b) {
+  Sparse_matrix operator*(Sparse_matrix &matr_b) {
     if (width != matr_b.height) {
       throw "Incompatible matrix dimensions for multiplication";
     }
@@ -86,7 +86,7 @@ struct Sparse_matrix {
     Sparse_matrix res;
     res.width = matr_b.width;
     res.height = height;
-    for (const auto& p : mp) {
+    for (const auto &p : mp) {
       res.val.push_back(p.second);
       res.col_ind.push_back(p.first.first);
       res.row_ind.push_back(p.first.second);

@@ -10,7 +10,7 @@
 
 namespace zavyalov_a_compl_sparse_matr_mult {
 
-ZavyalovAComplSparseMatrMultSEQ::ZavyalovAComplSparseMatrMultSEQ(const InType& in) {
+ZavyalovAComplSparseMatrMultSEQ::ZavyalovAComplSparseMatrMultSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
@@ -24,8 +24,8 @@ bool ZavyalovAComplSparseMatrMultSEQ::PreProcessingImpl() {
 }
 
 bool ZavyalovAComplSparseMatrMultSEQ::RunImpl() {
-  Sparse_matrix& matr_a = std::get<0>(GetInput());
-  Sparse_matrix& matr_b = std::get<1>(GetInput());
+  Sparse_matrix &matr_a = std::get<0>(GetInput());
+  Sparse_matrix &matr_b = std::get<1>(GetInput());
 
   GetOutput() = matr_a * matr_b;
 
