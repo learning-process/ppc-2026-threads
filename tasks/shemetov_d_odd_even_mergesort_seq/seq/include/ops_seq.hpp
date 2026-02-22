@@ -16,13 +16,8 @@ class ShemetovDOddEvenMergeSortSEQ : public BaseTask {
   explicit ShemetovDOddEvenMergeSortSEQ(const InType &in);
 
  private:
-  static void CompareExchange(int &a, int &b);
-
-  void PerfectUnshuffle(std::vector<int> &array, size_t left, size_t right);
-  void PerfectShuffle(std::vector<int> &array, size_t left, size_t right);
-  void Merge(std::vector<int> &array, size_t left, size_t right);
-  void OddEvenMergesort(std::vector<int> &array, size_t left, size_t right);
-  void SortWithPadding(std::vector<int> &array, size_t size, size_t power);
+  void RadixSort(std::vector<int> &array, size_t left, size_t right);
+  static void OddEvenMerge(std::vector<int> &array, size_t start, size_t segment);
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
@@ -31,9 +26,11 @@ class ShemetovDOddEvenMergeSortSEQ : public BaseTask {
 
   std::vector<int> array_;
   std::vector<int> buffer_;
+  std::vector<int> position_;
 
-  size_t size_{1};
-  size_t power_{1};
+  int offset_{0};
+  size_t size_{0};
+  size_t power_{0};
 };
 
 }  // namespace shemetov_d_odd_even_mergesort
