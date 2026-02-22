@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
-#include <cstddef>
-#include <functional>
+#include <utility>
 #include <vector>
 
 #include "redkina_a_integral_simpson_seq/common/include/common.hpp"
@@ -14,21 +13,26 @@ namespace redkina_a_integral_simpson_seq {
 class RedkinaAIntegralSimpsonPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   void SetUp() override {
-    auto func = [](const std::vector<double> &x) { return std::exp(-((x[0] * x[0]) + (x[1] * x[1]) + (x[2] * x[2]))); };
+    auto func = [](const std::vector<double>& x) {
+      return std::exp(-((x[0] * x[0]) + (x[1] * x[1]) + (x[2] * x[2])));
+    };
     std::vector<double> a = {-1.0, -1.0, -1.0};
     std::vector<double> b = {1.0, 1.0, 1.0};
     std::vector<int> n = {200, 200, 200};
 
-    input_data_ = InputData{.func = std::move(func), .a = std::move(a), .b = std::move(b), .n = std::move(n)};
+    input_data_ = InputData{
+        .func = std::move(func),
+        .a = std::move(a),
+        .b = std::move(b),
+        .n = std::move(n)
+    };
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     return std::isfinite(output_data);
   }
 
-  InType GetTestInputData() final {
-    return input_data_;
-  }
+  InType GetTestInputData() final { return input_data_; }
 
  private:
   InType input_data_;
