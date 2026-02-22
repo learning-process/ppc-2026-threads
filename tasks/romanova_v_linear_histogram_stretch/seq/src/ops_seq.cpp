@@ -40,7 +40,7 @@ bool RomanovaVLinHistogramStretchSEQ::RunImpl() {
 
   const uint8_t diff = max_v - min_v;
 
-  for (int i = 0; i < in.size(); i++) {
+  for (size_t i = 0; i < in.size(); i++) {
     uint8_t pix = in[i];
     out[i] = (pix - min_v) / diff * 255;
   }
