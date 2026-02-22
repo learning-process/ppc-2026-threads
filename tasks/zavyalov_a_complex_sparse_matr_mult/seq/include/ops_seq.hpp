@@ -1,7 +1,7 @@
 #pragma once
 
-#include "example_threads/common/include/common.hpp"
 #include "task/include/task.hpp"
+#include "zavyalov_a_complex_sparse_matr_mult/common/include/common.hpp"
 
 namespace zavyalov_a_compl_sparse_matr_mult {
 

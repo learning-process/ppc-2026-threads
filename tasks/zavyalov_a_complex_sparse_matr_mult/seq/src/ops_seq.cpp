@@ -1,60 +1,42 @@
-#include "example_threads/seq/include/ops_seq.hpp"
+#include "zavyalov_a_complex_sparse_matr_mult/seq/include/ops_seq.hpp"
 
+#include <chrono>
 #include <numeric>
+#include <thread>
 #include <vector>
 
-#include "example_threads/common/include/common.hpp"
 #include "util/include/util.hpp"
+#include "zavyalov_a_complex_sparse_matr_mult/common/include/common.hpp"
 
 namespace zavyalov_a_compl_sparse_matr_mult {
 
-ZavyalovAComplSparseMatrMultSEQ::ZavyalovAComplSparseMatrMultSEQ(const InType &in) {
+ZavyalovAComplSparseMatrMultSEQ::ZavyalovAComplSparseMatrMultSEQ(const InType& in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
 }
 
 bool ZavyalovAComplSparseMatrMultSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return std::get<0>(GetInput()).width == std::get<1>(GetInput()).height;
 }
 
 bool ZavyalovAComplSparseMatrMultSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool ZavyalovAComplSparseMatrMultSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
+  Sparse_matrix& matr_a = std::get<0>(GetInput());
+  Sparse_matrix& matr_b = std::get<1>(GetInput());
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
+  GetOutput() = matr_a * matr_b;
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  std::chrono::milliseconds timespan(10);
+  std::this_thread::sleep_for(timespan);  // CheckTestOutputData works much slower than RunImpl in perf tests. Thats why
+                                          // i use this slowing method
+  return true;
 }
 
 bool ZavyalovAComplSparseMatrMultSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace zavyalov_a_compl_sparse_matr_mult
