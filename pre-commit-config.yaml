@@ -1,0 +1,86 @@
+# Pre-commit hooks for automated formatting and linting
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+repos:
+  # C++ formatting with clang-format
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v21.1.8
+    hooks:
+      - id: clang-format
+        files: \.(cpp|hpp|c|h)$
+        exclude: ^(3rdparty/|build.*/|install/)
+        args: [--style=file]
+
+  # CMake formatting
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+      - id: cmake-format
+        files: \.(cmake|CMakeLists\.txt)$
+        exclude: ^(3rdparty/|build.*/|install/)
+
+  # Python import sorting
+  - repo: https://github.com/pycqa/isort
+    rev: 7.0.0
+    hooks:
+      - id: isort
+        args: [--settings-path, setup.cfg]
+
+  # Ruff Python linter
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.14.10
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # Flake8 Python style/lint checker (supplemental to Ruff)
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.3.0
+    hooks:
+      - id: flake8
+
+  # YAML linting
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.37.1
+    hooks:
+      - id: yamllint
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-json
+        files: \.json$
+        exclude: ^(3rdparty/|build.*/|install/)
+      - id: pretty-format-json
+        files: \.json$
+        exclude: ^(3rdparty/|build.*/|install/)
+        args: [--autofix, --indent=2]
+
+  # Shell script linting with shellcheck (no docker dependency)
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
+        files: \.sh$
+
+  # Dockerfile linting with hadolint
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.14.0
+    hooks:
+      - id: hadolint-docker
+        types: [file]
+        files: (^|/)(Dockerfile|.*\.Dockerfile)$
+        args: [--config, .hadolint.yaml]
+
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.20.0
+    hooks:
+      - id: markdownlint-cli2
+        exclude: ^(3rdparty/|build.*/|install/)
+        args: ["--fix"]
+
+# Configuration
+default_stages: [pre-commit]
+fail_fast: false
