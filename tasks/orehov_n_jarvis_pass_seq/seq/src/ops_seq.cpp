@@ -1,9 +1,9 @@
 #include "orehov_n_jarvis_pass_seq/seq/include/ops_seq.hpp"
 
-#include <vector>
-#include <set>
-#include <cstddef>
 #include <cmath>
+#include <cstddef>
+#include <set>
+#include <vector>
 
 #include "orehov_n_jarvis_pass_seq/common/include/common.hpp"
 
@@ -35,19 +35,7 @@ bool OrehovNJarvisPassSEQ::RunImpl() {
   res_.push_back(current);
 
   while(true){
-    Point next = current == input_[0] ? input_[1] : input_[0];
-    for (size_t i = 0; i < input_.size(); i++){
-      if (current == input_[i] || next == input_[i]){
-        continue;
-      }
-      double orient = CheckLeft(current, next, input_[i]); 
-      if (orient > 0){
-        next = input_[i];
-      }
-      if (orient == 0){
-        if (distance(current, next) < distance(current, input_[i])) {next = input_[i];}
-      }
-    }
+    Point next = FindNext(current);
     if (next == res_[0]) {break;}
 
     current = next;
@@ -57,7 +45,24 @@ bool OrehovNJarvisPassSEQ::RunImpl() {
   return true;
 }
 
-double OrehovNJarvisPassSEQ::CheckLeft(Point a, Point b, Point c) const {
+Point OrehovNJarvisPassSEQ::FindNext(Point current) const {
+  Point next = current == input_[0] ? input_[1] : input_[0];
+  for (auto p : input_){
+    if (current == p || next == p){
+      continue;
+    }
+    double orient = CheckLeft(current, next, p); 
+    if (orient > 0){
+      next = p;
+    }
+    if (orient == 0){
+      if (Distance(current, next) < Distance(current, p)) {next = p;}
+    }
+  }
+  return next;
+}
+
+double OrehovNJarvisPassSEQ::CheckLeft(Point a, Point b, Point c) {
   return ((b.x - a.x) * (c.y - a.y)) - ((b.y - a.y) * (c.x - a.x));
 }
 
@@ -71,7 +76,7 @@ Point OrehovNJarvisPassSEQ::FindFirstElem() const {
   return current;
 }
 
-double OrehovNJarvisPassSEQ::distance(Point a, Point b) const{
+double OrehovNJarvisPassSEQ::Distance(Point a, Point b){
   return std::sqrt(pow(a.y - b.y, 2) + pow(a.x - b.x, 2));
 }
 

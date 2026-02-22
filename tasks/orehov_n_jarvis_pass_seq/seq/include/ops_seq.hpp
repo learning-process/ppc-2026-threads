@@ -20,9 +20,10 @@ class OrehovNJarvisPassSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
   
-  [[nodiscard]] double CheckLeft(Point a, Point b, Point c) const;
-  [[nodiscard]]  Point FindFirstElem() const;
-  [[nodiscard]]  double distance(Point a, Point b) const;
+  [[nodiscard]] static double CheckLeft(Point a, Point b, Point c);
+  [[nodiscard]] Point FindFirstElem() const;
+  [[nodiscard]] static double Distance(Point a, Point b);
+  [[nodiscard]] Point FindNext(Point current) const;
 
   std::vector<Point> res_;
   std::vector<Point> input_;

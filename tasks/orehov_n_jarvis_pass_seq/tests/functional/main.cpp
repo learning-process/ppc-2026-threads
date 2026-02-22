@@ -24,28 +24,28 @@ class OrehovNJarvisPassSEQFuncTests : public ppc::util::BaseRunFuncTests<InType,
   void SetUp() override {
     TestType param = std::get<static_cast<int>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     if (param == 1){
-      input_data_.emplace_back(Point(0, 0));
-      input_data_.emplace_back(Point(1, 0));
-      input_data_.emplace_back(Point(3, 0));
-      input_data_.emplace_back(Point(2, 1));
-      input_data_.emplace_back(Point(4, 2));
-      input_data_.emplace_back(Point(0, 3));
-      input_data_.emplace_back(Point(2, 4));
-      test_res_.emplace_back(Point(0, 0));
-      test_res_.emplace_back(Point(0, 3));
-      test_res_.emplace_back(Point(2, 4));
-      test_res_.emplace_back(Point(4, 2));
-      test_res_.emplace_back(Point(3, 0));
+      input_data_.emplace_back(0, 0);
+      input_data_.emplace_back(1, 0);
+      input_data_.emplace_back(3, 0);
+      input_data_.emplace_back(2, 1);
+      input_data_.emplace_back(4, 2);
+      input_data_.emplace_back(0, 3);
+      input_data_.emplace_back(2, 4);
+      test_res_.emplace_back(0, 0);
+      test_res_.emplace_back(0, 3);
+      test_res_.emplace_back(2, 4);
+      test_res_.emplace_back(4, 2);
+      test_res_.emplace_back(3, 0);
     }
     if (param == 2){
-      input_data_.emplace_back(Point(0, 0));
-      test_res_.emplace_back(Point(0, 0));
+      input_data_.emplace_back(0, 0);
+      test_res_.emplace_back(0, 0);
     }
     if (param == 3){
-      input_data_.emplace_back(Point(0, 0));
-      input_data_.emplace_back(Point(1, 0));
-      test_res_.emplace_back(Point(0, 0));
-      test_res_.emplace_back(Point(1, 0));
+      input_data_.emplace_back(0, 0);
+      input_data_.emplace_back(1, 0);
+      test_res_.emplace_back(0, 0);
+      test_res_.emplace_back(1, 0);
     }
   }
 
@@ -58,7 +58,7 @@ class OrehovNJarvisPassSEQFuncTests : public ppc::util::BaseRunFuncTests<InType,
   }
 
  private:
-  InType input_data_ = std::vector<Point>();
+  InType input_data_;
   std::vector<Point> test_res_;
 };
 
