@@ -11,7 +11,6 @@ namespace redkina_a_integral_simpson_seq {
 
 namespace {
 
-// Вычисление произведения весов Симпсона и значения функции в точке
 void EvaluatePoint(const std::vector<double> &a, const std::vector<double> &h, const std::vector<int> &n,
                    const std::vector<int> &indices, const std::function<double(const std::vector<double> &)> &func,
                    std::vector<double> &point, double &sum) {
@@ -19,7 +18,7 @@ void EvaluatePoint(const std::vector<double> &a, const std::vector<double> &h, c
   double w_prod = 1.0;
   for (size_t dim_idx = 0; dim_idx < dim; ++dim_idx) {
     int idx = indices[dim_idx];
-    point[dim_idx] = a[dim_idx] + static_cast<double>(idx) * h[dim_idx];
+    point[dim_idx] = a[dim_idx] + (static_cast<double>(idx) * h[dim_idx]);
 
     int w = 0;
     if (idx == 0 || idx == n[dim_idx]) {
@@ -34,7 +33,6 @@ void EvaluatePoint(const std::vector<double> &a, const std::vector<double> &h, c
   sum += w_prod * func(point);
 }
 
-// Переход к следующей комбинации индексов (аналог многомерного счётчика)
 bool AdvanceIndices(std::vector<int> &indices, const std::vector<int> &n) {
   int dim = static_cast<int>(indices.size());
   int d = dim - 1;
@@ -43,7 +41,7 @@ bool AdvanceIndices(std::vector<int> &indices, const std::vector<int> &n) {
     --d;
   }
   if (d < 0) {
-    return false;  // все комбинации исчерпаны
+    return false;
   }
   ++indices[d];
   return true;
@@ -73,7 +71,6 @@ bool RedkinaAIntegralSimpsonSEQ::ValidationImpl() {
     }
   }
 
-  // Проверка наличия функции
   return static_cast<bool>(in.func);
 }
 
@@ -90,13 +87,11 @@ bool RedkinaAIntegralSimpsonSEQ::PreProcessingImpl() {
 bool RedkinaAIntegralSimpsonSEQ::RunImpl() {
   size_t dim = a_.size();
 
-  // Шаги по каждому измерению
   std::vector<double> h(dim);
   for (size_t i = 0; i < dim; ++i) {
     h[i] = (b_[i] - a_[i]) / static_cast<double>(n_[i]);
   }
 
-  // Произведение шагов
   double h_prod = 1.0;
   for (size_t i = 0; i < dim; ++i) {
     h_prod *= h[i];
@@ -105,15 +100,12 @@ bool RedkinaAIntegralSimpsonSEQ::RunImpl() {
   std::vector<double> point(dim);
   double sum = 0.0;
 
-  // Начальные индексы – все нули
   std::vector<int> indices(dim, 0);
 
-  // Перебор всех узлов сетки
   do {
     EvaluatePoint(a_, h, n_, indices, func_, point, sum);
   } while (AdvanceIndices(indices, n_));
 
-  // Знаменатель: 3^dim
   double denominator = 1.0;
   for (size_t i = 0; i < dim; ++i) {
     denominator *= 3.0;

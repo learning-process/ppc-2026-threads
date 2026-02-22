@@ -46,18 +46,12 @@ class RedkinaAIntegralSimpsonFuncTests : public ppc::util::BaseRunFuncTests<InTy
 
 namespace {
 
-// Константы с использованием C++20 numbers, если доступно, иначе оставляем литералы с NOLINT
-#ifdef __cpp_lib_numbers
-const double kPi = std::numbers::pi;
-const double kE = std::numbers::e;
-#else
-const double kPi = 3.14159265358979323846;  // NOLINT
-const double kE = 2.718281828459045;        // NOLINT
-#endif
+const double kPi = std::acos(-1.0);
+const double kE = std::exp(1.0);
 
 InputData MakeInput(std::function<double(const std::vector<double> &)> func, std::vector<double> a,
                     std::vector<double> b, std::vector<int> n) {
-  return InputData{std::move(func), std::move(a), std::move(b), std::move(n)};
+  return InputData{.func = std::move(func), .a = std::move(a), .b = std::move(b), .n = std::move(n)};
 }
 
 const std::array<TestType, 20> kTestCases = {

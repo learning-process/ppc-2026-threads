@@ -19,7 +19,7 @@ class RedkinaAIntegralSimpsonPerfTests : public ppc::util::BaseRunPerfTests<InTy
     std::vector<double> b = {1.0, 1.0, 1.0};
     std::vector<int> n = {200, 200, 200};
 
-    input_data_ = InputData{std::move(func), std::move(a), std::move(b), std::move(n)};
+    input_data_ = InputData{.func = std::move(func), .a = std::move(a), .b = std::move(b), .n = std::move(n)};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
