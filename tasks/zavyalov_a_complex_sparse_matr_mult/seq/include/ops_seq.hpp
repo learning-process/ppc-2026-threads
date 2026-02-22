@@ -3,14 +3,14 @@
 #include "example_threads/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace nesterov_a_test_task_threads {
+namespace zavyalov_a_compl_sparse_matr_mult {
 
-class NesterovATestTaskSEQ : public BaseTask {
+class ZavyalovAComplSparseMatrMultSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit NesterovATestTaskSEQ(const InType &in);
+  explicit ZavyalovAComplSparseMatrMultSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -19,4 +19,4 @@ class NesterovATestTaskSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace nesterov_a_test_task_threads
+}  // namespace zavyalov_a_compl_sparse_matr_mult

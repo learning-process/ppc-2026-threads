@@ -21,9 +21,9 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace nesterov_a_test_task_threads {
+namespace zavyalov_a_compl_sparse_matr_mult {
 
-class NesterovARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class ZavyalovAComplSparseMatrMultFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -68,7 +68,7 @@ class NesterovARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
 
 namespace {
 
-TEST_P(NesterovARunFuncTestsThreads, MatmulFromPic) {
+TEST_P(ZavyalovAComplSparseMatrMultFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
@@ -77,16 +77,16 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_t
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<NesterovATestTaskALL, InType>(kTestParam, PPC_SETTINGS_example_threads),
                    ppc::util::AddFuncTask<NesterovATestTaskOMP, InType>(kTestParam, PPC_SETTINGS_example_threads),
-                   ppc::util::AddFuncTask<NesterovATestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_example_threads),
+                   ppc::util::AddFuncTask<ZavyalovAComplSparseMatrMultSEQ, InType>(kTestParam, PPC_SETTINGS_example_threads),
                    ppc::util::AddFuncTask<NesterovATestTaskSTL, InType>(kTestParam, PPC_SETTINGS_example_threads),
                    ppc::util::AddFuncTask<NesterovATestTaskTBB, InType>(kTestParam, PPC_SETTINGS_example_threads));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = NesterovARunFuncTestsThreads::PrintFuncTestName<NesterovARunFuncTestsThreads>;
+const auto kPerfTestName = ZavyalovAComplSparseMatrMultFuncTests::PrintFuncTestName<ZavyalovAComplSparseMatrMultFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, NesterovARunFuncTestsThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PicMatrixTests, ZavyalovAComplSparseMatrMultFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
-}  // namespace nesterov_a_test_task_threads
+}  // namespace zavyalov_a_compl_sparse_matr_mult

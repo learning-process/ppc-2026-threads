@@ -6,24 +6,24 @@
 #include "example_threads/common/include/common.hpp"
 #include "util/include/util.hpp"
 
-namespace nesterov_a_test_task_threads {
+namespace zavyalov_a_compl_sparse_matr_mult {
 
-NesterovATestTaskSEQ::NesterovATestTaskSEQ(const InType &in) {
+ZavyalovAComplSparseMatrMultSEQ::ZavyalovAComplSparseMatrMultSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
 }
 
-bool NesterovATestTaskSEQ::ValidationImpl() {
+bool ZavyalovAComplSparseMatrMultSEQ::ValidationImpl() {
   return (GetInput() > 0) && (GetOutput() == 0);
 }
 
-bool NesterovATestTaskSEQ::PreProcessingImpl() {
+bool ZavyalovAComplSparseMatrMultSEQ::PreProcessingImpl() {
   GetOutput() = 2 * GetInput();
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskSEQ::RunImpl() {
+bool ZavyalovAComplSparseMatrMultSEQ::RunImpl() {
   if (GetInput() == 0) {
     return false;
   }
@@ -52,9 +52,9 @@ bool NesterovATestTaskSEQ::RunImpl() {
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskSEQ::PostProcessingImpl() {
+bool ZavyalovAComplSparseMatrMultSEQ::PostProcessingImpl() {
   GetOutput() -= GetInput();
   return GetOutput() > 0;
 }
 
-}  // namespace nesterov_a_test_task_threads
+}  // namespace zavyalov_a_compl_sparse_matr_mult

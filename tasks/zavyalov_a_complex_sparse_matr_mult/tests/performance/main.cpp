@@ -8,9 +8,9 @@
 #include "example_threads/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace nesterov_a_test_task_threads {
+namespace zavyalov_a_compl_sparse_matr_mult {
 
-class ExampleRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class ZayalovAComplexSparseMatrMultPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 200;
   InType input_data_{};
 
@@ -27,22 +27,22 @@ class ExampleRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Out
   }
 };
 
-TEST_P(ExampleRunPerfTestThreads, RunPerfModes) {
+TEST_P(ZayalovAComplexSparseMatrMultPerfTest, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NesterovATestTaskALL, NesterovATestTaskOMP, NesterovATestTaskSEQ,
+    ppc::util::MakeAllPerfTasks<InType, NesterovATestTaskALL, NesterovATestTaskOMP, ZavyalovAComplSparseMatrMultSEQ,
                                 NesterovATestTaskSTL, NesterovATestTaskTBB>(PPC_SETTINGS_example_threads);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = ExampleRunPerfTestThreads::CustomPerfTestName;
+const auto kPerfTestName = ZayalovAComplexSparseMatrMultPerfTest::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ExampleRunPerfTestThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, ZayalovAComplexSparseMatrMultPerfTest, kGtestValues, kPerfTestName);
 
 }  // namespace
 
-}  // namespace nesterov_a_test_task_threads
+}  // namespace zavyalov_a_compl_sparse_matr_mult
