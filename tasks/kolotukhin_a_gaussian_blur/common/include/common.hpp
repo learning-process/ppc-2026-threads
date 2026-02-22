@@ -1,15 +1,18 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "task/include/task.hpp"
 
 namespace kolotukhin_a_gaussian_blur {
 
-using InType = int;
-using OutType = int;
-using TestType = std::tuple<int, std::string>;
+// pixel data, image wigth, image height
+using InType = std::tuple<std::vector<uint8_t>, size_t, size_t>;
+using OutType = std::vector<uint8_t>;
+using TestType = std::tuple<InType, std::vector<uint8_t>, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace kolotukhin_a_gaussian_blur

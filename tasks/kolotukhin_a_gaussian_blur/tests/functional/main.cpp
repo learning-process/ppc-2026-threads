@@ -1,15 +1,8 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
-#include <algorithm>
-#include <array>
-#include <cstddef>
 #include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "kolotukhin_a_gaussian_blur/common/include/common.hpp"
@@ -22,36 +15,18 @@ namespace kolotukhin_a_gaussian_blur {
 class KolotukhinAGaussinBlureFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return std::get<2>(test_param);
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_example_threads), "pic.ppm");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    input_data_ = std::get<0>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    return get<1>(params) == output_data;
   }
 
   InType GetTestInputData() final {
@@ -59,7 +34,7 @@ class KolotukhinAGaussinBlureFuncTests : public ppc::util::BaseRunFuncTests<InTy
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
 };
 
 namespace {
@@ -68,7 +43,26 @@ TEST_P(KolotukhinAGaussinBlureFuncTests, GaussianBlure) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+// [TEST CASE] pixel: corner
+std::vector<uint8_t> test_1 = {255, 0, 0, 0, 0, 0, 0, 0, 0};
+std::vector<uint8_t> expect_1 = {143, 47, 0, 47, 15, 0, 0, 0, 0};
+
+// [TEST CASE] pixel: border
+std::vector<uint8_t> test_2 = {0, 0, 0, 255, 0, 0, 0, 0, 0};
+std::vector<uint8_t> expect_2 = {47, 15, 0, 95, 31, 0, 47, 15, 0};
+
+// [TEST CASE] pixel: inside
+std::vector<uint8_t> test_3 = {0, 0, 0, 0, 255, 0, 0, 0, 0};
+std::vector<uint8_t> expect_3 = {15, 31, 15, 31, 63, 31, 15, 31, 15};
+
+// [TEST CASE] pixels
+std::vector<uint8_t> test_4 = {15, 15, 15, 0, 90, 87, 42, 1, 12, 13, 134, 12};
+std::vector<uint8_t> expect_4 = {33, 30, 19, 5, 51, 52, 42, 17, 31, 51, 65, 34};
+
+const std::array<TestType, 4> kTestParam = {std::make_tuple(InType{test_1, 3, 3}, expect_1, "test_corner"),
+                                            std::make_tuple(InType{test_2, 3, 3}, expect_2, "test_border"),
+                                            std::make_tuple(InType{test_3, 3, 3}, expect_3, "test_inside"),
+                                            std::make_tuple(InType{test_4, 4, 3}, expect_4, "test_common")};
 
 const auto kTestTasksList =
     ppc::util::AddFuncTask<KolotukhinAGaussinBlureSEQ, InType>(kTestParam, PPC_SETTINGS_kolotukhin_a_gaussian_blur);

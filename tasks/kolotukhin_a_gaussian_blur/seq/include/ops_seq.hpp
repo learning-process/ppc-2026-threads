@@ -17,6 +17,8 @@ class KolotukhinAGaussinBlureSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  char8_t Clamp(const std::vector<uint8_t> &pixel_data, int img_width, int img_hight, int pos_x, int pos_y) const;
 };
 
 }  // namespace kolotukhin_a_gaussian_blur
