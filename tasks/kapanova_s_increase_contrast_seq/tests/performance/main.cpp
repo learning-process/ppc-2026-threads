@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -10,11 +12,11 @@
 namespace kapanova_s_increase_contrast_seq {
 
 class KapanovaSIncreaseContrastPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kSize_ = 1024;
-  InType input_data_{};
+  static constexpr int kSize_ = 1024;
+  InType input_data_;
 
   void SetUp() override {
-    input_data_.resize(kSize_ * kSize_);
+    input_data_.resize(static_cast<size_t>(kSize_) * static_cast<size_t>(kSize_));
     for (size_t i = 0; i < input_data_.size(); ++i) {
       input_data_[i] = static_cast<uint8_t>(i % 256);
     }
@@ -28,8 +30,8 @@ class KapanovaSIncreaseContrastPerfTest : public ppc::util::BaseRunPerfTests<InT
       return false;
     }
 
-    auto min_out = *std::min_element(output_data.begin(), output_data.end());
-    auto max_out = *std::max_element(output_data.begin(), output_data.end());
+    auto min_out = *std::ranges::min_element(output_data);
+    auto max_out = *std::ranges::max_element(output_data);
 
     return (min_out == 0 && max_out == 255);
   }

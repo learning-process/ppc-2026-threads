@@ -1,6 +1,10 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
 #include <cstdint>
+#include <string>
 #include <tuple>
 #include <vector>
 
@@ -21,7 +25,7 @@ class KapanovaSIncreaseContrastFuncTest : public ppc::util::BaseRunFuncTests<InT
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int size = std::get<0>(params);
 
-    input_data_.resize(size * size);
+    input_data_.resize(static_cast<size_t>(size) * static_cast<size_t>(size));
     for (size_t i = 0; i < input_data_.size(); ++i) {
       input_data_[i] = static_cast<uint8_t>(i % 256);
     }
@@ -35,13 +39,13 @@ class KapanovaSIncreaseContrastFuncTest : public ppc::util::BaseRunFuncTests<InT
       return false;
     }
 
-    auto min_in = *std::min_element(input_data_.begin(), input_data_.end());
-    auto max_in = *std::max_element(input_data_.begin(), input_data_.end());
-    auto min_out = *std::min_element(output_data.begin(), output_data.end());
-    auto max_out = *std::max_element(output_data.begin(), output_data.end());
+    auto min_in = *std::ranges::min_element(input_data_);
+    auto max_in = *std::ranges::max_element(input_data_);
+    auto min_out = *std::ranges::min_element(output_data);
+    auto max_out = *std::ranges::max_element(output_data);
 
     if (min_in == max_in) {
-      return std::all_of(output_data.begin(), output_data.end(), [min_in](uint8_t v) { return v == min_in; });
+      return std::ranges::all_of(output_data, [min_in](uint8_t v) { return v == min_in; });
     }
 
     return (min_out == 0 && max_out == 255);
@@ -84,12 +88,12 @@ class KapanovaSIncreaseContrastValidationTest : public ppc::util::BaseRunFuncTes
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int size = std::get<0>(params);
     if (size > 0) {
-      input_data_.resize(size);
+      input_data_.resize(static_cast<size_t>(size));
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    (void)output_data;
+    static_cast<void>(output_data);
     return true;
   }
 
@@ -141,6 +145,8 @@ class KapanovaSIncreaseContrastEdgeTest : public ppc::util::BaseRunFuncTests<InT
         input_data_ = {50, 100, 150, 200};
         expected_output_ = {0, 85, 170, 255};
         break;
+      default:
+        break;
     }
   }
 
@@ -177,7 +183,7 @@ class KapanovaSIncreaseContrastRandomTest : public ppc::util::BaseRunFuncTests<I
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int size = std::get<0>(params);
 
-    input_data_.resize(size);
+    input_data_.resize(static_cast<size_t>(size));
     for (size_t i = 0; i < input_data_.size(); ++i) {
       input_data_[i] = static_cast<uint8_t>(50 + (i % 156));
     }
@@ -191,13 +197,13 @@ class KapanovaSIncreaseContrastRandomTest : public ppc::util::BaseRunFuncTests<I
       return false;
     }
 
-    auto min_in = *std::min_element(input_data_.begin(), input_data_.end());
-    auto max_in = *std::max_element(input_data_.begin(), input_data_.end());
-    auto min_out = *std::min_element(output_data.begin(), output_data.end());
-    auto max_out = *std::max_element(output_data.begin(), output_data.end());
+    auto min_in = *std::ranges::min_element(input_data_);
+    auto max_in = *std::ranges::max_element(input_data_);
+    auto min_out = *std::ranges::min_element(output_data);
+    auto max_out = *std::ranges::max_element(output_data);
 
     if (min_in == max_in) {
-      return std::all_of(output_data.begin(), output_data.end(), [min_in](uint8_t v) { return v == min_in; });
+      return std::ranges::all_of(output_data, [min_in](uint8_t v) { return v == min_in; });
     }
 
     if (min_out != 0 || max_out != 255) {
@@ -205,9 +211,9 @@ class KapanovaSIncreaseContrastRandomTest : public ppc::util::BaseRunFuncTests<I
     }
 
     for (size_t i = 0; i < input_data_.size(); ++i) {
-      float scale = 255.0f / static_cast<float>(max_in - min_in);
+      float scale = 255.0F / static_cast<float>(max_in - min_in);
       float normalized = static_cast<float>(input_data_[i] - min_in) * scale;
-      uint8_t expected = static_cast<uint8_t>(normalized + 0.5f);
+      auto expected = static_cast<uint8_t>(std::lround(normalized));
 
       if (std::abs(static_cast<int>(output_data[i]) - static_cast<int>(expected)) > 1) {
         return false;

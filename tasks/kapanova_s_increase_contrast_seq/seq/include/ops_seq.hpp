@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "kapanova_s_increase_contrast_seq/common/include/common.hpp"
 #include "task/include/task.hpp"
 
