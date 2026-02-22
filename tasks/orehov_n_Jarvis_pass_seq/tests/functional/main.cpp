@@ -30,26 +30,26 @@ class OrehovNJarvisPassSEQFuncTests : public ppc::util::BaseRunFuncTests<InType,
       input_data_.emplace_back(Point(4, 2));
       input_data_.emplace_back(Point(0, 3));
       input_data_.emplace_back(Point(2, 4));
-      _test_res.emplace_back(Point(0, 0));
-      _test_res.emplace_back(Point(0, 3));
-      _test_res.emplace_back(Point(2, 4));
-      _test_res.emplace_back(Point(4, 2));
-      _test_res.emplace_back(Point(3, 0));
+      test_res_.emplace_back(Point(0, 0));
+      test_res_.emplace_back(Point(0, 3));
+      test_res_.emplace_back(Point(2, 4));
+      test_res_.emplace_back(Point(4, 2));
+      test_res_.emplace_back(Point(3, 0));
     }
     if (param == 2){
       input_data_.emplace_back(Point(0, 0));
-      _test_res.emplace_back(Point(0, 0));
+      test_res_.emplace_back(Point(0, 0));
     }
     if (param == 3){
       input_data_.emplace_back(Point(0, 0));
       input_data_.emplace_back(Point(1, 0));
-      _test_res.emplace_back(Point(0, 0));
-      _test_res.emplace_back(Point(1, 0));
+      test_res_.emplace_back(Point(0, 0));
+      test_res_.emplace_back(Point(1, 0));
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (_test_res == output_data);
+    return (test_res_ == output_data);
   }
 
   InType GetTestInputData() final {
