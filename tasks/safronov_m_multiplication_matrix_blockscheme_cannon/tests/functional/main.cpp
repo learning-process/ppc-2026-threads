@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cmath>
+#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -10,14 +12,13 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace safronov_m_multiplication_matrix_blockscheme_cannon {
+namespace safronov_m_multiplication_matrix_blocksscheme_cannon {
 
 class SafronovMMultiplicationMatrixBlockSchemeCannonFuncTests
     : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<0>(test_param);
-    ;
   }
 
  protected:
@@ -92,7 +93,7 @@ const std::array<TestType, 8> kTestParam = {
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<SafronovMMultiplicationMatrixBlockSchemeCannon, InType>(
-        kTestParam, PPC_SETTINGS_safronov_m_multiplication_matrix_blockscheme_cannon));
+        kTestParam, PPC_SETTINGS_safronov_m_multiplication_matrix_blocksscheme_cannon));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -104,4 +105,4 @@ INSTANTIATE_TEST_SUITE_P(MultiplicationMatrixBlockSchemeCannonTests,
 
 }  // namespace
 
-}  // namespace safronov_m_multiplication_matrix_blockscheme_cannon
+}  // namespace safronov_m_multiplication_matrix_blocksscheme_cannon
