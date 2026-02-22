@@ -4,15 +4,12 @@
 #include <complex>
 #include <cstddef>
 #include <exception>
+#include <utility>
 #include <vector>
 
 #include "barkalova_m_mult_matrix_ccs/common/include/common.hpp"
 
 namespace barkalova_m_mult_matrix_ccs {
-
-namespace {
-constexpr double kEpsilon = 1e-10;
-}
 
 BarkalovaMMultMatrixCcsSEQ::BarkalovaMMultMatrixCcsSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -34,7 +31,7 @@ bool BarkalovaMMultMatrixCcsSEQ::ValidationImpl() {
   if (A.col_ptrs.empty() || A.col_ptrs[0] != 0 || B.col_ptrs.empty() || B.col_ptrs[0] != 0) {
     return false;
   }
-  if (A.nnz != static_cast<int>(A.values.size()) || B.nnz != static_cast<int>(B.values.size())) {
+  if (std::cmp_not_equal(A.nnz, A.values.size()) || std::cmp_not_equal(B.nnz, B.values.size())) {
     return false;
   }
   return true;
@@ -44,6 +41,8 @@ bool BarkalovaMMultMatrixCcsSEQ::PreProcessingImpl() {
   return true;
 }
 namespace {
+constexpr double kEpsilon = 1e-10;
+
 void TransponirMatr(const CCSMatrix &a, CCSMatrix &at) {
   at.rows = a.cols;
   at.cols = a.rows;
@@ -84,52 +83,64 @@ void TransponirMatr(const CCSMatrix &a, CCSMatrix &at) {
   }
 }
 
-void AccumulateColumnProducts(const CCSMatrix &at, const CCSMatrix &b, int col_index, std::vector<Complex> &temp_row,
-                              std::vector<int> &row_marker, std::vector<Complex> &res_val,
-                              std::vector<int> &res_row_ind) {
-  for (int k = b.col_ptrs[col_index]; k < b.col_ptrs[col_index + 1]; k++) {
-    int row_b = b.row_indices[k];
-    Complex val_b = b.values[k];
+Complex ComputeScalarProduct(const CCSMatrix &at, const CCSMatrix &b, int row_a, int col_b) {
+  Complex sum = Complex(0.0, 0.0);
 
-    for (int idx = at.col_ptrs[row_b]; idx < at.col_ptrs[row_b + 1]; idx++) {
-      int row_a = at.row_indices[idx];
-      Complex val_a = at.values[idx];
+  int ks = at.col_ptrs[row_a];
+  int ls = b.col_ptrs[col_b];
+  int kf = at.col_ptrs[row_a + 1] - 1;
+  int lf = b.col_ptrs[col_b + 1] - 1;
 
-      if (row_marker[row_a] != col_index) {
-        row_marker[row_a] = col_index;
-        temp_row[row_a] = val_a * val_b;
-      } else {
-        temp_row[row_a] += val_a * val_b;
-      }
+  while ((ks <= kf) && (ls <= lf)) {
+    if (at.row_indices[ks] < b.row_indices[ls]) {
+      ks++;
+    } else if (at.row_indices[ks] > b.row_indices[ls]) {
+      ls++;
+    } else {
+      sum += at.values[ks] * b.values[ls];
+      ks++;
+      ls++;
     }
   }
 
-  for (size_t i = 0; i < temp_row.size(); i++) {
-    if (row_marker[i] == col_index && std::norm(temp_row[i]) > kEpsilon) {
-      res_val.push_back(temp_row[i]);
-      res_row_ind.push_back(static_cast<int>(i));
+  return sum;
+}
+void ProcessColumn(const CCSMatrix &at, const CCSMatrix &b, int col_idx, std::vector<Complex> &values,
+                   std::vector<int> &rows, int &NZ) {
+  for (int i = 0; i < at.cols; i++) {  // at.cols = a.rows
+    Complex sum = ComputeScalarProduct(at, b, i, col_idx);
+
+    if (sum != Complex(0.0, 0.0)) {
+      values.push_back(sum);
+      rows.push_back(i);
+      NZ++;
     }
   }
 }
-
 void MultMatrix(const CCSMatrix &a, const CCSMatrix &b, CCSMatrix &c) {
   CCSMatrix at;
   TransponirMatr(a, at);
 
+  std::vector<Complex> values;
+  std::vector<int> rows;
+  std::vector<int> col_ptrs;
+  col_ptrs.push_back(0);
+  int NZ = 0;
+
   c.rows = a.rows;
   c.cols = b.cols;
-  c.col_ptrs.push_back(0);
 
-  std::vector<Complex> temp_row(c.rows, Complex(0.0, 0.0));
-  std::vector<int> row_marker(c.rows, -1);
-
-  for (int j = 0; j < b.cols; j++) {
-    AccumulateColumnProducts(at, b, j, temp_row, row_marker, c.values, c.row_indices);
-    c.col_ptrs.push_back(static_cast<int>(c.values.size()));
+  for (int j = 0; j < c.cols; j++) {
+    ProcessColumn(at, b, j, values, rows, NZ);
+    col_ptrs.push_back(NZ);
   }
 
-  c.nnz = static_cast<int>(c.values.size());
+  c.values = values;
+  c.row_indices = rows;
+  c.col_ptrs = col_ptrs;
+  c.nnz = NZ;
 }
+
 }  // namespace
 
 bool BarkalovaMMultMatrixCcsSEQ::RunImpl() {

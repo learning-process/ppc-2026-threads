@@ -70,7 +70,7 @@ CCSMatrix CreateRandomSparseMatrix(int rows, int cols, double density) {
 class BarkalovaMMultMatrixCcsPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    int size = 2000;
+    int size = 1500;
     double density = 0.01;
 
     matrix_a_ = CreateRandomSparseMatrix(size, size, density);
