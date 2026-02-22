@@ -106,14 +106,14 @@ Complex ComputeScalarProduct(const CCSMatrix &at, const CCSMatrix &b, int row_a,
   return sum;
 }
 void ProcessColumn(const CCSMatrix &at, const CCSMatrix &b, int col_idx, std::vector<Complex> &values,
-                   std::vector<int> &rows, int &NZ) {
+                   std::vector<int> &rows, int &nz) {
   for (int i = 0; i < at.cols; i++) {
     Complex sum = ComputeScalarProduct(at, b, i, col_idx);
 
     if (std::abs(sum.real()) > kEpsilon || std::abs(sum.imag()) > kEpsilon) {
       values.push_back(sum);
       rows.push_back(i);
-      NZ++;
+      nz++;
     }
   }
 }
@@ -125,20 +125,20 @@ void MultMatrix(const CCSMatrix &a, const CCSMatrix &b, CCSMatrix &c) {
   std::vector<int> rows;
   std::vector<int> col_ptrs;
   col_ptrs.push_back(0);
-  int NZ = 0;
+  int nz = 0;
 
   c.rows = a.rows;
   c.cols = b.cols;
 
   for (int j = 0; j < c.cols; j++) {
-    ProcessColumn(at, b, j, values, rows, NZ);
-    col_ptrs.push_back(NZ);
+    ProcessColumn(at, b, j, values, rows, nz);
+    col_ptrs.push_back(nz);
   }
 
   c.values = values;
   c.row_indices = rows;
   c.col_ptrs = col_ptrs;
-  c.nnz = NZ;
+  c.nnz = nz;
 }
 
 }  // namespace
