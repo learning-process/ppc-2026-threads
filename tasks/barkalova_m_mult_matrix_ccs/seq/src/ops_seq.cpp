@@ -12,7 +12,7 @@ namespace barkalova_m_mult_matrix_ccs {
 
 namespace {
 constexpr double kEpsilon = 1e-10;
-}  // namespace
+}
 
 BarkalovaMMultMatrixCcsSEQ::BarkalovaMMultMatrixCcsSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -22,40 +22,29 @@ BarkalovaMMultMatrixCcsSEQ::BarkalovaMMultMatrixCcsSEQ(const InType &in) {
 
 bool BarkalovaMMultMatrixCcsSEQ::ValidationImpl() {
   const auto &[A, B] = GetInput();
-
-  // Самое важное: можно ли умножать матрицы
   if (A.cols != B.rows) {
     return false;
   }
-
-  // Проверка, что матрицы не пустые
   if (A.rows <= 0 || A.cols <= 0 || B.rows <= 0 || B.cols <= 0) {
     return false;
   }
-
-  // Проверка структуры CCS (самое минимальное)
   if (A.col_ptrs.size() != static_cast<size_t>(A.cols) + 1 || B.col_ptrs.size() != static_cast<size_t>(B.cols) + 1) {
     return false;
   }
-
-  // Проверка, что col_ptrs начинается с 0
   if (A.col_ptrs.empty() || A.col_ptrs[0] != 0 || B.col_ptrs.empty() || B.col_ptrs[0] != 0) {
     return false;
   }
-
-  // Проверка соответствия nnz
   if (A.nnz != static_cast<int>(A.values.size()) || B.nnz != static_cast<int>(B.values.size())) {
     return false;
   }
-
   return true;
 }
 
 bool BarkalovaMMultMatrixCcsSEQ::PreProcessingImpl() {
   return true;
 }
-
-void BarkalovaMMultMatrixCcsSEQ::TransposeMatrix(const CCSMatrix &a, CCSMatrix &at) {
+namespace {
+void TransponirMatr(const CCSMatrix &a, CCSMatrix &at) {
   at.rows = a.cols;
   at.cols = a.rows;
   at.nnz = a.nnz;
@@ -95,10 +84,9 @@ void BarkalovaMMultMatrixCcsSEQ::TransposeMatrix(const CCSMatrix &a, CCSMatrix &
   }
 }
 
-namespace {
-
-void ProcessColumnSEQ(const CCSMatrix &at, const CCSMatrix &b, int col_index, std::vector<Complex> &temp_row,
-                      std::vector<int> &row_marker, std::vector<Complex> &res_val, std::vector<int> &res_row_ind) {
+void AccumulateColumnProducts(const CCSMatrix &at, const CCSMatrix &b, int col_index, std::vector<Complex> &temp_row,
+                              std::vector<int> &row_marker, std::vector<Complex> &res_val,
+                              std::vector<int> &res_row_ind) {
   for (int k = b.col_ptrs[col_index]; k < b.col_ptrs[col_index + 1]; k++) {
     int row_b = b.row_indices[k];
     Complex val_b = b.values[k];
@@ -124,11 +112,9 @@ void ProcessColumnSEQ(const CCSMatrix &at, const CCSMatrix &b, int col_index, st
   }
 }
 
-}  // namespace
-
-void BarkalovaMMultMatrixCcsSEQ::MultiplyMatrices(const CCSMatrix &a, const CCSMatrix &b, CCSMatrix &c) {
+void MultMatrix(const CCSMatrix &a, const CCSMatrix &b, CCSMatrix &c) {
   CCSMatrix at;
-  TransposeMatrix(a, at);
+  TransponirMatr(a, at);
 
   c.rows = a.rows;
   c.cols = b.cols;
@@ -138,19 +124,20 @@ void BarkalovaMMultMatrixCcsSEQ::MultiplyMatrices(const CCSMatrix &a, const CCSM
   std::vector<int> row_marker(c.rows, -1);
 
   for (int j = 0; j < b.cols; j++) {
-    ProcessColumnSEQ(at, b, j, temp_row, row_marker, c.values, c.row_indices);
+    AccumulateColumnProducts(at, b, j, temp_row, row_marker, c.values, c.row_indices);
     c.col_ptrs.push_back(static_cast<int>(c.values.size()));
   }
 
   c.nnz = static_cast<int>(c.values.size());
 }
+}  // namespace
 
 bool BarkalovaMMultMatrixCcsSEQ::RunImpl() {
   const auto &[a, b] = GetInput();
 
   try {
     CCSMatrix c;
-    MultiplyMatrices(a, b, c);
+    MultMatrix(a, b, c);
     GetOutput() = c;
     return true;
   } catch (const std::exception &) {
