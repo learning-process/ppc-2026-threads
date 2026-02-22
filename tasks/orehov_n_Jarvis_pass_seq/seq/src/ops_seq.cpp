@@ -35,7 +35,7 @@ bool OrehovNJarvisPassSEQ::RunImpl() {
 
   while(true){
     Point next = current == input[0] ? input[1] : input[0];
-    for (int i = 0; i < input.size(); i++){
+    for (size_t i = 0; i < input.size(); i++){
       if (current == input[i] || next == input[i]){
         continue;
       }
