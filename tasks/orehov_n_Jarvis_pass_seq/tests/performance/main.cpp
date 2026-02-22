@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 #include <cmath>
 
-#include "orehov_n_Jarvis_pass_seq/common/include/common.hpp"
-#include "orehov_n_Jarvis_pass_seq/seq/include/ops_seq.hpp"
+#include "orehov_n_jarvis_pass_seq/common/include/common.hpp"
+#include "orehov_n_jarvis_pass_seq/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace orehov_n_Jarvis_pass_seq {
+namespace orehov_n_jarvis_pass_seq {
 
 class OrehovNJarvisPassSEQPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 2000;
@@ -25,7 +25,7 @@ class OrehovNJarvisPassSEQPerfTests : public ppc::util::BaseRunPerfTests<InType,
 
   bool CheckTestOutputData(OutType &output_data) final {
 
-    return (output_data.size() > 0);
+    return !output_data.empty();
   }
 
   InType GetTestInputData() final {
@@ -50,4 +50,4 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, OrehovNJarvisPassSEQPerfTests, kGtestValu
 
 }  // namespace
 
-}  // namespace orehov_n_Jarvis_pass_seq
+}  // namespace orehov_n_jarvis_pass_seq
