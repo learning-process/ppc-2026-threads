@@ -107,10 +107,10 @@ Complex ComputeScalarProduct(const CCSMatrix &at, const CCSMatrix &b, int row_a,
 }
 void ProcessColumn(const CCSMatrix &at, const CCSMatrix &b, int col_idx, std::vector<Complex> &values,
                    std::vector<int> &rows, int &NZ) {
-  for (int i = 0; i < at.cols; i++) {  // at.cols = a.rows
+  for (int i = 0; i < at.cols; i++) {
     Complex sum = ComputeScalarProduct(at, b, i, col_idx);
 
-    if (sum != Complex(0.0, 0.0)) {
+    if (std::abs(sum.real()) > kEpsilon || std::abs(sum.imag()) > kEpsilon) {
       values.push_back(sum);
       rows.push_back(i);
       NZ++;
