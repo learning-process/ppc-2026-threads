@@ -7,7 +7,7 @@
 namespace romanova_v_linear_histogram_stretch_threads {
 
 class RomanovaVRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const size_t kImageSize_ = 10000;
+  const size_t kImageSize_ = 20000;
   InType input_data_{};
 
   std::vector<uint8_t> MakeImg(size_t width, size_t height, uint8_t low = 75, uint8_t range = 50) {
