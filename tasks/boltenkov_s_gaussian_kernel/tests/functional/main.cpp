@@ -64,7 +64,7 @@ class BoltenkovSRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InTyp
  private:
   InType input_data_;
   InType output_data_test_;
-  void readData(std::string& abs_path, InType& data) {
+  void readData(std::string &abs_path, InType &data) {
     std::ifstream file_stream(abs_path, std::ios::in | std::ios::binary);
     if (!file_stream.is_open()) {
       throw std::runtime_error("Error opening file!\n");
@@ -95,8 +95,8 @@ TEST_P(BoltenkovSRunFuncTestsProcesses, MatmulFromPic) {
 
 const std::array<TestType, 2> kTestParam = {"pic1", "pic2"};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<BoltenkovSGaussianKernelSEQ, InType>(kTestParam, PPC_SETTINGS_boltenkov_s_gaussian_kernel));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<BoltenkovSGaussianKernelSEQ, InType>(kTestParam, PPC_SETTINGS_boltenkov_s_gaussian_kernel));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

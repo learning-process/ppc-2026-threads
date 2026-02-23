@@ -9,7 +9,7 @@ namespace boltenkov_s_gaussian_kernel {
 class BoltenkovSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_{};
 
-  void readData(std::string& abs_path, InType& data) {
+  void readData(std::string &abs_path, InType &data) {
     std::ifstream file_stream(abs_path, std::ios::in | std::ios::binary);
     if (!file_stream.is_open()) {
       throw std::runtime_error("Error opening file!\n");
