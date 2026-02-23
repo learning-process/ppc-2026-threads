@@ -93,14 +93,14 @@ void KrasnopevtsevaVHoareBatcherSortSEQ::QuickBatcherSort(std::vector<int> &arr,
       continue;
     }
 
-    int pivotIndex = Partition(arr, l, r);
+    int pivot_index = Partition(arr, l, r);
 
-    if (pivotIndex - l < r - pivotIndex) {
-      stack.emplace(pivotIndex + 1, r);
-      stack.emplace(l, pivotIndex - 1);
+    if (pivot_index - l < r - pivot_index) {
+      stack.emplace(pivot_index + 1, r);
+      stack.emplace(l, pivot_index - 1);
     } else {
-      stack.emplace(l, pivotIndex - 1);
-      stack.emplace(pivotIndex + 1, r);
+      stack.emplace(l, pivot_index - 1);
+      stack.emplace(pivot_index + 1, r);
     }
   }
 
