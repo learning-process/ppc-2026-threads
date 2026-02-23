@@ -17,7 +17,7 @@ struct SparseMatrixCCS {
 
   SparseMatrixCCS() : rows(0), cols(0) {}
 
-  SparseMatrixCCS(int n_rows, int n_cols) : rows(n_rows), cols(n_cols), col_ptrs(n_cols + 1, 0) {}
+  SparseMatrixCCS(int n_rows, int n_cols) : col_ptrs(n_cols + 1, 0), rows(n_rows), cols(n_cols) {}
 };
 
 using InType = std::pair<SparseMatrixCCS, SparseMatrixCCS>;
