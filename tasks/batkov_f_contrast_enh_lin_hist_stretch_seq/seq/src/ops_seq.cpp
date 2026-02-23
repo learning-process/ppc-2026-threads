@@ -1,6 +1,7 @@
 #include "batkov_f_contrast_enh_lin_hist_stretch_seq/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 

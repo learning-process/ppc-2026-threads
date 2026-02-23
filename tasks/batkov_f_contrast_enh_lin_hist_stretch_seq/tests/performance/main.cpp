@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstddef>
+#include <cstdint>
 
 #include "batkov_f_contrast_enh_lin_hist_stretch_seq/common/include/common.hpp"
 #include "batkov_f_contrast_enh_lin_hist_stretch_seq/seq/include/ops_seq.hpp"
