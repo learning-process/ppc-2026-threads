@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <complex>
 #include <vector>
 
 #include "borunov_v_complex_ccs/common/include/common.hpp"
@@ -9,6 +8,8 @@
 #include "util/include/perf_test_util.hpp"
 
 namespace borunov_v_complex_ccs_seq {
+
+namespace {
 
 SparseMatrix GenerateSparseMatrixPerf(int num_rows, int num_cols, int non_zeros_per_col) {
   SparseMatrix mat;
@@ -20,26 +21,28 @@ SparseMatrix GenerateSparseMatrixPerf(int num_rows, int num_cols, int non_zeros_
 
   for (int j = 0; j < num_cols; ++j) {
     for (int i = 0; i < num_rows; i += step) {
-      mat.values.push_back({static_cast<double>(i + 1), static_cast<double>(j + 1)});
+      mat.values.emplace_back(static_cast<double>(i + 1), static_cast<double>(j + 1));
       mat.row_indices.push_back(i);
     }
-    mat.col_ptrs[j + 1] = mat.values.size();
+    mat.col_ptrs[j + 1] = static_cast<int>(mat.values.size());
   }
   return mat;
 }
 
+}  // namespace
+
 class BorunovVRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
     int m = 200000;
     int k = 200000;
     int n = 200000;
 
-    SparseMatrix A = GenerateSparseMatrixPerf(m, k, 20);
-    SparseMatrix B = GenerateSparseMatrixPerf(k, n, 20);
+    SparseMatrix a = GenerateSparseMatrixPerf(m, k, 20);
+    SparseMatrix b = GenerateSparseMatrixPerf(k, n, 20);
 
-    input_data_ = {A, B};
+    input_data_ = {a, b};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

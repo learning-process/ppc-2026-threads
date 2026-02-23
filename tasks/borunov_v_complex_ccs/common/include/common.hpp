@@ -1,7 +1,6 @@
 #pragma once
 
 #include <complex>
-#include <string>
 #include <tuple>
 #include <vector>
 
@@ -16,7 +15,7 @@ struct SparseMatrix {
   std::vector<int> row_indices;
   std::vector<int> col_ptrs;
 
-  bool operator==(const SparseMatrix& other) const {
+  bool operator==(const SparseMatrix &other) const {
     return num_rows == other.num_rows && num_cols == other.num_cols && values == other.values &&
            row_indices == other.row_indices && col_ptrs == other.col_ptrs;
   }
