@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <cstdint>
 
 #include "krykov_e_sobel_op/common/include/common.hpp"
@@ -15,7 +16,7 @@ class KrykovERunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Out
     Image img;
     img.width = size;
     img.height = size;
-    img.data.resize(static_cast<size_t>(size * size));
+    img.data.resize(static_cast<size_t>(size) * static_cast<size_t>(size));
 
     for (int row = 0; row < size; ++row) {
       for (int col = 0; col < size; ++col) {

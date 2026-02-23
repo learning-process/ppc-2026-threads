@@ -29,9 +29,9 @@ class KrykovERunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Ou
     Image img;
     img.width = size;
     img.height = size;
-    img.data.resize(static_cast<size_t>(size * size));
+    img.data.resize(static_cast<size_t>(size) * static_cast<size_t>(size));
 
-    expected_output_.assign(static_cast<size_t>(size * size), 0);
+    expected_output_.assign(static_cast<size_t>(size) * static_cast<size_t>(size), 0);
 
     switch (test_id) {
       case 0:
@@ -59,7 +59,7 @@ class KrykovERunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Ou
   }
 
  private:
-  void SetUpConstantImage(Image &img) {
+  static void SetUpConstantImage(Image &img) {
     for (auto &p : img.data) {
       p = {.r = 50, .g = 50, .b = 50};
     }

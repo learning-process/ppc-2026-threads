@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 #include "krykov_e_sobel_op/common/include/common.hpp"
@@ -25,13 +26,13 @@ bool KrykovESobelOpSEQ::PreProcessingImpl() {
   width_ = img.width;
   height_ = img.height;
 
-  grayscale_.resize(static_cast<size_t>(width_ * height_));
+  grayscale_.resize(static_cast<size_t>(width_) * static_cast<size_t>(height_));
   // RGB → grayscale
   for (int i = 0; i < width_ * height_; ++i) {
     const Pixel &p = img.data[i];
     grayscale_[i] = static_cast<int>((0.299 * p.r) + (0.587 * p.g) + (0.114 * p.b));
   }
-  GetOutput().assign(static_cast<size_t>(width_ * height_), 0);
+  GetOutput().assign(static_cast<size_t>(width_) * static_cast<size_t>(height_), 0);
   return true;
 }
 
@@ -48,8 +49,8 @@ bool KrykovESobelOpSEQ::RunImpl() {
       for (int ky = -1; ky <= 1; ++ky) {
         for (int kx = -1; kx <= 1; ++kx) {
           int pixel = grayscale_[((row + ky) * width_) + (col + kx)];
-          gx += pixel * gx_kernel[ky + 1][kx + 1];
-          gy += pixel * gy_kernel[ky + 1][kx + 1];
+          gx += pixel * gx_kernel.at(ky + 1).at(kx + 1);
+          gy += pixel * gy_kernel.at(ky + 1).at(kx + 1);
         }
       }
 
