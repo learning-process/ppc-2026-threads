@@ -17,8 +17,7 @@ class KrykovERunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Out
 
     for (int y = 0; y < size; ++y) {
       for (int x = 0; x < size; ++x) {
-        uint8_t value =
-            static_cast<uint8_t>((255 * x) / (size - 1));
+        uint8_t value = static_cast<uint8_t>((255 * x) / (size - 1));
         img.data[y * size + x] = {value, value, value};
       }
     }
@@ -27,8 +26,7 @@ class KrykovERunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Out
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return static_cast<int>(output_data.size()) ==
-           input_data_.width * input_data_.height;
+    return static_cast<int>(output_data.size()) == input_data_.width * input_data_.height;
   }
 
   InType GetTestInputData() final {
@@ -45,8 +43,7 @@ TEST_P(KrykovERunPerfTestThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KrykovESobelOpSEQ>(PPC_SETTINGS_krykov_e_sobel_op);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KrykovESobelOpSEQ>(PPC_SETTINGS_krykov_e_sobel_op);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

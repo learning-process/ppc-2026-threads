@@ -15,14 +15,12 @@ KrykovESobelOpSEQ::KrykovESobelOpSEQ(const InType &in) {
 }
 
 bool KrykovESobelOpSEQ::ValidationImpl() {
-  const auto& img = GetInput();
-  return img.width > 2 &&
-         img.height > 2 &&
-         static_cast<int>(img.data.size()) == img.width * img.height;
+  const auto &img = GetInput();
+  return img.width > 2 && img.height > 2 && static_cast<int>(img.data.size()) == img.width * img.height;
 }
 
 bool KrykovESobelOpSEQ::PreProcessingImpl() {
-  const auto& img = GetInput();
+  const auto &img = GetInput();
 
   width_ = img.width;
   height_ = img.height;
@@ -31,11 +29,8 @@ bool KrykovESobelOpSEQ::PreProcessingImpl() {
 
   // RGB → grayscale (luminance)
   for (int i = 0; i < width_ * height_; ++i) {
-    const Pixel& p = img.data[i];
-    grayscale_[i] = static_cast<int>(
-        0.299 * p.r +
-        0.587 * p.g +
-        0.114 * p.b);
+    const Pixel &p = img.data[i];
+    grayscale_[i] = static_cast<int>(0.299 * p.r + 0.587 * p.g + 0.114 * p.b);
   }
 
   GetOutput().assign(width_ * height_, 0);
@@ -44,21 +39,12 @@ bool KrykovESobelOpSEQ::PreProcessingImpl() {
 }
 
 bool KrykovESobelOpSEQ::RunImpl() {
-  const int gx_kernel[3][3] = {
-      {-1, 0, 1},
-      {-2, 0, 2},
-      {-1, 0, 1}
-  };
+  const int gx_kernel[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
 
-  const int gy_kernel[3][3] = {
-      {-1, -2, -1},
-      { 0,  0,  0},
-      { 1,  2,  1}
-  };
+  const int gy_kernel[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
 
   for (int y = 1; y < height_ - 1; ++y) {
     for (int x = 1; x < width_ - 1; ++x) {
-
       int gx = 0;
       int gy = 0;
 
@@ -70,8 +56,7 @@ bool KrykovESobelOpSEQ::RunImpl() {
         }
       }
 
-      int magnitude = static_cast<int>(
-          std::sqrt(static_cast<double>(gx * gx + gy * gy)));
+      int magnitude = static_cast<int>(std::sqrt(static_cast<double>(gx * gx + gy * gy)));
 
       GetOutput()[y * width_ + x] = magnitude;
     }
