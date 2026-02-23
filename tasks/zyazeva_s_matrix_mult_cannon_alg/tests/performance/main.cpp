@@ -1,17 +1,17 @@
 #include <gtest/gtest.h>
 
-#include <tuple>
 #include <vector>
+#include <tuple>
 
-#include "util/include/perf_test_util.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/seq/include/ops_seq.hpp"
+#include "util/include/perf_test_util.hpp"
 
 namespace zyazeva_s_matrix_mult_cannon_alg {
 
 class ZyazevaSPerformanceTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    size_t sz = 640;
+    size_t sz = 640; //1
 
     size_t size = sz * sz;
 
@@ -31,13 +31,13 @@ class ZyazevaSPerformanceTest : public ppc::util::BaseRunPerfTests<InType, OutTy
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const auto &expected = expected_output_;
-    const auto &actual = output_data;
-
+    const auto& expected = expected_output_;
+    const auto& actual = output_data;
+    
     if (expected.size() != actual.size()) {
       return false;
     }
-
+    
     const double eps = 1e-7;
     for (size_t i = 0; i < expected.size(); ++i) {
       if (std::abs(expected[i] - actual[i]) > eps) {
@@ -47,7 +47,8 @@ class ZyazevaSPerformanceTest : public ppc::util::BaseRunPerfTests<InType, OutTy
     return true;
   }
 
-  static void MatMul(const std::vector<double> &m1, const std::vector<double> &m2, std::vector<double> &res, int n) {
+  static void MatMul(const std::vector<double> &m1, const std::vector<double> &m2, std::vector<double> &res,
+                                  int n) {
     for (int i = 0; i < n; ++i) {
       for (int k = 0; k < n; ++k) {
         double tmp = m1[(i * n) + k];
@@ -74,13 +75,15 @@ TEST_P(ZyazevaSPerformanceTest, RunPerformanceTest) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZyazevaSMatrixMultCannonAlgSEQ>(PPC_SETTINGS_zyazeva_s_matrix_mult_cannon_alg);
+    ppc::util::MakeAllPerfTasks<InType, ZyazevaSMatrixMultCannonAlgSEQ>(
+        PPC_SETTINGS_zyazeva_s_matrix_mult_cannon_alg);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = ZyazevaSPerformanceTest::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(SequentialPerformanceTests, ZyazevaSPerformanceTest, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(SequentialPerformanceTests, ZyazevaSPerformanceTest, 
+                         kGtestValues, kPerfTestName);
 
 }  // namespace
 

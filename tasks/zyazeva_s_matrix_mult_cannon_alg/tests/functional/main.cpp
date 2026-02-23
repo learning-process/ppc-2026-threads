@@ -11,10 +11,10 @@
 #include <utility>
 #include <vector>
 
-#include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/common/include/common.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/seq/include/ops_seq.hpp"
+#include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace zyazeva_s_matrix_mult_cannon_alg {
 
@@ -25,12 +25,12 @@ class ZyazevaARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
            std::to_string(std::get<0>(test_param)) + "_" + std::to_string(std::get<1>(test_param));
   }
 
- protected:
+protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     size_t sz = std::get<0>(params);
-    size_t size = sz * sz;
+    size_t size = sz *sz;
 
     int up_to = std::get<1>(params);
 
@@ -66,7 +66,8 @@ class ZyazevaARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
     return input_data_;
   }
 
-  static void MatMul(const std::vector<double> &m1, const std::vector<double> &m2, std::vector<double> &res, int n) {
+  static void MatMul(const std::vector<double> &m1, const std::vector<double> &m2, std::vector<double> &res,
+                                  int n) {
     for (int i = 0; i < n; ++i) {
       for (int k = 0; k < n; ++k) {
         double tmp = m1[(i * n) + k];
@@ -94,8 +95,7 @@ const std::array<TestType, 7> kTestParams = {
     std::make_tuple(7, 300, "medium3_matrix"), std::make_tuple(10, 700, "large_matrix"),
     std::make_tuple(15, 1500, "very_large_matrix")};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<ZyazevaSMatrixMultCannonAlgSEQ, InType>(
-    kTestParams, PPC_SETTINGS_zyazeva_s_matrix_mult_cannon_alg);
+const auto kTestTasksList = ppc::util::AddFuncTask<ZyazevaSMatrixMultCannonAlgSEQ, InType>(kTestParams, PPC_SETTINGS_zyazeva_s_matrix_mult_cannon_alg);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
