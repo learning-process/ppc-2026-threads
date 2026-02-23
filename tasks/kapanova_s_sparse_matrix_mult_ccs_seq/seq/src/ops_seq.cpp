@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <vector>
 
+#include "kapanova_s_sparse_matrix_mult_ccs_seq/common/include/common.hpp"
+
 namespace kapanova_s_sparse_matrix_mult_ccs_seq {
 
 KapanovaSSparseMatrixMultCCSSeq::KapanovaSSparseMatrixMultCCSSeq(const InType &in) {
