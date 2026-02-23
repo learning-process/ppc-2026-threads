@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
+#include <array>
 #include <cstddef>
+#include <cstdint>
 #include <fstream>
 #include <stdexcept>
 #include <string>
@@ -32,20 +34,20 @@ class GutyanskyARunFuncTestsImgContrastIncr : public ppc::util::BaseRunFuncTests
       throw std::runtime_error("Failed to open test file: " + file_name);
     }
 
-    size_t num_of_elements;
+    size_t num_of_elements = 0;
     ifs >> num_of_elements;
 
     input_data_.resize(num_of_elements);
     output_data_.resize(num_of_elements);
 
     for (auto &v : input_data_) {
-      uint32_t value;
+      uint32_t value = 0;
       ifs >> value;
       v = static_cast<uint8_t>(value);
     }
 
     for (auto &v : output_data_) {
-      uint32_t value;
+      uint32_t value = 0;
       ifs >> value;
       v = static_cast<uint8_t>(value);
     }
@@ -60,8 +62,8 @@ class GutyanskyARunFuncTestsImgContrastIncr : public ppc::util::BaseRunFuncTests
   }
 
  private:
-  InType input_data_ = {};
-  OutType output_data_ = {};
+  InType input_data_;
+  OutType output_data_;
 };
 
 namespace {

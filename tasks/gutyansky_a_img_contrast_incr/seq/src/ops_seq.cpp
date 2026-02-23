@@ -1,10 +1,11 @@
 #include "gutyansky_a_img_contrast_incr/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <numeric>
+#include <cstdint>
+#include <cstddef>
+#include <limits>
 
 #include "gutyansky_a_img_contrast_incr/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace gutyansky_a_img_contrast_incr {
 
@@ -34,7 +35,7 @@ bool GutyanskyAImgContrastIncrSEQ::RunImpl() {
   } else {
     size_t sz = GetInput().size();
     for (size_t i = 0; i < sz; i++) {
-      uint16_t old_value = static_cast<uint16_t>(GetInput()[i]);
+      auto old_value = static_cast<uint16_t>(GetInput()[i]);
       uint16_t new_value = (std::numeric_limits<uint8_t>::max() * (old_value - lower_bound)) / delta;
 
       GetOutput()[i] = static_cast<uint8_t>(new_value);

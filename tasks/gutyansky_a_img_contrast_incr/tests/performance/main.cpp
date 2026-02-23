@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
+#include <limits>
 
 #include "gutyansky_a_img_contrast_incr/common/include/common.hpp"
 #include "gutyansky_a_img_contrast_incr/seq/include/ops_seq.hpp"
@@ -10,7 +11,7 @@ namespace gutyansky_a_img_contrast_incr {
 
 class GutyanskyARunPerfTestsImgContrastIncr : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const size_t kCount_ = 100000000;
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
     input_data_.resize(kCount_);
