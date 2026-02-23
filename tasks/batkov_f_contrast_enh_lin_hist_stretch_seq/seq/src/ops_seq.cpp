@@ -8,8 +8,7 @@
 
 namespace batkov_f_contrast_enh_lin_hist_stretch_seq {
 
-BatkovFContrastEnhLinHistStretchSEQ::BatkovFContrastEnhLinHistStretchSEQ(
-    const InType &in) {
+BatkovFContrastEnhLinHistStretchSEQ::BatkovFContrastEnhLinHistStretchSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
@@ -31,8 +30,7 @@ bool BatkovFContrastEnhLinHistStretchSEQ::RunImpl() {
   if (max_el > min_el) {
     double scale = 255.0 / (max_el - min_el);
     for (size_t i = 0; i < GetInput().size(); ++i) {
-      GetOutput()[i] = static_cast<uint8_t>(
-          std::min(255.0, (GetInput()[i] - min_el) * scale));
+      GetOutput()[i] = static_cast<uint8_t>(std::min(255.0, (GetInput()[i] - min_el) * scale));
     }
   }
 
@@ -43,4 +41,4 @@ bool BatkovFContrastEnhLinHistStretchSEQ::PostProcessingImpl() {
   return !GetOutput().empty();
 }
 
-} // namespace batkov_f_contrast_enh_lin_hist_stretch_seq
+}  // namespace batkov_f_contrast_enh_lin_hist_stretch_seq

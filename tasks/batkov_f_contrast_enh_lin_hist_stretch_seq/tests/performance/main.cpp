@@ -8,8 +8,7 @@
 
 namespace batkov_f_contrast_enh_lin_hist_stretch_seq {
 
-class BatkovFRunPerfTestThreads
-    : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class BatkovFRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr size_t kImageSize = 7000;
   InType input_data_;
 
@@ -28,24 +27,26 @@ class BatkovFRunPerfTestThreads
     return (*min_it == 0 && *max_it == 255) || (*min_it == *max_it);
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 };
 
-TEST_P(BatkovFRunPerfTestThreads, RunPerfTests) { ExecuteTest(GetParam()); }
+TEST_P(BatkovFRunPerfTestThreads, RunPerfTests) {
+  ExecuteTest(GetParam());
+}
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, BatkovFContrastEnhLinHistStretchSEQ>(
-        PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch_seq);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, BatkovFContrastEnhLinHistStretchSEQ>(
+    PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = BatkovFRunPerfTestThreads::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunPerfTests, BatkovFRunPerfTestThreads, kGtestValues,
-                         kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunPerfTests, BatkovFRunPerfTestThreads, kGtestValues, kPerfTestName);
 
-} // namespace
+}  // namespace
 
-} // namespace batkov_f_contrast_enh_lin_hist_stretch_seq
+}  // namespace batkov_f_contrast_enh_lin_hist_stretch_seq
