@@ -78,7 +78,7 @@ void KrasnopevtsevaVHoareBatcherSortSEQ::BatcherMerge(std::vector<int> &arr, int
 
 void KrasnopevtsevaVHoareBatcherSortSEQ::QuickBatcherSort(std::vector<int> &arr, int left, int right) {
   std::stack<std::pair<int, int>> stack;
-  stack.push({left, right});
+  stack.emplace(left, right);
 
   while (!stack.empty()) {
     auto [l, r] = stack.top();
@@ -87,53 +87,20 @@ void KrasnopevtsevaVHoareBatcherSortSEQ::QuickBatcherSort(std::vector<int> &arr,
     if (l >= r) {
       continue;
     }
+
     if (r - l < 16) {
-      for (int i = l + 1; i <= r; i++) {
-        int key = arr[i];
-        int j = i - 1;
-        while (j >= l && arr[j] > key) {
-          arr[j + 1] = arr[j];
-          j--;
-        }
-        arr[j + 1] = key;
-      }
+      InsertionSort(arr, l, r);
       continue;
     }
 
-    int mid = l + (r - l) / 2;
-    if (arr[l] > arr[mid]) {
-      std::swap(arr[l], arr[mid]);
-    }
-    if (arr[l] > arr[r]) {
-      std::swap(arr[l], arr[r]);
-    }
-    if (arr[mid] > arr[r]) {
-      std::swap(arr[mid], arr[r]);
-    }
+    int pivotIndex = Partition(arr, l, r);
 
-    std::swap(arr[mid], arr[r - 1]);
-    int pivot = arr[r - 1];
-
-    int i = l;
-    int j = r - 1;
-
-    while (true) {
-      while (arr[++i] < pivot);
-      while (arr[--j] > pivot);
-      if (i >= j) {
-        break;
-      }
-      std::swap(arr[i], arr[j]);
-    }
-
-    std::swap(arr[i], arr[r - 1]);
-
-    if (i - l < r - i) {
-      stack.push({i + 1, r});
-      stack.push({l, i - 1});
+    if (pivotIndex - l < r - pivotIndex) {
+      stack.emplace(pivotIndex + 1, r);
+      stack.emplace(l, pivotIndex - 1);
     } else {
-      stack.push({l, i - 1});
-      stack.push({i + 1, r});
+      stack.emplace(l, pivotIndex - 1);
+      stack.emplace(pivotIndex + 1, r);
     }
   }
 
@@ -141,6 +108,52 @@ void KrasnopevtsevaVHoareBatcherSortSEQ::QuickBatcherSort(std::vector<int> &arr,
     BatcherMerge(arr, left, right);
   }
 }
+
+void KrasnopevtsevaVHoareBatcherSortSEQ::InsertionSort(std::vector<int> &arr, int left, int right) {
+  for (int i = left + 1; i <= right; ++i) {
+    int key = arr[i];
+    int j = i - 1;
+    while (j >= left && arr[j] > key) {
+      arr[j + 1] = arr[j];
+      --j;
+    }
+    arr[j + 1] = key;
+  }
+}
+
+int KrasnopevtsevaVHoareBatcherSortSEQ::Partition(std::vector<int> &arr, int left, int right) {
+  int mid = left + ((right - left) / 2);
+  if (arr[left] > arr[mid]) {
+    std::swap(arr[left], arr[mid]);
+  }
+  if (arr[left] > arr[right]) {
+    std::swap(arr[left], arr[right]);
+  }
+  if (arr[mid] > arr[right]) {
+    std::swap(arr[mid], arr[right]);
+  }
+
+  std::swap(arr[mid], arr[right - 1]);
+  int pivot = arr[right - 1];
+
+  int i = left;
+  int j = right - 1;
+
+  while (true) {
+    while (arr[++i] < pivot) {
+    }
+    while (arr[--j] > pivot) {
+    }
+    if (i >= j) {
+      break;
+    }
+    std::swap(arr[i], arr[j]);
+  }
+
+  std::swap(arr[i], arr[right - 1]);
+  return i;
+}
+
 bool KrasnopevtsevaVHoareBatcherSortSEQ::PostProcessingImpl() {
   return true;
 }
