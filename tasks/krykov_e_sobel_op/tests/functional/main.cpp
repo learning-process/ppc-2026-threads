@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <tuple>
@@ -28,56 +29,22 @@ class KrykovERunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Ou
     Image img;
     img.width = size;
     img.height = size;
-    img.data.resize(size * size);
+    img.data.resize(static_cast<size_t>(size * size));
 
-    expected_output_.assign(size * size, 0);
+    expected_output_.assign(static_cast<size_t>(size * size), 0);
 
     switch (test_id) {
-      case 0: {
-        for (auto &p : img.data) {
-          p = {50, 50, 50};
-        }
+      case 0:
+        SetUpConstantImage(img);
         break;
-      }
-
-      case 1: {
-        // 0 0 255 255
-        // 0 0 255 255
-        // 0 0 255 255
-        // 0 0 255 255
-        for (int y = 0; y < size; ++y) {
-          for (int x = 0; x < size; ++x) {
-            uint8_t v = (x < 2) ? 0 : 255;
-            img.data[y * size + x] = {v, v, v};
-          }
-        }
-        expected_output_[1 * size + 1] = 1020;
-        expected_output_[2 * size + 1] = 1020;
-        expected_output_[1 * size + 2] = 1020;
-        expected_output_[2 * size + 2] = 1020;
-
+      case 1:
+        SetUpVerticalEdge(img);
         break;
-      }
-
-      case 2: {
-        // 0 0 0 0
-        // 0 0 0 0
-        // 255 255 255 255
-        // 255 255 255 255
-        for (int y = 0; y < size; ++y) {
-          for (int x = 0; x < size; ++x) {
-            uint8_t v = (y < 2) ? 0 : 255;
-            img.data[y * size + x] = {v, v, v};
-          }
-        }
-
-        expected_output_[1 * size + 1] = 1020;
-        expected_output_[1 * size + 2] = 1020;
-        expected_output_[2 * size + 1] = 1020;
-        expected_output_[2 * size + 2] = 1020;
-
+      case 2:
+        SetUpHorizontalEdge(img);
         break;
-      }
+      default:
+        break;
     }
 
     input_data_ = img;
@@ -92,6 +59,40 @@ class KrykovERunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Ou
   }
 
  private:
+  void SetUpConstantImage(Image &img) {
+    for (auto &p : img.data) {
+      p = {.r = 50, .g = 50, .b = 50};
+    }
+  }
+
+  void SetUpVerticalEdge(Image &img) {
+    const int size = img.width;
+    for (int row = 0; row < size; ++row) {
+      for (int col = 0; col < size; ++col) {
+        uint8_t v = (col < 2) ? 0 : 255;
+        img.data[(row * size) + col] = {.r = v, .g = v, .b = v};
+      }
+    }
+    expected_output_[(1 * size) + 1] = 1020;
+    expected_output_[(2 * size) + 1] = 1020;
+    expected_output_[(1 * size) + 2] = 1020;
+    expected_output_[(2 * size) + 2] = 1020;
+  }
+
+  void SetUpHorizontalEdge(Image &img) {
+    const int size = img.width;
+    for (int row = 0; row < size; ++row) {
+      for (int col = 0; col < size; ++col) {
+        uint8_t v = (row < 2) ? 0 : 255;
+        img.data[(row * size) + col] = {.r = v, .g = v, .b = v};
+      }
+    }
+    expected_output_[(1 * size) + 1] = 1020;
+    expected_output_[(1 * size) + 2] = 1020;
+    expected_output_[(2 * size) + 1] = 1020;
+    expected_output_[(2 * size) + 2] = 1020;
+  }
+
   InType input_data_;
   OutType expected_output_;
 };

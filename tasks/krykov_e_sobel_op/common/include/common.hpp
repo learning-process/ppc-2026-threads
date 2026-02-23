@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -9,7 +10,9 @@
 namespace krykov_e_sobel_op {
 
 struct Pixel {
-  uint8_t r, g, b;
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
 
   bool operator==(const Pixel &other) const {
     return r == other.r && g == other.g && b == other.b;
@@ -17,9 +20,9 @@ struct Pixel {
 };
 
 struct Image {
-  int width;
-  int height;
-  std::vector<Pixel> data;  // width * height
+  int width = 0;
+  int height = 0;
+  std::vector<Pixel> data;
 };
 
 using InType = Image;

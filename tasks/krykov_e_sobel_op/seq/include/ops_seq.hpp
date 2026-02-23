@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "krykov_e_sobel_op/common/include/common.hpp"
 #include "task/include/task.hpp"
 
