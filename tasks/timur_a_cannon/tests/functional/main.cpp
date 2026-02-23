@@ -18,11 +18,9 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-
 namespace timur_a_cannon {
 
-class TimurACannonFuncTests
-    : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class TimurACannonFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<0>(test_param);
@@ -98,9 +96,8 @@ const std::array<TestType, 8> kTestParam = {
                     std::vector<std::vector<double>>(9, std::vector<double>(9, 2.0)),
                     std::vector<std::vector<double>>(9, std::vector<double>(9, 19.8)))};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<TimurACannonMatrixMultiplication, InType>(
-        kTestParam, PPC_SETTINGS_timur_a_cannon));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<TimurACannonMatrixMultiplication, InType>(kTestParam, PPC_SETTINGS_timur_a_cannon));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

@@ -29,8 +29,7 @@ bool TimurACannonMatrixMultiplication::PreProcessingImpl() {
 
 void TimurACannonMatrixMultiplication::MultiplyingBlocks(std::vector<std::vector<double>> &block_a,
                                                          std::vector<std::vector<double>> &block_b,
-                                                         std::vector<std::vector<double>> &block_c,
-                                                         int size_block) {
+                                                         std::vector<std::vector<double>> &block_c, int size_block) {
   for (int i = 0; i < size_block; i++) {
     for (int j = 0; j < size_block; j++) {
       for (int k = 0; k < size_block; k++) {
@@ -65,8 +64,7 @@ void TimurACannonMatrixMultiplication::ShiftingBlocksMatrixBUp(
 void TimurACannonMatrixMultiplication::AlgorithmCannon(
     std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks_a,
     std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks_b,
-    std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks_c,
-    int size_block, int columns_blocks) {
+    std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks_c, int size_block, int columns_blocks) {
   for (int i = 0; i < columns_blocks; i++) {
     for (int j = 0; j < columns_blocks; j++) {
       for (int k = 0; k < columns_blocks; k++) {
@@ -102,7 +100,7 @@ bool TimurACannonMatrixMultiplication::RunImpl() {
   const auto &matrix_b = std::get<2>(in);
   int n = static_cast<int>(matrix_a.size());
   int columns_blocks = n / size_block;
-  
+
   std::vector<std::vector<std::vector<std::vector<double>>>> matrix_blocks_a(
       columns_blocks,
       std::vector<std::vector<std::vector<double>>>(
@@ -127,13 +125,13 @@ bool TimurACannonMatrixMultiplication::RunImpl() {
       }
     }
   }
-  
-  TimurACannonMatrixMultiplication::AlgorithmCannon(matrix_blocks_a, matrix_blocks_b, matrix_blocks_c,
-                                                    size_block, columns_blocks);
+
+  TimurACannonMatrixMultiplication::AlgorithmCannon(matrix_blocks_a, matrix_blocks_b, matrix_blocks_c, size_block,
+                                                    columns_blocks);
 
   std::vector<std::vector<double>> matrix_c(n, std::vector<double>(n));
   TimurACannonMatrixMultiplication::FillingResultingMatrix(matrix_blocks_c, matrix_c, size_block, columns_blocks);
-  
+
   GetOutput() = std::move(matrix_c);
   return true;
 }

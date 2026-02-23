@@ -22,17 +22,14 @@ class TimurACannonMatrixMultiplication : public BaseTask {
                                       int columns_blocks);
   static void ShiftingBlocksMatrixALeft(std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks_a,
                                         int columns_blocks);
-  static void MultiplyingBlocks(std::vector<std::vector<double>> &block_a,
-                                std::vector<std::vector<double>> &block_b,
-                                std::vector<std::vector<double>> &block_c,
-                                int size_block);
+  static void MultiplyingBlocks(std::vector<std::vector<double>> &block_a, std::vector<std::vector<double>> &block_b,
+                                std::vector<std::vector<double>> &block_c, int size_block);
   static void AlgorithmCannon(std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks_a,
                               std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks_b,
                               std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks_c,
                               int size_block, int columns_blocks);
   static void FillingResultingMatrix(std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks_c,
-                                     std::vector<std::vector<double>> &matrix_c,
-                                     int size_block, int columns_blocks);
+                                     std::vector<std::vector<double>> &matrix_c, int size_block, int columns_blocks);
 };
 
 }  // namespace timur_a_cannon

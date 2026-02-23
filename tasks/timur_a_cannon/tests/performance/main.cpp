@@ -9,8 +9,6 @@
 #include "timur_a_cannon/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-
-
 namespace timur_a_cannon {
 
 class TimurACannonPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
@@ -52,8 +50,8 @@ TEST_P(TimurACannonPerfTests, MultiplicationMatrixBlockSchemeCannonPerf) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, TimurACannonMatrixMultiplication>(
-    PPC_SETTINGS_timur_a_cannon);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, TimurACannonMatrixMultiplication>(PPC_SETTINGS_timur_a_cannon);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
