@@ -18,7 +18,7 @@ class KotelnikovaATaskSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static SparseMatrixCCS MultiplyMatrices(const SparseMatrixCCS &A, const SparseMatrixCCS &B);
+  static SparseMatrixCCS MultiplyMatrices(const SparseMatrixCCS &a, const SparseMatrixCCS &b);
   static bool IsMatrixValid(const SparseMatrixCCS &matrix);
 };
 
