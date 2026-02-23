@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <ranges>
-#include <stdexcept>
 #include <vector>
+#include <stdexcept>
 
 namespace kapanova_s_sparse_matrix_mult_ccs_seq {
 
