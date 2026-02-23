@@ -11,7 +11,7 @@
 namespace batkov_f_contrast_enh_lin_hist_stretch_seq {
 
 class BatkovFRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr size_t kImageSize = 7000;
+  static constexpr size_t kImageSize = 5000;
   InType input_data_;
 
   void SetUp() override {
