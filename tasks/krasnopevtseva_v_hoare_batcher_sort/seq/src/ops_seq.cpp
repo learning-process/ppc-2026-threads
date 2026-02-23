@@ -74,7 +74,7 @@ void KrasnopevtsevaVHoareBatcherSortSEQ::BatcherMerge(std::vector<int> &arr, int
     arr[left + i] = temp[i];
   }
 }
-
+// NOLINTNEXTLINE(misc-no-recursion)
 void KrasnopevtsevaVHoareBatcherSortSEQ::QuickBatcherSort(std::vector<int> &arr, int left, int right) {
   if (left >= right) {
     return;

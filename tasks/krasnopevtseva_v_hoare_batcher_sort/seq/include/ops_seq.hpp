@@ -19,7 +19,7 @@ class KrasnopevtsevaVHoareBatcherSortSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   static void CompareAndSwap(int &a, int &b);
-  void BatcherMerge(std::vector<int> &arr, int left, int right);
+  static void BatcherMerge(std::vector<int> &arr, int left, int right);
   void QuickBatcherSort(std::vector<int> &arr, int left, int right);
   bool PostProcessingImpl() override;
 };
