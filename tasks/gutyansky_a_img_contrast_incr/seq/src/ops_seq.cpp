@@ -1,8 +1,8 @@
 #include "gutyansky_a_img_contrast_incr/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 
 #include "gutyansky_a_img_contrast_incr/common/include/common.hpp"
