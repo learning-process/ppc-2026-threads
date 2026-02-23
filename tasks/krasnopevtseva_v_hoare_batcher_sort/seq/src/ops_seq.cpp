@@ -98,8 +98,10 @@ void KrasnopevtsevaVHoareBatcherSortSEQ::QuickBatcherSort(std::vector<int> &arr,
   int j = right;
 
   while (true) {
-    while (arr[++i] < pivot){};
-    while (arr[--j] > pivot){};
+    while (arr[++i] < pivot) {
+    };
+    while (arr[--j] > pivot) {
+    };
     if (i >= j) {
       break;
     }

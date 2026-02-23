@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+
 #include "krasnopevtseva_v_hoare_batcher_sort/common/include/common.hpp"
 #include "task/include/task.hpp"
 
