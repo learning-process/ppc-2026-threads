@@ -90,8 +90,8 @@ TEST_P(ZyazevaARunFuncTestsThreads, MatMulCannonAlg) {
 
 const std::array<TestType, 7> kTestParams = {
     std::make_tuple(1, 70, "small_matrix"),        std::make_tuple(2, 100, "small2_matrix"),
-    std::make_tuple(3, 120, "medium1_matrix"), std::make_tuple(4, 150, "medium2_matrix"),
-    std::make_tuple(7, 300, "medium3_matrix"), std::make_tuple(10, 700, "large_matrix"),
+    std::make_tuple(3, 120, "medium1_matrix"),     std::make_tuple(4, 150, "medium2_matrix"),
+    std::make_tuple(7, 300, "medium3_matrix"),     std::make_tuple(10, 700, "large_matrix"),
     std::make_tuple(15, 1500, "very_large_matrix")};
 
 const auto kTestTasksList = ppc::util::AddFuncTask<ZyazevaSMatrixMultCannonAlgSEQ, InType>(
