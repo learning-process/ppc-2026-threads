@@ -26,11 +26,11 @@ struct Complex {
   }
 
   Complex operator*(const Complex &other) const {
-    return {(re * other.re) - (im * other.im), (re * other.im) + (im * other.re)};
+    return Complex{(re * other.re) - (im * other.im), (re * other.im) + (im * other.re)};
   }
 
   Complex operator+(const Complex &other) const {
-    return {re + other.re, im + other.im};
+    return Complex{re + other.re, im + other.im};
   }
 
   Complex &operator+=(const Complex &other) {
