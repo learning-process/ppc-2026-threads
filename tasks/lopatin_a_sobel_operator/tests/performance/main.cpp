@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
+#include <cstdint>
 #include <random>
 
 #include "lopatin_a_sobel_operator/common/include/common.hpp"
@@ -26,8 +27,8 @@ class LopatinARunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
     std::mt19937 gen(seed);
     std::uniform_int_distribution<int> dis(0, 255);
 
-    for (std::size_t i = 0; i < input_data_.pixels.size(); ++i) {
-      input_data_.pixels[i] = static_cast<std::uint8_t>(dis(gen));
+    for (unsigned char &pixel : input_data_.pixels) {
+      pixel = static_cast<std::uint8_t>(dis(gen));
     }
 
     output_chekup_data_.resize(height * width);

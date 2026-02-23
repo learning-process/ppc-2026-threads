@@ -8,6 +8,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 
 #include "lopatin_a_sobel_operator/common/include/common.hpp"
 #include "lopatin_a_sobel_operator/seq/include/ops_seq.hpp"
