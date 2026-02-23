@@ -23,8 +23,6 @@ class RectMethodSequential : public BaseTask {
   bool PostProcessingImpl() override;
 
  private:
-  double CalculateRecursive(size_t dim, std::vector<double> coords, double d_v);
-
   InType local_input_;
   double res_{0.0};
 };
