@@ -1,19 +1,18 @@
 #include "boltenkov_s_gaussian_kernel/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <cstddef>
 #include <vector>
 
 #include "boltenkov_s_gaussian_kernel/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace boltenkov_s_gaussian_kernel {
 
-BoltenkovSGaussianKernelSEQ::BoltenkovSGaussianKernelSEQ(const InType &in) {
+BoltenkovSGaussianKernelSEQ::BoltenkovSGaussianKernelSEQ(const InType &in)
+    : kernel_{{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}}, shift_(4) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<std::vector<int>>();
-  kernel = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
-  shift = 4;
 }
 
 bool BoltenkovSGaussianKernelSEQ::ValidationImpl() {
@@ -40,21 +39,21 @@ bool BoltenkovSGaussianKernelSEQ::RunImpl() {
   std::size_t m = std::get<1>(GetInput());
 
   std::vector<std::vector<int>> data = std::get<2>(GetInput());
-  std::vector<std::vector<int>> tmpData(n + 2, std::vector<int>(m + 2, 0));
+  std::vector<std::vector<int>> tmp_data(n + 2, std::vector<int>(m + 2, 0));
   std::vector<std::vector<int>> &res = GetOutput();
 
   for (std::size_t i = 1; i <= n; i++) {
-    std::copy(data[i - 1].begin(), data[i - 1].end(), tmpData[i].begin() + 1);
+    std::copy(data[i - 1].begin(), data[i - 1].end(), tmp_data[i].begin() + 1);
   }
 
   for (std::size_t i = 1; i <= n; i++) {
     for (std::size_t j = 1; j <= m; j++) {
-      res[i - 1][j - 1] = tmpData[i - 1][j - 1] * kernel[0][0] + tmpData[i - 1][j] * kernel[0][1] +
-                          tmpData[i - 1][j + 1] * kernel[0][2] + tmpData[i][j - 1] * kernel[1][0] +
-                          tmpData[i][j] * kernel[1][1] + tmpData[i][j + 1] * kernel[1][2] +
-                          tmpData[i + 1][j - 1] * kernel[2][0] + tmpData[i + 1][j] * kernel[2][1] +
-                          tmpData[i + 1][j + 1] * kernel[2][2];
-      res[i - 1][j - 1] >>= shift;
+      res[i - 1][j - 1] = (tmp_data[i - 1][j - 1] * kernel_[0][0]) + (tmp_data[i - 1][j] * kernel_[0][1]) +
+                          (tmp_data[i - 1][j + 1] * kernel_[0][2]) + (tmp_data[i][j - 1] * kernel_[1][0]) +
+                          (tmp_data[i][j] * kernel_[1][1]) + (tmp_data[i][j + 1] * kernel_[1][2]) +
+                          (tmp_data[i + 1][j - 1] * kernel_[2][0]) + (tmp_data[i + 1][j] * kernel_[2][1]) +
+                          (tmp_data[i + 1][j + 1] * kernel_[2][2]);
+      res[i - 1][j - 1] >>= shift_;
     }
   }
 

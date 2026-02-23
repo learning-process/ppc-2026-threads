@@ -3,6 +3,8 @@
 #include "boltenkov_s_gaussian_kernel/common/include/common.hpp"
 #include "task/include/task.hpp"
 
+#include <vector>
+
 namespace boltenkov_s_gaussian_kernel {
 
 class BoltenkovSGaussianKernelSEQ : public BaseTask {
@@ -13,8 +15,8 @@ class BoltenkovSGaussianKernelSEQ : public BaseTask {
   explicit BoltenkovSGaussianKernelSEQ(const InType &in);
 
  private:
-  std::vector<std::vector<int>> kernel;
-  int shift;
+  std::vector<std::vector<int>> kernel_;
+  int shift_;
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;

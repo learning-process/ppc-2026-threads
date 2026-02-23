@@ -1,15 +1,13 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
+#include <fstream>
+#include <ios>
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "boltenkov_s_gaussian_kernel/common/include/common.hpp"
@@ -30,10 +28,10 @@ class BoltenkovSRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InTyp
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     std::string file_name = params + ".bin";
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_boltenkov_s_gaussian_kernel, file_name);
-    readData(abs_path, input_data_);
+    ReadData(abs_path, input_data_);
     file_name = params + "_output.bin";
     abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_boltenkov_s_gaussian_kernel, file_name);
-    readData(abs_path, output_data_test_);
+    ReadData(abs_path, output_data_test_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -64,7 +62,7 @@ class BoltenkovSRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InTyp
  private:
   InType input_data_;
   InType output_data_test_;
-  void readData(std::string &abs_path, InType &data) {
+  static void ReadData(std::string &abs_path, InType &data) {
     std::ifstream file_stream(abs_path, std::ios::in | std::ios::binary);
     if (!file_stream.is_open()) {
       throw std::runtime_error("Error opening file!\n");

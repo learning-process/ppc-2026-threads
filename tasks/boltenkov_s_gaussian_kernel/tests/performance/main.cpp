@@ -1,15 +1,23 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <fstream>
+#include <ios>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
 #include "boltenkov_s_gaussian_kernel/common/include/common.hpp"
 #include "boltenkov_s_gaussian_kernel/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace boltenkov_s_gaussian_kernel {
 
 class BoltenkovSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+  InType input_data_;
 
-  void readData(std::string &abs_path, InType &data) {
+  static void ReadData(std::string &abs_path, InType &data) {
     std::ifstream file_stream(abs_path, std::ios::in | std::ios::binary);
     if (!file_stream.is_open()) {
       throw std::runtime_error("Error opening file!\n");
@@ -34,7 +42,7 @@ class BoltenkovSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType
   void SetUp() override {
     std::string file_name = "pic3.bin";
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_boltenkov_s_gaussian_kernel, file_name);
-    readData(abs_path, input_data_);
+    ReadData(abs_path, input_data_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
