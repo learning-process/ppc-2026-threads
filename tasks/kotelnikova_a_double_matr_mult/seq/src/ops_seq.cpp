@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <vector>
 
+#include "kotelnikova_a_double_matr_mult/common/include/common.hpp"
+
 namespace kotelnikova_a_double_matr_mult {
 
 KotelnikovaATaskSEQ::KotelnikovaATaskSEQ(const InType &in) {
@@ -66,41 +68,48 @@ bool KotelnikovaATaskSEQ::PreProcessingImpl() {
   return true;
 }
 
+namespace {
+void ProcessColumn(const SparseMatrixCCS &a, const SparseMatrixCCS &b, int j, std::vector<double> &temp) {
+  for (int k = 0; k < a.cols; ++k) {
+    double b_val = 0.0;
+    for (int b_idx = b.col_ptrs[j]; b_idx < b.col_ptrs[j + 1]; ++b_idx) {
+      if (b.row_indices[b_idx] == k) {
+        b_val = b.values[b_idx];
+        break;
+      }
+    }
+
+    if (b_val == 0.0) {
+      continue;
+    }
+
+    for (int a_idx = a.col_ptrs[k]; a_idx < a.col_ptrs[k + 1]; ++a_idx) {
+      const int i = a.row_indices[a_idx];
+      const double a_val = a.values[a_idx];
+      temp[i] += a_val * b_val;
+    }
+  }
+}
+
+void SaveColumnResults(int rows, std::vector<double> &temp, SparseMatrixCCS &result) {
+  for (int i = 0; i < rows; ++i) {
+    if (std::abs(temp[i]) > 1e-10) {
+      result.values.push_back(temp[i]);
+      result.row_indices.push_back(i);
+      temp[i] = 0.0;
+    }
+  }
+}
+}  // namespace
+
 SparseMatrixCCS KotelnikovaATaskSEQ::MultiplyMatrices(const SparseMatrixCCS &a, const SparseMatrixCCS &b) {
   SparseMatrixCCS result(a.rows, b.cols);
-
   std::vector<double> temp(a.rows, 0.0);
 
   for (int j = 0; j < b.cols; ++j) {
     result.col_ptrs[j] = static_cast<int>(result.values.size());
-
-    for (int k = 0; k < a.cols; ++k) {
-      double b_val = 0.0;
-      for (int b_idx = b.col_ptrs[j]; b_idx < b.col_ptrs[j + 1]; ++b_idx) {
-        if (b.row_indices[b_idx] == k) {
-          b_val = b.values[b_idx];
-          break;
-        }
-      }
-
-      if (b_val == 0.0) {
-        continue;
-      }
-
-      for (int a_idx = a.col_ptrs[k]; a_idx < a.col_ptrs[k + 1]; ++a_idx) {
-        const int i = a.row_indices[a_idx];
-        const double a_val = a.values[a_idx];
-        temp[i] += a_val * b_val;
-      }
-    }
-
-    for (int i = 0; i < a.rows; ++i) {
-      if (std::abs(temp[i]) > 1e-10) {
-        result.values.push_back(temp[i]);
-        result.row_indices.push_back(i);
-        temp[i] = 0.0;
-      }
-    }
+    ProcessColumn(a, b, j, temp);
+    SaveColumnResults(a.rows, temp, result);
   }
 
   result.col_ptrs[b.cols] = static_cast<int>(result.values.size());

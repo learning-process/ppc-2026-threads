@@ -11,6 +11,7 @@
 #include "kotelnikova_a_double_matr_mult/common/include/common.hpp"
 #include "kotelnikova_a_double_matr_mult/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace kotelnikova_a_double_matr_mult {
 
