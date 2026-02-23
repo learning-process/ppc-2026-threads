@@ -17,4 +17,9 @@ CMakeSettings.json
 .cache
 install
 *.pyc
+# zyazeva_s_matrix_mult_cannon_alg/all
+# zyazeva_s_matrix_mult_cannon_alg/data
+# zyazeva_s_matrix_mult_cannon_alg/omp
+# zyazeva_s_matrix_mult_cannon_alg/stl
+# zyazeva_s_matrix_mult_cannon_alg/
 
