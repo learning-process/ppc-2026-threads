@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
+
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -11,6 +12,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+
 #include "timur_a_cannon/common/include/common.hpp"
 #include "timur_a_cannon/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
