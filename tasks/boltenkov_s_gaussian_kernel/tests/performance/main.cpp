@@ -7,7 +7,6 @@
 namespace boltenkov_s_gaussian_kernel {
 
 class BoltenkovSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
   InType input_data_{};
 
   void readData(std::string& abs_path, InType& data) {
