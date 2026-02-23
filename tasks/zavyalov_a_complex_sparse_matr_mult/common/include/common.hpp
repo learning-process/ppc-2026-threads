@@ -2,6 +2,7 @@
 
 #include <cstddef>  // for size_t
 #include <map>
+#include <stdexcept>  // for std::invalid_argument
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -25,11 +26,11 @@ struct Complex {
   }
 
   Complex operator*(const Complex &other) const {
-    return Complex{re * other.re - im * other.im, re * other.im + im * other.re};
+    return {(re * other.re) - (im * other.im), (re * other.im) + (im * other.re)};
   }
 
   Complex operator+(const Complex &other) const {
-    return Complex{re + other.re, im + other.im};
+    return {re + other.re, im + other.im};
   }
 
   Complex &operator+=(const Complex &other) {

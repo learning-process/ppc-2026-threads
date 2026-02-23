@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
+#include <map>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
@@ -15,21 +17,20 @@ class ZavyalovAComplexSparseMatrMultPerfTest : public ppc::util::BaseRunPerfTest
   InType input_data_;
 
   void SetUp() override {
-    size_t n = kCount;
-    size_t m = kCount;
-    size_t k = kCount;
+    size_t rows_a = kCount;
+    size_t cols_a_rows_b = kCount;
+    size_t cols_b = kCount;
 
-    std::vector<std::vector<Complex>> matr_a(n, std::vector<Complex>(m, Complex(0.0, 0.0)));
-    for (size_t i = 0; i < n; ++i) {
-      matr_a[i][(i * 43247U) % m] = Complex(43.0, 74.0);
-      matr_a[i][(i * 73299U) % m] = Complex(static_cast<double>(i) * 9.0, 7843.0);
+    std::vector<std::vector<Complex>> matr_a(rows_a, std::vector<Complex>(cols_a_rows_b, Complex(0.0, 0.0)));
+    for (size_t i = 0; i < rows_a; ++i) {
+      matr_a[i][(i * 43247U) % cols_a_rows_b] = Complex(43.0, 74.0);
+      matr_a[i][(i * 73299U) % cols_a_rows_b] = Complex(static_cast<double>(i) * 9.0, 7843.0);
     }
 
-    std::vector<std::vector<Complex>> matr_b(m, std::vector<Complex>(k, Complex(0.0, 0.0)));
-    for (size_t i = 0; i < m; ++i) {
-      // Исправлено: используем matr_b вместо matr_a
-      matr_b[i][(i * 34627U) % k] = Complex(763.0, 743.0);
-      matr_b[i][(i * 13337U) % k] = Complex(static_cast<double>(i) * 953.0, 43215.0);
+    std::vector<std::vector<Complex>> matr_b(cols_a_rows_b, std::vector<Complex>(cols_b, Complex(0.0, 0.0)));
+    for (size_t i = 0; i < cols_a_rows_b; ++i) {
+      matr_b[i][(i * 34627U) % cols_b] = Complex(763.0, 743.0);
+      matr_b[i][(i * 13337U) % cols_b] = Complex(static_cast<double>(i) * 953.0, 43215.0);
     }
 
     SparseMatrix matr1(matr_a);
@@ -71,8 +72,8 @@ class ZavyalovAComplexSparseMatrMultPerfTest : public ppc::util::BaseRunPerfTest
 
     for (size_t i = 0; i < rows_a; ++i) {
       for (size_t j = 0; j < cols_b; ++j) {
-        for (size_t idx = 0; idx < cols_a_rows_b; ++idx) {
-          matr_c[i][j] += (matr_a[i][idx] * matr_b[idx][j]);
+        for (size_t k = 0; k < cols_a_rows_b; ++k) {
+          matr_c[i][j] += (matr_a[i][k] * matr_b[k][j]);
         }
       }
     }
@@ -82,7 +83,6 @@ class ZavyalovAComplexSparseMatrMultPerfTest : public ppc::util::BaseRunPerfTest
       return false;
     }
 
-    // Создаем map для более удобного сравнения
     std::map<std::pair<size_t, size_t>, Complex> output_map;
     for (size_t idx = 0; idx < output_data.Count(); ++idx) {
       output_map[{output_data.row_ind[idx], output_data.col_ind[idx]}] = output_data.val[idx];

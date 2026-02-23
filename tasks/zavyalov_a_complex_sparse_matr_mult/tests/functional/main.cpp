@@ -2,7 +2,10 @@
 
 #include <array>
 #include <cstddef>
+#include <map>
+#include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "util/include/func_test_util.hpp"
@@ -84,8 +87,8 @@ class ZavyalovAComplSparseMatrMultFuncTests : public ppc::util::BaseRunFuncTests
 
     for (size_t i = 0; i < rows_a; ++i) {
       for (size_t j = 0; j < cols_b; ++j) {
-        for (size_t p = 0; p < cols_a_rows_b; ++p) {
-          matr_c[i][j] += (matr_a[i][p] * matr_b[p][j]);
+        for (size_t k = 0; k < cols_a_rows_b; ++k) {
+          matr_c[i][j] += (matr_a[i][k] * matr_b[k][j]);
         }
       }
     }
@@ -95,7 +98,6 @@ class ZavyalovAComplSparseMatrMultFuncTests : public ppc::util::BaseRunFuncTests
       return false;
     }
 
-    // Создаем map для более удобного сравнения
     std::map<std::pair<size_t, size_t>, Complex> output_map;
     for (size_t idx = 0; idx < output_data.Count(); ++idx) {
       output_map[{output_data.row_ind[idx], output_data.col_ind[idx]}] = output_data.val[idx];
