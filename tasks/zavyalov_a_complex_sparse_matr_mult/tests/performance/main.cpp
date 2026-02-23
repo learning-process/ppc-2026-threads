@@ -53,7 +53,7 @@ class ZavyalovAComplexSparseMatrMultPerfTest : public ppc::util::BaseRunPerfTest
     return CompareSparse(expected, output_data);
   }
 
-  std::vector<std::vector<Complex>> RestoreDense(const SparseMatrix &matr, size_t rows, size_t cols) {
+  std::vector<std::vector<Complex>> static RestoreDense(const SparseMatrix &matr, size_t rows, size_t cols) {
     std::vector<std::vector<Complex>> result(rows, std::vector<Complex>(cols, Complex(0.0, 0.0)));
 
     for (size_t idx = 0; idx < matr.Count(); ++idx) {
@@ -66,8 +66,8 @@ class ZavyalovAComplexSparseMatrMultPerfTest : public ppc::util::BaseRunPerfTest
 
     return result;
   }
-  std::vector<std::vector<Complex>> MultiplyDense(const std::vector<std::vector<Complex>> &a,
-                                                  const std::vector<std::vector<Complex>> &b) {
+  std::vector<std::vector<Complex>> static MultiplyDense(const std::vector<std::vector<Complex>> &a,
+                                                         const std::vector<std::vector<Complex>> &b) {
     size_t rows = a.size();
     size_t inner = b.size();
     size_t cols = b[0].size();
@@ -84,7 +84,7 @@ class ZavyalovAComplexSparseMatrMultPerfTest : public ppc::util::BaseRunPerfTest
 
     return result;
   }
-  bool CompareSparse(const SparseMatrix &expected, const SparseMatrix &output) {
+  bool static CompareSparse(const SparseMatrix &expected, const SparseMatrix &output) {
     if (expected.Count() != output.Count()) {
       return false;
     }
