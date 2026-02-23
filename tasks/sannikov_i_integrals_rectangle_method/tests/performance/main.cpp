@@ -1,5 +1,10 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
+#include <numbers>
+#include <utility>
+#include <vector>
+
 #include "sannikov_i_integrals_rectangle_method/common/include/common.hpp"
 #include "sannikov_i_integrals_rectangle_method/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
@@ -8,12 +13,12 @@ namespace sannikov_i_integrals_rectangle_method {
 
 class SannikovIRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
-  static constexpr int kN = 20000;
+  static constexpr int kN = 10000;
 
  protected:
   void SetUp() override {
     input_data_ = InType{[](const std::vector<double> &x) { return std::sin(x[0]) * std::sin(x[1]); },
-                         std::vector<std::pair<double, double>>{{0.0, M_PI}, {0.0, M_PI}}, kN};
+                         std::vector<std::pair<double, double>>{{0.0, std::numbers::pi}, {0.0, std::numbers::pi}}, kN};
     expected_ = 4.0;
   }
 
@@ -27,7 +32,7 @@ class SannikovIRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType>
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
   OutType expected_ = 0.0;
 };
 

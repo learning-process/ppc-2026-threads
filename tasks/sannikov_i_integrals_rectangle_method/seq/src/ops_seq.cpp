@@ -1,10 +1,10 @@
 #include "sannikov_i_integrals_rectangle_method/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <cmath>
+#include <cstddef>
 #include <vector>
 
 #include "sannikov_i_integrals_rectangle_method/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace sannikov_i_integrals_rectangle_method {
 
@@ -28,13 +28,27 @@ bool SannikovIIntegralsRectangleMethodSEQ::ValidationImpl() {
     }
   }
 
-  return !((!func) || (n <= 0) || (GetOutput() != 0.0));
+  return func && (n > 0) && (GetOutput() == 0.0);
 }
 
 bool SannikovIIntegralsRectangleMethodSEQ::PreProcessingImpl() {
   GetOutput() = 0.0;
   return true;
 }
+
+namespace {
+bool NextIndex(std::vector<int> &idx, std::size_t dim, int n) {
+  for (std::size_t pos = 0; pos < dim; ++pos) {
+    ++idx[pos];
+    if (idx[pos] < n) {
+      return true;
+    }
+    idx[pos] = 0;
+  }
+  return false;
+}
+
+}  // namespace
 
 bool SannikovIIntegralsRectangleMethodSEQ::RunImpl() {
   const auto &[func, borders, n] = GetInput();
@@ -63,7 +77,7 @@ bool SannikovIIntegralsRectangleMethodSEQ::RunImpl() {
   while (true) {
     for (std::size_t i = 0; i < dim; ++i) {
       const double left_border = borders[i].first;
-      x[i] = left_border + (static_cast<double>(idx[i]) + 0.5) * h[i];
+      x[i] = left_border + ((static_cast<double>(idx[i]) + 0.5) * h[i]);
     }
 
     const double fx = func(x);
@@ -73,16 +87,7 @@ bool SannikovIIntegralsRectangleMethodSEQ::RunImpl() {
 
     sum += fx;
 
-    std::size_t pos = 0;
-    for (; pos < dim; pos++) {
-      idx[pos]++;
-      if (idx[pos] < n) {
-        break;
-      }
-      idx[pos] = 0;
-    }
-
-    if (pos == dim) {
+    if (!NextIndex(idx, dim, n)) {
       break;
     }
   }
