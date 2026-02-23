@@ -16,7 +16,7 @@ class BoltenkovSGaussianKernelSEQ : public BaseTask {
 
  private:
   std::vector<std::vector<int>> kernel_;
-  int shift_;
+  int shift_ = 4;
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;

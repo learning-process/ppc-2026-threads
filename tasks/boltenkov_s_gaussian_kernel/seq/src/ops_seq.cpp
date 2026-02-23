@@ -9,7 +9,7 @@
 namespace boltenkov_s_gaussian_kernel {
 
 BoltenkovSGaussianKernelSEQ::BoltenkovSGaussianKernelSEQ(const InType &in)
-    : kernel_{{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}}, shift_(4) {
+    : kernel_{{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}} {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<std::vector<int>>();
