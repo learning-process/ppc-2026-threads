@@ -58,63 +58,14 @@ class ZavyalovAComplSparseMatrMultFuncTests : public ppc::util::BaseRunFuncTests
     const SparseMatrix &matr1 = std::get<0>(input_data_);
     const SparseMatrix &matr2 = std::get<1>(input_data_);
 
-    size_t rows_a = matr1.height;
-    size_t cols_a_rows_b = matr1.width;
-    size_t cols_b = matr2.width;
+    auto matr_a = RestoreDense(matr1, matr1.height, matr1.width);
+    auto matr_b = RestoreDense(matr2, matr2.height, matr2.width);
 
-    std::vector<std::vector<Complex>> matr_a(rows_a, std::vector<Complex>(cols_a_rows_b, Complex(0.0, 0.0)));
-    std::vector<std::vector<Complex>> matr_b(cols_a_rows_b, std::vector<Complex>(cols_b, Complex(0.0, 0.0)));
-
-    for (size_t idx = 0; idx < matr1.Count(); ++idx) {
-      size_t row = matr1.row_ind[idx];
-      size_t col = matr1.col_ind[idx];
-      Complex val = matr1.val[idx];
-      if (row < rows_a && col < cols_a_rows_b) {
-        matr_a[row][col] = val;
-      }
-    }
-
-    for (size_t idx = 0; idx < matr2.Count(); ++idx) {
-      size_t row = matr2.row_ind[idx];
-      size_t col = matr2.col_ind[idx];
-      Complex val = matr2.val[idx];
-      if (row < cols_a_rows_b && col < cols_b) {
-        matr_b[row][col] = val;
-      }
-    }
-
-    std::vector<std::vector<Complex>> matr_c(rows_a, std::vector<Complex>(cols_b, Complex(0.0, 0.0)));
-
-    for (size_t i = 0; i < rows_a; ++i) {
-      for (size_t j = 0; j < cols_b; ++j) {
-        for (size_t k = 0; k < cols_a_rows_b; ++k) {
-          matr_c[i][j] += (matr_a[i][k] * matr_b[k][j]);
-        }
-      }
-    }
+    auto matr_c = MultiplyDense(matr_a, matr_b);
 
     SparseMatrix expected(matr_c);
-    if (expected.Count() != output_data.Count()) {
-      return false;
-    }
 
-    std::map<std::pair<size_t, size_t>, Complex> output_map;
-    for (size_t idx = 0; idx < output_data.Count(); ++idx) {
-      output_map[{output_data.row_ind[idx], output_data.col_ind[idx]}] = output_data.val[idx];
-    }
-
-    for (size_t idx = 0; idx < expected.Count(); ++idx) {
-      auto key = std::make_pair(expected.row_ind[idx], expected.col_ind[idx]);
-      auto it = output_map.find(key);
-      if (it == output_map.end()) {
-        return false;
-      }
-      if (!(expected.val[idx] == it->second)) {
-        return false;
-      }
-    }
-
-    return true;
+    return CompareSparse(expected, output_data);
   }
 
   InType GetTestInputData() final {
@@ -122,6 +73,59 @@ class ZavyalovAComplSparseMatrMultFuncTests : public ppc::util::BaseRunFuncTests
   }
 
  private:
+  std::vector<std::vector<Complex>> RestoreDense(const SparseMatrix &matr, size_t rows, size_t cols) {
+    std::vector<std::vector<Complex>> result(rows, std::vector<Complex>(cols, Complex(0.0, 0.0)));
+
+    for (size_t idx = 0; idx < matr.Count(); ++idx) {
+      size_t row = matr.row_ind[idx];
+      size_t col = matr.col_ind[idx];
+      if (row < rows && col < cols) {
+        result[row][col] = matr.val[idx];
+      }
+    }
+
+    return result;
+  }
+  std::vector<std::vector<Complex>> MultiplyDense(const std::vector<std::vector<Complex>> &a,
+                                                  const std::vector<std::vector<Complex>> &b) {
+    size_t rows = a.size();
+    size_t inner = b.size();
+    size_t cols = b[0].size();
+
+    std::vector<std::vector<Complex>> result(rows, std::vector<Complex>(cols, Complex(0.0, 0.0)));
+
+    for (size_t i = 0; i < rows; ++i) {
+      for (size_t j = 0; j < cols; ++j) {
+        for (size_t k = 0; k < inner; ++k) {
+          result[i][j] += a[i][k] * b[k][j];
+        }
+      }
+    }
+
+    return result;
+  }
+  bool CompareSparse(const SparseMatrix &expected, const SparseMatrix &output) {
+    if (expected.Count() != output.Count()) {
+      return false;
+    }
+
+    std::map<std::pair<size_t, size_t>, Complex> output_map;
+
+    for (size_t idx = 0; idx < output.Count(); ++idx) {
+      output_map[{output.row_ind[idx], output.col_ind[idx]}] = output.val[idx];
+    }
+
+    for (size_t idx = 0; idx < expected.Count(); ++idx) {
+      auto key = std::make_pair(expected.row_ind[idx], expected.col_ind[idx]);
+
+      auto it = output_map.find(key);
+      if (it == output_map.end() || !(expected.val[idx] == it->second)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
   InType input_data_;
 };
 
