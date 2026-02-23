@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <functional>
+#include <stack>
 #include <utility>
 #include <vector>
 
@@ -74,43 +75,67 @@ void KrasnopevtsevaVHoareBatcherSortSEQ::BatcherMerge(std::vector<int> &arr, int
     arr[left + i] = temp[i];
   }
 }
-// NOLINTNEXTLINE(misc-no-recursion)
+
 void KrasnopevtsevaVHoareBatcherSortSEQ::QuickBatcherSort(std::vector<int> &arr, int left, int right) {
-  if (left >= right) {
-    return;
-  }
+  std::stack<std::pair<int, int>> stack;
+  stack.push({left, right});
 
-  int mid = left + ((right - left) / 2);
-  if (arr[left] > arr[mid]) {
-    std::swap(arr[left], arr[mid]);
-  }
-  if (arr[left] > arr[right]) {
-    std::swap(arr[left], arr[right]);
-  }
-  if (arr[mid] > arr[right]) {
-    std::swap(arr[mid], arr[right]);
-  }
+  while (!stack.empty()) {
+    auto [l, r] = stack.top();
+    stack.pop();
 
-  std::swap(arr[mid], arr[right]);
-  int pivot = arr[right];
-
-  int i = left - 1;
-  int j = right;
-
-  while (true) {
-    while (arr[++i] < pivot) {
-    };
-    while (arr[--j] > pivot) {
-    };
-    if (i >= j) {
-      break;
+    if (l >= r) {
+      continue;
     }
-    std::swap(arr[i], arr[j]);
-  }
-  std::swap(arr[i], arr[right]);
+    if (r - l < 16) {
+      for (int i = l + 1; i <= r; i++) {
+        int key = arr[i];
+        int j = i - 1;
+        while (j >= l && arr[j] > key) {
+          arr[j + 1] = arr[j];
+          j--;
+        }
+        arr[j + 1] = key;
+      }
+      continue;
+    }
 
-  QuickBatcherSort(arr, left, i - 1);
-  QuickBatcherSort(arr, i + 1, right);
+    int mid = l + (r - l) / 2;
+    if (arr[l] > arr[mid]) {
+      std::swap(arr[l], arr[mid]);
+    }
+    if (arr[l] > arr[r]) {
+      std::swap(arr[l], arr[r]);
+    }
+    if (arr[mid] > arr[r]) {
+      std::swap(arr[mid], arr[r]);
+    }
+
+    std::swap(arr[mid], arr[r - 1]);
+    int pivot = arr[r - 1];
+
+    int i = l;
+    int j = r - 1;
+
+    while (true) {
+      while (arr[++i] < pivot);
+      while (arr[--j] > pivot);
+      if (i >= j) {
+        break;
+      }
+      std::swap(arr[i], arr[j]);
+    }
+
+    std::swap(arr[i], arr[r - 1]);
+
+    if (i - l < r - i) {
+      stack.push({i + 1, r});
+      stack.push({l, i - 1});
+    } else {
+      stack.push({l, i - 1});
+      stack.push({i + 1, r});
+    }
+  }
 
   if (right - left > 32) {
     BatcherMerge(arr, left, right);
