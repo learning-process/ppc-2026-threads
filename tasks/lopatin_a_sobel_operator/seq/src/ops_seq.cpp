@@ -4,7 +4,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <utility>
 
 #include "lopatin_a_sobel_operator/common/include/common.hpp"
 
@@ -50,8 +49,8 @@ bool LopatinASobelOperatorSEQ::RunImpl() {
         }
       }
 
-      auto magnitude = static_cast<std::uint8_t>(std::sqrt((gx * gx) + (gy * gy)));
-      output[(j * w_) + i] = std::cmp_greater(magnitude, input.threshold) ? magnitude : 0;
+      auto magnitude = static_cast<int>(round(std::sqrt((gx * gx) + (gy * gy))));
+      output[(j * w_) + i] = (magnitude > input.threshold) ? magnitude : 0;
     }
   }
 

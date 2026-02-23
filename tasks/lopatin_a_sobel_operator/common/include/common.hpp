@@ -19,7 +19,7 @@ struct Image {
 };
 
 using InType = Image;
-using OutType = std::vector<PixelType>;
+using OutType = std::vector<int>;
 using TestType = std::string;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
