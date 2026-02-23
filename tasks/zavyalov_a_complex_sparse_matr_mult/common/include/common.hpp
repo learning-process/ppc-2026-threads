@@ -1,8 +1,7 @@
 #pragma once
 
-#include <cmath>
+#include <cstddef>  // for size_t
 #include <map>
-#include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -14,41 +13,49 @@ namespace zavyalov_a_compl_sparse_matr_mult {
 struct Complex {
   double re;  // real
   double im;  // imaginary
-  Complex(double _re = 0.0, double _im = 0.0) {
-    re = _re;
-    im = _im;
-  }
-  bool operator==(Complex other) {
+
+  explicit Complex(double re = 0.0, double im = 0.0) : re(re), im(im) {}
+
+  bool operator==(const Complex &other) const {
     return other.re == re && other.im == im;
   }
-  bool operator!=(Complex other) {
+
+  bool operator!=(const Complex &other) const {
     return !(other == *this);
   }
-  Complex operator*(Complex other) {
-    return Complex(re * other.re - im * other.im, re * other.im + im * other.re);
+
+  Complex operator*(const Complex &other) const {
+    return Complex{re * other.re - im * other.im, re * other.im + im * other.re};
   }
-  Complex operator+(Complex other) {
-    return Complex(re + other.re, im + other.im);
+
+  Complex operator+(const Complex &other) const {
+    return Complex{re + other.re, im + other.im};
   }
-  Complex &operator+=(Complex other) {
+
+  Complex &operator+=(const Complex &other) {
     re += other.re;
     im += other.im;
     return *this;
   }
 };
 
-struct Sparse_matrix {
+struct SparseMatrix {
   std::vector<Complex> val;
   std::vector<size_t> row_ind;
   std::vector<size_t> col_ind;
   size_t height = 0;
   size_t width = 0;
-  Sparse_matrix() {}
-  Sparse_matrix(std::vector<std::vector<Complex>> matr) {
-    height = matr.size();
-    width = matr[0].size();
-    for (size_t col = 0; col < width; col++) {
-      for (size_t row = 0; row < height; row++) {
+
+  SparseMatrix() = default;
+
+  explicit SparseMatrix(const std::vector<std::vector<Complex>> &matr)
+      : height(matr.size()), width(matr.empty() ? 0 : matr[0].size()) {
+    if (height == 0 || width == 0) {
+      return;
+    }
+
+    for (size_t col = 0; col < width; ++col) {
+      for (size_t row = 0; row < height; ++row) {
         if (matr[row][col] != Complex(0.0)) {
           val.push_back(matr[row][col]);
           row_ind.push_back(row);
@@ -57,47 +64,49 @@ struct Sparse_matrix {
       }
     }
   }
-  size_t count() {
+
+  [[nodiscard]] size_t Count() const {
     return val.size();
   }
-  Sparse_matrix operator*(Sparse_matrix &matr_b) {
+
+  SparseMatrix operator*(const SparseMatrix &matr_b) const {
     if (width != matr_b.height) {
-      throw "Incompatible matrix dimensions for multiplication";
+      throw std::invalid_argument("Incompatible matrix dimensions for multiplication");
     }
 
-    std::map<std::pair<size_t, size_t>, Complex> mp;  // <col_b, row_a> -> val_c
+    std::map<std::pair<size_t, size_t>, Complex> mp;  // <row, col> -> val
 
-    for (size_t i = 0; i < count(); i++) {
+    for (size_t i = 0; i < Count(); ++i) {
       size_t row_a = row_ind[i];
       size_t col_a = col_ind[i];
       Complex val_a = val[i];
 
-      for (size_t j = 0; j < matr_b.count(); j++) {
+      for (size_t j = 0; j < matr_b.Count(); ++j) {
         size_t row_b = matr_b.row_ind[j];
         size_t col_b = matr_b.col_ind[j];
         Complex val_b = matr_b.val[j];
 
         if (col_a == row_b) {
-          mp[{col_b, row_a}] += val_a * val_b;
+          mp[{row_a, col_b}] += val_a * val_b;
         }
       }
     }
 
-    Sparse_matrix res;
+    SparseMatrix res;
     res.width = matr_b.width;
     res.height = height;
-    for (const auto &p : mp) {
-      res.val.push_back(p.second);
-      res.col_ind.push_back(p.first.first);
-      res.row_ind.push_back(p.first.second);
+    for (const auto &[key, value] : mp) {
+      res.val.push_back(value);
+      res.row_ind.push_back(key.first);
+      res.col_ind.push_back(key.second);
     }
 
     return res;
   }
 };
 
-using InType = std::tuple<Sparse_matrix, Sparse_matrix>;
-using OutType = Sparse_matrix;
+using InType = std::tuple<SparseMatrix, SparseMatrix>;
+using OutType = SparseMatrix;
 using TestType = std::tuple<size_t, size_t, size_t>;  // n, m, k. Matrix_1: n*m, Matrix_2: m*k
 using BaseTask = ppc::task::Task<InType, OutType>;
 

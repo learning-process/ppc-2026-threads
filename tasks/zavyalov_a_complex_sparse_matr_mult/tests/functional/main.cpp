@@ -1,15 +1,8 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
-#include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "util/include/func_test_util.hpp"
@@ -30,81 +23,91 @@ class ZavyalovAComplSparseMatrMultFuncTests : public ppc::util::BaseRunFuncTests
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    size_t n = std::get<0>(params);
-    size_t m = std::get<1>(params);
-    size_t k = std::get<2>(params);
+    size_t rows_a = std::get<0>(params);
+    size_t cols_a_rows_b = std::get<1>(params);
+    size_t cols_b = std::get<2>(params);
 
-    std::vector<std::vector<Complex>> matr_a(n);
-    for (size_t i = 0; i < n; i++) {
-      matr_a[i].resize(m);
-      for (size_t j = 0; j < m; j++) {
-        matr_a[i][j] = Complex((i * 42303u + 4242u + j) % 7433u, (i * 403u + 42u + j) % 733u);
+    std::vector<std::vector<Complex>> matr_a(rows_a);
+    for (size_t i = 0; i < rows_a; ++i) {
+      matr_a[i].resize(cols_a_rows_b);
+      for (size_t j = 0; j < cols_a_rows_b; ++j) {
+        matr_a[i][j] = Complex(static_cast<double>((i * 42303U + 4242U + j) % 7433U),
+                               static_cast<double>((i * 403U + 42U + j) % 733U));
       }
     }
 
-    std::vector<std::vector<Complex>> matr_b(m);
-    for (size_t i = 0; i < m; i++) {
-      matr_b[i].resize(k);
-      for (size_t j = 0; j < k; j++) {
-        matr_b[i][j] = Complex((i * 42303u + 4242u + j) % 7433u, (i * 403u + 42u + j) % 733u);
+    std::vector<std::vector<Complex>> matr_b(cols_a_rows_b);
+    for (size_t i = 0; i < cols_a_rows_b; ++i) {
+      matr_b[i].resize(cols_b);
+      for (size_t j = 0; j < cols_b; ++j) {
+        matr_b[i][j] = Complex(static_cast<double>((i * 42303U + 4242U + j) % 7433U),
+                               static_cast<double>((i * 403U + 42U + j) % 733U));
       }
     }
 
-    Sparse_matrix matr1(matr_a);
-    Sparse_matrix matr2(matr_b);
+    SparseMatrix matr1(matr_a);
+    SparseMatrix matr2(matr_b);
 
     input_data_ = std::make_tuple(matr1, matr2);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    Sparse_matrix &matr1 = std::get<0>(input_data_);
-    Sparse_matrix &matr2 = std::get<1>(input_data_);
-    size_t n = matr1.height;
-    size_t m = matr1.width;
-    size_t k = matr2.width;
-    std::vector<std::vector<Complex>> matr_a(n);
-    for (size_t i = 0; i < n; i++) {
-      matr_a[i].resize(m);
-    }
-    std::vector<std::vector<Complex>> matr_b(m);
-    for (size_t i = 0; i < m; i++) {
-      matr_b[i].resize(k);
+    const SparseMatrix &matr1 = std::get<0>(input_data_);
+    const SparseMatrix &matr2 = std::get<1>(input_data_);
+
+    size_t rows_a = matr1.height;
+    size_t cols_a_rows_b = matr1.width;
+    size_t cols_b = matr2.width;
+
+    std::vector<std::vector<Complex>> matr_a(rows_a, std::vector<Complex>(cols_a_rows_b, Complex(0.0, 0.0)));
+    std::vector<std::vector<Complex>> matr_b(cols_a_rows_b, std::vector<Complex>(cols_b, Complex(0.0, 0.0)));
+
+    for (size_t idx = 0; idx < matr1.Count(); ++idx) {
+      size_t row = matr1.row_ind[idx];
+      size_t col = matr1.col_ind[idx];
+      Complex val = matr1.val[idx];
+      if (row < rows_a && col < cols_a_rows_b) {
+        matr_a[row][col] = val;
+      }
     }
 
-    for (size_t i = 0; i < matr1.count(); i++) {
-      size_t row = matr1.row_ind[i];
-      size_t col = matr1.col_ind[i];
-      Complex val = matr1.val[i];
-      matr_a[row][col] = val;
+    for (size_t idx = 0; idx < matr2.Count(); ++idx) {
+      size_t row = matr2.row_ind[idx];
+      size_t col = matr2.col_ind[idx];
+      Complex val = matr2.val[idx];
+      if (row < cols_a_rows_b && col < cols_b) {
+        matr_b[row][col] = val;
+      }
     }
 
-    for (size_t i = 0; i < matr2.count(); i++) {
-      size_t row = matr2.row_ind[i];
-      size_t col = matr2.col_ind[i];
-      Complex val = matr2.val[i];
-      matr_b[row][col] = val;
-    }
-    std::vector<std::vector<Complex>> matr_c(n, std::vector<Complex>(k, Complex(0, 0)));
+    std::vector<std::vector<Complex>> matr_c(rows_a, std::vector<Complex>(cols_b, Complex(0.0, 0.0)));
 
-    for (size_t i = 0; i < n; i++) {
-      for (size_t j = 0; j < k; j++) {
-        for (size_t p = 0; p < m; p++) {
+    for (size_t i = 0; i < rows_a; ++i) {
+      for (size_t j = 0; j < cols_b; ++j) {
+        for (size_t p = 0; p < cols_a_rows_b; ++p) {
           matr_c[i][j] += (matr_a[i][p] * matr_b[p][j]);
         }
       }
     }
 
-    Sparse_matrix res(matr_c);
-    if (res.count() != output_data.count()) {
+    SparseMatrix expected(matr_c);
+    if (expected.Count() != output_data.Count()) {
       return false;
     }
 
-    for (size_t i = 0; i < res.count(); i++) {
-      bool ok = true;
-      ok &= (res.row_ind[i] == output_data.row_ind[i]);
-      ok &= (res.col_ind[i] == output_data.col_ind[i]);
-      ok &= (res.val[i] == output_data.val[i]);
-      if (!ok) {
+    // Создаем map для более удобного сравнения
+    std::map<std::pair<size_t, size_t>, Complex> output_map;
+    for (size_t idx = 0; idx < output_data.Count(); ++idx) {
+      output_map[{output_data.row_ind[idx], output_data.col_ind[idx]}] = output_data.val[idx];
+    }
+
+    for (size_t idx = 0; idx < expected.Count(); ++idx) {
+      auto key = std::make_pair(expected.row_ind[idx], expected.col_ind[idx]);
+      auto it = output_map.find(key);
+      if (it == output_map.end()) {
+        return false;
+      }
+      if (!(expected.val[idx] == it->second)) {
         return false;
       }
     }
@@ -117,7 +120,7 @@ class ZavyalovAComplSparseMatrMultFuncTests : public ppc::util::BaseRunFuncTests
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
 };
 
 namespace {

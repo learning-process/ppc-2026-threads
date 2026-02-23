@@ -1,86 +1,100 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <tuple>
+#include <vector>
+
 #include "util/include/perf_test_util.hpp"
 #include "zavyalov_a_complex_sparse_matr_mult/common/include/common.hpp"
 #include "zavyalov_a_complex_sparse_matr_mult/seq/include/ops_seq.hpp"
 
 namespace zavyalov_a_compl_sparse_matr_mult {
 
-class ZayalovAComplexSparseMatrMultPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const size_t kCount_ = 1000;
-  InType input_data_{};
+class ZavyalovAComplexSparseMatrMultPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  static constexpr size_t kCount = 1000;
+  InType input_data_;
 
   void SetUp() override {
-    size_t n = kCount_;
-    size_t m = kCount_;
-    size_t k = kCount_;
+    size_t n = kCount;
+    size_t m = kCount;
+    size_t k = kCount;
 
     std::vector<std::vector<Complex>> matr_a(n, std::vector<Complex>(m, Complex(0.0, 0.0)));
-    for (size_t i = 0; i < n; i++) {
-      matr_a[i][(i * 43247u) % m] = Complex(43.0, 74.0);
-      matr_a[i][(i * 73299u) % m] = Complex(i * 9.0, 7843.0);
+    for (size_t i = 0; i < n; ++i) {
+      matr_a[i][(i * 43247U) % m] = Complex(43.0, 74.0);
+      matr_a[i][(i * 73299U) % m] = Complex(static_cast<double>(i) * 9.0, 7843.0);
     }
 
     std::vector<std::vector<Complex>> matr_b(m, std::vector<Complex>(k, Complex(0.0, 0.0)));
-    for (size_t i = 0; i < m; i++) {
-      matr_a[i][(i * 34627u) % k] = Complex(763.0, 743.0);
-      matr_a[i][(i * 13337u) % k] = Complex(i * 953.0, 43215.0);
+    for (size_t i = 0; i < m; ++i) {
+      // Исправлено: используем matr_b вместо matr_a
+      matr_b[i][(i * 34627U) % k] = Complex(763.0, 743.0);
+      matr_b[i][(i * 13337U) % k] = Complex(static_cast<double>(i) * 953.0, 43215.0);
     }
-    Sparse_matrix matr1(matr_a);
-    Sparse_matrix matr2(matr_b);
+
+    SparseMatrix matr1(matr_a);
+    SparseMatrix matr2(matr_b);
 
     input_data_ = std::make_tuple(matr1, matr2);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    Sparse_matrix &matr1 = std::get<0>(input_data_);
-    Sparse_matrix &matr2 = std::get<1>(input_data_);
-    size_t n = matr1.height;
-    size_t m = matr1.width;
-    size_t k = matr2.width;
-    std::vector<std::vector<Complex>> matr_a(n);
-    for (size_t i = 0; i < n; i++) {
-      matr_a[i].resize(m);
-    }
-    std::vector<std::vector<Complex>> matr_b(m);
-    for (size_t i = 0; i < m; i++) {
-      matr_b[i].resize(k);
+    const SparseMatrix &matr1 = std::get<0>(input_data_);
+    const SparseMatrix &matr2 = std::get<1>(input_data_);
+
+    size_t rows_a = matr1.height;
+    size_t cols_a_rows_b = matr1.width;
+    size_t cols_b = matr2.width;
+
+    std::vector<std::vector<Complex>> matr_a(rows_a, std::vector<Complex>(cols_a_rows_b, Complex(0.0, 0.0)));
+    std::vector<std::vector<Complex>> matr_b(cols_a_rows_b, std::vector<Complex>(cols_b, Complex(0.0, 0.0)));
+
+    for (size_t idx = 0; idx < matr1.Count(); ++idx) {
+      size_t row = matr1.row_ind[idx];
+      size_t col = matr1.col_ind[idx];
+      Complex val = matr1.val[idx];
+      if (row < rows_a && col < cols_a_rows_b) {
+        matr_a[row][col] = val;
+      }
     }
 
-    for (size_t i = 0; i < matr1.count(); i++) {
-      size_t row = matr1.row_ind[i];
-      size_t col = matr1.col_ind[i];
-      Complex val = matr1.val[i];
-      matr_a[row][col] = val;
+    for (size_t idx = 0; idx < matr2.Count(); ++idx) {
+      size_t row = matr2.row_ind[idx];
+      size_t col = matr2.col_ind[idx];
+      Complex val = matr2.val[idx];
+      if (row < cols_a_rows_b && col < cols_b) {
+        matr_b[row][col] = val;
+      }
     }
 
-    for (size_t i = 0; i < matr2.count(); i++) {
-      size_t row = matr2.row_ind[i];
-      size_t col = matr2.col_ind[i];
-      Complex val = matr2.val[i];
-      matr_b[row][col] = val;
-    }
-    std::vector<std::vector<Complex>> matr_c(n, std::vector<Complex>(k, Complex(0, 0)));
+    std::vector<std::vector<Complex>> matr_c(rows_a, std::vector<Complex>(cols_b, Complex(0.0, 0.0)));
 
-    for (size_t i = 0; i < n; i++) {
-      for (size_t j = 0; j < k; j++) {
-        for (size_t p = 0; p < m; p++) {
-          matr_c[i][j] += (matr_a[i][p] * matr_b[p][j]);
+    for (size_t i = 0; i < rows_a; ++i) {
+      for (size_t j = 0; j < cols_b; ++j) {
+        for (size_t idx = 0; idx < cols_a_rows_b; ++idx) {
+          matr_c[i][j] += (matr_a[i][idx] * matr_b[idx][j]);
         }
       }
     }
 
-    Sparse_matrix res(matr_c);
-    if (res.count() != output_data.count()) {
+    SparseMatrix expected(matr_c);
+    if (expected.Count() != output_data.Count()) {
       return false;
     }
 
-    for (size_t i = 0; i < res.count(); i++) {
-      bool ok = true;
-      ok &= (res.row_ind[i] == output_data.row_ind[i]);
-      ok &= (res.col_ind[i] == output_data.col_ind[i]);
-      ok &= (res.val[i] == output_data.val[i]);
-      if (!ok) {
+    // Создаем map для более удобного сравнения
+    std::map<std::pair<size_t, size_t>, Complex> output_map;
+    for (size_t idx = 0; idx < output_data.Count(); ++idx) {
+      output_map[{output_data.row_ind[idx], output_data.col_ind[idx]}] = output_data.val[idx];
+    }
+
+    for (size_t idx = 0; idx < expected.Count(); ++idx) {
+      auto key = std::make_pair(expected.row_ind[idx], expected.col_ind[idx]);
+      auto it = output_map.find(key);
+      if (it == output_map.end()) {
+        return false;
+      }
+      if (!(expected.val[idx] == it->second)) {
         return false;
       }
     }
@@ -93,7 +107,7 @@ class ZayalovAComplexSparseMatrMultPerfTest : public ppc::util::BaseRunPerfTests
   }
 };
 
-TEST_P(ZayalovAComplexSparseMatrMultPerfTest, RunPerfModes) {
+TEST_P(ZavyalovAComplexSparseMatrMultPerfTest, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -104,9 +118,9 @@ const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZavyalovAComplSpa
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = ZayalovAComplexSparseMatrMultPerfTest::CustomPerfTestName;
+const auto kPerfTestName = ZavyalovAComplexSparseMatrMultPerfTest::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ZayalovAComplexSparseMatrMultPerfTest, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, ZavyalovAComplexSparseMatrMultPerfTest, kGtestValues, kPerfTestName);
 
 }  // namespace
 
