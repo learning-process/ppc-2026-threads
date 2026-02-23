@@ -2,9 +2,11 @@
 
 #include <array>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <utility>
 
 #include "lopatin_a_sobel_operator/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace lopatin_a_sobel_operator {
 
@@ -35,20 +37,21 @@ bool LopatinASobelOperatorSEQ::RunImpl() {
   const auto &input_data = input.pixels;
   auto &output = GetOutput();
 
-  for (std::size_t y = 1; y < h_ - 1; ++y) {  // processing only pixels with a full 3 x 3 neighborhood size
-    for (std::size_t x = 1; x < w_ - 1; ++x) {
-      int gx = 0, gy = 0;
+  for (std::size_t j = 1; j < h_ - 1; ++j) {  // processing only pixels with a full 3 x 3 neighborhood size
+    for (std::size_t i = 1; i < w_ - 1; ++i) {
+      int gx = 0;
+      int gy = 0;
 
       for (int ky = -1; ky <= 1; ++ky) {
         for (int kx = -1; kx <= 1; ++kx) {
-          std::uint8_t pixel = input_data[(y + ky) * w_ + (x + kx)];
-          gx += pixel * kSobelX[ky + 1][kx + 1];
-          gy += pixel * kSobelY[ky + 1][kx + 1];
+          std::uint8_t pixel = input_data[((j + ky) * w_) + (i + kx)];
+          gx += pixel * kSobelX.at(ky + 1).at(kx + 1);
+          gy += pixel * kSobelY.at(ky + 1).at(kx + 1);
         }
       }
 
-      std::uint8_t magnitude = static_cast<std::uint8_t>(std::sqrt((gx * gx) + (gy * gy)));
-      output[y * w_ + x] = (magnitude > input.threshold) ? magnitude : 0;
+      auto magnitude = static_cast<std::uint8_t>(std::sqrt((gx * gx) + (gy * gy)));
+      output[(j * w_) + i] = std::cmp_greater(magnitude, input.threshold) ? magnitude : 0;
     }
   }
 

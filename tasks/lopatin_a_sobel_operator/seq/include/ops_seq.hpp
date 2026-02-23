@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include "lopatin_a_sobel_operator/common/include/common.hpp"
 #include "task/include/task.hpp"
 

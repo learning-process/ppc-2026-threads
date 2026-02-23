@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
+#include <array>
 #include <cstddef>
 #include <fstream>
+#include <ios>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -72,7 +74,7 @@ class LopatinARunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
 
  private:
   InType input_data_;
-  OutType output_chekup_data_{};
+  OutType output_chekup_data_;
 };
 
 namespace {

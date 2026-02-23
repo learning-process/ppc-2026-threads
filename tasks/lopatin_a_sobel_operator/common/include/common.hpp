@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
-#include <tuple>
 #include <vector>
 
 #include "task/include/task.hpp"
@@ -13,9 +12,9 @@ namespace lopatin_a_sobel_operator {
 using PixelType = std::uint8_t;
 
 struct Image {
-  std::size_t height;
-  std::size_t width;
-  int threshold;
+  std::size_t height = 0;
+  std::size_t width = 0;
+  int threshold = 0;
   std::vector<PixelType> pixels;
 };
 
