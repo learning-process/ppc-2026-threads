@@ -56,7 +56,6 @@ bool KhruevARadixSortingIntBatherMergeSEQ::RunImpl() {
     GetOutput().clear();
     return true;
   }
-
   size_t pow2 = 1;
   while (pow2 < n) {
     pow2 <<= 1;
