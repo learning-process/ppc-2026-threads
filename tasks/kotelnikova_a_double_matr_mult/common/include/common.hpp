@@ -2,7 +2,7 @@
 
 #include <string>
 #include <tuple>
-#include <utility>  // для std::pair
+#include <utility>
 #include <vector>
 
 #include "task/include/task.hpp"
@@ -18,7 +18,8 @@ struct SparseMatrixCCS {
 
   SparseMatrixCCS() : rows(0), cols(0) {}
 
-  SparseMatrixCCS(int n_rows, int n_cols) : rows(n_rows), cols(n_cols), col_ptrs(n_cols + 1, 0) {}
+  SparseMatrixCCS(int n_rows, int n_cols)
+      : values(), row_indices(), col_ptrs(n_cols + 1, 0), rows(n_rows), cols(n_cols) {}
 };
 
 using InType = std::pair<SparseMatrixCCS, SparseMatrixCCS>;
