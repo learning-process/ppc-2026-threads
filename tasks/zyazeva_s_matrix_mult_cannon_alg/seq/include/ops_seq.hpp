@@ -1,7 +1,7 @@
 #pragma once
 
-#include "zyazeva_s_matrix_mult_cannon_alg/common/include/common.hpp"
 #include "task/include/task.hpp"
+#include "zyazeva_s_matrix_mult_cannon_alg/common/include/common.hpp"
 
 namespace zyazeva_s_matrix_mult_cannon_alg {
 
