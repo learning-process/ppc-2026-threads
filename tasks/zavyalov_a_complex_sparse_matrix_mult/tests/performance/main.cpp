@@ -7,8 +7,8 @@
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
-#include "zavyalov_a_complex_sparse_matr_mult/common/include/common.hpp"
-#include "zavyalov_a_complex_sparse_matr_mult/seq/include/ops_seq.hpp"
+#include "zavyalov_a_complex_sparse_matrix_mult/common/include/common.hpp"
+#include "zavyalov_a_complex_sparse_matrix_mult/seq/include/ops_seq.hpp"
 
 namespace zavyalov_a_compl_sparse_matr_mult {
 
@@ -118,7 +118,7 @@ TEST_P(ZavyalovAComplexSparseMatrMultPerfTest, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZavyalovAComplSparseMatrMultSEQ>(
-    PPC_SETTINGS_zavyalov_a_complex_sparse_matr_mult);
+    PPC_SETTINGS_zavyalov_a_complex_sparse_matrix_mult);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

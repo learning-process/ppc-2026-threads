@@ -10,8 +10,8 @@
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
-#include "zavyalov_a_complex_sparse_matr_mult/common/include/common.hpp"
-#include "zavyalov_a_complex_sparse_matr_mult/seq/include/ops_seq.hpp"
+#include "zavyalov_a_complex_sparse_matrix_mult/common/include/common.hpp"
+#include "zavyalov_a_complex_sparse_matrix_mult/seq/include/ops_seq.hpp"
 
 namespace zavyalov_a_compl_sparse_matr_mult {
 
@@ -141,7 +141,7 @@ const std::array<TestType, 10> kTestParam = {
     std::make_tuple(1, 5, 3), std::make_tuple(4, 7, 2)};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ZavyalovAComplSparseMatrMultSEQ, InType>(
-    kTestParam, PPC_SETTINGS_zavyalov_a_complex_sparse_matr_mult));
+    kTestParam, PPC_SETTINGS_zavyalov_a_complex_sparse_matrix_mult));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
