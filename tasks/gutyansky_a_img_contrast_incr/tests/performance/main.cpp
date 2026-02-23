@@ -17,7 +17,7 @@ class GutyanskyARunPerfTestsImgContrastIncr : public ppc::util::BaseRunPerfTests
 
     input_data_[0] = std::numeric_limits<InType::value_type>::max();
 
-    for (size_t i = 1; i < kCount_; i+=2) {
+    for (size_t i = 1; i < kCount_; i += 2) {
       input_data_[i] = (i - 1) % std::numeric_limits<InType::value_type>::max();
     }
   }

@@ -34,10 +34,10 @@ bool GutyanskyAImgContrastIncrSEQ::RunImpl() {
   } else {
     size_t sz = GetInput().size();
     for (size_t i = 0; i < sz; i++) {
-        uint16_t old_value = static_cast<uint16_t>(GetInput()[i]);
-        uint16_t new_value = (std::numeric_limits<uint8_t>::max() * (old_value - lower_bound)) / delta;
+      uint16_t old_value = static_cast<uint16_t>(GetInput()[i]);
+      uint16_t new_value = (std::numeric_limits<uint8_t>::max() * (old_value - lower_bound)) / delta;
 
-        GetOutput()[i] = static_cast<uint8_t>(new_value);
+      GetOutput()[i] = static_cast<uint8_t>(new_value);
     }
   }
 
