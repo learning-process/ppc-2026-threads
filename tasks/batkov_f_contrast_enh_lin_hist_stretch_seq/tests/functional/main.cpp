@@ -37,9 +37,11 @@ protected:
                                                contrast_range / 2);
 
     input_data_.resize(size * size);
-    for (size_t i = 0; i < input_data_.size(); ++i) {
-      uint8_t pixel = base_intensity + dis(gen_);
-      input_data_[i] = std::clamp<uint8_t>(pixel, 80, 160);
+    for (size_t row = 0; row < size; ++row) {
+      for (size_t col = 0; col < size; ++col) {
+        uint8_t value = base_intensity + ((row + col) % contrast_range);
+        input_data_[(row * size) + col] = value;
+      }
     }
   }
 
