@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <vector>
 
-#include "util/include/util.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/common/include/common.hpp"
 
 namespace zyazeva_s_matrix_mult_cannon_alg {

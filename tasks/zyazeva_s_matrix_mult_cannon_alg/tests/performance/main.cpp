@@ -1,9 +1,12 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
+#include <cstddef>
 #include <tuple>
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
+#include "zyazeva_s_matrix_mult_cannon_alg/common/include/common.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/seq/include/ops_seq.hpp"
 
 namespace zyazeva_s_matrix_mult_cannon_alg {
