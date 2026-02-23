@@ -11,7 +11,7 @@ namespace zyazeva_s_matrix_mult_cannon_alg {
 class ZyazevaSPerformanceTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    size_t sz = 640;
+    size_t sz = 640; //1
 
     size_t size = sz * sz;
 
