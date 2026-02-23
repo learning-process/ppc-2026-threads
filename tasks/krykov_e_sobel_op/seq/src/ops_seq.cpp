@@ -26,15 +26,12 @@ bool KrykovESobelOpSEQ::PreProcessingImpl() {
   height_ = img.height;
 
   grayscale_.resize(width_ * height_);
-
-  // RGB → grayscale (luminance)
+  // RGB → grayscale
   for (int i = 0; i < width_ * height_; ++i) {
     const Pixel &p = img.data[i];
     grayscale_[i] = static_cast<int>(0.299 * p.r + 0.587 * p.g + 0.114 * p.b);
   }
-
   GetOutput().assign(width_ * height_, 0);
-
   return true;
 }
 

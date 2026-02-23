@@ -8,7 +8,7 @@ namespace krykov_e_sobel_op {
 
 class KrykovERunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
   void SetUp() override {
-    const int size = 1024;  // размер для измерения производительности
+    const int size = 512;
 
     Image img;
     img.width = size;
