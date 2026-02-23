@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include "krasnopevtseva_v_hoare_batcher_sort/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -16,9 +17,9 @@ class KrasnopevtsevaVHoareBatcherSortSEQ : public BaseTask {
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
-  void compareAndSwap(int &a, int &b);
-  void batcherMerge(std::vector<int> &arr, int left, int right);
-  void quickBatcherSort(std::vector<int> &arr, int left, int right);
+  static void CompareAndSwap(int &a, int &b);
+  void BatcherMerge(std::vector<int> &arr, int left, int right);
+  void QuickBatcherSort(std::vector<int> &arr, int left, int right);
   bool PostProcessingImpl() override;
 };
 
