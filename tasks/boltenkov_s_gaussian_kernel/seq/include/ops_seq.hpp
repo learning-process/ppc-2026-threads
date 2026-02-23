@@ -1,9 +1,9 @@
 #pragma once
 
+#include <vector>
+
 #include "boltenkov_s_gaussian_kernel/common/include/common.hpp"
 #include "task/include/task.hpp"
-
-#include <vector>
 
 namespace boltenkov_s_gaussian_kernel {
 
