@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <ranges>
+#include <stdexcept>
 #include <vector>
 
 namespace kapanova_s_sparse_matrix_mult_ccs_seq {
@@ -84,7 +86,7 @@ bool KapanovaSSparseMatrixMultCCSSeq::RunImpl() {
       }
     }
 
-    std::sort(nnz_rows.begin(), nnz_rows.end());
+    std::ranges::sort(nnz_rows);
 
     for (size_t i : nnz_rows) {
       if (accum[i] != 0.0) {
