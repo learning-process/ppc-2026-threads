@@ -121,12 +121,16 @@ struct Frame {
 };
 
 void ProcessTopFrame(std::vector<Frame> &stack, Matrix &final_result) {
-  Frame &frame = stack.back();
+  if (stack.empty()) {
+    return;
+  }
+
+  size_t current_index = stack.size() - 1;
+  Frame &frame = stack[current_index];
 
   if (frame.size <= kThreshold) {
     Matrix base = StandardMultiply(frame.a, frame.b, frame.size);
     stack.pop_back();
-
     if (stack.empty()) {
       final_result = std::move(base);
     } else {
@@ -154,7 +158,6 @@ void ProcessTopFrame(std::vector<Frame> &stack, Matrix &final_result) {
 
       frame.temp_a.resize(block_size);
       frame.temp_b.resize(block_size);
-
       frame.m1.resize(block_size);
       frame.m2.resize(block_size);
       frame.m3.resize(block_size);
@@ -167,56 +170,95 @@ void ProcessTopFrame(std::vector<Frame> &stack, Matrix &final_result) {
       return;
     }
 
-    case 1:
+    case 1: {
       Add(frame.a11, frame.a22, frame.temp_a);
       Add(frame.b11, frame.b22, frame.temp_b);
-      stack.emplace_back(frame.temp_a, frame.temp_b, half);
-      frame.stage = 2;
-      return;
 
-    case 2:
+      Matrix temp_a_copy = frame.temp_a;
+      Matrix temp_b_copy = frame.temp_b;
+
+      stack.emplace_back(std::move(temp_a_copy), std::move(temp_b_copy), half);
+
+      Frame &updated_frame = stack[current_index];
+      updated_frame.stage = 2;
+      return;
+    }
+
+    case 2: {
       frame.m1 = frame.temp_a;
       Add(frame.a21, frame.a22, frame.temp_a);
-      stack.emplace_back(frame.temp_a, frame.b11, half);
-      frame.stage = 3;
-      return;
 
-    case 3:
+      Matrix temp_a_copy = frame.temp_a;
+      stack.emplace_back(std::move(temp_a_copy), frame.b11, half);
+
+      Frame &updated_frame = stack[current_index];
+      updated_frame.stage = 3;
+      return;
+    }
+
+    case 3: {
       frame.m2 = frame.temp_a;
       Sub(frame.b12, frame.b22, frame.temp_b);
-      stack.emplace_back(frame.a11, frame.temp_b, half);
-      frame.stage = 4;
-      return;
 
-    case 4:
+      Matrix temp_b_copy = frame.temp_b;
+      stack.emplace_back(frame.a11, std::move(temp_b_copy), half);
+
+      Frame &updated_frame = stack[current_index];
+      updated_frame.stage = 4;
+      return;
+    }
+
+    case 4: {
       frame.m3 = frame.temp_a;
       Sub(frame.b21, frame.b11, frame.temp_b);
-      stack.emplace_back(frame.a22, frame.temp_b, half);
-      frame.stage = 5;
-      return;
 
-    case 5:
+      Matrix temp_b_copy = frame.temp_b;
+      stack.emplace_back(frame.a22, std::move(temp_b_copy), half);
+
+      Frame &updated_frame = stack[current_index];
+      updated_frame.stage = 5;
+      return;
+    }
+
+    case 5: {
       frame.m4 = frame.temp_a;
       Add(frame.a11, frame.a12, frame.temp_a);
-      stack.emplace_back(frame.temp_a, frame.b22, half);
-      frame.stage = 6;
-      return;
 
-    case 6:
+      Matrix temp_a_copy = frame.temp_a;
+      stack.emplace_back(std::move(temp_a_copy), frame.b22, half);
+
+      Frame &updated_frame = stack[current_index];
+      updated_frame.stage = 6;
+      return;
+    }
+
+    case 6: {
       frame.m5 = frame.temp_a;
       Sub(frame.a21, frame.a11, frame.temp_a);
       Add(frame.b11, frame.b12, frame.temp_b);
-      stack.emplace_back(frame.temp_a, frame.temp_b, half);
-      frame.stage = 7;
-      return;
 
-    case 7:
+      Matrix temp_a_copy = frame.temp_a;
+      Matrix temp_b_copy = frame.temp_b;
+      stack.emplace_back(std::move(temp_a_copy), std::move(temp_b_copy), half);
+
+      Frame &updated_frame = stack[current_index];
+      updated_frame.stage = 7;
+      return;
+    }
+
+    case 7: {
       frame.m6 = frame.temp_a;
       Sub(frame.a12, frame.a22, frame.temp_a);
       Add(frame.b21, frame.b22, frame.temp_b);
-      stack.emplace_back(frame.temp_a, frame.temp_b, half);
-      frame.stage = 8;
+
+      Matrix temp_a_copy = frame.temp_a;
+      Matrix temp_b_copy = frame.temp_b;
+      stack.emplace_back(std::move(temp_a_copy), std::move(temp_b_copy), half);
+
+      Frame &updated_frame = stack[current_index];
+      updated_frame.stage = 8;
       return;
+    }
 
     case 8: {
       frame.m7 = frame.temp_a;
@@ -237,7 +279,6 @@ void ProcessTopFrame(std::vector<Frame> &stack, Matrix &final_result) {
       MergeMatrix(merged, c11, c12, c21, c22, frame.size, half);
 
       stack.pop_back();
-
       if (stack.empty()) {
         final_result = std::move(merged);
       } else {
