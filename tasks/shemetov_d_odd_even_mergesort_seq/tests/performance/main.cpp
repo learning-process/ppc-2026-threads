@@ -14,7 +14,7 @@ namespace shemetov_d_odd_even_mergesort {
 class ShemetovDRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    const size_t size = (1 << 15) + 1;
+    const size_t size = (1ULL << 17) + 1;
     std::vector<int> gen_array(size);
 
     std::random_device rnd_dvc;
