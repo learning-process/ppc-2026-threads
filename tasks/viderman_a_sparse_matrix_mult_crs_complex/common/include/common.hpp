@@ -1,8 +1,8 @@
 #pragma once
 
+#include <algorithm>
 #include <complex>
 #include <cstddef>
-#include <ranges>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -59,7 +59,7 @@ struct CRSMatrix {
   }
 
   [[nodiscard]] bool HasValidColIndices() const {
-    return std::ranges::all_of(col_indices, [this](int col) { return col >= 0 && col < cols; });
+    return std::all_of(col_indices.begin(), col_indices.end(), [this](int col) { return col >= 0 && col < cols; });
   }
 
   [[nodiscard]] bool HasSortedRows() const {
