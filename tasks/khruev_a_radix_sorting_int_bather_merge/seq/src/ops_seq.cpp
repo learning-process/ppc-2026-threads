@@ -10,10 +10,6 @@
 
 namespace khruev_a_radix_sorting_int_bather_merge {
 
-bool KhruevARadixSortingIntBatherMergeSEQ::SameBlock(size_t i, size_t j, size_t block_size) {
-  return (i & block_size) == (j & block_size);
-}
-
 void KhruevARadixSortingIntBatherMergeSEQ::CompareExchange(std::vector<int> &a, size_t i, size_t j) {
   if (a[i] > a[j]) {
     std::swap(a[i], a[j]);
@@ -26,14 +22,15 @@ void KhruevARadixSortingIntBatherMergeSEQ::RadixSort(std::vector<int> &arr) {
   const int mask = buckets - 1;
   const int passes = 32 / bits;
 
-  std::vector<int> output(arr.size());
+  std::vector<int> temp(arr.size());
+  std::vector<int> *src = &arr;
+  std::vector<int> *dst = &temp;
 
   for (int pass = 0; pass < passes; pass++) {
     std::vector<int> count(buckets, 0);
-
     int shift = pass * bits;
 
-    for (int x : arr) {
+    for (int x : *src) {
       uint32_t ux = static_cast<uint32_t>(x) ^ 0x80000000U;
       uint32_t digit = (ux >> shift) & mask;
       count[digit]++;
@@ -43,32 +40,28 @@ void KhruevARadixSortingIntBatherMergeSEQ::RadixSort(std::vector<int> &arr) {
       count[i] += count[i - 1];
     }
 
-    for (size_t i = arr.size(); i-- > 0;) {
-      uint32_t ux = static_cast<uint32_t>(arr[i]) ^ 0x80000000U;
+    for (size_t i = src->size(); i-- > 0;) {
+      uint32_t ux = static_cast<uint32_t>((*src)[i]) ^ 0x80000000U;
       uint32_t digit = (ux >> shift) & mask;
-      output[--count[digit]] = arr[i];
+      (*dst)[--count[digit]] = (*src)[i];
     }
 
-    arr = output;
+    std::swap(src, dst);
   }
 }
 
-void KhruevARadixSortingIntBatherMergeSEQ::OddEvenStage(std::vector<int> &a, size_t n, size_t p, size_t k) {
-  const size_t block_size = 2 * p;
-
-  for (size_t i = 0; i < n; ++i) {
-    const size_t j = i ^ k;
-
-    if (j > i && SameBlock(i, j, block_size)) {
-      CompareExchange(a, i, j);
-    }
-  }
-}
-
-void KhruevARadixSortingIntBatherMergeSEQ::OddEvenMergeSort(std::vector<int> &a, size_t n) {
-  for (size_t po = 1; po < n; po <<= 1) {
-    for (size_t ko = po; ko > 0; ko >>= 1) {
-      OddEvenStage(a, n, po, ko);
+void KhruevARadixSortingIntBatherMergeSEQ::OddEvenMerge(std::vector<int> &a, size_t n) {
+  for (size_t p = n / 2; p > 0; p >>= 1) {
+    if (p == n / 2) {
+      for (size_t i = 0; i < p; ++i) {
+        CompareExchange(a, i, i + p);
+      }
+    } else {
+      for (size_t i = p; i < n - p; i += 2 * p) {
+        for (size_t j = 0; j < p; ++j) {
+          CompareExchange(a, i + j, i + j + p);
+        }
+      }
     }
   }
 }
@@ -89,10 +82,12 @@ bool KhruevARadixSortingIntBatherMergeSEQ::PreProcessingImpl() {
 
 bool KhruevARadixSortingIntBatherMergeSEQ::RunImpl() {
   std::vector<int> data = GetInput();
-
-  RadixSort(data);
-
   size_t original_size = data.size();
+
+  if (original_size <= 1) {
+    GetOutput() = data;
+    return true;
+  }
 
   size_t pow2 = 1;
   while (pow2 < original_size) {
@@ -101,7 +96,17 @@ bool KhruevARadixSortingIntBatherMergeSEQ::RunImpl() {
 
   data.resize(pow2, std::numeric_limits<int>::max());
 
-  OddEvenMergeSort(data, data.size());
+  size_t half = pow2 / 2;
+  std::vector<int> left(data.begin(), data.begin() + half);
+  std::vector<int> right(data.begin() + half, data.end());
+
+  RadixSort(left);
+  RadixSort(right);
+
+  std::copy(left.begin(), left.end(), data.begin());
+  std::copy(right.begin(), right.end(), data.begin() + half);
+
+  OddEvenMerge(data, data.size());
 
   data.resize(original_size);
 
