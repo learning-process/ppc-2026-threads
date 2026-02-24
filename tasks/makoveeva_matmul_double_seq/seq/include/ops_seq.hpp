@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <vector>
 
 #include "makoveeva_matmul_double_seq/common/include/common.hpp"
@@ -20,7 +21,7 @@ class MatmulDoubleSeqTask : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  const std::vector<double> &GetResult() const {
+  [[nodiscard]] const std::vector<double> &GetResult() const {
     return C_;
   }
 

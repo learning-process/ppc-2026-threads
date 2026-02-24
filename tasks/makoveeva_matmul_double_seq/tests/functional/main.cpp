@@ -9,6 +9,8 @@
 
 namespace makoveeva_matmul_double_seq {
 
+namespace {
+
 std::vector<double> SimpleMultiply(const std::vector<double> &A, const std::vector<double> &B, size_t n) {
   std::vector<double> C(n * n, 0.0);
   for (size_t i = 0; i < n; i++) {
@@ -23,11 +25,12 @@ std::vector<double> SimpleMultiply(const std::vector<double> &A, const std::vect
   return C;
 }
 
+}  // namespace
+
 TEST(MatmulDoubleTest, Test2x2) {
   size_t n = 2;
 
   std::vector<double> A = {1.0, 2.0, 3.0, 4.0};
-
   std::vector<double> B = {5.0, 6.0, 7.0, 8.0};
   std::vector<double> expected = {19.0, 22.0, 43.0, 50.0};
 
