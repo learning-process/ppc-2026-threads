@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <cstddef>
 #include <random>
 #include <vector>
 
@@ -56,7 +57,7 @@ class SmyshlaevASleCgPerfTests : public ppc::util::BaseRunPerfTests<InType, OutT
       return false;
     }
     const double epsilon = 1e-6;
-    for (int i = 0; i < output_data.size(); ++i) {
+    for (size_t i = 0; i < output_data.size(); ++i) {
       if (std::isnan(output_data[i]) || std::fabs(output_data[i] - expected_x_[i]) > epsilon) {
         return false;
       }
