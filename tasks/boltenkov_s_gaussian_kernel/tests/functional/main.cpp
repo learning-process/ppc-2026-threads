@@ -72,7 +72,7 @@ class BoltenkovSRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InTyp
     int n = -1;
     file_stream.read(reinterpret_cast<char *>(&m), sizeof(int));
     file_stream.read(reinterpret_cast<char *>(&n), sizeof(int));
-    if (m <= 0 || n <= 0) {
+    if (file_stream.fail() || m <= 0 || n <= 0) {
       throw std::runtime_error("invalid input data!\n");
     }
     constexpr std::size_t kMaxSize = 1000;
