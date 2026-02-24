@@ -122,7 +122,7 @@ bool IsSortedInRows(const CRSMatrix &c) {
 }
 
 bool HasNoExplicitZeros(const CRSMatrix &c) {
-  return std::all_of(c.values.begin(), c.values.end(), [](const Complex &v) { return std::abs(v) > kEpsilon; });
+  return std::ranges::all_of(c.values, [](const Complex &v) { return std::abs(v) > kEpsilon; });
 }
 
 CRSMatrix RunTask(const CRSMatrix &a, const CRSMatrix &b, bool expect_valid = true) {
