@@ -23,7 +23,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<1>(test_param);
   }
-  double expected_value_ = 0.0;
+  double expected_value = 0.0;
 
  protected:
   void SetUp() override {
@@ -37,7 +37,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         input_data_.right_bounds = {1, 1};
         input_data_.step_n_size = {150, 150};
         input_data_.type_function = 0;
-        expected_value_ = 2.0 / 3.0;
+        expected_value = 2.0 / 3.0;
         break;
 
       case 1:
@@ -45,7 +45,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         input_data_.right_bounds = {2, 2};
         input_data_.step_n_size = {200, 200};
         input_data_.type_function = 0;
-        expected_value_ = 32.0 / 3.0;
+        expected_value = 32.0 / 3.0;
         break;
 
       case 2:
@@ -53,7 +53,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         input_data_.right_bounds = {1, 1};
         input_data_.step_n_size = {200, 200};
         input_data_.type_function = 0;
-        expected_value_ = 8.0 / 3.0;
+        expected_value = 8.0 / 3.0;
         break;
 
       case 3:
@@ -61,7 +61,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         input_data_.right_bounds = {1, 2};
         input_data_.step_n_size = {200, 200};
         input_data_.type_function = 0;
-        expected_value_ = 10.0 / 3.0;
+        expected_value = 10.0 / 3.0;
         break;
 
       case 4:
@@ -69,7 +69,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         input_data_.right_bounds = {2, 2};
         input_data_.step_n_size = {150, 150};
         input_data_.type_function = 0;
-        expected_value_ = (14.0 / 3.0);
+        expected_value = (14.0 / 3.0);
         break;
 
       case 5:
@@ -77,7 +77,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         input_data_.right_bounds = {1, 1};
         input_data_.step_n_size = {150, 150};
         input_data_.type_function = 4;
-        expected_value_ = 1.0;
+        expected_value = 1.0;
         break;
 
       case 6:
@@ -85,7 +85,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         input_data_.right_bounds = {2, 2};
         input_data_.step_n_size = {150, 150};
         input_data_.type_function = 4;
-        expected_value_ = 8.0;
+        expected_value = 8.0;
         break;
 
       case 7:
@@ -93,7 +93,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         input_data_.right_bounds = {1, 1};
         input_data_.step_n_size = {200, 200};
         input_data_.type_function = 4;
-        expected_value_ = 0.0;
+        expected_value = 0.0;
         break;
 
       case 8:
@@ -101,7 +101,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         input_data_.right_bounds = {1, 2};
         input_data_.step_n_size = {150, 150};
         input_data_.type_function = 4;
-        expected_value_ = 3.0;
+        expected_value = 3.0;
         break;
 
       case 9:
@@ -109,7 +109,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         input_data_.right_bounds = {kPi / 2, kPi / 2};
         input_data_.step_n_size = {300, 300};
         input_data_.type_function = 2;
-        expected_value_ = (((kPi / 2) * (1 - 0)) + ((kPi / 2) * (1 - 0)));
+        expected_value = (((kPi / 2) * (1 - 0)) + ((kPi / 2) * (1 - 0)));
         break;
 
       case 10:
@@ -117,7 +117,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         input_data_.right_bounds = {1, 1};
         input_data_.step_n_size = {200, 200};
         input_data_.type_function = 2;
-        expected_value_ = (((1) * (std::cos(0) - std::cos(1))) + ((1) * (std::sin(1) - std::sin(0))));
+        expected_value = (((1) * (std::cos(0) - std::cos(1))) + ((1) * (std::sin(1) - std::sin(0))));
         break;
 
       case 11:
@@ -125,7 +125,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         input_data_.right_bounds = {1, 1};
         input_data_.step_n_size = {300, 300};
         input_data_.type_function = 2;
-        expected_value_ = (((2) * (std::cos(-1) - std::cos(1))) + ((2) * (std::sin(1) - std::sin(-1))));
+        expected_value = (((2) * (std::cos(-1) - std::cos(1))) + ((2) * (std::sin(1) - std::sin(-1))));
         break;
 
       case 12:
@@ -133,7 +133,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         input_data_.right_bounds = {1, 1};
         input_data_.step_n_size = {200, 200};
         input_data_.type_function = 3;
-        expected_value_ = (std::numbers::e - 1) * (std::numbers::e - 1);
+        expected_value = (std::numbers::e - 1) * (std::numbers::e - 1);
         break;
 
       case 13:
@@ -141,7 +141,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         input_data_.right_bounds = {2, 2};
         input_data_.step_n_size = {200, 200};
         input_data_.type_function = 3;
-        expected_value_ = (std::exp(2.0) - 1) * (std::exp(2.0) - 1);
+        expected_value = (std::exp(2.0) - 1) * (std::exp(2.0) - 1);
         break;
 
       case 14:
@@ -149,7 +149,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         input_data_.right_bounds = {0, 0};
         input_data_.step_n_size = {10, 10};
         input_data_.type_function = 3;
-        expected_value_ = 0.0;
+        expected_value = 0.0;
         break;
 
       default:
@@ -158,7 +158,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::abs(output_data - expected_value_) < 1e-2;
+    return std::abs(output_data - expected_value) < 1e-2;
   }
 
   InType GetTestInputData() final {
@@ -167,7 +167,7 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
 
  private:
   InType input_data_;
-  // double expected_value_;
+  // double expected_value;
 };
 
 TEST_P(KiselevIRunFuncTestsThreads, IntegralCorrectness) {
