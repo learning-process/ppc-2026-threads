@@ -9,11 +9,6 @@ namespace kiselev_i_trapezoidal_method_for_multidimensional_integrals {
 
 class KiselevITestTaskSEQ : public BaseTask {
  public:
-  // KiselevITestTaskSEQ() {
-  //   SetTypeOfTask(GetStaticTypeOfTask());
-  //   GetOutput() = 0.0;
-  // }
-
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }

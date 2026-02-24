@@ -15,19 +15,6 @@ KiselevITestTaskSEQ::KiselevITestTaskSEQ(const InType &in) {
 }
 
 bool KiselevITestTaskSEQ::ValidationImpl() {
-  // if (in.left_bounds.empty()) {
-  //   return false;
-  // }
-  // if (in.left_bounds.size() != 2) {
-  //   return false;
-  // }
-  // if (in.left_bounds.size() != in.right_bounds.size()) {
-  //   return false;
-  // }
-  // if (in.left_bounds.size() != in.step_n_size.size()) {
-  //   return false;
-  // }
-
   return true;
 }
 

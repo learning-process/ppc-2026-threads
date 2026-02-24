@@ -1,17 +1,13 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
+#include <numbers>
 #include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "kiselev_i_trapezoidal_method_for_multidimensional_integrals/common/include/common.hpp"
 #include "kiselev_i_trapezoidal_method_for_multidimensional_integrals/seq/include/ops_seq.hpp"
@@ -20,7 +16,7 @@
 
 namespace kiselev_i_trapezoidal_method_for_multidimensional_integrals {
 
-constexpr double kPi = 3.1415926535897932384626433832795;
+constexpr double kPi = std::numbers::pi;
 class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
@@ -81,17 +77,17 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
 
       case 9:
         input_data_ = {{0, 0}, {kPi / 2, kPi / 2}, {300, 300}, 2};
-        expected_value_ = (kPi / 2) * (1 - 0) + (kPi / 2) * (1 - 0);  // π
+        expected_value_ = ((kPi / 2) * (1 - 0) + (kPi / 2) * (1 - 0));
         break;
 
       case 10:
         input_data_ = {{0, 0}, {1, 1}, {200, 200}, 2};
-        expected_value_ = (1) * (std::cos(0) - std::cos(1)) + (1) * (std::sin(1) - std::sin(0));
+        expected_value_ = ((1) * (std::cos(0) - std::cos(1)) + (1) * (std::sin(1) - std::sin(0)));
         break;
 
       case 11:
         input_data_ = {{-1, -1}, {1, 1}, {300, 300}, 2};
-        expected_value_ = (2) * (std::cos(-1) - std::cos(1)) + (2) * (std::sin(1) - std::sin(-1));
+        expected_value_ = ((2) * (std::cos(-1) - std::cos(1)) + (2) * (std::sin(1) - std::sin(-1)));
         break;
 
       case 12:
@@ -113,6 +109,8 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         input_data_ = {{0, 0}, {1, 1}, {150, 150}, 0, -1.0};
         expected_value_ = 2.0 / 3.0;
         break;
+      default:
+        throw std::runtime_error("Unknown test id");
     }
   }
 
@@ -147,7 +145,8 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
+namespace {
 INSTANTIATE_TEST_SUITE_P(IntegralTests, KiselevIRunFuncTestsThreads, kGtestValues,
                          KiselevIRunFuncTestsThreads::PrintFuncTestName<KiselevIRunFuncTestsThreads>);
-
+}
 }  // namespace kiselev_i_trapezoidal_method_for_multidimensional_integrals
