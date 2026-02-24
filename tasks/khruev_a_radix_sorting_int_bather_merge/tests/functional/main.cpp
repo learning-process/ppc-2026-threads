@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
+// #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <string>
@@ -52,7 +52,7 @@ class KhruevARadixSortingIntBatherMergeFuncTests : public ppc::util::BaseRunFunc
 
 namespace {
 
-TEST_P(KhruevARadixSortingIntBatherMergeFuncTests, radix_test) {
+TEST_P(KhruevARadixSortingIntBatherMergeFuncTests, radixTest) {
   ExecuteTest(GetParam());
 }
 
@@ -76,7 +76,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName =
     KhruevARadixSortingIntBatherMergeFuncTests::PrintFuncTestName<KhruevARadixSortingIntBatherMergeFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(radix_test1, KhruevARadixSortingIntBatherMergeFuncTests, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(radixTest1, KhruevARadixSortingIntBatherMergeFuncTests, kGtestValues, kTestName);
 
 }  // namespace
 

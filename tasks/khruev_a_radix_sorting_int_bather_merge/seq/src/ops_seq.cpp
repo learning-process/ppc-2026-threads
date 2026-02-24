@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <vector>
 
 #include "khruev_a_radix_sorting_int_bather_merge/common/include/common.hpp"
@@ -24,7 +25,7 @@ void KhruevARadixSortingIntBatherMergeSEQ::RadixSort(std::vector<int> &arr) {
 
     for (int x : arr) {
       uint32_t ux = static_cast<uint32_t>(x) ^ 0x80000000U;
-      int digit = (ux >> shift) & mask;
+      uint32_t digit = (ux >> shift) & mask;
       count[digit]++;
     }
 
@@ -32,9 +33,9 @@ void KhruevARadixSortingIntBatherMergeSEQ::RadixSort(std::vector<int> &arr) {
       count[i] += count[i - 1];
     }
 
-    for (int i = arr.size() - 1; i >= 0; i--) {
+    for (size_t i = arr.size(); i-- > 0;) {
       uint32_t ux = static_cast<uint32_t>(arr[i]) ^ 0x80000000U;
-      int digit = (ux >> shift) & mask;
+      uint32_t digit = (ux >> shift) & mask;
       output[--count[digit]] = arr[i];
     }
 
@@ -42,30 +43,30 @@ void KhruevARadixSortingIntBatherMergeSEQ::RadixSort(std::vector<int> &arr) {
   }
 }
 
-void KhruevARadixSortingIntBatherMergeSEQ::OddEvenMerge(std::vector<int> &a, int lo, int n, int r) {
-  int step = r * 2;
-  if (step < n) {
-    OddEvenMerge(a, lo, n, step);
-    OddEvenMerge(a, lo + r, n, step);
 
-    for (int i = lo + r; i + r < lo + n; i += step) {
-      if (a[i] > a[i + r]) {
-        std::swap(a[i], a[i + r]);
-      }
-    }
-  } else {
-    if (a[lo] > a[lo + r]) {
-      std::swap(a[lo], a[lo + r]);
+
+void KhruevARadixSortingIntBatherMergeSEQ::OddEvenStage(
+    std::vector<int>& a,
+    size_t n,
+    size_t p,
+    size_t k) {
+
+  const size_t block_size = 2 * p;
+
+  for (size_t i = 0; i < n; ++i) {
+    const size_t j = i ^ k;
+
+    if (j > i && SameBlock(i, j, block_size)) {
+      CompareExchange(a, i, j);
     }
   }
 }
 
-void KhruevARadixSortingIntBatherMergeSEQ::OddEvenMergeSort(std::vector<int> &a, int lo, int n) {
-  if (n > 1) {
-    int m = n / 2;
-    OddEvenMergeSort(a, lo, m);
-    OddEvenMergeSort(a, lo + m, m);
-    OddEvenMerge(a, lo, n, 1);
+void KhruevARadixSortingIntBatherMergeSEQ::OddEvenMergeSort(std::vector<int>& a, size_t n) {
+  for (size_t p = 1; p < n; p <<= 1) {
+    for (size_t k = p; k > 0; k >>= 1) {
+      OddEvenStage(a, n, p, k);
+    }
   }
 }
 
@@ -97,7 +98,7 @@ bool KhruevARadixSortingIntBatherMergeSEQ::RunImpl() {
 
   data.resize(pow2, std::numeric_limits<int>::max());
 
-  OddEvenMergeSort(data, 0, pow2);
+  OddEvenMergeSort(data, data.size());
 
   data.resize(original_size);
 
