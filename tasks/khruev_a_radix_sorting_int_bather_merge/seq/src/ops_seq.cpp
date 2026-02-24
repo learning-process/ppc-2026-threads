@@ -51,15 +51,15 @@ void KhruevARadixSortingIntBatherMergeSEQ::RadixSort(std::vector<int> &arr) {
 }
 
 void KhruevARadixSortingIntBatherMergeSEQ::OddEvenMerge(std::vector<int> &a, size_t n) {
-  for (size_t p = n / 2; p > 0; p >>= 1) {
-    if (p == n / 2) {
-      for (size_t i = 0; i < p; ++i) {
-        CompareExchange(a, i, i + p);
+  for (size_t po = n / 2; po > 0; po >>= 1) {
+    if (po == n / 2) {
+      for (size_t i = 0; i < po; ++i) {
+        CompareExchange(a, i, i + po);
       }
     } else {
-      for (size_t i = p; i < n - p; i += 2 * p) {
-        for (size_t j = 0; j < p; ++j) {
-          CompareExchange(a, i + j, i + j + p);
+      for (size_t i = po; i < n - po; i += 2 * po) {
+        for (size_t j = 0; j < po; ++j) {
+          CompareExchange(a, i + j, i + j + po);
         }
       }
     }
@@ -97,14 +97,16 @@ bool KhruevARadixSortingIntBatherMergeSEQ::RunImpl() {
   data.resize(pow2, std::numeric_limits<int>::max());
 
   size_t half = pow2 / 2;
-  std::vector<int> left(data.begin(), data.begin() + half);
-  std::vector<int> right(data.begin() + half, data.end());
+
+  auto half_dist = static_cast<std::ptrdiff_t>(half);
+  std::vector<int> left(data.begin(), data.begin() + half_dist);
+  std::vector<int> right(data.begin() + half_dist, data.end());
 
   RadixSort(left);
   RadixSort(right);
 
-  std::copy(left.begin(), left.end(), data.begin());
-  std::copy(right.begin(), right.end(), data.begin() + half);
+  std::ranges::copy(left, data.begin());
+  std::ranges::copy(right, data.begin() + half_dist);
 
   OddEvenMerge(data, data.size());
 
