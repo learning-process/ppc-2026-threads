@@ -76,7 +76,6 @@ const auto kGTestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kTestName = RectMethodFuncTests::PrintFuncTestName<RectMethodFuncTests>;
 
-// NOLINTNEXTLINE(modernize-type-traits, cppcoreguidelines-avoid-non-const-global-variables)
 INSTANTIATE_TEST_SUITE_P(MultidimensionalIntegration, RectMethodFuncTests, kGTestValues, kTestName);
 
 }  // namespace

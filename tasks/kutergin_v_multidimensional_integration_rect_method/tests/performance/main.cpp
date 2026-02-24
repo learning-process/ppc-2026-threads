@@ -40,7 +40,6 @@ TEST_P(RectMethodPerfTests, PerfTest) {
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, RectMethodSequential>(
     PPC_SETTINGS_kutergin_v_multidimensional_integration_rect_method);
 
-// NOLINTNEXTLINE(modernize-type-traits, cppcoreguidelines-avoid-non-const-global-variables)
 INSTANTIATE_TEST_SUITE_P(MultidimensionalIntegrationPerf, RectMethodPerfTests,
                          ppc::util::TupleToGTestValues(kAllPerfTasks), RectMethodPerfTests::CustomPerfTestName);
 
