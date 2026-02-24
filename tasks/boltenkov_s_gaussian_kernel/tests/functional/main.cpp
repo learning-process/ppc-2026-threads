@@ -74,12 +74,19 @@ class BoltenkovSRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InTyp
     if (m <= 0 || n <= 0) {
       throw std::runtime_error("invalid input data!\n");
     }
+    constexpr std::size_t MAX_SIZE = 1000;
+    if (static_cast<std::size_t>(n) > MAX_SIZE || static_cast<std::size_t>(m) > MAX_SIZE) {
+      throw std::runtime_error("matrix dimensions exceed maximum allowed (" + std::to_string(MAX_SIZE) + ")");
+    }
     std::get<0>(data) = static_cast<std::size_t>(n);
     std::get<1>(data) = static_cast<std::size_t>(m);
     std::vector<std::vector<int>> &mtr = std::get<2>(data);
     mtr.resize(static_cast<std::size_t>(n), std::vector<int>(static_cast<std::size_t>(m)));
     for (int i = 0; i < n; i++) {
       file_stream.read(reinterpret_cast<char *>(mtr[i].data()), static_cast<std::streamsize>(sizeof(int) * m));
+      if (file_stream.fail()) {
+        throw std::runtime_error("Failed to read row " + std::to_string(i));
+      }
     }
     file_stream.close();
   }
