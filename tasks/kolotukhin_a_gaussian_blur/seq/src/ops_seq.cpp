@@ -51,7 +51,8 @@ bool KolotukhinAGaussinBlureSEQ::RunImpl() {
           acc += kernel[1 + dy][1 + dx] * static_cast<int>(pixel);
         }
       }
-      output[(static_cast<size_t>(y) * static_cast<size_t>(img_width)) + static_cast<size_t>(x)] = static_cast<uint8_t>(acc / kSum);
+      output[(static_cast<size_t>(y) * static_cast<size_t>(img_width)) + static_cast<size_t>(x)] =
+          static_cast<uint8_t>(acc / kSum);
     }
   }
   return true;
