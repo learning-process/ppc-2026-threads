@@ -73,7 +73,7 @@ const std::array<TestType, 12> kTestParam = {
     TestType{InType{1e-20, 5e-6, 3e-12, 2e-3, 4e-9}, OutType{1e-20, 3e-12, 4e-9, 5e-6, 2e-3}, "Small"},
     TestType{InType{-8.0, -2.0, 0.5, 8.0, 9.0}, OutType{-8.0, -2.0, 0.5, 8.0, 9.0}, "Sorted"},
     TestType{InType{-3.3, 6.6, -10.9, 0.0, 2.2, -1.1}, OutType{-10.9, -3.3, -1.1, 0.0, 2.2, 6.6}, "DifferentSigns"},
-    TestType{InType{7.7, 3.3, 7.7, 3.3, 7.7}, OutType{3.3, 3.3, 7.7, 7.7, 7.7}, "Duplicates"},
+    TestType{InType{7.7, 3.3, 7.7, 3.3, 7.7}, OutType{3.3, 3.3, 7.7, 7.7, 7.7}, "duplicates"},
     TestType{InType{36.6, 25.5, 10.0, 8.9, 6.7, 4.5, 2.2}, OutType{2.2, 4.5, 6.7, 8.9, 10.0, 25.5, 36.6},
              "ReverseSeven"},
     TestType{InType{0.0, -0.0}, OutType{-0.0, 0.0}, "ZeroAndNegativeZero"}};
