@@ -5,6 +5,7 @@
 #include <ios>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "boltenkov_s_gaussian_kernel/common/include/common.hpp"
@@ -29,9 +30,9 @@ class BoltenkovSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType
     if (m <= 0 || n <= 0) {
       throw std::runtime_error("invalid input data!\n");
     }
-    constexpr std::size_t MAX_SIZE = 1000;
-    if (static_cast<std::size_t>(n) > MAX_SIZE || static_cast<std::size_t>(m) > MAX_SIZE) {
-      throw std::runtime_error("matrix dimensions exceed maximum allowed (" + std::to_string(MAX_SIZE) + ")");
+    constexpr std::size_t kMaxSize = 1000;
+    if (std::cmp_greater(n, kMaxSize) || std::cmp_greater(m, kMaxSize)) {
+      throw std::runtime_error("matrix dimensions exceed maximum allowed (" + std::to_string(kMaxSize) + ")");
     }
     std::get<0>(data) = static_cast<std::size_t>(n);
     std::get<1>(data) = static_cast<std::size_t>(m);
