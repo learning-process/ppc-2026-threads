@@ -1,14 +1,13 @@
 #include "viderman_a_sparse_matrix_mult_crs_complex/seq/include/ops_seq.hpp"
 
-#include <algorithm>
 #include <cmath>
+#include <ranges>
 #include <vector>
-
-#include "viderman_a_sparse_matrix_mult_crs_complex/common/include/common.hpp"
 
 namespace viderman_a_sparse_matrix_mult_crs_complex {
 
-VidermanASparseMatrixMultCRSComplexSEQ::VidermanASparseMatrixMultCRSComplexSEQ(const InType &in) {
+VidermanASparseMatrixMultCRSComplexSEQ::VidermanASparseMatrixMultCRSComplexSEQ(const InType &in)
+    : a_(nullptr), b_(nullptr) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = CRSMatrix();
@@ -19,7 +18,7 @@ bool VidermanASparseMatrixMultCRSComplexSEQ::ValidationImpl() {
   const auto &a = std::get<0>(input);
   const auto &b = std::get<1>(input);
 
-  if (!a.IsValid() || !b.IsValid()) {
+  if (!a.is_valid() || !b.is_valid()) {
     return false;
   }
 
@@ -39,7 +38,7 @@ bool VidermanASparseMatrixMultCRSComplexSEQ::PreProcessingImpl() {
   return true;
 }
 
-void VidermanASparseMatrixMultCRSComplexSEQ::Multiply(const CRSMatrix &a, const CRSMatrix &b, CRSMatrix &c) {
+void VidermanASparseMatrixMultCRSComplexSEQ::multiply(const CRSMatrix &a, const CRSMatrix &b, CRSMatrix &c) {
   c.rows = a.rows;
   c.cols = b.cols;
   c.row_ptr.assign(a.rows + 1, 0);
@@ -88,14 +87,14 @@ bool VidermanASparseMatrixMultCRSComplexSEQ::RunImpl() {
   }
 
   CRSMatrix &c = GetOutput();
-  Multiply(*a_, *b_, c);
+  multiply(*a_, *b_, c);
 
   return true;
 }
 
 bool VidermanASparseMatrixMultCRSComplexSEQ::PostProcessingImpl() {
   CRSMatrix &c = GetOutput();
-  return c.IsValid();
+  return c.is_valid();
 }
 
 }  // namespace viderman_a_sparse_matrix_mult_crs_complex

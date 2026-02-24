@@ -1,39 +1,37 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cstddef>
-#include <optional>
+#include <cstdint>
 #include <tuple>
-#include <vector>
 
-#include "util/include/perf_test_util.hpp"
 #include "viderman_a_sparse_matrix_mult_crs_complex/common/include/common.hpp"
-#include "viderman_a_sparse_matrix_mult_crs_complex/omp/include/ops_omp.hpp"
 #include "viderman_a_sparse_matrix_mult_crs_complex/seq/include/ops_seq.hpp"
-#include "viderman_a_sparse_matrix_mult_crs_complex/tbb/include/ops_tbb.hpp"
 
 namespace viderman_a_sparse_matrix_mult_crs_complex {
 namespace {
+int64_t run_and_time(const CRSMatrix &a, const CRSMatrix &b, CRSMatrix *out) {
+  VidermanASparseMatrixMultCRSComplexSEQ task(std::make_tuple(a, b));
 
-bool CheckOutput(const CRSMatrix &out, int rows, int cols, std::size_t min_nnz,
-                 std::optional<std::size_t> exact_nnz = std::nullopt) {
-  if (!out.IsValid() || out.rows != rows || out.cols != cols) {
-    return false;
-  }
-  if (out.NonZeros() < min_nnz) {
-    return false;
-  }
-  if (exact_nnz.has_value() && out.NonZeros() != exact_nnz.value()) {
-    return false;
-  }
-  return true;
+  EXPECT_TRUE(task.Validation());
+  EXPECT_TRUE(task.PreProcessing());
+
+  const auto start = std::chrono::high_resolution_clock::now();
+  EXPECT_TRUE(task.Run());
+  const auto end = std::chrono::high_resolution_clock::now();
+
+  EXPECT_TRUE(task.PostProcessing());
+
+  *out = task.GetOutput();
+  return std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 }
 
-CRSMatrix BuildBandMatrix(int n, const Complex &value, int bandwidth = 5) {
+CRSMatrix build_band_matrix(int n, const Complex &value, int bandwidth = 5) {
   CRSMatrix m(n, n);
   for (int i = 0; i < n; ++i) {
     for (int offset = 0; offset < bandwidth; ++offset) {
-      const int col = i + offset;
+      int col = i + offset;
       if (col < n) {
         m.col_indices.push_back(col);
         m.values.push_back(value);
@@ -44,7 +42,7 @@ CRSMatrix BuildBandMatrix(int n, const Complex &value, int bandwidth = 5) {
   return m;
 }
 
-CRSMatrix BuildDiagonalMatrix(int n, const Complex &value) {
+CRSMatrix build_diagonal_matrix(int n, const Complex &value) {
   CRSMatrix m(n, n);
   for (int i = 0; i < n; ++i) {
     m.col_indices.push_back(i);
@@ -54,22 +52,23 @@ CRSMatrix BuildDiagonalMatrix(int n, const Complex &value) {
   return m;
 }
 
-CRSMatrix BuildScatteredMatrix(int n, const Complex &value, int step = 7) {
+CRSMatrix build_scattered_matrix(int n, const Complex &value, int step = 7) {
   CRSMatrix m(n, n);
   for (int i = 0; i < n; ++i) {
-    const int col = (i * step) % n;
+    int col = (i * step) % n;
     m.col_indices.push_back(col);
     m.values.push_back(value);
     m.row_ptr[i + 1] = i + 1;
   }
+
   return m;
 }
 
-CRSMatrix BuildBlockDiagonalMatrix(int n, int block_size, const Complex &value) {
+CRSMatrix build_block_diagonal_matrix(int n, int block_size, const Complex &value) {
   CRSMatrix m(n, n);
   for (int i = 0; i < n; ++i) {
-    const int block_start = (i / block_size) * block_size;
-    const int block_end = std::min(block_start + block_size, n);
+    int block_start = (i / block_size) * block_size;
+    int block_end = std::min(block_start + block_size, n);
     for (int col = block_start; col < block_end; ++col) {
       m.col_indices.push_back(col);
       m.values.push_back(value);
@@ -78,236 +77,142 @@ CRSMatrix BuildBlockDiagonalMatrix(int n, int block_size, const Complex &value) 
   }
   return m;
 }
-
 }  // namespace
 
-class VidermanPerfBandMatrix : public ppc::util::BaseRunPerfTests<InType, OutType> {
- public:
-  void SetUp() override {
-    const int n = 1000;
-    input_data_ = std::make_tuple(BuildBandMatrix(n, Complex(1.0, 1.0)), BuildBandMatrix(n, Complex(1.0, 0.0)));
-    rows_ = n;
-    cols_ = n;
-    min_nnz_ = 1U;
-  }
+TEST(VidermanASparseMatrixMultCRSComplexPerfTest, MeasureTime) {
+  const int n = 1000;
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return CheckOutput(output_data, rows_, cols_, min_nnz_);
-  }
+  CRSMatrix a = build_band_matrix(n, Complex(1.0, 1.0));
+  CRSMatrix b = build_band_matrix(n, Complex(1.0, 0.0));
 
-  InType GetTestInputData() final {
-    return input_data_;
-  }
+  ASSERT_TRUE(a.is_valid()) << "Matrix a failed CRS validation";
+  ASSERT_TRUE(b.is_valid()) << "Matrix b failed CRS validation";
 
- private:
-  InType input_data_;
-  int rows_ = 0;
-  int cols_ = 0;
-  std::size_t min_nnz_ = 0U;
-};
+  CRSMatrix c;
+  const int64_t duration_ms = run_and_time(a, b, &c);
+  EXPECT_LT(duration_ms, 5000) << "Multiplication took " << duration_ms << " ms, which exceeds the 5 s limit";
 
-class VidermanPerfDiagonalMatrix : public ppc::util::BaseRunPerfTests<InType, OutType> {
- public:
-  void SetUp() override {
-    const int n = 5000;
-    input_data_ =
-        std::make_tuple(BuildDiagonalMatrix(n, Complex(2.0, 1.0)), BuildDiagonalMatrix(n, Complex(1.0, -1.0)));
-    rows_ = n;
-    cols_ = n;
-    exact_nnz_ = static_cast<std::size_t>(n);
-  }
+  EXPECT_TRUE(c.is_valid());
+  EXPECT_EQ(c.rows, n);
+  EXPECT_EQ(c.cols, n);
+  EXPECT_GT(c.non_zeros(), 0U);
+}
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    if (!exact_nnz_.has_value()) {
-      return false;
-    }
-    return CheckOutput(output_data, rows_, cols_, *exact_nnz_, exact_nnz_);
-  }
+TEST(VidermanASparseMatrixMultCRSComplexPerfTest, DiagonalMatrix5000x5000) {
+  const int n = 5000;
 
-  InType GetTestInputData() final {
-    return input_data_;
-  }
+  CRSMatrix a = build_diagonal_matrix(n, Complex(2.0, 1.0));
+  CRSMatrix b = build_diagonal_matrix(n, Complex(1.0, -1.0));
 
- private:
-  InType input_data_;
-  int rows_ = 0;
-  int cols_ = 0;
-  std::optional<std::size_t> exact_nnz_;
-};
+  ASSERT_TRUE(a.is_valid());
+  ASSERT_TRUE(b.is_valid());
 
-class VidermanPerfWideBandMatrix : public ppc::util::BaseRunPerfTests<InType, OutType> {
- public:
-  void SetUp() override {
-    const int n = 2000;
-    input_data_ = std::make_tuple(BuildBandMatrix(n, Complex(1.0, 0.5), 20), BuildBandMatrix(n, Complex(0.5, 1.0), 20));
-    rows_ = n;
-    cols_ = n;
-    min_nnz_ = 1U;
-  }
+  CRSMatrix c;
+  const int64_t duration_ms = run_and_time(a, b, &c);
+  EXPECT_LT(duration_ms, 500) << "Diagonal 5000x5000 took " << duration_ms << " ms, expected under 500 ms";
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return CheckOutput(output_data, rows_, cols_, min_nnz_);
-  }
+  EXPECT_TRUE(c.is_valid());
+  EXPECT_EQ(c.rows, n);
+  EXPECT_EQ(c.cols, n);
 
-  InType GetTestInputData() final {
-    return input_data_;
-  }
+  EXPECT_EQ(c.non_zeros(), static_cast<size_t>(n));
+}
 
- private:
-  InType input_data_;
-  int rows_ = 0;
-  int cols_ = 0;
-  std::size_t min_nnz_ = 0U;
-};
+TEST(VidermanASparseMatrixMultCRSComplexPerfTest, WideBandMatrix2000x2000) {
+  const int n = 2000;
 
-class VidermanPerfScatteredMatrix : public ppc::util::BaseRunPerfTests<InType, OutType> {
- public:
-  void SetUp() override {
-    const int n = 3000;
-    input_data_ =
-        std::make_tuple(BuildScatteredMatrix(n, Complex(1.0, 1.0), 7), BuildScatteredMatrix(n, Complex(1.0, -1.0), 11));
-    rows_ = n;
-    cols_ = n;
-    min_nnz_ = 1U;
-  }
+  CRSMatrix a = build_band_matrix(n, Complex(1.0, 0.5), 20);
+  CRSMatrix b = build_band_matrix(n, Complex(0.5, 1.0), 20);
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return CheckOutput(output_data, rows_, cols_, min_nnz_);
-  }
+  ASSERT_TRUE(a.is_valid());
+  ASSERT_TRUE(b.is_valid());
 
-  InType GetTestInputData() final {
-    return input_data_;
-  }
+  CRSMatrix c;
+  const int64_t duration_ms = run_and_time(a, b, &c);
+  EXPECT_LT(duration_ms, 5000) << "Wide-band 2000x2000 took " << duration_ms << " ms, exceeds 5 s limit";
 
- private:
-  InType input_data_;
-  int rows_ = 0;
-  int cols_ = 0;
-  std::size_t min_nnz_ = 0U;
-};
+  EXPECT_TRUE(c.is_valid());
+  EXPECT_EQ(c.rows, n);
+  EXPECT_EQ(c.cols, n);
+  EXPECT_GT(c.non_zeros(), 0U);
+}
 
-class VidermanPerfBlockDiagonalMatrix : public ppc::util::BaseRunPerfTests<InType, OutType> {
- public:
-  void SetUp() override {
-    const int n = 1000;
-    const int block_size = 10;
-    input_data_ = std::make_tuple(BuildBlockDiagonalMatrix(n, block_size, Complex(1.0, 1.0)),
-                                  BuildBlockDiagonalMatrix(n, block_size, Complex(2.0, -1.0)));
-    rows_ = n;
-    cols_ = n;
-    exact_nnz_ = static_cast<std::size_t>(n * block_size);
-  }
+TEST(VidermanASparseMatrixMultCRSComplexPerfTest, ScatteredMatrix3000x3000) {
+  const int n = 3000;
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    if (!exact_nnz_.has_value()) {
-      return false;
-    }
-    return CheckOutput(output_data, rows_, cols_, *exact_nnz_, exact_nnz_);
-  }
+  CRSMatrix a = build_scattered_matrix(n, Complex(1.0, 1.0), 7);
+  CRSMatrix b = build_scattered_matrix(n, Complex(1.0, -1.0), 11);
 
-  InType GetTestInputData() final {
-    return input_data_;
-  }
+  ASSERT_TRUE(a.is_valid());
+  ASSERT_TRUE(b.is_valid());
 
- private:
-  InType input_data_;
-  int rows_ = 0;
-  int cols_ = 0;
-  std::optional<std::size_t> exact_nnz_;
-};
+  CRSMatrix c;
+  const int64_t duration_ms = run_and_time(a, b, &c);
+  EXPECT_LT(duration_ms, 1000) << "Scattered 3000x3000 took " << duration_ms << " ms, expected under 1 s";
 
-class VidermanPerfRectangularBandMatrix : public ppc::util::BaseRunPerfTests<InType, OutType> {
- public:
-  void SetUp() override {
-    const int m = 500;
-    const int k = 2000;
-    const int n_out = 500;
+  EXPECT_TRUE(c.is_valid());
+  EXPECT_EQ(c.rows, n);
+  EXPECT_EQ(c.cols, n);
+}
 
-    CRSMatrix a(m, k);
-    for (int i = 0; i < m; ++i) {
-      for (int offset = 0; offset < 5; ++offset) {
-        const int col = (i * (k / m)) + offset;
-        if (col < k) {
-          a.col_indices.push_back(col);
-          a.values.emplace_back(1.0, 0.5);
-        }
+TEST(VidermanASparseMatrixMultCRSComplexPerfTest, BlockDiagonalMatrix1000x1000) {
+  const int n = 1000;
+  const int block_size = 10;
+
+  CRSMatrix a = build_block_diagonal_matrix(n, block_size, Complex(1.0, 1.0));
+  CRSMatrix b = build_block_diagonal_matrix(n, block_size, Complex(2.0, -1.0));
+
+  ASSERT_TRUE(a.is_valid());
+  ASSERT_TRUE(b.is_valid());
+
+  CRSMatrix c;
+  const int64_t duration_ms = run_and_time(a, b, &c);
+  EXPECT_LT(duration_ms, 2000) << "Block-diagonal 1000x1000 took " << duration_ms << " ms, exceeds 2 s limit";
+
+  EXPECT_TRUE(c.is_valid());
+  EXPECT_EQ(c.rows, n);
+  EXPECT_EQ(c.cols, n);
+
+  EXPECT_EQ(c.non_zeros(), static_cast<size_t>(n * block_size));
+}
+
+TEST(VidermanASparseMatrixMultCRSComplexPerfTest, RectangularBandMatrix500x2000x500) {
+  const int m = 500;
+  const int k = 2000;
+  const int n_out = 500;
+
+  CRSMatrix a(m, k);
+  for (int i = 0; i < m; ++i) {
+    for (int offset = 0; offset < 5; ++offset) {
+      int col = (i * (k / m)) + offset;
+      if (col < k) {
+        a.col_indices.push_back(col);
+        a.values.emplace_back(1.0, 0.5);
       }
-      a.row_ptr[i + 1] = static_cast<int>(a.col_indices.size());
     }
+    a.row_ptr[i + 1] = static_cast<int>(a.col_indices.size());
+  }
 
-    CRSMatrix b(k, n_out);
-    for (int i = 0; i < k; ++i) {
-      const int col = (i * n_out) / k;
-      if (col < n_out) {
-        b.col_indices.push_back(col);
-        b.values.emplace_back(0.5, 1.0);
-      }
-      b.row_ptr[i + 1] = static_cast<int>(b.col_indices.size());
+  CRSMatrix b(k, n_out);
+  for (int i = 0; i < k; ++i) {
+    int col = i * n_out / k;
+    if (col < n_out) {
+      b.col_indices.push_back(col);
+      b.values.emplace_back(0.5, 1.0);
     }
-
-    input_data_ = std::make_tuple(a, b);
-    rows_ = m;
-    cols_ = n_out;
-    min_nnz_ = 1U;
+    b.row_ptr[i + 1] = static_cast<int>(b.col_indices.size());
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return CheckOutput(output_data, rows_, cols_, min_nnz_);
-  }
+  ASSERT_TRUE(a.is_valid());
+  ASSERT_TRUE(b.is_valid());
 
-  InType GetTestInputData() final {
-    return input_data_;
-  }
+  CRSMatrix c;
+  const int64_t duration_ms = run_and_time(a, b, &c);
+  EXPECT_LT(duration_ms, 2000) << "Rectangular 500x2000x500 took " << duration_ms << " ms, exceeds 2 s limit";
 
- private:
-  InType input_data_;
-  int rows_ = 0;
-  int cols_ = 0;
-  std::size_t min_nnz_ = 0U;
-};
-
-TEST_P(VidermanPerfBandMatrix, RunPerfModes) {
-  ExecuteTest(GetParam());
+  EXPECT_TRUE(c.is_valid());
+  EXPECT_EQ(c.rows, m);
+  EXPECT_EQ(c.cols, n_out);
 }
-
-TEST_P(VidermanPerfDiagonalMatrix, RunPerfModes) {
-  ExecuteTest(GetParam());
-}
-
-TEST_P(VidermanPerfWideBandMatrix, RunPerfModes) {
-  ExecuteTest(GetParam());
-}
-
-TEST_P(VidermanPerfScatteredMatrix, RunPerfModes) {
-  ExecuteTest(GetParam());
-}
-
-TEST_P(VidermanPerfBlockDiagonalMatrix, RunPerfModes) {
-  ExecuteTest(GetParam());
-}
-
-TEST_P(VidermanPerfRectangularBandMatrix, RunPerfModes) {
-  ExecuteTest(GetParam());
-}
-
-namespace {
-
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, VidermanASparseMatrixMultCRSComplexSEQ, VidermanASparseMatrixMultCRSComplexOMP,
-                                VidermanASparseMatrixMultCRSComplexTBB>(
-        PPC_SETTINGS_viderman_a_sparse_matrix_mult_crs_complex);
-
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-
-const auto kPerfTestName = ppc::util::BaseRunPerfTests<InType, OutType>::CustomPerfTestName;
-
-INSTANTIATE_TEST_SUITE_P(BandMatrixPerf, VidermanPerfBandMatrix, kGtestValues, kPerfTestName);
-INSTANTIATE_TEST_SUITE_P(DiagonalMatrixPerf, VidermanPerfDiagonalMatrix, kGtestValues, kPerfTestName);
-INSTANTIATE_TEST_SUITE_P(WideBandMatrixPerf, VidermanPerfWideBandMatrix, kGtestValues, kPerfTestName);
-INSTANTIATE_TEST_SUITE_P(ScatteredMatrixPerf, VidermanPerfScatteredMatrix, kGtestValues, kPerfTestName);
-INSTANTIATE_TEST_SUITE_P(BlockDiagonalMatrixPerf, VidermanPerfBlockDiagonalMatrix, kGtestValues, kPerfTestName);
-INSTANTIATE_TEST_SUITE_P(RectangularBandMatrixPerf, VidermanPerfRectangularBandMatrix, kGtestValues, kPerfTestName);
-
-}  // namespace
 
 }  // namespace viderman_a_sparse_matrix_mult_crs_complex
