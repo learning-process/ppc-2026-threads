@@ -19,10 +19,10 @@ class VidermanASparseMatrixMultCRSComplexSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static void multiply(const CRSMatrix &a, const CRSMatrix &b, CRSMatrix &c);
+  static void Multiply(const CRSMatrix &a, const CRSMatrix &b, CRSMatrix &c);
 
-  const CRSMatrix *a_;
-  const CRSMatrix *b_;
+  const CRSMatrix *a_{nullptr};
+  const CRSMatrix *b_{nullptr};
 };
 
 }  // namespace viderman_a_sparse_matrix_mult_crs_complex
