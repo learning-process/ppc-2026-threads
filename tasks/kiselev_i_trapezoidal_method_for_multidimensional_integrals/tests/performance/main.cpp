@@ -93,5 +93,5 @@ const auto kPerfTestName = KiselevPerfTests::CustomPerfTestName;
 
 namespace {
 INSTANTIATE_TEST_SUITE_P(KiselevPerfTests, KiselevPerfTests, kGtestValues, kPerfTestName);
-}
+}  // namespace
 }  // namespace kiselev_i_trapezoidal_method_for_multidimensional_integrals

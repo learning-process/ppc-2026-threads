@@ -49,7 +49,7 @@ double KiselevITestTaskSEQ::ComputeIntegral(const std::vector<int> &steps) {
     double wx = (i == 0 || i == steps[0]) ? 0.5 : 1.0;
 
     for (int j = 0; j <= steps[1]; j++) {
-      double y = GetInput().left_bounds[1] + j * hy;
+      double y = GetInput().left_bounds[1] + (j * hy);
       double wy = (j == 0 || j == steps[1]) ? 0.5 : 1.0;
 
       result += wx * wy * FunctionTypeChoose(GetInput().type_function, x, y);
