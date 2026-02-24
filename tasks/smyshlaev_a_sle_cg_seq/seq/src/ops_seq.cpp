@@ -72,10 +72,10 @@ bool SmyshlaevASleCgTaskSEQ::ValidationImpl() {
 
 bool SmyshlaevASleCgTaskSEQ::PreProcessingImpl() {
   const auto &a = GetInput().A;
-  int n = a.size();
+  size_t n = a.size();
   flat_A_.resize(static_cast<size_t>(n * n));
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < n; ++j) {
+  for (size_t i = 0; i < n; ++i) {
+    for (size_t j = 0; j < n; ++j) {
       flat_A_[(i * n) + j] = a[i][j];
     }
   }

@@ -4,7 +4,6 @@
 #include <cstddef>
 #include <random>
 #include <utility>
-#include <vector>
 
 #include "smyshlaev_a_sle_cg_seq/common/include/common.hpp"
 #include "smyshlaev_a_sle_cg_seq/seq/include/ops_seq.hpp"
