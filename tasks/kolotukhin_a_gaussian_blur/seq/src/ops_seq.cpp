@@ -1,5 +1,7 @@
 #include "kolotukhin_a_gaussian_blur/seq/include/ops_seq.hpp"
 
+#include <algorithm>
+#include <cstddef>
 #include <numeric>
 #include <vector>
 
@@ -19,14 +21,14 @@ bool KolotukhinAGaussinBlureSEQ::ValidationImpl() {
   const auto img_width = get<1>(GetInput());
   const auto img_height = get<2>(GetInput());
 
-  return img_height * img_width == pixel_data.size();
+  return static_cast<size_t>(img_height) * static_cast<size_t>(img_width) == pixel_data.size();
 }
 
 bool KolotukhinAGaussinBlureSEQ::PreProcessingImpl() {
   const auto img_width = get<1>(GetInput());
   const auto img_height = get<2>(GetInput());
 
-  GetOutput().assign(img_height * img_width, 0);
+  GetOutput().assign(static_cast<size_t>(img_height) * static_cast<size_t>(img_width), 0);
   return true;
 }
 
@@ -35,8 +37,8 @@ bool KolotukhinAGaussinBlureSEQ::RunImpl() {
   const auto img_width = get<1>(GetInput());
   const auto img_height = get<2>(GetInput());
 
-  const int kernel[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
-  const int kSum = 16;
+  const static int kernel[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
+  const static int kSum = 16;
 
   auto &output = GetOutput();
 
@@ -45,20 +47,20 @@ bool KolotukhinAGaussinBlureSEQ::RunImpl() {
       int acc = 0;
       for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
-          int pixel = Clamp(pixel_data, img_width, img_height, x + dx, y + dy);
-          acc += kernel[1 + dy][1 + dx] * pixel;
+          uint8_t pixel = Clamp(pixel_data, img_width, img_height, x + dx, y + dy);
+          acc += kernel[1 + dy][1 + dx] * static_cast<int>(pixel);
         }
       }
-      output[(static_cast<size_t>(y) * img_width) + static_cast<size_t>(x)] = static_cast<uint8_t>(acc / kSum);
+      output[(static_cast<size_t>(y) * static_cast<size_t>(img_width)) + static_cast<size_t>(x)] = static_cast<uint8_t>(acc / kSum);
     }
   }
   return true;
 }
 
-char8_t KolotukhinAGaussinBlureSEQ::Clamp(const std::vector<uint8_t> &pixel_data, int img_width, int img_height,
+uint8_t KolotukhinAGaussinBlureSEQ::Clamp(const std::vector<uint8_t> &pixel_data, int img_width, int img_height,
                                           int pos_x, int pos_y) const {
-  std::size_t x = std::max(0, std::min(pos_x, img_width - 1));
-  std::size_t y = std::max(0, std::min(pos_y, img_height - 1));
+  std::size_t x = static_cast<size_t>(std::max(0, std::min(pos_x, img_width - 1)));
+  std::size_t y = static_cast<size_t>(std::max(0, std::min(pos_y, img_height - 1)));
   return pixel_data[(y * static_cast<size_t>(img_width)) + x];
 }
 
