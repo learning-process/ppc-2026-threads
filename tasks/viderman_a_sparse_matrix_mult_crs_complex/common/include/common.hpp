@@ -1,6 +1,9 @@
 #pragma once
 
+#include <algorithm>
 #include <complex>
+#include <cstddef>
+#include <ranges>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -24,29 +27,43 @@ struct CRSMatrix {
     row_ptr.resize(r + 1, 0);
   }
 
-  bool IsValid() const {
-    if (rows < 0 || cols < 0) {
-      return false;
-    }
-    if (row_ptr.size() != static_cast<size_t>(rows + 1)) {
-      return false;
-    }
-    if (col_indices.size() != values.size()) {
-      return false;
-    }
+  [[nodiscard]] bool is_valid() const {
+    return has_valid_shape() && has_valid_row_ptr_size() && has_matching_value_sizes() && has_monotonic_row_ptr() &&
+           has_valid_col_indices() && has_sorted_rows();
+  }
 
+  [[nodiscard]] size_t non_zeros() const {
+    return values.size();
+  }
+
+ private:
+  [[nodiscard]] bool has_valid_shape() const {
+    return rows >= 0 && cols >= 0;
+  }
+
+  [[nodiscard]] bool has_valid_row_ptr_size() const {
+    const auto expected = static_cast<std::size_t>(rows) + 1;
+    return row_ptr.size() == expected;
+  }
+
+  [[nodiscard]] bool has_matching_value_sizes() const {
+    return col_indices.size() == values.size();
+  }
+
+  [[nodiscard]] bool has_monotonic_row_ptr() const {
     for (int i = 0; i < rows; ++i) {
       if (row_ptr[i] > row_ptr[i + 1]) {
         return false;
       }
     }
+    return true;
+  }
 
-    for (size_t i = 0; i < col_indices.size(); ++i) {
-      if (col_indices[i] < 0 || col_indices[i] >= cols) {
-        return false;
-      }
-    }
+  [[nodiscard]] bool has_valid_col_indices() const {
+    return std::ranges::all_of(col_indices, [this](int col) { return col >= 0 && col < cols; });
+  }
 
+  [[nodiscard]] bool has_sorted_rows() const {
     for (int i = 0; i < rows; ++i) {
       for (int j = row_ptr[i]; j < row_ptr[i + 1] - 1; ++j) {
         if (col_indices[j] >= col_indices[j + 1]) {
@@ -54,12 +71,7 @@ struct CRSMatrix {
         }
       }
     }
-
     return true;
-  }
-
-  size_t NonZeros() const {
-    return values.size();
   }
 };
 
@@ -68,6 +80,6 @@ using OutType = CRSMatrix;
 using TestType = std::tuple<int, int, int, int, int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-constexpr double EPSILON = 1e-14;
+constexpr double kEpsilon = 1e-14;
 
 }  // namespace viderman_a_sparse_matrix_mult_crs_complex

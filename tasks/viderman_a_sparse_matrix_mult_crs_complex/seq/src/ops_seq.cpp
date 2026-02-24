@@ -1,29 +1,28 @@
 #include "viderman_a_sparse_matrix_mult_crs_complex/seq/include/ops_seq.hpp"
 
-#include <algorithm>
 #include <cmath>
+#include <ranges>
 #include <vector>
 
 namespace viderman_a_sparse_matrix_mult_crs_complex {
 
-VidermanASparseMatrixMultCRSComplexSEQ::VidermanASparseMatrixMultCRSComplexSEQ(const InType &in) {
+VidermanASparseMatrixMultCRSComplexSEQ::VidermanASparseMatrixMultCRSComplexSEQ(const InType &in)
+    : a_(nullptr), b_(nullptr) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = CRSMatrix();
-  A_ = nullptr;
-  B_ = nullptr;
 }
 
 bool VidermanASparseMatrixMultCRSComplexSEQ::ValidationImpl() {
   const auto &input = GetInput();
-  const auto &A = std::get<0>(input);
-  const auto &B = std::get<1>(input);
+  const auto &a = std::get<0>(input);
+  const auto &b = std::get<1>(input);
 
-  if (!A.IsValid() || !B.IsValid()) {
+  if (!a.is_valid() || !b.is_valid()) {
     return false;
   }
 
-  if (A.cols != B.rows) {
+  if (a.cols != b.rows) {
     return false;
   }
 
@@ -33,49 +32,49 @@ bool VidermanASparseMatrixMultCRSComplexSEQ::ValidationImpl() {
 bool VidermanASparseMatrixMultCRSComplexSEQ::PreProcessingImpl() {
   const auto &input = GetInput();
 
-  A_ = &std::get<0>(input);
-  B_ = &std::get<1>(input);
+  a_ = &std::get<0>(input);
+  b_ = &std::get<1>(input);
 
   return true;
 }
 
-void VidermanASparseMatrixMultCRSComplexSEQ::Multiply(const CRSMatrix &A, const CRSMatrix &B, CRSMatrix &C) {
-  C.rows = A.rows;
-  C.cols = B.cols;
-  C.row_ptr.assign(A.rows + 1, 0);
-  C.col_indices.clear();
-  C.values.clear();
+void VidermanASparseMatrixMultCRSComplexSEQ::multiply(const CRSMatrix &a, const CRSMatrix &b, CRSMatrix &c) {
+  c.rows = a.rows;
+  c.cols = b.cols;
+  c.row_ptr.assign(a.rows + 1, 0);
+  c.col_indices.clear();
+  c.values.clear();
 
-  std::vector<Complex> accumulator(B.cols, Complex(0.0, 0.0));
-  std::vector<int> marker(B.cols, -1);
+  std::vector<Complex> accumulator(b.cols, Complex(0.0, 0.0));
+  std::vector<int> marker(b.cols, -1);
   std::vector<int> current_row_indices;
 
-  for (int i = 0; i < A.rows; ++i) {
+  for (int i = 0; i < a.rows; ++i) {
     current_row_indices.clear();
 
-    for (int j = A.row_ptr[i]; j < A.row_ptr[i + 1]; ++j) {
-      int col_A = A.col_indices[j];
-      Complex val_A = A.values[j];
+    for (int j = a.row_ptr[i]; j < a.row_ptr[i + 1]; ++j) {
+      int col_a = a.col_indices[j];
+      Complex val_a = a.values[j];
 
-      for (int k = B.row_ptr[col_A]; k < B.row_ptr[col_A + 1]; ++k) {
-        int col_B = B.col_indices[k];
-        accumulator[col_B] += val_A * B.values[k];
+      for (int k = b.row_ptr[col_a]; k < b.row_ptr[col_a + 1]; ++k) {
+        int col_b = b.col_indices[k];
+        accumulator[col_b] += val_a * b.values[k];
 
-        if (marker[col_B] != i) {
-          current_row_indices.push_back(col_B);
-          marker[col_B] = i;
+        if (marker[col_b] != i) {
+          current_row_indices.push_back(col_b);
+          marker[col_b] = i;
         }
       }
     }
 
-    std::sort(current_row_indices.begin(), current_row_indices.end());
+    std::ranges::sort(current_row_indices);
 
-    C.row_ptr[i + 1] = C.row_ptr[i];
+    c.row_ptr[i + 1] = c.row_ptr[i];
     for (int idx : current_row_indices) {
-      if (std::abs(accumulator[idx]) > EPSILON) {
-        C.values.push_back(accumulator[idx]);
-        C.col_indices.push_back(idx);
-        ++C.row_ptr[i + 1];
+      if (std::abs(accumulator[idx]) > kEpsilon) {
+        c.values.push_back(accumulator[idx]);
+        c.col_indices.push_back(idx);
+        ++c.row_ptr[i + 1];
       }
       accumulator[idx] = Complex(0.0, 0.0);
     }
@@ -83,19 +82,19 @@ void VidermanASparseMatrixMultCRSComplexSEQ::Multiply(const CRSMatrix &A, const 
 }
 
 bool VidermanASparseMatrixMultCRSComplexSEQ::RunImpl() {
-  if (!A_ || !B_) {
+  if (a_ == nullptr || b_ == nullptr) {
     return false;
   }
 
-  CRSMatrix &C = GetOutput();
-  Multiply(*A_, *B_, C);
+  CRSMatrix &c = GetOutput();
+  multiply(*a_, *b_, c);
 
   return true;
 }
 
 bool VidermanASparseMatrixMultCRSComplexSEQ::PostProcessingImpl() {
-  CRSMatrix &C = GetOutput();
-  return C.IsValid();
+  CRSMatrix &c = GetOutput();
+  return c.is_valid();
 }
 
 }  // namespace viderman_a_sparse_matrix_mult_crs_complex
