@@ -28,6 +28,7 @@ bool KiselevITestTaskSEQ::ValidationImpl() {
   // if (in.left_bounds.size() != in.step_n_size.size()) {
   //   return false;
   // }
+
   return true;
 }
 
