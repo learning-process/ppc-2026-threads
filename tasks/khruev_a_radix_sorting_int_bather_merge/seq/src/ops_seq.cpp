@@ -10,6 +10,16 @@
 
 namespace khruev_a_radix_sorting_int_bather_merge {
 
+bool KhruevARadixSortingIntBatherMergeSEQ::SameBlock(size_t i, size_t j, size_t block_size) {
+  return (i & block_size) == (j & block_size);
+}
+
+void KhruevARadixSortingIntBatherMergeSEQ::CompareExchange(std::vector<int> &a, size_t i, size_t j) {
+  if (a[i] > a[j]) {
+    std::swap(a[i], a[j]);
+  }
+}
+
 void KhruevARadixSortingIntBatherMergeSEQ::RadixSort(std::vector<int> &arr) {
   const int bits = 8;
   const int buckets = 1 << bits;
@@ -56,9 +66,9 @@ void KhruevARadixSortingIntBatherMergeSEQ::OddEvenStage(std::vector<int> &a, siz
 }
 
 void KhruevARadixSortingIntBatherMergeSEQ::OddEvenMergeSort(std::vector<int> &a, size_t n) {
-  for (size_t p = 1; p < n; p <<= 1) {
-    for (size_t k = p; k > 0; k >>= 1) {
-      OddEvenStage(a, n, p, k);
+  for (size_t po = 1; po < n; po <<= 1) {
+    for (size_t ko = po; ko > 0; ko >>= 1) {
+      OddEvenStage(a, n, po, ko);
     }
   }
 }
