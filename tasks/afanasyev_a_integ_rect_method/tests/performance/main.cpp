@@ -10,22 +10,22 @@ namespace afanasyev_a_integ_rect_method {
 
 class AfanasyevAIntegRectMethodPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
-  const InType kDefaultN = 200;
+  static constexpr InType kDefaultN = 200;
 
  protected:
-  InType n_ = kDefaultN;
+  InType n = kDefaultN;
 
-  void SetUp() override { n_ = kDefaultN; }
+  void SetUp() override { n = kDefaultN; }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    constexpr int kDim = 3;
+    constexpr int k_dim = 3;
     const double i1 = 0.5 * std::sqrt(M_PI) * std::erf(1.0);
-    const double expected = std::pow(i1, kDim);
-    const double tol = 5e-3;
-    return std::fabs(output_data - expected) <= tol;
+    const double expected = std::pow(i1, k_dim);
+    constexpr double kTol = 5e-3;
+    return std::fabs(output_data - expected) <= kTol;
   }
 
-  InType GetTestInputData() final { return n_; }
+  InType GetTestInputData() final { return n; }
 };
 
 TEST_P(AfanasyevAIntegRectMethodPerfTests, RunPerfModes) {

@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <cmath>
 #include <array>
+#include <cmath>
+#include <cstddef>
 #include <string>
 #include <tuple>
 
@@ -22,9 +23,13 @@ class AfanasyevARunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutTyp
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     n_ = std::get<0>(params);
-    if (n_ >= 80) tol_ = 2e-4;
-    else if (n_ >= 30) tol_ = 1e-3;
-    else tol_ = 1e-2;
+    if (n_ >= 80) {
+      tol_ = 2e-4;
+    } else if (n_ >= 30) {
+      tol_ = 1e-3;
+    } else {
+      tol_ = 1e-2;
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
