@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
+
 #include <cmath>
-#include <vector>
 #include <random>
+#include <vector>
 
 #include "smyshlaev_a_sle_cg_seq/common/include/common.hpp"
 #include "smyshlaev_a_sle_cg_seq/seq/include/ops_seq.hpp"
@@ -37,7 +38,7 @@ class SmyshlaevASleCgPerfTests : public ppc::util::BaseRunPerfTests<InType, OutT
           row_sum += std::abs(A[i][j]);
         }
       }
-      A[i][i] = row_sum + 1.0; 
+      A[i][i] = row_sum + 1.0;
     }
 
     for (int i = 0; i < kSystemSize; ++i) {
@@ -45,7 +46,7 @@ class SmyshlaevASleCgPerfTests : public ppc::util::BaseRunPerfTests<InType, OutT
         b[i] += A[i][j] * expected_x_[j];
       }
     }
-    
+
     input_data_.A = std::move(A);
     input_data_.b = std::move(b);
   }

@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
-#include <cmath>
 
-#include <vector>
+#include <cmath>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "smyshlaev_a_sle_cg_seq/common/include/common.hpp"
 #include "smyshlaev_a_sle_cg_seq/seq/include/ops_seq.hpp"
@@ -20,7 +20,6 @@ class SmyshlaevASleCgFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
 
  protected:
   void SetUp() override {
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_id = std::get<0>(params);
 
@@ -33,10 +32,7 @@ class SmyshlaevASleCgFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
       input_data_.b = {14.0, 18.0, 30.0};
       expected_x_ = {1.0, 2.0, 3.0};
     } else if (test_id == 3) {
-      input_data_.A = {{1.0, 0.0, 0.0, 0.0},
-                       {0.0, 1.0, 0.0, 0.0},
-                       {0.0, 0.0, 1.0, 0.0},
-                       {0.0, 0.0, 0.0, 1.0}};
+      input_data_.A = {{1.0, 0.0, 0.0, 0.0}, {0.0, 1.0, 0.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 0.0, 1.0}};
       input_data_.b = {5.0, -2.0, 8.0, 1.0};
       expected_x_ = {5.0, -2.0, 8.0, 1.0};
     }
@@ -70,11 +66,8 @@ TEST_P(SmyshlaevASleCgFuncTests, SleCgSeqTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {
-    std::make_tuple(1, "Simple2x2"),
-    std::make_tuple(2, "Medium3x3"),
-    std::make_tuple(3, "IdentityMatrix4x4")
-};
+const std::array<TestType, 3> kTestParam = {std::make_tuple(1, "Simple2x2"), std::make_tuple(2, "Medium3x3"),
+                                            std::make_tuple(3, "IdentityMatrix4x4")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<SmyshlaevASleCgTaskSEQ, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_sle_cg_seq));
