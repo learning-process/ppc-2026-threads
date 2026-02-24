@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <tuple>
@@ -121,12 +122,7 @@ bool IsSortedInRows(const CRSMatrix &c) {
 }
 
 bool HasNoExplicitZeros(const CRSMatrix &c) {
-  for (const auto &v : c.values) {
-    if (std::abs(v) <= kEpsilon) {
-      return false;
-    }
-  }
-  return true;
+  return std::all_of(c.values.begin(), c.values.end(), [](const Complex &v) { return std::abs(v) > kEpsilon; });
 }
 
 CRSMatrix RunTask(const CRSMatrix &a, const CRSMatrix &b, bool expect_valid = true) {
