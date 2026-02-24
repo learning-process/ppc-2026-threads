@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <cstddef>
 #include <tuple>
 #include <vector>
@@ -11,20 +12,30 @@ namespace viderman_a_sparse_matrix_mult_crs_complex {
 namespace {
 constexpr double kTestTol = 1e-12;
 
-void expect_complex_near(const Complex &actual, const Complex &expected, const char *msg = "") {
-  EXPECT_NEAR(actual.real(), expected.real(), kTestTol) << msg;
-  EXPECT_NEAR(actual.imag(), expected.imag(), kTestTol) << msg;
+bool complex_near(const Complex &lhs, const Complex &rhs, double tol = kTestTol) {
+  return std::abs(lhs.real() - rhs.real()) <= tol && std::abs(lhs.imag() - rhs.imag()) <= tol;
+}
+
+bool crs_equal(const CRSMatrix &expected, const CRSMatrix &actual, double tol = kTestTol) {
+  if (expected.rows != actual.rows || expected.cols != actual.cols) {
+    return false;
+  }
+  if (expected.row_ptr != actual.row_ptr || expected.col_indices != actual.col_indices) {
+    return false;
+  }
+  if (expected.values.size() != actual.values.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < expected.values.size(); ++i) {
+    if (!complex_near(expected.values[i], actual.values[i], tol)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 void compare_crs_matrices(const CRSMatrix &expected, const CRSMatrix &actual) {
-  EXPECT_EQ(expected.rows, actual.rows);
-  EXPECT_EQ(expected.cols, actual.cols);
-  EXPECT_EQ(expected.row_ptr, actual.row_ptr);
-  EXPECT_EQ(expected.col_indices, actual.col_indices);
-  ASSERT_EQ(expected.values.size(), actual.values.size());
-  for (size_t i = 0; i < expected.values.size(); ++i) {
-    expect_complex_near(actual.values[i], expected.values[i], "compare_crs_matrices");
-  }
+  EXPECT_TRUE(crs_equal(expected, actual));
 }
 
 std::vector<std::vector<Complex>> to_dense(const CRSMatrix &m) {
@@ -38,58 +49,58 @@ std::vector<std::vector<Complex>> to_dense(const CRSMatrix &m) {
 }
 
 void compare_dense(const std::vector<std::vector<Complex>> &expected, const CRSMatrix &actual, double tol = 1e-12) {
-  int rows = static_cast<int>(expected.size());
-  int cols = rows > 0 ? static_cast<int>(expected[0].size()) : 0;
-  ASSERT_EQ(actual.rows, rows);
-  ASSERT_EQ(actual.cols, cols);
-  auto d = to_dense(actual);
-  int total = rows * cols;
-  for (int idx = 0; idx < total; ++idx) {
-    int i = idx / cols;
-    int j = idx % cols;
-    EXPECT_NEAR(d[i][j].real(), expected[i][j].real(), tol) << "  at [" << i << "][" << j << "] real part";
-    EXPECT_NEAR(d[i][j].imag(), expected[i][j].imag(), tol) << "  at [" << i << "][" << j << "] imag part";
+  const int rows = static_cast<int>(expected.size());
+  const int cols = rows > 0 ? static_cast<int>(expected[0].size()) : 0;
+  bool ok = actual.rows == rows && actual.cols == cols;
+  if (ok) {
+    const auto d = to_dense(actual);
+    const int total = rows * cols;
+    for (int idx = 0; idx < total; ++idx) {
+      const int i = idx / cols;
+      const int j = idx % cols;
+      if (!complex_near(d[i][j], expected[i][j], tol)) {
+        ok = false;
+        break;
+      }
+    }
   }
+  EXPECT_TRUE(ok);
 }
 
 void compare_2x2_dense(const CRSMatrix &lhs, const CRSMatrix &rhs, double tol = 1e-11) {
-  const auto lhs_dense = to_dense(lhs);
-  const auto rhs_dense = to_dense(rhs);
-  ASSERT_EQ(lhs_dense.size(), rhs_dense.size());
-  for (int i = 0; i < 2; ++i) {
+  const auto l = to_dense(lhs);
+  const auto r = to_dense(rhs);
+  bool ok = l.size() == r.size() && l.size() == 2;
+  for (int i = 0; ok && i < 2; ++i) {
     for (int j = 0; j < 2; ++j) {
-      EXPECT_NEAR(lhs_dense[i][j].real(), rhs_dense[i][j].real(), tol) << "real at [" << i << "][" << j << "]";
-      EXPECT_NEAR(lhs_dense[i][j].imag(), rhs_dense[i][j].imag(), tol) << "imag at [" << i << "][" << j << "]";
+      if (!complex_near(l[i][j], r[i][j], tol)) {
+        ok = false;
+        break;
+      }
     }
   }
+  EXPECT_TRUE(ok);
 }
 
 void check_partial_cancellation(const CRSMatrix &c) {
-  EXPECT_EQ(c.rows, 2);
-  EXPECT_EQ(c.cols, 1);
-  EXPECT_EQ(c.row_ptr[0], 0);
-  EXPECT_EQ(c.row_ptr[1], 0);
-  ASSERT_EQ(c.row_ptr[2], 1);
-  EXPECT_NEAR(c.values[0].real(), 0.0, kTestTol);
-  EXPECT_NEAR(c.values[0].imag(), 2.0, kTestTol);
+  const bool ok = c.rows == 2 && c.cols == 1 && c.row_ptr.size() == 3 && c.row_ptr[0] == 0 && c.row_ptr[1] == 0 &&
+                  c.row_ptr[2] == 1 && c.values.size() == 1 && complex_near(c.values[0], Complex(0.0, 2.0));
+  EXPECT_TRUE(ok);
 }
 
 void check_corner_elements_5x5(const CRSMatrix &c) {
-  EXPECT_EQ(c.rows, 5);
-  EXPECT_EQ(c.cols, 5);
-  EXPECT_EQ(c.non_zeros(), 2U);
   const auto d = to_dense(c);
-  expect_complex_near(d[0][0], Complex(2.0, 0.0), "corner (0,0)");
-  expect_complex_near(d[4][4], Complex(1.0, 0.0), "corner (4,4)");
+  const bool ok = c.rows == 5 && c.cols == 5 && c.non_zeros() == 2U && complex_near(d[0][0], Complex(2.0, 0.0)) &&
+                  complex_near(d[4][4], Complex(1.0, 0.0));
+  EXPECT_TRUE(ok);
 }
 
 void check_dense_row_times_identity(const CRSMatrix &c) {
-  ASSERT_EQ(c.non_zeros(), 4U);
   const auto d = to_dense(c);
-  expect_complex_near(d[0][0], Complex(1.0, 1.0), "col 0");
-  expect_complex_near(d[0][1], Complex(2.0, 0.0), "col 1");
-  expect_complex_near(d[0][2], Complex(3.0, -1.0), "col 2");
-  expect_complex_near(d[0][3], Complex(0.0, 4.0), "col 3");
+  const bool ok = c.non_zeros() == 4U && complex_near(d[0][0], Complex(1.0, 1.0)) &&
+                  complex_near(d[0][1], Complex(2.0, 0.0)) && complex_near(d[0][2], Complex(3.0, -1.0)) &&
+                  complex_near(d[0][3], Complex(0.0, 4.0));
+  EXPECT_TRUE(ok);
 }
 
 CRSMatrix run_task(const CRSMatrix &a, const CRSMatrix &b, bool expect_valid = true) {
@@ -98,10 +109,11 @@ CRSMatrix run_task(const CRSMatrix &a, const CRSMatrix &b, bool expect_valid = t
     EXPECT_FALSE(task.Validation());
     return CRSMatrix{};
   }
-  EXPECT_TRUE(task.Validation());
-  EXPECT_TRUE(task.PreProcessing());
-  EXPECT_TRUE(task.Run());
-  EXPECT_TRUE(task.PostProcessing());
+  const bool ok = task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing();
+  EXPECT_TRUE(ok);
+  if (!ok) {
+    return CRSMatrix{};
+  }
   return task.GetOutput();
 }
 }  // namespace
