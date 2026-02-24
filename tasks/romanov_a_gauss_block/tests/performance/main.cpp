@@ -1,0 +1,55 @@
+#include <gtest/gtest.h>
+
+#include <vector>
+#include <cstdint>
+#include <random>
+
+#include "romanov_a_gauss_block/common/include/common.hpp"
+#include "romanov_a_gauss_block/seq/include/ops_seq.hpp"
+#include "util/include/perf_test_util.hpp"
+
+namespace romanov_a_gauss_block {
+
+class RomanovAPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  const int kWidth_ = 2560;
+  const int kHeight = 1440;
+  InType input_data_{};
+
+  void SetUp() override {
+    std::vector<unit8_t> picture(kWidth_ * kHeight * 3);
+    std::mt19937 rng(42);
+    std::uniform_int_distribution<int> dist(0, 255);
+    for (uint8_t& v : picture) {
+        v = static_cast<uint8_t>(dist(rng));
+    }
+    input_data_ = std::make_tuple(kWidth_, kHeight, picture);
+  }
+
+  bool CheckTestOutputData(OutType &output_data) final {
+    return input_data_ == output_data;
+  }
+
+  InType GetTestInputData() final {
+    return input_data_;
+  }
+};
+
+TEST_P(RomanovAPerfTestThreads, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
+
+namespace {
+
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, RomanovAGaussBlockALL, RomanovAGaussBlockOMP, RomanovAGaussBlockSEQ,
+                                RomanovAGaussBlockSTL, RomanovAGaussBlockTBB>(PPC_SETTINGS_example_threads);
+
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+
+const auto kPerfTestName = RomanovAPerfTestThreads::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(RunModeTests, RomanovAPerfTestThreads, kGtestValues, kPerfTestName);
+
+}  // namespace
+
+}  // namespace romanov_a_gauss_block
