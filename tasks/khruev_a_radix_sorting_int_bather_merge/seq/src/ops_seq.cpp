@@ -43,14 +43,7 @@ void KhruevARadixSortingIntBatherMergeSEQ::RadixSort(std::vector<int> &arr) {
   }
 }
 
-
-
-void KhruevARadixSortingIntBatherMergeSEQ::OddEvenStage(
-    std::vector<int>& a,
-    size_t n,
-    size_t p,
-    size_t k) {
-
+void KhruevARadixSortingIntBatherMergeSEQ::OddEvenStage(std::vector<int> &a, size_t n, size_t p, size_t k) {
   const size_t block_size = 2 * p;
 
   for (size_t i = 0; i < n; ++i) {
@@ -62,7 +55,7 @@ void KhruevARadixSortingIntBatherMergeSEQ::OddEvenStage(
   }
 }
 
-void KhruevARadixSortingIntBatherMergeSEQ::OddEvenMergeSort(std::vector<int>& a, size_t n) {
+void KhruevARadixSortingIntBatherMergeSEQ::OddEvenMergeSort(std::vector<int> &a, size_t n) {
   for (size_t p = 1; p < n; p <<= 1) {
     for (size_t k = p; k > 0; k >>= 1) {
       OddEvenStage(a, n, p, k);

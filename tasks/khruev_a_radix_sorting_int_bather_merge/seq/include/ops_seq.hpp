@@ -20,21 +20,17 @@ class KhruevARadixSortingIntBatherMergeSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  inline bool SameBlock(size_t i,
-                      size_t j,
-                      size_t block_size) {
+  inline bool SameBlock(size_t i, size_t j, size_t block_size) {
     return (i & block_size) == (j & block_size);
   }
-  inline void CompareExchange(std::vector<int>& a,
-                            size_t i,
-                            size_t j) {
-  if (a[i] > a[j]) {
-    std::swap(a[i], a[j]);
+  inline void CompareExchange(std::vector<int> &a, size_t i, size_t j) {
+    if (a[i] > a[j]) {
+      std::swap(a[i], a[j]);
+    }
   }
-}
   static void RadixSort(std::vector<int> &arr);
-  void OddEvenStage(std::vector<int>& a, size_t n, size_t p, size_t k);
-  void OddEvenMergeSort(std::vector<int>& a, size_t n);
+  void OddEvenStage(std::vector<int> &a, size_t n, size_t p, size_t k);
+  void OddEvenMergeSort(std::vector<int> &a, size_t n);
 };
 
 }  // namespace khruev_a_radix_sorting_int_bather_merge
