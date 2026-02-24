@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstddef>
 #include <random>
+#include <utility>
 #include <vector>
 
 #include "smyshlaev_a_sle_cg_seq/common/include/common.hpp"
@@ -14,21 +15,22 @@ namespace smyshlaev_a_sle_cg_seq {
 class SmyshlaevASleCgPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr int kSystemSize = 512;
   InType input_data_{};
-  OutType expected_x_{};
+  OutType expected_x_;
 
   void SetUp() override {
-    std::mt19937 gen(1337);
+    std::random_device rd;
+    std::mt19937 gen(rd());
     std::uniform_real_distribution<double> dis(-1.0, 1.0);
 
-    CGMatrix A(kSystemSize, CGVector(kSystemSize, 0.0));
+    CGMatrix a(kSystemSize, CGVector(kSystemSize, 0.0));
     expected_x_.assign(kSystemSize, 1.0);
     CGVector b(kSystemSize, 0.0);
 
     for (int i = 0; i < kSystemSize; ++i) {
       for (int j = i + 1; j < kSystemSize; ++j) {
         double val = dis(gen);
-        A[i][j] = val;
-        A[j][i] = val;
+        a[i][j] = val;
+        a[j][i] = val;
       }
     }
 
@@ -36,19 +38,19 @@ class SmyshlaevASleCgPerfTests : public ppc::util::BaseRunPerfTests<InType, OutT
       double row_sum = 0.0;
       for (int j = 0; j < kSystemSize; ++j) {
         if (i != j) {
-          row_sum += std::abs(A[i][j]);
+          row_sum += std::abs(a[i][j]);
         }
       }
-      A[i][i] = row_sum + 1.0;
+      a[i][i] = row_sum + 1.0;
     }
 
     for (int i = 0; i < kSystemSize; ++i) {
       for (int j = 0; j < kSystemSize; ++j) {
-        b[i] += A[i][j] * expected_x_[j];
+        b[i] += a[i][j] * expected_x_[j];
       }
     }
 
-    input_data_.A = std::move(A);
+    input_data_.A = std::move(a);
     input_data_.b = std::move(b);
   }
 

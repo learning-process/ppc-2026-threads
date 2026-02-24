@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "smyshlaev_a_sle_cg_seq/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -13,7 +15,7 @@ class SmyshlaevASleCgTaskSEQ : public BaseTask {
   explicit SmyshlaevASleCgTaskSEQ(const InType &in);
 
  private:
-  std::vector<double> flat_A;
+  std::vector<double> flat_A_;
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
