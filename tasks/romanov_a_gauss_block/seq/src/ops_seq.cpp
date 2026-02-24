@@ -70,7 +70,7 @@ bool RomanovAGaussBlockSEQ::RunImpl() {
         if (result_value > 255) {
           result_value = 255;
         }
-        result_picture[(((y * width) + x) * 3) + c] = static_cast<uint8_t>(val);
+        result_picture[(((y * width) + x) * 3) + c] = static_cast<uint8_t>(result_value);
       }
     }
   }

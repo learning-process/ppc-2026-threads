@@ -29,11 +29,11 @@ class RomanovARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_ = std::make_tuple(std::get<0>(params), std::get<1>(params), std::get<2>(params));
-    expected_result_ = std::get<3>(params)
+    expected_result_ = std::get<3>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    return (std::get<2>(input_data_) == output_data);
   }
 
   InType GetTestInputData() final {
@@ -52,7 +52,7 @@ TEST_P(RomanovARunFuncTestsThreads, GaussFilter) {
 }
 
 const std::array<TestType, 1> kTestParam = {
-  std::make_tuple(1, 1, std::vector<uint8_t>{0, 0, 0}, std::vector<uint8_t>{0, 0, 0}, "1")
+  std::make_tuple(1, 1, std::vector<uint8_t>{0, 0, 0}, std::vector<uint8_t>{0, 0, 0}, "TestNo1")
 };
 
 const auto kTestTasksList =
@@ -62,7 +62,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = RomanovARunFuncTestsThreads::PrintFuncTestName<RomanovARunFuncTestsThreads>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, RomanovARunFuncTestsThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(GaussFilter, RomanovARunFuncTestsThreads, kGtestValues, kPerfTestName);
 
 }  // namespace
 

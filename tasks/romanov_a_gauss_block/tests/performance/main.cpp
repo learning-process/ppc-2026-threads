@@ -16,7 +16,7 @@ class RomanovAPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutTy
   InType input_data_{};
 
   void SetUp() override {
-    std::vector<unit8_t> picture(kWidth_ * kHeight * 3);
+    std::vector<uint8_t> picture(kWidth_ * kHeight * 3);
     std::mt19937 rng(42);
     std::uniform_int_distribution<int> dist(0, 255);
     for (uint8_t& v : picture) {
@@ -26,7 +26,7 @@ class RomanovAPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutTy
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    return std::get<2>(input_data_) == output_data;
   }
 
   InType GetTestInputData() final {
@@ -34,21 +34,20 @@ class RomanovAPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutTy
   }
 };
 
-TEST_P(RomanovAPerfTestThreads, RunPerfModes) {
+TEST_P(RomanovAPerfTestThreads, GaussFilter) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, RomanovAGaussBlockALL, RomanovAGaussBlockOMP, RomanovAGaussBlockSEQ,
-                                RomanovAGaussBlockSTL, RomanovAGaussBlockTBB>(PPC_SETTINGS_example_threads);
+    ppc::util::MakeAllPerfTasks<InType, RomanovAGaussBlockSEQ>(PPC_SETTINGS_example_threads);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = RomanovAPerfTestThreads::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, RomanovAPerfTestThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(GaussFilter, RomanovAPerfTestThreads, kGtestValues, kPerfTestName);
 
 }  // namespace
 
