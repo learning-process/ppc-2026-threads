@@ -18,7 +18,7 @@ class MatmulDoublePerfTest : public ppc::util::BaseRunPerfTests<InType, OutType>
  protected:
   void SetUp() override {
     size_t n = 400;
-    
+
     size_t size = n * n;
 
     std::vector<double> a(size);
@@ -47,7 +47,6 @@ class MatmulDoublePerfTest : public ppc::util::BaseRunPerfTests<InType, OutType>
       return false;
     }
 
-
     const double epsilon = 1e-7;
     for (size_t i = 0; i < expected.size(); ++i) {
       if (std::abs(expected[i] - actual[i]) > epsilon) {
@@ -57,9 +56,7 @@ class MatmulDoublePerfTest : public ppc::util::BaseRunPerfTests<InType, OutType>
     return true;
   }
 
-  static void ReferenceMultiply(const std::vector<double> &a, 
-                                const std::vector<double> &b, 
-                                std::vector<double> &c,
+  static void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c,
                                 size_t n) {
     for (size_t i = 0; i < n; ++i) {
       for (size_t k = 0; k < n; ++k) {
@@ -82,11 +79,9 @@ TEST_P(MatmulDoublePerfTest, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = 
-    ppc::util::MakeAllPerfTasks<InType, 
-                                MatmulDoubleSeqTask
-                      
-                                >(PPC_SETTINGS_makoveeva_matmul_double_seq);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, MatmulDoubleSeqTask
+
+                                                       >(PPC_SETTINGS_makoveeva_matmul_double_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
