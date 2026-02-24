@@ -20,7 +20,7 @@ class KhruevARadixSortingIntBatherMergeSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void compareExchange(std::vector<int> &a, int i, int j);
+  void radixSort(std::vector<int> &arr);
   void oddEvenMerge(std::vector<int> &a, int lo, int n, int r);
   void oddEvenMergeSort(std::vector<int> &a, int lo, int n);
 };

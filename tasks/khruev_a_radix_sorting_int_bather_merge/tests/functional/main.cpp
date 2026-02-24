@@ -56,14 +56,17 @@ TEST_P(KhruevARadixSortingIntBatherMergeFuncTests, radix_test) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 7> kTestParam = {
+const std::array<TestType, 8> kTestParam = {
     TestType{InType{1, 2, 3, 4, 5, 6}, OutType{1, 2, 3, 4, 5, 6}, "Sorted"},
     TestType{InType{9, 8, 7, 6, 5, 4, 3, 2, 1}, OutType{1, 2, 3, 4, 5, 6, 7, 8, 9}, "Reversed"},
     TestType{InType{1}, OutType{1}, "One"},
     TestType{InType{2, 2, 2, 2, 2, 2}, OutType{2, 2, 2, 2, 2, 2}, "odinakovie"},
     TestType{InType{2, 2, 44, 2, 3, 5, 1}, OutType{1, 2, 2, 2, 3, 5, 44}, "odinakovie_plus"},
     TestType{InType{2, 1}, OutType{1, 2}, "two_elems"},
-    TestType{InType{1, -2, 3, -5}, OutType{-5, -2, 1, 3}, "negative"}};
+    TestType{InType{1, -2, 3, -5}, OutType{-5, -2, 1, 3}, "negative"},
+    TestType{InType{1, 22, 13, 51, 2, 1, 2, 2, 34, 41}, OutType{1, 1, 2, 2, 2, 13, 22, 34, 41, 51}, "raznie"}
+
+};
 
 const auto kTestTasksList = ppc::util::AddFuncTask<KhruevARadixSortingIntBatherMergeSEQ, InType>(
     kTestParam, PPC_SETTINGS_khruev_a_radix_sorting_int_bather_merge);
