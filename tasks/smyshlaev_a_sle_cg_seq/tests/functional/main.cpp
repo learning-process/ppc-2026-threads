@@ -36,6 +36,10 @@ class SmyshlaevASleCgFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
       input_data_.A = {{1.0, 0.0, 0.0, 0.0}, {0.0, 1.0, 0.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 0.0, 1.0}};
       input_data_.b = {5.0, -2.0, 8.0, 1.0};
       expected_x_ = {5.0, -2.0, 8.0, 1.0};
+    } else if (test_id == 4) {
+      input_data_.A = {{4.0, 1.0}, {1.0, 3.0}};
+      input_data_.b = {1.0, 2.0};
+      expected_x_ = {1.0 / 11.0, 7.0 / 11.0};
     }
   }
 
@@ -67,8 +71,8 @@ TEST_P(SmyshlaevASleCgFuncTests, SleCgSeqTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(1, "Simple2x2"), std::make_tuple(2, "Medium3x3"),
-                                            std::make_tuple(3, "IdentityMatrix4x4")};
+const std::array<TestType, 4> kTestParam = {std::make_tuple(1, "Simple2x2"), std::make_tuple(2, "Medium3x3"),
+                                            std::make_tuple(3, "IdentityMatrix4x4"), std::make_tuple(4, "Harder2x2")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<SmyshlaevASleCgTaskSEQ, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_sle_cg_seq));
