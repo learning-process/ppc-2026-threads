@@ -12,7 +12,7 @@
 
 namespace karpich_i_bitwise_batcher_omp {
 
-class KarpichIBitwiseBatcherFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class KarpichIBitwiseBatcherFuncTestsOmp : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -38,7 +38,7 @@ class KarpichIBitwiseBatcherFuncTestsThreads : public ppc::util::BaseRunFuncTest
 
 namespace {
 
-TEST_P(KarpichIBitwiseBatcherFuncTestsThreads, MatmulFromPic) {
+TEST_P(KarpichIBitwiseBatcherFuncTestsOmp, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
@@ -55,9 +55,9 @@ const auto kTestTasksList = std::tuple_cat(
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName =
-    KarpichIBitwiseBatcherFuncTestsThreads::PrintFuncTestName<KarpichIBitwiseBatcherFuncTestsThreads>;
+    KarpichIBitwiseBatcherFuncTestsOmp::PrintFuncTestName<KarpichIBitwiseBatcherFuncTestsOmp>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, KarpichIBitwiseBatcherFuncTestsThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PicMatrixTests, KarpichIBitwiseBatcherFuncTestsOmp, kGtestValues, kPerfTestName);
 
 }  // namespace
 

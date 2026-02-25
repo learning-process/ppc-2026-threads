@@ -6,7 +6,7 @@
 
 namespace karpich_i_bitwise_batcher_omp {
 
-class KarpichIBitwiseBatcherPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class KarpichIBitwiseBatcherPerfTestsOmp : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 1500000;
   InType input_data_{};
 
@@ -23,7 +23,7 @@ class KarpichIBitwiseBatcherPerfTestsThreads : public ppc::util::BaseRunPerfTest
   }
 };
 
-TEST_P(KarpichIBitwiseBatcherPerfTestsThreads, RunPerfModes) {
+TEST_P(KarpichIBitwiseBatcherPerfTestsOmp, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -34,9 +34,9 @@ const auto kAllPerfTasks =
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = KarpichIBitwiseBatcherPerfTestsThreads::CustomPerfTestName;
+const auto kPerfTestName = KarpichIBitwiseBatcherPerfTestsOmp::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, KarpichIBitwiseBatcherPerfTestsThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, KarpichIBitwiseBatcherPerfTestsOmp, kGtestValues, kPerfTestName);
 
 }  // namespace
 
