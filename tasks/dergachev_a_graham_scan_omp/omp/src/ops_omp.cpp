@@ -1,5 +1,7 @@
 #include "dergachev_a_graham_scan_omp/omp/include/ops_omp.hpp"
 
+#include <omp.h>
+
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
@@ -27,22 +29,38 @@ bool AllPointsSame(const std::vector<Point> &pts) {
   if (pts.empty()) {
     return true;
   }
-  for (std::size_t i = 1; i < pts.size(); i++) {
+  bool all_same = true;
+  int size = static_cast<int>(pts.size());
+#pragma omp parallel for reduction(&& : all_same)
+  for (int i = 1; i < size; i++) {
     if (pts[i].x != pts[0].x || pts[i].y != pts[0].y) {
-      return false;
+      all_same = false;
     }
   }
-  return true;
+  return all_same;
 }
 
 std::size_t FindPivotIndex(const std::vector<Point> &pts) {
-  std::size_t pivot_idx = 0;
-  for (std::size_t i = 1; i < pts.size(); i++) {
-    if (pts[i].y < pts[pivot_idx].y || (pts[i].y == pts[pivot_idx].y && pts[i].x < pts[pivot_idx].x)) {
-      pivot_idx = i;
+  int size = static_cast<int>(pts.size());
+  int pivot_idx = 0;
+#pragma omp parallel
+  {
+    int local_idx = 0;
+#pragma omp for nowait
+    for (int i = 1; i < size; i++) {
+      if (pts[i].y < pts[local_idx].y || (pts[i].y == pts[local_idx].y && pts[i].x < pts[local_idx].x)) {
+        local_idx = i;
+      }
+    }
+#pragma omp critical
+    {
+      if (pts[local_idx].y < pts[pivot_idx].y ||
+          (pts[local_idx].y == pts[pivot_idx].y && pts[local_idx].x < pts[pivot_idx].x)) {
+        pivot_idx = local_idx;
+      }
     }
   }
-  return pivot_idx;
+  return static_cast<std::size_t>(pivot_idx);
 }
 
 void SortByAngle(std::vector<Point> &pts) {
