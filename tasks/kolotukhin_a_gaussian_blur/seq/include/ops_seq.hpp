@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+#include <vector>
+
 #include "kolotukhin_a_gaussian_blur/common/include/common.hpp"
 #include "task/include/task.hpp"
 

@@ -2,11 +2,10 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <numeric>
+#include <cstdint>
 #include <vector>
 
 #include "kolotukhin_a_gaussian_blur/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace kolotukhin_a_gaussian_blur {
 

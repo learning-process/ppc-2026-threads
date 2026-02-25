@@ -1,9 +1,19 @@
 #include <gtest/gtest.h>
+
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <new>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
 #include <stb/stb_image.h>
 
 #include "kolotukhin_a_gaussian_blur/common/include/common.hpp"
 #include "kolotukhin_a_gaussian_blur/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp" 
 
 namespace kolotukhin_a_gaussian_blur {
 
