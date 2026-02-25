@@ -1,11 +1,9 @@
 #include "klimenko_v_lsh_contrast_incr_omp/omp/include/ops_omp.hpp"
 
-#include <atomic>
-#include <numeric>
+#include <algorithm>
 #include <vector>
 
 #include "klimenko_v_lsh_contrast_incr_omp/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace klimenko_v_lsh_contrast_incr_omp {
 
@@ -31,32 +29,28 @@ bool KlimenkoVLSHContrastIncrOMP::RunImpl() {
     return false;
   }
 
-  const int size = static_cast<int>(input.size());
+  const size_t size = input.size();
 
   int min_val = input[0];
   int max_val = input[0];
 
-#pragma omp parallel for reduction(min : min_val) reduction(max : max_val)
-  for (int i = 0; i < size; ++i) {
-    if (input[i] < min_val) {
-      min_val = input[i];
-    }
-    if (input[i] > max_val) {
-      max_val = input[i];
-    }
+#pragma omp parallel for default(none) shared(input, size) reduction(min : min_val) reduction(max : max_val)
+  for (size_t i = 0; i < size; ++i) {
+    min_val = std::min(input[i], min_val);
+    max_val = std::max(input[i], max_val);
   }
 
   if (max_val == min_val) {
-#pragma omp parallel for
-    for (int i = 0; i < size; ++i) {
+#pragma omp parallel for default(none) shared(input, output, size)
+    for (size_t i = 0; i < size; ++i) {
       output[i] = input[i];
     }
     return true;
   }
-
-#pragma omp parallel for
-  for (int i = 0; i < static_cast<int>(input.size()); ++i) {
-    output[i] = ((input[i] - min_val) * 255) / (max_val - min_val);
+  const int range = max_val - min_val;
+#pragma omp parallel for default(none) shared(input, output, size, min_val, range)
+  for (size_t i = 0; i < size; ++i) {
+    output[i] = ((input[i] - min_val) * 255) / range;
   }
   return true;
 }
