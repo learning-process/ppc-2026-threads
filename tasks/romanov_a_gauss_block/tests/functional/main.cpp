@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "romanov_a_gauss_block/common/include/common.hpp"
