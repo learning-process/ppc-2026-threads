@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <algorithm>
 #include <array>
 #include <memory>
@@ -6,9 +7,9 @@
 #include <tuple>
 #include <vector>
 
-#include "util/include/func_test_util.hpp"
 #include "buzulukski_d_gaus_gorizontal/common/include/common.hpp"
 #include "buzulukski_d_gaus_gorizontal/seq/include/ops_seq.hpp"
+#include "util/include/func_test_util.hpp"
 
 namespace buzulukski_d_gaus_gorizontal {
 
@@ -17,6 +18,7 @@ class BuzulukskiDGausGorizontalFuncTests : public ppc::util::BaseRunFuncTests<In
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<1>(test_param) + "_" + std::to_string(std::get<0>(test_param));
   }
+
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
@@ -28,6 +30,7 @@ class BuzulukskiDGausGorizontalFuncTests : public ppc::util::BaseRunFuncTests<In
   InType GetTestInputData() final {
     return input_data_;
   }
+
  private:
   InType input_data_ = 0;
 };
@@ -36,20 +39,17 @@ namespace {
 bool RunFullPipeline(BuzulukskiDGausGorizontalSEQ &task) {
   return task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing();
 }
-}
+}  // namespace
 
 TEST_P(BuzulukskiDGausGorizontalFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {
-    std::make_tuple(3, "Small"), 
-    std::make_tuple(10, "Medium"), 
-    std::make_tuple(21, "Large")
-};
+const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "Small"), std::make_tuple(10, "Medium"),
+                                            std::make_tuple(21, "Large")};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<BuzulukskiDGausGorizontalSEQ, InType>(
-    kTestParam, PPC_SETTINGS_buzulukski_d_gaus_gorizontal);
+const auto kTestTasksList =
+    ppc::util::AddFuncTask<BuzulukskiDGausGorizontalSEQ, InType>(kTestParam, PPC_SETTINGS_buzulukski_d_gaus_gorizontal);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = BuzulukskiDGausGorizontalFuncTests::PrintFuncTestName<BuzulukskiDGausGorizontalFuncTests>;

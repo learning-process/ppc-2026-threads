@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <tuple>
+
 #include "task/include/task.hpp"
 
 namespace buzulukski_d_gaus_gorizontal {

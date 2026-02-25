@@ -1,4 +1,5 @@
 #include "buzulukski_d_gaus_gorizontal/seq/include/ops_seq.hpp"
+
 #include <algorithm>
 #include <array>
 
@@ -25,8 +26,10 @@ bool BuzulukskiDGausGorizontalSEQ::ValidationImpl() {
 bool BuzulukskiDGausGorizontalSEQ::PreProcessingImpl() {
   width_ = GetInput();
   height_ = GetInput();
-  if (width_ < 3) return false;
-  
+  if (width_ < 3) {
+    return false;
+  }
+
   int total = width_ * height_ * kChannels;
   input_image_.assign(total, 100);
   output_image_.assign(total, 0);
@@ -57,7 +60,9 @@ bool BuzulukskiDGausGorizontalSEQ::RunImpl() {
 }
 
 bool BuzulukskiDGausGorizontalSEQ::PostProcessingImpl() {
-  if (output_image_.empty()) return false;
+  if (output_image_.empty()) {
+    return false;
+  }
   int64_t sum = 0;
   for (uint8_t val : output_image_) {
     sum += val;

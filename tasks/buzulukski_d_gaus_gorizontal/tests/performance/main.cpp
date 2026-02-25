@@ -1,15 +1,17 @@
 #include <gtest/gtest.h>
-#include <vector>
+
 #include <memory>
-#include "util/include/perf_test_util.hpp"
+#include <vector>
+
 #include "buzulukski_d_gaus_gorizontal/common/include/common.hpp"
 #include "buzulukski_d_gaus_gorizontal/seq/include/ops_seq.hpp"
+#include "util/include/perf_test_util.hpp"
 
 namespace buzulukski_d_gaus_gorizontal {
 
 class BuzulukskiDGausGorizontalPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  const int kCount_ = 1000; 
+  const int kCount_ = 1000;
   InType input_data_{};
 
   void SetUp() override {

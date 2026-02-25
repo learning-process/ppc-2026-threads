@@ -1,8 +1,9 @@
 #pragma once
 #include <cstdint>
 #include <vector>
-#include "task/include/task.hpp"
+
 #include "buzulukski_d_gaus_gorizontal/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace buzulukski_d_gaus_gorizontal {
 
@@ -13,8 +14,12 @@ class BuzulukskiDGausGorizontalSEQ : public BaseTask {
   }
   explicit BuzulukskiDGausGorizontalSEQ(const InType &in);
 
-  std::vector<uint8_t> &InputImage() { return input_image_; }
-  std::vector<uint8_t> &OutputImage() { return output_image_; }
+  std::vector<uint8_t> &InputImage() {
+    return input_image_;
+  }
+  std::vector<uint8_t> &OutputImage() {
+    return output_image_;
+  }
 
  private:
   bool ValidationImpl() override;
