@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "dergachev_a_graham_scan_omp/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace dergachev_a_graham_scan_omp {
 
@@ -36,9 +35,9 @@ bool AllPointsSame(const std::vector<Point> &pts) {
   return true;
 }
 
-int FindPivotIndex(const std::vector<Point> &pts) {
-  int pivot_idx = 0;
-  for (int i = 1; i < static_cast<int>(pts.size()); i++) {
+std::size_t FindPivotIndex(const std::vector<Point> &pts) {
+  std::size_t pivot_idx = 0;
+  for (std::size_t i = 1; i < pts.size(); i++) {
     if (pts[i].y < pts[pivot_idx].y || (pts[i].y == pts[pivot_idx].y && pts[i].x < pts[pivot_idx].x)) {
       pivot_idx = i;
     }
@@ -78,10 +77,7 @@ std::vector<Point> DergachevAGrahamScanOMP::GetHull() const {
 }
 
 bool DergachevAGrahamScanOMP::ValidationImpl() {
-  if (GetInput() < 0) {
-    return false;
-  }
-  return true;
+  return GetInput() >= 0;
 }
 
 bool DergachevAGrahamScanOMP::PreProcessingImpl() {
@@ -98,11 +94,11 @@ bool DergachevAGrahamScanOMP::PreProcessingImpl() {
     points_.reserve(n);
     for (int i = 0; i < n; ++i) {
       double angle = (2.0 * kPi * static_cast<double>(i)) / static_cast<double>(n);
-      Point p{std::cos(angle), std::sin(angle)};
+      Point p{.x = std::cos(angle), .y = std::sin(angle)};
       points_.push_back(p);
     }
   } else {
-    if (static_cast<InType>(points_.size()) != GetInput()) {
+    if (points_.size() != static_cast<std::size_t>(GetInput())) {
       GetInput() = static_cast<InType>(points_.size());
     }
   }
@@ -133,7 +129,7 @@ bool DergachevAGrahamScanOMP::RunImpl() {
     return true;
   }
 
-  int pivot_idx = FindPivotIndex(points_);
+  std::size_t pivot_idx = FindPivotIndex(points_);
   std::swap(points_[0], points_[pivot_idx]);
   SortByAngle(points_);
 
