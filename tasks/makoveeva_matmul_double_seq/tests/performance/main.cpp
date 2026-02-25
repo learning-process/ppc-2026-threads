@@ -5,6 +5,7 @@
 #include <tuple>
 #include <vector>
 
+#include "makoveeva_matmul_double_seq/common/include/common.hpp"
 #include "makoveeva_matmul_double_seq/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
