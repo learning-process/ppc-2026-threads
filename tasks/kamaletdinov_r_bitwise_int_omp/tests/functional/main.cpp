@@ -15,7 +15,7 @@
 
 namespace kamaletdinov_r_bitwise_int_omp {
 
-class KamaletdinovRBitwiseIntFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class KamaletdinovRBitwiseIntFuncTestsOmp : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -53,7 +53,7 @@ void RunTaskPipeline(const std::shared_ptr<KamaletdinovRBitwiseIntOMP> &task, in
   EXPECT_EQ(task->GetOutput(), expected);
 }
 
-TEST_P(KamaletdinovRBitwiseIntFuncTests, MatmulFromPic) {
+TEST_P(KamaletdinovRBitwiseIntFuncTestsOmp, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
@@ -64,9 +64,9 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KamaletdinovRB
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = KamaletdinovRBitwiseIntFuncTests::PrintFuncTestName<KamaletdinovRBitwiseIntFuncTests>;
+const auto kPerfTestName = KamaletdinovRBitwiseIntFuncTestsOmp::PrintFuncTestName<KamaletdinovRBitwiseIntFuncTestsOmp>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, KamaletdinovRBitwiseIntFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PicMatrixTests, KamaletdinovRBitwiseIntFuncTestsOmp, kGtestValues, kPerfTestName);
 
 TEST(KamaletdinovRBitwiseIntEdge, PipelineEmptyInput) {
   RunTaskPipeline(std::make_shared<KamaletdinovRBitwiseIntOMP>(0), 0);

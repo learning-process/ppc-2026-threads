@@ -6,7 +6,7 @@
 
 namespace kamaletdinov_r_bitwise_int_omp {
 
-class KamaletdinovRBitwiseIntPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class KamaletdinovRBitwiseIntFuncTestsOmp : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 1000000;
   InType input_data_{};
 
@@ -23,7 +23,7 @@ class KamaletdinovRBitwiseIntPerfTests : public ppc::util::BaseRunPerfTests<InTy
   }
 };
 
-TEST_P(KamaletdinovRBitwiseIntPerfTests, RunPerfModes) {
+TEST_P(KamaletdinovRBitwiseIntFuncTestsOmp, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -34,9 +34,9 @@ const auto kAllPerfTasks =
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = KamaletdinovRBitwiseIntPerfTests::CustomPerfTestName;
+const auto kPerfTestName = KamaletdinovRBitwiseIntFuncTestsOmp::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, KamaletdinovRBitwiseIntPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, KamaletdinovRBitwiseIntFuncTestsOmp, kGtestValues, kPerfTestName);
 
 }  // namespace
 
