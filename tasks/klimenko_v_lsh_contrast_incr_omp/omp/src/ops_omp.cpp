@@ -1,6 +1,7 @@
 #include "klimenko_v_lsh_contrast_incr_omp/omp/include/ops_omp.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <vector>
 
 #include "klimenko_v_lsh_contrast_incr_omp/common/include/common.hpp"
