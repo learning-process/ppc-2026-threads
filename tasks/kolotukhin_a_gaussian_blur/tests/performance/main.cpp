@@ -50,7 +50,7 @@ class KolotukhinAGaussinBlurePerfTests : public ppc::util::BaseRunPerfTests<InTy
       input_data_ = {std::move(data), width, height};
     } catch (const std::bad_alloc &e) {
       stbi_image_free(raw);
-      throw std::runtime_error("Failed to allocate memory for image");
+      throw std::runtime_error("Failed to allocate memory for image: " + std::string(e.what()));
     }
   }
 
