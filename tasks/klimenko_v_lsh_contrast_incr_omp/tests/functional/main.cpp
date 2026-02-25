@@ -12,7 +12,7 @@
 
 namespace klimenko_v_lsh_contrast_incr_omp {
 
-class KlimenkoVRunFuncTestsLSH : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class KlimenkoVRunOMPFuncTestsLSH : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(test_param);
@@ -61,7 +61,7 @@ class KlimenkoVRunFuncTestsLSH : public ppc::util::BaseRunFuncTests<InType, OutT
 
 namespace {
 
-TEST_P(KlimenkoVRunFuncTestsLSH, ContrastStretching) {
+TEST_P(KlimenkoVRunOMPFuncTestsLSH, ContrastStretching) {
   ExecuteTest(GetParam());
 }
 
@@ -72,9 +72,9 @@ const auto kTestTasksList = ppc::util::AddFuncTask<KlimenkoVLSHContrastIncrOMP, 
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kTestName = KlimenkoVRunFuncTestsLSH::PrintFuncTestName<KlimenkoVRunFuncTestsLSH>;
+const auto kTestName = KlimenkoVRunOMPFuncTestsLSH::PrintFuncTestName<KlimenkoVRunOMPFuncTestsLSH>;
 
-INSTANTIATE_TEST_SUITE_P(ContrastIncrTests, KlimenkoVRunFuncTestsLSH, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(ContrastIncrTests, KlimenkoVRunOMPFuncTestsLSH, kGtestValues, kTestName);
 
 }  // namespace
 
