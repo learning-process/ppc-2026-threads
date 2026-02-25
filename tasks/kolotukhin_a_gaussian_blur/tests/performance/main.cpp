@@ -9,7 +9,6 @@ namespace kolotukhin_a_gaussian_blur {
 
 class KolotukhinAGaussinBlurePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
-  std::string input_path_;
 
   void SetUp() override {
     const int rank = ppc::util::GetMPIRank();
@@ -17,28 +16,33 @@ class KolotukhinAGaussinBlurePerfTests : public ppc::util::BaseRunPerfTests<InTy
       input_data_ = {std::vector<std::uint8_t>{}, 0, 0};
       return;
     }
-    input_path_ = ppc::util::GetAbsoluteTaskPath(PPC_ID_kolotukhin_a_gaussian_blur, "Frog_32x32.png");
+    std::string input_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_kolotukhin_a_gaussian_blur, "test_image_2.jpg");
 
     int width = -1;
     int height = -1;
-    int channels = -1;
-    unsigned char *raw = stbi_load(input_path_.c_str(), &width, &height, &channels, STBI_grey);
+    int channels_in_file = -1;
+
+    unsigned char *raw = stbi_load(input_path.c_str(), &width, &height, &channels_in_file, STBI_grey);
+
     if (raw == nullptr) {
-      throw std::runtime_error("Load error: " + input_path_);
+      throw std::runtime_error("Load error: " + input_path);
     }
 
     if (width <= 0 || height <= 0) {
       stbi_image_free(raw);
-      throw std::runtime_error("Image has non-positive dimensions: " + input_path_);
+      throw std::runtime_error("Image has non-positive dimension: " + input_path);
     }
 
     const std::size_t img_size = static_cast<std::size_t>(width) * static_cast<std::size_t>(height);
 
-    std::vector<std::uint8_t> data(img_size);
-    std::copy(raw, raw + img_size, data.begin());
-    stbi_image_free(raw);
-
-    input_data_ = {data, width, height};
+    try {
+      std::vector<std::uint8_t> data(img_size);
+      std::copy(raw, raw + img_size, data.begin());
+      input_data_ = {std::move(data), width, height};
+    } catch (const std::bad_alloc &e) {
+      stbi_image_free(raw);
+      throw std::runtime_error("Failed to allocate memory for image");
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
