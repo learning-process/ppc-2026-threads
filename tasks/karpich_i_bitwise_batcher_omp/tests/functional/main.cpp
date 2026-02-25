@@ -54,8 +54,7 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName =
-    KarpichIBitwiseBatcherFuncTestsOmp::PrintFuncTestName<KarpichIBitwiseBatcherFuncTestsOmp>;
+const auto kPerfTestName = KarpichIBitwiseBatcherFuncTestsOmp::PrintFuncTestName<KarpichIBitwiseBatcherFuncTestsOmp>;
 
 INSTANTIATE_TEST_SUITE_P(PicMatrixTests, KarpichIBitwiseBatcherFuncTestsOmp, kGtestValues, kPerfTestName);
 
