@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <stb/stb_image.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -8,12 +9,10 @@
 #include <string>
 #include <vector>
 
-#include <stb/stb_image.h>
-
 #include "kolotukhin_a_gaussian_blur/common/include/common.hpp"
 #include "kolotukhin_a_gaussian_blur/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp" 
+#include "util/include/util.hpp"
 
 namespace kolotukhin_a_gaussian_blur {
 
