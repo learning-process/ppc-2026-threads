@@ -35,7 +35,7 @@ int ApplyKernel(const std::vector<uint8_t> &img, int row, int col, int channel, 
       int nc = col + static_cast<int>(kc) - 1;
       if (nr >= 0 && nr < height && nc >= 0 && nc < width) {
         size_t idx = (((static_cast<size_t>(nr) * width) + nc) * 3) + channel;
-        sum += (static_cast<int>(img[idx]) * kernel[kr][kc]);
+        sum += (static_cast<int>(img[idx]) * kernel.at(kr).at(kc));
       }
     }
   }
