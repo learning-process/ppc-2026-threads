@@ -18,7 +18,6 @@ class MatmulDoublePerfTest : public ppc::util::BaseRunPerfTests<InType, OutType>
  protected:
   void SetUp() override {
     size_t n = 400;
-
     size_t size = n * n;
 
     std::vector<double> a(size);
@@ -73,15 +72,14 @@ class MatmulDoublePerfTest : public ppc::util::BaseRunPerfTests<InType, OutType>
   }
 };
 
-TEST_P(MatmulDoublePerfTest, RunPerfModes) {
+TEST_P(MatmulDoublePerfTest, RunPerfModes) {  // NOLINT
   ExecuteTest(GetParam());
 }
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, MatmulDoubleSeqTask
-
-                                                       >(PPC_SETTINGS_makoveeva_matmul_double_seq);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, MatmulDoubleSeqTask>(PPC_SETTINGS_makoveeva_matmul_double_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
