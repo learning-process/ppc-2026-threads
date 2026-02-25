@@ -68,22 +68,20 @@ class BoltenkovSRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InTyp
     if (!file_stream.is_open()) {
       throw std::runtime_error("Error opening file!\n");
     }
+    constexpr std::size_t kMaxSize = 1000;
     int m = -1;
     int n = -1;
     file_stream.read(reinterpret_cast<char *>(&m), sizeof(int));
     file_stream.read(reinterpret_cast<char *>(&n), sizeof(int));
-    if (file_stream.fail() || m <= 0 || n <= 0) {
+    if (file_stream.fail() || m <= 0 || n <= 0 || std::cmp_greater(n, kMaxSize) || std::cmp_greater(m, kMaxSize)) {
       throw std::runtime_error("invalid input data!\n");
-    }
-    constexpr std::size_t kMaxSize = 1000;
-    if (std::cmp_greater(n, kMaxSize) || std::cmp_greater(m, kMaxSize)) {
-      throw std::runtime_error("matrix dimensions exceed maximum allowed (" + std::to_string(kMaxSize) + ")");
     }
     std::get<0>(data) = static_cast<std::size_t>(n);
     std::get<1>(data) = static_cast<std::size_t>(m);
     std::vector<std::vector<int>> &mtr = std::get<2>(data);
-    mtr.resize(static_cast<std::size_t>(n), std::vector<int>(static_cast<std::size_t>(m)));
+    mtr.resize(static_cast<std::size_t>(n));
     for (int i = 0; i < n; i++) {
+      mtr[i].resize(static_cast<std::size_t>(m));
       file_stream.read(reinterpret_cast<char *>(mtr[i].data()), static_cast<std::streamsize>(sizeof(int) * m));
       if (file_stream.fail()) {
         throw std::runtime_error("Failed to read row " + std::to_string(i));
