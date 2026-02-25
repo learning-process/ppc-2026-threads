@@ -29,15 +29,13 @@ namespace {
 int ApplyKernel(const std::vector<uint8_t> &img, int row, int col, int channel, int width, int height,
                 const std::array<std::array<int, 3>, 3> &kernel) {
   int sum = 0;
-  for (int dr = -1; dr <= 1; ++dr) {
-    for (int dc = -1; dc <= 1; ++dc) {
-      int nr = row + dr;
-      int nc = col + dc;
-      const size_t delta_r = static_cast<size_t>(dr + 1);
-      const size_t delta_c = static_cast<size_t>(dc + 1);
+  for (size_t kr = 0; kr < 3; ++kr) {
+    for (size_t kc = 0; kc < 3; ++kc) {
+      int nr = row + static_cast<int>(kr) - 1;
+      int nc = col + static_cast<int>(kc) - 1;
       if (nr >= 0 && nr < height && nc >= 0 && nc < width) {
-        size_t idx = (static_cast<size_t>(((nr * width) + nc) * 3) + channel);
-        sum += static_cast<int>(img[idx]) * kernel[delta_r][delta_c];
+        size_t idx = (((static_cast<size_t>(nr) * width) + nc) * 3) + channel;
+        sum += (static_cast<int>(img[idx]) * kernel[kr][kc]);
       }
     }
   }
