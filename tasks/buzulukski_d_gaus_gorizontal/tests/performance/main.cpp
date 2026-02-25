@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <vector>
+
 #include "buzulukski_d_gaus_gorizontal/common/include/common.hpp"
 #include "buzulukski_d_gaus_gorizontal/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
@@ -8,18 +10,20 @@ namespace buzulukski_d_gaus_gorizontal {
 
 class BuzulukskiDGausGorizontalPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
-  const int k_count = 1000;
-  InType input_data{};
+  static constexpr int kCount = 1000;
 
   void SetUp() override {
-    input_data = k_count;
+    input_data_ = kCount;
   }
   bool CheckTestOutputData(OutType &output_data) final {
     return output_data == 100;
   }
   InType GetTestInputData() final {
-    return input_data;
+    return input_data_;
   }
+
+ private:
+  InType input_data_{};
 };
 
 TEST_P(BuzulukskiDGausGorizontalPerfTests, RunPerfModes) {
