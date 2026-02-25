@@ -22,12 +22,12 @@ struct DenseMatrix {
   DenseMatrix() = default;
 
   double &operator()(int i, int j) {
-    std::size_t index = static_cast<std::size_t>(i) * static_cast<std::size_t>(cols) + static_cast<std::size_t>(j);
+    std::size_t index = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j);
     return data[index];
   }
 
   const double &operator()(int i, int j) const {
-    std::size_t index = static_cast<std::size_t>(i) * static_cast<std::size_t>(cols) + static_cast<std::size_t>(j);
+    std::size_t index = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j);
     return data[index];
   }
 };
