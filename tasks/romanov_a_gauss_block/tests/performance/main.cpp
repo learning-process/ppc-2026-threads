@@ -12,17 +12,17 @@ namespace romanov_a_gauss_block {
 
 class RomanovAPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kWidth_ = 7680;
-  const int kHeight = 4320;
+  const int kHeight_ = 4320;
   InType input_data_{};
 
   void SetUp() override {
-    std::vector<uint8_t> picture(kWidth_ * kHeight * 3);
+    std::vector<uint8_t> picture(static_cast<size_t>(kWidth_ * kHeight_ * 3));
     std::mt19937 rng(42);
     std::uniform_int_distribution<int> dist(0, 255);
     for (uint8_t &v : picture) {
       v = static_cast<uint8_t>(dist(rng));
     }
-    input_data_ = std::make_tuple(kWidth_, kHeight, picture);
+    input_data_ = std::make_tuple(kWidth_, kHeight_, picture);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
