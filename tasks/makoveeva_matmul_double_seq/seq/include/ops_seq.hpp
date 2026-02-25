@@ -14,14 +14,16 @@ class MatmulDoubleSeqTask : public BaseTask {
     return ppc::task::TypeOfTask::kSEQ;
   }
 
-  explicit MatmulDoubleSeqTask(const InType& in);
+  explicit MatmulDoubleSeqTask(const InType &in);
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  [[nodiscard]] const std::vector<double>& GetResult() const { return C_; }
+  [[nodiscard]] const std::vector<double> &GetResult() const {
+    return C_;
+  }
 
  private:
   size_t n_;

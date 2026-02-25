@@ -11,8 +11,7 @@
 
 namespace makoveeva_matmul_double_seq {
 
-class MatmulDoublePerformanceTest
-    : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class MatmulDoublePerformanceTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
   std::vector<double> expected_output_;
 
@@ -35,9 +34,9 @@ class MatmulDoublePerformanceTest
     ReferenceMultiply(a, b, expected_output_, n);
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
-    const auto& expected = expected_output_;
-    const auto& actual = output_data;
+  bool CheckTestOutputData(OutType &output_data) final {
+    const auto &expected = expected_output_;
+    const auto &actual = output_data;
 
     if (expected.size() != actual.size()) {
       return false;
@@ -52,9 +51,7 @@ class MatmulDoublePerformanceTest
     return true;
   }
 
-  static void ReferenceMultiply(const std::vector<double>& a,
-                                const std::vector<double>& b,
-                                std::vector<double>& c,
+  static void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c,
                                 size_t n) {
     for (size_t i = 0; i < n; ++i) {
       for (size_t k = 0; k < n; ++k) {
@@ -77,19 +74,14 @@ TEST_P(MatmulDoublePerformanceTest, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType,
-                                                        MatmulDoubleSeqTask>(
-    PPC_SETTINGS_makoveeva_matmul_double_seq);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, MatmulDoubleSeqTask>(PPC_SETTINGS_makoveeva_matmul_double_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = MatmulDoublePerformanceTest::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(
-    RunModeTests,
-    MatmulDoublePerformanceTest,
-    kGtestValues,
-    kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, MatmulDoublePerformanceTest, kGtestValues, kPerfTestName);
 
 }  // namespace
 
