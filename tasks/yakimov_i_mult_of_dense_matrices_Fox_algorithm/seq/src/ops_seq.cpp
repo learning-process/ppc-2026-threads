@@ -1,4 +1,4 @@
-#include "yakimov_i_mult_of_dense_matrices_fox_algorithm/seq/include/ops_seq.hpp"
+#include "yakimov_i_mult_of_dense_matrices_Fox_algorithm/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <cmath>
