@@ -57,8 +57,8 @@ void BuzulukskiDGausGorizontalSEQ::ApplyGaussianToPixel(int py, int px) {
         const auto idx = (((static_cast<std::size_t>(ny) * u_width) + static_cast<std::size_t>(nx)) * u_channels) +
                          static_cast<std::size_t>(ch);
 
-        const auto row_idx = static_cast<std::size_t>(ky + 1);
-        const auto col_idx = static_cast<std::size_t>(kx + 1);
+        const auto row_idx = static_cast<std::size_t>(ky) + 1;
+        const auto col_idx = static_cast<std::size_t>(kx) + 1;
 
         sum += static_cast<int>(input_image_.at(idx)) * kKernel.at(row_idx).at(col_idx);
       }

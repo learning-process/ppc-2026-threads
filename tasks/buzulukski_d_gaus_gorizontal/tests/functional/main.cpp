@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -48,7 +47,7 @@ namespace {
 const std::array<TestType, 2> kTestParam = {std::make_tuple(3, "size_3"), std::make_tuple(10, "size_10")};
 
 INSTANTIATE_TEST_SUITE_P(
-    Sequential, BuzulukskiDGausGorizontalFuncTests,
+    buzulukski_d_gaus_gorizontal_seq, BuzulukskiDGausGorizontalFuncTests,
     ppc::util::ExpandToValues(std::tuple_cat(ppc::util::AddFuncTask<BuzulukskiDGausGorizontalSEQ, InType>(
         kTestParam, PPC_SETTINGS_buzulukski_d_gaus_gorizontal))),
     BuzulukskiDGausGorizontalFuncTests::PrintTestParam);
