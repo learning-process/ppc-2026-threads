@@ -30,7 +30,10 @@ bool BoltenkovSGaussianKernelSEQ::ValidationImpl() {
 }
 
 bool BoltenkovSGaussianKernelSEQ::PreProcessingImpl() {
-  GetOutput().resize(std::get<0>(GetInput()), std::vector<int>(std::get<1>(GetInput())));
+  GetOutput().resize(std::get<0>(GetInput()));
+  for (std::size_t i = 0; i < std::get<0>(GetInput()); i++) {
+    GetOutput()[i].resize(std::get<1>(GetInput()));
+  }
   return true;
 }
 
