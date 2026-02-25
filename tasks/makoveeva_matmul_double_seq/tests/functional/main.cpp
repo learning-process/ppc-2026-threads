@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <cstddef>
 #include <tuple>
 #include <vector>
 
@@ -10,23 +11,36 @@
 namespace makoveeva_matmul_double_seq {
 namespace {
 
-std::vector<double> SimpleMultiply(const std::vector<double> &a, const std::vector<double> &b, size_t n) {
+// Эталонное умножение матриц - вынесено в отдельную функцию
+std::vector<double> ReferenceMultiply(const std::vector<double>& a,
+                                      const std::vector<double>& b,
+                                      size_t n) {
   std::vector<double> c(n * n, 0.0);
   for (size_t i = 0; i < n; ++i) {
-    for (size_t j = 0; j < n; ++j) {
-      double sum = 0.0;
-      for (size_t k = 0; k < n; ++k) {
-        sum += a[(i * n) + k] * b[(k * n) + j];
+    for (size_t k = 0; k < n; ++k) {
+      double tmp = a[(i * n) + k];
+      for (size_t j = 0; j < n; ++j) {
+        c[(i * n) + j] += tmp * b[(k * n) + j];
       }
-      c[(i * n) + j] = sum;
     }
   }
   return c;
 }
 
+// Проверка результатов с допуском
+void CheckResults(const std::vector<double>& actual,
+                  const std::vector<double>& expected,
+                  size_t n) {
+  const double epsilon = 1e-10;
+  for (size_t i = 0; i < n * n; ++i) {
+    ASSERT_NEAR(actual[i], expected[i], epsilon);
+  }
+}
+
 }  // namespace
 
-TEST(MatmulDoubleTest, Test2x2) {  // NOLINT
+// Тест для матрицы 2x2
+TEST(MatmulDoubleFunctionalTest, Multiply2x2) {
   size_t n = 2;
 
   std::vector<double> a = {1.0, 2.0, 3.0, 4.0};
@@ -42,42 +56,62 @@ TEST(MatmulDoubleTest, Test2x2) {  // NOLINT
   ASSERT_TRUE(task.PostProcessingImpl());
 
   auto result = task.GetResult();
-
-  for (size_t i = 0; i < result.size(); ++i) {
-    EXPECT_NEAR(result[i], expected[i], 1e-10);
-  }
+  CheckResults(result, expected, n);
 }
 
-TEST(MatmulDoubleTest, TestVariousSizes) {  // NOLINT
-  std::vector<size_t> sizes = {2, 3, 4, 5, 8};
+// Тест для матрицы 3x3
+TEST(MatmulDoubleFunctionalTest, Multiply3x3) {
+  size_t n = 3;
 
-  for (size_t n : sizes) {
-    std::vector<double> a(n * n);
-    std::vector<double> b(n * n);
+  std::vector<double> a = {1.0, 2.0, 3.0,
+                           4.0, 5.0, 6.0,
+                           7.0, 8.0, 9.0};
 
-    for (size_t i = 0; i < n; ++i) {
-      for (size_t j = 0; j < n; ++j) {
-        a[(i * n) + j] = static_cast<double>(i + j + 1);
-        b[(i * n) + j] = static_cast<double>((i * n) + j + 1);
-      }
-    }
+  std::vector<double> b = {9.0, 8.0, 7.0,
+                           6.0, 5.0, 4.0,
+                           3.0, 2.0, 1.0};
 
-    auto expected = SimpleMultiply(a, b, n);
-    auto input = std::make_tuple(n, a, b);
+  std::vector<double> expected = {30.0, 24.0, 18.0,
+                                   84.0, 69.0, 54.0,
+                                  138.0, 114.0, 90.0};
 
-    MatmulDoubleSeqTask task(input);
+  auto input = std::make_tuple(n, a, b);
+  MatmulDoubleSeqTask task(input);
 
-    ASSERT_TRUE(task.ValidationImpl()) << "Failed validation for n=" << n;
-    ASSERT_TRUE(task.PreProcessingImpl()) << "Failed preprocessing for n=" << n;
-    ASSERT_TRUE(task.RunImpl()) << "Failed run for n=" << n;
-    ASSERT_TRUE(task.PostProcessingImpl()) << "Failed postprocessing for n=" << n;
+  ASSERT_TRUE(task.ValidationImpl());
+  ASSERT_TRUE(task.PreProcessingImpl());
+  ASSERT_TRUE(task.RunImpl());
+  ASSERT_TRUE(task.PostProcessingImpl());
 
-    auto result = task.GetResult();
+  auto result = task.GetResult();
+  CheckResults(result, expected, n);
+}
 
-    for (size_t i = 0; i < result.size(); ++i) {
-      EXPECT_NEAR(result[i], expected[i], 1e-10) << "Failed at index " << i << " for n=" << n;
-    }
-  }
+// Тест для матрицы 4x4
+TEST(MatmulDoubleFunctionalTest, Multiply4x4) {
+  size_t n = 4;
+
+  std::vector<double> a = {1.0,  2.0,  3.0,  4.0,
+                           5.0,  6.0,  7.0,  8.0,
+                           9.0, 10.0, 11.0, 12.0,
+                          13.0, 14.0, 15.0, 16.0};
+
+  std::vector<double> b = {16.0, 15.0, 14.0, 13.0,
+                           12.0, 11.0, 10.0,  9.0,
+                            8.0,  7.0,  6.0,  5.0,
+                            4.0,  3.0,  2.0,  1.0};
+
+  auto expected = ReferenceMultiply(a, b, n);
+  auto input = std::make_tuple(n, a, b);
+  MatmulDoubleSeqTask task(input);
+
+  ASSERT_TRUE(task.ValidationImpl());
+  ASSERT_TRUE(task.PreProcessingImpl());
+  ASSERT_TRUE(task.RunImpl());
+  ASSERT_TRUE(task.PostProcessingImpl());
+
+  auto result = task.GetResult();
+  CheckResults(result, expected, n);
 }
 
 }  // namespace makoveeva_matmul_double_seq

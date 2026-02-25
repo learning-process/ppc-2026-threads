@@ -11,36 +11,33 @@
 
 namespace makoveeva_matmul_double_seq {
 
-class MatmulDoublePerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class MatmulDoublePerformanceTest
+    : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
   std::vector<double> expected_output_;
 
  protected:
   void SetUp() override {
-    size_t n = 400;
-    size_t size = n * n;
+    const size_t n = 400;
+    const size_t size = n * n;
 
     std::vector<double> a(size);
     std::vector<double> b(size);
 
     for (size_t i = 0; i < size; ++i) {
       a[i] = static_cast<double>(i + 1);
-    }
-
-    for (size_t i = 0; i < size; ++i) {
       b[i] = static_cast<double>(size - i);
     }
 
     input_data_ = std::make_tuple(n, a, b);
 
-    std::vector<double> expected(size, 0.0);
-    ReferenceMultiply(a, b, expected, n);
-    expected_output_ = expected;
+    expected_output_.assign(size, 0.0);
+    ReferenceMultiply(a, b, expected_output_, n);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    const auto &expected = expected_output_;
-    const auto &actual = output_data;
+  bool CheckTestOutputData(OutType& output_data) final {
+    const auto& expected = expected_output_;
+    const auto& actual = output_data;
 
     if (expected.size() != actual.size()) {
       return false;
@@ -55,11 +52,13 @@ class MatmulDoublePerfTest : public ppc::util::BaseRunPerfTests<InType, OutType>
     return true;
   }
 
-  static void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c,
+  static void ReferenceMultiply(const std::vector<double>& a,
+                                const std::vector<double>& b,
+                                std::vector<double>& c,
                                 size_t n) {
     for (size_t i = 0; i < n; ++i) {
       for (size_t k = 0; k < n; ++k) {
-        double tmp = a[(i * n) + k];
+        const double tmp = a[(i * n) + k];
         for (size_t j = 0; j < n; ++j) {
           c[(i * n) + j] += tmp * b[(k * n) + j];
         }
@@ -72,20 +71,25 @@ class MatmulDoublePerfTest : public ppc::util::BaseRunPerfTests<InType, OutType>
   }
 };
 
-TEST_P(MatmulDoublePerfTest, RunPerfModes) {  // NOLINT
+TEST_P(MatmulDoublePerformanceTest, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, MatmulDoubleSeqTask>(PPC_SETTINGS_makoveeva_matmul_double_seq);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType,
+                                                        MatmulDoubleSeqTask>(
+    PPC_SETTINGS_makoveeva_matmul_double_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = MatmulDoublePerfTest::CustomPerfTestName;
+const auto kPerfTestName = MatmulDoublePerformanceTest::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, MatmulDoublePerfTest, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(
+    RunModeTests,
+    MatmulDoublePerformanceTest,
+    kGtestValues,
+    kPerfTestName);
 
 }  // namespace
 
