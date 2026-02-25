@@ -11,7 +11,7 @@
 
 #include "buzulukski_d_gaus_gorizontal/common/include/common.hpp"
 #include "buzulukski_d_gaus_gorizontal/seq/include/ops_seq.hpp"
-#include "util/include/func_test_util.hpp"
+#include "util/include/func_test_util.hpp"  // NOLINT
 
 namespace buzulukski_d_gaus_gorizontal {
 
