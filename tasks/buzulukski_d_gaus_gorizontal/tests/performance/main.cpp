@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -10,20 +13,18 @@
 namespace buzulukski_d_gaus_gorizontal {
 
 class BuzulukskiDGausGorizontalPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
- protected:
-  const int kCount_ = 1000;
-  InType input_data_{};
+ public:
+  const int k_count = 1000;
+  InType input_data{};
 
   void SetUp() override {
-    input_data_ = kCount_;
+    input_data = k_count;
   }
-
   bool CheckTestOutputData(OutType &output_data) final {
     return output_data == 100;
   }
-
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 };
 
@@ -34,11 +35,10 @@ TEST_P(BuzulukskiDGausGorizontalPerfTests, RunPerfModes) {
 namespace {
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, BuzulukskiDGausGorizontalSEQ>(PPC_SETTINGS_buzulukski_d_gaus_gorizontal);
-
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-const auto kPerfTestName = BuzulukskiDGausGorizontalPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, BuzulukskiDGausGorizontalPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, BuzulukskiDGausGorizontalPerfTests, kGtestValues,
+                         BuzulukskiDGausGorizontalPerfTests::CustomPerfTestName);
 }  // namespace
 
 }  // namespace buzulukski_d_gaus_gorizontal

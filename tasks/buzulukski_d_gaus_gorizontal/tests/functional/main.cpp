@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <array>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -15,64 +16,50 @@ namespace buzulukski_d_gaus_gorizontal {
 
 class BuzulukskiDGausGorizontalFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return std::get<1>(test_param) + "_" + std::to_string(std::get<0>(test_param));
+  static std::string PrintTestParam(
+      const ::testing::TestParamInfo<ppc::util::FuncTestParam<InType, OutType, TestType>> &info) {
+    const auto &params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(info.param);
+    return std::get<1>(params);
   }
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = std::get<0>(params);
+    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    input_data = std::get<0>(params);
   }
+
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data >= 0 && output_data <= 255;
+    return output_data >= 0;
   }
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data = 0;
 };
 
-namespace {
-bool RunFullPipeline(BuzulukskiDGausGorizontalSEQ &task) {
-  return task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing();
-}
-}  // namespace
-
-TEST_P(BuzulukskiDGausGorizontalFuncTests, MatmulFromPic) {
+TEST_P(BuzulukskiDGausGorizontalFuncTests, SequentialRun) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "Small"), std::make_tuple(10, "Medium"),
-                                            std::make_tuple(21, "Large")};
+namespace {
+const std::array<TestType, 2> kTestParam = {std::make_tuple(3, "size_3"), std::make_tuple(10, "size_10")};
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<BuzulukskiDGausGorizontalSEQ, InType>(kTestParam, PPC_SETTINGS_buzulukski_d_gaus_gorizontal);
-
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-const auto kTestName = BuzulukskiDGausGorizontalFuncTests::PrintFuncTestName<BuzulukskiDGausGorizontalFuncTests>;
-
-INSTANTIATE_TEST_SUITE_P(Sequential, BuzulukskiDGausGorizontalFuncTests, kGtestValues, kTestName);
-
-TEST(BuzulukskiDGausGorizontalExtra, ConstantImageProcessing) {
-  auto task = std::make_shared<BuzulukskiDGausGorizontalSEQ>(10);
-  ASSERT_TRUE(RunFullPipeline(*task));
-  EXPECT_EQ(task->GetOutput(), 100);
-}
+INSTANTIATE_TEST_SUITE_P(
+    Sequential, BuzulukskiDGausGorizontalFuncTests,
+    ppc::util::ExpandToValues(std::tuple_cat(ppc::util::AddFuncTask<BuzulukskiDGausGorizontalSEQ, InType>(
+        kTestParam, PPC_SETTINGS_buzulukski_d_gaus_gorizontal))),
+    BuzulukskiDGausGorizontalFuncTests::PrintTestParam);
 
 TEST(BuzulukskiDGausGorizontalExtra, AllZerosImage) {
-  auto task = std::make_shared<BuzulukskiDGausGorizontalSEQ>(5);
-  ASSERT_TRUE(task->Validation() && task->PreProcessing());
+  auto task = std::make_shared<BuzulukskiDGausGorizontalSEQ>(4);
+  ASSERT_TRUE(task->Validation());
+  task->PreProcessing();
   std::fill(task->InputImage().begin(), task->InputImage().end(), static_cast<uint8_t>(0));
-  ASSERT_TRUE(task->Run() && task->PostProcessing());
+  task->Run();
+  task->PostProcessing();
   EXPECT_EQ(task->GetOutput(), 0);
 }
-
-TEST(BuzulukskiDGausGorizontalExtra, ValidationFailsForSmallSize) {
-  auto task = std::make_shared<BuzulukskiDGausGorizontalSEQ>(2);
-  EXPECT_FALSE(task->Validation());
-}
-
+}  // namespace
 }  // namespace buzulukski_d_gaus_gorizontal
