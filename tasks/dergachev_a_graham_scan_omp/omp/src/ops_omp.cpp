@@ -31,7 +31,7 @@ bool AllPointsSame(const std::vector<Point> &pts) {
   }
   bool all_same = true;
   int size = static_cast<int>(pts.size());
-#pragma omp parallel for reduction(&& : all_same)
+#pragma omp parallel for default(none) shared(pts, size) reduction(&& : all_same)
   for (int i = 1; i < size; i++) {
     if (pts[i].x != pts[0].x || pts[i].y != pts[0].y) {
       all_same = false;
@@ -43,7 +43,7 @@ bool AllPointsSame(const std::vector<Point> &pts) {
 std::size_t FindPivotIndex(const std::vector<Point> &pts) {
   int size = static_cast<int>(pts.size());
   int pivot_idx = 0;
-#pragma omp parallel
+#pragma omp parallel default(none) shared(pts, size, pivot_idx)
   {
     int local_idx = 0;
 #pragma omp for nowait
