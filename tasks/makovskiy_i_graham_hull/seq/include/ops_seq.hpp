@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstddef>
-
 #include "makovskiy_i_graham_hull/common/include/common.hpp"
 #include "task/include/task.hpp"
 

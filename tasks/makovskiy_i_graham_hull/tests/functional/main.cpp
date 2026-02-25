@@ -55,7 +55,7 @@ class MakovskiyIGrahamHullRunFuncTestsThreads : public ppc::util::BaseRunFuncTes
       return output_data.size() == 4;
     }
     if (test_id == 4) {
-      return output_data.size() == 0;
+      return output_data.empty();
     }
     if (test_id == 5) {
       return output_data.size() == 2;

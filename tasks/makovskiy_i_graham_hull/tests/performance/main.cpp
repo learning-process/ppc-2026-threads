@@ -1,8 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
-#include <cstdint>
-#include <vector>
 
 #include "makovskiy_i_graham_hull/common/include/common.hpp"
 #include "makovskiy_i_graham_hull/seq/include/ops_seq.hpp"
@@ -17,7 +15,7 @@ class MakovskiyIGrahamHullRunPerfTestsThreads : public ppc::util::BaseRunPerfTes
     input_data_.clear();
     input_data_.resize(num_points);
     for (int i = 0; i < num_points; ++i) {
-      input_data_[i] = {std::sin(i) * 100.0, std::cos(i) * 100.0};
+      input_data_[i] = {.x = std::sin(static_cast<double>(i)) * 100.0, .y = std::cos(static_cast<double>(i)) * 100.0};
     }
   }
 
