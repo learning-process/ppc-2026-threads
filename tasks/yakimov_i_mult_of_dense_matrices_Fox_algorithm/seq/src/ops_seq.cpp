@@ -1,4 +1,4 @@
-#include "yakimov_i_mult_of_dense_matrices_Fox_algorithm/seq/include/ops_seq.hpp"
+#include "yakimov_i_mult_of_dense_matrices_fox_algorithm/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -8,9 +8,9 @@
 #include <vector>
 
 #include "util/include/util.hpp"
-#include "yakimov_i_mult_of_dense_matrices_Fox_algorithm/common/include/common.hpp"
+#include "yakimov_i_mult_of_dense_matrices_fox_algorithm/common/include/common.hpp"
 
-namespace yakimov_i_mult_of_dense_matrices_Fox_algorithm {
+namespace yakimov_i_mult_of_dense_matrices_fox_algorithm {
 
 namespace {
 
@@ -30,7 +30,7 @@ bool ReadDimensions(std::ifstream &file, DenseMatrix &matrix) {
 bool ReadMatrixData(std::ifstream &file, DenseMatrix &matrix) {
   bool success = true;
 
-  size_t total_elements = static_cast<size_t>(matrix.rows * matrix.cols);
+  auto total_elements = static_cast<std::size_t>(matrix.rows) * static_cast<std::size_t>(matrix.cols);
   matrix.data.resize(total_elements, 0.0);
 
   for (int i = 0; i < matrix.rows; ++i) {
@@ -77,7 +77,9 @@ void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &r
 
   result.rows = a.rows;
   result.cols = b.cols;
-  result.data.assign(static_cast<size_t>(result.rows * result.cols), 0.0);
+
+  auto total_elements = static_cast<std::size_t>(result.rows) * static_cast<std::size_t>(result.cols);
+  result.data.assign(total_elements, 0.0);
 
   for (int stage = 0; stage < num_blocks; ++stage) {
     for (int i = 0; i < num_blocks; ++i) {
@@ -94,12 +96,12 @@ void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &r
 }  // namespace
 
 YakimovIMultOfDenseMatricesFoxAlgorithmSEQ::YakimovIMultOfDenseMatricesFoxAlgorithmSEQ(const InType &in) {
-  this->SetTypeOfTask(this->GetStaticTypeOfTask());
+  this->SetTypeOfTask(YakimovIMultOfDenseMatricesFoxAlgorithmSEQ::GetStaticTypeOfTask());
 
   this->GetInput() = in;
   this->GetOutput() = 0.0;
 
-  std::string task_name = "yakimov_i_mult_of_dense_matrices_Fox_algorithm";
+  std::string task_name = "yakimov_i_mult_of_dense_matrices_fox_algorithm";
 
   this->matrix_a_filename_ =
       ppc::util::GetAbsoluteTaskPath(task_name, "A_" + std::to_string(this->GetInput()) + ".txt");
@@ -161,4 +163,4 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace yakimov_i_mult_of_dense_matrices_Fox_algorithm
+}  // namespace yakimov_i_mult_of_dense_matrices_fox_algorithm
