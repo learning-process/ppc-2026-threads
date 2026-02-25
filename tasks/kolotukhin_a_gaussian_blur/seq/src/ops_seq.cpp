@@ -1,6 +1,7 @@
 #include "kolotukhin_a_gaussian_blur/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -36,21 +37,21 @@ bool KolotukhinAGaussinBlureSEQ::RunImpl() {
   const auto img_width = get<1>(GetInput());
   const auto img_height = get<2>(GetInput());
 
-  const static int kernel[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
+  const static std::array<std::array<int, 3>, 3> kKernel = {{{{1, 2, 1}}, {{2, 4, 2}}, {{1, 2, 1}}}};
   const static int kSum = 16;
 
   auto &output = GetOutput();
 
-  for (int y = 0; y < img_height; y++) {
-    for (int x = 0; x < img_width; x++) {
+  for (int row = 0; row < img_height; row++) {
+    for (int col = 0; col < img_width; col++) {
       int acc = 0;
       for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
-          std::uint8_t pixel = GetPixel(pixel_data, img_width, img_height, x + dx, y + dy);
-          acc += kernel[1 + dy][1 + dx] * static_cast<int>(pixel);
+          std::uint8_t pixel = GetPixel(pixel_data, img_width, img_height, col + dx, row + dy);
+          acc += kKernel[1 + dy][1 + dx] * static_cast<int>(pixel);
         }
       }
-      output[(static_cast<std::size_t>(y) * static_cast<std::size_t>(img_width)) + static_cast<std::size_t>(x)] =
+      output[(static_cast<std::size_t>(row) * static_cast<std::size_t>(img_width)) + static_cast<std::size_t>(col)] =
           static_cast<std::uint8_t>(acc / kSum);
     }
   }
@@ -58,7 +59,7 @@ bool KolotukhinAGaussinBlureSEQ::RunImpl() {
 }
 
 std::uint8_t KolotukhinAGaussinBlureSEQ::GetPixel(const std::vector<std::uint8_t> &pixel_data, int img_width,
-                                                  int img_height, int pos_x, int pos_y) const {
+                                                  int img_height, int pos_x, int pos_y) {
   std::size_t x = static_cast<std::size_t>(std::max(0, std::min(pos_x, img_width - 1)));
   std::size_t y = static_cast<std::size_t>(std::max(0, std::min(pos_y, img_height - 1)));
   return pixel_data[(y * static_cast<std::size_t>(img_width)) + x];

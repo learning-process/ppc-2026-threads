@@ -21,8 +21,8 @@ class KolotukhinAGaussinBlureSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  std::uint8_t GetPixel(const std::vector<std::uint8_t> &pixel_data, int img_width, int img_hight, int pos_x,
-                        int pos_y) const;
+  [[nodiscard]] static std::uint8_t GetPixel(const std::vector<std::uint8_t> &pixel_data, int img_width, int img_height,
+                                             int pos_x, int pos_y);
 };
 
 }  // namespace kolotukhin_a_gaussian_blur

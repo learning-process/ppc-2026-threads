@@ -7,6 +7,7 @@
 #include <new>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "kolotukhin_a_gaussian_blur/common/include/common.hpp"
