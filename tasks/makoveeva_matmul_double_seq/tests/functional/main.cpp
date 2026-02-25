@@ -21,11 +21,28 @@ void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &
   }
 }
 
-void CheckTaskExecution(MatmulDoubleSeqTask &task) {
+// Разбиваем функцию на еще более мелкие части
+void ValidateTask(MatmulDoubleSeqTask &task) {
   ASSERT_TRUE(task.ValidationImpl());
+}
+
+void PreProcessTask(MatmulDoubleSeqTask &task) {
   ASSERT_TRUE(task.PreProcessingImpl());
+}
+
+void RunTask(MatmulDoubleSeqTask &task) {
   ASSERT_TRUE(task.RunImpl());
+}
+
+void PostProcessTask(MatmulDoubleSeqTask &task) {
   ASSERT_TRUE(task.PostProcessingImpl());
+}
+
+void CheckTaskExecution(MatmulDoubleSeqTask &task) {
+  ValidateTask(task);
+  PreProcessTask(task);
+  RunTask(task);
+  PostProcessTask(task);
 }
 
 void CheckResults(const std::vector<double> &result, const std::vector<double> &expected) {
