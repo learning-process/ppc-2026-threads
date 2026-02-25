@@ -12,7 +12,7 @@ class KondrashovaVTaskSEQ : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  
+
   explicit KondrashovaVTaskSEQ(const InType &in);
 
  private:

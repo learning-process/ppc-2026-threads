@@ -16,7 +16,7 @@ struct ImageData {
 };
 
 struct Result {
-  int count{};  // количество компонент
+  int count{};                           // количество компонент
   std::vector<std::vector<int>> labels;  // 2D карта меток
 };
 

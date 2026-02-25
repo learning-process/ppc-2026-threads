@@ -24,8 +24,7 @@ bool KondrashovaVTaskSEQ::PreProcessingImpl() {
   height_ = in.height;
   image_ = in.data;
 
-  if (width_ > 0 && height_ > 0 && 
-      static_cast<int>(image_.size()) == width_ * height_) {
+  if (width_ > 0 && height_ > 0 && static_cast<int>(image_.size()) == width_ * height_) {
     labels_1d_.assign(width_ * height_, 0);
   } else {
     labels_1d_.clear();
@@ -44,9 +43,7 @@ bool KondrashovaVTaskSEQ::RunImpl() {
 
   int current_label = 0;
 
-  auto inside = [&](int x, int y) {
-    return (x >= 0 && x < height_ && y >= 0 && y < width_);
-  };
+  auto inside = [&](int x, int y) { return (x >= 0 && x < height_ && y >= 0 && y < width_); };
 
   const int dx[4] = {-1, 1, 0, 0};
   const int dy[4] = {0, 0, -1, 1};
@@ -70,7 +67,9 @@ bool KondrashovaVTaskSEQ::RunImpl() {
             int nx = x + dx[k];
             int ny = y + dy[k];
 
-            if (!inside(nx, ny)) continue;
+            if (!inside(nx, ny)) {
+              continue;
+            }
 
             int nidx = nx * width_ + ny;
 
