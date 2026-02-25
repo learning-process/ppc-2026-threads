@@ -10,10 +10,10 @@
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
-#include "yakimov_i_mult_of_dense_matrices_Fox_algorithm/common/include/common.hpp"
-#include "yakimov_i_mult_of_dense_matrices_Fox_algorithm/seq/include/ops_seq.hpp"
+#include "yakimov_i_mult_of_dense_matrices_fox_algorithm/common/include/common.hpp"
+#include "yakimov_i_mult_of_dense_matrices_fox_algorithm/seq/include/ops_seq.hpp"
 
-namespace yakimov_i_mult_of_dense_matrices_Fox_algorithm {
+namespace yakimov_i_mult_of_dense_matrices_fox_algorithm {
 
 class YakimovIMultDenseFoxFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -27,20 +27,15 @@ class YakimovIMultDenseFoxFuncTests : public ppc::util::BaseRunFuncTests<InType,
       return false;
     }
 
-    // Нужно вычислить реальные ожидаемые значения для ваших тестовых матриц
-    // Временное решение - пропускаем проверку для отладки
-    return true;
-
-    /* Раскомментируйте когда узнаете реальные значения
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     InType test_id = std::get<0>(params);
 
     static const std::unordered_map<InType, std::pair<double, double>> kExpectedResults = {
-        {1, {15.0, 1e-9}},
-        {2, {90.0, 1e-9}},
-        {3, {284.0, 1e-9}},
-        {4, {0.0, 1e-9}},
-        {5, {-15.0, 1e-9}}
+        {1, {52.9498, 1e-4}},   // 2x3 * 3x2
+        {2, {-24.5668, 1e-4}},  // 3x3 * 3x3
+        {3, {-1.68714, 1e-4}},  // 4x4 * 4x4
+        {4, {0.0, 1e-9}},       // нулевые матрицы
+        {5, {60.678, 1e-4}}     // отрицательные значения
     };
 
     auto it = kExpectedResults.find(test_id);
@@ -48,11 +43,10 @@ class YakimovIMultDenseFoxFuncTests : public ppc::util::BaseRunFuncTests<InType,
       return true;
     }
 
-    const double expected = it->second.first;
-    const double tolerance = it->second.second;
+    double expected = it->second.first;
+    double tolerance = it->second.second;
 
     return std::abs(output_data - expected) <= tolerance;
-    */
   }
 
   InType GetTestInputData() final {
@@ -72,7 +66,7 @@ const std::array<TestType, 5> kAllTestParam = {std::make_tuple(1, "small_2x3"), 
                                                std::make_tuple(5, "negative_values")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<YakimovIMultOfDenseMatricesFoxAlgorithmSEQ, InType>(
-    kAllTestParam, PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_Fox_algorithm));
+    kAllTestParam, PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_fox_algorithm));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -82,4 +76,4 @@ INSTANTIATE_TEST_SUITE_P(DenseMatrixMultiplicationTests, YakimovIMultDenseFoxFun
 
 }  // namespace
 
-}  // namespace yakimov_i_mult_of_dense_matrices_Fox_algorithm
+}  // namespace yakimov_i_mult_of_dense_matrices_fox_algorithm
