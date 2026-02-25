@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <vector>
 #include <cstdint>
 #include <random>
+#include <vector>
 
 #include "romanov_a_gauss_block/common/include/common.hpp"
 #include "romanov_a_gauss_block/seq/include/ops_seq.hpp"
@@ -19,8 +19,8 @@ class RomanovAPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutTy
     std::vector<uint8_t> picture(kWidth_ * kHeight * 3);
     std::mt19937 rng(42);
     std::uniform_int_distribution<int> dist(0, 255);
-    for (uint8_t& v : picture) {
-        v = static_cast<uint8_t>(dist(rng));
+    for (uint8_t &v : picture) {
+      v = static_cast<uint8_t>(dist(rng));
     }
     input_data_ = std::make_tuple(kWidth_, kHeight, picture);
   }
@@ -40,8 +40,7 @@ TEST_P(RomanovAPerfTestThreads, GaussFilter) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, RomanovAGaussBlockSEQ>(PPC_SETTINGS_example_threads);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, RomanovAGaussBlockSEQ>(PPC_SETTINGS_example_threads);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

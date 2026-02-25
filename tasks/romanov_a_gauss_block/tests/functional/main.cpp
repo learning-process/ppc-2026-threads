@@ -52,35 +52,22 @@ TEST_P(RomanovARunFuncTestsThreads, GaussFilter) {
 }
 
 const std::array<TestType, 7> kTestParam = {
-  std::make_tuple(1, 1,
-    std::vector<uint8_t>{0, 0, 0},
-    std::vector<uint8_t>{0, 0, 0},
-    "TestNo1"),
-  std::make_tuple(2, 1,
-    std::vector<uint8_t>{224, 143, 37, 137, 16, 22},
-    std::vector<uint8_t>{73, 38, 12, 62, 22, 10},
-    "TestNo2"),
-  std::make_tuple(1, 2,
-    std::vector<uint8_t>{224, 143, 37, 137, 16, 22},
-    std::vector<uint8_t>{73, 38, 12, 62, 22, 10},
-    "TestNo3"),
-  std::make_tuple(2, 2,
-    std::vector<uint8_t>{100,150,200, 50,60,70, 80,90,100, 120,130,140},
-    std::vector<uint8_t>{49,64,80, 45,56,66, 51,61,72, 53,61,69},
-    "TestNo4"),
-  std::make_tuple(3, 3,
-    std::vector<uint8_t>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 201, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    std::vector<uint8_t>{13, 0, 0, 25, 0, 0, 13, 0, 0, 25, 0, 0, 50, 0, 0, 25, 0, 0, 13, 0, 0, 25, 0, 0, 13, 0, 0},
-    "TestNo5"),
-  std::make_tuple(2, 3,
-    std::vector<uint8_t>{10, 10, 10, 20, 20, 20, 30, 30, 30, 40, 40, 40, 50, 50, 50, 60, 60, 60},
-    std::vector<uint8_t>{11, 11, 11, 13, 13, 13, 25, 25, 25, 28, 28, 28, 26, 26, 26, 28, 28, 28},
-    "TestNo6"),
-  std::make_tuple(4, 1,
-    std::vector<uint8_t>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    std::vector<uint8_t>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    "TestNo7")
-};
+    std::make_tuple(1, 1, std::vector<uint8_t>{0, 0, 0}, std::vector<uint8_t>{0, 0, 0}, "TestNo1"),
+    std::make_tuple(2, 1, std::vector<uint8_t>{224, 143, 37, 137, 16, 22}, std::vector<uint8_t>{73, 38, 12, 62, 22, 10},
+                    "TestNo2"),
+    std::make_tuple(1, 2, std::vector<uint8_t>{224, 143, 37, 137, 16, 22}, std::vector<uint8_t>{73, 38, 12, 62, 22, 10},
+                    "TestNo3"),
+    std::make_tuple(2, 2, std::vector<uint8_t>{100, 150, 200, 50, 60, 70, 80, 90, 100, 120, 130, 140},
+                    std::vector<uint8_t>{49, 64, 80, 45, 56, 66, 51, 61, 72, 53, 61, 69}, "TestNo4"),
+    std::make_tuple(
+        3, 3, std::vector<uint8_t>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 201, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        std::vector<uint8_t>{13, 0, 0, 25, 0, 0, 13, 0, 0, 25, 0, 0, 50, 0, 0, 25, 0, 0, 13, 0, 0, 25, 0, 0, 13, 0, 0},
+        "TestNo5"),
+    std::make_tuple(2, 3, std::vector<uint8_t>{10, 10, 10, 20, 20, 20, 30, 30, 30, 40, 40, 40, 50, 50, 50, 60, 60, 60},
+                    std::vector<uint8_t>{11, 11, 11, 13, 13, 13, 25, 25, 25, 28, 28, 28, 26, 26, 26, 28, 28, 28},
+                    "TestNo6"),
+    std::make_tuple(4, 1, std::vector<uint8_t>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                    std::vector<uint8_t>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, "TestNo7")};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<RomanovAGaussBlockSEQ, InType>(kTestParam, PPC_SETTINGS_example_threads));

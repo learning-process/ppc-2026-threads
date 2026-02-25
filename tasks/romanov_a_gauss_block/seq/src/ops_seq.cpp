@@ -1,9 +1,9 @@
 #include "romanov_a_gauss_block/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <vector>
 #include <cstdint>
+#include <numeric>
 #include <tuple>
+#include <vector>
 
 #include "romanov_a_gauss_block/common/include/common.hpp"
 
@@ -24,18 +24,13 @@ bool RomanovAGaussBlockSEQ::PreProcessingImpl() {
 }
 
 bool RomanovAGaussBlockSEQ::RunImpl() {
-
   const int width = std::get<0>(GetInput());
   const int height = std::get<1>(GetInput());
 
   const std::vector<uint8_t> initial_picture = std::get<2>(GetInput());
   std::vector<uint8_t> result_picture(height * width * 3);
 
-  const int kernel[3][3] = {
-    {1, 2, 1},
-    {2, 4, 2},
-    {1, 2, 1}
-  };
+  const int kernel[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
 
   for (int y = 0; y < height; ++y) {
     for (int x = 0; x < width; ++x) {

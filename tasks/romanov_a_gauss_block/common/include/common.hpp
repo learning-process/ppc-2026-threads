@@ -1,9 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <tuple>
 #include <vector>
-#include <cstdint>
 
 #include "task/include/task.hpp"
 
