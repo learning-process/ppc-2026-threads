@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "util/include/util.hpp"
-#include "yakimov_i_mult_of_dense_matrices_fox_algorithm/common/include/common.hpp"
+#include "yakimov_i_mult_of_dense_matrices_Fox_algorithm/common/include/common.hpp"
 
 namespace yakimov_i_mult_of_dense_matrices_fox_algorithm {
 
