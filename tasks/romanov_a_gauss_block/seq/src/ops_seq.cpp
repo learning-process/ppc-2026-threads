@@ -33,9 +33,11 @@ int ApplyKernel(const std::vector<uint8_t> &img, int row, int col, int channel, 
     for (int dc = -1; dc <= 1; ++dc) {
       int nr = row + dr;
       int nc = col + dc;
+      const size_t delta_r = static_cast<size_t>(dr + 1);
+      const size_t delta_c = static_cast<size_t>(dc + 1);
       if (nr >= 0 && nr < height && nc >= 0 && nc < width) {
         size_t idx = (static_cast<size_t>(((nr * width) + nc) * 3) + channel);
-        sum += static_cast<int>(img[idx]) * kernel[static_cast<size_t>(dr + 1)][static_cast<size_t>(dc + 1)];
+        sum += static_cast<int>(img[idx]) * kernel[delta_r][delta_c];
       }
     }
   }
@@ -58,7 +60,7 @@ bool RomanovAGaussBlockSEQ::RunImpl() {
         int sum = ApplyKernel(initial_picture, row, col, channel, width, height, kernel);
         int result_value = (sum + 8) / 16;
         result_value = std::clamp(result_value, 0, 255);
-        auto idx = (static_cast<size_t>(row) * width + col) * 3 + channel;
+        auto idx = ((static_cast<size_t>(row) * width + col) * 3) + channel;
         result_picture[idx] = static_cast<uint8_t>(result_value);
       }
     }
