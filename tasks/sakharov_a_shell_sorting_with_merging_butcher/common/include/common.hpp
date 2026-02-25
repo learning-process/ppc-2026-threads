@@ -13,4 +13,9 @@ using OutType = std::vector<int>;
 using TestType = std::tuple<std::vector<int>, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
+inline bool IsValidInput(const InType &input) {
+  (void)input;
+  return true;
+}
+
 }  // namespace sakharov_a_shell_sorting_with_merging_butcher

@@ -11,16 +11,14 @@ namespace sakharov_a_shell_sorting_with_merging_butcher {
 SakharovAShellButcherSEQ::SakharovAShellButcherSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = {};
 }
 
 bool SakharovAShellButcherSEQ::ValidationImpl() {
-  return true;
+  return IsValidInput(GetInput());
 }
 
 bool SakharovAShellButcherSEQ::PreProcessingImpl() {
-  input_data_ = GetInput();
-  output_data_.clear();
+  GetOutput().clear();
   return true;
 }
 
@@ -130,26 +128,28 @@ std::vector<int> SakharovAShellButcherSEQ::BatcherOddEvenMerge(const std::vector
 }
 
 bool SakharovAShellButcherSEQ::RunImpl() {
-  if (input_data_.empty()) {
-    output_data_.clear();
+  const auto &input = GetInput();
+
+  if (input.empty()) {
+    GetOutput().clear();
     return true;
   }
 
-  const size_t middle = input_data_.size() / 2;
+  const size_t middle = input.size() / 2;
 
-  std::vector<int> left(input_data_.begin(), input_data_.begin() + static_cast<std::ptrdiff_t>(middle));
-  std::vector<int> right(input_data_.begin() + static_cast<std::ptrdiff_t>(middle), input_data_.end());
+  std::vector<int> left(input.begin(), input.begin() + static_cast<std::ptrdiff_t>(middle));
+  std::vector<int> right(input.begin() + static_cast<std::ptrdiff_t>(middle), input.end());
 
   ShellSort(left);
   ShellSort(right);
 
-  output_data_ = BatcherOddEvenMerge(left, right);
-  ShellSort(output_data_);
+  auto output = BatcherOddEvenMerge(left, right);
+  ShellSort(output);
+  GetOutput() = std::move(output);
   return true;
 }
 
 bool SakharovAShellButcherSEQ::PostProcessingImpl() {
-  GetOutput() = output_data_;
   return true;
 }
 
