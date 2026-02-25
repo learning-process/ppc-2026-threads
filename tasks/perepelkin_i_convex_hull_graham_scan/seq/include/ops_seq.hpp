@@ -17,6 +17,12 @@ class PerepelkinIConvexHullGrahamScanSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  static bool AngleCmp(const std::pair<double, double> &a, const std::pair<double, double> &b,
+                       const std::pair<double, double> &pivot);
+  static double Orientation(const std::pair<double, double> &p,
+                               const std::pair<double, double> &q,
+                               const std::pair<double, double> &r);
 };
 
 }  // namespace perepelkin_i_convex_hull_graham_scan
