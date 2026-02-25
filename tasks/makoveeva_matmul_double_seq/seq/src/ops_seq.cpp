@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstddef>
 #include <vector>
 
 namespace makoveeva_matmul_double_seq {
