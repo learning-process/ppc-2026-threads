@@ -29,6 +29,10 @@ bool ShilinNMonteCarloIntegrationSEQ::ValidationImpl() {
   if (func_type < FuncType::kConstant || func_type > FuncType::kSinProduct) {
     return false;
   }
+  constexpr size_t kMaxDimensions = 10;
+  if (lower.size() > kMaxDimensions) {
+    return false;
+  }
   return true;
 }
 
@@ -58,14 +62,13 @@ bool ShilinNMonteCarloIntegrationSEQ::RunImpl() {
       0.38516480713450403   // frac(sqrt(29))
   };
 
-  auto alpha_size = static_cast<int>(kAlpha.size());
   std::vector<double> current(dimensions, 0.5);
   std::vector<double> point(dimensions);
   double sum = 0.0;
 
   for (int i = 0; i < num_points_; ++i) {
     for (int d = 0; d < dimensions; ++d) {
-      current[d] += kAlpha[d % alpha_size];
+      current[d] += kAlpha[d];
       if (current[d] >= 1.0) {
         current[d] -= 1.0;
       }
