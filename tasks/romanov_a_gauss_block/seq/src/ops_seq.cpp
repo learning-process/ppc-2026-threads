@@ -45,17 +45,8 @@ bool RomanovAGaussBlockSEQ::RunImpl() {
           for (int dx = -1; dx <= 1; ++dx) {
             int nx = x + dx;
             int ny = y + dy;
-            if (nx < 0) {
-              nx = 0;
-            }
-            if (nx >= width) {
-              nx = width - 1;
-            }
-            if (ny < 0) {
-              ny = 0;
-            }
-            if (ny >= height) {
-              ny = height - 1;
+            if (nx < 0 || nx >= width || ny < 0 || ny >= height) {
+              continue;
             }
 
             uint8_t pixel = initial_picture[(((ny * width) + nx)) * 3 + c];
