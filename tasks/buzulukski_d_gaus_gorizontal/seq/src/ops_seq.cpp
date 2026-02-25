@@ -43,17 +43,19 @@ bool BuzulukskiDGausGorizontalSEQ::PreProcessingImpl() {
 }
 
 void BuzulukskiDGausGorizontalSEQ::ApplyGaussianToPixel(int py, int px) {
+  const auto u_width = static_cast<std::size_t>(width_);
+  const auto u_height = static_cast<std::size_t>(height_);
+  const auto u_channels = static_cast<std::size_t>(kChannels);
+
   for (int ch = 0; ch < kChannels; ++ch) {
     int sum = 0;
     for (int ky = -1; ky <= 1; ++ky) {
       for (int kx = -1; kx <= 1; ++kx) {
-        const int ny = std::clamp(py + ky, 0, height_ - 1);
-        const int nx = std::clamp(px + kx, 0, width_ - 1);
+        const int ny = std::clamp(py + ky, 0, static_cast<int>(u_height) - 1);
+        const int nx = std::clamp(px + kx, 0, static_cast<int>(u_width) - 1);
 
-        const auto idx =
-            (((static_cast<std::size_t>(ny) * static_cast<std::size_t>(width_)) + static_cast<std::size_t>(nx)) *
-             static_cast<std::size_t>(kChannels)) +
-            static_cast<std::size_t>(ch);
+        const auto idx = (((static_cast<std::size_t>(ny) * u_width) + static_cast<std::size_t>(nx)) * u_channels) +
+                         static_cast<std::size_t>(ch);
 
         const auto row_idx = static_cast<std::size_t>(ky + 1);
         const auto col_idx = static_cast<std::size_t>(kx + 1);
@@ -61,10 +63,8 @@ void BuzulukskiDGausGorizontalSEQ::ApplyGaussianToPixel(int py, int px) {
         sum += static_cast<int>(input_image_.at(idx)) * kKernel.at(row_idx).at(col_idx);
       }
     }
-    const auto out_idx =
-        (((static_cast<std::size_t>(py) * static_cast<std::size_t>(width_)) + static_cast<std::size_t>(px)) *
-         static_cast<std::size_t>(kChannels)) +
-        static_cast<std::size_t>(ch);
+    const auto out_idx = (((static_cast<std::size_t>(py) * u_width) + static_cast<std::size_t>(px)) * u_channels) +
+                         static_cast<std::size_t>(ch);
     output_image_.at(out_idx) = static_cast<uint8_t>(sum / kKernelSum);
   }
 }

@@ -11,7 +11,7 @@
 
 #include "buzulukski_d_gaus_gorizontal/common/include/common.hpp"
 #include "buzulukski_d_gaus_gorizontal/seq/include/ops_seq.hpp"
-#include "util/include/func_test_util.hpp"  // NOLINT
+#include "util/include/func_test_util.hpp"
 
 namespace buzulukski_d_gaus_gorizontal {
 
@@ -19,14 +19,14 @@ class BuzulukskiDGausGorizontalFuncTests : public ppc::util::BaseRunFuncTests<In
  public:
   static std::string PrintTestParam(
       const ::testing::TestParamInfo<ppc::util::FuncTestParam<InType, OutType, TestType>> &info) {
-    const auto &params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(info.param);
-    return std::get<1>(params);
+    const auto &params_tuple = std::get<TestType>(info.param);
+    return std::get<std::string>(params_tuple);
   }
 
  protected:
   void SetUp() override {
-    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = std::get<0>(params);
+    const auto &params_tuple = std::get<TestType>(GetParam());
+    input_data_ = std::get<int>(params_tuple);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
