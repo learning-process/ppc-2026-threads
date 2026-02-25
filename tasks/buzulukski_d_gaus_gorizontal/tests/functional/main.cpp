@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -25,18 +26,18 @@ class BuzulukskiDGausGorizontalFuncTests : public ppc::util::BaseRunFuncTests<In
  protected:
   void SetUp() override {
     auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data = std::get<0>(params);
+    input_data_ = std::get<0>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     return output_data >= 0;
   }
   InType GetTestInputData() final {
-    return input_data;
+    return input_data_;
   }
 
  private:
-  InType input_data = 0;
+  InType input_data_ = 0;
 };
 
 TEST_P(BuzulukskiDGausGorizontalFuncTests, SequentialRun) {
