@@ -66,7 +66,7 @@ const std::array<TestType, 5> kAllTestParam = {std::make_tuple(1, "small_2x3"), 
                                                std::make_tuple(5, "negative_values")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<YakimovIMultOfDenseMatricesFoxAlgorithmSEQ, InType>(
-    kAllTestParam, PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_fox_algorithm));
+    kAllTestParam, PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_Fox_algorithm));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

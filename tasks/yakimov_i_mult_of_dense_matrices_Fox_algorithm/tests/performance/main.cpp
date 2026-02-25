@@ -30,7 +30,7 @@ TEST_P(YakimovIMultDenseFoxPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, YakimovIMultOfDenseMatricesFoxAlgorithmSEQ>(
-    PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_fox_algorithm);
+    PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_Fox_algorithm);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
