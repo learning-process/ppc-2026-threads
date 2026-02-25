@@ -4,6 +4,8 @@
 #include <cmath>
 #include <vector>
 
+#include "makoveeva_matmul_double_seq/common/include/common.hpp"
+
 namespace makoveeva_matmul_double_seq {
 
 MatmulDoubleSeqTask::MatmulDoubleSeqTask(const InType &in)
