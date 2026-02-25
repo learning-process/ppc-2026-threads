@@ -1,6 +1,7 @@
 #include "sakharov_a_shell_sorting_with_merging_butcher/seq/include/ops_seq.hpp"
 
-#include <limits>
+#include <cstddef>
+#include <utility>
 #include <vector>
 
 #include "sakharov_a_shell_sorting_with_merging_butcher/common/include/common.hpp"
@@ -10,73 +11,145 @@ namespace sakharov_a_shell_sorting_with_merging_butcher {
 SakharovAShellButcherSEQ::SakharovAShellButcherSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = {};
 }
 
 bool SakharovAShellButcherSEQ::ValidationImpl() {
-  return GetInput() > 0;
-}
-
-bool SakharovAShellButcherSEQ::PreProcessingImpl() {
   return true;
 }
 
-// static
-InType SakharovAShellButcherSEQ::FindMinDist(const std::vector<InType> &dist, const std::vector<bool> &visited) {
-  auto n = static_cast<InType>(dist.size());
-  InType min_dist = std::numeric_limits<InType>::max();
-  InType u = -1;
-  for (InType i = 0; i < n; ++i) {
-    if (!visited[i] && dist[i] < min_dist) {
-      min_dist = dist[i];
-      u = i;
-    }
-  }
-  return u;
+bool SakharovAShellButcherSEQ::PreProcessingImpl() {
+  input_data_ = GetInput();
+  output_data_.clear();
+  return true;
 }
 
-// static
-void SakharovAShellButcherSEQ::RelaxEdges(InType u, std::vector<InType> &dist, const std::vector<bool> &visited) {
-  auto n = static_cast<InType>(dist.size());
-  for (InType vert = 0; vert < n; ++vert) {
-    if (!visited[vert] && u != vert) {
-      InType weight = (u > vert) ? (u - vert) : (vert - u);
-      if (dist[u] != std::numeric_limits<InType>::max() && dist[u] + weight < dist[vert]) {
-        dist[vert] = dist[u] + weight;
+void SakharovAShellButcherSEQ::ShellSort(std::vector<int> &data) {
+  if (data.empty()) {
+    return;
+  }
+
+  for (size_t gap = data.size() / 2; gap > 0; gap /= 2) {
+    for (size_t i = gap; i < data.size(); ++i) {
+      int temp = data[i];
+      size_t j = i;
+      while (j >= gap && data[j - gap] > temp) {
+        data[j] = data[j - gap];
+        j -= gap;
       }
+      data[j] = temp;
     }
   }
+}
+
+std::vector<int> SakharovAShellButcherSEQ::MergeSortedVectors(const std::vector<int> &left,
+                                                              const std::vector<int> &right) {
+  std::vector<int> merged;
+  merged.reserve(left.size() + right.size());
+
+  size_t left_index = 0;
+  size_t right_index = 0;
+
+  while (left_index < left.size() && right_index < right.size()) {
+    if (left[left_index] <= right[right_index]) {
+      merged.push_back(left[left_index]);
+      ++left_index;
+    } else {
+      merged.push_back(right[right_index]);
+      ++right_index;
+    }
+  }
+
+  while (left_index < left.size()) {
+    merged.push_back(left[left_index]);
+    ++left_index;
+  }
+
+  while (right_index < right.size()) {
+    merged.push_back(right[right_index]);
+    ++right_index;
+  }
+
+  return merged;
+}
+
+std::vector<int> SakharovAShellButcherSEQ::BatcherOddEvenMerge(const std::vector<int> &left,
+                                                               const std::vector<int> &right) {
+  std::vector<int> left_even;
+  std::vector<int> left_odd;
+  std::vector<int> right_even;
+  std::vector<int> right_odd;
+
+  left_even.reserve((left.size() + 1) / 2);
+  left_odd.reserve(left.size() / 2);
+  right_even.reserve((right.size() + 1) / 2);
+  right_odd.reserve(right.size() / 2);
+
+  for (size_t index = 0; index < left.size(); ++index) {
+    if (index % 2 == 0) {
+      left_even.push_back(left[index]);
+    } else {
+      left_odd.push_back(left[index]);
+    }
+  }
+
+  for (size_t index = 0; index < right.size(); ++index) {
+    if (index % 2 == 0) {
+      right_even.push_back(right[index]);
+    } else {
+      right_odd.push_back(right[index]);
+    }
+  }
+
+  std::vector<int> even_merged = MergeSortedVectors(left_even, right_even);
+  std::vector<int> odd_merged = MergeSortedVectors(left_odd, right_odd);
+
+  std::vector<int> result;
+  result.reserve(left.size() + right.size());
+  size_t even_index = 0;
+  size_t odd_index = 0;
+
+  while (even_index < even_merged.size() || odd_index < odd_merged.size()) {
+    if (even_index < even_merged.size()) {
+      result.push_back(even_merged[even_index]);
+      ++even_index;
+    }
+    if (odd_index < odd_merged.size()) {
+      result.push_back(odd_merged[odd_index]);
+      ++odd_index;
+    }
+  }
+
+  for (size_t index = 1; index + 1 < result.size(); index += 2) {
+    if (result[index] > result[index + 1]) {
+      std::swap(result[index], result[index + 1]);
+    }
+  }
+
+  return result;
 }
 
 bool SakharovAShellButcherSEQ::RunImpl() {
-  InType n = GetInput();
-  if (n == 0) {
-    return false;
+  if (input_data_.empty()) {
+    output_data_.clear();
+    return true;
   }
 
-  const InType k_inf = std::numeric_limits<InType>::max();
-  std::vector<InType> dist(n, k_inf);
-  std::vector<bool> visited(n, false);
-  dist[0] = 0;
+  const size_t middle = input_data_.size() / 2;
 
-  for (int count = 0; count < n; ++count) {
-    InType u = FindMinDist(dist, visited);
-    if (u == -1) {
-      break;
-    }
-    visited[u] = true;
-    RelaxEdges(u, dist, visited);
-  }
+  std::vector<int> left(input_data_.begin(), input_data_.begin() + static_cast<std::ptrdiff_t>(middle));
+  std::vector<int> right(input_data_.begin() + static_cast<std::ptrdiff_t>(middle), input_data_.end());
 
-  InType sum = 0;
-  for (InType i = 0; i < n; ++i) {
-    sum += dist[i];
-  }
-  GetOutput() = sum;
+  ShellSort(left);
+  ShellSort(right);
+
+  output_data_ = BatcherOddEvenMerge(left, right);
+  ShellSort(output_data_);
   return true;
 }
 
 bool SakharovAShellButcherSEQ::PostProcessingImpl() {
+  GetOutput() = output_data_;
   return true;
 }
 
