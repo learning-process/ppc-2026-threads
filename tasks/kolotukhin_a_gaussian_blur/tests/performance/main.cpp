@@ -25,7 +25,7 @@ class KolotukhinAGaussinBlurePerfTests : public ppc::util::BaseRunPerfTests<InTy
       input_data_ = {std::vector<std::uint8_t>{}, 0, 0};
       return;
     }
-    std::string input_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_kolotukhin_a_gaussian_blur, "test_image_2.jpg");
+    std::string input_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_kolotukhin_a_gaussian_blur, "test_image_1.jpg");
 
     int width = -1;
     int height = -1;
