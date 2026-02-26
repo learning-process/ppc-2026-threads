@@ -11,8 +11,8 @@ namespace akimov_i_radixsort_int_merge {
 
 AkimovIRadixSortIntMergeSEQ::AkimovIRadixSortIntMergeSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput() = OutType();
+  GetInput() = in;          // copy input vector
+  GetOutput() = OutType();  // initially empty
 }
 
 bool AkimovIRadixSortIntMergeSEQ::ValidationImpl() {
