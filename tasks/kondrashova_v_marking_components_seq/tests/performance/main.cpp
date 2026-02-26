@@ -23,10 +23,15 @@ void SetTimer(ppc::performance::PerfAttr &perf_attrs) {
 }
 
 bool CheckLabels(const OutType &output_data, int expected_count, int size) {
-  if (output_data.count != expected_count) return false;
-  if (output_data.labels.size() != size) return false;
-  if (!output_data.labels.empty() && (output_data.labels[0].size() != size))
+  if (output_data.count != expected_count) {
     return false;
+  }
+  if (output_data.labels.size() != size) {
+    return false;
+  }
+  if (!output_data.labels.empty() && (output_data.labels[0].size() != size)) {
+    return false;
+  }
   return true;
 }
 }  // namespace
@@ -77,10 +82,15 @@ class ChessboardPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
     SetTimer(perf_attrs);
   }
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.count <= 0) return false;
-    if (output_data.labels.size() != kSize) return false;
-    if (!output_data.labels.empty() && (output_data.labels[0].size() != kSize))
+    if (output_data.count <= 0) {
       return false;
+    }
+    if (output_data.labels.size() != kSize) {
+      return false;
+    }
+    if (!output_data.labels.empty() && (output_data.labels[0].size() != kSize)) {
+      return false;
+    }
     return true;
   }
   InType GetTestInputData() final {
@@ -90,8 +100,7 @@ class ChessboardPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
     input.data.resize(static_cast<size_t>(kSize * kSize));
     for (int row = 0; row < kSize; ++row) {
       for (int col = 0; col < kSize; ++col) {
-        input.data[static_cast<size_t>((row * kSize) + col)] =
-            static_cast<uint8_t>((row + col) % 2);
+        input.data[static_cast<size_t>((row * kSize) + col)] = static_cast<uint8_t>((row + col) % 2);
       }
     }
     return input;
@@ -106,10 +115,15 @@ class SparseDotsPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
     SetTimer(perf_attrs);
   }
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.count <= 0) return false;
-    if (output_data.labels.size() != kSize) return false;
-    if (!output_data.labels.empty() && (output_data.labels[0].size() != kSize))
+    if (output_data.count <= 0) {
       return false;
+    }
+    if (output_data.labels.size() != kSize) {
+      return false;
+    }
+    if (!output_data.labels.empty() && (output_data.labels[0].size() != kSize)) {
+      return false;
+    }
     return true;
   }
   InType GetTestInputData() final {
@@ -134,10 +148,15 @@ class StripesPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
     SetTimer(perf_attrs);
   }
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.count <= 0) return false;
-    if (output_data.labels.size() != kSize) return false;
-    if (!output_data.labels.empty() && (output_data.labels[0].size() != kSize))
+    if (output_data.count <= 0) {
       return false;
+    }
+    if (output_data.labels.size() != kSize) {
+      return false;
+    }
+    if (!output_data.labels.empty() && (output_data.labels[0].size() != kSize)) {
+      return false;
+    }
     return true;
   }
   InType GetTestInputData() final {
@@ -163,10 +182,15 @@ class BlocksPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
     SetTimer(perf_attrs);
   }
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.count <= 0) return false;
-    if (output_data.labels.size() != kSize) return false;
-    if (!output_data.labels.empty() && (output_data.labels[0].size() != kSize))
+    if (output_data.count <= 0) {
       return false;
+    }
+    if (output_data.labels.size() != kSize) {
+      return false;
+    }
+    if (!output_data.labels.empty() && (output_data.labels[0].size() != kSize)) {
+      return false;
+    }
     return true;
   }
   InType GetTestInputData() final {
@@ -187,33 +211,40 @@ class BlocksPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
   }
 };
 
-TEST_P(AllOnesPerfTest, RunPerfModes) { ExecuteTest(GetParam()); }
-TEST_P(AllZerosPerfTest, RunPerfModes) { ExecuteTest(GetParam()); }
-TEST_P(ChessboardPerfTest, RunPerfModes) { ExecuteTest(GetParam()); }
-TEST_P(SparseDotsPerfTest, RunPerfModes) { ExecuteTest(GetParam()); }
-TEST_P(StripesPerfTest, RunPerfModes) { ExecuteTest(GetParam()); }
-TEST_P(BlocksPerfTest, RunPerfModes) { ExecuteTest(GetParam()); }
+TEST_P(AllOnesPerfTest, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
+TEST_P(AllZerosPerfTest, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
+TEST_P(ChessboardPerfTest, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
+TEST_P(SparseDotsPerfTest, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
+TEST_P(StripesPerfTest, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
+TEST_P(BlocksPerfTest, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
 
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KondrashovaVTaskSEQ>(
-        PPC_SETTINGS_kondrashova_v_marking_components_seq);
+    ppc::util::MakeAllPerfTasks<InType, KondrashovaVTaskSEQ>(PPC_SETTINGS_kondrashova_v_marking_components_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-INSTANTIATE_TEST_SUITE_P(AllOnes_RunModeTests, AllOnesPerfTest, kGtestValues,
-                         AllOnesPerfTest::CustomPerfTestName);
-INSTANTIATE_TEST_SUITE_P(AllZeros_RunModeTests, AllZerosPerfTest, kGtestValues,
-                         AllZerosPerfTest::CustomPerfTestName);
-INSTANTIATE_TEST_SUITE_P(Chessboard_RunModeTests, ChessboardPerfTest,
-                         kGtestValues, ChessboardPerfTest::CustomPerfTestName);
-INSTANTIATE_TEST_SUITE_P(SparseDots_RunModeTests, SparseDotsPerfTest,
-                         kGtestValues, SparseDotsPerfTest::CustomPerfTestName);
-INSTANTIATE_TEST_SUITE_P(Stripes_RunModeTests, StripesPerfTest, kGtestValues,
-                         StripesPerfTest::CustomPerfTestName);
-INSTANTIATE_TEST_SUITE_P(Blocks_RunModeTests, BlocksPerfTest, kGtestValues,
-                         BlocksPerfTest::CustomPerfTestName);
+INSTANTIATE_TEST_SUITE_P(AllOnes_RunModeTests, AllOnesPerfTest, kGtestValues, AllOnesPerfTest::CustomPerfTestName);
+INSTANTIATE_TEST_SUITE_P(AllZeros_RunModeTests, AllZerosPerfTest, kGtestValues, AllZerosPerfTest::CustomPerfTestName);
+INSTANTIATE_TEST_SUITE_P(Chessboard_RunModeTests, ChessboardPerfTest, kGtestValues,
+                         ChessboardPerfTest::CustomPerfTestName);
+INSTANTIATE_TEST_SUITE_P(SparseDots_RunModeTests, SparseDotsPerfTest, kGtestValues,
+                         SparseDotsPerfTest::CustomPerfTestName);
+INSTANTIATE_TEST_SUITE_P(Stripes_RunModeTests, StripesPerfTest, kGtestValues, StripesPerfTest::CustomPerfTestName);
+INSTANTIATE_TEST_SUITE_P(Blocks_RunModeTests, BlocksPerfTest, kGtestValues, BlocksPerfTest::CustomPerfTestName);
 
 }  // namespace
 

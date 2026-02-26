@@ -11,8 +11,7 @@
 
 namespace kondrashova_v_marking_components_seq {
 
-class MarkingComponentsFuncTest
-    : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class MarkingComponentsFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &param) {
     return std::get<1>(param);
@@ -92,18 +91,15 @@ TEST_P(MarkingComponentsFuncTest, VariousBinaryImages) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 4> kTestParam = {
-    std::make_tuple(0, "empty"), std::make_tuple(1, "one_component"),
-    std::make_tuple(2, "isolated_pixels"), std::make_tuple(3, "two_regions")};
+const std::array<TestType, 4> kTestParam = {std::make_tuple(0, "empty"), std::make_tuple(1, "one_component"),
+                                            std::make_tuple(2, "isolated_pixels"), std::make_tuple(3, "two_regions")};
 
 const auto kTestTasksList =
-    ppc::util::AddFuncTask<KondrashovaVTaskSEQ, InType>(
-        kTestParam, PPC_SETTINGS_kondrashova_v_marking_components_seq);
+    ppc::util::AddFuncTask<KondrashovaVTaskSEQ, InType>(kTestParam, PPC_SETTINGS_kondrashova_v_marking_components_seq);
 
-INSTANTIATE_TEST_SUITE_P(
-    MarkingComponentsFunctionalTests, MarkingComponentsFuncTest,
-    ppc::util::ExpandToValues(kTestTasksList),
-    MarkingComponentsFuncTest::PrintFuncTestName<MarkingComponentsFuncTest>);
+INSTANTIATE_TEST_SUITE_P(MarkingComponentsFunctionalTests, MarkingComponentsFuncTest,
+                         ppc::util::ExpandToValues(kTestTasksList),
+                         MarkingComponentsFuncTest::PrintFuncTestName<MarkingComponentsFuncTest>);
 }  // namespace
 
 }  // namespace kondrashova_v_marking_components_seq

@@ -15,8 +15,8 @@ KondrashovaVTaskSEQ::KondrashovaVTaskSEQ(const InType &in) {
   GetOutput() = {};
 }
 
-bool KondrashovaVTaskSEQ::ValidationImpl() { 
-  return true; 
+bool KondrashovaVTaskSEQ::ValidationImpl() {
+  return true;
 }
 
 bool KondrashovaVTaskSEQ::PreProcessingImpl() {
@@ -38,13 +38,12 @@ bool KondrashovaVTaskSEQ::PreProcessingImpl() {
 }
 
 namespace {
-void BfsComponent(int start_i, int start_j, int width, int height, int label, const std::vector<uint8_t> &image, std::vector<int> &labels_1d) {
+void BfsComponent(int start_i, int start_j, int width, int height, int label, const std::vector<uint8_t> &image,
+                  std::vector<int> &labels_1d) {
   const std::array<int, 4> dx = {-1, 1, 0, 0};
   const std::array<int, 4> dy = {0, 0, -1, 1};
 
-  auto inside = [&](int xi, int yi) {
-    return (xi >= 0 && xi < height && yi >= 0 && yi < width);
-  };
+  auto inside = [&](int xi, int yi) { return (xi >= 0 && xi < height && yi >= 0 && yi < width); };
 
   std::queue<std::pair<int, int>> q;
   q.emplace(start_i, start_j);
@@ -85,8 +84,7 @@ bool KondrashovaVTaskSEQ::RunImpl() {
       auto idx = static_cast<size_t>((ii * width_) + jj);
       if (image_[idx] == 0 && labels_1d_[idx] == 0) {
         ++current_label;
-        BfsComponent(ii, jj, width_, height_, current_label, image_,
-                     labels_1d_);
+        BfsComponent(ii, jj, width_, height_, current_label, image_, labels_1d_);
       }
     }
   }
@@ -105,8 +103,7 @@ bool KondrashovaVTaskSEQ::PostProcessingImpl() {
 
   for (int ii = 0; ii < height_; ++ii) {
     for (int jj = 0; jj < width_; ++jj) {
-      GetOutput().labels[ii][jj] =
-          labels_1d_[static_cast<size_t>((ii * width_) + jj)];
+      GetOutput().labels[ii][jj] = labels_1d_[static_cast<size_t>((ii * width_) + jj)];
     }
   }
 
