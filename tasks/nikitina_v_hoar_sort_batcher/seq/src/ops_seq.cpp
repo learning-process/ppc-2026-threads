@@ -23,26 +23,41 @@ bool HoareSortBatcherSEQ::PreProcessingImpl() {
 }
 
 void HoareSortBatcherSEQ::QuickSortHoare(std::vector<int> &arr, int low, int high) {
-  if (low >= high) {
-    return;
-  }
-  int pivot = arr[low + ((high - low) / 2)];
-  int i = low - 1;
-  int j = high + 1;
-  while (true) {
-    do {
-      i++;
-    } while (arr[i] < pivot);
-    do {
-      j--;
-    } while (arr[j] > pivot);
-    if (i >= j) {
-      break;
+  std::vector<std::pair<int, int>> stack;
+  stack.emplace_back(low, high);
+
+  while (!stack.empty()) {
+    auto [l, h] = stack.back();
+    stack.pop_back();
+
+    if (l >= h) {
+      continue;
     }
-    std::swap(arr[i], arr[j]);
+
+    int pivot = arr[l + ((h - l) / 2)];
+    int i = l - 1;
+    int j = h + 1;
+
+    while (true) {
+      i++;
+      while (arr[i] < pivot) {
+        i++;
+      }
+
+      j--;
+      while (arr[j] > pivot) {
+        j--;
+      }
+
+      if (i >= j) {
+        break;
+      }
+      std::swap(arr[i], arr[j]);
+    }
+
+    stack.emplace_back(l, j);
+    stack.emplace_back(j + 1, h);
   }
-  QuickSortHoare(arr, low, j);
-  QuickSortHoare(arr, j + 1, high);
 }
 
 bool HoareSortBatcherSEQ::RunImpl() {

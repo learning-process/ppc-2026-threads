@@ -1,8 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <random>
-#include <vector>
 
 #include "nikitina_v_hoar_sort_batcher/common/include/common.hpp"
 #include "nikitina_v_hoar_sort_batcher/seq/include/ops_seq.hpp"
@@ -16,15 +14,15 @@ class NikitinaVHoarSortBatcherPerfTests : public ppc::util::BaseRunPerfTests<InT
     const int count = 500000;
     input_data_.resize(count);
 
-    std::mt19937 gen(42);
-    std::uniform_int_distribution<> dist(-10000, 10000);
+    int seed_val = 42;
     for (int &x : input_data_) {
-      x = dist(gen);
+      x = (seed_val % 20001) - 10000;
+      seed_val = (seed_val * 73 + 17) % 20001;
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return !output_data.empty() && std::is_sorted(output_data.begin(), output_data.end());
+    return !output_data.empty() && std::ranges::is_sorted(output_data);
   }
 
   InType GetTestInputData() final {

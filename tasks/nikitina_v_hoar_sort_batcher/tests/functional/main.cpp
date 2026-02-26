@@ -2,8 +2,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cstddef>
-#include <random>
 #include <string>
 #include <tuple>
 
@@ -21,7 +19,7 @@ class NikitinaVHoarSortBatcherFuncTests : public ppc::util::BaseRunFuncTests<InT
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    TestType params = std::get<2>(GetParam());
     int test_id = std::get<0>(params);
     input_data_.clear();
     if (test_id == 1) {
@@ -31,11 +29,11 @@ class NikitinaVHoarSortBatcherFuncTests : public ppc::util::BaseRunFuncTests<InT
     } else if (test_id == 3) {
       input_data_ = {5, 4, 3, 2, 1};
     } else if (test_id == 4) {
-      std::mt19937 gen(42);
-      std::uniform_int_distribution<> dist(-100, 100);
       input_data_.resize(20);
+      int seed_val = 42;
       for (int &x : input_data_) {
-        x = dist(gen);
+        x = (seed_val % 201) - 100;
+        seed_val = (seed_val * 73 + 17) % 201;
       }
     }
   }
