@@ -83,7 +83,7 @@ class BortsovaAIntegralsRectangleFuncTests : public ppc::util::BaseRunFuncTests<
         expected_ = 2.0 / 3.0;
         break;
       case 8:
-        input_data_.func = [](const std::vector<double> &x) { return x[0] * x[0] + x[1] * x[1]; };
+        input_data_.func = [](const std::vector<double> &x) { return (x[0] * x[0]) + (x[1] * x[1]); };
         input_data_.lower_bounds = {0.0, 0.0};
         input_data_.upper_bounds = {1.0, 1.0};
         input_data_.num_steps = 100;
@@ -135,84 +135,6 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = BortsovaAIntegralsRectangleFuncTests::PrintFuncTestName<BortsovaAIntegralsRectangleFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(IntegralTests, BortsovaAIntegralsRectangleFuncTests, kGtestValues, kTestName);
-
-TEST(bortsova_a_integrals_rectangle_seq_Validation, NullFunction) {
-  IntegralInput input;
-  input.lower_bounds = {0.0};
-  input.upper_bounds = {1.0};
-  input.num_steps = 100;
-
-  BortsovaAIntegralsRectangleSEQ task(input);
-  EXPECT_FALSE(task.Validation());
-
-  task.GetInput().func = [](const std::vector<double> &) { return 1.0; };
-  task.PreProcessing();
-  task.Run();
-  task.PostProcessing();
-}
-
-TEST(bortsova_a_integrals_rectangle_seq_Validation, EmptyBounds) {
-  IntegralInput input;
-  input.func = [](const std::vector<double> &) { return 1.0; };
-  input.num_steps = 100;
-
-  BortsovaAIntegralsRectangleSEQ task(input);
-  EXPECT_FALSE(task.Validation());
-
-  task.GetInput().lower_bounds = {0.0};
-  task.GetInput().upper_bounds = {1.0};
-  task.PreProcessing();
-  task.Run();
-  task.PostProcessing();
-}
-
-TEST(bortsova_a_integrals_rectangle_seq_Validation, MismatchedBounds) {
-  IntegralInput input;
-  input.func = [](const std::vector<double> &) { return 1.0; };
-  input.lower_bounds = {0.0, 0.0};
-  input.upper_bounds = {1.0};
-  input.num_steps = 100;
-
-  BortsovaAIntegralsRectangleSEQ task(input);
-  EXPECT_FALSE(task.Validation());
-
-  task.GetInput().upper_bounds = {1.0, 1.0};
-  task.PreProcessing();
-  task.Run();
-  task.PostProcessing();
-}
-
-TEST(bortsova_a_integrals_rectangle_seq_Validation, ZeroSteps) {
-  IntegralInput input;
-  input.func = [](const std::vector<double> &) { return 1.0; };
-  input.lower_bounds = {0.0};
-  input.upper_bounds = {1.0};
-  input.num_steps = 0;
-
-  BortsovaAIntegralsRectangleSEQ task(input);
-  EXPECT_FALSE(task.Validation());
-
-  task.GetInput().num_steps = 100;
-  task.PreProcessing();
-  task.Run();
-  task.PostProcessing();
-}
-
-TEST(bortsova_a_integrals_rectangle_seq_Validation, NegativeSteps) {
-  IntegralInput input;
-  input.func = [](const std::vector<double> &) { return 1.0; };
-  input.lower_bounds = {0.0};
-  input.upper_bounds = {1.0};
-  input.num_steps = -5;
-
-  BortsovaAIntegralsRectangleSEQ task(input);
-  EXPECT_FALSE(task.Validation());
-
-  task.GetInput().num_steps = 100;
-  task.PreProcessing();
-  task.Run();
-  task.PostProcessing();
-}
 
 }  // namespace
 

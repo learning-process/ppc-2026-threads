@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 #include "bortsova_a_integrals_rectangle_seq/common/include/common.hpp"
@@ -21,9 +22,11 @@ class BortsovaAIntegralsRectangleSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 
   Function func_;
-  std::vector<double> lower_bounds_;
-  std::vector<double> upper_bounds_;
+  int dims_ = 0;
   int num_steps_ = 0;
+  int64_t total_points_ = 0;
+  double volume_ = 0.0;
+  std::vector<std::vector<double>> midpoints_;
 };
 
 }  // namespace bortsova_a_integrals_rectangle_seq

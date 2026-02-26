@@ -14,7 +14,7 @@ class BortsovaAIntegralsRectanglePerfTests : public ppc::util::BaseRunPerfTests<
   double expected_ = 0.0;
 
   void SetUp() override {
-    input_data_.func = [](const std::vector<double> &x) { return x[0] * x[0] + x[1] * x[1] + x[2] * x[2]; };
+    input_data_.func = [](const std::vector<double> &x) { return (x[0] * x[0]) + (x[1] * x[1]) + (x[2] * x[2]); };
     input_data_.lower_bounds = {0.0, 0.0, 0.0};
     input_data_.upper_bounds = {1.0, 1.0, 1.0};
     input_data_.num_steps = 200;

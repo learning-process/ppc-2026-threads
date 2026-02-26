@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <vector>
 
+#include "bortsova_a_integrals_rectangle_seq/common/include/common.hpp"
+
 namespace bortsova_a_integrals_rectangle_seq {
 
 BortsovaAIntegralsRectangleSEQ::BortsovaAIntegralsRectangleSEQ(const InType &in) {
@@ -20,50 +22,48 @@ bool BortsovaAIntegralsRectangleSEQ::ValidationImpl() {
 bool BortsovaAIntegralsRectangleSEQ::PreProcessingImpl() {
   const auto &input = GetInput();
   func_ = input.func;
-  lower_bounds_ = input.lower_bounds;
-  upper_bounds_ = input.upper_bounds;
   num_steps_ = input.num_steps;
+  dims_ = static_cast<int>(input.lower_bounds.size());
+
+  midpoints_.resize(dims_);
+  volume_ = 1.0;
+  total_points_ = 1;
+
+  for (int di = 0; di < dims_; di++) {
+    double step = (input.upper_bounds[di] - input.lower_bounds[di]) / static_cast<double>(num_steps_);
+    volume_ *= step;
+    total_points_ *= num_steps_;
+
+    midpoints_[di].resize(num_steps_);
+    for (int si = 0; si < num_steps_; si++) {
+      midpoints_[di][si] = input.lower_bounds[di] + ((si + 0.5) * step);
+    }
+  }
+
   return true;
 }
 
 bool BortsovaAIntegralsRectangleSEQ::RunImpl() {
-  int dims = static_cast<int>(lower_bounds_.size());
-
-  std::vector<double> step_sizes(dims);
-  for (int i = 0; i < dims; i++) {
-    step_sizes[i] = (upper_bounds_[i] - lower_bounds_[i]) / static_cast<double>(num_steps_);
-  }
-
-  int64_t total_points = 1;
-  for (int i = 0; i < dims; i++) {
-    total_points *= num_steps_;
-  }
-
   double sum = 0.0;
-  std::vector<int> indices(dims, 0);
-  std::vector<double> point(dims);
+  std::vector<int> indices(dims_, 0);
+  std::vector<double> point(dims_);
 
-  for (int64_t p = 0; p < total_points; p++) {
-    for (int d = 0; d < dims; d++) {
-      point[d] = lower_bounds_[d] + (indices[d] + 0.5) * step_sizes[d];
+  for (int64_t pt = 0; pt < total_points_; pt++) {
+    for (int di = 0; di < dims_; di++) {
+      point[di] = midpoints_[di][indices[di]];
     }
     sum += func_(point);
 
-    for (int d = dims - 1; d >= 0; d--) {
-      indices[d]++;
-      if (indices[d] < num_steps_) {
+    for (int di = dims_ - 1; di >= 0; di--) {
+      indices[di]++;
+      if (indices[di] < num_steps_) {
         break;
       }
-      indices[d] = 0;
+      indices[di] = 0;
     }
   }
 
-  double volume = 1.0;
-  for (int i = 0; i < dims; i++) {
-    volume *= step_sizes[i];
-  }
-
-  GetOutput() = sum * volume;
+  GetOutput() = sum * volume_;
   return true;
 }
 
