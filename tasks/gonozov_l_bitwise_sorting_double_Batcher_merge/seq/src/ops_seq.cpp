@@ -28,7 +28,6 @@ namespace {
 uint64_t DoubleToSortableInt(double d) {
   uint64_t bits = 0;
   std::memcpy(&bits, &d, sizeof(double));
-
   if ((bits >> 63) != 0) {  // Отрицательное число
     return ~bits;           // Инвертируем ВСЕ биты
   }  // Положительное число или ноль
@@ -92,27 +91,63 @@ void RadixSortDouble(std::vector<double> &data) {
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)
-void BatcherOddEvenMerge(std::vector<double> &arr, int low, int high) {
-  if (high - low <= 1) {
+void BatcherOddEvenMergeIterative(std::vector<double> &arr, size_t n) {
+  if (n <= 1) {
     return;
   }
 
-  int mid = (low + high) / 2;
-  BatcherOddEvenMerge(arr, low, mid);
-  BatcherOddEvenMerge(arr, mid, high);
-
-  // Сравниваем и меняем элементы из двух половин
-  for (int i = low; i < mid; ++i) {
-    int j = i + mid - low;  // Индекс во второй половине
-    if (j < high && arr[i] > arr[j]) {
-      std::swap(arr[i], arr[j]);
+  for (size_t block_size = 1; block_size < n; block_size *= 2) {
+    for (size_t step = block_size; step > 0; step /= 2) {
+      for (size_t i = 0; i < n - step; ++i) {
+        // Проверяем, нужно ли сравнивать элементы i и i+step
+        if ((i & block_size) == 0) {
+          size_t idx1 = i;
+          size_t idx2 = i + step;
+          if (idx2 < n && arr[idx1] > arr[idx2]) {
+            std::swap(arr[idx1], arr[idx2]);
+          }
+        }
+      }
     }
   }
 }
 
+// Нахождение ближайшей степени двойки, большей или равной n
+size_t NextPowerOfTwo(size_t n) {
+  size_t power = 1;
+  while (power < n) {
+    power <<= 1;
+  }
+  return power;
+}
+
 void HybridSortDouble(std::vector<double> &data) {
-  RadixSortDouble(data);
-  BatcherOddEvenMerge(data, 0, static_cast<int>(data.size()));
+  if (data.size() <= 1) {
+    return;
+  }
+
+  size_t original_size = data.size();
+
+  size_t new_size = NextPowerOfTwo(original_size);
+  data.resize(new_size, std::numeric_limits<double>::max());
+
+  size_t mid = new_size / 2;
+  std::vector<double> left(data.begin(), data.begin() + mid);
+  std::vector<double> right(data.begin() + mid, data.end());
+
+  // Сортируем каждую половину поразрядно
+  RadixSortDouble(left);
+  RadixSortDouble(right);
+
+  // Собираем обратно в единый массив
+  std::copy(left.begin(), left.end(), data.begin());
+  std::copy(right.begin(), right.end(), data.begin() + mid);
+
+  // Используем слияние Бэтчера для слияния двух отсортированных массивов
+  BatcherOddEvenMergeIterative(data, new_size);
+
+  // Обрезаем до исходного размера
+  data.resize(original_size);
 }
 
 }  // namespace
