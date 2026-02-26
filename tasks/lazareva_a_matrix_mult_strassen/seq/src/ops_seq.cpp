@@ -1,11 +1,26 @@
 #include "lazareva_a_matrix_mult_strassen/seq/include/ops_seq.hpp"
 
 #include <cstddef>
+#include <cstdint>
+#include <stack>
+#include <utility>
 #include <vector>
 
 #include "lazareva_a_matrix_mult_strassen/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace lazareva_a_matrix_mult_strassen {
+
+namespace {
+
+struct StrassenTask {
+  std::vector<double> a;
+  std::vector<double> b;
+  int n;
+  int result_idx;
+};
+
+}  // namespace
 
 LazarevaATestTaskSEQ::LazarevaATestTaskSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -58,7 +73,9 @@ std::vector<double> LazarevaATestTaskSEQ::PadMatrix(const std::vector<double> &m
   std::vector<double> result(new_size, 0.0);
   for (int i = 0; i < old_n; ++i) {
     for (int j = 0; j < old_n; ++j) {
-      result[static_cast<size_t>((i * new_n) + j)] = m[static_cast<size_t>((i * old_n) + j)];
+      const auto dst = (static_cast<ptrdiff_t>(i) * new_n) + j;
+      const auto src = (static_cast<ptrdiff_t>(i) * old_n) + j;
+      result[static_cast<size_t>(dst)] = m[static_cast<size_t>(src)];
     }
   }
   return result;
@@ -69,7 +86,9 @@ std::vector<double> LazarevaATestTaskSEQ::UnpadMatrix(const std::vector<double> 
   std::vector<double> result(new_size);
   for (int i = 0; i < new_n; ++i) {
     for (int j = 0; j < new_n; ++j) {
-      result[static_cast<size_t>((i * new_n) + j)] = m[static_cast<size_t>((i * old_n) + j)];
+      const auto dst = (static_cast<ptrdiff_t>(i) * new_n) + j;
+      const auto src = (static_cast<ptrdiff_t>(i) * old_n) + j;
+      result[static_cast<size_t>(dst)] = m[static_cast<size_t>(src)];
     }
   }
   return result;
@@ -104,11 +123,11 @@ void LazarevaATestTaskSEQ::Split(const std::vector<double> &parent, int n, std::
 
   for (int i = 0; i < half; ++i) {
     for (int j = 0; j < half; ++j) {
-      const auto idx = static_cast<size_t>((i * half) + j);
-      a11[idx] = parent[static_cast<size_t>((i * n) + j)];
-      a12[idx] = parent[static_cast<size_t>((i * n) + j + half)];
-      a21[idx] = parent[static_cast<size_t>(((i + half) * n) + j)];
-      a22[idx] = parent[static_cast<size_t>(((i + half) * n) + j + half)];
+      const auto idx = static_cast<size_t>((static_cast<ptrdiff_t>(i) * half) + j);
+      a11[idx] = parent[static_cast<size_t>((static_cast<ptrdiff_t>(i) * n) + j)];
+      a12[idx] = parent[static_cast<size_t>((static_cast<ptrdiff_t>(i) * n) + j + half)];
+      a21[idx] = parent[static_cast<size_t>((static_cast<ptrdiff_t>(i + half) * n) + j)];
+      a22[idx] = parent[static_cast<size_t>((static_cast<ptrdiff_t>(i + half) * n) + j + half)];
     }
   }
 }
@@ -121,11 +140,11 @@ std::vector<double> LazarevaATestTaskSEQ::Merge(const std::vector<double> &c11, 
 
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
-      const auto src = static_cast<size_t>((i * n) + j);
-      result[static_cast<size_t>((i * full) + j)] = c11[src];
-      result[static_cast<size_t>((i * full) + j + n)] = c12[src];
-      result[static_cast<size_t>(((i + n) * full) + j)] = c21[src];
-      result[static_cast<size_t>(((i + n) * full) + j + n)] = c22[src];
+      const auto src = static_cast<size_t>((static_cast<ptrdiff_t>(i) * n) + j);
+      result[static_cast<size_t>((static_cast<ptrdiff_t>(i) * full) + j)] = c11[src];
+      result[static_cast<size_t>((static_cast<ptrdiff_t>(i) * full) + j + n)] = c12[src];
+      result[static_cast<size_t>((static_cast<ptrdiff_t>(i + n) * full) + j)] = c21[src];
+      result[static_cast<size_t>((static_cast<ptrdiff_t>(i + n) * full) + j + n)] = c22[src];
     }
   }
   return result;
@@ -136,52 +155,96 @@ std::vector<double> LazarevaATestTaskSEQ::NaiveMult(const std::vector<double> &a
   std::vector<double> c(size, 0.0);
   for (int i = 0; i < n; ++i) {
     for (int k = 0; k < n; ++k) {
-      const double aik = a[static_cast<size_t>((i * n) + k)];
+      const double aik = a[static_cast<size_t>((static_cast<ptrdiff_t>(i) * n) + k)];
       for (int j = 0; j < n; ++j) {
-        c[static_cast<size_t>((i * n) + j)] += aik * b[static_cast<size_t>((k * n) + j)];
+        c[static_cast<size_t>((static_cast<ptrdiff_t>(i) * n) + j)] +=
+            aik * b[static_cast<size_t>((static_cast<ptrdiff_t>(k) * n) + j)];
       }
     }
   }
   return c;
 }
 
-std::vector<double> LazarevaATestTaskSEQ::StrassenImpl(const std::vector<double> &a, const std::vector<double> &b,
-                                                       int n) {
-  if (n <= 64) {
-    return NaiveMult(a, b, n);
+std::vector<double> LazarevaATestTaskSEQ::Strassen(const std::vector<double> &a, const std::vector<double> &b, int n) {
+  struct Frame {
+    std::vector<double> a;
+    std::vector<double> b;
+    int n;
+    int phase;
+    std::vector<std::vector<double>> m;
+    std::vector<double> a11, a12, a21, a22;
+    std::vector<double> b11, b12, b21, b22;
+  };
+
+  std::stack<Frame> stack;
+  std::vector<std::vector<double>> results;
+
+  stack.push({a, b, n, 0, {}, {}, {}, {}, {}, {}, {}, {}, {}});
+
+  while (!stack.empty()) {
+    auto &frame = stack.top();
+
+    if (frame.n <= 64) {
+      results.push_back(NaiveMult(frame.a, frame.b, frame.n));
+      stack.pop();
+      continue;
+    }
+
+    const int half = frame.n / 2;
+
+    if (frame.phase == 0) {
+      Split(frame.a, frame.n, frame.a11, frame.a12, frame.a21, frame.a22);
+      Split(frame.b, frame.n, frame.b11, frame.b12, frame.b21, frame.b22);
+      frame.m.resize(7);
+      frame.phase = 1;
+
+      std::vector<std::pair<std::vector<double>, std::vector<double>>> sub = {
+          {Add(frame.a11, frame.a22, half), Add(frame.b11, frame.b22, half)},
+          {Add(frame.a21, frame.a22, half), frame.b11},
+          {frame.a11, Sub(frame.b12, frame.b22, half)},
+          {frame.a22, Sub(frame.b21, frame.b11, half)},
+          {Add(frame.a11, frame.a12, half), frame.b22},
+          {Sub(frame.a21, frame.a11, half), Add(frame.b11, frame.b12, half)},
+          {Sub(frame.a12, frame.a22, half), Add(frame.b21, frame.b22, half)},
+      };
+
+      for (int idx = 6; idx >= 0; --idx) {
+        stack.push({std::move(sub[static_cast<size_t>(idx)].first),
+                    std::move(sub[static_cast<size_t>(idx)].second),
+                    half,
+                    0,
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {}});
+      }
+      continue;
+    }
+
+    const size_t results_needed = 7;
+    if (results.size() >= results_needed) {
+      const size_t base = results.size() - results_needed;
+      for (int idx = 0; idx < 7; ++idx) {
+        frame.m[static_cast<size_t>(idx)] = std::move(results[base + static_cast<size_t>(idx)]);
+      }
+      results.resize(base);
+
+      auto c11 = Add(Sub(Add(frame.m[0], frame.m[3], half), frame.m[4], half), frame.m[6], half);
+      auto c12 = Add(frame.m[2], frame.m[4], half);
+      auto c21 = Add(frame.m[1], frame.m[3], half);
+      auto c22 = Add(Sub(Add(frame.m[0], frame.m[2], half), frame.m[1], half), frame.m[5], half);
+
+      results.push_back(Merge(c11, c12, c21, c22, half));
+      stack.pop();
+    }
   }
 
-  const int half = n / 2;
-
-  std::vector<double> a11;
-  std::vector<double> a12;
-  std::vector<double> a21;
-  std::vector<double> a22;
-  std::vector<double> b11;
-  std::vector<double> b12;
-  std::vector<double> b21;
-  std::vector<double> b22;
-  Split(a, n, a11, a12, a21, a22);
-  Split(b, n, b11, b12, b21, b22);
-
-  auto m1 = StrassenImpl(Add(a11, a22, half), Add(b11, b22, half), half);
-  auto m2 = StrassenImpl(Add(a21, a22, half), b11, half);
-  auto m3 = StrassenImpl(a11, Sub(b12, b22, half), half);
-  auto m4 = StrassenImpl(a22, Sub(b21, b11, half), half);
-  auto m5 = StrassenImpl(Add(a11, a12, half), b22, half);
-  auto m6 = StrassenImpl(Sub(a21, a11, half), Add(b11, b12, half), half);
-  auto m7 = StrassenImpl(Sub(a12, a22, half), Add(b21, b22, half), half);
-
-  auto c11 = Add(Sub(Add(m1, m4, half), m5, half), m7, half);
-  auto c12 = Add(m3, m5, half);
-  auto c21 = Add(m2, m4, half);
-  auto c22 = Add(Sub(Add(m1, m3, half), m2, half), m6, half);
-
-  return Merge(c11, c12, c21, c22, half);
-}
-
-std::vector<double> LazarevaATestTaskSEQ::Strassen(const std::vector<double> &a, const std::vector<double> &b, int n) {
-  return StrassenImpl(a, b, n);
+  return results.front();
 }
 
 }  // namespace lazareva_a_matrix_mult_strassen

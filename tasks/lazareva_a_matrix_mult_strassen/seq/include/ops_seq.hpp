@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "lazareva_a_matrix_mult_strassen/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace lazareva_a_matrix_mult_strassen {
 
@@ -35,7 +36,6 @@ class LazarevaATestTaskSEQ : public BaseTask {
   static std::vector<double> Merge(const std::vector<double> &c11, const std::vector<double> &c12,
                                    const std::vector<double> &c21, const std::vector<double> &c22, int n);
   static std::vector<double> NaiveMult(const std::vector<double> &a, const std::vector<double> &b, int n);
-  static std::vector<double> StrassenImpl(const std::vector<double> &a, const std::vector<double> &b, int n);
   static std::vector<double> Strassen(const std::vector<double> &a, const std::vector<double> &b, int n);
 };
 
