@@ -17,7 +17,7 @@ class GonozovLBitSortBatcherMergePerfTest : public ppc::util::BaseRunPerfTests<I
     std::vector<double> forming_data;
     forming_data.reserve(kCount);
     for (size_t i = 0; i < kCount; i++) {
-      forming_data[i] = static_cast<double>((i + 120358361.0) * (i + 1.0) / (234134.0) % 1000.0);
+      forming_data[i] = static_cast<double>((i + 161.0) * (i + 1.0) / (2344.0));
     }
     input_data_ = forming_data;
   }
