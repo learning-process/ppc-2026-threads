@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <random>
+#include <ranges>
 #include <vector>
 
 #include "shkryleva_s_shell_sort_simple_merge/common/include/common.hpp"
@@ -25,7 +27,7 @@ class ShkrylevaSShellMergePerfTests : public ppc::util::BaseRunPerfTests<InType,
     }
 
     expected_output_ = input_data_;
-    std::sort(expected_output_.begin(), expected_output_.end());
+    std::ranges::sort(expected_output_.begin(), expected_output_.end());
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

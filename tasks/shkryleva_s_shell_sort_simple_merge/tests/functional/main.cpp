@@ -2,25 +2,28 @@
 
 #include <algorithm>
 #include <memory>
+#include <ranges>
 #include <vector>
 
-#include "shkryleva_s_shell_sort_simple_merge/common/include/common.hpp"
 #include "shkryleva_s_shell_sort_simple_merge/seq/include/ops_seq.hpp"
 
 namespace shkryleva_s_shell_sort_simple_merge {
 
 namespace {
 
-void RunAndCheck(const std::vector<int> &input) {
+void RunTask(const std::vector<int> &input, const std::vector<int> &expected) {
   auto task = std::make_shared<ShkrylevaSShellMergeSEQ>(input);
-  std::vector<int> expected = input;
-  std::sort(expected.begin(), expected.end());
-
   ASSERT_TRUE(task->Validation());
   ASSERT_TRUE(task->PreProcessing());
   ASSERT_TRUE(task->Run());
   ASSERT_TRUE(task->PostProcessing());
   ASSERT_EQ(task->GetOutput(), expected);
+}
+
+void RunAndCheck(const std::vector<int> &input) {
+  std::vector<int> expected = input;
+  std::ranges::sort(expected.begin(), expected.end());
+  RunTask(input, expected);
 }
 
 TEST(ShkrylevaSShellMergeSEQFunctional, BasicEven) {
