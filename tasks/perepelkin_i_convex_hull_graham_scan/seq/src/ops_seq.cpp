@@ -1,11 +1,11 @@
 #include "perepelkin_i_convex_hull_graham_scan/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <vector>
 #include <algorithm>
+#include <cstddef>
+#include <utility>
+#include <vector>
 
 #include "perepelkin_i_convex_hull_graham_scan/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace perepelkin_i_convex_hull_graham_scan {
 
@@ -34,20 +34,19 @@ bool PerepelkinIConvexHullGrahamScanSEQ::RunImpl() {
   std::vector<std::pair<double, double>> pts = data;
 
   // find pivot: lowest y, then lowest x
-  auto pivot_it = std::min_element(
-      pts.begin(), pts.end(), [](const auto &a, const auto &b) {
-        if (a.second == b.second)
-          return a.first < b.first;
-        return a.second < b.second;
-      });
+  auto pivot_it = std::ranges::min_element(pts, [](const auto &a, const auto &b) {
+    if (a.second == b.second) {
+      return a.first < b.first;
+    }
+    return a.second < b.second;
+  });
   std::pair<double, double> pivot = *pivot_it;
   pts.erase(pivot_it);
 
   // sort remaining points by polar angle around pivot (counter-clockwise)
-  std::sort(pts.begin(), pts.end(),
-            [&](const std::pair<double, double> &a, const std::pair<double, double> &b) { 
-              return AngleCmp(a, b, pivot); 
-            });
+  std::ranges::sort(pts, [&](const std::pair<double, double> &a, const std::pair<double, double> &b) {
+    return AngleCmp(a, b, pivot);
+  });
 
   // build hull
   std::vector<std::pair<double, double>> hull;
@@ -66,25 +65,24 @@ bool PerepelkinIConvexHullGrahamScanSEQ::RunImpl() {
   return true;
 }
 
-double PerepelkinIConvexHullGrahamScanSEQ::Orientation(
-    const std::pair<double, double> &p, const std::pair<double, double> &q,
-    const std::pair<double, double> &r) {
-  return (q.first - p.first) * (r.second - p.second) -
-         (q.second - p.second) * (r.first - p.first);
+double PerepelkinIConvexHullGrahamScanSEQ::Orientation(const std::pair<double, double> &p,
+                                                       const std::pair<double, double> &q,
+                                                       const std::pair<double, double> &r) {
+  return ((q.first - p.first) * (r.second - p.second)) - ((q.second - p.second) * (r.first - p.first));
 }
 
 bool PerepelkinIConvexHullGrahamScanSEQ::AngleCmp(const std::pair<double, double> &a,
-                                                   const std::pair<double, double> &b,
-                                                   const std::pair<double, double> &pivot) {
+                                                  const std::pair<double, double> &b,
+                                                  const std::pair<double, double> &pivot) {
   double dx1 = a.first - pivot.first;
   double dy1 = a.second - pivot.second;
   double dx2 = b.first - pivot.first;
   double dy2 = b.second - pivot.second;
 
-  double cross = dx1 * dy2 - dy1 * dx2;
+  double cross = (dx1 * dy2) - (dy1 * dx2);
   if (cross == 0) {
-    double dist1 = dx1 * dx1 + dy1 * dy1;
-    double dist2 = dx2 * dx2 + dy2 * dy2;
+    double dist1 = (dx1 * dx1) + (dy1 * dy1);
+    double dist2 = (dx2 * dx2) + (dy2 * dy2);
     return dist1 < dist2;
   }
   return cross > 0;

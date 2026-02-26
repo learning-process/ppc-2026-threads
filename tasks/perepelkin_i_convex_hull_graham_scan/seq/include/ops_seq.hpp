@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include "perepelkin_i_convex_hull_graham_scan/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -20,9 +22,8 @@ class PerepelkinIConvexHullGrahamScanSEQ : public BaseTask {
 
   static bool AngleCmp(const std::pair<double, double> &a, const std::pair<double, double> &b,
                        const std::pair<double, double> &pivot);
-  static double Orientation(const std::pair<double, double> &p,
-                               const std::pair<double, double> &q,
-                               const std::pair<double, double> &r);
+  static double Orientation(const std::pair<double, double> &p, const std::pair<double, double> &q,
+                            const std::pair<double, double> &r);
 };
 
 }  // namespace perepelkin_i_convex_hull_graham_scan

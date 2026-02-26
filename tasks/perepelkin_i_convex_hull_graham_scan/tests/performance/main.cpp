@@ -1,12 +1,17 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <cstddef>
 #include <cstdlib>
+#include <memory>
 #include <random>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 #include "perepelkin_i_convex_hull_graham_scan/common/include/common.hpp"
 #include "perepelkin_i_convex_hull_graham_scan/seq/include/ops_seq.hpp"
+#include "task/include/task.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace perepelkin_i_convex_hull_graham_scan {
@@ -15,7 +20,7 @@ class PerepelkinIConvexHullGrahamScanPerfTest : public ppc::util::BaseRunPerfTes
   InType input_data_;
   OutType expected_output_;
 
-  size_t base_length_ = std::pow(10, 6);
+  size_t base_length_ = static_cast<size_t>(std::pow(10, 6));
   size_t scale_factor_ = 2;
   unsigned int seed_ = 42;
 
@@ -55,7 +60,7 @@ class PerepelkinIConvexHullGrahamScanPerfTest : public ppc::util::BaseRunPerfTes
     task->Run();
     task->PostProcessing();
     OutType expected_output = task->GetOutput();
-  
+
     return {data, expected_output};
   }
 };
@@ -66,8 +71,8 @@ TEST_P(PerepelkinIConvexHullGrahamScanPerfTest, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, PerepelkinIConvexHullGrahamScanSEQ>(PPC_SETTINGS_perepelkin_i_convex_hull_graham_scan);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, PerepelkinIConvexHullGrahamScanSEQ>(
+    PPC_SETTINGS_perepelkin_i_convex_hull_graham_scan);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
