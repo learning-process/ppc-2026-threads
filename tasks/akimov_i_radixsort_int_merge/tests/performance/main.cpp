@@ -10,8 +10,7 @@
 
 namespace akimov_i_radixsort_int_merge {
 
-class AkimovIRadixSortIntMergePerfTests
-    : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class AkimovIRadixSortIntMergePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 200;
   InType input_data_;
   InType expected_sorted_;
@@ -31,23 +30,25 @@ class AkimovIRadixSortIntMergePerfTests
     return output_data == expected_sorted_;
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 };
 
-TEST_P(AkimovIRadixSortIntMergePerfTests, RunPerfModes) { ExecuteTest(GetParam()); }
+TEST_P(AkimovIRadixSortIntMergePerfTests, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
 
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, AkimovIRadixSortIntMergeSEQ>(
-        PPC_SETTINGS_akimov_i_radixsort_int_merge);
+    ppc::util::MakeAllPerfTasks<InType, AkimovIRadixSortIntMergeSEQ>(PPC_SETTINGS_akimov_i_radixsort_int_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = AkimovIRadixSortIntMergePerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, AkimovIRadixSortIntMergePerfTests,
-                         kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, AkimovIRadixSortIntMergePerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
