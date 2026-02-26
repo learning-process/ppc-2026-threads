@@ -2,10 +2,10 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <random>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "nikitina_v_hoar_sort_batcher/common/include/common.hpp"
 #include "nikitina_v_hoar_sort_batcher/seq/include/ops_seq.hpp"
@@ -23,9 +23,7 @@ class NikitinaVHoarSortBatcherFuncTests : public ppc::util::BaseRunFuncTests<InT
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_id = std::get<0>(params);
-
     input_data_.clear();
-
     if (test_id == 1) {
       input_data_ = {};
     } else if (test_id == 2) {
@@ -43,7 +41,7 @@ class NikitinaVHoarSortBatcherFuncTests : public ppc::util::BaseRunFuncTests<InT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::is_sorted(output_data.begin(), output_data.end());
+    return std::ranges::is_sorted(output_data);
   }
 
   InType GetTestInputData() final {
@@ -63,7 +61,6 @@ TEST_P(NikitinaVHoarSortBatcherFuncTests, RunFuncTests) {
 const std::array<TestType, 4> kTestParam = {std::make_tuple(1, "empty"), std::make_tuple(2, "sorted"),
                                             std::make_tuple(3, "reverse"), std::make_tuple(4, "random")};
 
-// Генерируем задачи на основе настроек
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<HoareSortBatcherSEQ, InType>(kTestParam, PPC_SETTINGS_nikitina_v_hoar_sort_batcher));
 

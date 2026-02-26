@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <utility>
+#include <vector>
 
 #include "nikitina_v_hoar_sort_batcher/common/include/common.hpp"
 
@@ -25,11 +26,9 @@ void HoareSortBatcherSEQ::QuickSortHoare(std::vector<int> &arr, int low, int hig
   if (low >= high) {
     return;
   }
-
-  int pivot = arr[low + (high - low) / 2];
+  int pivot = arr[low + ((high - low) / 2)];
   int i = low - 1;
   int j = high + 1;
-
   while (true) {
     do {
       i++;
@@ -37,13 +36,11 @@ void HoareSortBatcherSEQ::QuickSortHoare(std::vector<int> &arr, int low, int hig
     do {
       j--;
     } while (arr[j] > pivot);
-
     if (i >= j) {
       break;
     }
     std::swap(arr[i], arr[j]);
   }
-
   QuickSortHoare(arr, low, j);
   QuickSortHoare(arr, j + 1, high);
 }
