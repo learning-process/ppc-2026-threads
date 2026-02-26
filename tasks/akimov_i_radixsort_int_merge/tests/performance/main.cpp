@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <random>
-//
+
 #include "akimov_i_radixsort_int_merge/common/include/common.hpp"
 #include "akimov_i_radixsort_int_merge/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
