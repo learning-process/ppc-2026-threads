@@ -7,6 +7,15 @@
 
 namespace lazareva_a_matrix_mult_strassen {
 
+struct StrassenNode {
+  std::vector<double> a;
+  std::vector<double> b;
+  int n{};
+  int result_slot{};
+  int child_slots[7]{};
+  bool expanded{};
+};
+
 class LazarevaATestTaskSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {

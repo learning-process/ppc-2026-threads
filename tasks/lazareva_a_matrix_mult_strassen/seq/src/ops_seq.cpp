@@ -1,8 +1,6 @@
 #include "lazareva_a_matrix_mult_strassen/seq/include/ops_seq.hpp"
 
 #include <cstddef>
-#include <cstdint>
-#include <stack>
 #include <utility>
 #include <vector>
 
@@ -10,17 +8,6 @@
 #include "task/include/task.hpp"
 
 namespace lazareva_a_matrix_mult_strassen {
-
-namespace {
-
-struct StrassenTask {
-  std::vector<double> a;
-  std::vector<double> b;
-  int n;
-  int result_idx;
-};
-
-}  // namespace
 
 LazarevaATestTaskSEQ::LazarevaATestTaskSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -165,86 +152,110 @@ std::vector<double> LazarevaATestTaskSEQ::NaiveMult(const std::vector<double> &a
   return c;
 }
 
-std::vector<double> LazarevaATestTaskSEQ::Strassen(const std::vector<double> &a, const std::vector<double> &b, int n) {
-  struct Frame {
-    std::vector<double> a;
-    std::vector<double> b;
-    int n;
-    int phase;
-    std::vector<std::vector<double>> m;
-    std::vector<double> a11, a12, a21, a22;
-    std::vector<double> b11, b12, b21, b22;
-  };
-
-  std::stack<Frame> stack;
+std::vector<double> LazarevaATestTaskSEQ::Strassen(const std::vector<double> &root_a, const std::vector<double> &root_b,
+                                                   int root_n) {
   std::vector<std::vector<double>> results;
+  std::vector<StrassenNode> nodes;
+  std::vector<int> call_stack;
 
-  stack.push({a, b, n, 0, {}, {}, {}, {}, {}, {}, {}, {}, {}});
+  results.emplace_back();
+  {
+    StrassenNode root;
+    root.a = root_a;
+    root.b = root_b;
+    root.n = root_n;
+    root.result_slot = 0;
+    root.expanded = false;
+    nodes.push_back(std::move(root));
+  }
+  call_stack.push_back(0);
 
-  while (!stack.empty()) {
-    auto &frame = stack.top();
+  while (!call_stack.empty()) {
+    const int node_idx = call_stack.back();
+    call_stack.pop_back();
 
-    if (frame.n <= 64) {
-      results.push_back(NaiveMult(frame.a, frame.b, frame.n));
-      stack.pop();
+    const int cur_n = nodes[static_cast<size_t>(node_idx)].n;
+    const int cur_slot = nodes[static_cast<size_t>(node_idx)].result_slot;
+
+    if (cur_n <= 64) {
+      results[static_cast<size_t>(cur_slot)] =
+          NaiveMult(nodes[static_cast<size_t>(node_idx)].a, nodes[static_cast<size_t>(node_idx)].b, cur_n);
+      nodes[static_cast<size_t>(node_idx)].a = {};
+      nodes[static_cast<size_t>(node_idx)].b = {};
       continue;
     }
 
-    const int half = frame.n / 2;
+    if (!nodes[static_cast<size_t>(node_idx)].expanded) {
+      const int half = cur_n / 2;
 
-    if (frame.phase == 0) {
-      Split(frame.a, frame.n, frame.a11, frame.a12, frame.a21, frame.a22);
-      Split(frame.b, frame.n, frame.b11, frame.b12, frame.b21, frame.b22);
-      frame.m.resize(7);
-      frame.phase = 1;
+      std::vector<double> a11;
+      std::vector<double> a12;
+      std::vector<double> a21;
+      std::vector<double> a22;
+      std::vector<double> b11;
+      std::vector<double> b12;
+      std::vector<double> b21;
+      std::vector<double> b22;
 
-      std::vector<std::pair<std::vector<double>, std::vector<double>>> sub = {
-          {Add(frame.a11, frame.a22, half), Add(frame.b11, frame.b22, half)},
-          {Add(frame.a21, frame.a22, half), frame.b11},
-          {frame.a11, Sub(frame.b12, frame.b22, half)},
-          {frame.a22, Sub(frame.b21, frame.b11, half)},
-          {Add(frame.a11, frame.a12, half), frame.b22},
-          {Sub(frame.a21, frame.a11, half), Add(frame.b11, frame.b12, half)},
-          {Sub(frame.a12, frame.a22, half), Add(frame.b21, frame.b22, half)},
-      };
+      Split(nodes[static_cast<size_t>(node_idx)].a, cur_n, a11, a12, a21, a22);
+      Split(nodes[static_cast<size_t>(node_idx)].b, cur_n, b11, b12, b21, b22);
 
-      for (int idx = 6; idx >= 0; --idx) {
-        stack.push({std::move(sub[static_cast<size_t>(idx)].first),
-                    std::move(sub[static_cast<size_t>(idx)].second),
-                    half,
-                    0,
-                    {},
-                    {},
-                    {},
-                    {},
-                    {},
-                    {},
-                    {},
-                    {},
-                    {}});
+      nodes[static_cast<size_t>(node_idx)].a = {};
+      nodes[static_cast<size_t>(node_idx)].b = {};
+      nodes[static_cast<size_t>(node_idx)].expanded = true;
+
+      std::vector<std::pair<std::vector<double>, std::vector<double>>> args;
+      args.reserve(7);
+      args.emplace_back(Add(a11, a22, half), Add(b11, b22, half));
+      args.emplace_back(Add(a21, a22, half), std::vector<double>(b11));
+      args.emplace_back(std::vector<double>(a11), Sub(b12, b22, half));
+      args.emplace_back(std::vector<double>(a22), Sub(b21, b11, half));
+      args.emplace_back(Add(a11, a12, half), std::vector<double>(b22));
+      args.emplace_back(Sub(a21, a11, half), Add(b11, b12, half));
+      args.emplace_back(Sub(a12, a22, half), Add(b21, b22, half));
+
+      const int base_slot = static_cast<int>(results.size());
+      for (int k = 0; k < 7; ++k) {
+        nodes[static_cast<size_t>(node_idx)].child_slots[k] = base_slot + k;
+        results.emplace_back();
       }
-      continue;
-    }
 
-    const size_t results_needed = 7;
-    if (results.size() >= results_needed) {
-      const size_t base = results.size() - results_needed;
-      for (int idx = 0; idx < 7; ++idx) {
-        frame.m[static_cast<size_t>(idx)] = std::move(results[base + static_cast<size_t>(idx)]);
+      call_stack.push_back(node_idx);
+
+      for (int k = 6; k >= 0; --k) {
+        StrassenNode child;
+        child.a = std::move(args[static_cast<size_t>(k)].first);
+        child.b = std::move(args[static_cast<size_t>(k)].second);
+        child.n = half;
+        child.result_slot = base_slot + k;
+        child.expanded = false;
+        const int child_idx = static_cast<int>(nodes.size());
+        nodes.push_back(std::move(child));
+        call_stack.push_back(child_idx);
       }
-      results.resize(base);
 
-      auto c11 = Add(Sub(Add(frame.m[0], frame.m[3], half), frame.m[4], half), frame.m[6], half);
-      auto c12 = Add(frame.m[2], frame.m[4], half);
-      auto c21 = Add(frame.m[1], frame.m[3], half);
-      auto c22 = Add(Sub(Add(frame.m[0], frame.m[2], half), frame.m[1], half), frame.m[5], half);
+    } else {
+      const int half = cur_n / 2;
+      const int *cs = nodes[static_cast<size_t>(node_idx)].child_slots;
 
-      results.push_back(Merge(c11, c12, c21, c22, half));
-      stack.pop();
+      const auto &m1 = results[static_cast<size_t>(cs[0])];
+      const auto &m2 = results[static_cast<size_t>(cs[1])];
+      const auto &m3 = results[static_cast<size_t>(cs[2])];
+      const auto &m4 = results[static_cast<size_t>(cs[3])];
+      const auto &m5 = results[static_cast<size_t>(cs[4])];
+      const auto &m6 = results[static_cast<size_t>(cs[5])];
+      const auto &m7 = results[static_cast<size_t>(cs[6])];
+
+      auto c11 = Add(Sub(Add(m1, m4, half), m5, half), m7, half);
+      auto c12 = Add(m3, m5, half);
+      auto c21 = Add(m2, m4, half);
+      auto c22 = Add(Sub(Add(m1, m3, half), m2, half), m6, half);
+
+      results[static_cast<size_t>(cur_slot)] = Merge(c11, c12, c21, c22, half);
     }
   }
 
-  return results.front();
+  return results[0];
 }
 
 }  // namespace lazareva_a_matrix_mult_strassen
