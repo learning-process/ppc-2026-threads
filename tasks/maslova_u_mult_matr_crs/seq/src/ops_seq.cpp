@@ -44,10 +44,42 @@ bool MaslovaUMultMatrSEQ::PreProcessingImpl() {
   return true;
 }
 
+void MaslovaUMultMatrSEQ::process_row(int i, const CRSMatrix &a, const CRSMatrix &b, CRSMatrix &c) {
+  used_cols_.clear();
+  for (int j = a.row_ptr[i]; j < a.row_ptr[i + 1]; ++j) {
+    const int col_a = a.col_ind[j];
+    const double val_a = a.values[j];
+
+    for (int k = b.row_ptr[col_a]; k < b.row_ptr[col_a + 1]; ++k) {
+      const int col_b = b.col_ind[k];
+      const double val_b = b.values[k];
+
+      if (marker_[col_b] < i) {
+        marker_[col_b] = i;
+        used_cols_.push_back(col_b);
+        temp_row_[col_b] = val_a * val_b;
+      } else {
+        temp_row_[col_b] += val_a * val_b;
+      }
+    }
+  }
+
+  if (!used_cols_.empty()) {
+    std::ranges::sort(used_cols_);
+    for (int col_idx : used_cols_) {
+      const double val = temp_row_[col_idx];
+      if (std::abs(val) > 1e-15) {
+        c.values.push_back(val);
+        c.col_ind.push_back(col_idx);
+      }
+      temp_row_[col_idx] = 0.0;
+    }
+  }
+}
+
 bool MaslovaUMultMatrSEQ::RunImpl() {
-  const auto &input = GetInput();
-  const auto &a = std::get<0>(input);
-  const auto &b = std::get<1>(input);
+  const auto &a = std::get<0>(GetInput());
+  const auto &b = std::get<1>(GetInput());
   auto &c = GetOutput();
 
   c.rows = a.rows;
@@ -55,48 +87,15 @@ bool MaslovaUMultMatrSEQ::RunImpl() {
   c.row_ptr.assign(static_cast<size_t>(a.rows) + 1, 0);
   c.values.clear();
   c.col_ind.clear();
-
   c.values.reserve(a.values.size());
   c.col_ind.reserve(a.values.size());
 
   std::ranges::fill(marker_, -1);
-  used_cols_.clear();
 
   for (int i = 0; i < a.rows; ++i) {
-    for (int j = a.row_ptr[i]; j < a.row_ptr[i + 1]; ++j) {
-      const int col_a = a.col_ind[j];
-      const double val_a = a.values[j];
-
-      for (int k = b.row_ptr[col_a]; k < b.row_ptr[col_a + 1]; ++k) {
-        const int col_b = b.col_ind[k];
-        const double val_b = b.values[k];
-
-        if (marker_[col_b] < i) {
-          marker_[col_b] = i;
-          used_cols_.push_back(col_b);
-          temp_row_[col_b] = val_a * val_b;
-        } else {
-          temp_row_[col_b] += val_a * val_b;
-        }
-      }
-    }
-
-    if (!used_cols_.empty()) {
-      std::ranges::sort(used_cols_);
-
-      for (int col_idx : used_cols_) {
-        const double val = temp_row_[col_idx];
-        if (std::abs(val) > 1e-15) {
-          c.values.push_back(val);
-          c.col_ind.push_back(col_idx);
-        }
-        temp_row_[col_idx] = 0.0;
-      }
-      used_cols_.clear();
-    }
+    process_row(i, a, b, c);
     c.row_ptr[i + 1] = static_cast<int>(c.values.size());
   }
-
   return true;
 }
 

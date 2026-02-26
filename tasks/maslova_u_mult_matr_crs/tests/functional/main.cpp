@@ -1,9 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <array>  
 #include <cmath>
 #include <cstddef>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -11,6 +10,7 @@
 #include "maslova_u_mult_matr_crs/common/include/common.hpp"
 #include "maslova_u_mult_matr_crs/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace maslova_u_mult_matr_crs {
 
