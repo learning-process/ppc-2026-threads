@@ -13,7 +13,7 @@ class TsyplakovKTestTaskSEQ : public BaseTask {
     return ppc::task::TypeOfTask::kSEQ;
   }
 
-  explicit TsyplakovKTestTaskSEQ(const InType& in);
+  explicit TsyplakovKTestTaskSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -21,9 +21,9 @@ class TsyplakovKTestTaskSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static std::vector<double> MultiplyRowByMatrix(const std::vector<double>& row_values,
-                                                 const std::vector<int>& row_cols, const SparseMatrixCRS& b,
-                                                 int& result_nnz);
+  static std::vector<double> MultiplyRowByMatrix(const std::vector<double> &row_values,
+                                                 const std::vector<int> &row_cols, const SparseMatrixCRS &b,
+                                                 int &result_nnz);
 };
 
 }  // namespace tsyplakov_k_mul_double_crs_matrix

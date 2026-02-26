@@ -10,7 +10,7 @@
 
 namespace tsyplakov_k_mul_double_crs_matrix {
 
-TsyplakovKTestTaskSEQ::TsyplakovKTestTaskSEQ(const InType& in) {
+TsyplakovKTestTaskSEQ::TsyplakovKTestTaskSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
@@ -25,9 +25,9 @@ bool TsyplakovKTestTaskSEQ::PreProcessingImpl() {
   return true;
 }
 
-std::vector<double> TsyplakovKTestTaskSEQ::MultiplyRowByMatrix(const std::vector<double>& row_values,
-                                                               const std::vector<int>& row_cols,
-                                                               const SparseMatrixCRS& b, int& result_nnz) {
+std::vector<double> TsyplakovKTestTaskSEQ::MultiplyRowByMatrix(const std::vector<double> &row_values,
+                                                               const std::vector<int> &row_cols,
+                                                               const SparseMatrixCRS &b, int &result_nnz) {
   std::map<int, double> temp_result;
   for (size_t i = 0; i < row_cols.size(); ++i) {
     int col_a = row_cols[i];
@@ -62,9 +62,9 @@ std::vector<double> TsyplakovKTestTaskSEQ::MultiplyRowByMatrix(const std::vector
 }
 
 bool TsyplakovKTestTaskSEQ::RunImpl() {
-  const SparseMatrixCRS& a = GetInput().a;
-  const SparseMatrixCRS& b = GetInput().b;
-  SparseMatrixCRS& c = GetOutput();
+  const SparseMatrixCRS &a = GetInput().a;
+  const SparseMatrixCRS &b = GetInput().b;
+  SparseMatrixCRS &c = GetOutput();
 
   c.values.clear();
   c.col_index.clear();
@@ -110,7 +110,7 @@ bool TsyplakovKTestTaskSEQ::RunImpl() {
     const double eps = std::numeric_limits<double>::epsilon() * 100;
     c.row_ptr[i] = static_cast<int>(c.values.size());
 
-    for (const auto& [col, val] : temp_result) {
+    for (const auto &[col, val] : temp_result) {
       if (std::abs(val) > eps) {
         c.col_index.push_back(col);
         c.values.push_back(val);
