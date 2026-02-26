@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "maslova_u_mult_matr_crs/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -18,9 +20,9 @@ class MaslovaUMultMatrSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  std::vector<double> temp_row;
-  std::vector<int> marker;
-  std::vector<int> used_cols;
+  std::vector<double> temp_row_;
+  std::vector<int> marker_;
+  std::vector<int> used_cols_;
 };
 
 }  // namespace maslova_u_mult_matr_crs

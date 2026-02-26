@@ -1,20 +1,16 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
-#include <array>
+#include <cmath>
 #include <cstddef>
-#include <cstdint>
 #include <numeric>
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "maslova_u_mult_matr_crs/common/include/common.hpp"
 #include "maslova_u_mult_matr_crs/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace maslova_u_mult_matr_crs {
 
@@ -28,21 +24,22 @@ class MaslovaUMultMatrRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<I
   void SetUp() override {
     int test_case =
         std::get<0>(std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()));
-    CRSMatrix A, B;
+    CRSMatrix a;
+    CRSMatrix b;
     expected_result_ = CRSMatrix();
 
     switch (test_case) {
       case 1: {
-        A.rows = 2;
-        A.cols = 2;
-        A.row_ptr = {0, 2, 4};
-        A.col_ind = {0, 1, 0, 1};
-        A.values = {1.0, 1.0, 1.0, 1.0};
-        B.rows = 2;
-        B.cols = 2;
-        B.row_ptr = {0, 2, 4};
-        B.col_ind = {0, 1, 0, 1};
-        B.values = {1.0, 1.0, 1.0, 1.0};
+        a.rows = 2;
+        a.cols = 2;
+        a.row_ptr = {0, 2, 4};
+        a.col_ind = {0, 1, 0, 1};
+        a.values = {1.0, 1.0, 1.0, 1.0};
+        b.rows = 2;
+        b.cols = 2;
+        b.row_ptr = {0, 2, 4};
+        b.col_ind = {0, 1, 0, 1};
+        b.values = {1.0, 1.0, 1.0, 1.0};
 
         expected_result_.rows = 2;
         expected_result_.cols = 2;
@@ -53,16 +50,16 @@ class MaslovaUMultMatrRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<I
       }
 
       case 2: {
-        A.rows = 2;
-        A.cols = 2;
-        A.row_ptr = {0, 1, 3};
-        A.col_ind = {0, 0, 1};
-        A.values = {1.0, 1.0, 1.0};
-        B.rows = 2;
-        B.cols = 2;
-        B.row_ptr = {0, 1, 3};
-        B.col_ind = {0, 0, 1};
-        B.values = {1.0, 1.0, 1.0};
+        a.rows = 2;
+        a.cols = 2;
+        a.row_ptr = {0, 1, 3};
+        a.col_ind = {0, 0, 1};
+        a.values = {1.0, 1.0, 1.0};
+        b.rows = 2;
+        b.cols = 2;
+        b.row_ptr = {0, 1, 3};
+        b.col_ind = {0, 0, 1};
+        b.values = {1.0, 1.0, 1.0};
 
         expected_result_.rows = 2;
         expected_result_.cols = 2;
@@ -73,16 +70,16 @@ class MaslovaUMultMatrRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<I
       }
 
       case 3: {
-        A.rows = 1;
-        A.cols = 1;
-        A.row_ptr = {0, 1};
-        A.col_ind = {0};
-        A.values = {5.0};
-        B.rows = 1;
-        B.cols = 2;
-        B.row_ptr = {0, 2};
-        B.col_ind = {0, 1};
-        B.values = {2.0, 3.0};
+        a.rows = 1;
+        a.cols = 1;
+        a.row_ptr = {0, 1};
+        a.col_ind = {0};
+        a.values = {5.0};
+        b.rows = 1;
+        b.cols = 2;
+        b.row_ptr = {0, 2};
+        b.col_ind = {0, 1};
+        b.values = {2.0, 3.0};
 
         expected_result_.rows = 1;
         expected_result_.cols = 2;
@@ -93,16 +90,16 @@ class MaslovaUMultMatrRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<I
       }
 
       case 4: {
-        A.rows = 2;
-        A.cols = 2;
-        A.row_ptr = {0, 1, 1};
-        A.col_ind = {1};
-        A.values = {5.0};
-        B.rows = 2;
-        B.cols = 2;
-        B.row_ptr = {0, 0, 1};
-        B.col_ind = {0};
-        B.values = {2.0};
+        a.rows = 2;
+        a.cols = 2;
+        a.row_ptr = {0, 1, 1};
+        a.col_ind = {1};
+        a.values = {5.0};
+        b.rows = 2;
+        b.cols = 2;
+        b.row_ptr = {0, 0, 1};
+        b.col_ind = {0};
+        b.values = {2.0};
 
         expected_result_.rows = 2;
         expected_result_.cols = 2;
@@ -113,16 +110,16 @@ class MaslovaUMultMatrRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<I
       }
 
       case 5: {
-        A.rows = 1;
-        A.cols = 3;
-        A.row_ptr = {0, 3};
-        A.col_ind = {0, 1, 2};
-        A.values = {1.0, 2.0, 3.0};
-        B.rows = 3;
-        B.cols = 1;
-        B.row_ptr = {0, 1, 2, 3};
-        B.col_ind = {0, 0, 0};
-        B.values = {4.0, 5.0, 6.0};
+        a.rows = 1;
+        a.cols = 3;
+        a.row_ptr = {0, 3};
+        a.col_ind = {0, 1, 2};
+        a.values = {1.0, 2.0, 3.0};
+        b.rows = 3;
+        b.cols = 1;
+        b.row_ptr = {0, 1, 2, 3};
+        b.col_ind = {0, 0, 0};
+        b.values = {4.0, 5.0, 6.0};
 
         expected_result_.rows = 1;
         expected_result_.cols = 1;
@@ -135,7 +132,7 @@ class MaslovaUMultMatrRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<I
       default:
         throw std::runtime_error("Invalid Test Case");
     }
-    input_data_ = std::make_tuple(A, B);
+    input_data_ = std::make_tuple(a, b);
   }
 
   bool CheckTestOutputData(OutType &out) final {
