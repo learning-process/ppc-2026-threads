@@ -1,13 +1,12 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <complex>
 #include <random>
 #include <vector>
-#include <algorithm>
 
 #include "liulin_y_complex_ccs/common/include/common.hpp"
 #include "liulin_y_complex_ccs/seq/include/ops_seq.hpp"
-
 #include "util/include/perf_test_util.hpp"
 
 namespace liulin_y_complex_ccs {
@@ -33,7 +32,7 @@ CCSMatrix CreateRandomSparseComplexMatrix(int rows, int cols, double density) {
         current_col_rows.push_back(i);
       }
     }
-    
+
     for (int row : current_col_rows) {
       matrix.values.emplace_back(val_dist(gen), val_dist(gen));
       matrix.row_index.push_back(row);
@@ -50,7 +49,7 @@ CCSMatrix CreateRandomSparseComplexMatrix(int rows, int cols, double density) {
 class LiulinYComplexCcsPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    int size = 1000; 
+    int size = 1000;
     double density = 0.01;
 
     matrix_a_ = CreateRandomSparseComplexMatrix(size, size, density);
@@ -60,8 +59,7 @@ class LiulinYComplexCcsPerfTest : public ppc::util::BaseRunPerfTests<InType, Out
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.count_rows != matrix_a_.count_rows || 
-        output_data.count_cols != matrix_b_.count_cols) {
+    if (output_data.count_rows != matrix_a_.count_rows || output_data.count_cols != matrix_b_.count_cols) {
       return false;
     }
 
@@ -94,8 +92,7 @@ TEST_P(LiulinYComplexCcsPerfTest, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LiulinYComplexCcs>(
-    PPC_SETTINGS_liulin_y_complex_ccs);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LiulinYComplexCcs>(PPC_SETTINGS_liulin_y_complex_ccs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

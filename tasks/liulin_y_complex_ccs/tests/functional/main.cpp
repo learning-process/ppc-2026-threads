@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <algorithm>
 #include <complex>
 #include <fstream>
@@ -13,19 +14,21 @@
 namespace liulin_y_complex_ccs {
 
 static CCSMatrix triplet_to_ccs_test(int rows, int cols,
-                                     const std::vector<std::tuple<int, int, std::complex<double>>>& triplets) {
+                                     const std::vector<std::tuple<int, int, std::complex<double>>> &triplets) {
   CCSMatrix res;
   res.count_rows = rows;
   res.count_cols = cols;
   res.col_index.assign(cols + 1, 0);
 
   auto sorted = triplets;
-  std::sort(sorted.begin(), sorted.end(), [](const auto& a, const auto& b) {
-    if (std::get<1>(a) != std::get<1>(b)) return std::get<1>(a) < std::get<1>(b);
+  std::sort(sorted.begin(), sorted.end(), [](const auto &a, const auto &b) {
+    if (std::get<1>(a) != std::get<1>(b)) {
+      return std::get<1>(a) < std::get<1>(b);
+    }
     return std::get<0>(a) < std::get<0>(b);
   });
 
-  for (const auto& triplet : sorted) {
+  for (const auto &triplet : sorted) {
     res.values.push_back(std::get<2>(triplet));
     res.row_index.push_back(std::get<0>(triplet));
     res.col_index[std::get<1>(triplet) + 1]++;
@@ -39,7 +42,9 @@ static CCSMatrix triplet_to_ccs_test(int rows, int cols,
 
 class LiulinYComplexCcsFuncTestsFromFile : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType& p) { return std::get<1>(p); }
+  static std::string PrintTestParam(const TestType &p) {
+    return std::get<1>(p);
+  }
 
  protected:
   void SetUp() override {
@@ -52,11 +57,13 @@ class LiulinYComplexCcsFuncTestsFromFile : public ppc::util::BaseRunFuncTests<In
       throw std::runtime_error("Cannot open test file: " + abs_path + ".txt");
     }
 
-    auto read_matrix = [&](CCSMatrix& M) {
+    auto read_matrix = [&](CCSMatrix &M) {
       int r;
       int c;
       int nnz;
-      if (!(file >> r >> c >> nnz)) return;
+      if (!(file >> r >> c >> nnz)) {
+        return;
+      }
       std::vector<std::tuple<int, int, std::complex<double>>> triplets;
       for (int i = 0; i < nnz; ++i) {
         int row;
@@ -91,26 +98,42 @@ class LiulinYComplexCcsFuncTestsFromFile : public ppc::util::BaseRunFuncTests<In
     std::vector<std::tuple<int, int, std::complex<double>>> res_triplets;
     for (int j = 0; j < C; ++j) {
       for (int i = 0; i < R; ++i) {
-        if (std::abs(dense[i * C + j]) > 1e-15) res_triplets.emplace_back(i, j, dense[i * C + j]);
+        if (std::abs(dense[i * C + j]) > 1e-15) {
+          res_triplets.emplace_back(i, j, dense[i * C + j]);
+        }
       }
     }
     exp_output_ = triplet_to_ccs_test(R, C, res_triplets);
     file.close();
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
-    if (output_data.count_rows != exp_output_.count_rows) return false;
-    if (output_data.count_cols != exp_output_.count_cols) return false;
-    if (output_data.col_index != exp_output_.col_index) return false;
-    if (output_data.row_index != exp_output_.row_index) return false;
-    if (output_data.values.size() != exp_output_.values.size()) return false;
+  bool CheckTestOutputData(OutType &output_data) final {
+    if (output_data.count_rows != exp_output_.count_rows) {
+      return false;
+    }
+    if (output_data.count_cols != exp_output_.count_cols) {
+      return false;
+    }
+    if (output_data.col_index != exp_output_.col_index) {
+      return false;
+    }
+    if (output_data.row_index != exp_output_.row_index) {
+      return false;
+    }
+    if (output_data.values.size() != exp_output_.values.size()) {
+      return false;
+    }
     for (size_t i = 0; i < output_data.values.size(); ++i) {
-      if (std::abs(output_data.values[i] - exp_output_.values[i]) > 1e-9) return false;
+      if (std::abs(output_data.values[i] - exp_output_.values[i]) > 1e-9) {
+        return false;
+      }
     }
     return true;
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
  private:
   InType input_data_;
@@ -118,15 +141,17 @@ class LiulinYComplexCcsFuncTestsFromFile : public ppc::util::BaseRunFuncTests<In
 };
 
 namespace {
-TEST_P(LiulinYComplexCcsFuncTestsFromFile, SparseMultiplyFileTest) { ExecuteTest(GetParam()); }
+TEST_P(LiulinYComplexCcsFuncTestsFromFile, SparseMultiplyFileTest) {
+  ExecuteTest(GetParam());
+}
 
 const std::array<TestType, 6> kTestParam = {
-    std::make_tuple(0, "identity_2x2"),      std::make_tuple(1, "complex_scalar"),
-    std::make_tuple(2, "rectangular_simple"), std::make_tuple(3, "zero_matrix"),
+    std::make_tuple(0, "identity_2x2"),        std::make_tuple(1, "complex_scalar"),
+    std::make_tuple(2, "rectangular_simple"),  std::make_tuple(3, "zero_matrix"),
     std::make_tuple(4, "sparse_random_small"), std::make_tuple(5, "only_imaginary")};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<LiulinYComplexCcs, InType>(kTestParam, PPC_SETTINGS_liulin_y_complex_ccs));
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<LiulinYComplexCcs, InType>(kTestParam, PPC_SETTINGS_liulin_y_complex_ccs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kFuncTestName = LiulinYComplexCcsFuncTestsFromFile::PrintFuncTestName<LiulinYComplexCcsFuncTestsFromFile>;
