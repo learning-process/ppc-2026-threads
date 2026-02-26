@@ -26,7 +26,9 @@ bool AkimovIRadixSortIntMergeSEQ::PreProcessingImpl() {
 
 bool AkimovIRadixSortIntMergeSEQ::RunImpl() {
   auto &arr = GetOutput();
-  if (arr.empty()) return true;
+  if (arr.empty()) {
+    return true;
+  }
 
   constexpr uint32_t sign_mask = 0x80000000;
   for (int &x : arr) {

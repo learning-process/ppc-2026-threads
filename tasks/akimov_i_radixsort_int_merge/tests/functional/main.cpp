@@ -53,10 +53,11 @@ TEST_P(AkimovIRadixSortIntMergeFuncTests, RadixSort) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(10, "10"), std::make_tuple(100, "100"), std::make_tuple(1000, "1000")};
+const std::array<TestType, 3> kTestParam = {std::make_tuple(10, "10"), std::make_tuple(100, "100"),
+                                            std::make_tuple(1000, "1000")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<AkimovIRadixSortIntMergeSEQ, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<AkimovIRadixSortIntMergeSEQ, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
