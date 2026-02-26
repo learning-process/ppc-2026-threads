@@ -2,12 +2,12 @@
 
 #include <algorithm>
 #include <cmath>
-#include <numeric>
 #include <stack>
+#include <cstddef>
+#include <utility>
 #include <vector>
 
 #include "tabalaev_a_matrix_mul_strassen/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace tabalaev_a_matrix_mul_strassen {
 
@@ -42,13 +42,13 @@ bool TabalaevAMatrixMulStrassenSEQ::PreProcessingImpl() {
 
   for (int i = 0; i < a_rows_; ++i) {
     for (int j = 0; j < a_cols_b_rows_; ++j) {
-      padded_a_[i * padded_n_ + j] = in.a[i * a_cols_b_rows_ + j];
+      padded_a_[(i * padded_n_) + j] = in.a[(i * a_cols_b_rows_) + j];
     }
   }
 
   for (int i = 0; i < a_cols_b_rows_; ++i) {
     for (int j = 0; j < b_cols_; ++j) {
-      padded_b_[i * padded_n_ + j] = in.b[i * b_cols_ + j];
+      padded_b_[(i * padded_n_) + j] = in.b[(i * b_cols_) + j];
     }
   }
   return true;
@@ -62,7 +62,7 @@ bool TabalaevAMatrixMulStrassenSEQ::RunImpl() {
 
   for (int i = 0; i < a_rows_; ++i) {
     for (int j = 0; j < b_cols_; ++j) {
-      out[i * b_cols_ + j] = result_c_[i * padded_n_ + j];
+      out[(i * b_cols_) + j] = result_c_[(i * padded_n_) + j];
     }
   }
   return true;
@@ -107,7 +107,7 @@ std::vector<double> TabalaevAMatrixMulStrassenSEQ::StrassenMultiply(const std::v
         for (int i = 0; i < current.n; ++i) {
           for (int k = 0; k < current.n; ++k) {
             for (int j = 0; j < current.n; ++j) {
-              res[i * current.n + j] += current.mat_a[i * current.n + k] * current.mat_b[k * current.n + j];
+              res[(i * current.n) + j] += current.mat_a[(i * current.n) + k] * current.mat_b[(k * current.n) + j];
             }
           }
         }
@@ -117,19 +117,25 @@ std::vector<double> TabalaevAMatrixMulStrassenSEQ::StrassenMultiply(const std::v
 
       int h = current.n / 2;
       int sz = h * h;
-      std::vector<double> a11(sz), a12(sz), a21(sz), a22(sz);
-      std::vector<double> b11(sz), b12(sz), b21(sz), b22(sz);
+      std::vector<double> a11(sz);
+      std::vector<double> a12(sz);
+      std::vector<double> a21(sz);
+      std::vector<double> a22(sz);
+      std::vector<double> b11(sz);
+      std::vector<double> b12(sz);
+      std::vector<double> b21(sz);
+      std::vector<double> b22(sz);
 
       for (int i = 0; i < h; ++i) {
         for (int j = 0; j < h; ++j) {
-          a11[i * h + j] = current.mat_a[i * current.n + j];
-          a12[i * h + j] = current.mat_a[i * current.n + j + h];
-          a21[i * h + j] = current.mat_a[(i + h) * current.n + j];
-          a22[i * h + j] = current.mat_a[(i + h) * current.n + j + h];
-          b11[i * h + j] = current.mat_b[i * current.n + j];
-          b12[i * h + j] = current.mat_b[i * current.n + j + h];
-          b21[i * h + j] = current.mat_b[(i + h) * current.n + j];
-          b22[i * h + j] = current.mat_b[(i + h) * current.n + j + h];
+          a11[(i * h) + j] = current.mat_a[(i * current.n) + j];
+          a12[(i * h) + j] = current.mat_a[(i * current.n) + j + h];
+          a21[(i * h) + j] = current.mat_a[((i + h) * current.n) + j];
+          a22[(i * h) + j] = current.mat_a[((i + h) * current.n) + j + h];
+          b11[(i * h) + j] = current.mat_b[(i * current.n) + j];
+          b12[(i * h) + j] = current.mat_b[(i * current.n) + j + h];
+          b21[(i * h) + j] = current.mat_b[((i + h) * current.n) + j];
+          b22[(i * h) + j] = current.mat_b[((i + h) * current.n) + j + h];
         }
       }
 
@@ -164,10 +170,10 @@ std::vector<double> TabalaevAMatrixMulStrassenSEQ::StrassenMultiply(const std::v
       for (int i = 0; i < h; ++i) {
         for (int j = 0; j < h; ++j) {
           int idx = i * h + j;
-          res[i * current.n + j] = p1[idx] + p4[idx] - p5[idx] + p7[idx];
-          res[i * current.n + j + h] = p3[idx] + p5[idx];
-          res[(i + h) * current.n + j] = p2[idx] + p4[idx];
-          res[(i + h) * current.n + j + h] = p1[idx] - p2[idx] + p3[idx] + p6[idx];
+          res[(i * current.n) + j] = p1[idx] + p4[idx] - p5[idx] + p7[idx];
+          res[(i * current.n) + j + h] = p3[idx] + p5[idx];
+          res[((i + h) * current.n) + j] = p2[idx] + p4[idx];
+          res[((i + h) * current.n) + j + h] = p1[idx] - p2[idx] + p3[idx] + p6[idx];
         }
       }
       results.push(std::move(res));

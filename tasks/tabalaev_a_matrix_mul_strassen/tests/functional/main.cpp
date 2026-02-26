@@ -1,15 +1,11 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
+#include <cmath>
 
 #include "tabalaev_a_matrix_mul_strassen/common/include/common.hpp"
 #include "tabalaev_a_matrix_mul_strassen/seq/include/ops_seq.hpp"
@@ -29,9 +25,9 @@ class TabalaevAMatrixMulStrassenFuncTests : public ppc::util::BaseRunFuncTests<I
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    int r_a = static_cast<int>(std::get<0>(params));
-    int c_a_r_b = static_cast<int>(std::get<1>(params));
-    int c_b = static_cast<int>(std::get<2>(params));
+    int r_a = std::get<0>(params);
+    int c_a_r_b = std::get<1>(params);
+    int c_b = std::get<2>(params);
     int up_to = std::get<3>(params);
 
     input_data_.a_rows = r_a;
@@ -50,9 +46,9 @@ class TabalaevAMatrixMulStrassenFuncTests : public ppc::util::BaseRunFuncTests<I
     expected_output_.assign(r_a * c_b, 0.0);
     for (int i = 0; i < r_a; ++i) {
       for (int k = 0; k < c_a_r_b; ++k) {
-        double temp = input_data_.a[i * c_a_r_b + k];
+        double temp = input_data_.a[(i * c_a_r_b) + k];
         for (int j = 0; j < c_b; ++j) {
-          expected_output_[i * c_b + j] += temp * input_data_.b[k * c_b + j];
+          expected_output_[(i * c_b) + j] += temp * input_data_.b[(k * c_b) + j];
         }
       }
     }
@@ -89,7 +85,7 @@ TEST_P(TabalaevAMatrixMulStrassenFuncTests, MatmulFromPic) {
 const std::array<TestType, 5> kTestParam = {
     std::make_tuple(2, 2, 2, 10, "Small_2x2"), std::make_tuple(4, 4, 4, 10, "PowerOfTwo_4x4"),
     std::make_tuple(3, 5, 3, 20, "NonSquare_Padded"), std::make_tuple(16, 16, 16, 100, "Medium_16x16"),
-    std::make_tuple(32, 32, 32, 50, "Large_32x32")};
+    std::make_tuple(64, 64, 64, 150, "Large_64x64")};
 
 const auto kTestTasksList = ppc::util::AddFuncTask<TabalaevAMatrixMulStrassenSEQ, InType>(
     kTestParam, PPC_SETTINGS_tabalaev_a_matrix_mul_strassen);

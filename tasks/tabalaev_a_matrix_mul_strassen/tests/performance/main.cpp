@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <cmath>
+#include <vector>
+
 #include "tabalaev_a_matrix_mul_strassen/common/include/common.hpp"
 #include "tabalaev_a_matrix_mul_strassen/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
@@ -8,12 +12,12 @@ namespace tabalaev_a_matrix_mul_strassen {
 
 class TabalaevAMatrixMulStrassenPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   void SetUp() override {
-    const size_t kRc = 512;
-    const size_t size = kRc * kRc;
+    const size_t rc = 512;
+    const size_t size = rc * rc;
 
-    input_data_.a_rows = static_cast<int>(kRc);
-    input_data_.a_cols_b_rows = static_cast<int>(kRc);
-    input_data_.b_cols = static_cast<int>(kRc);
+    input_data_.a_rows = static_cast<int>(rc);
+    input_data_.a_cols_b_rows = static_cast<int>(rc);
+    input_data_.b_cols = static_cast<int>(rc);
 
     input_data_.a.assign(size, 0.0);
     input_data_.b.assign(size, 0.0);
@@ -25,11 +29,11 @@ class TabalaevAMatrixMulStrassenPerfTests : public ppc::util::BaseRunPerfTests<I
 
     expected_output_.assign(size, 0.0);
 
-    for (size_t i = 0; i < kRc; ++i) {
-      for (size_t k = 0; k < kRc; ++k) {
-        double temp = input_data_.a[i * kRc + k];
-        for (size_t j = 0; j < kRc; ++j) {
-          expected_output_[i * kRc + j] += temp * input_data_.b[k * kRc + j];
+    for (size_t i = 0; i < rc; ++i) {
+      for (size_t k = 0; k < rc; ++k) {
+        double temp = input_data_.a[(i * rc) + k];
+        for (size_t j = 0; j < rc; ++j) {
+          expected_output_[(i * rc) + j] += temp * input_data_.b[(k * rc) + j];
         }
       }
     }

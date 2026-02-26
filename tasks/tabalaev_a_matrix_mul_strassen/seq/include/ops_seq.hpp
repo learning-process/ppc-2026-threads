@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "tabalaev_a_matrix_mul_strassen/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -26,8 +28,8 @@ class TabalaevAMatrixMulStrassenSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 
   std::vector<double> StrassenMultiply(const std::vector<double> &mat_a, const std::vector<double> &mat_b, int n);
-  std::vector<double> Add(const std::vector<double> &mat_a, const std::vector<double> &mat_b);
-  std::vector<double> Subtract(const std::vector<double> &mat_a, const std::vector<double> &mat_b);
+  static std::vector<double> Add(const std::vector<double> &mat_a, const std::vector<double> &mat_b);
+  static std::vector<double> Subtract(const std::vector<double> &mat_a, const std::vector<double> &mat_b);
 
   int a_rows_ = 0;
   int a_cols_b_rows_ = 0;
