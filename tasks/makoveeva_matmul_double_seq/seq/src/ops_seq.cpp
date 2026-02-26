@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstddef>  // для size_t
 #include <vector>
 
 #include "makoveeva_matmul_double_seq/common/include/common.hpp"  // для InType
@@ -55,7 +54,7 @@ bool MatmulDoubleSeqTask::RunImpl() {
     return false;
   }
 
-  // Очищаем C_ перед вычислениями - используем assign вместо цикла
+  // Очищаем C_ перед вычислениями
   C_.assign(C_.size(), 0.0);
 
   const int n_int = static_cast<int>(n_);
