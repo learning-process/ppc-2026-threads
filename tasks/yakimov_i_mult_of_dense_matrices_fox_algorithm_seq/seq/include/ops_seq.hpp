@@ -3,9 +3,9 @@
 #include <string>
 
 #include "task/include/task.hpp"
-#include "yakimov_i_mult_of_dense_matrices_Fox_algorithm/common/include/common.hpp"
+#include "yakimov_i_mult_of_dense_matrices_fox_algorithm_seq/common/include/common.hpp"
 
-namespace yakimov_i_mult_of_dense_matrices_fox_algorithm {
+namespace yakimov_i_mult_of_dense_matrices_fox_algorithm_seq {
 
 class YakimovIMultOfDenseMatricesFoxAlgorithmSEQ : public BaseTask {
  public:
@@ -28,4 +28,4 @@ class YakimovIMultOfDenseMatricesFoxAlgorithmSEQ : public BaseTask {
   int block_size_ = 0;
 };
 
-}  // namespace yakimov_i_mult_of_dense_matrices_fox_algorithm
+}  // namespace yakimov_i_mult_of_dense_matrices_fox_algorithm_seq

@@ -1,4 +1,4 @@
-#include "yakimov_i_mult_of_dense_matrices_Fox_algorithm/seq/include/ops_seq.hpp"
+#include "yakimov_i_mult_of_dense_matrices_fox_algorithm_seq/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -8,9 +8,9 @@
 #include <vector>
 
 #include "util/include/util.hpp"
-#include "yakimov_i_mult_of_dense_matrices_Fox_algorithm/common/include/common.hpp"
+#include "yakimov_i_mult_of_dense_matrices_fox_algorithm_seq/common/include/common.hpp"
 
-namespace yakimov_i_mult_of_dense_matrices_fox_algorithm {
+namespace yakimov_i_mult_of_dense_matrices_fox_algorithm_seq {
 
 namespace {
 
@@ -105,7 +105,7 @@ YakimovIMultOfDenseMatricesFoxAlgorithmSEQ::YakimovIMultOfDenseMatricesFoxAlgori
   this->GetInput() = in;
   this->GetOutput() = 0.0;
 
-  std::string task_name = "yakimov_i_mult_of_dense_matrices_fox_algorithm";
+  std::string task_name = "yakimov_i_mult_of_dense_matrices_fox_algorithm_seq";
 
   this->matrix_a_filename_ =
       ppc::util::GetAbsoluteTaskPath(task_name, "A_" + std::to_string(this->GetInput()) + ".txt");
@@ -167,4 +167,4 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace yakimov_i_mult_of_dense_matrices_fox_algorithm
+}  // namespace yakimov_i_mult_of_dense_matrices_fox_algorithm_seq

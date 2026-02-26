@@ -10,10 +10,10 @@
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
-#include "yakimov_i_mult_of_dense_matrices_Fox_algorithm/common/include/common.hpp"
-#include "yakimov_i_mult_of_dense_matrices_Fox_algorithm/seq/include/ops_seq.hpp"
+#include "yakimov_i_mult_of_dense_matrices_fox_algorithm_seq/common/include/common.hpp"
+#include "yakimov_i_mult_of_dense_matrices_fox_algorithm_seq/seq/include/ops_seq.hpp"
 
-namespace yakimov_i_mult_of_dense_matrices_fox_algorithm {
+namespace yakimov_i_mult_of_dense_matrices_fox_algorithm_seq {
 
 class YakimovIMultDenseFoxFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -61,7 +61,7 @@ const std::array<TestType, 5> kAllTestParam = {std::make_tuple(1, "small_2x3"), 
                                                std::make_tuple(5, "negative_values")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<YakimovIMultOfDenseMatricesFoxAlgorithmSEQ, InType>(
-    kAllTestParam, PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_Fox_algorithm));
+    kAllTestParam, PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_fox_algorithm_seq));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -71,4 +71,4 @@ INSTANTIATE_TEST_SUITE_P(DenseMatrixMultiplicationTests, YakimovIMultDenseFoxFun
 
 }  // namespace
 
-}  // namespace yakimov_i_mult_of_dense_matrices_fox_algorithm
+}  // namespace yakimov_i_mult_of_dense_matrices_fox_algorithm_seq

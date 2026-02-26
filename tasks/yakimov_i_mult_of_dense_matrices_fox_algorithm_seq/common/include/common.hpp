@@ -7,7 +7,7 @@
 
 #include "task/include/task.hpp"
 
-namespace yakimov_i_mult_of_dense_matrices_fox_algorithm {
+namespace yakimov_i_mult_of_dense_matrices_fox_algorithm_seq {
 
 using InType = int;
 using OutType = double;
@@ -32,4 +32,4 @@ struct DenseMatrix {
   }
 };
 
-}  // namespace yakimov_i_mult_of_dense_matrices_fox_algorithm
+}  // namespace yakimov_i_mult_of_dense_matrices_fox_algorithm_seq
