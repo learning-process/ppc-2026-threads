@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <random>
+#include <ranges>
 
 #include "shkryleva_s_shell_sort_simple_merge/common/include/common.hpp"
 #include "shkryleva_s_shell_sort_simple_merge/seq/include/ops_seq.hpp"

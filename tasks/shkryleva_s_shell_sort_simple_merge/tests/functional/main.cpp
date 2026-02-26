@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <memory>
+#include <ranges>
 #include <vector>
 
 #include "shkryleva_s_shell_sort_simple_merge/seq/include/ops_seq.hpp"
@@ -13,42 +13,36 @@ namespace {
 TEST(ShkrylevaSShellMergeSEQFunctional, BasicEven) {
   std::vector<int> input{7, 0, 2, 4, 2, 6, 3, 6};
   std::vector<int> expected = input;
-  std::sort(expected.begin(), expected.end());
+  std::ranges::sort(expected);
 
   auto task = std::make_shared<ShkrylevaSShellMergeSEQ>(input);
 
-  ASSERT_TRUE(task->Validation());
-  ASSERT_TRUE(task->PreProcessing());
-  ASSERT_TRUE(task->Run());
-  ASSERT_TRUE(task->PostProcessing());
+  ASSERT_TRUE(task->Validation() && task->PreProcessing() && task->Run() && task->PostProcessing());
+
   ASSERT_EQ(task->GetOutput(), expected);
 }
 
 TEST(ShkrylevaSShellMergeSEQFunctional, NegativeOdd) {
   std::vector<int> input{29, -76, -4, -56, 0, 44, 3};
   std::vector<int> expected = input;
-  std::sort(expected.begin(), expected.end());
+  std::ranges::sort(expected);
 
   auto task = std::make_shared<ShkrylevaSShellMergeSEQ>(input);
 
-  ASSERT_TRUE(task->Validation());
-  ASSERT_TRUE(task->PreProcessing());
-  ASSERT_TRUE(task->Run());
-  ASSERT_TRUE(task->PostProcessing());
+  ASSERT_TRUE(task->Validation() && task->PreProcessing() && task->Run() && task->PostProcessing());
+
   ASSERT_EQ(task->GetOutput(), expected);
 }
 
 TEST(ShkrylevaSShellMergeSEQFunctional, Duplicates) {
   std::vector<int> input{1, 1, 1, 1, 1, 1};
   std::vector<int> expected = input;
-  std::sort(expected.begin(), expected.end());
+  std::ranges::sort(expected);
 
   auto task = std::make_shared<ShkrylevaSShellMergeSEQ>(input);
 
-  ASSERT_TRUE(task->Validation());
-  ASSERT_TRUE(task->PreProcessing());
-  ASSERT_TRUE(task->Run());
-  ASSERT_TRUE(task->PostProcessing());
+  ASSERT_TRUE(task->Validation() && task->PreProcessing() && task->Run() && task->PostProcessing());
+
   ASSERT_EQ(task->GetOutput(), expected);
 }
 
@@ -58,10 +52,8 @@ TEST(ShkrylevaSShellMergeSEQFunctional, Single) {
 
   auto task = std::make_shared<ShkrylevaSShellMergeSEQ>(input);
 
-  ASSERT_TRUE(task->Validation());
-  ASSERT_TRUE(task->PreProcessing());
-  ASSERT_TRUE(task->Run());
-  ASSERT_TRUE(task->PostProcessing());
+  ASSERT_TRUE(task->Validation() && task->PreProcessing() && task->Run() && task->PostProcessing());
+
   ASSERT_EQ(task->GetOutput(), expected);
 }
 
@@ -71,10 +63,8 @@ TEST(ShkrylevaSShellMergeSEQFunctional, Empty) {
 
   auto task = std::make_shared<ShkrylevaSShellMergeSEQ>(input);
 
-  ASSERT_TRUE(task->Validation());
-  ASSERT_TRUE(task->PreProcessing());
-  ASSERT_TRUE(task->Run());
-  ASSERT_TRUE(task->PostProcessing());
+  ASSERT_TRUE(task->Validation() && task->PreProcessing() && task->Run() && task->PostProcessing());
+
   ASSERT_EQ(task->GetOutput(), expected);
 }
 
@@ -84,38 +74,32 @@ TEST(ShkrylevaSShellMergeSEQFunctional, AlreadySorted) {
 
   auto task = std::make_shared<ShkrylevaSShellMergeSEQ>(input);
 
-  ASSERT_TRUE(task->Validation());
-  ASSERT_TRUE(task->PreProcessing());
-  ASSERT_TRUE(task->Run());
-  ASSERT_TRUE(task->PostProcessing());
+  ASSERT_TRUE(task->Validation() && task->PreProcessing() && task->Run() && task->PostProcessing());
+
   ASSERT_EQ(task->GetOutput(), expected);
 }
 
 TEST(ShkrylevaSShellMergeSEQFunctional, ReverseSorted) {
   std::vector<int> input{8, 7, 6, 5, 4, 3, 2, 1};
   std::vector<int> expected = input;
-  std::sort(expected.begin(), expected.end());
+  std::ranges::sort(expected);
 
   auto task = std::make_shared<ShkrylevaSShellMergeSEQ>(input);
 
-  ASSERT_TRUE(task->Validation());
-  ASSERT_TRUE(task->PreProcessing());
-  ASSERT_TRUE(task->Run());
-  ASSERT_TRUE(task->PostProcessing());
+  ASSERT_TRUE(task->Validation() && task->PreProcessing() && task->Run() && task->PostProcessing());
+
   ASSERT_EQ(task->GetOutput(), expected);
 }
 
 TEST(ShkrylevaSShellMergeSEQFunctional, Small) {
   std::vector<int> input{2, 1};
   std::vector<int> expected = input;
-  std::sort(expected.begin(), expected.end());
+  std::ranges::sort(expected);
 
   auto task = std::make_shared<ShkrylevaSShellMergeSEQ>(input);
 
-  ASSERT_TRUE(task->Validation());
-  ASSERT_TRUE(task->PreProcessing());
-  ASSERT_TRUE(task->Run());
-  ASSERT_TRUE(task->PostProcessing());
+  ASSERT_TRUE(task->Validation() && task->PreProcessing() && task->Run() && task->PostProcessing());
+
   ASSERT_EQ(task->GetOutput(), expected);
 }
 
