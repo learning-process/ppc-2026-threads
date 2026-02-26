@@ -12,11 +12,13 @@
 #include "util/include/util.hpp"
 
 namespace ppc::util {
+namespace {
 template <typename InType, typename OutType, typename TestType>
-inline void PrintTo(const FuncTestParam<InType, OutType, TestType> &param, ::std::ostream *os) {
+void PrintTo(const FuncTestParam<InType, OutType, TestType> &param, ::std::ostream *os) {
   *os << "FuncTestParam{"
       << "name=" << std::get<static_cast<std::size_t>(GTestParamIndex::kNameTest)>(param) << "}";
 }
+}  // namespace
 }  // namespace ppc::util
 
 namespace sakharov_a_shell_sorting_with_merging_butcher {
