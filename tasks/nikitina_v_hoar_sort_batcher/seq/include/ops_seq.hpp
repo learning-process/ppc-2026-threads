@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "nikitina_v_hoar_sort_batcher/common/include/common.hpp"
 #include "task/include/task.hpp"
 
