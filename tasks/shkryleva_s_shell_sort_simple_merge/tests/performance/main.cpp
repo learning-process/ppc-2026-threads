@@ -3,8 +3,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <random>
-#include <ranges>
-#include <vector>
 
 #include "shkryleva_s_shell_sort_simple_merge/common/include/common.hpp"
 #include "shkryleva_s_shell_sort_simple_merge/seq/include/ops_seq.hpp"
@@ -18,7 +16,7 @@ class ShkrylevaSShellMergePerfTests : public ppc::util::BaseRunPerfTests<InType,
 
   void SetUp() override {
     constexpr size_t kSize = 40000;
-    std::mt19937 generator(2026);
+    std::mt19937 generator(std::random_device{}());
     std::uniform_int_distribution<int> distribution(-100000, 100000);
 
     input_data_.resize(kSize);
