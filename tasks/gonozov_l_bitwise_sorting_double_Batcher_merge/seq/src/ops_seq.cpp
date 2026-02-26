@@ -90,7 +90,6 @@ void RadixSortDouble(std::vector<double> &data) {
   }
 }
 
-// NOLINTNEXTLINE(misc-no-recursion)
 void BatcherOddEvenMergeIterative(std::vector<double> &arr, size_t n) {
   if (n <= 1) {
     return;
