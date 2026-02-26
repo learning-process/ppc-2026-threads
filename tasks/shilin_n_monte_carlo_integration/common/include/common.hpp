@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <tuple>
@@ -59,7 +60,7 @@ class IntegrandFunction {
 
   static double AnalyticalIntegral(FuncType func_type, const std::vector<double> &lower,
                                    const std::vector<double> &upper) {
-    auto dim = static_cast<int>(lower.size());
+    size_t dim = lower.size();
     switch (func_type) {
       case FuncType::kConstant:
         return ComputeVolume(lower, upper);
@@ -79,15 +80,15 @@ class IntegrandFunction {
  private:
   static double ComputeVolume(const std::vector<double> &lower, const std::vector<double> &upper) {
     double vol = 1.0;
-    for (int i = 0; i < static_cast<int>(lower.size()); ++i) {
+    for (size_t i = 0; i < lower.size(); ++i) {
       vol *= (upper[i] - lower[i]);
     }
     return vol;
   }
 
-  static double VolumeExcludingDim(const std::vector<double> &lower, const std::vector<double> &upper, int exclude) {
+  static double VolumeExcludingDim(const std::vector<double> &lower, const std::vector<double> &upper, size_t exclude) {
     double product = 1.0;
-    for (int j = 0; j < static_cast<int>(lower.size()); ++j) {
+    for (size_t j = 0; j < lower.size(); ++j) {
       if (j != exclude) {
         product *= (upper[j] - lower[j]);
       }
@@ -95,35 +96,37 @@ class IntegrandFunction {
     return product;
   }
 
-  static double ComputeLinearIntegral(const std::vector<double> &lower, const std::vector<double> &upper, int dim) {
+  static double ComputeLinearIntegral(const std::vector<double> &lower, const std::vector<double> &upper, size_t dim) {
     double result = 0.0;
-    for (int i = 0; i < dim; ++i) {
+    for (size_t i = 0; i < dim; ++i) {
       double term = (upper[i] * upper[i] - lower[i] * lower[i]) / 2.0;
       result += term * VolumeExcludingDim(lower, upper, i);
     }
     return result;
   }
 
-  static double ComputeProductIntegral(const std::vector<double> &lower, const std::vector<double> &upper, int dim) {
+  static double ComputeProductIntegral(const std::vector<double> &lower, const std::vector<double> &upper, size_t dim) {
     double prod = 1.0;
-    for (int i = 0; i < dim; ++i) {
+    for (size_t i = 0; i < dim; ++i) {
       prod *= (upper[i] * upper[i] - lower[i] * lower[i]) / 2.0;
     }
     return prod;
   }
 
-  static double ComputeSumSquaresIntegral(const std::vector<double> &lower, const std::vector<double> &upper, int dim) {
+  static double ComputeSumSquaresIntegral(const std::vector<double> &lower, const std::vector<double> &upper,
+                                          size_t dim) {
     double result = 0.0;
-    for (int i = 0; i < dim; ++i) {
+    for (size_t i = 0; i < dim; ++i) {
       double term = (upper[i] * upper[i] * upper[i] - lower[i] * lower[i] * lower[i]) / 3.0;
       result += term * VolumeExcludingDim(lower, upper, i);
     }
     return result;
   }
 
-  static double ComputeSinProductIntegral(const std::vector<double> &lower, const std::vector<double> &upper, int dim) {
+  static double ComputeSinProductIntegral(const std::vector<double> &lower, const std::vector<double> &upper,
+                                          size_t dim) {
     double prod = 1.0;
-    for (int i = 0; i < dim; ++i) {
+    for (size_t i = 0; i < dim; ++i) {
       prod *= (-std::cos(upper[i]) + std::cos(lower[i]));
     }
     return prod;
