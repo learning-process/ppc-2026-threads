@@ -14,7 +14,7 @@ namespace kurpiakov_a_sp_comp_mat_mul {
 
 class KurpiakovRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType& test_param) {
+  static std::string PrintTestParam(const TestType &test_param) {
     return std::get<1>(test_param);
   }
 
