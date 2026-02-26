@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-#include "tasks/melnik_i_radix_sort_int/common/include/common.hpp"
+#include "melnik_i_radix_sort_int/common/include/common.hpp"
 
 namespace melnik_i_radix_sort_int {
 
