@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <string>
@@ -14,36 +15,37 @@ namespace zorin_d_strassen_alg_matrix_seq {
 
 namespace {
 
-void NaiveMulRef(const std::vector<double> &A, const std::vector<double> &B, std::vector<double> &C, std::size_t n) {
-  C.assign(n * n, 0.0);
+void naive_mul_ref(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, std::size_t n) {
+  c.assign(n * n, 0.0);
   for (std::size_t i = 0; i < n; ++i) {
     for (std::size_t k = 0; k < n; ++k) {
-      const double aik = A[i * n + k];
+      const double aik = a[(i * n) + k];
       for (std::size_t j = 0; j < n; ++j) {
-        C[i * n + j] += aik * B[k * n + j];
+        c[(i * n) + j] += aik * b[(k * n) + j];
       }
     }
   }
 }
 
-std::vector<double> MakeMatrixA(std::size_t n) {
-  std::vector<double> A(n * n);
+std::vector<double> make_matrix_a(std::size_t n) {
+  std::vector<double> a(n * n);
   for (std::size_t i = 0; i < n; ++i) {
     for (std::size_t j = 0; j < n; ++j) {
-      A[i * n + j] = std::sin(double(i + 1)) + std::cos(double(j + 1)) + double(i) * 0.1;
+      a[(i * n) + j] =
+          std::sin(static_cast<double>(i + 1)) + std::cos(static_cast<double>(j + 1)) + (static_cast<double>(i) * 0.1);
     }
   }
-  return A;
+  return a;
 }
 
-std::vector<double> MakeMatrixB(std::size_t n) {
-  std::vector<double> B(n * n);
+std::vector<double> make_matrix_b(std::size_t n) {
+  std::vector<double> b(n * n);
   for (std::size_t i = 0; i < n; ++i) {
     for (std::size_t j = 0; j < n; ++j) {
-      B[i * n + j] = std::cos(double(i + j + 1)) + double(j) * 0.05;
+      b[(i * n) + j] = std::cos(static_cast<double>(i + j + 1)) + (static_cast<double>(j) * 0.05);
     }
   }
-  return B;
+  return b;
 }
 
 class ZorinDRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
@@ -54,14 +56,14 @@ class ZorinDRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, T
 
  protected:
   void SetUp() override {
-    const auto params = std::get<std::size_t(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    const std::size_t n = static_cast<std::size_t>(std::get<0>(params));
+    const auto params = std::get<0>(GetParam());
+    const auto n = static_cast<std::size_t>(std::get<0>(params));
 
     input_.n = n;
-    input_.A = MakeMatrixA(n);
-    input_.B = MakeMatrixB(n);
+    input_.A = make_matrix_a(n);
+    input_.B = make_matrix_b(n);
 
-    NaiveMulRef(input_.A, input_.B, expected_, n);
+    naive_mul_ref(input_.A, input_.B, expected_, n);
   }
 
   InType GetTestInputData() final {
@@ -69,12 +71,12 @@ class ZorinDRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, T
   }
 
   bool CheckTestOutputData(OutType &output) final {
-    const double eps = 1e-9;
+    constexpr double k_eps = 1e-9;
     if (output.size() != expected_.size()) {
       return false;
     }
     for (std::size_t i = 0; i < output.size(); ++i) {
-      if (std::abs(output[i] - expected_[i]) > eps) {
+      if (std::abs(output[i] - expected_[i]) > k_eps) {
         return false;
       }
     }
@@ -86,7 +88,7 @@ class ZorinDRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, T
   std::vector<double> expected_;
 };
 
-TEST_P(ZorinDRunFuncTests, StrassenMatMul) {
+TEST_P(ZorinDRunFuncTests, ZorinDSEQStrassenRunFuncModes) {
   ExecuteTest(GetParam());
 }
 
