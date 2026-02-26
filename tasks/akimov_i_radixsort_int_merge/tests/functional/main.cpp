@@ -1,15 +1,8 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
 #include <algorithm>
-#include <array>
-#include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
-#include <string>
+#include <random>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "akimov_i_radixsort_int_merge/common/include/common.hpp"
@@ -19,7 +12,7 @@
 
 namespace akimov_i_radixsort_int_merge {
 
-class NesterovARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class AkimovIRadixSortIntMergeFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -27,31 +20,22 @@ class NesterovARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_akimov_i_radixsort_int_merge), "pic.ppm");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    int size = std::get<0>(params);
+
+    std::mt19937 gen(42);
+    std::uniform_int_distribution<int> dist(-1000, 1000);
+    input_data_.resize(size);
+    for (int &val : input_data_) {
+      val = dist(gen);
     }
 
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    expected_sorted_ = input_data_;
+    std::sort(expected_sorted_.begin(), expected_sorted_.end());
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    return output_data == expected_sorted_;
   }
 
   InType GetTestInputData() final {
@@ -59,25 +43,26 @@ class NesterovARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  InType expected_sorted_;
 };
 
 namespace {
 
-TEST_P(NesterovARunFuncTestsThreads, MatmulFromPic) {
+TEST_P(AkimovIRadixSortIntMergeFuncTests, RadixSort) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 3> kTestParam = {std::make_tuple(10, "10"), std::make_tuple(100, "100"), std::make_tuple(1000, "1000")};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<AkimovIRadixSortIntMergeSEQ, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = NesterovARunFuncTestsThreads::PrintFuncTestName<NesterovARunFuncTestsThreads>;
+const auto kPerfTestName = AkimovIRadixSortIntMergeFuncTests::PrintFuncTestName<AkimovIRadixSortIntMergeFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, NesterovARunFuncTestsThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RadixSortTests, AkimovIRadixSortIntMergeFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 

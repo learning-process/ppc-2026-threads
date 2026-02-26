@@ -1,6 +1,7 @@
 #include "akimov_i_radixsort_int_merge/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <cstdint>
 #include <vector>
 
 #include "akimov_i_radixsort_int_merge/common/include/common.hpp"
@@ -11,50 +12,58 @@ namespace akimov_i_radixsort_int_merge {
 AkimovIRadixSortIntMergeSEQ::AkimovIRadixSortIntMergeSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = OutType();
 }
 
 bool AkimovIRadixSortIntMergeSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return !GetInput().empty();
 }
 
 bool AkimovIRadixSortIntMergeSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  GetOutput() = GetInput();
+  return true;
 }
 
 bool AkimovIRadixSortIntMergeSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
+  auto &arr = GetOutput();
+  if (arr.empty()) return true;
+
+  constexpr uint32_t sign_mask = 0x80000000;
+  for (int &x : arr) {
+    x ^= sign_mask;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  const int num_bytes = static_cast<int>(sizeof(int));
+  std::vector<int> temp(arr.size());
+
+  for (int byte_pos = 0; byte_pos < num_bytes; ++byte_pos) {
+    int count[256] = {0};
+    for (int x : arr) {
+      uint8_t byte = (x >> (byte_pos * 8)) & 0xFF;
+      ++count[byte];
     }
+
+    for (int i = 1; i < 256; ++i) {
+      count[i] += count[i - 1];
+    }
+
+    for (int i = static_cast<int>(arr.size()) - 1; i >= 0; --i) {
+      uint8_t byte = (arr[i] >> (byte_pos * 8)) & 0xFF;
+      temp[--count[byte]] = arr[i];
+    }
+
+    arr.swap(temp);
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
+  for (int &x : arr) {
+    x ^= sign_mask;
   }
 
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  return true;
 }
 
 bool AkimovIRadixSortIntMergeSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace akimov_i_radixsort_int_merge
