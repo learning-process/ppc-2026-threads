@@ -1,7 +1,10 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cmath>
+#include <cstddef>
 #include <string>
+#include <tuple>
 
 #include "ovsyannikov_n_simpson_method/common/include/common.hpp"
 #include "ovsyannikov_n_simpson_method/seq/include/ops_seq.hpp"
@@ -30,7 +33,7 @@ class OvsyannikovNRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InTyp
   }
 
  private:
-  InType input_data_;
+  InType input_data_ = {};
   double expected_val_ = 1.0;
 };
 

@@ -20,9 +20,10 @@ class OvsyannikovNRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType
   }
 
  private:
-  InType input_data_;
+  InType input_data_ = {};
 };
 
+namespace {
 TEST_P(OvsyannikovNRunPerfTestThreads, SimpsonTestRunPerfModes) {
   ExecuteTest(GetParam());
 }
@@ -32,5 +33,5 @@ const auto kAllPerfTasks =
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = OvsyannikovNRunPerfTestThreads::CustomPerfTestName;
 INSTANTIATE_TEST_SUITE_P(RunModeTests, OvsyannikovNRunPerfTestThreads, kGtestValues, kPerfTestName);
-
+}  // namespace
 }  // namespace ovsyannikov_n_simpson_method

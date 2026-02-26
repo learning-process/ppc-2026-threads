@@ -5,7 +5,7 @@
 namespace ovsyannikov_n_simpson_method {
 
 // Тестовая функция: f(x, y) = x + y
-double OvsyannikovNSimpsonMethodSEQ::function(double x, double y) {
+double OvsyannikovNSimpsonMethodSEQ::Function(double x, double y) {
   return x + y;
 }
 

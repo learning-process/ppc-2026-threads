@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ovsyannikov_n_simpson_method/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace ovsyannikov_n_simpson_method {
 
@@ -17,7 +18,7 @@ class OvsyannikovNSimpsonMethodSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static double function(double x, double y);  // Функция для интегрирования
+  static double Function(double x, double y);  // Функция для интегрирования
   InType params_{};
   OutType res_{};
 };
