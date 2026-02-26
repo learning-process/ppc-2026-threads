@@ -73,7 +73,7 @@ void MultiplyBlock(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &resu
 }
 
 void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int block_size) {
-  if (block_size <= 0) {
+  if (block_size <= 0 || a.rows < block_size || a.cols < block_size || b.rows < block_size || b.cols < block_size) {
     return;
   }
 
