@@ -24,7 +24,7 @@ class AkimovIRadixSortIntMergeFuncTests : public ppc::util::BaseRunFuncTests<InT
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int size = std::get<0>(params);
 
-    std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
+    std::mt19937 gen(std::random_device{}());
     std::uniform_int_distribution<int> dist(-1000, 1000);
     input_data_.resize(size);
     for (int &val : input_data_) {
