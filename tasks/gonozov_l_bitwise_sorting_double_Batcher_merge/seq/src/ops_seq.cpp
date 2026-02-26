@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <vector>
 
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/common/include/common.hpp"
@@ -90,6 +91,16 @@ void RadixSortDouble(std::vector<double> &data) {
   }
 }
 
+void ComparingSwapElements(std::vector<double> &arr, size_t n) {
+  if ((i & block_size) == 0) {
+    size_t idx1 = i;
+    size_t idx2 = i + step;
+    if (idx2 < n && arr[idx1] > arr[idx2]) {
+      std::swap(arr[idx1], arr[idx2]);
+    }
+  }
+}
+
 void BatcherOddEvenMergeIterative(std::vector<double> &arr, size_t n) {
   if (n <= 1) {
     return;
@@ -98,14 +109,7 @@ void BatcherOddEvenMergeIterative(std::vector<double> &arr, size_t n) {
   for (size_t block_size = 1; block_size < n; block_size *= 2) {
     for (size_t step = block_size; step > 0; step /= 2) {
       for (size_t i = 0; i < n - step; ++i) {
-        // Проверяем, нужно ли сравнивать элементы i и i+step
-        if ((i & block_size) == 0) {
-          size_t idx1 = i;
-          size_t idx2 = i + step;
-          if (idx2 < n && arr[idx1] > arr[idx2]) {
-            std::swap(arr[idx1], arr[idx2]);
-          }
-        }
+        ComparingSwapElements(arr, n);
       }
     }
   }
@@ -131,16 +135,16 @@ void HybridSortDouble(std::vector<double> &data) {
   data.resize(new_size, std::numeric_limits<double>::max());
 
   size_t mid = new_size / 2;
-  std::vector<double> left(data.begin(), data.begin() + mid);
-  std::vector<double> right(data.begin() + mid, data.end());
+  std::vector<double> left(data.begin(), data.begin() + static_cast<ptrdiff_t>(mid));
+  std::vector<double> right(data.begin() + static_cast<ptrdiff_t>(mid), data.end());
 
   // Сортируем каждую половину поразрядно
   RadixSortDouble(left);
   RadixSortDouble(right);
 
   // Собираем обратно в единый массив
-  std::copy(left.begin(), left.end(), data.begin());
-  std::copy(right.begin(), right.end(), data.begin() + mid);
+  std::ranges::copy(left, data.begin());
+  std::ranges::copy(right, data.begin() + static_cast<ptrdiff_t>(mid));
 
   // Используем слияние Бэтчера для слияния двух отсортированных массивов
   BatcherOddEvenMergeIterative(data, new_size);
