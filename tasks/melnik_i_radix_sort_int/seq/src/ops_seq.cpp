@@ -12,7 +12,6 @@ namespace {
 
 constexpr int kBitsPerDigit = 8;
 constexpr int kBuckets = 1 << kBitsPerDigit;
-constexpr int kDigitMask = kBuckets - 1;
 
 }  // namespace
 
