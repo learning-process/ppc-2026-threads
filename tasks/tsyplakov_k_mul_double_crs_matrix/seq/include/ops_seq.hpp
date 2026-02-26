@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "task/include/task.hpp"
 #include "tsyplakov_k_mul_double_crs_matrix/common/include/common.hpp"
 
@@ -20,7 +22,7 @@ class TsyplakovKTestTaskSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 
   static std::vector<double> MultiplyRowByMatrix(const std::vector<double>& row_values,
-                                                 const std::vector<int>& row_cols, const SparseMatrixCRS& B,
+                                                 const std::vector<int>& row_cols, const SparseMatrixCRS& b,
                                                  int& result_nnz);
 };
 

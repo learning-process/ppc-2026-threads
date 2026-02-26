@@ -1,11 +1,6 @@
 #include "tsyplakov_k_mul_double_crs_matrix/omp/include/ops_omp.hpp"
 
-#include <atomic>
-#include <numeric>
-#include <vector>
-
 #include "tsyplakov_k_mul_double_crs_matrix/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace tsyplakov_k_mul_double_crs_matrix {
 

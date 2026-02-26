@@ -2,11 +2,6 @@
 
 #include <tbb/tbb.h>
 
-#include <atomic>
-#include <numeric>
-#include <util/include/util.hpp>
-#include <vector>
-
 #include "oneapi/tbb/parallel_for.h"
 #include "tsyplakov_k_mul_double_crs_matrix/common/include/common.hpp"
 

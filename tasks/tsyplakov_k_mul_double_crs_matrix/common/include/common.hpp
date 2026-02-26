@@ -1,6 +1,7 @@
 #pragma once
 
-#include <cstddef>
+#include <string>
+#include <tuple>
 #include <vector>
 
 #include "task/include/task.hpp"
@@ -20,8 +21,8 @@ struct SparseMatrixCRS {
 };
 
 struct MatrixMulInput {
-  SparseMatrixCRS A;
-  SparseMatrixCRS B;
+  SparseMatrixCRS a;
+  SparseMatrixCRS b;
 };
 
 using InType = MatrixMulInput;

@@ -1,11 +1,9 @@
 #include <gtest/gtest.h>
 
-#include "tsyplakov_k_mul_double_crs_matrix/all/include/ops_all.hpp"
+#include <vector>
+
 #include "tsyplakov_k_mul_double_crs_matrix/common/include/common.hpp"
-#include "tsyplakov_k_mul_double_crs_matrix/omp/include/ops_omp.hpp"
 #include "tsyplakov_k_mul_double_crs_matrix/seq/include/ops_seq.hpp"
-#include "tsyplakov_k_mul_double_crs_matrix/stl/include/ops_stl.hpp"
-#include "tsyplakov_k_mul_double_crs_matrix/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace tsyplakov_k_mul_double_crs_matrix {
@@ -16,14 +14,15 @@ class TsyplakovKRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType,
   InType input_data_{};
 
   void SetUp() override {
-    SparseMatrixCRS A(kSize_, kSize_);
-    SparseMatrixCRS B(kSize_, kSize_);
+    SparseMatrixCRS a(kSize_, kSize_);
+    SparseMatrixCRS b(kSize_, kSize_);
 
     std::vector<double> values_a, values_b;
     std::vector<int> col_idx_a, col_idx_b;
     std::vector<int> row_ptr_a(kSize_ + 1, 0), row_ptr_b(kSize_ + 1, 0);
 
-    int nnz_a = 0, nnz_b = 0;
+    int nnz_a = 0;
+    int nnz_b = 0;
     for (int i = 0; i < kSize_; ++i) {
       row_ptr_a[i] = nnz_a;
       row_ptr_b[i] = nnz_b;
@@ -39,15 +38,15 @@ class TsyplakovKRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType,
     row_ptr_a[kSize_] = nnz_a;
     row_ptr_b[kSize_] = nnz_b;
 
-    A.values = values_a;
-    A.col_index = col_idx_a;
-    A.row_ptr = row_ptr_a;
+    a.values = values_a;
+    a.col_index = col_idx_a;
+    a.row_ptr = row_ptr_a;
 
-    B.values = values_b;
-    B.col_index = col_idx_b;
-    B.row_ptr = row_ptr_b;
+    b.values = values_b;
+    b.col_index = col_idx_b;
+    b.row_ptr = row_ptr_b;
 
-    input_data_ = {A, B};
+    input_data_ = {a, b};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
