@@ -40,7 +40,6 @@ class KurpiakovRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
 
 namespace {
 
-// Test 1: Identity * A = A
 InType MakeIdentityTest() {
   SparseMatrix eye(2, 2, {ComplexD(1, 0), ComplexD(1, 0)}, {0, 1}, {0, 1, 2});
   SparseMatrix a(2, 2, {ComplexD(1, 0), ComplexD(2, 1), ComplexD(3, 0)}, {0, 1, 1}, {0, 2, 3});
@@ -50,7 +49,6 @@ OutType MakeIdentityExpected() {
   return {2, 2, {ComplexD(1, 0), ComplexD(2, 1), ComplexD(3, 0)}, {0, 1, 1}, {0, 2, 3}};
 }
 
-// Test 2: A * Zero = Zero
 InType MakeZeroTest() {
   SparseMatrix a(2, 2, {ComplexD(1, 0), ComplexD(2, 1)}, {0, 1}, {0, 1, 2});
   SparseMatrix zero(2, 2);
@@ -60,7 +58,6 @@ OutType MakeZeroExpected() {
   return {2, 2};
 }
 
-// Test 3: Diagonal * Diagonal
 InType MakeDiagTest() {
   SparseMatrix a(2, 2, {ComplexD(1, 1), ComplexD(2, 0)}, {0, 1}, {0, 1, 2});
   SparseMatrix b(2, 2, {ComplexD(2, 0), ComplexD(0, 1)}, {0, 1}, {0, 1, 2});
@@ -70,7 +67,6 @@ OutType MakeDiagExpected() {
   return {2, 2, {ComplexD(2, 2), ComplexD(0, 2)}, {0, 1}, {0, 1, 2}};
 }
 
-// Test 4: General 2x2 complex
 InType MakeGeneralTest() {
   SparseMatrix a(2, 2, {ComplexD(1, 1), ComplexD(1, -1)}, {0, 1}, {0, 1, 2});
   SparseMatrix b(2, 2, {ComplexD(2, 0), ComplexD(3, 1)}, {0, 1}, {0, 1, 2});
@@ -80,7 +76,6 @@ OutType MakeGeneralExpected() {
   return {2, 2, {ComplexD(2, 2), ComplexD(4, -2)}, {0, 1}, {0, 1, 2}};
 }
 
-// Test 5: Scalar i * i = -1
 InType MakeScalarITest() {
   SparseMatrix si(1, 1, {ComplexD(0, 1)}, {0}, {0, 1});
   return {si, si};
@@ -89,7 +84,6 @@ OutType MakeScalarIExpected() {
   return {1, 1, {ComplexD(-1, 0)}, {0}, {0, 1}};
 }
 
-// Test 6: Scalar (3+4i)*(1-2i) = 11-2i
 InType MakeScalarComplexTest() {
   SparseMatrix a(1, 1, {ComplexD(3, 4)}, {0}, {0, 1});
   SparseMatrix b(1, 1, {ComplexD(1, -2)}, {0}, {0, 1});
@@ -99,7 +93,6 @@ OutType MakeScalarComplexExpected() {
   return {1, 1, {ComplexD(11, -2)}, {0}, {0, 1}};
 }
 
-// Test 7: Rectangular A(2x3) * B(3x2)
 InType MakeRectTest() {
   SparseMatrix a(2, 3, {ComplexD(1, 0), ComplexD(2, 0), ComplexD(1, 0)}, {0, 2, 1}, {0, 2, 3});
   SparseMatrix b(3, 2, {ComplexD(1, 0), ComplexD(1, 0), ComplexD(1, 0), ComplexD(1, 0)}, {0, 1, 0, 1}, {0, 2, 3, 4});
@@ -109,7 +102,6 @@ OutType MakeRectExpected() {
   return {2, 2, {ComplexD(1, 0), ComplexD(3, 0), ComplexD(1, 0)}, {0, 1, 0}, {0, 2, 3}};
 }
 
-// Test 8: Both empty 3x3
 InType MakeEmptyTest() {
   SparseMatrix empty(3, 3);
   return {empty, empty};
@@ -118,7 +110,6 @@ OutType MakeEmptyExpected() {
   return {3, 3};
 }
 
-// Test 9: Dense 2x2
 InType MakeDenseTest() {
   SparseMatrix a(2, 2, {ComplexD(1, 0), ComplexD(2, 0), ComplexD(3, 0), ComplexD(4, 0)}, {0, 1, 0, 1}, {0, 2, 4});
   SparseMatrix b(2, 2, {ComplexD(5, 0), ComplexD(6, 0), ComplexD(7, 0), ComplexD(8, 0)}, {0, 1, 0, 1}, {0, 2, 4});
@@ -128,7 +119,6 @@ OutType MakeDenseExpected() {
   return {2, 2, {ComplexD(19, 0), ComplexD(22, 0), ComplexD(43, 0), ComplexD(50, 0)}, {0, 1, 0, 1}, {0, 2, 4}};
 }
 
-// Test 10: Row * Column = scalar
 InType MakeRowColTest() {
   SparseMatrix a(1, 3, {ComplexD(1, 0), ComplexD(2, 0), ComplexD(3, 0)}, {0, 1, 2}, {0, 3});
   SparseMatrix b(3, 1, {ComplexD(4, 0), ComplexD(5, 0), ComplexD(6, 0)}, {0, 0, 0}, {0, 1, 2, 3});
