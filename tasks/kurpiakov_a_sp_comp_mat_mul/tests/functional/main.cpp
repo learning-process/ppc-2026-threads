@@ -25,7 +25,7 @@ class KurpiakovRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
     expected_output_ = std::get<2>(params);
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     return expected_output_ == output_data;
   }
 

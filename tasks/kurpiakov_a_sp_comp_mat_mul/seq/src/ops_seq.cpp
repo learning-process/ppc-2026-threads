@@ -6,7 +6,7 @@ namespace kurpiakov_a_sp_comp_mat_mul {
 
 namespace {
 
-bool ValidateCSR(const SparseMatrix& m) {
+bool ValidateCSR(const SparseMatrix &m) {
   if (m.rows <= 0 || m.cols <= 0) {
     return false;
   }
@@ -34,14 +34,14 @@ bool ValidateCSR(const SparseMatrix& m) {
 
 }  // namespace
 
-KurpiskovACRSMatMulSEQ::KurpiskovACRSMatMulSEQ(const InType& in) {
+KurpiskovACRSMatMulSEQ::KurpiskovACRSMatMulSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = SparseMatrix();
 }
 
 bool KurpiskovACRSMatMulSEQ::ValidationImpl() {
-  const auto& [a, b] = GetInput();
+  const auto &[a, b] = GetInput();
 
   if (!ValidateCSR(a) || !ValidateCSR(b)) {
     return false;
@@ -55,7 +55,7 @@ bool KurpiskovACRSMatMulSEQ::PreProcessingImpl() {
 }
 
 bool KurpiskovACRSMatMulSEQ::RunImpl() {
-  const auto& [a, b] = GetInput();
+  const auto &[a, b] = GetInput();
   GetOutput() = a.Multiply(b);
   return true;
 }

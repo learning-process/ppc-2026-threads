@@ -9,7 +9,7 @@ class KurpiskovACRSMatMulSEQ : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit KurpiskovACRSMatMulSEQ(const InType& in);
+  explicit KurpiskovACRSMatMulSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;

@@ -49,7 +49,7 @@ class KurpiakovRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
     input_data_ = {std::move(a), std::move(b)};
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     return expected_output_ == output_data;
   }
 
