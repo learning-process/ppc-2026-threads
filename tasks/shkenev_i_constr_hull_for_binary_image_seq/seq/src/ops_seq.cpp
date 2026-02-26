@@ -31,6 +31,10 @@ bool IsForeground(uint8_t pixel) {
   return pixel > kThreshold;
 }
 
+bool IsInBounds(int x, int y, int width, int height) {
+  return x >= 0 && x < width && y >= 0 && y < height;
+}
+
 }  // namespace
 
 ShkenevIConstrHullSeq::ShkenevIConstrHullSeq(const InType &in) : work_(in) {
@@ -86,6 +90,36 @@ void ShkenevIConstrHullSeq::ThresholdImage() {
   }
 }
 
+void ShkenevIConstrHullSeq::ExploreComponent(int start_col, int start_row, int width, int height,
+                                             std::vector<bool> &visited, std::vector<Point> &component) {
+  std::queue<Point> queue;
+  queue.emplace(start_col, start_row);
+  visited[Index(start_col, start_row, width)] = true;
+
+  while (!queue.empty()) {
+    Point current = queue.front();
+    queue.pop();
+    component.push_back(current);
+
+    for (auto [dx, dy] : kDirs) {
+      int next_x = current.x + dx;
+      int next_y = current.y + dy;
+
+      if (!IsInBounds(next_x, next_y, width, height)) {
+        continue;
+      }
+
+      size_t next_idx = Index(next_x, next_y, width);
+      if (visited[next_idx] || work_.pixels[next_idx] == 0) {
+        continue;
+      }
+
+      visited[next_idx] = true;
+      queue.emplace(next_x, next_y);
+    }
+  }
+}
+
 void ShkenevIConstrHullSeq::FindComponents() {
   int width = work_.width;
   int height = work_.height;
@@ -101,29 +135,7 @@ void ShkenevIConstrHullSeq::FindComponents() {
       }
 
       std::vector<Point> component;
-      std::queue<Point> queue;
-      queue.emplace(col, row);
-      visited[idx] = true;
-
-      while (!queue.empty()) {
-        Point current = queue.front();
-        queue.pop();
-        component.push_back(current);
-
-        for (auto [dx, dy] : kDirs) {
-          int next_x = current.x + dx;
-          int next_y = current.y + dy;
-          if (next_x < 0 || next_x >= width || next_y < 0 || next_y >= height) {
-            continue;
-          }
-          size_t next_idx = Index(next_x, next_y, width);
-          if (visited[next_idx] || work_.pixels[next_idx] == 0) {
-            continue;
-          }
-          visited[next_idx] = true;
-          queue.emplace(next_x, next_y);
-        }
-      }
+      ExploreComponent(col, row, width, height, visited, component);
 
       if (!component.empty()) {
         work_.components.push_back(std::move(component));
