@@ -1,4 +1,4 @@
-#include "example_threads/seq/include/ops_seq.hpp"
+#include "shakirova_e_sobel_edge_detection/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <array>
@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <vector>
 
-#include "example_threads/common/include/common.hpp"
+#include "shakirova_e_sobel_edge_detection/common/include/common.hpp"
 
 namespace shakirova_e_sobel_edge_detection {
 
