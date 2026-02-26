@@ -63,7 +63,7 @@ const std::array<TestType, 4> kTestParam = {
 };
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<GonozovLBitSortBatcherMergeSEQ, InType>(
-    kTestParam, PPC_SETTINGS_gonozov_l_bitwise_sorting_double_batcher_merge));
+    kTestParam, PPC_SETTINGS_gonozov_l_bitwise_sorting_double_Batcher_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

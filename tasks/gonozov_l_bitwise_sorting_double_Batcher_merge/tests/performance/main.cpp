@@ -44,7 +44,7 @@ TEST_P(GonozovLBitSortBatcherMergePerfTest, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, GonozovLBitSortBatcherMergeSEQ>(
-    PPC_SETTINGS_gonozov_l_bitwise_sorting_double_batcher_merge);
+    PPC_SETTINGS_gonozov_l_bitwise_sorting_double_Batcher_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
