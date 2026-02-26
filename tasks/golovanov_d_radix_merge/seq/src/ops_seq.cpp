@@ -1,29 +1,29 @@
-#include "example_threads/seq/include/ops_seq.hpp"
+#include "golovanov_d_radix_merge/seq/include/ops_seq.hpp"
 
 #include <numeric>
 #include <vector>
 
-#include "example_threads/common/include/common.hpp"
+#include "golovanov_d_radix_merge/common/include/common.hpp"
 #include "util/include/util.hpp"
 
-namespace nesterov_a_test_task_threads {
+namespace golovanov_d_radix_merge {
 
-NesterovATestTaskSEQ::NesterovATestTaskSEQ(const InType &in) {
+GolovanovDRadixMergeSEQ::GolovanovDRadixMergeSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
 }
 
-bool NesterovATestTaskSEQ::ValidationImpl() {
+bool GolovanovDRadixMergeSEQ::ValidationImpl() {
   return (GetInput() > 0) && (GetOutput() == 0);
 }
 
-bool NesterovATestTaskSEQ::PreProcessingImpl() {
+bool GolovanovDRadixMergeSEQ::PreProcessingImpl() {
   GetOutput() = 2 * GetInput();
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskSEQ::RunImpl() {
+bool GolovanovDRadixMergeSEQ::RunImpl() {
   if (GetInput() == 0) {
     return false;
   }
@@ -52,9 +52,9 @@ bool NesterovATestTaskSEQ::RunImpl() {
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskSEQ::PostProcessingImpl() {
+bool GolovanovDRadixMergeSEQ::PostProcessingImpl() {
   GetOutput() -= GetInput();
   return GetOutput() > 0;
 }
 
-}  // namespace nesterov_a_test_task_threads
+}  // namespace golovanov_d_radix_merge

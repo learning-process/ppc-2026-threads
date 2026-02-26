@@ -1,16 +1,16 @@
 #include <gtest/gtest.h>
 
-#include "example_threads/all/include/ops_all.hpp"
-#include "example_threads/common/include/common.hpp"
-#include "example_threads/omp/include/ops_omp.hpp"
-#include "example_threads/seq/include/ops_seq.hpp"
-#include "example_threads/stl/include/ops_stl.hpp"
-#include "example_threads/tbb/include/ops_tbb.hpp"
+#include "golovanov_d_radix_merge/all/include/ops_all.hpp"
+#include "golovanov_d_radix_merge/common/include/common.hpp"
+#include "golovanov_d_radix_merge/omp/include/ops_omp.hpp"
+#include "golovanov_d_radix_merge/seq/include/ops_seq.hpp"
+#include "golovanov_d_radix_merge/stl/include/ops_stl.hpp"
+#include "golovanov_d_radix_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace nesterov_a_test_task_threads {
+namespace golovanov_d_radix_merge {
 
-class ExampleRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class GolovanovDRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 200;
   InType input_data_{};
 
@@ -27,22 +27,21 @@ class ExampleRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Out
   }
 };
 
-TEST_P(ExampleRunPerfTestThreads, RunPerfModes) {
+TEST_P(GolovanovDRunPerfTestsThreads, RadixMergePerf) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NesterovATestTaskALL, NesterovATestTaskOMP, NesterovATestTaskSEQ,
-                                NesterovATestTaskSTL, NesterovATestTaskTBB>(PPC_SETTINGS_example_threads);
+    ppc::util::MakeAllPerfTasks<InType, GolovanovDRadixMergeSEQ>(PPC_SETTINGS_golovanov_d_radix_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = ExampleRunPerfTestThreads::CustomPerfTestName;
+const auto kPerfTestName = GolovanovDRunPerfTestsThreads::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ExampleRunPerfTestThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RadixMergePerf, GolovanovDRunPerfTestsThreads, kGtestValues, kPerfTestName);
 
 }  // namespace
 
-}  // namespace nesterov_a_test_task_threads
+}  // namespace golovanov_d_radix_merge

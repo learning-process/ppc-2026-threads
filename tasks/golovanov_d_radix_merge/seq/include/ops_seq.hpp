@@ -1,16 +1,16 @@
 #pragma once
 
-#include "example_threads/common/include/common.hpp"
+#include "golovanov_d_radix_merge/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace nesterov_a_test_task_threads {
+namespace golovanov_d_radix_merge {
 
-class NesterovATestTaskSEQ : public BaseTask {
+class GolovanovDRadixMergeSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit NesterovATestTaskSEQ(const InType &in);
+  explicit GolovanovDRadixMergeSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -19,4 +19,4 @@ class NesterovATestTaskSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace nesterov_a_test_task_threads
+}  // namespace golovanov_d_radix_merge
