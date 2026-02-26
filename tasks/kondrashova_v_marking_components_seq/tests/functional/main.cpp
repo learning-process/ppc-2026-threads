@@ -36,10 +36,10 @@ class MarkingComponentsFuncTest : public ppc::util::BaseRunFuncTests<InType, Out
     if (output_data.count != expected_count) {
       return false;
     }
-    if (output_data.labels.size() != image.height) {
+    if (static_cast<int>(output_data.labels.size()) != image.height) {
       return false;
     }
-    if (!output_data.labels.empty() && (output_data.labels[0].size() != image.width)) {
+    if (!output_data.labels.empty() && (static_cast<int>(output_data.labels[0].size()) != image.width)) {
       return false;
     }
 
