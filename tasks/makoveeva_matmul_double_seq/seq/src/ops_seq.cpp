@@ -22,10 +22,7 @@ bool MatmulDoubleSeqTask::RunImpl() {
         const int k_start = kb * block_size;
         const int k_end = std::min(k_start + block_size, n_int);
 
-        ProcessBlock(A_, B_, C_, n_int,
-                     i_start, i_end,
-                     j_start, j_end,
-                     k_start, k_end);
+        ProcessBlock(A_, B_, C_, n_int, i_start, i_end, j_start, j_end, k_start, k_end);
       }
     }
   }
