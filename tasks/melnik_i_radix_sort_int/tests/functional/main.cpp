@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <ranges>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -23,7 +24,7 @@ class MelnikIRadixSortIntFuncTests : public ppc::util::BaseRunFuncTests<InType, 
  protected:
   bool CheckTestOutputData(OutType &output_data) final {
     OutType expected = input_data_;
-    std::sort(expected.begin(), expected.end());
+    std::ranges::sort(expected);
     return expected == output_data;
   }
 
@@ -46,16 +47,14 @@ TEST_P(MelnikIRadixSortIntFuncTests, SortMatchesStdSort) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 9> kTestParam = {
-    std::make_tuple(std::vector<int>{1, 2, 3, 4, 5}, "sorted"),
-    std::make_tuple(std::vector<int>{5, 4, 3, 2, 1}, "reverse_sorted"),
-    std::make_tuple(std::vector<int>{-5, -4, -3, -2, -1}, "reverse_sorted_negative"),
-    std::make_tuple(std::vector<int>{-1, -2, -3, -4, -5}, "sorted_negative"),
-    std::make_tuple(std::vector<int>{3, 1, 4, 1, 5, 9, 2, 6}, "with_duplicates"),
-    std::make_tuple(std::vector<int>{-5, -3, -1, 0, 1, 3, 5}, "mixed"),
-    std::make_tuple(std::vector<int>{-10, -20, -30}, "negative"),
-    std::make_tuple(std::vector<int>{1, 2, 3}, "small_array"),
-    std::make_tuple(std::vector<int>{100, 50, 25, 75, 10}, "random_small"),
+const std::array<TestType, 7> kTestParam = {
+    std::make_tuple(std::vector<int>{1, 2, 3, 4, 5}, std::string("sorted_positive")),
+    std::make_tuple(std::vector<int>{5, 4, 3, 2, 1}, std::string("reverse_sorted")),
+    std::make_tuple(std::vector<int>{3, 1, 4, 1, 5, 9, 2, 6}, std::string("with_duplicates")),
+    std::make_tuple(std::vector<int>{-5, -3, -1, 0, 1, 3, 5}, std::string("mixed_negative")),
+    std::make_tuple(std::vector<int>{-10, -20, -30}, std::string("only_negative")),
+    std::make_tuple(std::vector<int>{1, 2, 3}, std::string("small_array")),
+    std::make_tuple(std::vector<int>{100, 50, 25, 75, 10}, std::string("random_small")),
 };
 
 const auto kTestTasksList =

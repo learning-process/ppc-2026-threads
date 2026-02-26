@@ -1,7 +1,8 @@
 #include "melnik_i_radix_sort_int/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <utility>
+#include <array>
+#include <ranges>
 #include <vector>
 
 #include "melnik_i_radix_sort_int/common/include/common.hpp"
@@ -39,11 +40,11 @@ bool MelnikIRadixSortIntSEQ::RunImpl() {
 }
 
 bool MelnikIRadixSortIntSEQ::PostProcessingImpl() {
-  return std::is_sorted(GetOutput().begin(), GetOutput().end());
+  return std::ranges::is_sorted(GetOutput());
 }
 
 int MelnikIRadixSortIntSEQ::GetMaxValue(const OutType &data) {
-  return *std::max_element(data.begin(), data.end());
+  return *std::ranges::max_element(data);
 }
 
 void MelnikIRadixSortIntSEQ::CountingSort(OutType &data, int exp, int offset) {
@@ -53,21 +54,22 @@ void MelnikIRadixSortIntSEQ::CountingSort(OutType &data, int exp, int offset) {
   }
 
   OutType output(n);
-  int count[kBuckets] = {0};
+  std::array<int, kBuckets> count{};
+  count.fill(0);
 
   for (int i = 0; i < n; i++) {
     int digit = ((data[i] + offset) / exp) % kBuckets;
-    count[digit]++;
+    count.at(digit)++;
   }
 
   for (int i = 1; i < kBuckets; i++) {
-    count[i] += count[i - 1];
+    count.at(i) += count.at(i - 1);
   }
 
   for (int i = n - 1; i >= 0; i--) {
     int digit = ((data[i] + offset) / exp) % kBuckets;
-    output[count[digit] - 1] = data[i];
-    count[digit]--;
+    output[count.at(digit) - 1] = data[i];
+    count.at(digit)--;
   }
 
   data = std::move(output);
@@ -79,7 +81,7 @@ void MelnikIRadixSortIntSEQ::RadixSort(OutType &data) {
   }
 
   int max_val = GetMaxValue(data);
-  int min_val = *std::min_element(data.begin(), data.end());
+  int min_val = *std::ranges::min_element(data);
 
   if (min_val >= 0) {
     for (int exp = 1; max_val / exp > 0; exp <<= kBitsPerDigit) {
