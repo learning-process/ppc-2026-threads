@@ -8,7 +8,7 @@
 namespace ovsyannikov_n_simpson_method {
 
 struct IntegralParams {
-  double ax, bx;  // Границы по X
+  double ax, bx;  // Грaницы по X
   double ay, by;  // Границы по Y
   int nx, ny;
 };
