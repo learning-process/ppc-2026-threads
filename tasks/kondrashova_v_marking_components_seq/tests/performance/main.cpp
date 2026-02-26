@@ -26,10 +26,10 @@ bool CheckLabels(const OutType &output_data, int expected_count, int size) {
   if (output_data.count != expected_count) {
     return false;
   }
-  if (output_data.labels.size() != size) {
+  if (static_cast<int>(output_data.labels.size()) != size) {
     return false;
   }
-  if (!output_data.labels.empty() && (output_data.labels[0].size() != size)) {
+  if (!output_data.labels.empty() && (static_cast<int>(output_data.labels[0].size()) != size)) {
     return false;
   }
   return true;
