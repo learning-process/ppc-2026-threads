@@ -31,8 +31,9 @@ class LazarevaARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, O
     for (int row = 0; row < kN_; ++row) {
       for (int k = 0; k < kN_; ++k) {
         for (int col = 0; col < kN_; ++col) {
-          expected_output_[static_cast<size_t>((row * kN_) + col)] +=
-              a[static_cast<size_t>((row * kN_) + k)] * b[static_cast<size_t>((k * kN_) + col)];
+          expected_output_[static_cast<size_t>((static_cast<ptrdiff_t>(row) * kN_) + col)] +=
+              a[static_cast<size_t>((static_cast<ptrdiff_t>(row) * kN_) + k)] *
+              b[static_cast<size_t>((static_cast<ptrdiff_t>(k) * kN_) + col)];
         }
       }
     }

@@ -39,8 +39,9 @@ class LazarevaARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
     for (int row = 0; row < n; ++row) {
       for (int k = 0; k < n; ++k) {
         for (int col = 0; col < n; ++col) {
-          expected_output_[static_cast<size_t>((row * n) + col)] +=
-              a[static_cast<size_t>((row * n) + k)] * b[static_cast<size_t>((k * n) + col)];
+          expected_output_[static_cast<size_t>((static_cast<ptrdiff_t>(row) * n) + col)] +=
+              a[static_cast<size_t>((static_cast<ptrdiff_t>(row) * n) + k)] *
+              b[static_cast<size_t>((static_cast<ptrdiff_t>(k) * n) + col)];
         }
       }
     }
