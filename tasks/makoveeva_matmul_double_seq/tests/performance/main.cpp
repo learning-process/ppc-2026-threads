@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
+#include <cmath>    // для std::abs
 #include <cstddef>  // для size_t
 #include <tuple>
 #include <vector>
@@ -13,10 +13,8 @@ namespace makoveeva_matmul_double_seq {
 namespace {
 
 void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, size_t n) {
-  // Очищаем c перед вычислениями
-  for (size_t i = 0; i < c.size(); ++i) {
-    c[i] = 0.0;
-  }
+  // Очищаем c перед вычислениями - используем assign вместо цикла
+  c.assign(c.size(), 0.0);
 
   for (size_t i = 0; i < n; ++i) {
     for (size_t k = 0; k < n; ++k) {

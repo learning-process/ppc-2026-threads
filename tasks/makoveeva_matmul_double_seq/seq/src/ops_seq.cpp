@@ -1,8 +1,11 @@
-#include "makoveeva_matmul_double_seq/seq/include/ops_seq.hpp"  // ЭТО САМОЕ ГЛАВНОЕ!
+#include "makoveeva_matmul_double_seq/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>  // для size_t
 #include <vector>
+
+#include "makoveeva_matmul_double_seq/common/include/common.hpp"  // для InType
 
 namespace makoveeva_matmul_double_seq {
 namespace {
@@ -52,10 +55,8 @@ bool MatmulDoubleSeqTask::RunImpl() {
     return false;
   }
 
-  // Очищаем C_ перед вычислениями
-  for (size_t i = 0; i < C_.size(); ++i) {
-    C_[i] = 0.0;
-  }
+  // Очищаем C_ перед вычислениями - используем assign вместо цикла
+  C_.assign(C_.size(), 0.0);
 
   const int n_int = static_cast<int>(n_);
   const int block_size = CalculateBlockSize(n_int);
