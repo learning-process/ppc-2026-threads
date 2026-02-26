@@ -48,7 +48,7 @@ bool KolotukhinAGaussinBlureSEQ::RunImpl() {
       for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
           std::uint8_t pixel = GetPixel(pixel_data, img_width, img_height, col + dx, row + dy);
-          acc += kKernel[1 + dy][1 + dx] * static_cast<int>(pixel);
+          acc += kKernel.at(1 + dy).at(1 + dx) * static_cast<int>(pixel);
         }
       }
       output[(static_cast<std::size_t>(row) * static_cast<std::size_t>(img_width)) + static_cast<std::size_t>(col)] =
