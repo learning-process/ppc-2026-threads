@@ -1,8 +1,11 @@
 #include "kondrashova_v_marking_components_seq/seq/include/ops_seq.hpp"
 
+#include <array>
 #include <queue>
 #include <utility>
 #include <vector>
+
+#include "kondrashova_v_marking_components_seq/common/include/common.hpp"
 
 namespace kondrashova_v_marking_components_seq {
 
@@ -12,9 +15,8 @@ KondrashovaVTaskSEQ::KondrashovaVTaskSEQ(const InType &in) {
   GetOutput() = {};
 }
 
-bool KondrashovaVTaskSEQ::ValidationImpl() {
-  // Фреймворк может вызывать Validation до установки реальных данных
-  return true;
+bool KondrashovaVTaskSEQ::ValidationImpl() { 
+  return true; 
 }
 
 bool KondrashovaVTaskSEQ::PreProcessingImpl() {
@@ -25,7 +27,7 @@ bool KondrashovaVTaskSEQ::PreProcessingImpl() {
   image_ = in.data;
 
   if (width_ > 0 && height_ > 0 && static_cast<int>(image_.size()) == width_ * height_) {
-    labels_1d_.assign(width_ * height_, 0);
+    labels_1d_.assign(static_cast<size_t>(width_ * height_), 0);
   } else {
     labels_1d_.clear();
   }
@@ -35,6 +37,41 @@ bool KondrashovaVTaskSEQ::PreProcessingImpl() {
   return true;
 }
 
+namespace {
+void BfsComponent(int start_i, int start_j, int width, int height, int label, const std::vector<uint8_t> &image, std::vector<int> &labels_1d) {
+  const std::array<int, 4> dx = {-1, 1, 0, 0};
+  const std::array<int, 4> dy = {0, 0, -1, 1};
+
+  auto inside = [&](int xi, int yi) {
+    return (xi >= 0 && xi < height && yi >= 0 && yi < width);
+  };
+
+  std::queue<std::pair<int, int>> q;
+  q.emplace(start_i, start_j);
+  labels_1d[static_cast<size_t>((start_i * width) + start_j)] = label;
+
+  while (!q.empty()) {
+    auto [cx, cy] = q.front();
+    q.pop();
+
+    for (int ki = 0; ki < 4; ++ki) {
+      int nx = cx + dx[ki];
+      int ny = cy + dy[ki];
+
+      if (!inside(nx, ny)) {
+        continue;
+      }
+
+      auto nidx = static_cast<size_t>((nx * width) + ny);
+      if (image[nidx] == 0 && labels_1d[nidx] == 0) {
+        labels_1d[nidx] = label;
+        q.emplace(nx, ny);
+      }
+    }
+  }
+}
+}  // namespace
+
 bool KondrashovaVTaskSEQ::RunImpl() {
   if (width_ <= 0 || height_ <= 0 || image_.empty()) {
     GetOutput().count = 0;
@@ -43,42 +80,13 @@ bool KondrashovaVTaskSEQ::RunImpl() {
 
   int current_label = 0;
 
-  auto inside = [&](int x, int y) { return (x >= 0 && x < height_ && y >= 0 && y < width_); };
-
-  const int dx[4] = {-1, 1, 0, 0};
-  const int dy[4] = {0, 0, -1, 1};
-
-  for (int i = 0; i < height_; ++i) {
-    for (int j = 0; j < width_; ++j) {
-      int idx = i * width_ + j;
-
+  for (int ii = 0; ii < height_; ++ii) {
+    for (int jj = 0; jj < width_; ++jj) {
+      auto idx = static_cast<size_t>((ii * width_) + jj);
       if (image_[idx] == 0 && labels_1d_[idx] == 0) {
-        current_label++;
-
-        std::queue<std::pair<int, int>> q;
-        q.emplace(i, j);
-        labels_1d_[idx] = current_label;
-
-        while (!q.empty()) {
-          auto [x, y] = q.front();
-          q.pop();
-
-          for (int k = 0; k < 4; ++k) {
-            int nx = x + dx[k];
-            int ny = y + dy[k];
-
-            if (!inside(nx, ny)) {
-              continue;
-            }
-
-            int nidx = nx * width_ + ny;
-
-            if (image_[nidx] == 0 && labels_1d_[nidx] == 0) {
-              labels_1d_[nidx] = current_label;
-              q.emplace(nx, ny);
-            }
-          }
-        }
+        ++current_label;
+        BfsComponent(ii, jj, width_, height_, current_label, image_,
+                     labels_1d_);
       }
     }
   }
@@ -95,9 +103,10 @@ bool KondrashovaVTaskSEQ::PostProcessingImpl() {
 
   GetOutput().labels.assign(height_, std::vector<int>(width_, 0));
 
-  for (int i = 0; i < height_; ++i) {
-    for (int j = 0; j < width_; ++j) {
-      GetOutput().labels[i][j] = labels_1d_[i * width_ + j];
+  for (int ii = 0; ii < height_; ++ii) {
+    for (int jj = 0; jj < width_; ++jj) {
+      GetOutput().labels[ii][jj] =
+          labels_1d_[static_cast<size_t>((ii * width_) + jj)];
     }
   }
 

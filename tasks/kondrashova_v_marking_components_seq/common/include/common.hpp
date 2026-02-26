@@ -10,14 +10,14 @@
 namespace kondrashova_v_marking_components_seq {
 
 struct ImageData {
-  std::vector<uint8_t> data;  // 1D бинарное изображение: 0 - объект, 1 - фон
+  std::vector<uint8_t> data;
   int width{};
   int height{};
 };
 
 struct Result {
-  int count{};                           // количество компонент
-  std::vector<std::vector<int>> labels;  // 2D карта меток
+  int count{};
+  std::vector<std::vector<int>> labels;
 };
 
 using InType = ImageData;

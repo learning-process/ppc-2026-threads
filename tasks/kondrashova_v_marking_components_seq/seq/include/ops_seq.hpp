@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 #include "kondrashova_v_marking_components_seq/common/include/common.hpp"
@@ -23,8 +24,8 @@ class KondrashovaVTaskSEQ : public BaseTask {
 
   int width_{};
   int height_{};
-  std::vector<uint8_t> image_;  // 1D вход
-  std::vector<int> labels_1d_;  // внутренняя 1D разметка
+  std::vector<uint8_t> image_;
+  std::vector<int> labels_1d_;
 };
 
 }  // namespace kondrashova_v_marking_components_seq
