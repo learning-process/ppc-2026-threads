@@ -4,90 +4,71 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <deque>
 #include <queue>
+#include <ranges>
+#include <utility>
 #include <vector>
+
+#include "shkenev_i_constr_hull_for_binary_image_seq/common/include/common.hpp"
 
 namespace shkenev_i_constr_hull_for_binary_image_seq {
 
 namespace {
 
-const std::array<std::pair<int, int>, 4> kNeighborDirections = {std::make_pair(1, 0), std::make_pair(-1, 0),
-                                                                std::make_pair(0, 1), std::make_pair(0, -1)};
+constexpr uint8_t kThreshold = 128;
+constexpr std::array<std::pair<int, int>, 4> kDirs = {std::make_pair(1, 0), std::make_pair(-1, 0), std::make_pair(0, 1),
+                                                      std::make_pair(0, -1)};
 
-void ExploreRegion(int start_row, int start_col, const BinaryImageData &image, std::vector<bool> &visited_mask,
-                   std::vector<ImagePoint> &region) {
-  std::queue<ImagePoint> exploration_queue;
-  exploration_queue.emplace(start_row, start_col);
-  visited_mask[helpers::ComputeIndex(start_row, start_col, image.cols)] = true;
+int64_t Cross(const Point &a, const Point &b, const Point &c) {
+  int64_t abx = static_cast<int64_t>(b.x) - static_cast<int64_t>(a.x);
+  int64_t aby = static_cast<int64_t>(b.y) - static_cast<int64_t>(a.y);
+  int64_t bcx = static_cast<int64_t>(c.x) - static_cast<int64_t>(b.x);
+  int64_t bcy = static_cast<int64_t>(c.y) - static_cast<int64_t>(b.y);
+  return (abx * bcy) - (aby * bcx);
+}
 
-  while (!exploration_queue.empty()) {
-    ImagePoint current = exploration_queue.front();
-    exploration_queue.pop();
-    region.push_back(current);
-
-    for (const auto &[dr, dc] : kNeighborDirections) {
-      int neighbor_row = current.row + dr;
-      int neighbor_col = current.col + dc;
-
-      if (!helpers::IsValidCoordinate(neighbor_row, neighbor_col, image.rows, image.cols)) {
-        continue;
-      }
-
-      size_t neighbor_idx = helpers::ComputeIndex(neighbor_row, neighbor_col, image.cols);
-      if (visited_mask[neighbor_idx] || image.data[neighbor_idx] == 0) {
-        continue;
-      }
-
-      visited_mask[neighbor_idx] = true;
-      exploration_queue.emplace(neighbor_row, neighbor_col);
-    }
-  }
+bool IsForeground(uint8_t pixel) {
+  return pixel > kThreshold;
 }
 
 }  // namespace
 
-ShkenevIConstrHullSeq::ShkenevIConstrHullSeq(const InType &in) : working_image_(in) {
+ShkenevIConstrHullSeq::ShkenevIConstrHullSeq(const InType &in) : work_(in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
 bool ShkenevIConstrHullSeq::ValidationImpl() {
-  const auto &input = GetInput();
-
-  if (input.rows <= 0 || input.cols <= 0) {
-    return false;
-  }
-
-  size_t expected_size = static_cast<size_t>(input.rows) * static_cast<size_t>(input.cols);
-  return input.data.size() == expected_size;
+  const auto &in = GetInput();
+  bool dims = in.width > 0 && in.height > 0;
+  bool size = in.pixels.size() == static_cast<size_t>(in.width) * static_cast<size_t>(in.height);
+  return dims && size;
 }
 
 bool ShkenevIConstrHullSeq::PreProcessingImpl() {
-  working_image_ = GetInput();
-  BinarizeImage();
+  work_ = GetInput();
+  ThresholdImage();
   return true;
 }
 
 bool ShkenevIConstrHullSeq::RunImpl() {
-  ExtractConnectedRegions();
+  FindComponents();
 
-  working_image_.convex_envelopes.clear();
-  working_image_.convex_envelopes.reserve(working_image_.connected_components.size());
+  work_.convex_hulls.clear();
+  work_.convex_hulls.reserve(work_.components.size());
 
-  for (const auto &region : working_image_.connected_components) {
-    if (region.empty()) {
+  for (const auto &comp : work_.components) {
+    if (comp.empty()) {
       continue;
     }
-
-    if (region.size() <= 2) {
-      working_image_.convex_envelopes.push_back(region);
+    if (comp.size() <= 2) {
+      work_.convex_hulls.push_back(comp);
     } else {
-      working_image_.convex_envelopes.push_back(ComputeConvexEnvelope(region));
+      work_.convex_hulls.push_back(BuildHull(comp));
     }
   }
 
-  GetOutput() = working_image_;
+  GetOutput() = work_;
   return true;
 }
 
@@ -95,106 +76,100 @@ bool ShkenevIConstrHullSeq::PostProcessingImpl() {
   return true;
 }
 
-void ShkenevIConstrHullSeq::BinarizeImage(uint8_t threshold) {
-  for (auto &pixel : working_image_.data) {
-    pixel = (pixel > threshold) ? static_cast<uint8_t>(1) : static_cast<uint8_t>(0);
+size_t ShkenevIConstrHullSeq::Index(int x, int y, int width) {
+  return (static_cast<size_t>(y) * static_cast<size_t>(width)) + static_cast<size_t>(x);
+}
+
+void ShkenevIConstrHullSeq::ThresholdImage() {
+  for (auto &p : work_.pixels) {
+    p = IsForeground(p) ? static_cast<uint8_t>(255) : static_cast<uint8_t>(0);
   }
 }
 
-void ShkenevIConstrHullSeq::ExtractConnectedRegions() {
-  size_t total_pixels = static_cast<size_t>(working_image_.rows) * static_cast<size_t>(working_image_.cols);
-  std::vector<bool> visited(total_pixels, false);
+void ShkenevIConstrHullSeq::FindComponents() {
+  int width = work_.width;
+  int height = work_.height;
 
-  working_image_.connected_components.clear();
+  std::vector<bool> visited(static_cast<size_t>(width) * static_cast<size_t>(height), false);
+  work_.components.clear();
 
-  for (int r = 0; r < working_image_.rows; ++r) {
-    for (int c = 0; c < working_image_.cols; ++c) {
-      size_t idx = helpers::ComputeIndex(r, c, working_image_.cols);
-
-      if (working_image_.data[idx] == 0 || visited[idx]) {
+  for (int row = 0; row < height; ++row) {
+    for (int col = 0; col < width; ++col) {
+      size_t idx = Index(col, row, width);
+      if (work_.pixels[idx] == 0 || visited[idx]) {
         continue;
       }
 
-      std::vector<ImagePoint> region;
-      ExploreRegion(r, c, working_image_, visited, region);
+      std::vector<Point> component;
+      std::queue<Point> queue;
+      queue.emplace(col, row);
+      visited[idx] = true;
 
-      if (!region.empty()) {
-        working_image_.connected_components.push_back(std::move(region));
+      while (!queue.empty()) {
+        Point current = queue.front();
+        queue.pop();
+        component.push_back(current);
+
+        for (auto [dx, dy] : kDirs) {
+          int next_x = current.x + dx;
+          int next_y = current.y + dy;
+          if (next_x < 0 || next_x >= width || next_y < 0 || next_y >= height) {
+            continue;
+          }
+          size_t next_idx = Index(next_x, next_y, width);
+          if (visited[next_idx] || work_.pixels[next_idx] == 0) {
+            continue;
+          }
+          visited[next_idx] = true;
+          queue.emplace(next_x, next_y);
+        }
+      }
+
+      if (!component.empty()) {
+        work_.components.push_back(std::move(component));
       }
     }
   }
 }
 
-long long ShkenevIConstrHullSeq::ComputeCrossProduct(const ImagePoint &p1, const ImagePoint &p2, const ImagePoint &p3) {
-  long long v1_row = static_cast<long long>(p2.row) - static_cast<long long>(p1.row);
-  long long v1_col = static_cast<long long>(p2.col) - static_cast<long long>(p1.col);
-  long long v2_row = static_cast<long long>(p3.row) - static_cast<long long>(p2.row);
-  long long v2_col = static_cast<long long>(p3.col) - static_cast<long long>(p2.col);
-
-  return (v1_row * v2_col) - (v1_col * v2_row);
-}
-
-std::vector<ImagePoint> ShkenevIConstrHullSeq::ComputeConvexEnvelope(const std::vector<ImagePoint> &region) {
-  if (region.size() <= 2) {
-    return region;
+std::vector<Point> ShkenevIConstrHullSeq::BuildHull(const std::vector<Point> &points) {
+  if (points.size() <= 2) {
+    return points;
   }
 
-  std::vector<ImagePoint> sorted_points = region;
+  std::vector<Point> pts = points;
+  std::ranges::sort(pts, [](const Point &a, const Point &b) { return (a.x != b.x) ? (a.x < b.x) : (a.y < b.y); });
 
-  std::sort(sorted_points.begin(), sorted_points.end(), [](const ImagePoint &a, const ImagePoint &b) {
-    return (a.row != b.row) ? (a.row < b.row) : (a.col < b.col);
-  });
+  auto [first, last] = std::ranges::unique(pts);
+  pts.erase(first, last);
 
-  auto last_unique = std::unique(sorted_points.begin(), sorted_points.end());
-  sorted_points.erase(last_unique, sorted_points.end());
-
-  if (sorted_points.size() <= 2) {
-    return sorted_points;
+  if (pts.size() <= 2) {
+    return pts;
   }
 
-  std::deque<ImagePoint> lower_hull;
-  std::deque<ImagePoint> upper_hull;
+  std::vector<Point> lower;
+  std::vector<Point> upper;
+  lower.reserve(pts.size());
+  upper.reserve(pts.size());
 
-  for (const auto &point : sorted_points) {
-    while (lower_hull.size() >= 2) {
-      const auto &p1 = lower_hull[lower_hull.size() - 2];
-      const auto &p2 = lower_hull.back();
-
-      if (ComputeCrossProduct(p1, p2, point) <= 0) {
-        lower_hull.pop_back();
-      } else {
-        break;
-      }
+  for (const auto &p : pts) {
+    while (lower.size() >= 2 && Cross(lower[lower.size() - 2], lower.back(), p) <= 0) {
+      lower.pop_back();
     }
-    lower_hull.push_back(point);
+    lower.push_back(p);
   }
 
-  for (auto it = sorted_points.rbegin(); it != sorted_points.rend(); ++it) {
-    const auto &point = *it;
-
-    while (upper_hull.size() >= 2) {
-      const auto &p1 = upper_hull[upper_hull.size() - 2];
-      const auto &p2 = upper_hull.back();
-
-      if (ComputeCrossProduct(p1, p2, point) <= 0) {
-        upper_hull.pop_back();
-      } else {
-        break;
-      }
+  for (const auto &p : std::ranges::reverse_view(pts)) {
+    while (upper.size() >= 2 && Cross(upper[upper.size() - 2], upper.back(), p) <= 0) {
+      upper.pop_back();
     }
-    upper_hull.push_back(point);
+    upper.push_back(p);
   }
 
-  lower_hull.pop_back();
-  upper_hull.pop_back();
-
-  std::vector<ImagePoint> convex_envelope;
-  convex_envelope.reserve(lower_hull.size() + upper_hull.size());
-
-  convex_envelope.insert(convex_envelope.end(), lower_hull.begin(), lower_hull.end());
-  convex_envelope.insert(convex_envelope.end(), upper_hull.begin(), upper_hull.end());
-
-  return convex_envelope;
+  lower.pop_back();
+  upper.pop_back();
+  lower.insert(lower.end(), upper.begin(), upper.end());
+  return lower;
 }
 
 }  // namespace shkenev_i_constr_hull_for_binary_image_seq

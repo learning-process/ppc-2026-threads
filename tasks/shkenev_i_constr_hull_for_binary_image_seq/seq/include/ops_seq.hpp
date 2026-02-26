@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <vector>
 
 #include "shkenev_i_constr_hull_for_binary_image_seq/common/include/common.hpp"
@@ -21,12 +22,12 @@ class ShkenevIConstrHullSeq : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void BinarizeImage(uint8_t threshold = 128);
-  void ExtractConnectedRegions();
-  static std::vector<ImagePoint> ComputeConvexEnvelope(const std::vector<ImagePoint> &region);
-  static long long ComputeCrossProduct(const ImagePoint &p1, const ImagePoint &p2, const ImagePoint &p3);
+  void ThresholdImage();
+  void FindComponents();
+  static std::vector<Point> BuildHull(const std::vector<Point> &points);
+  static size_t Index(int x, int y, int width);
 
-  BinaryImageData working_image_;
+  BinaryImage work_;
 };
 
 }  // namespace shkenev_i_constr_hull_for_binary_image_seq
