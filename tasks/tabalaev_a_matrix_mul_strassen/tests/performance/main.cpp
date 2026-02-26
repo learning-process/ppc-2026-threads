@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <cstddef>
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 #include "tabalaev_a_matrix_mul_strassen/common/include/common.hpp"
