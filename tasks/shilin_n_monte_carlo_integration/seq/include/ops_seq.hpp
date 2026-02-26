@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "shilin_n_monte_carlo_integration/common/include/common.hpp"
 #include "task/include/task.hpp"
 
