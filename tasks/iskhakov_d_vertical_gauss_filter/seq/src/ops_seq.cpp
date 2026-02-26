@@ -62,17 +62,17 @@ bool IskhakovDVerticalGaussFilterSEQ::RunImpl() {
     for (int vertical = 0; vertical < height; ++vertical) {
       int sum = 0;
 
-      sum += 1 * IskhakovDGetPixelMirrorSeq(matrix, horizontal - 1, vertical - 1, width, height);
-      sum += 2 * IskhakovDGetPixelMirrorSeq(matrix, horizontal, vertical - 1, width, height);
-      sum += 1 * IskhakovDGetPixelMirrorSeq(matrix, horizontal + 1, vertical - 1, width, height);
+      sum += GAUSS_KERNEL[0][0] * IskhakovDGetPixelMirrorSeq(matrix, horizontal - 1, vertical - 1, width, height);
+      sum += GAUSS_KERNEL[0][1] * IskhakovDGetPixelMirrorSeq(matrix, horizontal, vertical - 1, width, height);
+      sum += GAUSS_KERNEL[0][2] * IskhakovDGetPixelMirrorSeq(matrix, horizontal + 1, vertical - 1, width, height);
 
-      sum += 2 * IskhakovDGetPixelMirrorSeq(matrix, horizontal - 1, vertical, width, height);
-      sum += 4 * IskhakovDGetPixelMirrorSeq(matrix, horizontal, vertical, width, height);
-      sum += 2 * IskhakovDGetPixelMirrorSeq(matrix, horizontal + 1, vertical, width, height);
+      sum += GAUSS_KERNEL[1][0] * IskhakovDGetPixelMirrorSeq(matrix, horizontal - 1, vertical, width, height);
+      sum += GAUSS_KERNEL[1][1] * IskhakovDGetPixelMirrorSeq(matrix, horizontal, vertical, width, height);
+      sum += GAUSS_KERNEL[1][2] * IskhakovDGetPixelMirrorSeq(matrix, horizontal + 1, vertical, width, height);
 
-      sum += 1 * IskhakovDGetPixelMirrorSeq(matrix, horizontal - 1, vertical + 1, width, height);
-      sum += 2 * IskhakovDGetPixelMirrorSeq(matrix, horizontal, vertical + 1, width, height);
-      sum += 1 * IskhakovDGetPixelMirrorSeq(matrix, horizontal + 1, vertical + 1, width, height);
+      sum += GAUSS_KERNEL[2][0] * IskhakovDGetPixelMirrorSeq(matrix, horizontal - 1, vertical + 1, width, height);
+      sum += GAUSS_KERNEL[2][1] * IskhakovDGetPixelMirrorSeq(matrix, horizontal, vertical + 1, width, height);
+      sum += GAUSS_KERNEL[2][2] * IskhakovDGetPixelMirrorSeq(matrix, horizontal + 1, vertical + 1, width, height);
 
       result[vertical * width + horizontal] = static_cast<uint8_t>(sum / DIV_CONST);
     }
