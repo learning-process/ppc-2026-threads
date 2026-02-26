@@ -6,6 +6,8 @@
 #include <map>
 #include <vector>
 
+#include "tsyplakov_k_mul_double_crs_matrix/common/include/common.hpp"
+
 namespace tsyplakov_k_mul_double_crs_matrix {
 
 TsyplakovKTestTaskSEQ::TsyplakovKTestTaskSEQ(const InType& in) {

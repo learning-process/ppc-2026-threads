@@ -35,7 +35,7 @@ class TsyplakovKRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType,
       b.col_index = {0, 1};
       b.row_ptr = {0, 1, 2};
 
-      input_data_ = {a, b};
+      input_data_ = {.a = a, .b = b};
       expected_nnz_ = 2;
       expected_values_ = {2.0, 3.0};
     } else if (case_num == 2) {
@@ -49,7 +49,7 @@ class TsyplakovKRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType,
       b.col_index = {0, 0, 1};
       b.row_ptr = {0, 1, 3};
 
-      input_data_ = {a, b};
+      input_data_ = {.a = a, .b = b};
       expected_nnz_ = 3;
       expected_values_ = {4.0, 23.0, 18.0};
     } else if (case_num == 3) {
@@ -60,7 +60,7 @@ class TsyplakovKRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType,
 
       SparseMatrixCRS b(2, 2);
 
-      input_data_ = {a, b};
+      input_data_ = {.a = a, .b = b};
       expected_nnz_ = 0;
     } else if (case_num == 4) {
       SparseMatrixCRS a(3, 3);
@@ -73,7 +73,7 @@ class TsyplakovKRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType,
       b.col_index = {0, 1, 2, 0};
       b.row_ptr = {0, 1, 3, 4};
 
-      input_data_ = {a, b};
+      input_data_ = {.a = a, .b = b};
       expected_nnz_ = 4;
     }
   }
@@ -83,7 +83,7 @@ class TsyplakovKRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType,
       return false;
     }
 
-    if (output_data.row_ptr.size() != static_cast<size_t>(output_data.rows + 1)) {
+    if (output_data.row_ptr.size() != static_cast<size_t>(output_data.rows) + 1) {
       return false;
     }
 

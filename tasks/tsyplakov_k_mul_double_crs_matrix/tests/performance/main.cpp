@@ -17,9 +17,12 @@ class TsyplakovKRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType,
     SparseMatrixCRS a(kSize_, kSize_);
     SparseMatrixCRS b(kSize_, kSize_);
 
-    std::vector<double> values_a, values_b;
-    std::vector<int> col_idx_a, col_idx_b;
-    std::vector<int> row_ptr_a(kSize_ + 1, 0), row_ptr_b(kSize_ + 1, 0);
+    std::vector<double> values_a;
+    std::vector<double> values_b;
+    std::vector<int> col_idx_a;
+    std::vector<int> col_idx_b;
+    std::vector<int> row_ptr_a(kSize_ + 1, 0);
+    std::vector<int> row_ptr_b(kSize_ + 1, 0);
 
     int nnz_a = 0;
     int nnz_b = 0;
@@ -46,7 +49,7 @@ class TsyplakovKRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType,
     b.col_index = col_idx_b;
     b.row_ptr = row_ptr_b;
 
-    input_data_ = {a, b};
+    input_data_ = {.a = a, .b = b};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
