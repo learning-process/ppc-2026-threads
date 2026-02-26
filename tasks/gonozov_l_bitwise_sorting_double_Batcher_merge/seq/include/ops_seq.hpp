@@ -3,7 +3,7 @@
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace gonozov_l_bitwise_sorting_double_Batcher_merge {
+namespace gonozov_l_bitwise_sorting_double_batcher_merge {
 
 class GonozovLBitSortBatcherMergeSEQ : public BaseTask {
  public:
@@ -19,4 +19,4 @@ class GonozovLBitSortBatcherMergeSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace gonozov_l_bitwise_sorting_double_Batcher_merge
+}  // namespace gonozov_l_bitwise_sorting_double_batcher_merge

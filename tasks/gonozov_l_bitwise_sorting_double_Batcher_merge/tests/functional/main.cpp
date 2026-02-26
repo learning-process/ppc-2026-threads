@@ -1,11 +1,10 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cmath>
 #include <cstddef>
-#include <map>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/common/include/common.hpp"
@@ -13,7 +12,7 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace gonozov_l_bitwise_sorting_double_Batcher_merge {
+namespace gonozov_l_bitwise_sorting_double_batcher_merge {
 
 class GonozovLBitSortBatcherMergeFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -22,11 +21,11 @@ class GonozovLBitSortBatcherMergeFuncTests : public ppc::util::BaseRunFuncTests<
   }
 
  protected:
-  InType input_data_;
+  InType input_data;
 
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = std::get<0>(params);
+    input_data = std::get<0>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -42,7 +41,7 @@ class GonozovLBitSortBatcherMergeFuncTests : public ppc::util::BaseRunFuncTests<
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 };
 
@@ -64,7 +63,7 @@ const std::array<TestType, 4> kTestParam = {
 };
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<GonozovLBitSortBatcherMergeSEQ, InType>(
-    kTestParam, PPC_SETTINGS_gonozov_l_bitwise_sorting_double_Batcher_merge));
+    kTestParam, PPC_SETTINGS_gonozov_l_bitwise_sorting_double_batcher_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -75,4 +74,4 @@ INSTANTIATE_TEST_SUITE_P(FuncTests, GonozovLBitSortBatcherMergeFuncTests, kGtest
 
 }  // namespace
 
-}  // namespace gonozov_l_bitwise_sorting_double_Batcher_merge
+}  // namespace gonozov_l_bitwise_sorting_double_batcher_merge

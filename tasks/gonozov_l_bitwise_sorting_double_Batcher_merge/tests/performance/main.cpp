@@ -1,16 +1,13 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
-#include <map>
-#include <tuple>
-#include <utility>
 #include <vector>
 
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/common/include/common.hpp"
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace gonozov_l_bitwise_sorting_double_Batcher_merge {
+namespace gonozov_l_bitwise_sorting_double_batcher_merge {
 
 class GonozovLBitSortBatcherMergePerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr size_t kCount = 1000000;
@@ -18,8 +15,9 @@ class GonozovLBitSortBatcherMergePerfTest : public ppc::util::BaseRunPerfTests<I
 
   void SetUp() override {
     std::vector<double> forming_data;
+    forming_data.reserve(kCount);
     for (size_t i = 0; i < kCount; i++) {
-      forming_data.push_back((i + 120358361) * (i + 1) / (234134) % 1000);
+      forming_data[i] = static_cast<double>((i + 120358361.0) * (i + 1.0) / (234134.0) % 1000.0);
     }
     input_data_ = forming_data;
   }
@@ -46,7 +44,7 @@ TEST_P(GonozovLBitSortBatcherMergePerfTest, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, GonozovLBitSortBatcherMergeSEQ>(
-    PPC_SETTINGS_gonozov_l_bitwise_sorting_double_Batcher_merge);
+    PPC_SETTINGS_gonozov_l_bitwise_sorting_double_batcher_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -56,4 +54,4 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, GonozovLBitSortBatcherMergePerfTest, kGte
 
 }  // namespace
 
-}  // namespace gonozov_l_bitwise_sorting_double_Batcher_merge
+}  // namespace gonozov_l_bitwise_sorting_double_batcher_merge
