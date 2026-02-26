@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "egorova_l_binary_convex_hull/common/include/common.hpp"
 #include "task/include/task.hpp"
 
