@@ -4,7 +4,6 @@
 #include <cmath>
 #include <vector>
 
-// Явный include для InType, хотя он уже есть в ops_seq.hpp
 #include "makoveeva_matmul_double_seq/common/include/common.hpp"
 
 namespace makoveeva_matmul_double_seq {
@@ -77,7 +76,6 @@ bool MatmulDoubleSeqTask::RunImpl() {
     }
   }
 
-  // Убедись, что GetOutput() получает C_
   GetOutput() = C_;
   return true;
 }
