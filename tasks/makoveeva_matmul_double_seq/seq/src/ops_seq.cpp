@@ -1,9 +1,58 @@
+#include "makoveeva_matmul_double_seq/seq/include/ops_seq.hpp"  // ЭТО САМОЕ ГЛАВНОЕ!
+
+#include <algorithm>
+#include <cmath>
+#include <vector>
+
+namespace makoveeva_matmul_double_seq {
+namespace {
+
+void ProcessBlock(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, int n,
+                  int i_start, int i_end, int j_start, int j_end, int k_start, int k_end) {
+  for (int i = i_start; i < i_end; ++i) {
+    for (int j = j_start; j < j_end; ++j) {
+      double sum = 0.0;
+      for (int k = k_start; k < k_end; ++k) {
+        sum += a[(i * n) + k] * b[(k * n) + j];
+      }
+      c[(i * n) + j] += sum;
+    }
+  }
+}
+
+int CalculateBlockSize(int n) {
+  return std::max(1, static_cast<int>(std::sqrt(static_cast<double>(n))));
+}
+
+int CalculateNumBlocks(int n, int block_size) {
+  return (n + block_size - 1) / block_size;
+}
+
+}  // namespace
+
+MatmulDoubleSeqTask::MatmulDoubleSeqTask(const InType &in)
+    : n_(std::get<0>(in)), A_(std::get<1>(in)), B_(std::get<2>(in)), C_(n_ * n_, 0.0) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetOutput() = C_;
+}
+
+bool MatmulDoubleSeqTask::ValidationImpl() {
+  const bool valid_n = n_ > 0;
+  const bool valid_a = A_.size() == n_ * n_;
+  const bool valid_b = B_.size() == n_ * n_;
+  return valid_n && valid_a && valid_b;
+}
+
+bool MatmulDoubleSeqTask::PreProcessingImpl() {
+  return true;
+}
+
 bool MatmulDoubleSeqTask::RunImpl() {
   if (n_ <= 0) {
     return false;
   }
 
-  // Очищаем C_ перед вычислениями - заменяем std::fill на цикл
+  // Очищаем C_ перед вычислениями
   for (size_t i = 0; i < C_.size(); ++i) {
     C_[i] = 0.0;
   }
@@ -30,3 +79,9 @@ bool MatmulDoubleSeqTask::RunImpl() {
   GetOutput() = C_;
   return true;
 }
+
+bool MatmulDoubleSeqTask::PostProcessingImpl() {
+  return true;
+}
+
+}  // namespace makoveeva_matmul_double_seq
