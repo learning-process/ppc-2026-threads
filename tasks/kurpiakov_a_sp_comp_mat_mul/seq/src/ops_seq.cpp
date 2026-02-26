@@ -1,6 +1,6 @@
-#include <utility>
-
 #include "kurpiakov_a_sp_comp_mat_mul/seq/include/ops_seq.hpp"
+
+#include <utility>
 
 #include "kurpiakov_a_sp_comp_mat_mul/common/include/common.hpp"
 
