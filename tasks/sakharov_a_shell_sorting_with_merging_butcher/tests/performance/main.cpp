@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstddef>
+#include <ostream>
 #include <random>
 #include <vector>
 
@@ -8,9 +10,17 @@
 #include "sakharov_a_shell_sorting_with_merging_butcher/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
+namespace ppc::util {
+template <typename InType, typename OutType>
+static inline void PrintTo(const PerfTestParam<InType, OutType> &param, ::std::ostream *os) {
+  *os << "PerfTestParam{"
+      << "name=" << std::get<static_cast<std::size_t>(GTestParamIndex::kNameTest)>(param) << "}";
+}
+}  // namespace ppc::util
+
 namespace sakharov_a_shell_sorting_with_merging_butcher {
 
-class ShellButcherPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class SakharovAShellButcherPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
   OutType expected_output_;
 
@@ -37,7 +47,7 @@ class ShellButcherPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
   }
 };
 
-TEST_P(ShellButcherPerfTests, RunPerfModes) {
+TEST_P(SakharovAShellButcherPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -46,9 +56,9 @@ namespace {
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SakharovAShellButcherSEQ>(
     PPC_SETTINGS_sakharov_a_shell_sorting_with_merging_butcher);
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-const auto kPerfTestName = ShellButcherPerfTests::CustomPerfTestName;
+const auto kPerfTestName = SakharovAShellButcherPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(ShellButcherSeqPerf, ShellButcherPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(ShellButcherSeqPerf, SakharovAShellButcherPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 }  // namespace sakharov_a_shell_sorting_with_merging_butcher

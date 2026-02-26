@@ -18,7 +18,7 @@ bool SakharovAShellButcherSEQ::ValidationImpl() {
 }
 
 bool SakharovAShellButcherSEQ::PreProcessingImpl() {
-  GetOutput().clear();
+  GetOutput().assign(GetInput().size(), 0);
   return true;
 }
 
@@ -27,10 +27,10 @@ void SakharovAShellButcherSEQ::ShellSort(std::vector<int> &data) {
     return;
   }
 
-  for (size_t gap = data.size() / 2; gap > 0; gap /= 2) {
-    for (size_t i = gap; i < data.size(); ++i) {
+  for (std::size_t gap = data.size() / 2; gap > 0; gap /= 2) {
+    for (std::size_t i = gap; i < data.size(); ++i) {
       int temp = data[i];
-      size_t j = i;
+      std::size_t j = i;
       while (j >= gap && data[j - gap] > temp) {
         data[j] = data[j - gap];
         j -= gap;
@@ -45,8 +45,8 @@ std::vector<int> SakharovAShellButcherSEQ::MergeSortedVectors(const std::vector<
   std::vector<int> merged;
   merged.reserve(left.size() + right.size());
 
-  size_t left_index = 0;
-  size_t right_index = 0;
+  std::size_t left_index = 0;
+  std::size_t right_index = 0;
 
   while (left_index < left.size() && right_index < right.size()) {
     if (left[left_index] <= right[right_index]) {
@@ -83,7 +83,7 @@ std::vector<int> SakharovAShellButcherSEQ::BatcherOddEvenMerge(const std::vector
   right_even.reserve((right.size() + 1) / 2);
   right_odd.reserve(right.size() / 2);
 
-  for (size_t index = 0; index < left.size(); ++index) {
+  for (std::size_t index = 0; index < left.size(); ++index) {
     if (index % 2 == 0) {
       left_even.push_back(left[index]);
     } else {
@@ -91,7 +91,7 @@ std::vector<int> SakharovAShellButcherSEQ::BatcherOddEvenMerge(const std::vector
     }
   }
 
-  for (size_t index = 0; index < right.size(); ++index) {
+  for (std::size_t index = 0; index < right.size(); ++index) {
     if (index % 2 == 0) {
       right_even.push_back(right[index]);
     } else {
@@ -104,8 +104,8 @@ std::vector<int> SakharovAShellButcherSEQ::BatcherOddEvenMerge(const std::vector
 
   std::vector<int> result;
   result.reserve(left.size() + right.size());
-  size_t even_index = 0;
-  size_t odd_index = 0;
+  std::size_t even_index = 0;
+  std::size_t odd_index = 0;
 
   while (even_index < even_merged.size() || odd_index < odd_merged.size()) {
     if (even_index < even_merged.size()) {
@@ -118,7 +118,7 @@ std::vector<int> SakharovAShellButcherSEQ::BatcherOddEvenMerge(const std::vector
     }
   }
 
-  for (size_t index = 1; index + 1 < result.size(); index += 2) {
+  for (std::size_t index = 1; index + 1 < result.size(); index += 2) {
     if (result[index] > result[index + 1]) {
       std::swap(result[index], result[index + 1]);
     }
@@ -135,7 +135,7 @@ bool SakharovAShellButcherSEQ::RunImpl() {
     return true;
   }
 
-  const size_t middle = input.size() / 2;
+  const std::size_t middle = input.size() / 2;
 
   std::vector<int> left(input.begin(), input.begin() + static_cast<std::ptrdiff_t>(middle));
   std::vector<int> right(input.begin() + static_cast<std::ptrdiff_t>(middle), input.end());
