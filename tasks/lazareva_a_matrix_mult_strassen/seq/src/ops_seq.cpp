@@ -1,11 +1,11 @@
 #include "lazareva_a_matrix_mult_strassen/seq/include/ops_seq.hpp"
 
+#include <array>
 #include <cstddef>
 #include <utility>
 #include <vector>
 
 #include "lazareva_a_matrix_mult_strassen/common/include/common.hpp"
-#include "task/include/task.hpp"
 
 namespace lazareva_a_matrix_mult_strassen {
 
@@ -174,18 +174,18 @@ std::vector<double> LazarevaATestTaskSEQ::Strassen(const std::vector<double> &ro
     const int node_idx = call_stack.back();
     call_stack.pop_back();
 
-    const int cur_n = nodes[static_cast<size_t>(node_idx)].n;
-    const int cur_slot = nodes[static_cast<size_t>(node_idx)].result_slot;
+    const auto nidx = static_cast<size_t>(node_idx);
+    const int cur_n = nodes[nidx].n;
+    const int cur_slot = nodes[nidx].result_slot;
 
     if (cur_n <= 64) {
-      results[static_cast<size_t>(cur_slot)] =
-          NaiveMult(nodes[static_cast<size_t>(node_idx)].a, nodes[static_cast<size_t>(node_idx)].b, cur_n);
-      nodes[static_cast<size_t>(node_idx)].a = {};
-      nodes[static_cast<size_t>(node_idx)].b = {};
+      results[static_cast<size_t>(cur_slot)] = NaiveMult(nodes[nidx].a, nodes[nidx].b, cur_n);
+      nodes[nidx].a = {};
+      nodes[nidx].b = {};
       continue;
     }
 
-    if (!nodes[static_cast<size_t>(node_idx)].expanded) {
+    if (!nodes[nidx].expanded) {
       const int half = cur_n / 2;
 
       std::vector<double> a11;
@@ -197,35 +197,36 @@ std::vector<double> LazarevaATestTaskSEQ::Strassen(const std::vector<double> &ro
       std::vector<double> b21;
       std::vector<double> b22;
 
-      Split(nodes[static_cast<size_t>(node_idx)].a, cur_n, a11, a12, a21, a22);
-      Split(nodes[static_cast<size_t>(node_idx)].b, cur_n, b11, b12, b21, b22);
+      Split(nodes[nidx].a, cur_n, a11, a12, a21, a22);
+      Split(nodes[nidx].b, cur_n, b11, b12, b21, b22);
 
-      nodes[static_cast<size_t>(node_idx)].a = {};
-      nodes[static_cast<size_t>(node_idx)].b = {};
-      nodes[static_cast<size_t>(node_idx)].expanded = true;
+      nodes[nidx].a = {};
+      nodes[nidx].b = {};
+      nodes[nidx].expanded = true;
 
-      std::vector<std::pair<std::vector<double>, std::vector<double>>> args;
-      args.reserve(7);
-      args.emplace_back(Add(a11, a22, half), Add(b11, b22, half));
-      args.emplace_back(Add(a21, a22, half), std::vector<double>(b11));
-      args.emplace_back(std::vector<double>(a11), Sub(b12, b22, half));
-      args.emplace_back(std::vector<double>(a22), Sub(b21, b11, half));
-      args.emplace_back(Add(a11, a12, half), std::vector<double>(b22));
-      args.emplace_back(Sub(a21, a11, half), Add(b11, b12, half));
-      args.emplace_back(Sub(a12, a22, half), Add(b21, b22, half));
+      std::array<std::pair<std::vector<double>, std::vector<double>>, 7> args = {
+          std::make_pair(Add(a11, a22, half), Add(b11, b22, half)),
+          std::make_pair(Add(a21, a22, half), std::vector<double>(b11)),
+          std::make_pair(std::vector<double>(a11), Sub(b12, b22, half)),
+          std::make_pair(std::vector<double>(a22), Sub(b21, b11, half)),
+          std::make_pair(Add(a11, a12, half), std::vector<double>(b22)),
+          std::make_pair(Sub(a21, a11, half), Add(b11, b12, half)),
+          std::make_pair(Sub(a12, a22, half), Add(b21, b22, half)),
+      };
 
       const int base_slot = static_cast<int>(results.size());
-      for (int k = 0; k < 7; ++k) {
-        nodes[static_cast<size_t>(node_idx)].child_slots[k] = base_slot + k;
+      for (size_t k = 0; k < 7; ++k) {
+        nodes[nidx].child_slots.at(k) = base_slot + static_cast<int>(k);
         results.emplace_back();
       }
 
       call_stack.push_back(node_idx);
 
       for (int k = 6; k >= 0; --k) {
+        const auto uk = static_cast<size_t>(k);
         StrassenNode child;
-        child.a = std::move(args[static_cast<size_t>(k)].first);
-        child.b = std::move(args[static_cast<size_t>(k)].second);
+        child.a = std::move(args.at(uk).first);
+        child.b = std::move(args.at(uk).second);
         child.n = half;
         child.result_slot = base_slot + k;
         child.expanded = false;
@@ -236,15 +237,15 @@ std::vector<double> LazarevaATestTaskSEQ::Strassen(const std::vector<double> &ro
 
     } else {
       const int half = cur_n / 2;
-      const int *cs = nodes[static_cast<size_t>(node_idx)].child_slots;
+      const std::array<int, 7> &cs = nodes[nidx].child_slots;
 
-      const auto &m1 = results[static_cast<size_t>(cs[0])];
-      const auto &m2 = results[static_cast<size_t>(cs[1])];
-      const auto &m3 = results[static_cast<size_t>(cs[2])];
-      const auto &m4 = results[static_cast<size_t>(cs[3])];
-      const auto &m5 = results[static_cast<size_t>(cs[4])];
-      const auto &m6 = results[static_cast<size_t>(cs[5])];
-      const auto &m7 = results[static_cast<size_t>(cs[6])];
+      const auto &m1 = results[static_cast<size_t>(cs.at(0))];
+      const auto &m2 = results[static_cast<size_t>(cs.at(1))];
+      const auto &m3 = results[static_cast<size_t>(cs.at(2))];
+      const auto &m4 = results[static_cast<size_t>(cs.at(3))];
+      const auto &m5 = results[static_cast<size_t>(cs.at(4))];
+      const auto &m6 = results[static_cast<size_t>(cs.at(5))];
+      const auto &m7 = results[static_cast<size_t>(cs.at(6))];
 
       auto c11 = Add(Sub(Add(m1, m4, half), m5, half), m7, half);
       auto c12 = Add(m3, m5, half);

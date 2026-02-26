@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <vector>
 
 #include "lazareva_a_matrix_mult_strassen/common/include/common.hpp"
@@ -12,7 +13,7 @@ struct StrassenNode {
   std::vector<double> b;
   int n{};
   int result_slot{};
-  int child_slots[7]{};
+  std::array<int, 7> child_slots{};
   bool expanded{};
 };
 
