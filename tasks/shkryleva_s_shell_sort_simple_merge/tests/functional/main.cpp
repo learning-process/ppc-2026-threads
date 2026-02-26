@@ -59,7 +59,7 @@ const std::array<TestType, 8> kTestParam = {
     TestType{InType{1, 2, 3, 4, 5, 6}, OutType{1, 2, 3, 4, 5, 6}},
     TestType{InType{9, 8, 7, 6, 5, 4, 3, 2, 1}, OutType{1, 2, 3, 4, 5, 6, 7, 8, 9}},
     TestType{InType{1}, OutType{1}},
-    TestType{InType{2, 2, 2, 2, 2, 2}, OutType{2, 2, 2, 2, 2, 2}},
+    TestType{InType{2, 2, 2, 2, 2, 2, 2, 2}, OutType{2, 2, 2, 2, 2, 2, 2, 2}},
     TestType{InType{2, 2, 44, 2, 3, 5, 1}, OutType{1, 2, 2, 2, 3, 5, 44}},
     TestType{InType{2, 1}, OutType{1, 2}},
     TestType{InType{1, -2, 3, -5}, OutType{-5, -2, 1, 3}},
