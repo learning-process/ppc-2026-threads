@@ -16,7 +16,7 @@ bool ValidateCSR(const SparseMatrix &m) {
   if (m.row_ptr[0] != 0) {
     return false;
   }
-  if (static_cast<int>(m.values.size()) != m.row_ptr[m.rows]) {
+  if (std::cmp_not_equal(m.values.size(), m.row_ptr[m.rows])) {
     return false;
   }
   if (m.col_indices.size() != m.values.size()) {
