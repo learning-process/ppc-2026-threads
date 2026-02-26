@@ -1,10 +1,8 @@
 #include <gtest/gtest.h>
 
-// #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <string>
-// #include <tuple>
 
 #include "shkryleva_s_shell_sort_simple_merge/common/include/common.hpp"
 #include "shkryleva_s_shell_sort_simple_merge/seq/include/ops_seq.hpp"
@@ -23,11 +21,11 @@ class ShkrylevaSShellMergeFuncTests : public ppc::util::BaseRunFuncTests<InType,
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.size() != input_data_.size()) {
+    if (output_data.size() != expected_data_.size()) {
       return false;
     }
 
-    for (size_t i = 0; i < output_data.size(); i++) {
+    for (std::size_t i = 0; i < output_data.size(); i++) {
       if (output_data[i] != expected_data_[i]) {
         return false;
       }
@@ -40,6 +38,12 @@ class ShkrylevaSShellMergeFuncTests : public ppc::util::BaseRunFuncTests<InType,
     return input_data_;
   }
 
+ public:
+  static std::string PrintTestParam(const TestType &param) {
+    const auto &input = std::get<0>(param);
+    return "Size_" + std::to_string(input.size());
+  }
+
  private:
   InType input_data_;
   OutType expected_data_;
@@ -47,7 +51,7 @@ class ShkrylevaSShellMergeFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
 namespace {
 
-TEST_P(ShkrylevaSShellMergeFuncTests, radixTest) {
+TEST_P(ShkrylevaSShellMergeFuncTests, shellMergeTest) {
   ExecuteTest(GetParam());
 }
 
@@ -68,7 +72,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kTestName = ShkrylevaSShellMergeFuncTests::PrintFuncTestName<ShkrylevaSShellMergeFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(radixTest1, ShkrylevaSShellMergeFuncTests, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(shellMergeTests, ShkrylevaSShellMergeFuncTests, kGtestValues, kTestName);
 
 }  // namespace
 
