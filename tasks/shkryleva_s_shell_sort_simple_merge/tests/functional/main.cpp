@@ -57,16 +57,15 @@ TEST_P(ShkrylevaSShellMergeFuncTests, radixTest) {
 }
 
 const std::array<TestType, 8> kTestParam = {
-    TestType{InType{1, 2, 3, 4, 5, 6}, OutType{1, 2, 3, 4, 5, 6}, "Sorted"},
-    TestType{InType{9, 8, 7, 6, 5, 4, 3, 2, 1}, OutType{1, 2, 3, 4, 5, 6, 7, 8, 9}, "Reversed"},
-    TestType{InType{1}, OutType{1}, "One"},
-    TestType{InType{2, 2, 2, 2, 2, 2}, OutType{2, 2, 2, 2, 2, 2}, "odinakovie"},
-    TestType{InType{2, 2, 44, 2, 3, 5, 1}, OutType{1, 2, 2, 2, 3, 5, 44}, "odinakovie_plus"},
-    TestType{InType{2, 1}, OutType{1, 2}, "two_elems"},
-    TestType{InType{1, -2, 3, -5}, OutType{-5, -2, 1, 3}, "negative"},
-    TestType{InType{1, 22, 13, 51, 2, 1, 2, 2, 34, 41}, OutType{1, 1, 2, 2, 2, 13, 22, 34, 41, 51}, "raznie"}
-
-};
+    TestType{InType{1, 2, 3, 4, 5, 6}, OutType{1, 2, 3, 4, 5, 6}, std::string("Sorted")},
+    TestType{InType{9, 8, 7, 6, 5, 4, 3, 2, 1}, OutType{1, 2, 3, 4, 5, 6, 7, 8, 9}, std::string("Reversed")},
+    TestType{InType{1}, OutType{1}, std::string("One")},
+    TestType{InType{2, 2, 2, 2, 2, 2}, OutType{2, 2, 2, 2, 2, 2}, std::string("Equal")},
+    TestType{InType{2, 2, 44, 2, 3, 5, 1}, OutType{1, 2, 2, 2, 3, 5, 44}, std::string("EqualPlus")},
+    TestType{InType{2, 1}, OutType{1, 2}, std::string("TwoElems")},
+    TestType{InType{1, -2, 3, -5}, OutType{-5, -2, 1, 3}, std::string("Negative")},
+    TestType{InType{1, 22, 13, 51, 2, 1, 2, 2, 34, 41}, OutType{1, 1, 2, 2, 2, 13, 22, 34, 41, 51},
+             std::string("Mixed")}};
 
 const auto kTestTasksList = ppc::util::AddFuncTask<ShkrylevaSShellMergeSEQ, InType>(
     kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);

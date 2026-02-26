@@ -60,7 +60,7 @@ TEST_P(ShkrylevaSShellMergePerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ShkrylevaSShellMergeSEQ>(PPC_SETTINGS_klimenko_v_lsh_contrast_incr_seq);
+    ppc::util::MakeAllPerfTasks<InType, ShkrylevaSShellMergeSEQ>(PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
