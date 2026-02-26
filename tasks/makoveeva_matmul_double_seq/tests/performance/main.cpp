@@ -11,6 +11,20 @@
 
 namespace makoveeva_matmul_double_seq {
 
+void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, size_t n) {
+  // Обнуляем c перед вычислениями
+  std::fill(c.begin(), c.end(), 0.0);
+
+  for (size_t i = 0; i < n; ++i) {
+    for (size_t k = 0; k < n; ++k) {
+      const double tmp = a[(i * n) + k];
+      for (size_t j = 0; j < n; ++j) {
+        c[(i * n) + j] += tmp * b[(k * n) + j];
+      }
+    }
+  }
+}
+
 class MatmulDoublePerformanceTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
   std::vector<double> expected_output_;
@@ -23,6 +37,7 @@ class MatmulDoublePerformanceTest : public ppc::util::BaseRunPerfTests<InType, O
     std::vector<double> a(size);
     std::vector<double> b(size);
 
+    // Заполняем матрицы
     for (size_t i = 0; i < size; ++i) {
       a[i] = static_cast<double>(i + 1);
       b[i] = static_cast<double>(size - i);
@@ -30,7 +45,8 @@ class MatmulDoublePerformanceTest : public ppc::util::BaseRunPerfTests<InType, O
 
     input_data_ = std::make_tuple(n, a, b);
 
-    expected_output_.assign(size, 0.0);
+    // Вычисляем эталонный результат
+    expected_output_.resize(size);
     ReferenceMultiply(a, b, expected_output_, n);
   }
 
@@ -38,29 +54,24 @@ class MatmulDoublePerformanceTest : public ppc::util::BaseRunPerfTests<InType, O
     const auto &expected = expected_output_;
     const auto &actual = output_data;
 
+    // Проверяем размер
     if (expected.size() != actual.size()) {
       return false;
     }
 
+    // Проверяем с допуском
     const double epsilon = 1e-7;
     for (size_t i = 0; i < expected.size(); ++i) {
       if (std::abs(expected[i] - actual[i]) > epsilon) {
+        // Для отладки выведем первые несколько несовпадений
+        if (i < 10) {
+          std::cout << "Mismatch at index " << i << ": expected=" << expected[i] << ", actual=" << actual[i]
+                    << std::endl;
+        }
         return false;
       }
     }
     return true;
-  }
-
-  static void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c,
-                                size_t n) {
-    for (size_t i = 0; i < n; ++i) {
-      for (size_t k = 0; k < n; ++k) {
-        const double tmp = a[(i * n) + k];
-        for (size_t j = 0; j < n; ++j) {
-          c[(i * n) + j] += tmp * b[(k * n) + j];
-        }
-      }
-    }
   }
 
   InType GetTestInputData() final {

@@ -55,6 +55,9 @@ bool MatmulDoubleSeqTask::RunImpl() {
     return false;
   }
 
+  // Очищаем C_ перед вычислениями
+  std::fill(C_.begin(), C_.end(), 0.0);
+
   const int n_int = static_cast<int>(n_);
   const int block_size = CalculateBlockSize(n_int);
   const int num_blocks = CalculateNumBlocks(n_int, block_size);
@@ -74,6 +77,7 @@ bool MatmulDoubleSeqTask::RunImpl() {
     }
   }
 
+  // Убедись, что GetOutput() получает C_
   GetOutput() = C_;
   return true;
 }
