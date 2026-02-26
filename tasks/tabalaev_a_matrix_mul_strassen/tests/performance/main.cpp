@@ -14,24 +14,24 @@ class TabalaevAMatrixMulStrassenPerfTests : public ppc::util::BaseRunPerfTests<I
     input_data_.a_rows = static_cast<int>(kRc);
     input_data_.a_cols_b_rows = static_cast<int>(kRc);
     input_data_.b_cols = static_cast<int>(kRc);
-    
+
     input_data_.a.assign(size, 0.0);
     input_data_.b.assign(size, 0.0);
 
     for (size_t i = 0; i < size; i++) {
-        input_data_.a[i] = static_cast<double>(i % 100);
-        input_data_.b[i] = static_cast<double>((i + 1) % 100);
+      input_data_.a[i] = static_cast<double>(i % 100);
+      input_data_.b[i] = static_cast<double>((i + 1) % 100);
     }
 
     expected_output_.assign(size, 0.0);
 
     for (size_t i = 0; i < kRc; ++i) {
-        for (size_t k = 0; k < kRc; ++k) {
-            double temp = input_data_.a[i * kRc + k];
-            for (size_t j = 0; j < kRc; ++j) {
-                expected_output_[i * kRc + j] += temp * input_data_.b[k * kRc + j];
-            }
+      for (size_t k = 0; k < kRc; ++k) {
+        double temp = input_data_.a[i * kRc + k];
+        for (size_t j = 0; j < kRc; ++j) {
+          expected_output_[i * kRc + j] += temp * input_data_.b[k * kRc + j];
         }
+      }
     }
   }
 
@@ -52,7 +52,7 @@ class TabalaevAMatrixMulStrassenPerfTests : public ppc::util::BaseRunPerfTests<I
     return input_data_;
   }
 
-private:
+ private:
   InType input_data_;
   std::vector<double> expected_output_;
 };
@@ -64,7 +64,7 @@ TEST_P(TabalaevAMatrixMulStrassenPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType,TabalaevAMatrixMulStrassenSEQ>(PPC_SETTINGS_tabalaev_a_matrix_mul_strassen);
+    ppc::util::MakeAllPerfTasks<InType, TabalaevAMatrixMulStrassenSEQ>(PPC_SETTINGS_tabalaev_a_matrix_mul_strassen);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

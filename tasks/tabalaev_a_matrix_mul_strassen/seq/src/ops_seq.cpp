@@ -18,7 +18,7 @@ TabalaevAMatrixMulStrassenSEQ::TabalaevAMatrixMulStrassenSEQ(const InType &in) {
 }
 
 bool TabalaevAMatrixMulStrassenSEQ::ValidationImpl() {
-  const auto& in = GetInput();
+  const auto &in = GetInput();
   return in.a_rows > 0 && in.a_cols_b_rows > 0 && in.b_cols > 0 &&
          in.a.size() == static_cast<size_t>(in.a_rows * in.a_cols_b_rows) &&
          in.b.size() == static_cast<size_t>(in.a_cols_b_rows * in.b_cols);
@@ -144,13 +144,20 @@ std::vector<double> TabalaevAMatrixMulStrassenSEQ::StrassenMultiply(const std::v
       frames.push({Add(a11, a22), Add(b11, b22), h, 0});
 
     } else {
-      auto p7 = std::move(results.top()); results.pop();
-      auto p6 = std::move(results.top()); results.pop();
-      auto p5 = std::move(results.top()); results.pop();
-      auto p4 = std::move(results.top()); results.pop();
-      auto p3 = std::move(results.top()); results.pop();
-      auto p2 = std::move(results.top()); results.pop();
-      auto p1 = std::move(results.top()); results.pop();
+      auto p7 = std::move(results.top());
+      results.pop();
+      auto p6 = std::move(results.top());
+      results.pop();
+      auto p5 = std::move(results.top());
+      results.pop();
+      auto p4 = std::move(results.top());
+      results.pop();
+      auto p3 = std::move(results.top());
+      results.pop();
+      auto p2 = std::move(results.top());
+      results.pop();
+      auto p1 = std::move(results.top());
+      results.pop();
 
       int h = current.n / 2;
       std::vector<double> res(static_cast<size_t>(current.n) * current.n);

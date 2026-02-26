@@ -11,10 +11,10 @@
 #include <utility>
 #include <vector>
 
-#include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 #include "tabalaev_a_matrix_mul_strassen/common/include/common.hpp"
 #include "tabalaev_a_matrix_mul_strassen/seq/include/ops_seq.hpp"
+#include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace tabalaev_a_matrix_mul_strassen {
 
@@ -22,7 +22,8 @@ class TabalaevAMatrixMulStrassenFuncTests : public ppc::util::BaseRunFuncTests<I
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<4>(test_param) + "_" + std::to_string(std::get<0>(test_param)) + "x" +
-           std::to_string(std::get<1>(test_param)) + "_" + std::to_string(std::get<1>(test_param)) + "x" + std::to_string(std::get<2>(test_param))+ "_Elems_Up_To_" + std::to_string(std::get<3>(test_param));
+           std::to_string(std::get<1>(test_param)) + "_" + std::to_string(std::get<1>(test_param)) + "x" +
+           std::to_string(std::get<2>(test_param)) + "_Elems_Up_To_" + std::to_string(std::get<3>(test_param));
   }
 
  protected:
@@ -86,15 +87,12 @@ TEST_P(TabalaevAMatrixMulStrassenFuncTests, MatmulFromPic) {
 }
 
 const std::array<TestType, 5> kTestParam = {
-    std::make_tuple(2, 2, 2, 10, "Small_2x2"),
-    std::make_tuple(4, 4, 4, 10, "PowerOfTwo_4x4"),
-    std::make_tuple(3, 5, 3, 20, "NonSquare_Padded"),
-    std::make_tuple(16, 16, 16, 100, "Medium_16x16"),
-    std::make_tuple(32, 32, 32, 50, "Large_32x32")
-  };
+    std::make_tuple(2, 2, 2, 10, "Small_2x2"), std::make_tuple(4, 4, 4, 10, "PowerOfTwo_4x4"),
+    std::make_tuple(3, 5, 3, 20, "NonSquare_Padded"), std::make_tuple(16, 16, 16, 100, "Medium_16x16"),
+    std::make_tuple(32, 32, 32, 50, "Large_32x32")};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<TabalaevAMatrixMulStrassenSEQ, InType>(kTestParam,
-                                                                  PPC_SETTINGS_tabalaev_a_matrix_mul_strassen);
+const auto kTestTasksList = ppc::util::AddFuncTask<TabalaevAMatrixMulStrassenSEQ, InType>(
+    kTestParam, PPC_SETTINGS_tabalaev_a_matrix_mul_strassen);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
