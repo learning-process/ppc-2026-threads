@@ -5,8 +5,6 @@
 #include <cstddef>
 #include <ostream>
 #include <string>
-#include <tuple>
-#include <vector>
 
 #include "sakharov_a_shell_sorting_with_merging_butcher/common/include/common.hpp"
 #include "sakharov_a_shell_sorting_with_merging_butcher/seq/include/ops_seq.hpp"
@@ -15,7 +13,7 @@
 
 namespace ppc::util {
 template <typename InType, typename OutType, typename TestType>
-static inline void PrintTo(const FuncTestParam<InType, OutType, TestType> &param, ::std::ostream *os) {
+inline void PrintTo(const FuncTestParam<InType, OutType, TestType> &param, ::std::ostream *os) {
   *os << "FuncTestParam{"
       << "name=" << std::get<static_cast<std::size_t>(GTestParamIndex::kNameTest)>(param) << "}";
 }
@@ -53,7 +51,7 @@ namespace {
 
 TestType MakeCase(const InType &input, const std::string &name) {
   OutType expected = input;
-  std::sort(expected.begin(), expected.end());
+  std::ranges::sort(expected);
   return TestType{input, expected, name};
 }
 

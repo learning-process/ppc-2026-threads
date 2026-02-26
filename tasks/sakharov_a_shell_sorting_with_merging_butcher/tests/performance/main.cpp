@@ -4,15 +4,15 @@
 #include <cstddef>
 #include <ostream>
 #include <random>
-#include <vector>
 
 #include "sakharov_a_shell_sorting_with_merging_butcher/common/include/common.hpp"
 #include "sakharov_a_shell_sorting_with_merging_butcher/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace ppc::util {
 template <typename InType, typename OutType>
-static inline void PrintTo(const PerfTestParam<InType, OutType> &param, ::std::ostream *os) {
+inline void PrintTo(const PerfTestParam<InType, OutType> &param, ::std::ostream *os) {
   *os << "PerfTestParam{"
       << "name=" << std::get<static_cast<std::size_t>(GTestParamIndex::kNameTest)>(param) << "}";
 }
@@ -25,8 +25,9 @@ class SakharovAShellButcherPerfTests : public ppc::util::BaseRunPerfTests<InType
   OutType expected_output_;
 
   void SetUp() override {
-    constexpr size_t kSize = 40000;
-    std::mt19937 generator(2026);
+    constexpr std::size_t kSize = 40000;
+    std::random_device random_device;
+    std::mt19937 generator(random_device());
     std::uniform_int_distribution<int> distribution(-100000, 100000);
 
     input_data_.resize(kSize);
@@ -35,7 +36,7 @@ class SakharovAShellButcherPerfTests : public ppc::util::BaseRunPerfTests<InType
     }
 
     expected_output_ = input_data_;
-    std::sort(expected_output_.begin(), expected_output_.end());
+    std::ranges::sort(expected_output_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

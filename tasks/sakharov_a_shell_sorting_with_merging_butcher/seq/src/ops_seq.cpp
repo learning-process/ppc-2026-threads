@@ -8,6 +8,52 @@
 
 namespace sakharov_a_shell_sorting_with_merging_butcher {
 
+namespace {
+
+void SplitByParity(const std::vector<int> &source, std::vector<int> &even, std::vector<int> &odd) {
+  even.reserve((source.size() + 1) / 2);
+  odd.reserve(source.size() / 2);
+
+  for (std::size_t index = 0; index < source.size(); ++index) {
+    if (index % 2 == 0) {
+      even.push_back(source[index]);
+    } else {
+      odd.push_back(source[index]);
+    }
+  }
+}
+
+std::vector<int> Interleave(const std::vector<int> &even, const std::vector<int> &odd) {
+  std::vector<int> result;
+  result.reserve(even.size() + odd.size());
+
+  std::size_t even_index = 0;
+  std::size_t odd_index = 0;
+
+  while (even_index < even.size() || odd_index < odd.size()) {
+    if (even_index < even.size()) {
+      result.push_back(even[even_index]);
+      ++even_index;
+    }
+    if (odd_index < odd.size()) {
+      result.push_back(odd[odd_index]);
+      ++odd_index;
+    }
+  }
+
+  return result;
+}
+
+void FixOddEvenAdjacents(std::vector<int> &data) {
+  for (std::size_t index = 1; index + 1 < data.size(); index += 2) {
+    if (data[index] > data[index + 1]) {
+      std::swap(data[index], data[index + 1]);
+    }
+  }
+}
+
+}  // namespace
+
 SakharovAShellButcherSEQ::SakharovAShellButcherSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -78,51 +124,14 @@ std::vector<int> SakharovAShellButcherSEQ::BatcherOddEvenMerge(const std::vector
   std::vector<int> right_even;
   std::vector<int> right_odd;
 
-  left_even.reserve((left.size() + 1) / 2);
-  left_odd.reserve(left.size() / 2);
-  right_even.reserve((right.size() + 1) / 2);
-  right_odd.reserve(right.size() / 2);
-
-  for (std::size_t index = 0; index < left.size(); ++index) {
-    if (index % 2 == 0) {
-      left_even.push_back(left[index]);
-    } else {
-      left_odd.push_back(left[index]);
-    }
-  }
-
-  for (std::size_t index = 0; index < right.size(); ++index) {
-    if (index % 2 == 0) {
-      right_even.push_back(right[index]);
-    } else {
-      right_odd.push_back(right[index]);
-    }
-  }
+  SplitByParity(left, left_even, left_odd);
+  SplitByParity(right, right_even, right_odd);
 
   std::vector<int> even_merged = MergeSortedVectors(left_even, right_even);
   std::vector<int> odd_merged = MergeSortedVectors(left_odd, right_odd);
 
-  std::vector<int> result;
-  result.reserve(left.size() + right.size());
-  std::size_t even_index = 0;
-  std::size_t odd_index = 0;
-
-  while (even_index < even_merged.size() || odd_index < odd_merged.size()) {
-    if (even_index < even_merged.size()) {
-      result.push_back(even_merged[even_index]);
-      ++even_index;
-    }
-    if (odd_index < odd_merged.size()) {
-      result.push_back(odd_merged[odd_index]);
-      ++odd_index;
-    }
-  }
-
-  for (std::size_t index = 1; index + 1 < result.size(); index += 2) {
-    if (result[index] > result[index + 1]) {
-      std::swap(result[index], result[index + 1]);
-    }
-  }
+  std::vector<int> result = Interleave(even_merged, odd_merged);
+  FixOddEvenAdjacents(result);
 
   return result;
 }
