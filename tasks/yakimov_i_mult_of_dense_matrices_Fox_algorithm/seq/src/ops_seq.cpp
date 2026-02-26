@@ -146,11 +146,7 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmSEQ::PreProcessingImpl() {
     this->block_size_ *= 2;
   }
 
-  if (this->block_size_ <= 0) {
-    return false;
-  }
-
-  return true;
+  return this->block_size_ > 0;
 }
 
 bool YakimovIMultOfDenseMatricesFoxAlgorithmSEQ::RunImpl() {
