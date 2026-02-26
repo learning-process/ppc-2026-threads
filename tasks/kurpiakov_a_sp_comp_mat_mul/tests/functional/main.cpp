@@ -130,7 +130,6 @@ OutType MakeRowColExpected() {
   return SparseMatrix(1, 1, {ComplexD(32, 0)}, {0}, {0, 1});
 }
 
-
 const std::array<TestType, 15> kTestParam = {
     std::make_tuple(MakeIdentityTest(), "identity_2x2", MakeIdentityExpected()),
     std::make_tuple(MakeZeroTest(), "zero_2x2", MakeZeroExpected()),
