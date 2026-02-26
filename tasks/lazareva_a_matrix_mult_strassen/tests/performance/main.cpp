@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <vector>
+
 #include "lazareva_a_matrix_mult_strassen/common/include/common.hpp"
 #include "lazareva_a_matrix_mult_strassen/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"

@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cmath>
 #include <string>
 #include <tuple>
@@ -8,7 +9,6 @@
 #include "lazareva_a_matrix_mult_strassen/common/include/common.hpp"
 #include "lazareva_a_matrix_mult_strassen/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace lazareva_a_matrix_mult_strassen {
 
@@ -22,11 +22,10 @@ class LazarevaARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     const int n = std::get<0>(params);
-
     const int size = n * n;
+
     std::vector<double> a(static_cast<size_t>(size));
     std::vector<double> b(static_cast<size_t>(size));
-
     for (int i = 0; i < size; ++i) {
       a[static_cast<size_t>(i)] = static_cast<double>(i % 7 + 1);
       b[static_cast<size_t>(i)] = static_cast<double>((i * 3 + 5) % 11 + 1);
@@ -34,7 +33,6 @@ class LazarevaARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
 
     input_data_ = MatrixInput{a, b, n};
 
-    // Вычисляем эталонный результат наивным умножением
     expected_output_.assign(static_cast<size_t>(size), 0.0);
     for (int row = 0; row < n; ++row) {
       for (int k = 0; k < n; ++k) {

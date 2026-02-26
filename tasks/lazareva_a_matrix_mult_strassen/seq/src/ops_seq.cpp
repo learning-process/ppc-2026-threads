@@ -1,10 +1,6 @@
 #include "lazareva_a_matrix_mult_strassen/seq/include/ops_seq.hpp"
 
-#include <algorithm>
-#include <cmath>
 #include <vector>
-
-#include "lazareva_a_matrix_mult_strassen/common/include/common.hpp"
 
 namespace lazareva_a_matrix_mult_strassen {
 
@@ -15,12 +11,12 @@ LazarevaATestTaskSEQ::LazarevaATestTaskSEQ(const InType &in) {
 }
 
 bool LazarevaATestTaskSEQ::ValidationImpl() {
-  const auto &input = GetInput();
-  if (input.n <= 0) {
+  const int n = GetInput().n;
+  if (n <= 0) {
     return false;
   }
-  const int expected = input.n * input.n;
-  return static_cast<int>(input.a.size()) == expected && static_cast<int>(input.b.size()) == expected;
+  const int expected = n * n;
+  return static_cast<int>(GetInput().a.size()) == expected && static_cast<int>(GetInput().b.size()) == expected;
 }
 
 bool LazarevaATestTaskSEQ::PreProcessingImpl() {
@@ -139,43 +135,28 @@ std::vector<double> LazarevaATestTaskSEQ::NaiveMult(const std::vector<double> &a
 }
 
 std::vector<double> LazarevaATestTaskSEQ::Strassen(const std::vector<double> &a, const std::vector<double> &b, int n) {
-  // Base case: use naive multiplication for small matrices
   if (n <= 64) {
     return NaiveMult(a, b, n);
   }
 
   const int half = n / 2;
 
-  // Split matrices into quadrants
   std::vector<double> a11, a12, a21, a22;
   std::vector<double> b11, b12, b21, b22;
   Split(a, n, a11, a12, a21, a22);
   Split(b, n, b11, b12, b21, b22);
 
-  // Compute the 7 Strassen products
-  // m1 = (a11 + a22) * (b11 + b22)
   auto m1 = Strassen(Add(a11, a22, half), Add(b11, b22, half), half);
-  // m2 = (a21 + a22) * b11
   auto m2 = Strassen(Add(a21, a22, half), b11, half);
-  // m3 = a11 * (b12 - b22)
   auto m3 = Strassen(a11, Sub(b12, b22, half), half);
-  // m4 = a22 * (b21 - b11)
   auto m4 = Strassen(a22, Sub(b21, b11, half), half);
-  // m5 = (a11 + a12) * b22
   auto m5 = Strassen(Add(a11, a12, half), b22, half);
-  // m6 = (a21 - a11) * (b11 + b12)
   auto m6 = Strassen(Sub(a21, a11, half), Add(b11, b12, half), half);
-  // m7 = (a12 - a22) * (b21 + b22)
   auto m7 = Strassen(Sub(a12, a22, half), Add(b21, b22, half), half);
 
-  // Combine results
-  // c11 = m1 + m4 - m5 + m7
   auto c11 = Add(Sub(Add(m1, m4, half), m5, half), m7, half);
-  // c12 = m3 + m5
   auto c12 = Add(m3, m5, half);
-  // c21 = m2 + m4
   auto c21 = Add(m2, m4, half);
-  // c22 = m1 - m2 + m3 + m6
   auto c22 = Add(Sub(Add(m1, m3, half), m2, half), m6, half);
 
   return Merge(c11, c12, c21, c22, half);
