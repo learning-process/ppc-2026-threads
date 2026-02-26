@@ -1,8 +1,9 @@
 #pragma once
 
-#include <vector>
 #include <string>
 #include <tuple>
+#include <vector>
+
 #include "task/include/task.hpp"
 
 namespace spichek_d_radix_sort_for_integers_with_simple_merging {
