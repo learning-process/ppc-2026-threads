@@ -31,12 +31,7 @@ class YakimovIMultDenseFoxFuncTests : public ppc::util::BaseRunFuncTests<InType,
     InType test_id = std::get<0>(params);
 
     static const std::unordered_map<InType, std::pair<double, double>> kExpectedResults = {
-        {1, {52.9498, 1e-4}},   // 2x3 * 3x2
-        {2, {-24.5668, 1e-4}},  // 3x3 * 3x3
-        {3, {-1.68714, 1e-4}},  // 4x4 * 4x4
-        {4, {0.0, 1e-9}},       // нулевые матрицы
-        {5, {60.678, 1e-4}}     // отрицательные значения
-    };
+        {1, {52.9498, 1e-4}}, {2, {-24.5668, 1e-4}}, {3, {-1.68714, 1e-4}}, {4, {0.0, 1e-9}}, {5, {60.678, 1e-4}}};
 
     auto it = kExpectedResults.find(test_id);
     if (it == kExpectedResults.end()) {
