@@ -2,8 +2,8 @@
 
 #include <algorithm>
 #include <array>
-#include <ranges>
 #include <vector>
+#include <utility>
 
 #include "melnik_i_radix_sort_int/common/include/common.hpp"
 

@@ -35,7 +35,7 @@ class MelnikIRadixSortIntPerfTests : public ppc::util::BaseRunPerfTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::is_sorted(output_data.begin(), output_data.end());
+    return std::ranges::is_sorted(output_data.begin(), output_data.end());
   }
 
   InType GetTestInputData() final {
