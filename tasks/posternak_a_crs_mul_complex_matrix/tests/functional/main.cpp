@@ -8,10 +8,10 @@
 #include <cstdint>
 #include <numeric>
 #include <stdexcept>
+#include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <string>
 
 #include "posternak_a_crs_mul_complex_matrix/common/include/common.hpp"
 #include "posternak_a_crs_mul_complex_matrix/seq/include/ops_seq.hpp"
@@ -148,9 +148,9 @@ class PosternakARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType,
       // C[3][0] = 2*1 = 2
       // C[3][2] = 2*i = 2i
       std::vector<std::vector<std::complex<double>>> mat_c = {{{2, -2}, {0, 0}, {3, -1}, {0, 0}},
-                                                                {{0, 0}, {6, 4}, {0, 0}, {5, -1}},
-                                                                {{2, 0}, {0, 0}, {2, 2}, {0, 0}},
-                                                                {{2, 0}, {0, 0}, {0, 2}, {0, 0}}};
+                                                              {{0, 0}, {6, 4}, {0, 0}, {5, -1}},
+                                                              {{2, 0}, {0, 0}, {2, 2}, {0, 0}},
+                                                              {{2, 0}, {0, 0}, {0, 2}, {0, 0}}};
 
       a = MakeCRS(4, 3, mat_a);
       b = MakeCRS(3, 4, mat_b);
