@@ -18,7 +18,7 @@ bool LazarevaATestTaskSEQ::ValidationImpl() {
   if (n <= 0) {
     return false;
   }
-  const auto expected = static_cast<size_t>(n * n);
+  const auto expected = static_cast<size_t>(n) * static_cast<size_t>(n);
   return std::cmp_equal(GetInput().a.size(), expected) && std::cmp_equal(GetInput().b.size(), expected);
 }
 
@@ -145,8 +145,8 @@ std::vector<double> LazarevaATestTaskSEQ::NaiveMult(const std::vector<double> &a
   return c;
 }
 
-std::vector<double> LazarevaATestTaskSEQ::Strassen(  // NOLINT(misc-no-recursion)
-    const std::vector<double> &a, const std::vector<double> &b, int n) {
+std::vector<double> LazarevaATestTaskSEQ::StrassenImpl(const std::vector<double> &a, const std::vector<double> &b,
+                                                       int n) {
   if (n <= 64) {
     return NaiveMult(a, b, n);
   }
@@ -164,13 +164,13 @@ std::vector<double> LazarevaATestTaskSEQ::Strassen(  // NOLINT(misc-no-recursion
   Split(a, n, a11, a12, a21, a22);
   Split(b, n, b11, b12, b21, b22);
 
-  auto m1 = Strassen(Add(a11, a22, half), Add(b11, b22, half), half);
-  auto m2 = Strassen(Add(a21, a22, half), b11, half);
-  auto m3 = Strassen(a11, Sub(b12, b22, half), half);
-  auto m4 = Strassen(a22, Sub(b21, b11, half), half);
-  auto m5 = Strassen(Add(a11, a12, half), b22, half);
-  auto m6 = Strassen(Sub(a21, a11, half), Add(b11, b12, half), half);
-  auto m7 = Strassen(Sub(a12, a22, half), Add(b21, b22, half), half);
+  auto m1 = StrassenImpl(Add(a11, a22, half), Add(b11, b22, half), half);
+  auto m2 = StrassenImpl(Add(a21, a22, half), b11, half);
+  auto m3 = StrassenImpl(a11, Sub(b12, b22, half), half);
+  auto m4 = StrassenImpl(a22, Sub(b21, b11, half), half);
+  auto m5 = StrassenImpl(Add(a11, a12, half), b22, half);
+  auto m6 = StrassenImpl(Sub(a21, a11, half), Add(b11, b12, half), half);
+  auto m7 = StrassenImpl(Sub(a12, a22, half), Add(b21, b22, half), half);
 
   auto c11 = Add(Sub(Add(m1, m4, half), m5, half), m7, half);
   auto c12 = Add(m3, m5, half);
@@ -178,6 +178,10 @@ std::vector<double> LazarevaATestTaskSEQ::Strassen(  // NOLINT(misc-no-recursion
   auto c22 = Add(Sub(Add(m1, m3, half), m2, half), m6, half);
 
   return Merge(c11, c12, c21, c22, half);
+}
+
+std::vector<double> LazarevaATestTaskSEQ::Strassen(const std::vector<double> &a, const std::vector<double> &b, int n) {
+  return StrassenImpl(a, b, n);
 }
 
 }  // namespace lazareva_a_matrix_mult_strassen
