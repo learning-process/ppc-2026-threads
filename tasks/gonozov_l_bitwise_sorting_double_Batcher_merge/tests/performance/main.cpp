@@ -6,9 +6,9 @@
 #include <utility>
 #include <vector>
 
-#include "util/include/perf_test_util.hpp"
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/common/include/common.hpp"
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/seq/include/ops_seq.hpp"
+#include "util/include/perf_test_util.hpp"
 
 namespace gonozov_l_bitwise_sorting_double_Batcher_merge {
 
@@ -18,16 +18,17 @@ class GonozovLBitSortBatcherMergePerfTest : public ppc::util::BaseRunPerfTests<I
 
   void SetUp() override {
     std::vector<double> forming_data;
-    for (size_t i = 0; i < kCount; i++)
-      forming_data.push_back((i + 120358361) * (i+1) / (234134) % 1000);
+    for (size_t i = 0; i < kCount; i++) {
+      forming_data.push_back((i + 120358361) * (i + 1) / (234134) % 1000);
+    }
     input_data_ = forming_data;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    for (size_t i = 1; i < kCount; i++)
-    {
-      if (output_data[i] < output_data[i-1])
+    for (size_t i = 1; i < kCount; i++) {
+      if (output_data[i] < output_data[i - 1]) {
         return false;
+      }
     }
 
     return true;
