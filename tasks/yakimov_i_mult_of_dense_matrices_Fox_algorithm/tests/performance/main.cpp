@@ -36,6 +36,10 @@ const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = YakimovIMultDenseFoxPerfTests::CustomPerfTestName;
 
+namespace {
+
 INSTANTIATE_TEST_SUITE_P(RunModeTests, YakimovIMultDenseFoxPerfTests, kGtestValues, kPerfTestName);
+
+}  // namespace
 
 }  // namespace yakimov_i_mult_of_dense_matrices_fox_algorithm
