@@ -47,7 +47,7 @@ bool OvsyannikovNSimpsonMethodSEQ::RunImpl() {
         coeff_y = 4.0;
       }
 
-      total_sum += coeff_x * coeff_y * function(x, y);
+      total_sum += coeff_x * coeff_y * Function(x, y);
     }
   }
 
