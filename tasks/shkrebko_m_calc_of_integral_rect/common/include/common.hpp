@@ -10,12 +10,10 @@
 
 namespace shkrebko_m_calc_of_integral_rect {
 
-
 struct IntegralInput {
-
   std::vector<std::pair<double, double>> limits;
   std::vector<int> n_steps;
-  std::function<double(const std::vector<double>&)> func;
+  std::function<double(const std::vector<double> &)> func;
 };
 using InType = IntegralInput;
 using OutType = double;

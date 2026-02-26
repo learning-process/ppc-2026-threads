@@ -48,40 +48,34 @@ TEST_P(ShkrebkoMRunFuncTests, MultiDimRectangleMethod) {
   ExecuteTest(GetParam());
 }
 
-InType MakeInType(std::function<double(const std::vector<double>&)> func,
-                  const std::vector<std::pair<double, double>>& limits,
-                  int n_steps) {
+InType MakeInType(std::function<double(const std::vector<double> &)> func,
+                  const std::vector<std::pair<double, double>> &limits, int n_steps) {
   std::vector<int> steps(limits.size(), n_steps);
   return InType{limits, steps, func};
 }
 
 const std::array<TestType, 10> kTestCases = {
-    TestType{MakeInType([](const std::vector<double>&) { return 1.0; }, {{0.0, 1.0}}, 100),
-             1.0, "Const_1D"},
-    TestType{MakeInType([](const std::vector<double>&) { return 1.0; }, {{0.0, 1.0}, {0.0, 2.0}}, 80),
-             2.0, "Const_2D"},
-    TestType{MakeInType([](const std::vector<double>&) { return 1.0; }, {{0.0, 1.0}, {-1.0, 1.0}, {2.0, 5.0}}, 40),
+    TestType{MakeInType([](const std::vector<double> &) { return 1.0; }, {{0.0, 1.0}}, 100), 1.0, "Const_1D"},
+    TestType{MakeInType([](const std::vector<double> &) { return 1.0; }, {{0.0, 1.0}, {0.0, 2.0}}, 80), 2.0,
+             "Const_2D"},
+    TestType{MakeInType([](const std::vector<double> &) { return 1.0; }, {{0.0, 1.0}, {-1.0, 1.0}, {2.0, 5.0}}, 40),
              6.0, "Const_3D"},
-    TestType{MakeInType([](const std::vector<double>& x) { return x[0]; }, {{0.0, 2.0}}, 200),
-             2.0, "Linear_1D"},
-    TestType{MakeInType([](const std::vector<double>& x) { return x[0] + x[1]; }, {{0.0, 1.0}, {0.0, 1.0}}, 80),
-             1.0, "Linear_2D"},
-    TestType{MakeInType([](const std::vector<double>& x) { return x[0] * x[0]; }, {{-1.0, 2.0}}, 200),
-             3.0, "Quad_1D"},
-    TestType{MakeInType([](const std::vector<double>& x) { return x[0] * x[1]; }, {{0.0, 2.0}, {1.0, 3.0}}, 100),
-             8.0, "Prod_2D"},
-    TestType{MakeInType([](const std::vector<double>& x) { return std::sin(x[0]); }, {{0.0, std::numbers::pi}}, 200),
+    TestType{MakeInType([](const std::vector<double> &x) { return x[0]; }, {{0.0, 2.0}}, 200), 2.0, "Linear_1D"},
+    TestType{MakeInType([](const std::vector<double> &x) { return x[0] + x[1]; }, {{0.0, 1.0}, {0.0, 1.0}}, 80), 1.0,
+             "Linear_2D"},
+    TestType{MakeInType([](const std::vector<double> &x) { return x[0] * x[0]; }, {{-1.0, 2.0}}, 200), 3.0, "Quad_1D"},
+    TestType{MakeInType([](const std::vector<double> &x) { return x[0] * x[1]; }, {{0.0, 2.0}, {1.0, 3.0}}, 100), 8.0,
+             "Prod_2D"},
+    TestType{MakeInType([](const std::vector<double> &x) { return std::sin(x[0]); }, {{0.0, std::numbers::pi}}, 200),
              2.0, "Trig_sin_1D"},
-    TestType{MakeInType([](const std::vector<double>& x) { return std::exp(x[0]); }, {{0.0, 1.0}}, 200),
+    TestType{MakeInType([](const std::vector<double> &x) { return std::exp(x[0]); }, {{0.0, 1.0}}, 200),
              std::numbers::e - 1.0, "Exp_1D"},
-    TestType{MakeInType([](const std::vector<double>&) { return 1.0; }, {{0.0, 1e-3}}, 100),
-             1e-3, "Const_1D_small"},
+    TestType{MakeInType([](const std::vector<double> &) { return 1.0; }, {{0.0, 1e-3}}, 100), 1e-3, "Const_1D_small"},
 };
 
 // Добавляем задачу в список тестов
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<ShkrebkoMCalcOfIntegralRectSEQ, InType>(
-        kTestCases, PPC_SETTINGS_shkrebko_m_calc_of_integral_rect));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ShkrebkoMCalcOfIntegralRectSEQ, InType>(
+    kTestCases, PPC_SETTINGS_shkrebko_m_calc_of_integral_rect));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

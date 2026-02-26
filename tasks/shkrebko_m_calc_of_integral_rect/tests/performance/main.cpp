@@ -16,15 +16,12 @@ class ShkrebkoMRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType>
 
  protected:
   void SetUp() override {
-
     double exact = (1.0 - std::cos(1.0)) + std::sin(1.0) + 0.5;
     expected_ = exact;
 
     input_data_.limits = {{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}};
     input_data_.n_steps = {kN, kN, kN};
-    input_data_.func = [](const std::vector<double>& x) {
-      return std::sin(x[0]) + std::cos(x[1]) + x[2];
-    };
+    input_data_.func = [](const std::vector<double> &x) { return std::sin(x[0]) + std::cos(x[1]) + x[2]; };
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -47,8 +44,8 @@ TEST_P(ShkrebkoMRunPerfTest, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ShkrebkoMCalcOfIntegralRectSEQ>(
-    PPC_SETTINGS_shkrebko_m_calc_of_integral_rect);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, ShkrebkoMCalcOfIntegralRectSEQ>(PPC_SETTINGS_shkrebko_m_calc_of_integral_rect);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
