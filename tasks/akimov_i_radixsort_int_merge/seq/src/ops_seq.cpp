@@ -1,18 +1,15 @@
 #include "akimov_i_radixsort_int_merge/seq/include/ops_seq.hpp"
 
-#include <algorithm>
+#include <array>
 #include <cstdint>
 #include <vector>
-
-#include "akimov_i_radixsort_int_merge/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace akimov_i_radixsort_int_merge {
 
 AkimovIRadixSortIntMergeSEQ::AkimovIRadixSortIntMergeSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;          // copy input vector
-  GetOutput() = OutType();  // initially empty
+  GetInput() = in;
+  GetOutput() = OutType();
 }
 
 bool AkimovIRadixSortIntMergeSEQ::ValidationImpl() {
@@ -30,16 +27,16 @@ bool AkimovIRadixSortIntMergeSEQ::RunImpl() {
     return true;
   }
 
-  constexpr uint32_t sign_mask = 0x80000000;
+  constexpr int32_t kSignMask = 0x80000000;
   for (int &x : arr) {
-    x ^= sign_mask;
+    x ^= kSignMask;
   }
 
   const int num_bytes = static_cast<int>(sizeof(int));
   std::vector<int> temp(arr.size());
 
   for (int byte_pos = 0; byte_pos < num_bytes; ++byte_pos) {
-    int count[256] = {0};
+    std::array<int, 256> count{};
     for (int x : arr) {
       uint8_t byte = (x >> (byte_pos * 8)) & 0xFF;
       ++count[byte];
@@ -58,7 +55,7 @@ bool AkimovIRadixSortIntMergeSEQ::RunImpl() {
   }
 
   for (int &x : arr) {
-    x ^= sign_mask;
+    x ^= kSignMask;
   }
 
   return true;

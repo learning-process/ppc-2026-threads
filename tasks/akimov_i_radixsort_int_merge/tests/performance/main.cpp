@@ -16,7 +16,7 @@ class AkimovIRadixSortIntMergePerfTests : public ppc::util::BaseRunPerfTests<InT
   InType expected_sorted_;
 
   void SetUp() override {
-    std::mt19937 gen(42);
+    std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
     std::uniform_int_distribution<int> dist(-1000, 1000);
     input_data_.resize(kCount_);
     for (int &val : input_data_) {

@@ -1,14 +1,15 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <array>
+#include <cstddef>
 #include <random>
+#include <string>
 #include <tuple>
-#include <vector>
 
 #include "akimov_i_radixsort_int_merge/common/include/common.hpp"
 #include "akimov_i_radixsort_int_merge/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace akimov_i_radixsort_int_merge {
 
@@ -23,7 +24,7 @@ class AkimovIRadixSortIntMergeFuncTests : public ppc::util::BaseRunFuncTests<InT
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int size = std::get<0>(params);
 
-    std::mt19937 gen(42);
+    std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
     std::uniform_int_distribution<int> dist(-1000, 1000);
     input_data_.resize(size);
     for (int &val : input_data_) {
