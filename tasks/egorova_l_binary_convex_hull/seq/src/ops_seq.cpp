@@ -75,7 +75,6 @@ void ProcessComponent(const std::vector<uint8_t> &image, int width, int height, 
     stack.pop();
     component_points.push_back(current);
 
-    // Process all 4 directions using helper function
     TryAddNeighbor(image, width, height, current.x + 1, current.y, label, labels, stack);
     TryAddNeighbor(image, width, height, current.x - 1, current.y, label, labels, stack);
     TryAddNeighbor(image, width, height, current.x, current.y + 1, label, labels, stack);
