@@ -13,9 +13,9 @@ namespace terekhov_d_seq_gauss_vert {
 class TerekhovDGaussVertSEQPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   void SetUp() override {
-    const size_t total_pixels = 10000000; // 10M пикселей
+    const size_t total_pixels = 10000000;  // 10M пикселей
     int img_size = static_cast<int>(std::sqrt(total_pixels));
-    
+
     input_data_.width = img_size;
     input_data_.height = img_size;
     input_data_.data.resize(input_data_.width * input_data_.height);
@@ -23,15 +23,14 @@ class TerekhovDGaussVertSEQPerfTests : public ppc::util::BaseRunPerfTests<InType
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<int> dist(0, 255);
-    
+
     for (auto &pixel : input_data_.data) {
       pixel = dist(gen);
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data.width == input_data_.width && 
-           output_data.height == input_data_.height &&
+    return output_data.width == input_data_.width && output_data.height == input_data_.height &&
            output_data.data.size() == input_data_.data.size();
   }
 
