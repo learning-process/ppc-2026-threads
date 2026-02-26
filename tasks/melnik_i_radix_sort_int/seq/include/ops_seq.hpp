@@ -20,7 +20,7 @@ class MelnikIRadixSortIntSEQ : public BaseTask {
 
   static void RadixSort(OutType &data);
   static int GetMaxValue(const OutType &data);
-  static void CountingSort(OutType &data, int exp, int offset);
+  static void CountingSort(OutType &data, int exp);
 };
 
 }  // namespace melnik_i_radix_sort_int

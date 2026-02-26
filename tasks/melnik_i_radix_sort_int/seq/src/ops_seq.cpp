@@ -9,7 +9,7 @@ namespace melnik_i_radix_sort_int {
 namespace {
 
 constexpr int kBitsPerDigit = 8;
-constexpr int kBuckets = 1 << kBitsPerDigit;
+constexpr int kBuckets = 256;
 
 }  // namespace
 
@@ -44,7 +44,7 @@ int MelnikIRadixSortIntSEQ::GetMaxValue(const OutType &data) {
   return *std::max_element(data.begin(), data.end());
 }
 
-void MelnikIRadixSortIntSEQ::CountingSort(OutType &data, int exp, int offset) {
+void MelnikIRadixSortIntSEQ::CountingSort(OutType &data, int exp) {
   const auto n = static_cast<int>(data.size());
   if (n == 0) {
     return;
@@ -54,7 +54,7 @@ void MelnikIRadixSortIntSEQ::CountingSort(OutType &data, int exp, int offset) {
   int count[kBuckets] = {0};
 
   for (int i = 0; i < n; i++) {
-    int digit = ((data[i] + offset) / exp) % kBuckets;
+    int digit = (data[i] / exp) % kBuckets;
     count[digit]++;
   }
 
@@ -63,7 +63,7 @@ void MelnikIRadixSortIntSEQ::CountingSort(OutType &data, int exp, int offset) {
   }
 
   for (int i = n - 1; i >= 0; i--) {
-    int digit = ((data[i] + offset) / exp) % kBuckets;
+    int digit = (data[i] / exp) % kBuckets;
     output[count[digit] - 1] = data[i];
     count[digit]--;
   }
@@ -81,15 +81,52 @@ void MelnikIRadixSortIntSEQ::RadixSort(OutType &data) {
 
   if (min_val >= 0) {
     for (int exp = 1; max_val / exp > 0; exp <<= kBitsPerDigit) {
-      CountingSort(data, exp, 0);
+      CountingSort(data, exp);
     }
     return;
   }
 
-  int offset = -min_val;
-  for (int exp = 1; (max_val + offset) / exp > 0 || (min_val + offset) / exp > 0; exp <<= kBitsPerDigit) {
-    CountingSort(data, exp, offset);
+  if (max_val <= 0) {
+    for (auto &val : data) {
+      val = -val;
+    }
+    for (int exp = 1; (-min_val) / exp > 0; exp <<= kBitsPerDigit) {
+      CountingSort(data, exp);
+    }
+    for (auto &val : data) {
+      val = -val;
+    }
+    return;
   }
+
+  auto pivot = std::stable_partition(data.begin(), data.end(), [](int x) { return x < 0; });
+
+  OutType negatives(data.begin(), pivot);
+  OutType positives(pivot, data.end());
+
+  if (!negatives.empty()) {
+    for (auto &val : negatives) {
+      val = -val;
+    }
+    int neg_max = *std::max_element(negatives.begin(), negatives.end());
+    for (int exp = 1; neg_max / exp > 0; exp <<= kBitsPerDigit) {
+      CountingSort(negatives, exp);
+    }
+    for (auto &val : negatives) {
+      val = -val;
+    }
+  }
+
+  if (!positives.empty()) {
+    int pos_max = *std::max_element(positives.begin(), positives.end());
+    for (int exp = 1; pos_max / exp > 0; exp <<= kBitsPerDigit) {
+      CountingSort(positives, exp);
+    }
+  }
+
+  data.clear();
+  data.insert(data.end(), negatives.begin(), negatives.end());
+  data.insert(data.end(), positives.begin(), positives.end());
 }
 
 }  // namespace melnik_i_radix_sort_int
