@@ -3,12 +3,11 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <random>
 #include <string>
 #include <tuple>
 #include <vector>
 
+#include "melnik_i_radix_sort_int/common/include/common.hpp"
 #include "melnik_i_radix_sort_int/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"

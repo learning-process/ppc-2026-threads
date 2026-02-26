@@ -5,6 +5,7 @@
 #include <random>
 #include <vector>
 
+#include "melnik_i_radix_sort_int/common/include/common.hpp"
 #include "melnik_i_radix_sort_int/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -19,11 +20,9 @@ std::vector<int> GenerateRandomData(std::size_t size, unsigned int seed) {
   std::mt19937 gen(seed);
   std::uniform_int_distribution<int> dist(-1000000, 1000000);
   std::vector<int> data(size);
-
   for (auto &val : data) {
     val = dist(gen);
   }
-
   return data;
 }
 
