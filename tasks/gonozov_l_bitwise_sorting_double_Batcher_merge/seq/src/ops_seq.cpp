@@ -77,7 +77,7 @@ void RadixSortDouble(std::vector<double> &data) {
     }
 
     // Распределение
-    for (size_t i = keys.size() - 1; i >= 0; --i) {
+    for (int i = static_cast<int>(keys.size() - 1); i >= 0; --i) {
       uint8_t byte = (keys[i] >> shift) & 0xFF;
       temp_keys[--count[byte]] = keys[i];
     }
