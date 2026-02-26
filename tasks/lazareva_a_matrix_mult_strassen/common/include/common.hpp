@@ -9,8 +9,8 @@
 namespace lazareva_a_matrix_mult_strassen {
 
 struct MatrixInput {
-  std::vector<double> a{};
-  std::vector<double> b{};
+  std::vector<double> a;
+  std::vector<double> b;
   int n{};
 };
 
