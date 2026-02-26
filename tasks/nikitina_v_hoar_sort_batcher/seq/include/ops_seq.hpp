@@ -20,8 +20,6 @@ class HoareSortBatcherSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
-  void QuickSortHoare(std::vector<int> &arr, int low, int high);
 };
 
 }  // namespace nikitina_v_hoar_sort_batcher

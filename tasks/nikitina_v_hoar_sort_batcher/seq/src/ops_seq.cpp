@@ -8,21 +8,9 @@
 
 namespace nikitina_v_hoar_sort_batcher {
 
-HoareSortBatcherSEQ::HoareSortBatcherSEQ(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-}
+namespace {
 
-bool HoareSortBatcherSEQ::ValidationImpl() {
-  return true;
-}
-
-bool HoareSortBatcherSEQ::PreProcessingImpl() {
-  GetOutput() = GetInput();
-  return true;
-}
-
-void HoareSortBatcherSEQ::QuickSortHoare(std::vector<int> &arr, int low, int high) {
+void QuickSortHoare(std::vector<int> &arr, int low, int high) {
   std::vector<std::pair<int, int>> stack;
   stack.emplace_back(low, high);
 
@@ -58,6 +46,22 @@ void HoareSortBatcherSEQ::QuickSortHoare(std::vector<int> &arr, int low, int hig
     stack.emplace_back(l, j);
     stack.emplace_back(j + 1, h);
   }
+}
+
+}  // namespace
+
+HoareSortBatcherSEQ::HoareSortBatcherSEQ(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+}
+
+bool HoareSortBatcherSEQ::ValidationImpl() {
+  return true;
+}
+
+bool HoareSortBatcherSEQ::PreProcessingImpl() {
+  GetOutput() = GetInput();
+  return true;
 }
 
 bool HoareSortBatcherSEQ::RunImpl() {
