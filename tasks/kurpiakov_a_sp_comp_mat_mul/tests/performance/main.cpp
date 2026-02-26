@@ -13,22 +13,22 @@ namespace {
 
 SparseMatrix MakeTridiagonal(int n) {
   SparseMatrix m;
-  m._rows = n;
-  m._cols = n;
-  m._row_ptr.resize(n + 1, 0);
+  m.rows = n;
+  m.cols = n;
+  m.row_ptr.resize(n + 1, 0);
 
   for (int i = 0; i < n; ++i) {
     if (i > 0) {
-      m._values.emplace_back(0, 1);
-      m._col_indices.push_back(i - 1);
+      m.values.emplace_back(0, 1);
+      m.col_indices.push_back(i - 1);
     }
-    m._values.emplace_back(2, 1);
-    m._col_indices.push_back(i);
+    m.values.emplace_back(2, 1);
+    m.col_indices.push_back(i);
     if (i < n - 1) {
-      m._values.emplace_back(1, 0);
-      m._col_indices.push_back(i + 1);
+      m.values.emplace_back(1, 0);
+      m.col_indices.push_back(i + 1);
     }
-    m._row_ptr[i + 1] = static_cast<int>(m._values.size());
+    m.row_ptr[i + 1] = static_cast<int>(m.values.size());
   }
   return m;
 }
