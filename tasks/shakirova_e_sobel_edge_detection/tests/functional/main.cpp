@@ -2,11 +2,12 @@
 
 #include <array>
 #include <cctype>
+#include <cstddef>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "shakirova_e_sobel_edge_detection/common/include/common.hpp"
+#include "shakirova_e_sobel_edge_detection/common/include/img_container.hpp"
 #include "shakirova_e_sobel_edge_detection/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -19,7 +20,7 @@ class ShakirovaESobelEdgeDetectionFuncTestsThreads
   static std::string PrintTestParam(const TestType& test_param) {
     std::string name = std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
     for (char& c : name) {
-      if (!std::isalnum(static_cast<unsigned char>(c)) && c != '_') {
+      if ((std::isalnum(static_cast<unsigned char>(c)) == 0) && c != '_') {
         c = '_';
       }
     }
@@ -42,9 +43,11 @@ class ShakirovaESobelEdgeDetectionFuncTestsThreads
 
   bool CheckTestOutputData(OutType& output_data) final {
     int edge_count = 0;
-    for (int y = 1; y < input_data_.height - 1; ++y) {
-      for (int x = 1; x < input_data_.width - 1; ++x) {
-        if (output_data[y * input_data_.width + x] > 0) ++edge_count;
+    for (int row = 1; row < input_data_.height - 1; ++row) {
+      for (int col = 1; col < input_data_.width - 1; ++col) {
+        if (output_data[(row * input_data_.width) + col] > 0) {
+          ++edge_count;
+        }
       }
     }
     return (expected_edges_ == 0) ? (edge_count == 0) : (edge_count >= expected_edges_);
