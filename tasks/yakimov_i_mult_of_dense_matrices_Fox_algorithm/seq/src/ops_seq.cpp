@@ -73,6 +73,10 @@ void MultiplyBlock(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &resu
 }
 
 void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int block_size) {
+  if (block_size <= 0) {
+    return;
+  }
+
   int num_blocks = a.rows / block_size;
 
   result.rows = a.rows;
@@ -140,6 +144,10 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmSEQ::PreProcessingImpl() {
   this->block_size_ = 1;
   while (this->block_size_ * 2 <= min_dimension) {
     this->block_size_ *= 2;
+  }
+
+  if (this->block_size_ <= 0) {
+    return false;
   }
 
   return true;
