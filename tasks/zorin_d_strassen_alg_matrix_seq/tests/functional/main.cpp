@@ -14,10 +14,7 @@ namespace zorin_d_strassen_alg_matrix_seq {
 
 namespace {
 
-void NaiveMulRef(const std::vector<double>& A,
-                 const std::vector<double>& B,
-                 std::vector<double>& C,
-                 std::size_t n) {
+void NaiveMulRef(const std::vector<double> &A, const std::vector<double> &B, std::vector<double> &C, std::size_t n) {
   C.assign(n * n, 0.0);
   for (std::size_t i = 0; i < n; ++i) {
     for (std::size_t k = 0; k < n; ++k) {
@@ -51,7 +48,7 @@ std::vector<double> MakeMatrixB(std::size_t n) {
 
 class ZorinDRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType& p) {
+  static std::string PrintTestParam(const TestType &p) {
     return std::to_string(std::get<0>(p)) + "_" + std::get<1>(p);
   }
 
@@ -67,13 +64,19 @@ class ZorinDRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, T
     NaiveMulRef(input_.A, input_.B, expected_, n);
   }
 
-  InType GetTestInputData() final { return input_; }
+  InType GetTestInputData() final {
+    return input_;
+  }
 
-  bool CheckTestOutputData(OutType& output) final {
+  bool CheckTestOutputData(OutType &output) final {
     const double eps = 1e-9;
-    if (output.size() != expected_.size()) return false;
+    if (output.size() != expected_.size()) {
+      return false;
+    }
     for (std::size_t i = 0; i < output.size(); ++i) {
-      if (std::abs(output[i] - expected_[i]) > eps) return false;
+      if (std::abs(output[i] - expected_[i]) > eps) {
+        return false;
+      }
     }
     return true;
   }
@@ -88,13 +91,8 @@ TEST_P(ZorinDRunFuncTests, StrassenMatMul) {
 }
 
 const std::array<TestType, 7> kParams = {
-    std::make_tuple(1, "n1"),
-    std::make_tuple(2, "n2"),
-    std::make_tuple(3, "n3"),
-    std::make_tuple(5, "n5"),
-    std::make_tuple(8, "n8"),
-    std::make_tuple(9, "n9"),
-    std::make_tuple(16, "n16"),
+    std::make_tuple(1, "n1"), std::make_tuple(2, "n2"), std::make_tuple(3, "n3"),   std::make_tuple(5, "n5"),
+    std::make_tuple(8, "n8"), std::make_tuple(9, "n9"), std::make_tuple(16, "n16"),
 };
 
 const auto kTasks =

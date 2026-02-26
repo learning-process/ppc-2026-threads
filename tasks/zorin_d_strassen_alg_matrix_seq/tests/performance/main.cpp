@@ -24,9 +24,11 @@ class ZorinDRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
     input_.B = MakeOnes(n);
   }
 
-  InType GetTestInputData() final { return input_; }
+  InType GetTestInputData() final {
+    return input_;
+  }
 
-  bool CheckTestOutputData(OutType& out) final {
+  bool CheckTestOutputData(OutType &out) final {
     return out.size() == input_.n * input_.n;
   }
 
