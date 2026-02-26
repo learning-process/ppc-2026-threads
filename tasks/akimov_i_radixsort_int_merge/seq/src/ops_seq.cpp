@@ -1,8 +1,9 @@
 #include "akimov_i_radixsort_int_merge/seq/include/ops_seq.hpp"
 
-#include <array>
 #include <cstdint>
 #include <vector>
+
+#include "akimov_i_radixsort_int_merge/common/include/common.hpp"
 
 namespace akimov_i_radixsort_int_merge {
 
@@ -27,7 +28,7 @@ bool AkimovIRadixSortIntMergeSEQ::RunImpl() {
     return true;
   }
 
-  constexpr int32_t kSignMask = 0x80000000;
+  constexpr int32_t kSignMask = INT32_MIN;  // 0x80000000
   for (int &x : arr) {
     x ^= kSignMask;
   }
@@ -36,7 +37,7 @@ bool AkimovIRadixSortIntMergeSEQ::RunImpl() {
   std::vector<int> temp(arr.size());
 
   for (int byte_pos = 0; byte_pos < num_bytes; ++byte_pos) {
-    std::array<int, 256> count{};
+    std::vector<int> count(256, 0);
     for (int x : arr) {
       uint8_t byte = (x >> (byte_pos * 8)) & 0xFF;
       ++count[byte];

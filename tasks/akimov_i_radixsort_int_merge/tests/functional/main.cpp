@@ -10,6 +10,7 @@
 #include "akimov_i_radixsort_int_merge/common/include/common.hpp"
 #include "akimov_i_radixsort_int_merge/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace akimov_i_radixsort_int_merge {
 
@@ -32,7 +33,7 @@ class AkimovIRadixSortIntMergeFuncTests : public ppc::util::BaseRunFuncTests<InT
     }
 
     expected_sorted_ = input_data_;
-    std::sort(expected_sorted_.begin(), expected_sorted_.end());
+    std::ranges::sort(expected_sorted_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
