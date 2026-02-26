@@ -91,7 +91,7 @@ void RadixSortDouble(std::vector<double> &data) {
   }
 }
 
-void ComparingSwapElements(std::vector<double> &arr, size_t n) {
+void ComparingSwapElements(std::vector<double> &arr, size_t n, size_t block_size, size_t step, size_t i) {
   if ((i & block_size) == 0) {
     size_t idx1 = i;
     size_t idx2 = i + step;
@@ -109,7 +109,7 @@ void BatcherOddEvenMergeIterative(std::vector<double> &arr, size_t n) {
   for (size_t block_size = 1; block_size < n; block_size *= 2) {
     for (size_t step = block_size; step > 0; step /= 2) {
       for (size_t i = 0; i < n - step; ++i) {
-        ComparingSwapElements(arr, n);
+        ComparingSwapElements(arr, n, block_size, step, i);
       }
     }
   }
