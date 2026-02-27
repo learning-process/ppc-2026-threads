@@ -13,8 +13,8 @@ namespace shekhirev_v_hoare_batcher_sort_seq {
 namespace {
 std::vector<int> GenerateRandomVector(size_t size) {
   std::vector<int> res(size);
-  // NOLINTNEXTLINE(cert-msc51-cpp)
-  std::mt19937 gen(73);
+  std::random_device rd;
+  std::mt19937 gen(rd());
   std::uniform_int_distribution<int> dist(-1000, 1000);
   for (size_t i = 0; i < size; ++i) {
     res[i] = dist(gen);
@@ -22,13 +22,24 @@ std::vector<int> GenerateRandomVector(size_t size) {
   return res;
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void RunFuncTest(const std::vector<int> &in) {
   ShekhirevHoareBatcherSortSEQ task(in);
-  ASSERT_TRUE(task.Validation());
-  ASSERT_TRUE(task.PreProcessing());
-  ASSERT_TRUE(task.Run());
-  ASSERT_TRUE(task.PostProcessing());
+  bool success = true;
+
+  if (!task.Validation()) {
+    success = false;
+  }
+  if (!task.PreProcessing()) {
+    success = false;
+  }
+  if (!task.Run()) {
+    success = false;
+  }
+  if (!task.PostProcessing()) {
+    success = false;
+  }
+
+  ASSERT_TRUE(success);
 
   std::vector<int> out = task.GetOutput();
   std::vector<int> expected = in;

@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <climits>
 #include <cstddef>
+#include <stack>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -39,13 +41,12 @@ void ShekhirevHoareBatcherSortSEQ::HoareSort(std::vector<int> &arr, int left, in
     return;
   }
 
-  std::vector<std::pair<int, int>> stack;
-  stack.reserve(static_cast<size_t>(right - left + 1));
-  stack.emplace_back(left, right);
+  std::stack<std::pair<int, int>> tasks;
+  tasks.emplace(left, right);
 
-  while (!stack.empty()) {
-    auto [l, r] = stack.back();
-    stack.pop_back();
+  while (!tasks.empty()) {
+    auto [l, r] = tasks.top();
+    tasks.pop();
 
     if (l >= r) {
       continue;
@@ -70,25 +71,45 @@ void ShekhirevHoareBatcherSortSEQ::HoareSort(std::vector<int> &arr, int left, in
     }
 
     if (i < r) {
-      stack.emplace_back(i, r);
+      tasks.emplace(i, r);
     }
     if (l < j) {
-      stack.emplace_back(l, j);
+      tasks.emplace(l, j);
     }
   }
 }
 
-// NOLINTNEXTLINE(misc-no-recursion)
 void ShekhirevHoareBatcherSortSEQ::BatcherMerge(std::vector<int> &arr, int left, int right, int step) {
-  int n = right - left + 1;
-  if (n <= step) {
-    return;
-  }
-  BatcherMerge(arr, left, right, step * 2);
-  BatcherMerge(arr, left + step, right, step * 2);
-  for (int i = left + step; i + step <= right; i += step * 2) {
-    if (arr[i] > arr[i + step]) {
-      std::swap(arr[i], arr[i + step]);
+  struct MergeTask {
+    int l;
+    int r;
+    int s;
+    bool process;
+  };
+
+  std::stack<MergeTask> tasks;
+  tasks.push({left, right, step, false});
+
+  while (!tasks.empty()) {
+    MergeTask task = tasks.top();
+    tasks.pop();
+
+    int n = task.r - task.l + 1;
+    if (n <= task.s) {
+      continue;
+    }
+
+    if (task.process) {
+      for (int i = task.l + task.s; i + task.s <= task.r; i += task.s * 2) {
+        if (arr[i] > arr[i + task.s]) {
+          std::swap(arr[i], arr[i + task.s]);
+        }
+      }
+    } else {
+      tasks.push({task.l, task.r, task.s, true});
+
+      tasks.push({task.l + task.s, task.r, task.s * 2, false});
+      tasks.push({task.l, task.r, task.s * 2, false});
     }
   }
 }
