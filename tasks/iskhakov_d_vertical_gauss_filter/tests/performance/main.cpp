@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <random>
 #include <vector>
@@ -22,7 +23,8 @@ class IskhakovDVerticalGaussFilterPerfTests : public ppc::util::BaseRunPerfTests
 
     input_data_.width = kWidth;
     input_data_.height = kHeight;
-    input_data_.data.resize(kWidth * kHeight);
+
+    input_data_.data.resize(static_cast<size_t>(kWidth) * static_cast<size_t>(kHeight));
     for (auto &val : input_data_.data) {
       val = static_cast<std::uint8_t>(dist(gen));
     }

@@ -1,11 +1,12 @@
 #include "iskhakov_d_vertical_gauss_filter/seq/include/ops_seq.hpp"
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "iskhakov_d_vertical_gauss_filter/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace iskhakov_d_vertical_gauss_filter {
 
@@ -13,6 +14,20 @@ namespace {
 const int kDivConst = 16;
 const std::array<std::array<int, 3>, 3> kGaussKernel = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
 const int kNumBands = 1;
+
+uint8_t IskhakovDGetPixelMirrorSeq(const std::vector<uint8_t> &res, int col, int row, int width, int height) {
+  if (col < 0) {
+    col = -col - 1;
+  } else if (col >= width) {
+    col = (2 * width) - col - 1;
+  }
+  if (row < 0) {
+    row = -row - 1;
+  } else if (row >= height) {
+    row = (2 * height) - row - 1;
+  }
+  return res[(row * width) + col];
+}
 }  // namespace
 
 IskhakovDVerticalGaussFilterSEQ::IskhakovDVerticalGaussFilterSEQ(const InType &in) {
@@ -27,7 +42,7 @@ bool IskhakovDVerticalGaussFilterSEQ::ValidationImpl() {
   if (in.width <= 0 || in.height <= 0) {
     return false;
   }
-  if (in.data.size() != static_cast<size_t>(in.width * in.height)) {
+  if (in.data.size() != static_cast<size_t>(in.width) * static_cast<size_t>(in.height)) {
     return false;
   }
   return true;
@@ -37,27 +52,13 @@ bool IskhakovDVerticalGaussFilterSEQ::PreProcessingImpl() {
   return true;
 }
 
-static uint8_t IskhakovDGetPixelMirrorSeq(const std::vector<uint8_t> &res, int col, int row, int width, int height) {
-  if (col < 0) {
-    col = -col - 1;
-  } else if (col >= width) {
-    col = 2 * width - col - 1;
-  }
-  if (row < 0) {
-    row = -row - 1;
-  } else if (row >= height) {
-    row = 2 * height - row - 1;
-  }
-  return res[row * width + col];
-}
-
 bool IskhakovDVerticalGaussFilterSEQ::RunImpl() {
   const auto &in = GetInput();
 
   int width = in.width;
   int height = in.height;
   const std::vector<uint8_t> &matrix = in.data;
-  std::vector<uint8_t> result(width * height);
+  std::vector<uint8_t> result(static_cast<size_t>(width) * static_cast<size_t>(height));
 
   int band_width = width / kNumBands;
   int remainder = width % kNumBands;
@@ -91,7 +92,7 @@ bool IskhakovDVerticalGaussFilterSEQ::RunImpl() {
         sum += kGaussKernel[2][2] *
                IskhakovDGetPixelMirrorSeq(matrix, horizontal_band + 1, vertical_band + 1, width, height);
 
-        result[vertical_band * width + horizontal_band] = static_cast<uint8_t>(sum / kDivConst);
+        result[(vertical_band * width) + horizontal_band] = static_cast<uint8_t>(sum / kDivConst);
       }
     }
     start_band = end_band;
