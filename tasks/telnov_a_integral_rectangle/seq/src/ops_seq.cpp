@@ -34,19 +34,19 @@ bool TelnovAIntegralRectangleSEQ::RunImpl() {
 
   double result = 0.0;
 
-  for (int64_t idx = 0; idx < totalPoints; idx++) {
+  for (int64_t idx = 0; idx < total_points; idx++) {
     int64_t tmp = idx;
-    double f_Value = 0.0;
+    double f_value = 0.0;
 
     for (int dim = 0; dim < d; dim++) {
-      int coordIndex = static_cast<int>(tmp % n);
+      int coord_index = static_cast<int>(tmp % n);
       tmp /= n;
 
-      double x = a + ((coordIndex + 0.5) * h);
-      f_Value += x;
+      double x = a + ((coord_index + 0.5) * h);
+      f_value += x;
     }
 
-    result += f_Value;
+    result += f_value;
   }
 
   result *= std::pow(h, d);
