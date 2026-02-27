@@ -91,7 +91,7 @@ const std::vector<uint8_t> kExpected10 = {0, 36, 73, 109, 146, 182, 219, 255};
 
 // 11. КРАЙНИЙ СЛУЧАЙ: Изображение с одним элементом (минимальное)
 const std::vector<uint8_t> kImage11 = {100};
-const std::vector<uint8_t> kExpected11 = {100}; // Должно остаться без изменений
+const std::vector<uint8_t> kExpected11 = {100};  // Должно остаться без изменений
 
 // 12. КРАЙНИЙ СЛУЧАЙ: Изображение с одним элементом (максимальное)
 const std::vector<uint8_t> kImage12 = {255};
@@ -122,27 +122,25 @@ TEST_P(PylaevaSRunFuncTestsThreads, MatmulFromPic) {
 }
 
 // Создаем массив тестовых параметров
-const std::array<TestType, 17> kTestParam = {
-    std::make_tuple(kImage1, kExpected1, "gradient"),
-    std::make_tuple(kImage2, kExpected2, "narrow_range"),
-    std::make_tuple(kImage3, kExpected3, "very_narrow_range"),
-    std::make_tuple(kImage4, kExpected4, "constant"),
-    std::make_tuple(kImage5, kExpected5, "extreme"),
-    std::make_tuple(kImage6, kExpected6, "uneven"),
-    std::make_tuple(kImage7, kExpected7, "two_peaks"),
-    std::make_tuple(kImage8, kExpected8, "noisy"),
-    std::make_tuple(kImage9, kExpected9, "dark"),
-    std::make_tuple(kImage10, kExpected10, "bright"),
-    std::make_tuple(kImage11, kExpected11, "single_element_min"),
-    std::make_tuple(kImage12, kExpected12, "single_element_max"),
-    std::make_tuple(kImage13, kExpected13, "single_element_zero"),
-    std::make_tuple(kImage14, kExpected14, "two_elements_min_diff"),
-    std::make_tuple(kImage15, kExpected15, "two_elements_max_diff"),
-    std::make_tuple(kImage16, kExpected16, "all_zero"),
-    std::make_tuple(kImage17, kExpected17, "all_max")
-};
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<PylaevaSIncContrastImgByLshSEQ, InType>(kTestParam, PPC_SETTINGS_pylaeva_s_inc_contrast_img_by_lsh));
+const std::array<TestType, 17> kTestParam = {std::make_tuple(kImage1, kExpected1, "gradient"),
+                                             std::make_tuple(kImage2, kExpected2, "narrow_range"),
+                                             std::make_tuple(kImage3, kExpected3, "very_narrow_range"),
+                                             std::make_tuple(kImage4, kExpected4, "constant"),
+                                             std::make_tuple(kImage5, kExpected5, "extreme"),
+                                             std::make_tuple(kImage6, kExpected6, "uneven"),
+                                             std::make_tuple(kImage7, kExpected7, "two_peaks"),
+                                             std::make_tuple(kImage8, kExpected8, "noisy"),
+                                             std::make_tuple(kImage9, kExpected9, "dark"),
+                                             std::make_tuple(kImage10, kExpected10, "bright"),
+                                             std::make_tuple(kImage11, kExpected11, "single_element_min"),
+                                             std::make_tuple(kImage12, kExpected12, "single_element_max"),
+                                             std::make_tuple(kImage13, kExpected13, "single_element_zero"),
+                                             std::make_tuple(kImage14, kExpected14, "two_elements_min_diff"),
+                                             std::make_tuple(kImage15, kExpected15, "two_elements_max_diff"),
+                                             std::make_tuple(kImage16, kExpected16, "all_zero"),
+                                             std::make_tuple(kImage17, kExpected17, "all_max")};
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<PylaevaSIncContrastImgByLshSEQ, InType>(
+    kTestParam, PPC_SETTINGS_pylaeva_s_inc_contrast_img_by_lsh));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

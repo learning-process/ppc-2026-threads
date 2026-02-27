@@ -11,9 +11,8 @@ class PylaevaSRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Ou
   InType input_data_;
 
   void SetUp() override {
-
     input_data_.resize(kCount_);
-    
+
     // Создаем градиент: значения от 0 до 255
     for (size_t i = 0; i < kCount_; ++i) {
       input_data_[i] = static_cast<uint8_t>((i * 255) / kCount_);
@@ -25,7 +24,7 @@ class PylaevaSRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Ou
     if (output_data.size() != input_data_.size()) {
       return false;
     }
-    
+
     auto [out_min, out_max] = std::ranges::minmax(output_data);
     return (out_min == 0 && out_max == 255);
   }
