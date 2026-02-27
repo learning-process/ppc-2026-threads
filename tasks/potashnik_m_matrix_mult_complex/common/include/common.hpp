@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstddef> 
+#include <cstddef>
 #include <map>
 #include <tuple>
 #include <utility>
@@ -11,13 +11,13 @@
 namespace potashnik_m_matrix_mult_complex {
 
 struct Complex {
-  double real;  
-  double imaginary; 
+  double real;
+  double imaginary;
 
   explicit Complex(double real = 0.0, double imaginary = 0.0) {
     this->real = real;
     this->imaginary = imaginary;
-  } 
+  }
 
   bool operator==(const Complex &comp) const {
     return comp.real == real && comp.imaginary == imaginary;
@@ -57,8 +57,11 @@ struct CCSMatrix {
 
   explicit CCSMatrix(const std::vector<std::vector<Complex>> &matr) {
     height = matr.size();
-    if (!matr.empty()) width = matr[0].size();
-    else width = 0;
+    if (!matr.empty()) {
+      width = matr[0].size();
+    } else {
+      width = 0;
+    }
 
     if (height == 0 || width == 0) {
       return;
@@ -80,21 +83,37 @@ struct CCSMatrix {
   }
 
   bool compare(const CCSMatrix &matr) {
-    if (height != matr.height) return false;
-    if (width != matr.height) return false;
+    if (height != matr.height) {
+      return false;
+    }
+    if (width != matr.height) {
+      return false;
+    }
 
-    if (val.size() != matr.val.size()) return false;
-    if (row_ind.size() != matr.row_ind.size()) return false;
-    if (col_ptr.size() != matr.col_ptr.size()) return false;
+    if (val.size() != matr.val.size()) {
+      return false;
+    }
+    if (row_ind.size() != matr.row_ind.size()) {
+      return false;
+    }
+    if (col_ptr.size() != matr.col_ptr.size()) {
+      return false;
+    }
 
     for (size_t i = 0; i < val.size(); i++) {
-      if (val[i] != matr.val[i]) return false;
+      if (val[i] != matr.val[i]) {
+        return false;
+      }
     }
     for (size_t i = 0; i < row_ind.size(); i++) {
-      if (row_ind[i] != matr.row_ind[i]) return false;
+      if (row_ind[i] != matr.row_ind[i]) {
+        return false;
+      }
     }
     for (size_t i = 0; i < col_ptr.size(); i++) {
-      if (col_ptr[i] != matr.col_ptr[i]) return false;
+      if (col_ptr[i] != matr.col_ptr[i]) {
+        return false;
+      }
     }
 
     return true;

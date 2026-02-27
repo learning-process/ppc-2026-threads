@@ -8,10 +8,10 @@
 #include <utility>
 #include <vector>
 
-#include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 #include "potashnik_m_matrix_mult_complex/common/include/common.hpp"
 #include "potashnik_m_matrix_mult_complex/seq/include/ops_seq.hpp"
+#include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace potashnik_m_matrix_mult_complex {
 
@@ -37,14 +37,16 @@ class PotashnikMMatrixMultComplexFuncTests : public ppc::util::BaseRunFuncTests<
     for (size_t i = 0; i < rows_left; ++i) {
       matrix_left[i].resize(columns_left);
       for (size_t j = 0; j < columns_left; ++j) {
-        matrix_left[i][j] = Complex(static_cast<double>((i * i * rows_left) % 50U), static_cast<double>((j * j * columns_left) % 50U));
+        matrix_left[i][j] =
+            Complex(static_cast<double>((i * i * rows_left) % 50U), static_cast<double>((j * j * columns_left) % 50U));
       }
     }
 
     for (size_t i = 0; i < rows_right; ++i) {
       matrix_right[i].resize(columns_right);
       for (size_t j = 0; j < columns_right; ++j) {
-        matrix_right[i][j] = Complex(static_cast<double>((i * i * rows_right) % 50U), static_cast<double>((j * j * columns_right) % 50U));
+        matrix_right[i][j] = Complex(static_cast<double>((i * i * rows_right) % 50U),
+                                     static_cast<double>((j * j * columns_right) % 50U));
       }
     }
 
@@ -70,7 +72,7 @@ class PotashnikMMatrixMultComplexFuncTests : public ppc::util::BaseRunFuncTests<
     // size_t height_right = matrix_right.height;
     size_t width_right = matrix_right.width;
 
-    std::map<std::pair<size_t, size_t>, Complex> buffer;  
+    std::map<std::pair<size_t, size_t>, Complex> buffer;
 
     for (size_t i = 0; i < matrix_left.Count(); i++) {
       size_t row_left = row_ind_left[i];
@@ -116,8 +118,8 @@ TEST_P(PotashnikMMatrixMultComplexFuncTests, MatmulFromPic) {
 }
 
 const std::array<TestType, 10> kTestParam = {
-    std::make_tuple(4, 5, 6), std::make_tuple(6, 5, 4), std::make_tuple(4, 6, 5), std::make_tuple(5, 6, 4),
-    std::make_tuple(6, 6, 5), std::make_tuple(6, 5, 6), std::make_tuple(5, 6, 6), std::make_tuple(8, 8, 8),
+    std::make_tuple(4, 5, 6), std::make_tuple(6, 5, 4),   std::make_tuple(4, 6, 5), std::make_tuple(5, 6, 4),
+    std::make_tuple(6, 6, 5), std::make_tuple(6, 5, 6),   std::make_tuple(5, 6, 6), std::make_tuple(8, 8, 8),
     std::make_tuple(9, 9, 9), std::make_tuple(10, 10, 10)};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<PotashnikMMatrixMultComplexSEQ, InType>(

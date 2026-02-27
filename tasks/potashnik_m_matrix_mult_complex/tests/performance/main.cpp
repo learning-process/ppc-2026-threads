@@ -6,9 +6,9 @@
 #include <utility>
 #include <vector>
 
-#include "util/include/perf_test_util.hpp"
 #include "potashnik_m_matrix_mult_complex/common/include/common.hpp"
 #include "potashnik_m_matrix_mult_complex/seq/include/ops_seq.hpp"
+#include "util/include/perf_test_util.hpp"
 
 namespace potashnik_m_matrix_mult_complex {  // comm for ci1
 
@@ -49,7 +49,7 @@ class PotashnikMMatrixMultComplexPerfTest : public ppc::util::BaseRunPerfTests<I
     // size_t height_right = matrix_right.height;
     size_t width_right = matrix_right.width;
 
-    std::map<std::pair<size_t, size_t>, Complex> buffer;  
+    std::map<std::pair<size_t, size_t>, Complex> buffer;
 
     for (size_t i = 0; i < matrix_left.Count(); i++) {
       size_t row_left = row_ind_left[i];
@@ -91,8 +91,8 @@ TEST_P(PotashnikMMatrixMultComplexPerfTest, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, PotashnikMMatrixMultComplexSEQ>(
-    PPC_SETTINGS_potashnik_m_matrix_mult_complex);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, PotashnikMMatrixMultComplexSEQ>(PPC_SETTINGS_potashnik_m_matrix_mult_complex);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

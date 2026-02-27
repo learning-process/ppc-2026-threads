@@ -38,7 +38,7 @@ bool PotashnikMMatrixMultComplexSEQ::RunImpl() {
   // size_t height_right = matrix_right.height;
   size_t width_right = matrix_right.width;
 
-  std::map<std::pair<size_t, size_t>, Complex> buffer;  
+  std::map<std::pair<size_t, size_t>, Complex> buffer;
 
   for (size_t i = 0; i < matrix_left.Count(); i++) {
     size_t row_left = row_ind_left[i];
