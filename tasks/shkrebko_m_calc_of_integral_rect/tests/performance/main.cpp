@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
-#include <functional>
+#include <numbers>
 #include <vector>
 
 #include "shkrebko_m_calc_of_integral_rect/common/include/common.hpp"
@@ -12,13 +12,16 @@ namespace shkrebko_m_calc_of_integral_rect {
 
 class ShkrebkoMRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
-  static constexpr int kN = 10000;
+  static constexpr int kN = 200;
 
  protected:
   void SetUp() override {
-    input_data_ =
-        InType{{{0.0, 1.0}, {0.0, 1.0}}, kN, [](const std::vector<double> &x) { return x[0] * x[0] + x[1] * x[1]; }};
-    expected_ = 2.0 / 3.0;
+    double exact = (1.0 - std::cos(1.0)) + std::sin(1.0) + 0.5;
+    expected_ = exact;
+
+    input_data_.limits = {{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}};
+    input_data_.n_steps = {kN, kN, kN};
+    input_data_.func = [](const std::vector<double> &x) { return std::sin(x[0]) + std::cos(x[1]) + x[2]; };
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -40,11 +43,16 @@ TEST_P(ShkrebkoMRunPerfTest, RunPerfModes) {
 }
 
 namespace {
+
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ShkrebkoMCalcOfIntegralRectSEQ>(PPC_SETTINGS_shkrebko_m_calc_of_integral_rect);
+
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+
 const auto kPerfTestName = ShkrebkoMRunPerfTest::CustomPerfTestName;
+
 INSTANTIATE_TEST_SUITE_P(RunModeTests, ShkrebkoMRunPerfTest, kGtestValues, kPerfTestName);
+
 }  // namespace
 
 }  // namespace shkrebko_m_calc_of_integral_rect
