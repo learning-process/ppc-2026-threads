@@ -11,9 +11,13 @@ namespace strassen_impl {
 constexpr size_t kStrassenThreshold = 64;
 
 inline size_t NextPowerOf2(size_t n) {
-  if (n <= 1) return 1;
+  if (n <= 1) {
+    return 1;
+  }
   size_t p = 1;
-  while (p < n) p *= 2;
+  while (p < n) {
+    p *= 2;
+  }
   return p;
 }
 
@@ -31,8 +35,8 @@ inline void NaiveMultiply(const std::vector<double> &A, const std::vector<double
 }
 
 template <typename ParallelRun>
-void StrassenRecurse(const std::vector<double> &A, const std::vector<double> &B, std::vector<double> &C,
-                     size_t n, ParallelRun &&parallel_run) {
+void StrassenRecurse(const std::vector<double> &A, const std::vector<double> &B, std::vector<double> &C, size_t n,
+                     ParallelRun &&parallel_run) {
   if (n <= kStrassenThreshold) {
     NaiveMultiply(A, B, C, n);
     return;
@@ -69,47 +73,47 @@ void StrassenRecurse(const std::vector<double> &A, const std::vector<double> &B,
 
   std::vector<std::function<void()>> tasks = {
       [&]() {
-        std::vector<double> t1(sz), t2(sz);
-        add_block(A.data(), A.data(), 0, 0, m, m, t1);
-        add_block(B.data(), B.data(), 0, 0, m, m, t2);
-        StrassenRecurse(t1, t2, M1, m, parallel_run);
-      },
+    std::vector<double> t1(sz), t2(sz);
+    add_block(A.data(), A.data(), 0, 0, m, m, t1);
+    add_block(B.data(), B.data(), 0, 0, m, m, t2);
+    StrassenRecurse(t1, t2, M1, m, parallel_run);
+  },
       [&]() {
-        std::vector<double> t1(sz), t2(sz);
-        add_block(A.data(), A.data(), m, 0, m, m, t1);
-        copy_block(B.data(), 0, 0, t2);
-        StrassenRecurse(t1, t2, M2, m, parallel_run);
-      },
+    std::vector<double> t1(sz), t2(sz);
+    add_block(A.data(), A.data(), m, 0, m, m, t1);
+    copy_block(B.data(), 0, 0, t2);
+    StrassenRecurse(t1, t2, M2, m, parallel_run);
+  },
       [&]() {
-        std::vector<double> t1(sz), t2(sz);
-        sub_block(B.data(), B.data(), 0, m, m, m, t1);
-        copy_block(A.data(), 0, 0, t2);
-        StrassenRecurse(t2, t1, M3, m, parallel_run);
-      },
+    std::vector<double> t1(sz), t2(sz);
+    sub_block(B.data(), B.data(), 0, m, m, m, t1);
+    copy_block(A.data(), 0, 0, t2);
+    StrassenRecurse(t2, t1, M3, m, parallel_run);
+  },
       [&]() {
-        std::vector<double> t1(sz), t2(sz);
-        sub_block(B.data(), B.data(), m, 0, 0, 0, t1);
-        copy_block(A.data(), m, m, t2);
-        StrassenRecurse(t2, t1, M4, m, parallel_run);
-      },
+    std::vector<double> t1(sz), t2(sz);
+    sub_block(B.data(), B.data(), m, 0, 0, 0, t1);
+    copy_block(A.data(), m, m, t2);
+    StrassenRecurse(t2, t1, M4, m, parallel_run);
+  },
       [&]() {
-        std::vector<double> t1(sz), t2(sz);
-        add_block(A.data(), A.data(), 0, 0, 0, m, t1);
-        copy_block(B.data(), m, m, t2);
-        StrassenRecurse(t1, t2, M5, m, parallel_run);
-      },
+    std::vector<double> t1(sz), t2(sz);
+    add_block(A.data(), A.data(), 0, 0, 0, m, t1);
+    copy_block(B.data(), m, m, t2);
+    StrassenRecurse(t1, t2, M5, m, parallel_run);
+  },
       [&]() {
-        std::vector<double> t1(sz), t2(sz);
-        sub_block(A.data(), A.data(), m, 0, 0, 0, t1);
-        add_block(B.data(), B.data(), 0, 0, 0, m, t2);
-        StrassenRecurse(t1, t2, M6, m, parallel_run);
-      },
+    std::vector<double> t1(sz), t2(sz);
+    sub_block(A.data(), A.data(), m, 0, 0, 0, t1);
+    add_block(B.data(), B.data(), 0, 0, 0, m, t2);
+    StrassenRecurse(t1, t2, M6, m, parallel_run);
+  },
       [&]() {
-        std::vector<double> t1(sz), t2(sz);
-        sub_block(A.data(), A.data(), 0, m, m, m, t1);
-        add_block(B.data(), B.data(), m, 0, m, m, t2);
-        StrassenRecurse(t1, t2, M7, m, parallel_run);
-      },
+    std::vector<double> t1(sz), t2(sz);
+    sub_block(A.data(), A.data(), 0, m, m, m, t1);
+    add_block(B.data(), B.data(), m, 0, m, m, t2);
+    StrassenRecurse(t1, t2, M7, m, parallel_run);
+  },
   };
 
   parallel_run(tasks);
@@ -125,8 +129,7 @@ void StrassenRecurse(const std::vector<double> &A, const std::vector<double> &B,
 }
 
 inline void StrassenMultiply(const std::vector<double> &A, const std::vector<double> &B, std::vector<double> &C,
-                             size_t n,
-                             const std::function<void(std::vector<std::function<void()>> &)> &parallel_run) {
+                             size_t n, const std::function<void(std::vector<std::function<void()>> &)> &parallel_run) {
   StrassenRecurse(A, B, C, n, parallel_run);
 }
 

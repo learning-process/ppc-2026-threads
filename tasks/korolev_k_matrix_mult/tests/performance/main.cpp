@@ -4,12 +4,12 @@
 #include <cstddef>
 #include <vector>
 
-#include "korolev_k_matrix_mult/all/include/ops_all.hpp"
+// #include "korolev_k_matrix_mult/all/include/ops_all.hpp"
 #include "korolev_k_matrix_mult/common/include/common.hpp"
-#include "korolev_k_matrix_mult/omp/include/ops_omp.hpp"
+// #include "korolev_k_matrix_mult/omp/include/ops_omp.hpp"
 #include "korolev_k_matrix_mult/seq/include/ops_seq.hpp"
-#include "korolev_k_matrix_mult/stl/include/ops_stl.hpp"
-#include "korolev_k_matrix_mult/tbb/include/ops_tbb.hpp"
+// #include "korolev_k_matrix_mult/stl/include/ops_stl.hpp"
+// #include "korolev_k_matrix_mult/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace korolev_k_matrix_mult {

@@ -30,7 +30,9 @@ bool KorolevKMatrixMultSEQ::RunImpl() {
   size_t np2 = strassen_impl::NextPowerOf2(n);
 
   auto sequential_run = [](std::vector<std::function<void()>> &tasks) {
-    for (auto &t : tasks) t();
+    for (auto &t : tasks) {
+      t();
+    }
   };
 
   if (np2 == n) {
