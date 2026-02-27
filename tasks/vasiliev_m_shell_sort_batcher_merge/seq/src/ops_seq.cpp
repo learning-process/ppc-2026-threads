@@ -96,8 +96,8 @@ std::vector<ValType> VasilievMShellSortBatcherMergeSEQ::BatcherMerge(std::vector
 
 void VasilievMShellSortBatcherMergeSEQ::SplitEvenOdd(std::vector<ValType> &vec, std::vector<ValType> &even,
                                                      std::vector<ValType> &odd) {
-  even.reserve(even.size() + vec.size() / 2 + 1);
-  odd.reserve(odd.size() + vec.size() / 2);
+  even.reserve(even.size() + (vec.size() / 2) + 1);
+  odd.reserve(odd.size() + (vec.size() / 2));
 
   for (size_t i = 0; i < vec.size(); i += 2) {
     even.push_back(vec[i]);

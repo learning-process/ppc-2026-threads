@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 #include "vasiliev_m_shell_sort_batcher_merge/common/include/common.hpp"
 #include "vasiliev_m_shell_sort_batcher_merge/seq/include/ops_seq.hpp"
 

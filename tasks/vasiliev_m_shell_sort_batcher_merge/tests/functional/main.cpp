@@ -6,7 +6,6 @@
 #include <cctype>
 #include <cstddef>
 #include <fstream>
-#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <tuple>
