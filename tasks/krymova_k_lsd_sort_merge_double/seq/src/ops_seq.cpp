@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
-#include <vector>
 
 namespace krymova_k_lsd_sort_merge_double {
 
@@ -13,10 +12,12 @@ KrymovaKLsdSortMergeDoubleSEQ::KrymovaKLsdSortMergeDoubleSEQ(const InType &in) {
   GetOutput() = OutType();
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 bool KrymovaKLsdSortMergeDoubleSEQ::ValidationImpl() {
   return true;
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 bool KrymovaKLsdSortMergeDoubleSEQ::PreProcessingImpl() {
   GetOutput() = GetInput();
   return true;
@@ -92,18 +93,42 @@ void KrymovaKLsdSortMergeDoubleSEQ::LSDSortDouble(double* arr, int size) {
   }
 }
 
-void KrymovaKLsdSortMergeDoubleSEQ::IterativeMergeSort(double* arr, double* tmp, int size, int portion) {
-  if (size <= 1) {
-    return;
+void KrymovaKLsdSortMergeDoubleSEQ::MergeSections(double* left, const double* right,
+                                                   int left_size, int right_size) {
+  std::vector<double> temp(left_size);
+  std::copy(left, left + left_size, temp.begin());
+
+  int l = 0;
+  int r = 0;
+  int k = 0;
+
+  while (l < left_size && r < right_size) {
+    if (temp[l] <= right[r]) {
+      left[k++] = temp[l++];
+    } else {
+      left[k++] = right[r++];
+    }
   }
 
-  // ШАГ 1: Сортируем все кусочки размера portion с помощью LSD
+  while (l < left_size) {
+    left[k++] = temp[l++];
+  }
+}
+
+void KrymovaKLsdSortMergeDoubleSEQ::SortSections(double* arr, int size, int portion) {
   for (int i = 0; i < size; i += portion) {
     int current_size = std::min(portion, size - i);
     LSDSortDouble(arr + i, current_size);
   }
+}
 
-  // ШАГ 2: Итеративно сливаем кусочки
+void KrymovaKLsdSortMergeDoubleSEQ::IterativeMergeSort(double* arr, int size, int portion) {
+  if (size <= 1) {
+    return;
+  }
+
+  SortSections(arr, size, portion);
+
   for (int merge_size = portion; merge_size < size; merge_size *= 2) {
     for (int i = 0; i < size; i += 2 * merge_size) {
       int left_size = merge_size;
@@ -114,30 +139,14 @@ void KrymovaKLsdSortMergeDoubleSEQ::IterativeMergeSort(double* arr, double* tmp,
       }
 
       double* left = arr + i;
-      double* right = arr + i + left_size;
-      double* temp = tmp + i;
+      const double* right = arr + i + left_size;
 
-      std::copy(left, left + left_size, temp);
-
-      int l = 0;
-      int r = 0;
-      int k = 0;
-
-      while (l < left_size && r < right_size) {
-        if (temp[l] <= right[r]) {
-          left[k++] = temp[l++];
-        } else {
-          left[k++] = right[r++];
-        }
-      }
-
-      while (l < left_size) {
-        left[k++] = temp[l++];
-      }
+      MergeSections(left, right, left_size, right_size);
     }
   }
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 bool KrymovaKLsdSortMergeDoubleSEQ::RunImpl() {
   OutType& output = GetOutput();
   int size = static_cast<int>(output.size());
@@ -146,14 +155,13 @@ bool KrymovaKLsdSortMergeDoubleSEQ::RunImpl() {
     return true;
   }
 
-  std::vector<double> tmp(size);
   int portion = std::max(1, size / 10);
-
-  IterativeMergeSort(output.data(), tmp.data(), size, portion);
+  IterativeMergeSort(output.data(), size, portion);  // без tmp
 
   return true;
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 bool KrymovaKLsdSortMergeDoubleSEQ::PostProcessingImpl() {
   const OutType& output = GetOutput();
 
