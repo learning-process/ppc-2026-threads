@@ -1,5 +1,10 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>  // for std::ranges::minmax
+#include <cstddef>    // for size_t
+#include <cstdint>    // for uint8_t
+#include <ranges>     // for std::ranges::minmax
+
 #include "pylaeva_s_inc_contrast_img_by_lsh/common/include/common.hpp"
 #include "pylaeva_s_inc_contrast_img_by_lsh/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"

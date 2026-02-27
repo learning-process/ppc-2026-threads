@@ -3,11 +3,9 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <ranges>
 #include <vector>
 
 #include "pylaeva_s_inc_contrast_img_by_lsh/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace pylaeva_s_inc_contrast_img_by_lsh {
 
@@ -37,7 +35,7 @@ bool PylaevaSIncContrastImgByLshSEQ::RunImpl() {
     return true;
   }
 
-  float scale = 255.0f / static_cast<float>(max_pixel - min_pixel);
+  float scale = 255.0F / static_cast<float>(max_pixel - min_pixel);
 
   for (size_t i = 0; i < input.size(); ++i) {
     output[i] = static_cast<uint8_t>(std::round(static_cast<float>(input[i] - min_pixel) * scale));

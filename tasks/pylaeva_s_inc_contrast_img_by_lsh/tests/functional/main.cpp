@@ -1,15 +1,11 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "pylaeva_s_inc_contrast_img_by_lsh/common/include/common.hpp"
