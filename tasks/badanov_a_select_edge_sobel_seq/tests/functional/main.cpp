@@ -31,27 +31,27 @@ class BadanovASelectEdgeSobelFuncTests : public ppc::util::BaseRunFuncTests<InTy
   void SetUp() override {
     const auto &[threshold, filename] =
         std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    
+
     threshold_ = threshold;
-    
+
     const std::string abs_path =
         ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_badanov_a_select_edge_sobel_seq), filename);
-    
+
     std::ifstream file(abs_path);
     if (!file.is_open()) {
       throw std::runtime_error("Cannot open file: " + abs_path);
     }
-    
+
     int width, height;
     file >> width >> height;
-    
+
     input_data_.resize(width * height);
     for (int i = 0; i < width * height; ++i) {
       int pixel;
       file >> pixel;
       input_data_[i] = static_cast<uint8_t>(pixel);
     }
-    
+
     file.close();
   }
 
@@ -59,24 +59,32 @@ class BadanovASelectEdgeSobelFuncTests : public ppc::util::BaseRunFuncTests<InTy
     if (output_data.empty()) {
       return false;
     }
-    
+
     if (output_data.size() != input_data_.size()) {
       return false;
     }
-    
+
     int width = static_cast<int>(std::sqrt(input_data_.size()));
     int height = width;
-    
+
     for (int col = 0; col < width; ++col) {
-      if (output_data[col] != 0) return false;
-      if (output_data[(height - 1) * width + col] != 0) return false;
+      if (output_data[col] != 0) {
+        return false;
+      }
+      if (output_data[(height - 1) * width + col] != 0) {
+        return false;
+      }
     }
-    
+
     for (int row = 0; row < height; ++row) {
-      if (output_data[row * width] != 0) return false;
-      if (output_data[row * width + (width - 1)] != 0) return false;
+      if (output_data[row * width] != 0) {
+        return false;
+      }
+      if (output_data[row * width + (width - 1)] != 0) {
+        return false;
+      }
     }
-    
+
     bool all_zeros = true;
     for (uint8_t pixel : input_data_) {
       if (pixel != 0) {
@@ -84,7 +92,7 @@ class BadanovASelectEdgeSobelFuncTests : public ppc::util::BaseRunFuncTests<InTy
         break;
       }
     }
-    
+
     if (all_zeros) {
       for (uint8_t pixel : output_data) {
         if (pixel != 0) {
@@ -93,7 +101,7 @@ class BadanovASelectEdgeSobelFuncTests : public ppc::util::BaseRunFuncTests<InTy
       }
       return true;
     }
-    
+
     bool has_edges = false;
     for (int row = 1; row < height - 1 && !has_edges; ++row) {
       for (int col = 1; col < width - 1 && !has_edges; ++col) {
@@ -102,7 +110,7 @@ class BadanovASelectEdgeSobelFuncTests : public ppc::util::BaseRunFuncTests<InTy
         }
       }
     }
-    
+
     return has_edges;
   }
 
@@ -122,11 +130,11 @@ TEST_P(BadanovASelectEdgeSobelFuncTests, SobelOnFiles) {
 }
 
 const std::array<TestType, 5> kTestParam = {
-    std::make_tuple(50, "test_1.txt"),   // Простой квадрат
-    std::make_tuple(30, "test_2.txt"),   // Градиент
-    std::make_tuple(40, "test_3.txt"),   // Диагональная линия
-    std::make_tuple(50, "test_4.txt"),   // Пустое изображение
-    std::make_tuple(50, "test_6.txt")    // Крест
+    std::make_tuple(50, "test_1.txt"),  // Простой квадрат
+    std::make_tuple(30, "test_2.txt"),  // Градиент
+    std::make_tuple(40, "test_3.txt"),  // Диагональная линия
+    std::make_tuple(50, "test_4.txt"),  // Пустое изображение
+    std::make_tuple(50, "test_6.txt")   // Крест
 };
 
 const auto kTestTasksList = ppc::util::AddFuncTask<BadanovASelectEdgeSobelSEQ, InType>(
@@ -134,8 +142,7 @@ const auto kTestTasksList = ppc::util::AddFuncTask<BadanovASelectEdgeSobelSEQ, I
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName =
-    BadanovASelectEdgeSobelFuncTests::PrintFuncTestName<BadanovASelectEdgeSobelFuncTests>;
+const auto kPerfTestName = BadanovASelectEdgeSobelFuncTests::PrintFuncTestName<BadanovASelectEdgeSobelFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(SobelEdgeTests, BadanovASelectEdgeSobelFuncTests, kGtestValues, kPerfTestName);
 

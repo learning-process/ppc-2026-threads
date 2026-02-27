@@ -13,10 +13,10 @@ namespace badanov_a_select_edge_sobel_seq {
 class BadanovASelectEdgeSobelPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr int kWidth = 3840;
   static constexpr int kHeight = 2160;
-  
+
   void SetUp() override {
     input_data_.resize(kWidth * kHeight);
-    
+
     for (int row = 0; row < kHeight; ++row) {
       for (int col = 0; col < kWidth; ++col) {
         double val = static_cast<double>(col % 256) / 255.0;
@@ -29,7 +29,7 @@ class BadanovASelectEdgeSobelPerfTests : public ppc::util::BaseRunPerfTests<InTy
     if (output_data.size() != static_cast<size_t>(kWidth * kHeight)) {
       return false;
     }
-    
+
     return true;
   }
 

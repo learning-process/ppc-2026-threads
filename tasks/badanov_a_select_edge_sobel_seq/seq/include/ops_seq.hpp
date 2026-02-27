@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include <cstdint>
+#include <vector>
 
 #include "badanov_a_select_edge_sobel_seq/common/include/common.hpp"
 #include "task/include/task.hpp"
@@ -21,21 +21,13 @@ class BadanovASelectEdgeSobelSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static constexpr std::array<std::array<int, 3>, 3> KERNEL_X = {{
-    {{-1, 0, 1}},
-    {{-2, 0, 2}},
-    {{-1, 0, 1}}
-  }};
-  
-  static constexpr std::array<std::array<int, 3>, 3> KERNEL_Y = {{
-    {{-1, -2, -1}},
-    {{0, 0, 0}},
-    {{1, 2, 1}}
-  }};
+  static constexpr std::array<std::array<int, 3>, 3> KERNEL_X = {{{{-1, 0, 1}}, {{-2, 0, 2}}, {{-1, 0, 1}}}};
+
+  static constexpr std::array<std::array<int, 3>, 3> KERNEL_Y = {{{{-1, -2, -1}}, {{0, 0, 0}}, {{1, 2, 1}}}};
 
   int width_ = 0;
   int height_ = 0;
   int threshold_ = 50;
 };
 
-}
+}  // namespace badanov_a_select_edge_sobel_seq
