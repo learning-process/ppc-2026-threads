@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "task/include/task.hpp"
 #include "terekhov_d_seq_gauss_vert/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace terekhov_d_seq_gauss_vert {
 
@@ -19,10 +19,15 @@ class TerekhovDGaussVertSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
+  
+  void ProcessBands(OutType &output);
+  void ProcessBand(OutType &output, int padded_width, int band, int band_width);
+  void ProcessPixel(OutType &output, int padded_width, int row, int col);
+  
   int width_ = 0;
   int height_ = 0;
-  std::vector<int> padded_image_;  // 1
+  static constexpr int num_bands = 4;
+  std::vector<int> padded_image_;
 };
 
 }  // namespace terekhov_d_seq_gauss_vert

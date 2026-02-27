@@ -37,51 +37,73 @@ class TerekhovDRunFuncTestsGauss : public ppc::util::BaseRunFuncTests<InType, Ou
     }
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.width != input_data_.width || output_data.height != input_data_.height) {
+bool CheckTestOutputData(OutType &output_data) final {
+  if (!ValidateOutputSize(output_data)) {
+    return false;
+  }
+  
+  if (input_data_.width < 3 || input_data_.height < 3) {
+    return true;
+  }
+  
+  return ValidateCenterPixel(output_data);
+}
+
+private:
+  bool ValidateOutputSize(const OutType &output_data) const {
+    if (output_data.width != input_data_.width || 
+        output_data.height != input_data_.height) {
       return false;
     }
-
+    
     if (output_data.data.size() != input_data_.data.size()) {
       return false;
     }
-
-    if (input_data_.width < 3 || input_data_.height < 3) {
-      return true;
-    }
-
+    
+    return true;
+  }
+  
+  bool ValidateCenterPixel(const OutType &output_data) const {
     int cx = input_data_.width / 2;
     int cy = input_data_.height / 2;
-
-    float expected = 0.0F;
+    
+    float expected = ComputeExpectedValue(cx, cy);
+    int actual = GetActualValue(output_data, cx, cy);
+    int expected_int = static_cast<int>(std::lround(expected));
+    
+    return std::abs(actual - expected_int) <= 1;
+  }
+  
+  float ComputeExpectedValue(int cx, int cy) const {
+    float sum = 0.0F;
+    
     for (int ky = -1; ky <= 1; ++ky) {
       for (int kx = -1; kx <= 1; ++kx) {
         int px = cx + kx;
         int py = cy + ky;
-
-        if (px < 0) {
-          px = 0;
-        } else if (px >= input_data_.width) {
-          px = input_data_.width - 1;
-        }
-
-        if (py < 0) {
-          py = 0;
-        } else if (py >= input_data_.height) {
-          py = input_data_.height - 1;
-        }
-
+        
+        px = ClampCoordinate(px, 0, input_data_.width - 1);
+        py = ClampCoordinate(py, 0, input_data_.height - 1);
+        
         int kernel_idx = ((ky + 1) * 3) + (kx + 1);
         size_t data_idx = (static_cast<size_t>(py) * static_cast<size_t>(input_data_.width)) + static_cast<size_t>(px);
-        expected += static_cast<float>(input_data_.data[data_idx]) * kGaussKernel[static_cast<size_t>(kernel_idx)];
+        
+        sum += static_cast<float>(input_data_.data[data_idx]) * kGaussKernel[static_cast<size_t>(kernel_idx)];
       }
     }
-
+    
+    return sum;
+  }
+  
+  int GetActualValue(const OutType &output_data, int cx, int cy) const {
     size_t out_idx = (static_cast<size_t>(cy) * static_cast<size_t>(output_data.width)) + static_cast<size_t>(cx);
-    int actual = output_data.data[out_idx];
-    int expected_int = static_cast<int>(std::lround(expected));
-
-    return std::abs(actual - expected_int) <= 1;
+    return output_data.data[out_idx];
+  }
+  
+  int ClampCoordinate(int value, int min_val, int max_val) const {
+    if (value < min_val) return min_val;
+    if (value > max_val) return max_val;
+    return value;
   }
 
   InType GetTestInputData() final {
