@@ -1,6 +1,7 @@
 #include "kazennova_a_sobel_operator/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -62,11 +63,11 @@ bool SobelSeq::RunImpl() {
         for (int kx = -1; kx <= 1; ++kx) {
           const uint8_t pixel = GetPixel(in, size, static_cast<int>(col) + kx, static_cast<int>(row) + ky);
 
-          const size_t ky_idx = static_cast<size_t>(ky + 1);
-          const size_t kx_idx = static_cast<size_t>(kx + 1);
+          const auto ky_idx = ky + 1;
+          const auto kx_idx = kx + 1;
 
-          gx += static_cast<int>(pixel) * k_gx.at(ky_idx).at(kx_idx);
-          gy += static_cast<int>(pixel) * k_gy.at(ky_idx).at(kx_idx);
+          gx += static_cast<int>(pixel) * k_gx[ky_idx][kx_idx];
+          gy += static_cast<int>(pixel) * k_gy[ky_idx][kx_idx];
         }
       }
 
