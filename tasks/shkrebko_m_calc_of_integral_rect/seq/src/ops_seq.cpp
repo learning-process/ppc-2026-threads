@@ -18,10 +18,18 @@ ShkrebkoMCalcOfIntegralRectSEQ::ShkrebkoMCalcOfIntegralRectSEQ(const InType &in)
 bool ShkrebkoMCalcOfIntegralRectSEQ::ValidationImpl() {
   const auto &in = GetInput();
 
-  if (!in.func) return false;
-  if (in.limits.empty() || in.limits.size() != in.n_steps.size()) return false;
-  if (!std::ranges::all_of(in.n_steps, [](int n) { return n > 0; })) return false;
-  if (!std::ranges::all_of(in.limits, [](const auto &lim) { return lim.first < lim.second; })) return false;
+  if (!in.func) {
+    return false;
+  }
+  if (in.limits.empty() || in.limits.size() != in.n_steps.size()) {
+    return false;
+  }
+  if (!std::ranges::all_of(in.n_steps, [](int n) { return n > 0; })) {
+    return false;
+  }
+  if (!std::ranges::all_of(in.limits, [](const auto &lim) { return lim.first < lim.second; })) {
+    return false;
+  }
 
   return true;
 }
@@ -54,15 +62,21 @@ bool ShkrebkoMCalcOfIntegralRectSEQ::RunImpl() {
     }
 
     double f_val = in.func(point);
-    if (!std::isfinite(f_val)) return false;
+    if (!std::isfinite(f_val)) {
+      return false;
+    }
     sum += f_val;
 
     int level = static_cast<int>(dim) - 1;
     while (level >= 0) {
-      if (++idx[level] < in.n_steps[level]) break;
+      if (++idx[level] < in.n_steps[level]) {
+        break;
+      }
       idx[level--] = 0;
     }
-    if (level < 0) break;
+    if (level < 0) {
+      break;
+    }
   }
 
   GetOutput() = sum * cell_volume;
