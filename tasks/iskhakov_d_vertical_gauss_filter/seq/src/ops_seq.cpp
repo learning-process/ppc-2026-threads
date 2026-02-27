@@ -1,7 +1,7 @@
 #include "iskhakov_d_vertical_gauss_filter/seq/include/ops_seq.hpp"
 
 #include <array>
-#include <numeric>
+#include <cstdint>
 #include <vector>
 
 #include "iskhakov_d_vertical_gauss_filter/common/include/common.hpp"
@@ -10,9 +10,9 @@
 namespace iskhakov_d_vertical_gauss_filter {
 
 namespace {
-const int DIV_CONST = 16;
-const std::array<std::array<int, 3>, 3> GAUSS_KERNEL = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
-const int num_bands = 1;
+const int kDivConst = 16;
+const std::array<std::array<int, 3>, 3> kGaussKernel = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
+const int kNumBands = 1;
 }  // namespace
 
 IskhakovDVerticalGaussFilterSEQ::IskhakovDVerticalGaussFilterSEQ(const InType &in) {
@@ -59,11 +59,11 @@ bool IskhakovDVerticalGaussFilterSEQ::RunImpl() {
   const std::vector<uint8_t> &matrix = in.data;
   std::vector<uint8_t> result(width * height);
 
-  int band_width = width / num_bands;
-  int remainder = width % num_bands;
+  int band_width = width / kNumBands;
+  int remainder = width % kNumBands;
   int start_band = 0;
 
-  for (int band = 0; band < num_bands; ++band) {
+  for (int band = 0; band < kNumBands; ++band) {
     int cur_band_width = band_width + (band < remainder ? 1 : 0);
     int end_band = start_band + cur_band_width;
 
@@ -71,27 +71,27 @@ bool IskhakovDVerticalGaussFilterSEQ::RunImpl() {
       for (int vertical_band = 0; vertical_band < height; ++vertical_band) {
         int sum = 0;
 
-        sum += GAUSS_KERNEL[0][0] *
+        sum += kGaussKernel[0][0] *
                IskhakovDGetPixelMirrorSeq(matrix, horizontal_band - 1, vertical_band - 1, width, height);
         sum +=
-            GAUSS_KERNEL[0][1] * IskhakovDGetPixelMirrorSeq(matrix, horizontal_band, vertical_band - 1, width, height);
-        sum += GAUSS_KERNEL[0][2] *
+            kGaussKernel[0][1] * IskhakovDGetPixelMirrorSeq(matrix, horizontal_band, vertical_band - 1, width, height);
+        sum += kGaussKernel[0][2] *
                IskhakovDGetPixelMirrorSeq(matrix, horizontal_band + 1, vertical_band - 1, width, height);
 
         sum +=
-            GAUSS_KERNEL[1][0] * IskhakovDGetPixelMirrorSeq(matrix, horizontal_band - 1, vertical_band, width, height);
-        sum += GAUSS_KERNEL[1][1] * IskhakovDGetPixelMirrorSeq(matrix, horizontal_band, vertical_band, width, height);
+            kGaussKernel[1][0] * IskhakovDGetPixelMirrorSeq(matrix, horizontal_band - 1, vertical_band, width, height);
+        sum += kGaussKernel[1][1] * IskhakovDGetPixelMirrorSeq(matrix, horizontal_band, vertical_band, width, height);
         sum +=
-            GAUSS_KERNEL[1][2] * IskhakovDGetPixelMirrorSeq(matrix, horizontal_band + 1, vertical_band, width, height);
+            kGaussKernel[1][2] * IskhakovDGetPixelMirrorSeq(matrix, horizontal_band + 1, vertical_band, width, height);
 
-        sum += GAUSS_KERNEL[2][0] *
+        sum += kGaussKernel[2][0] *
                IskhakovDGetPixelMirrorSeq(matrix, horizontal_band - 1, vertical_band + 1, width, height);
         sum +=
-            GAUSS_KERNEL[2][1] * IskhakovDGetPixelMirrorSeq(matrix, horizontal_band, vertical_band + 1, width, height);
-        sum += GAUSS_KERNEL[2][2] *
+            kGaussKernel[2][1] * IskhakovDGetPixelMirrorSeq(matrix, horizontal_band, vertical_band + 1, width, height);
+        sum += kGaussKernel[2][2] *
                IskhakovDGetPixelMirrorSeq(matrix, horizontal_band + 1, vertical_band + 1, width, height);
 
-        result[vertical_band * width + horizontal_band] = static_cast<uint8_t>(sum / DIV_CONST);
+        result[vertical_band * width + horizontal_band] = static_cast<uint8_t>(sum / kDivConst);
       }
     }
     start_band = end_band;
