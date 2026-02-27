@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
-#include <numbers>
-#include <vector>
+#include <cstddef>
 
 #include "badanov_a_select_edge_sobel_seq/common/include/common.hpp"
 #include "badanov_a_select_edge_sobel_seq/seq/include/ops_seq.hpp"
@@ -15,22 +14,21 @@ class BadanovASelectEdgeSobelPerfTests : public ppc::util::BaseRunPerfTests<InTy
   static constexpr int kHeight = 2160;
 
   void SetUp() override {
-    input_data_.resize(kWidth * kHeight);
+    const size_t total_pixels = static_cast<size_t>(kWidth) * static_cast<size_t>(kHeight);
+    input_data_.resize(total_pixels);
 
     for (int row = 0; row < kHeight; ++row) {
       for (int col = 0; col < kWidth; ++col) {
-        double val = static_cast<double>(col % 256) / 255.0;
-        input_data_[row * kWidth + col] = static_cast<uint8_t>(val * 255.0);
+        const double value = static_cast<double>(col % 256) / 255.0;
+        const size_t index = (static_cast<size_t>(row) * static_cast<size_t>(kWidth)) + static_cast<size_t>(col);
+        input_data_[index] = static_cast<uint8_t>(value * 255.0);
       }
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.size() != static_cast<size_t>(kWidth * kHeight)) {
-      return false;
-    }
-
-    return true;
+    const size_t expected_size = static_cast<size_t>(kWidth) * static_cast<size_t>(kHeight);
+    return output_data.size() == expected_size;
   }
 
   InType GetTestInputData() final {
