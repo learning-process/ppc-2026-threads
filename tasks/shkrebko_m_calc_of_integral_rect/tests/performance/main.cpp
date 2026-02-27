@@ -20,7 +20,7 @@ class ShkrebkoMRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType>
     expected_ = exact;
 
     input_data_.limits = {{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}};
-    input_data_.steps = kN;
+    input_data_.n_steps = {kN, kN, kN};
     input_data_.func = [](const std::vector<double> &x) { return std::sin(x[0]) + std::cos(x[1]) + x[2]; };
   }
 
