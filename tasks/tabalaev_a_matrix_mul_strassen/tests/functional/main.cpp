@@ -25,30 +25,30 @@ class TabalaevAMatrixMulStrassenFuncTests : public ppc::util::BaseRunFuncTests<I
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    size_t r_a = std::get<0>(params);
-    size_t c_a_r_b = std::get<1>(params);
-    size_t c_b = std::get<2>(params);
+    size_t rows_a = std::get<0>(params);
+    size_t cols_a_rows_b = std::get<1>(params);
+    size_t cols_b = std::get<2>(params);
     int up_to = std::get<3>(params);
 
-    input_data_.a_rows = r_a;
-    input_data_.a_cols_b_rows = c_a_r_b;
-    input_data_.b_cols = c_b;
-    input_data_.a.assign(r_a * c_a_r_b, 0.0);
-    input_data_.b.assign(c_a_r_b * c_b, 0.0);
+    input_data_.a_rows = rows_a;
+    input_data_.a_cols_b_rows = cols_a_rows_b;
+    input_data_.b_cols = cols_b;
+    input_data_.a.assign(rows_a * cols_a_rows_b, 0.0);
+    input_data_.b.assign(cols_a_rows_b * cols_b, 0.0);
 
-    for (int i = 0; i < r_a * c_a_r_b; ++i) {
+    for (size_t i = 0; i < rows_a * cols_a_rows_b; ++i) {
       input_data_.a[i] = static_cast<double>(i % up_to);
     }
-    for (int i = 0; i < c_a_r_b * c_b; ++i) {
+    for (size_t i = 0; i < cols_a_rows_b * cols_b; ++i) {
       input_data_.b[i] = static_cast<double>(i % up_to) * 0.5;
     }
 
-    expected_output_.assign(r_a * c_b, 0.0);
-    for (int i = 0; i < r_a; ++i) {
-      for (int k = 0; k < c_a_r_b; ++k) {
-        double temp = input_data_.a[(i * c_a_r_b) + k];
-        for (int j = 0; j < c_b; ++j) {
-          expected_output_[(i * c_b) + j] += temp * input_data_.b[(k * c_b) + j];
+    expected_output_.assign(rows_a * cols_b, 0.0);
+    for (size_t i = 0; i < rows_a; ++i) {
+      for (size_t k = 0; k < cols_a_rows_b; ++k) {
+        double temp = input_data_.a[(i * cols_a_rows_b) + k];
+        for (size_t j = 0; j < cols_b; ++j) {
+          expected_output_[(i * cols_b) + j] += temp * input_data_.b[(k * cols_b) + j];
         }
       }
     }
@@ -58,9 +58,9 @@ class TabalaevAMatrixMulStrassenFuncTests : public ppc::util::BaseRunFuncTests<I
     if (output_data.size() != expected_output_.size()) {
       return false;
     }
-    constexpr double kEps = 1e-9;
+    constexpr double epsilon = 1e-9;
     for (size_t i = 0; i < output_data.size(); ++i) {
-      if (std::fabs(output_data[i] - expected_output_[i]) > kEps) {
+      if (std::fabs(output_data[i] - expected_output_[i]) > epsilon) {
         return false;
       }
     }

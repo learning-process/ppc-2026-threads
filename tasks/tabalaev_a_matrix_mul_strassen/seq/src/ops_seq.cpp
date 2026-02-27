@@ -60,8 +60,8 @@ bool TabalaevAMatrixMulStrassenSEQ::RunImpl() {
   auto &out = GetOutput();
   out.assign(a_rows_ * b_cols_, 0.0);
 
-  for (int i = 0; i < a_rows_; ++i) {
-    for (int j = 0; j < b_cols_; ++j) {
+  for (size_t i = 0; i < a_rows_; ++i) {
+    for (size_t j = 0; j < b_cols_; ++j) {
       out[(i * b_cols_) + j] = result_c_[(i * padded_n_) + j];
     }
   }
@@ -90,12 +90,12 @@ std::vector<double> TabalaevAMatrixMulStrassenSEQ::Subtract(const std::vector<do
   return res;
 }
 
-std::vector<double> TabalaevAMatrixMulStrassenSEQ::BaseCaseMultiply(const std::vector<double> &mat_a,
-                                                                    const std::vector<double> &mat_b, int n) {
+std::vector<double> TabalaevAMatrixMulStrassenSEQ::BaseMultiply(const std::vector<double> &mat_a,
+                                                                const std::vector<double> &mat_b, size_t n) {
   std::vector<double> res(n * n, 0.0);
-  for (int i = 0; i < n; ++i) {
-    for (int k = 0; k < n; ++k) {
-      for (int j = 0; j < n; ++j) {
+  for (size_t i = 0; i < n; ++i) {
+    for (size_t k = 0; k < n; ++k) {
+      for (size_t j = 0; j < n; ++j) {
         res[(i * n) + j] += mat_a[(i * n) + k] * mat_b[(k * n) + j];
       }
     }
@@ -105,9 +105,9 @@ std::vector<double> TabalaevAMatrixMulStrassenSEQ::BaseCaseMultiply(const std::v
 
 void TabalaevAMatrixMulStrassenSEQ::PushStrassenSubtasks(std::stack<StrassenFrame> &frames,
                                                          const std::vector<double> &mat_a,
-                                                         const std::vector<double> &mat_b, int n) {
-  int h = n / 2;
-  int sz = h * h;
+                                                         const std::vector<double> &mat_b, size_t n) {
+  size_t h = n / 2;
+  size_t sz = h * h;
   std::vector<double> a11(sz);
   std::vector<double> a12(sz);
   std::vector<double> a21(sz);
@@ -117,8 +117,8 @@ void TabalaevAMatrixMulStrassenSEQ::PushStrassenSubtasks(std::stack<StrassenFram
   std::vector<double> b21(sz);
   std::vector<double> b22(sz);
 
-  for (int i = 0; i < h; ++i) {
-    for (int j = 0; j < h; ++j) {
+  for (size_t i = 0; i < h; ++i) {
+    for (size_t j = 0; j < h; ++j) {
       int idx_src = (i * n) + j;
       int idx_dst = (i * h) + j;
       a11[idx_dst] = mat_a[idx_src];
@@ -145,7 +145,7 @@ void TabalaevAMatrixMulStrassenSEQ::PushStrassenSubtasks(std::stack<StrassenFram
 }
 
 std::vector<double> TabalaevAMatrixMulStrassenSEQ::CombineStrassenResults(std::stack<std::vector<double>> &results,
-                                                                          int n) {
+                                                                          size_t n) {
   auto p7 = std::move(results.top());
   results.pop();
   auto p6 = std::move(results.top());
@@ -176,7 +176,7 @@ std::vector<double> TabalaevAMatrixMulStrassenSEQ::CombineStrassenResults(std::s
 }
 
 std::vector<double> TabalaevAMatrixMulStrassenSEQ::StrassenMultiply(const std::vector<double> &mat_a,
-                                                                    const std::vector<double> &mat_b, int n) {
+                                                                    const std::vector<double> &mat_b, size_t n) {
   std::stack<StrassenFrame> frames;
   std::stack<std::vector<double>> results;
 
@@ -188,7 +188,7 @@ std::vector<double> TabalaevAMatrixMulStrassenSEQ::StrassenMultiply(const std::v
 
     if (current.stage == 0) {
       if (current.n <= 32) {
-        results.push(BaseCaseMultiply(current.mat_a, current.mat_b, current.n));
+        results.push(BaseMultiply(current.mat_a, current.mat_b, current.n));
       } else {
         PushStrassenSubtasks(frames, current.mat_a, current.mat_b, current.n);
       }
