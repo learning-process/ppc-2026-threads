@@ -163,8 +163,8 @@ std::vector<double> TabalaevAMatrixMulStrassenSEQ::CombineStrassenResults(std::s
 
   size_t h = n / 2;
   std::vector<double> res(n * n);
-  for (int i = 0; i < h; ++i) {
-    for (int j = 0; j < h; ++j) {
+  for (size_t i = 0; i < h; ++i) {
+    for (size_t j = 0; j < h; ++j) {
       int idx = (i * h) + j;
       res[(i * n) + j] = p1[idx] + p4[idx] - p5[idx] + p7[idx];
       res[(i * n) + j + h] = p3[idx] + p5[idx];
