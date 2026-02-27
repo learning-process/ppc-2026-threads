@@ -92,11 +92,10 @@ void RadixSortDouble(std::vector<double> &data) {
   }
 }
 
-void MergingHalves(std::vector<double> &arr, size_t i, size_t half) {
+void MergingHalves(std::vector<double> &arr, size_t i, size_t len) {
+  size_t half = len / 2;
   for (size_t step = half; step > 0; step /= 2) {
     for (size_t j = i; j < i + len - step; ++j) {
-      size_t idx1 = j;
-      size_t idx2 = j + step;
       if (i < arr.size() && j < arr.size() && arr[i] > arr[j]) {
         std::swap(arr[i], arr[j]);
       }
@@ -112,8 +111,7 @@ void BatcherOddEvenMergeIterative(std::vector<double> &arr, size_t n) {
   // Сначала сливаем блоки размером 1, потом 2, потом 4 и т.д.
   for (size_t len = 2; len <= n; len *= 2) {
     for (size_t i = 0; i < n; i += len) {
-      size_t half = len / 2;
-      MergingHalves(arr, i, half);
+      MergingHalves(arr, i, len);
     }
   }
 }
