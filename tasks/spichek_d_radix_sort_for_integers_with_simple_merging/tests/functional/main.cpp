@@ -38,8 +38,7 @@ class RadixSortRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Проверяем, что результат действительно отсортирован
-    return std::is_sorted(output_data.begin(), output_data.end());
+    return std::ranges::is_sorted(output_data);  // Переход на ranges
   }
 
   InType GetTestInputData() final {

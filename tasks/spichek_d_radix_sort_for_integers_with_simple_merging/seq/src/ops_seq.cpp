@@ -3,6 +3,9 @@
 #include <algorithm>
 #include <vector>
 
+// Добавлено для прямого включения InType
+#include "spichek_d_radix_sort_for_integers_with_simple_merging/common/include/common.hpp"
+
 namespace spichek_d_radix_sort_for_integers_with_simple_merging {
 
 RadixSortSEQ::RadixSortSEQ(const InType &in) {
@@ -11,12 +14,10 @@ RadixSortSEQ::RadixSortSEQ(const InType &in) {
 }
 
 bool RadixSortSEQ::ValidationImpl() {
-  // Проверяем, что входные данные не пусты
   return !GetInput().empty();
 }
 
 bool RadixSortSEQ::PreProcessingImpl() {
-  // Копируем входные данные в выходной буфер для последующей сортировки
   GetOutput() = GetInput();
   return true;
 }
@@ -31,8 +32,7 @@ bool RadixSortSEQ::RunImpl() {
 }
 
 bool RadixSortSEQ::PostProcessingImpl() {
-  // Проверка: отсортирован ли массив
-  return std::is_sorted(GetOutput().begin(), GetOutput().end());
+  return std::ranges::is_sorted(GetOutput());  // Переход на ranges
 }
 
 void RadixSortSEQ::RadixSort(std::vector<int> &data) {
@@ -40,20 +40,18 @@ void RadixSortSEQ::RadixSort(std::vector<int> &data) {
     return;
   }
 
-  // Обработка отрицательных чисел
-  int min_val = *std::min_element(data.begin(), data.end());
+  // Переход на std::ranges
+  int min_val = *std::ranges::min_element(data);
   if (min_val < 0) {
     for (auto &x : data) {
       x -= min_val;
     }
   }
 
-  int max_val = *std::max_element(data.begin(), data.end());
+  int max_val = *std::ranges::max_element(data);
 
-  // Сама поразрядная сортировка (LSD) по основанию 10
   for (int exp = 1; max_val / exp > 0; exp *= 10) {
     std::vector<int> output(data.size());
-    // Используем vector вместо C-style array для соответствия Core Guidelines
     std::vector<int> count(10, 0);
 
     for (int x : data) {
@@ -72,7 +70,6 @@ void RadixSortSEQ::RadixSort(std::vector<int> &data) {
     data = output;
   }
 
-  // Возвращаем смещение назад
   if (min_val < 0) {
     for (auto &x : data) {
       x += min_val;

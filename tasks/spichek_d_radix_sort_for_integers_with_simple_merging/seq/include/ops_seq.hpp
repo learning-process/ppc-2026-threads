@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>  // Добавлено
+
 #include "spichek_d_radix_sort_for_integers_with_simple_merging/common/include/common.hpp"
 #include "task/include/task.hpp"
 
