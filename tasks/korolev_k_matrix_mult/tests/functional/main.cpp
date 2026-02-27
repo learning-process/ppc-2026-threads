@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -15,22 +14,23 @@
 // #include "korolev_k_matrix_mult/stl/include/ops_stl.hpp"
 // #include "korolev_k_matrix_mult/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace korolev_k_matrix_mult {
 
 namespace {
 
-std::vector<double> NaiveMultiply(const std::vector<double> &A, const std::vector<double> &B, size_t n) {
-  std::vector<double> C(n * n, 0.0);
+std::vector<double> NaiveMultiply(const std::vector<double> &a, const std::vector<double> &b, size_t n) {
+  std::vector<double> c(n * n, 0.0);
   for (size_t i = 0; i < n; ++i) {
     for (size_t k = 0; k < n; ++k) {
-      double a_ik = A[i * n + k];
+      double a_ik = a[(i * n) + k];
       for (size_t j = 0; j < n; ++j) {
-        C[i * n + j] += a_ik * B[k * n + j];
+        c[(i * n) + j] += a_ik * b[(k * n) + j];
       }
     }
   }
-  return C;
+  return c;
 }
 
 MatrixInput CreateTestInput(size_t n) {
@@ -39,8 +39,8 @@ MatrixInput CreateTestInput(size_t n) {
   in.A.resize(n * n);
   in.B.resize(n * n);
   for (size_t i = 0; i < n * n; ++i) {
-    in.A[i] = static_cast<double>((i * 7 + 3) % 11 - 5);
-    in.B[i] = static_cast<double>((i * 13 + 2) % 7 - 3);
+    in.A[i] = static_cast<double>(((i * 7 + 3) % 11) - 5);
+    in.B[i] = static_cast<double>(((i * 13 + 2) % 7) - 3);
   }
   return in;
 }

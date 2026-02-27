@@ -10,7 +10,7 @@
 namespace korolev_k_matrix_mult {
 
 struct MatrixInput {
-  size_t n;
+  size_t n{};
   std::vector<double> A;  // row-major, n*n
   std::vector<double> B;
 };
