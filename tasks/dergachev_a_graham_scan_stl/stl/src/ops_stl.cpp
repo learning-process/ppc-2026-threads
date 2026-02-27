@@ -25,13 +25,115 @@ double DistSquared(const Point &a, const Point &b) {
 
 const double kPi = std::acos(-1.0);
 
+bool IsLowerLeft(const Point &a, const Point &b) {
+  return a.y < b.y || (a.y == b.y && a.x < b.x);
+}
+
 bool AllPointsSame(const std::vector<Point> &pts) {
-  for (size_t i = 1; i < pts.size(); i++) {
+  int n = static_cast<int>(pts.size());
+  for (int i = 1; i < n; i++) {
     if (pts[i].x != pts[0].x || pts[i].y != pts[0].y) {
       return false;
     }
   }
   return true;
+}
+
+bool CompareByAngle(const Point &pivot, const Point &a, const Point &b) {
+  double cross = CrossProduct(pivot, a, b);
+  if (cross > 0.0) {
+    return true;
+  }
+  if (cross < 0.0) {
+    return false;
+  }
+  return DistSquared(pivot, a) < DistSquared(pivot, b);
+}
+
+int FindLocalPivot(const std::vector<Point> &pts, int start, int end) {
+  int local_min = start;
+  for (int i = start + 1; i < end; i++) {
+    if (IsLowerLeft(pts[i], pts[local_min])) {
+      local_min = i;
+    }
+  }
+  return local_min;
+}
+
+int FindPivot(const std::vector<Point> &pts, int num_threads) {
+  int n = static_cast<int>(pts.size());
+  if (n < num_threads * 2) {
+    return FindLocalPivot(pts, 0, n);
+  }
+
+  int chunk = n / num_threads;
+  std::vector<int> local_pivots(num_threads);
+  std::vector<std::thread> threads;
+
+  for (int ti = 0; ti < num_threads; ti++) {
+    int start = ti * chunk;
+    int end = (ti == num_threads - 1) ? n : ((ti + 1) * chunk);
+    threads.emplace_back(
+        [&pts, &local_pivots, ti, start, end]() { local_pivots[ti] = FindLocalPivot(pts, start, end); });
+  }
+  for (auto &th : threads) {
+    th.join();
+  }
+
+  int pivot_idx = local_pivots[0];
+  for (int ti = 1; ti < num_threads; ti++) {
+    if (IsLowerLeft(pts[local_pivots[ti]], pts[pivot_idx])) {
+      pivot_idx = local_pivots[ti];
+    }
+  }
+  return pivot_idx;
+}
+
+void SortByAngle(std::vector<Point> &pts, const Point &pivot, int num_threads) {
+  int n = static_cast<int>(pts.size());
+  int sort_n = n - 1;
+
+  auto cmp = [&pivot](const Point &a, const Point &b) { return CompareByAngle(pivot, a, b); };
+
+  if (num_threads <= 1 || sort_n <= num_threads) {
+    std::sort(pts.begin() + 1, pts.end(), cmp);
+    return;
+  }
+
+  int chunk = sort_n / num_threads;
+  std::vector<std::thread> threads;
+
+  for (int ti = 0; ti < num_threads; ti++) {
+    int start = 1 + (ti * chunk);
+    int end = (ti == num_threads - 1) ? n : 1 + ((ti + 1) * chunk);
+    threads.emplace_back([&pts, start, end, &cmp]() { std::sort(pts.begin() + start, pts.begin() + end, cmp); });
+  }
+  for (auto &th : threads) {
+    th.join();
+  }
+
+  int merged_end = 1 + chunk;
+  for (int ti = 1; ti < num_threads; ti++) {
+    int next_end = (ti == num_threads - 1) ? n : 1 + ((ti + 1) * chunk);
+    std::inplace_merge(pts.begin() + 1, pts.begin() + merged_end, pts.begin() + next_end, cmp);
+    merged_end = next_end;
+  }
+}
+
+std::vector<Point> BuildHull(const std::vector<Point> &pts) {
+  int n = static_cast<int>(pts.size());
+  std::vector<Point> hull;
+  hull.reserve(n);
+  hull.push_back(pts[0]);
+  hull.push_back(pts[1]);
+
+  for (int i = 2; i < n; i++) {
+    while (hull.size() > 1 && CrossProduct(hull[hull.size() - 2], hull[hull.size() - 1], pts[i]) <= 0.0) {
+      hull.pop_back();
+    }
+    hull.push_back(pts[i]);
+  }
+  return hull;
 }
 
 }  // namespace
@@ -79,17 +181,14 @@ bool DergachevAGrahamScanSTL::RunImpl() {
     hull_.clear();
     return true;
   }
-
   if (n == 1) {
     hull_ = points_;
     return true;
   }
-
   if (AllPointsSame(points_)) {
     hull_ = {points_[0]};
     return true;
   }
-
   if (n == 2) {
     hull_ = points_;
     return true;
@@ -97,100 +196,12 @@ bool DergachevAGrahamScanSTL::RunImpl() {
 
   const int num_threads = ppc::util::GetNumThreads();
 
-  int pivot_idx = 0;
-  if (n >= num_threads * 2) {
-    std::vector<int> local_pivots(num_threads);
-    std::vector<std::thread> threads;
-    int chunk = n / num_threads;
-
-    for (int t = 0; t < num_threads; t++) {
-      int start = t * chunk;
-      int end = (t == num_threads - 1) ? n : (t + 1) * chunk;
-      threads.emplace_back([this, &local_pivots, t, start, end]() {
-        int local_min = start;
-        for (int i = start + 1; i < end; i++) {
-          if (points_[i].y < points_[local_min].y ||
-              (points_[i].y == points_[local_min].y && points_[i].x < points_[local_min].x)) {
-            local_min = i;
-          }
-        }
-        local_pivots[t] = local_min;
-      });
-    }
-    for (auto &th : threads) {
-      th.join();
-    }
-
-    pivot_idx = local_pivots[0];
-    for (int t = 1; t < num_threads; t++) {
-      int idx = local_pivots[t];
-      if (points_[idx].y < points_[pivot_idx].y ||
-          (points_[idx].y == points_[pivot_idx].y && points_[idx].x < points_[pivot_idx].x)) {
-        pivot_idx = idx;
-      }
-    }
-  } else {
-    for (int i = 1; i < n; i++) {
-      if (points_[i].y < points_[pivot_idx].y ||
-          (points_[i].y == points_[pivot_idx].y && points_[i].x < points_[pivot_idx].x)) {
-        pivot_idx = i;
-      }
-    }
-  }
-
+  int pivot_idx = FindPivot(points_, num_threads);
   std::swap(points_[0], points_[pivot_idx]);
-  Point pivot = points_[0];
 
-  auto comparator = [&pivot](const Point &a, const Point &b) {
-    double cross = CrossProduct(pivot, a, b);
-    if (cross > 0.0) {
-      return true;
-    }
-    if (cross < 0.0) {
-      return false;
-    }
-    return DistSquared(pivot, a) < DistSquared(pivot, b);
-  };
+  SortByAngle(points_, points_[0], num_threads);
 
-  int sort_n = n - 1;
-
-  if (num_threads > 1 && sort_n > num_threads) {
-    int chunk = sort_n / num_threads;
-    std::vector<std::thread> threads;
-
-    for (int t = 0; t < num_threads; t++) {
-      int start = 1 + t * chunk;
-      int end = (t == num_threads - 1) ? n : 1 + (t + 1) * chunk;
-      threads.emplace_back(
-          [this, start, end, &comparator]() { std::sort(points_.begin() + start, points_.begin() + end, comparator); });
-    }
-    for (auto &th : threads) {
-      th.join();
-    }
-
-    int merged_end = 1 + chunk;
-    for (int t = 1; t < num_threads; t++) {
-      int next_end = (t == num_threads - 1) ? n : 1 + (t + 1) * chunk;
-      std::inplace_merge(points_.begin() + 1, points_.begin() + merged_end, points_.begin() + next_end, comparator);
-      merged_end = next_end;
-    }
-  } else {
-    std::sort(points_.begin() + 1, points_.end(), comparator);
-  }
-
-  std::vector<Point> stack;
-  stack.reserve(n);
-  stack.push_back(points_[0]);
-  stack.push_back(points_[1]);
-
-  for (int i = 2; i < n; i++) {
-    while (stack.size() > 1 && CrossProduct(stack[stack.size() - 2], stack[stack.size() - 1], points_[i]) <= 0.0) {
-      stack.pop_back();
-    }
-    stack.push_back(points_[i]);
-  }
-
-  hull_ = stack;
+  hull_ = BuildHull(points_);
   return true;
 }
 

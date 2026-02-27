@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "dergachev_a_graham_scan_stl/common/include/common.hpp"
 #include "task/include/task.hpp"
 
