@@ -26,7 +26,7 @@ class TerekhovDGaussVertSEQ : public BaseTask {
 
   int width_ = 0;
   int height_ = 0;
-  static constexpr int num_bands = 4;
+  static constexpr int kNumBands = 4;
   std::vector<int> padded_image_;
 };
 

@@ -90,7 +90,7 @@ void TerekhovDGaussVertSEQ::ProcessPixel(OutType &output, int padded_width, int 
 
 void TerekhovDGaussVertSEQ::ProcessBand(OutType &output, int padded_width, int band, int band_width) {
   int start_x = band * band_width;
-  int end_x = (band == num_bands - 1) ? width_ : ((band + 1) * band_width);
+  int end_x = (band == kNumBands - 1) ? width_ : ((band + 1) * band_width);
 
   for (int row = 0; row < height_; ++row) {
     for (int col = start_x; col < end_x; ++col) {
@@ -102,12 +102,10 @@ void TerekhovDGaussVertSEQ::ProcessBand(OutType &output, int padded_width, int b
 void TerekhovDGaussVertSEQ::ProcessBands(OutType &output) {
   int padded_width = width_ + 2;
 
-  int band_width = width_ / num_bands;
-  if (band_width < 1) {
-    band_width = 1;
-  }
+  int band_width = width_ / kNumBands;
+  band_width = std::max(band_width, 1);
 
-  for (int band = 0; band < num_bands; ++band) {
+  for (int band = 0; band < kNumBands; ++band) {
     ProcessBand(output, padded_width, band, band_width);
   }
 }
