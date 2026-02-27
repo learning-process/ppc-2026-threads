@@ -81,16 +81,13 @@ bool CheckKeyElements(const CRSMatrix &result, const CRSMatrix &a, const CRSMatr
   const std::vector<std::pair<int, int>> key_positions = {
       {0, 0}, {0, n - 1}, {n / 2, n / 2}, {n - 1, 0}, {n - 1, n - 1}};
 
-  for (const auto &[row, col] : key_positions) {
+  return std::ranges::all_of(key_positions, [&](const auto &pos) {
+    const auto &[row, col] = pos;
     if (row >= n || col >= n) {
-      continue;
+      return true;
     }
-    if (!CheckSingleElement(result, a, b, row, col)) {
-      return false;
-    }
-  }
-
-  return true;
+    return CheckSingleElement(result, a, b, row, col);
+  });
 }
 
 class PosternakARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
