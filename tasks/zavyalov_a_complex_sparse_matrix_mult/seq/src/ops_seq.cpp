@@ -1,8 +1,5 @@
 #include "zavyalov_a_complex_sparse_matrix_mult/seq/include/ops_seq.hpp"
 
-#include <chrono>
-#include <thread>
-
 #include "zavyalov_a_complex_sparse_matrix_mult/common/include/common.hpp"
 
 namespace zavyalov_a_compl_sparse_matr_mult {
