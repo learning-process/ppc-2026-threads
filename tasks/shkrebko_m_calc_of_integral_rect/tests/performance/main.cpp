@@ -42,7 +42,6 @@ TEST_P(ShkrebkoMRunPerfTest, RunPerfModes) {
 }
 
 namespace {
-
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ShkrebkoMCalcOfIntegralRectSEQ>(PPC_SETTINGS_shkrebko_m_calc_of_integral_rect);
 
