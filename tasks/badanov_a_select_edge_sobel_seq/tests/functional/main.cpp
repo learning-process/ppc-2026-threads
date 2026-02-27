@@ -1,61 +1,109 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
+#include <cctype>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
+#include <fstream>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
-#include "example_threads/all/include/ops_all.hpp"
-#include "example_threads/common/include/common.hpp"
-#include "example_threads/omp/include/ops_omp.hpp"
-#include "example_threads/seq/include/ops_seq.hpp"
-#include "example_threads/stl/include/ops_stl.hpp"
-#include "example_threads/tbb/include/ops_tbb.hpp"
+#include "badanov_a_select_edge_sobel/common/include/common.hpp"
+#include "badanov_a_select_edge_sobel/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
 namespace badanov_a_select_edge_sobel {
 
-class BadanovASelectEdgeSobelSEQFuncTestThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class BadanovASelectEdgeSobelFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    std::string name = std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    for (char &c : name) {
+      if ((std::isalnum(static_cast<unsigned char>(c)) == 0) && c != '_') {
+        c = '_';
+      }
+    }
+    return name;
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_example_threads), "pic.ppm");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
+    const auto &[threshold, filename] =
+        std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    
+    threshold_ = threshold;
+    
+    const std::string abs_path =
+        ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_badanov_a_select_edge_sobel), "data/" + filename);
+    
+    std::ifstream file(abs_path);
+    if (!file.is_open()) {
+      throw std::runtime_error("Cannot open file: " + abs_path);
     }
-
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    
+    int width, height;
+    file >> width >> height;
+    
+    input_data_.resize(width * height);
+    for (int i = 0; i < width * height; ++i) {
+      int pixel;
+      file >> pixel;
+      input_data_[i] = static_cast<uint8_t>(pixel);
+    }
+    
+    file.close();
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    if (output_data.empty()) {
+      return false;
+    }
+    
+    if (output_data.size() != input_data_.size()) {
+      return false;
+    }
+    
+    int width = static_cast<int>(std::sqrt(input_data_.size()));
+    int height = width;
+    
+    for (int col = 0; col < width; ++col) {
+      if (output_data[col] != 0) return false;
+      if (output_data[(height - 1) * width + col] != 0) return false;
+    }
+    
+    for (int row = 0; row < height; ++row) {
+      if (output_data[row * width] != 0) return false;
+      if (output_data[row * width + (width - 1)] != 0) return false;
+    }
+    
+    bool all_zeros = true;
+    for (uint8_t pixel : input_data_) {
+      if (pixel != 0) {
+        all_zeros = false;
+        break;
+      }
+    }
+    
+    if (all_zeros) {
+      for (uint8_t pixel : output_data) {
+        if (pixel != 0) {
+          return false;
+        }
+      }
+      return true;
+    }
+    
+    bool has_edges = false;
+    for (int row = 1; row < height - 1 && !has_edges; ++row) {
+      for (int col = 1; col < width - 1 && !has_edges; ++col) {
+        if (output_data[row * width + col] > 0) {
+          has_edges = true;
+        }
+      }
+    }
+    
+    return has_edges;
   }
 
   InType GetTestInputData() final {
@@ -63,29 +111,34 @@ class BadanovASelectEdgeSobelSEQFuncTestThreads : public ppc::util::BaseRunFuncT
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  int threshold_{50};
 };
 
 namespace {
 
-TEST_P(BadanovASelectEdgeSobelSEQFuncTestThreads, MatmulFromPic) {
+TEST_P(BadanovASelectEdgeSobelFuncTests, SobelOnFiles) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 6> kTestParam = {
+    std::make_tuple(50, "test_1.txt"),   // Простой квадрат
+    std::make_tuple(30, "test_2.txt"),   // Градиент
+    std::make_tuple(40, "test_3.txt"),   // Диагональная линия
+    std::make_tuple(50, "test_4.txt"),   // Пустое изображение
+    std::make_tuple(60, "test_5.txt"),   // Шахматная доска
+    std::make_tuple(50, "test_6.txt")    // Крест
+};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<NesterovATestTaskALL, InType>(kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel),
-                   ppc::util::AddFuncTask<NesterovATestTaskOMP, InType>(kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel),
-                   ppc::util::AddFuncTask<BadanovASelectEdgeSobelSEQ, InType>(kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel),
-                   ppc::util::AddFuncTask<NesterovATestTaskSTL, InType>(kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel),
-                   ppc::util::AddFuncTask<NesterovATestTaskTBB, InType>(kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel));
+const auto kTestTasksList = ppc::util::AddFuncTask<BadanovASelectEdgeSobel, InType>(
+    kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = BadanovASelectEdgeSobelSEQFuncTestThreads::PrintFuncTestName<BadanovASelectEdgeSobelSEQFuncTestThreads>;
+const auto kPerfTestName =
+    BadanovASelectEdgeSobelFuncTests::PrintFuncTestName<BadanovASelectEdgeSobelFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, BadanovASelectEdgeSobelSEQFuncTestThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(SobelEdgeTests, BadanovASelectEdgeSobelFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
