@@ -2,6 +2,7 @@
 #include <stb/stb_image.h>
 
 #include <algorithm>
+#include <ranges>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -12,58 +13,38 @@
 #include <utility>
 #include <vector>
 
-#include "golovanov_d_radix_merge/all/include/ops_all.hpp"
+//#include "golovanov_d_radix_merge/all/include/ops_all.hpp"
 #include "golovanov_d_radix_merge/common/include/common.hpp"
-#include "golovanov_d_radix_merge/omp/include/ops_omp.hpp"
+//#include "golovanov_d_radix_merge/omp/include/ops_omp.hpp"
 #include "golovanov_d_radix_merge/seq/include/ops_seq.hpp"
-#include "golovanov_d_radix_merge/stl/include/ops_stl.hpp"
-#include "golovanov_d_radix_merge/tbb/include/ops_tbb.hpp"
+//#include "golovanov_d_radix_merge/stl/include/ops_stl.hpp"
+//#include "golovanov_d_radix_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
 namespace golovanov_d_radix_merge {
 
 class GolovanovDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+ InType input_data_{};
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return std::to_string(test_param[0]);
   }
 
  protected:
-  void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_golovanov_d_radix_merge), "pic.ppm");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
-
+  void SetUp() override {   
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    input_data_ = params;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    return std::ranges::is_sorted(output_data);
   }
 
   InType GetTestInputData() final {
     return input_data_;
   }
 
- private:
-  InType input_data_ = 0;
 };
 
 namespace {
@@ -72,7 +53,11 @@ TEST_P(GolovanovDRunFuncTestsThreads, RadixMergeFunc) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 3> kTestParam = {
+  TestType{ 3.14, -2.71, 0.0, 42.0, -1.5 },
+  TestType{ -10.0, -5.0, -3.0, -1.0, -7.0 },
+  TestType{ 100.5, 1.1, 50.0, 2.2, 0.0001 }  
+};
 
 const auto kTestTasksList =
     std::tuple_cat(

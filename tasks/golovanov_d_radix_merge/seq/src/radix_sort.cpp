@@ -1,4 +1,4 @@
-#include "tasks\golovanov_d_radix_merge\seq\include\radix_sort.hpp"
+#include "../include/radix_sort.hpp"
 
 #include <cstdint>
 #include <cstring>
