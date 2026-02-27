@@ -11,6 +11,7 @@
 #include "telnov_a_integral_rectangle/common/include/common.hpp"
 #include "telnov_a_integral_rectangle/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace telnov_a_integral_rectangle {
 
