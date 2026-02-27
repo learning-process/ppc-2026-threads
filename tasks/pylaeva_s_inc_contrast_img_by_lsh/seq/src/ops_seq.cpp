@@ -1,6 +1,9 @@
 #include "pylaeva_s_inc_contrast_img_by_lsh/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <ranges>
 #include <vector>
 
 #include "pylaeva_s_inc_contrast_img_by_lsh/common/include/common.hpp"
@@ -11,50 +14,40 @@ namespace pylaeva_s_inc_contrast_img_by_lsh {
 PylaevaSIncContrastImgByLshSEQ::PylaevaSIncContrastImgByLshSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = {};
 }
 
 bool PylaevaSIncContrastImgByLshSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return !(GetInput().empty());
 }
 
 bool PylaevaSIncContrastImgByLshSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  GetOutput().resize(GetInput().size());
+  return true;
 }
 
 bool PylaevaSIncContrastImgByLshSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
+  const auto &input = GetInput();
+  auto &output = GetOutput();
+
+  auto [min_pixel, max_pixel] = std::ranges::minmax(input);
+
+  if (min_pixel == max_pixel) {
+    output = input;
+    return true;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
+  float scale = 255.0f / static_cast<float>(max_pixel - min_pixel);
+
+  for (size_t i = 0; i < input.size(); ++i) {
+    output[i] = static_cast<uint8_t>(static_cast<float>(input[i] - min_pixel) * scale);
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  return true;
 }
 
 bool PylaevaSIncContrastImgByLshSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace pylaeva_s_inc_contrast_img_by_lsh
