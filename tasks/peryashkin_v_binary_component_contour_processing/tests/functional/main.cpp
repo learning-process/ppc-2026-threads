@@ -201,4 +201,4 @@ TEST(PeryashkinVBinaryComponentContourProcessingSEQUnit, PipelineReturnsFalseIfI
   EXPECT_FALSE(task.Run());
 }
 
-}  // namespace peryashkin_v_binary_component_contour_processing
+}  // namespace peryashkin_v_binary_component_contour_processing.
