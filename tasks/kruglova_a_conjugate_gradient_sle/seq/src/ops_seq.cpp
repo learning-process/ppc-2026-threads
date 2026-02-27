@@ -17,7 +17,7 @@ bool KruglovaAConjGradSleSEQ::ValidationImpl() {
     return false;
   }
 
-  if (in.A.size() != static_cast<size_t>(in.size * in.size)) {
+  if (in.A.size() != static_cast<size_t>(in.size) * static_cast<size_t>(in.size)) {
     return false;
   }
   if (in.b.size() != static_cast<size_t>(in.size)) {
@@ -32,7 +32,7 @@ bool KruglovaAConjGradSleSEQ::PreProcessingImpl() {
 }
 
 bool KruglovaAConjGradSleSEQ::RunImpl() {
-  const auto &A = GetInput().A;
+  const auto &a = GetInput().A;
   const auto &b = GetInput().b;
   int n = GetInput().size;
   auto &x = GetOutput();
@@ -52,7 +52,7 @@ bool KruglovaAConjGradSleSEQ::RunImpl() {
     for (int i = 0; i < n; ++i) {
       ap[i] = 0.0;
       for (int j = 0; j < n; ++j) {
-        ap[i] += A[(i * n) + j] * p[j];
+        ap[i] += a[(i * n) + j] * p[j];
       }
     }
 
@@ -82,7 +82,7 @@ bool KruglovaAConjGradSleSEQ::RunImpl() {
     }
 
     for (int i = 0; i < n; ++i) {
-      p[i] = r[i] + (rsnew / rsold) * p[i];
+      p[i] = r[i] + ((rsnew / rsold) * p[i]);
     }
     rsold = rsnew;
   }

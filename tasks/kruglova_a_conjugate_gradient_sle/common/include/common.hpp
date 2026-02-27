@@ -9,7 +9,7 @@
 namespace kruglova_a_conjugate_gradient_sle {
 
 struct SLEInput {
-  int size;
+  int size = 0;
   std::vector<double> A;
   std::vector<double> b;
 };

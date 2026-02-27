@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -26,12 +27,12 @@ class KruglovaAFuncTestAConjGradSle : public ppc::util::BaseRunFuncTests<InType,
     std::string type = std::get<1>(params);
 
     input_data_.size = size;
-    input_data_.A.assign(size * size, 0.0);
+    input_data_.A.assign(static_cast<size_t>(size) * static_cast<size_t>(size), 0.0);
     input_data_.b.assign(size, 0.0);
 
     if (type == "Identity") {
       for (int i = 0; i < size; ++i) {
-        input_data_.A[i * size + i] = 1.0;
+        input_data_.A[(i * size) + i] = 1.0;
         input_data_.b[i] = static_cast<double>(i + 1);
       }
     } else if (type == "Diagonal") {
@@ -44,7 +45,7 @@ class KruglovaAFuncTestAConjGradSle : public ppc::util::BaseRunFuncTests<InType,
         double sum = 0.0;
         for (int j = 0; j < size; ++j) {
           if (i != j) {
-            double val = static_cast<double>((i + j) % 5 + 1);
+            double val = static_cast<double>(((i + j) % 5) + 1);
             input_data_.A[i * size + j] = input_data_.A[j * size + i] = val;
             sum += val;
           }
