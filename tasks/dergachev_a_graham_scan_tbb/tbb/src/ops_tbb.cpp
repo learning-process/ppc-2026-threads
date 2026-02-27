@@ -120,21 +120,29 @@ bool DergachevAGrahamScanTBB::PreProcessingImpl() {
     int n = GetInput();
     if (n <= 0) {
       points_.clear();
-      return true;
     }
-    points_.resize(static_cast<std::size_t>(n));
-    const double pi2 = 2.0 * std::acos(-1.0);
-    auto dn = static_cast<double>(n);
-    tbb::parallel_for(0, n, [&](int i) {
-      double angle = (pi2 * static_cast<double>(i)) / dn;
-      points_[static_cast<std::size_t>(i)] = {.x = std::cos(angle), .y = std::sin(angle)};
-    });
   }
 
   return true;
 }
 
 bool DergachevAGrahamScanTBB::RunImpl() {
+  if (!custom_points_) {
+    int count = GetInput();
+    if (count <= 0) {
+      hull_.clear();
+      GetOutput() = 0;
+      return true;
+    }
+    points_.resize(static_cast<std::size_t>(count));
+    const double pi2 = 2.0 * std::acos(-1.0);
+    auto dn = static_cast<double>(count);
+    tbb::parallel_for(0, count, [&](int i) {
+      double angle = (pi2 * static_cast<double>(i)) / dn;
+      points_[static_cast<std::size_t>(i)] = {.x = std::cos(angle), .y = std::sin(angle)};
+    });
+  }
+
   int n = static_cast<int>(points_.size());
 
   if (n <= 0) {
