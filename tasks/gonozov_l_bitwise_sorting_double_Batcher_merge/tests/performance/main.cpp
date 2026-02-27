@@ -34,7 +34,7 @@ class GonozovLBitSortBatcherMergePerfTest : public ppc::util::BaseRunPerfTests<I
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 };
 
