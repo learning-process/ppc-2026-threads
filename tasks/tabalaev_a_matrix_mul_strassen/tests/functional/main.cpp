@@ -78,14 +78,14 @@ class TabalaevAMatrixMulStrassenFuncTests : public ppc::util::BaseRunFuncTests<I
 
 namespace {
 
-TEST_P(TabalaevAMatrixMulStrassenFuncTests, MatmulFromPic) {
+TEST_P(TabalaevAMatrixMulStrassenFuncTests, MatrixMultiply) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {
-    std::make_tuple(2, 2, 2, 10, "Small_2x2"), std::make_tuple(4, 4, 4, 10, "PowerOfTwo_4x4"),
-    std::make_tuple(3, 5, 3, 20, "NonSquare_Padded"), std::make_tuple(16, 16, 16, 100, "Medium_16x16"),
-    std::make_tuple(64, 64, 64, 150, "Large_64x64")};
+const std::array<TestType, 6> kTestParam = {
+    std::make_tuple(3, 3, 3, 50, "SmallPadded"),     std::make_tuple(4, 4, 4, 50, "SmallPowerOfTwo_4x4"),
+    std::make_tuple(15, 5, 15, 150, "MediumPadded"), std::make_tuple(16, 16, 16, 150, "MediumPowerOfTwo_16x16"),
+    std::make_tuple(63, 63, 63, 300, "LargePadded"), std::make_tuple(64, 64, 64, 300, "LargePowerOfTwo_64x64")};
 
 const auto kTestTasksList = ppc::util::AddFuncTask<TabalaevAMatrixMulStrassenSEQ, InType>(
     kTestParam, PPC_SETTINGS_tabalaev_a_matrix_mul_strassen);
@@ -94,7 +94,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = TabalaevAMatrixMulStrassenFuncTests::PrintFuncTestName<TabalaevAMatrixMulStrassenFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, TabalaevAMatrixMulStrassenFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(StrassenMatrixMultiplyTests, TabalaevAMatrixMulStrassenFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
