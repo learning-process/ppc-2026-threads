@@ -81,4 +81,4 @@ INSTANTIATE_TEST_SUITE_P(PicMatrixTests, ChernovTRadixSortFuncTests, kGtestValue
 
 }  // namespace
 
-}  // namespace chernov_t_radix_sort_r
+}  // namespace chernov_t_radix_sort
