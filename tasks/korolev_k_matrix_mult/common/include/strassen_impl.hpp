@@ -37,7 +37,16 @@ inline void NaiveMultiply(const std::vector<double> &a, const std::vector<double
 namespace detail {
 
 void AddBlock(const double *a_ptr, const double *b_ptr, size_t ar, size_t ac, size_t br, size_t bc, size_t n, size_t m,
-              std::vector<double> &out) {
+              std::vector<double> &out);
+void SubBlock(const double *a_ptr, const double *b_ptr, size_t ar, size_t ac, size_t br, size_t bc, size_t n, size_t m,
+              std::vector<double> &out);
+void CopyBlock(const double *a_ptr, size_t ro, size_t co, size_t n, size_t m, std::vector<double> &out);
+void AssembleStrassenResult(std::vector<double> &c, const std::vector<double> &m1, const std::vector<double> &m2,
+                            const std::vector<double> &m3, const std::vector<double> &m4, const std::vector<double> &m5,
+                            const std::vector<double> &m6, const std::vector<double> &m7, size_t n, size_t m);
+
+inline void AddBlock(const double *a_ptr, const double *b_ptr, size_t ar, size_t ac, size_t br, size_t bc, size_t n,
+                     size_t m, std::vector<double> &out) {
   for (size_t i = 0; i < m; ++i) {
     for (size_t j = 0; j < m; ++j) {
       out[(i * m) + j] = a_ptr[((ar + i) * n) + ac + j] + b_ptr[((br + i) * n) + bc + j];
@@ -45,8 +54,8 @@ void AddBlock(const double *a_ptr, const double *b_ptr, size_t ar, size_t ac, si
   }
 }
 
-void SubBlock(const double *a_ptr, const double *b_ptr, size_t ar, size_t ac, size_t br, size_t bc, size_t n, size_t m,
-              std::vector<double> &out) {
+inline void SubBlock(const double *a_ptr, const double *b_ptr, size_t ar, size_t ac, size_t br, size_t bc, size_t n,
+                     size_t m, std::vector<double> &out) {
   for (size_t i = 0; i < m; ++i) {
     for (size_t j = 0; j < m; ++j) {
       out[(i * m) + j] = a_ptr[((ar + i) * n) + ac + j] - b_ptr[((br + i) * n) + bc + j];
@@ -54,7 +63,7 @@ void SubBlock(const double *a_ptr, const double *b_ptr, size_t ar, size_t ac, si
   }
 }
 
-void CopyBlock(const double *a_ptr, size_t ro, size_t co, size_t n, size_t m, std::vector<double> &out) {
+inline void CopyBlock(const double *a_ptr, size_t ro, size_t co, size_t n, size_t m, std::vector<double> &out) {
   for (size_t i = 0; i < m; ++i) {
     for (size_t j = 0; j < m; ++j) {
       out[(i * m) + j] = a_ptr[((ro + i) * n) + co + j];
@@ -62,9 +71,10 @@ void CopyBlock(const double *a_ptr, size_t ro, size_t co, size_t n, size_t m, st
   }
 }
 
-void AssembleStrassenResult(std::vector<double> &c, const std::vector<double> &m1, const std::vector<double> &m2,
-                            const std::vector<double> &m3, const std::vector<double> &m4, const std::vector<double> &m5,
-                            const std::vector<double> &m6, const std::vector<double> &m7, size_t n, size_t m) {
+inline void AssembleStrassenResult(std::vector<double> &c, const std::vector<double> &m1, const std::vector<double> &m2,
+                                   const std::vector<double> &m3, const std::vector<double> &m4,
+                                   const std::vector<double> &m5, const std::vector<double> &m6,
+                                   const std::vector<double> &m7, size_t n, size_t m) {
   for (size_t i = 0; i < m; ++i) {
     for (size_t j = 0; j < m; ++j) {
       c[(i * n) + j] = m1[(i * m) + j] + m4[(i * m) + j] - m5[(i * m) + j] + m7[(i * m) + j];
