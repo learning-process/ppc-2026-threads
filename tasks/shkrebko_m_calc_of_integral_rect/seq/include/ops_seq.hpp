@@ -13,15 +13,11 @@ class ShkrebkoMCalcOfIntegralRectSEQ : public BaseTask {
 
   explicit ShkrebkoMCalcOfIntegralRectSEQ(const InType &in);
 
- protected:
+ private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
- private:
-  InType local_input_;
-  double res_;
 };
 
 }  // namespace shkrebko_m_calc_of_integral_rect

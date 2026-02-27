@@ -1,6 +1,5 @@
 #include "shkrebko_m_calc_of_integral_rect/seq/include/ops_seq.hpp"
 
-#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <vector>
@@ -22,76 +21,76 @@ bool ShkrebkoMCalcOfIntegralRectSEQ::ValidationImpl() {
     return false;
   }
 
-  if (input.limits.size() != input.n_steps.size() || input.limits.empty()) {
+  if (input.limits.empty()) {
     return false;
   }
 
-  if (!std::ranges::all_of(input.n_steps, [](int n) { return n > 0; })) {
+  if (input.steps <= 0) {
     return false;
   }
 
-  for (const auto &[left, right] : input.limits) {
-    if (left >= right) {
+  for (std::size_t i = 0; i < input.limits.size(); ++i) {
+    if (input.limits[i].first >= input.limits[i].second) {
       return false;
     }
   }
-
   return true;
 }
 
 bool ShkrebkoMCalcOfIntegralRectSEQ::PreProcessingImpl() {
-  local_input_ = GetInput();
-  res_ = 0.0;
+  GetOutput() = 0.0;
   return true;
 }
 
 bool ShkrebkoMCalcOfIntegralRectSEQ::RunImpl() {
-  const std::size_t dim = local_input_.limits.size();
+  const auto &input = GetInput();
+  const std::size_t dim = input.limits.size();
+  const int n = input.steps;
+
+  if (dim == 0) {
+    GetOutput() = 0.0;
+    return true;
+  }
+
   std::vector<double> h(dim);
   double cell_volume = 1.0;
   for (std::size_t i = 0; i < dim; ++i) {
-    const double left = local_input_.limits[i].first;
-    const double right = local_input_.limits[i].second;
-    const int steps = local_input_.n_steps[i];
-    h[i] = (right - left) / static_cast<double>(steps);
+    h[i] = (input.limits[i].second - input.limits[i].first) / static_cast<double>(n);
     cell_volume *= h[i];
   }
 
-  std::vector<int> idx(dim, 0);
-  std::vector<double> point(dim);
-  double sum = 0.0;
+  long long total_cells = 1;
+  for (std::size_t i = 0; i < dim; ++i) {
+    total_cells *= n;
+  }
 
-  while (true) {
+  double sum = 0.0;
+  std::vector<int> idx(dim);
+
+  for (long long cell = 0; cell < total_cells; ++cell) {
+    long long tmp = cell;
     for (std::size_t i = 0; i < dim; ++i) {
-      point[i] = local_input_.limits[i].first + (static_cast<double>(idx[i]) + 0.5) * h[i];
+      idx[i] = static_cast<int>(tmp % n);
+      tmp /= n;
     }
 
-    double f_val = local_input_.func(point);
+    std::vector<double> point(dim);
+    for (std::size_t i = 0; i < dim; ++i) {
+      point[i] = input.limits[i].first + ((static_cast<double>(idx[i]) + 0.5) * h[i]);
+    }
+
+    double f_val = input.func(point);
     if (!std::isfinite(f_val)) {
       return false;
     }
     sum += f_val;
-
-    int level = static_cast<int>(dim) - 1;
-    while (level >= 0) {
-      idx[level]++;
-      if (idx[level] < local_input_.n_steps[level]) {
-        break;
-      }
-      idx[level] = 0;
-      level--;
-    }
-    if (level < 0) {
-      break;
-    }
   }
 
-  res_ = sum * cell_volume;
+  GetOutput() = sum * cell_volume;
   return true;
 }
 
 bool ShkrebkoMCalcOfIntegralRectSEQ::PostProcessingImpl() {
-  GetOutput() = res_;
   return true;
 }
 
