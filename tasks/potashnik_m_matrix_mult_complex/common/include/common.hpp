@@ -1,9 +1,6 @@
 #pragma once
 
 #include <cstddef>
-#include <map>
-#include <tuple>
-#include <utility>
 #include <vector>
 
 #include "task/include/task.hpp"
@@ -14,10 +11,7 @@ struct Complex {
   double real;
   double imaginary;
 
-  explicit Complex(double real = 0.0, double imaginary = 0.0) {
-    this->real = real;
-    this->imaginary = imaginary;
-  }
+  explicit Complex(double real = 0.0, double imaginary = 0.0) : real(real), imaginary(imaginary) {}
 
   bool operator==(const Complex &comp) const {
     return comp.real == real && comp.imaginary == imaginary;
@@ -55,8 +49,7 @@ struct CCSMatrix {
 
   CCSMatrix() = default;
 
-  explicit CCSMatrix(const std::vector<std::vector<Complex>> &matr) {
-    height = matr.size();
+  explicit CCSMatrix(const std::vector<std::vector<Complex>> &matr) : height(matr.size()) {
     if (!matr.empty()) {
       width = matr[0].size();
     } else {
@@ -82,7 +75,7 @@ struct CCSMatrix {
     return val.size();
   }
 
-  bool compare(const CCSMatrix &matr) {
+  bool Сompare(const CCSMatrix &matr) {
     if (height != matr.height) {
       return false;
     }
@@ -122,7 +115,7 @@ struct CCSMatrix {
 
 using InType = std::tuple<CCSMatrix, CCSMatrix>;
 using OutType = CCSMatrix;
-using TestType = std::tuple<size_t, size_t, size_t>;  // n, m, k. Matrix_1: n*m, Matrix_2: m*k
+using TestType = std::tuple<size_t, size_t, size_t>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace potashnik_m_matrix_mult_complex

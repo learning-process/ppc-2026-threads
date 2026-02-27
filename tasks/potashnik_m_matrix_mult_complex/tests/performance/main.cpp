@@ -10,7 +10,7 @@
 #include "potashnik_m_matrix_mult_complex/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace potashnik_m_matrix_mult_complex {  // comm for ci1
+namespace potashnik_m_matrix_mult_complex {
 
 class PotashnikMMatrixMultComplexPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr size_t kCount = 10000;
@@ -27,10 +27,10 @@ class PotashnikMMatrixMultComplexPerfTest : public ppc::util::BaseRunPerfTests<I
       matrix_right[i][(i * 444U) % kCount] = Complex(static_cast<double>(i) * 19.0, static_cast<double>(i) * 22.0);
     }
 
-    CCSMatrix matrix_left_CCS(matrix_left);
-    CCSMatrix matrix_right_CCS(matrix_right);
+    CCSMatrix matrix_left_ccs(matrix_left);
+    CCSMatrix matrix_right_ccs(matrix_right);
 
-    input_data_ = std::make_tuple(matrix_left_CCS, matrix_right_CCS);
+    input_data_ = std::make_tuple(matrix_left_ccs, matrix_right_ccs);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -77,7 +77,7 @@ class PotashnikMMatrixMultComplexPerfTest : public ppc::util::BaseRunPerfTests<I
       matrix_res.col_ptr.push_back(key.second);
     }
 
-    return output_data.compare(matrix_res);
+    return output_data.Сompare(matrix_res);
   }
 
   InType GetTestInputData() final {

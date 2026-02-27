@@ -50,10 +50,10 @@ class PotashnikMMatrixMultComplexFuncTests : public ppc::util::BaseRunFuncTests<
       }
     }
 
-    CCSMatrix matrix_left_CCS(matrix_left);
-    CCSMatrix matrix_right_CCS(matrix_right);
+    CCSMatrix matrix_left_ccs(matrix_left);
+    CCSMatrix matrix_right_ccs(matrix_right);
 
-    input_data_ = std::make_tuple(matrix_left_CCS, matrix_right_CCS);
+    input_data_ = std::make_tuple(matrix_left_ccs, matrix_right_ccs);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -100,7 +100,7 @@ class PotashnikMMatrixMultComplexFuncTests : public ppc::util::BaseRunFuncTests<
       matrix_res.col_ptr.push_back(key.second);
     }
 
-    return output_data.compare(matrix_res);
+    return output_data.Сompare(matrix_res);
   }
 
   InType GetTestInputData() final {
