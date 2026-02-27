@@ -13,7 +13,7 @@ namespace urin_o_graham_passage {
 class UrinOGrahamPassagePerfTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    // Генерируем точки в SetUp, чтобы можно было использовать в разных тестах
+    // Генерируем точки в SetUp, чтобы можно было использовать в разных тестах/
   }
 
   InType GenerateRandomPoints(size_t num_points) {
