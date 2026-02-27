@@ -1,0 +1,64 @@
+#include <gtest/gtest.h>
+
+#include <vector>
+
+#include "kruglova_a_conjugate_gradient_sle/common/include/common.hpp"
+#include "kruglova_a_conjugate_gradient_sle/seq/include/ops_seq.hpp"
+#include "util/include/perf_test_util.hpp"
+
+namespace kruglova_a_conjugate_gradient_sle {
+
+class KruglovaAPerfTestAConjGradSle : public ppc::util::BaseRunPerfTests<InType, OutType> {
+ protected:
+  const int kSize = 2000;
+  InType input_data_{};
+
+  void SetUp() override {
+    input_data_.size = kSize;
+    input_data_.A.resize(kSize * kSize);
+    input_data_.b.resize(kSize);
+
+    for (int i = 0; i < kSize; ++i) {
+      for (int j = 0; j < kSize; ++j) {
+        if (i == j) {
+          input_data_.A[i * kSize + j] = static_cast<double>(kSize + 10);
+        } else {
+          input_data_.A[i * kSize + j] = 1.0;
+        }
+      }
+      input_data_.b[i] = static_cast<double>(i % 10 + 1);
+    }
+  }
+
+  bool CheckTestOutputData(OutType &output_data) final {
+    return output_data.size() == static_cast<size_t>(kSize);
+  }
+
+  InType GetTestInputData() final {
+    return input_data_;
+  }
+};
+
+TEST_P(KruglovaAPerfTestAConjGradSle, RunPerfPipeline) {
+  ExecuteTest(GetParam());
+}
+
+TEST_P(KruglovaAPerfTestAConjGradSle, RunPerfTask) {
+  ExecuteTest(GetParam());
+}
+
+namespace {
+
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KruglovaAConjGradSleSEQ
+
+                                                       >(PPC_SETTINGS_kruglova_a_conjugate_gradient_sle);
+
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+
+const auto kPerfTestName = KruglovaAPerfTestAConjGradSle::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(SequentialPerformance, KruglovaAPerfTestAConjGradSle, kGtestValues, kPerfTestName);
+
+}  // namespace
+
+}  // namespace kruglova_a_conjugate_gradient_sle
