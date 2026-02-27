@@ -70,24 +70,24 @@ bool TerekhovDGaussVertSEQ::PreProcessingImpl() {
 bool TerekhovDGaussVertSEQ::RunImpl() {
   const auto &input = GetInput();
   auto &output = GetOutput();
-  
+
   if (input.data.empty() || width_ <= 0 || height_ <= 0) {
     return false;
   }
-  
+
   ProcessBands(output);
   return true;
 }
 
 void TerekhovDGaussVertSEQ::ProcessBands(OutType &output) {
   int padded_width = width_ + 2;
-  
+
   const int num_bands = 4;
   int band_width = width_ / num_bands;
   if (band_width < 1) {
     band_width = 1;
   }
-  
+
   for (int band = 0; band < num_bands; ++band) {
     ProcessBand(output, padded_width, band, band_width);
   }
@@ -96,7 +96,7 @@ void TerekhovDGaussVertSEQ::ProcessBands(OutType &output) {
 void TerekhovDGaussVertSEQ::ProcessBand(OutType &output, int padded_width, int band, int band_width) {
   int start_x = band * band_width;
   int end_x = (band == num_bands - 1) ? width_ : ((band + 1) * band_width);
-  
+
   for (int row = 0; row < height_; ++row) {
     for (int col = start_x; col < end_x; ++col) {
       ProcessPixel(output, padded_width, row, col);
@@ -106,22 +106,22 @@ void TerekhovDGaussVertSEQ::ProcessBand(OutType &output, int padded_width, int b
 
 void TerekhovDGaussVertSEQ::ProcessPixel(OutType &output, int padded_width, int row, int col) {
   size_t idx = (static_cast<size_t>(row) * static_cast<size_t>(width_)) + static_cast<size_t>(col);
-  
+
   float sum = 0.0F;
-  
+
   for (int ky = -1; ky <= 1; ++ky) {
     for (int kx = -1; kx <= 1; ++kx) {
       int px = col + kx + 1;
       int py = row + ky + 1;
-      
+
       int kernel_idx = ((ky + 1) * 3) + (kx + 1);
       size_t padded_idx = (static_cast<size_t>(py) * static_cast<size_t>(padded_width)) + static_cast<size_t>(px);
       int pixel_value = padded_image_[padded_idx];
-      
+
       sum += static_cast<float>(pixel_value) * kGaussKernel[static_cast<size_t>(kernel_idx)];
     }
   }
-  
+
   output.data[idx] = static_cast<int>(std::lround(sum));
 }
 
