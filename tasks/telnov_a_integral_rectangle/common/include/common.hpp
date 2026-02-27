@@ -4,6 +4,8 @@
 #include <tuple>
 #include <utility>
 
+#include "../../modules/task/include/task.hpp"
+
 namespace telnov_a_integral_rectangle {
 
 using InType = std::pair<int, int>;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "task/include/task.hpp"
+#include "../../modules/task/include/task.hpp"
 #include "telnov_a_integral_rectangle/common/include/common.hpp"
 
 namespace telnov_a_integral_rectangle {
