@@ -10,43 +10,40 @@
 
 namespace spichek_d_radix_sort_for_integers_with_simple_merging {
 
-// Создаем заглушки для других типов задач, наследуясь от последовательной версии.
-// Это необходимо, чтобы MakeAllPerfTasks мог создать уникальные имена тестов.
-class RadixSortOMP : public RadixSortSEQ {
+class SpichekDRadixSortOMP : public SpichekDRadixSortSEQ {
  public:
-  using RadixSortSEQ::RadixSortSEQ;
+  using SpichekDRadixSortSEQ::SpichekDRadixSortSEQ;
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kOMP;
   }
 };
 
-class RadixSortTBB : public RadixSortSEQ {
+class SpichekDRadixSortTBB : public SpichekDRadixSortSEQ {
  public:
-  using RadixSortSEQ::RadixSortSEQ;
+  using SpichekDRadixSortSEQ::SpichekDRadixSortSEQ;
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kTBB;
   }
 };
 
-class RadixSortSTL : public RadixSortSEQ {
+class SpichekDRadixSortSTL : public SpichekDRadixSortSEQ {
  public:
-  using RadixSortSEQ::RadixSortSEQ;
+  using SpichekDRadixSortSEQ::SpichekDRadixSortSEQ;
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSTL;
   }
 };
 
-class RadixSortALL : public RadixSortSEQ {
+class SpichekDRadixSortALL : public SpichekDRadixSortSEQ {
  public:
-  using RadixSortSEQ::RadixSortSEQ;
+  using SpichekDRadixSortSEQ::SpichekDRadixSortSEQ;
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kALL;
   }
 };
 
-class RadixSortRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class SpichekDRadixSortRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  // Исправлено именование согласно правилу readability-identifier-naming
   const int k_count = 1000000;
   InType input_data;
 
@@ -70,22 +67,22 @@ class RadixSortRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType>
   }
 };
 
-TEST_P(RadixSortRunPerfTest, RunPerfModes) {
+TEST_P(SpichekDRadixSortRunPerfTest, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
-// Используем MakeAllPerfTasks точно так же, как в образце.
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, RadixSortALL, RadixSortOMP, RadixSortSEQ, RadixSortSTL, RadixSortTBB>(
+    ppc::util::MakeAllPerfTasks<InType, SpichekDRadixSortALL, SpichekDRadixSortOMP, SpichekDRadixSortSEQ,
+                                SpichekDRadixSortSTL, SpichekDRadixSortTBB>(
         PPC_SETTINGS_spichek_d_radix_sort_for_integers_with_simple_merging);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = RadixSortRunPerfTest::CustomPerfTestName;
+const auto kPerfTestName = SpichekDRadixSortRunPerfTest::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, RadixSortRunPerfTest, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, SpichekDRadixSortRunPerfTest, kGtestValues, kPerfTestName);
 
 }  // namespace
 

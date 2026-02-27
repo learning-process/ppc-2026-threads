@@ -3,26 +3,25 @@
 #include <algorithm>
 #include <vector>
 
-// Добавлено для прямого включения InType
 #include "spichek_d_radix_sort_for_integers_with_simple_merging/common/include/common.hpp"
 
 namespace spichek_d_radix_sort_for_integers_with_simple_merging {
 
-RadixSortSEQ::RadixSortSEQ(const InType &in) {
+SpichekDRadixSortSEQ::SpichekDRadixSortSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
-bool RadixSortSEQ::ValidationImpl() {
+bool SpichekDRadixSortSEQ::ValidationImpl() {
   return !GetInput().empty();
 }
 
-bool RadixSortSEQ::PreProcessingImpl() {
+bool SpichekDRadixSortSEQ::PreProcessingImpl() {
   GetOutput() = GetInput();
   return true;
 }
 
-bool RadixSortSEQ::RunImpl() {
+bool SpichekDRadixSortSEQ::RunImpl() {
   if (GetOutput().empty()) {
     return true;
   }
@@ -31,16 +30,15 @@ bool RadixSortSEQ::RunImpl() {
   return true;
 }
 
-bool RadixSortSEQ::PostProcessingImpl() {
-  return std::ranges::is_sorted(GetOutput());  // Переход на ranges
+bool SpichekDRadixSortSEQ::PostProcessingImpl() {
+  return std::ranges::is_sorted(GetOutput());
 }
 
-void RadixSortSEQ::RadixSort(std::vector<int> &data) {
+void SpichekDRadixSortSEQ::RadixSort(std::vector<int> &data) {
   if (data.empty()) {
     return;
   }
 
-  // Переход на std::ranges
   int min_val = *std::ranges::min_element(data);
   if (min_val < 0) {
     for (auto &x : data) {

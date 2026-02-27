@@ -1,18 +1,18 @@
 #pragma once
 
-#include <vector>  // Добавлено
+#include <vector>
 
 #include "spichek_d_radix_sort_for_integers_with_simple_merging/common/include/common.hpp"
 #include "task/include/task.hpp"
 
 namespace spichek_d_radix_sort_for_integers_with_simple_merging {
 
-class RadixSortSEQ : public BaseTask {
+class SpichekDRadixSortSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit RadixSortSEQ(const InType &in);
+  explicit SpichekDRadixSortSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
