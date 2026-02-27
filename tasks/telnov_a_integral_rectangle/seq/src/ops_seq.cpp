@@ -1,10 +1,7 @@
 #include "telnov_a_integral_rectangle/seq/include/ops_seq.hpp"
 
 #include <cmath>
-#include <vector>
-
-#include "telnov_a_integral_rectangle/common/include/common.hpp"
-#include "util/include/util.hpp"
+#include <cstdint>
 
 namespace telnov_a_integral_rectangle {
 
@@ -24,33 +21,33 @@ bool TelnovAIntegralRectangleSEQ::PreProcessingImpl() {
 }
 
 bool TelnovAIntegralRectangleSEQ::RunImpl() {
-  const int N = GetInput().first;
-  const int D = GetInput().second;
+  const int n = GetInput().first;
+  const int d = GetInput().second;
 
   const double a = 0.0;
   const double b = 1.0;
-  const double h = (b - a) / N;
+  const double h = (b - a) / n;
 
-  const long long total_points = static_cast<long long>(std::pow(N, D));
+  const int64_t totalPoints = static_cast<int64_t>(std::pow(n, d));
 
   double result = 0.0;
 
-  for (long long idx = 0; idx < total_points; idx++) {
-    long long tmp = idx;
-    double f_value = 0.0;
+  for (int64_t idx = 0; idx < totalPoints; idx++) {
+    int64_t tmp = idx;
+    double fValue = 0.0;
 
-    for (int dim = 0; dim < D; dim++) {
-      int coord_index = tmp % N;
-      tmp /= N;
+    for (int dim = 0; dim < d; dim++) {
+      int coordIndex = static_cast<int>(tmp % n);
+      tmp /= n;
 
-      double x = a + (coord_index + 0.5) * h;
-      f_value += x;
+      double x = a + ((coordIndex + 0.5) * h);
+      fValue += x;
     }
 
-    result += f_value;
+    result += fValue;
   }
 
-  result *= std::pow(h, D);
+  result *= std::pow(h, d);
 
   GetOutput() = result;
   return true;

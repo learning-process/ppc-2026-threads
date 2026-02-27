@@ -1,21 +1,15 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
-#include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
+#include <cmath>
 #include <string>
 #include <tuple>
 #include <utility>
-#include <vector>
 
 #include "telnov_a_integral_rectangle/common/include/common.hpp"
 #include "telnov_a_integral_rectangle/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace telnov_a_integral_rectangle {
 
@@ -34,12 +28,11 @@ class TelnovAIntegralRectangleFuncTests : public ppc::util::BaseRunFuncTests<InT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const int D = input_data_.second;
-    const int N = input_data_.first;
+    const int d = input_data_.second;
+    const int n = input_data_.first;
 
-    const double expected = static_cast<double>(D) / 2.0;
-
-    double tolerance = 1.0 / N;
+    const double expected = static_cast<double>(d) / 2.0;
+    const double tolerance = 1.0 / n;
 
     return std::abs(output_data - expected) < tolerance;
   }
@@ -59,14 +52,10 @@ TEST_P(TelnovAIntegralRectangleFuncTests, MatmulFromPic) {
 }
 
 const std::array<TestType, 8> kTestParam = {
-    std::make_tuple(InType{1, 1}, "1D_N1"),     std::make_tuple(InType{5, 1}, "1D_small"),
-    std::make_tuple(InType{20, 1}, "1D"),
-
-    std::make_tuple(InType{10, 2}, "2D_small"), std::make_tuple(InType{20, 2}, "2D"),
-
-    std::make_tuple(InType{10, 3}, "3D_small"), std::make_tuple(InType{15, 3}, "3D"),
-
-    std::make_tuple(InType{8, 5}, "5D")};
+    std::make_tuple(InType{1, 1}, "1D_N1"), std::make_tuple(InType{5, 1}, "1D_small"),
+    std::make_tuple(InType{20, 1}, "1D"),   std::make_tuple(InType{10, 2}, "2D_small"),
+    std::make_tuple(InType{20, 2}, "2D"),   std::make_tuple(InType{10, 3}, "3D_small"),
+    std::make_tuple(InType{15, 3}, "3D"),   std::make_tuple(InType{8, 5}, "5D")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<TelnovAIntegralRectangleSEQ, InType>(kTestParam, PPC_SETTINGS_telnov_a_integral_rectangle));

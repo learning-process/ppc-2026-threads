@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
+
 #include "telnov_a_integral_rectangle/common/include/common.hpp"
 #include "telnov_a_integral_rectangle/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"

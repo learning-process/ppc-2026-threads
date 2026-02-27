@@ -2,8 +2,7 @@
 
 #include <string>
 #include <tuple>
-
-#include "task/include/task.hpp"
+#include <utility>
 
 namespace telnov_a_integral_rectangle {
 
