@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <vector>
 
 #include "shekhirev_v_hoare_batcher_sort_seq/common/include/common.hpp"
@@ -11,25 +12,25 @@ namespace shekhirev_v_hoare_batcher_sort_seq {
 
 class ShekhirevVRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
-  ShekhirevVRunPerfTest() : kArraySize_(200000) {}
+  ShekhirevVRunPerfTest() = default;
 
  protected:
-  const size_t kArraySize_;
-  InType input_data_;
+  const size_t kArraySize = 200000;
+  InType input_data;
 
   void SetUp() override {
-    input_data_.resize(kArraySize_);
-    for (size_t i = 0; i < kArraySize_; ++i) {
-      input_data_[i] = static_cast<int>(kArraySize_ - i);
+    input_data.resize(kArraySize);
+    for (size_t i = 0; i < kArraySize; ++i) {
+      input_data[i] = static_cast<int>(kArraySize - i);
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::is_sorted(output_data.begin(), output_data.end());
+    return std::ranges::is_sorted(output_data);
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 };
 

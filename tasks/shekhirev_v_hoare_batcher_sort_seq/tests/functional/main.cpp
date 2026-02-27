@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <random>
 #include <vector>
 
@@ -12,7 +13,8 @@ namespace shekhirev_v_hoare_batcher_sort_seq {
 namespace {
 std::vector<int> GenerateRandomVector(size_t size) {
   std::vector<int> res(size);
-  std::mt19937 gen(42);
+  // NOLINTNEXTLINE(cert-msc51-cpp)
+  std::mt19937 gen(73);
   std::uniform_int_distribution<int> dist(-1000, 1000);
   for (size_t i = 0; i < size; ++i) {
     res[i] = dist(gen);
@@ -20,6 +22,7 @@ std::vector<int> GenerateRandomVector(size_t size) {
   return res;
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void RunFuncTest(const std::vector<int> &in) {
   ShekhirevHoareBatcherSortSEQ task(in);
   ASSERT_TRUE(task.Validation());
@@ -29,41 +32,42 @@ void RunFuncTest(const std::vector<int> &in) {
 
   std::vector<int> out = task.GetOutput();
   std::vector<int> expected = in;
-  std::sort(expected.begin(), expected.end());
+  std::ranges::sort(expected);
 
   ASSERT_EQ(out, expected);
 }
 }  // namespace
 
-TEST(ShekhirevVHoareBatcherSortSEQ, Test_Empty) {
+TEST(ShekhirevVHoareBatcherSortSEQ, TestEmpty) {
   RunFuncTest({});
 }
 
-TEST(ShekhirevVHoareBatcherSortSEQ, Test_SingleElement) {
+TEST(ShekhirevVHoareBatcherSortSEQ, TestSingleElement) {
   RunFuncTest({42});
 }
 
-TEST(ShekhirevVHoareBatcherSortSEQ, Test_Sorted) {
+TEST(ShekhirevVHoareBatcherSortSEQ, TestSorted) {
   RunFuncTest({1, 2, 3, 4, 5, 6, 7, 8});
 }
 
-TEST(ShekhirevVHoareBatcherSortSEQ, Test_ReverseSorted) {
+TEST(ShekhirevVHoareBatcherSortSEQ, TestReverseSorted) {
   RunFuncTest({8, 7, 6, 5, 4, 3, 2, 1});
 }
 
-TEST(ShekhirevVHoareBatcherSortSEQ, Test_Random_PowerOf2) {
+TEST(ShekhirevVHoareBatcherSortSEQ, TestRandomPowerOf2) {
   RunFuncTest(GenerateRandomVector(64));
 }
 
-TEST(ShekhirevVHoareBatcherSortSEQ, Test_Random_NotPowerOf2) {
+TEST(ShekhirevVHoareBatcherSortSEQ, TestRandomNotPowerOf2) {
   RunFuncTest(GenerateRandomVector(53));
 }
 
-TEST(ShekhirevVHoareBatcherSortSEQ, Test_Large) {
+TEST(ShekhirevVHoareBatcherSortSEQ, TestLarge) {
   RunFuncTest(GenerateRandomVector(1000));
 }
 
-TEST(ShekhirevVHoareBatcherSortSEQ, Test_IdenticalElements) {
+TEST(ShekhirevVHoareBatcherSortSEQ, TestIdenticalElements) {
   RunFuncTest({5, 5, 5, 5, 5, 5, 5, 5});
 }
+
 }  // namespace shekhirev_v_hoare_batcher_sort_seq

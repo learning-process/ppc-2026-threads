@@ -2,7 +2,11 @@
 
 #include <algorithm>
 #include <climits>
+#include <cstddef>
 #include <utility>
+#include <vector>
+
+#include "shekhirev_v_hoare_batcher_sort_seq/common/include/common.hpp"
 
 namespace shekhirev_v_hoare_batcher_sort_seq {
 
@@ -34,30 +38,47 @@ void ShekhirevHoareBatcherSortSEQ::HoareSort(std::vector<int> &arr, int left, in
   if (left >= right) {
     return;
   }
-  int pivot = arr[left + (right - left) / 2];
-  int i = left;
-  int j = right;
-  while (i <= j) {
-    while (arr[i] < pivot) {
-      i++;
+
+  std::vector<std::pair<int, int>> stack;
+  stack.reserve(static_cast<size_t>(right - left + 1));
+  stack.emplace_back(left, right);
+
+  while (!stack.empty()) {
+    auto [l, r] = stack.back();
+    stack.pop_back();
+
+    if (l >= r) {
+      continue;
     }
-    while (arr[j] > pivot) {
-      j--;
+
+    int pivot = arr[l + ((r - l) / 2)];
+    int i = l;
+    int j = r;
+
+    while (i <= j) {
+      while (arr[i] < pivot) {
+        i++;
+      }
+      while (arr[j] > pivot) {
+        j--;
+      }
+      if (i <= j) {
+        std::swap(arr[i], arr[j]);
+        i++;
+        j--;
+      }
     }
-    if (i <= j) {
-      std::swap(arr[i], arr[j]);
-      i++;
-      j--;
+
+    if (i < r) {
+      stack.emplace_back(i, r);
     }
-  }
-  if (left < j) {
-    HoareSort(arr, left, j);
-  }
-  if (i < right) {
-    HoareSort(arr, i, right);
+    if (l < j) {
+      stack.emplace_back(l, j);
+    }
   }
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 void ShekhirevHoareBatcherSortSEQ::BatcherMerge(std::vector<int> &arr, int left, int right, int step) {
   int n = right - left + 1;
   if (n <= step) {
