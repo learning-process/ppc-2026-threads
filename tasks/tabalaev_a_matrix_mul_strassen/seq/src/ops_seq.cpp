@@ -119,8 +119,8 @@ void TabalaevAMatrixMulStrassenSEQ::PushStrassenSubtasks(std::stack<StrassenFram
 
   for (size_t i = 0; i < h; ++i) {
     for (size_t j = 0; j < h; ++j) {
-      int idx_src = (i * n) + j;
-      int idx_dst = (i * h) + j;
+      size_t idx_src = (i * n) + j;
+      size_t idx_dst = (i * h) + j;
       a11[idx_dst] = mat_a[idx_src];
       a12[idx_dst] = mat_a[idx_src + h];
       a21[idx_dst] = mat_a[idx_src + (h * n)];
@@ -161,8 +161,8 @@ std::vector<double> TabalaevAMatrixMulStrassenSEQ::CombineStrassenResults(std::s
   auto p1 = std::move(results.top());
   results.pop();
 
-  int h = n / 2;
-  std::vector<double> res(static_cast<size_t>(n) * n);
+  size_t h = n / 2;
+  std::vector<double> res(n * n);
   for (int i = 0; i < h; ++i) {
     for (int j = 0; j < h; ++j) {
       int idx = (i * h) + j;
