@@ -1,7 +1,6 @@
 #include "kazennova_a_sobel_operator/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -9,11 +8,7 @@
 
 #include "kazennova_a_sobel_operator/common/include/common.hpp"
 
-namespace kazennova_a_sobel_operator {
-
 namespace {
-const std::array<std::array<int, 3>, 3> kGx = {{{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}}};
-const std::array<std::array<int, 3>, 3> kGy = {{{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}}};
 
 uint8_t GetPixel(const std::vector<uint8_t> &img, size_t size, int x, int y) {
   const int size_int = static_cast<int>(size);
@@ -24,7 +19,13 @@ uint8_t GetPixel(const std::vector<uint8_t> &img, size_t size, int x, int y) {
   const size_t idx = (static_cast<size_t>(y) * size) + static_cast<size_t>(x);
   return img[idx];
 }
+
 }  // namespace
+
+namespace kazennova_a_sobel_operator {
+
+const int kGx[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
+const int kGy[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
 
 SobelSeq::SobelSeq(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -36,7 +37,7 @@ bool SobelSeq::ValidationImpl() {
   if (in.empty()) {
     return false;
   }
-  const size_t size = static_cast<size_t>(std::sqrt(in.size()));
+  const auto size = static_cast<size_t>(std::sqrt(in.size()));
   return (size * size == in.size());
 }
 
@@ -49,7 +50,7 @@ bool SobelSeq::RunImpl() {
   const auto &in = GetInput();
   auto &out = GetOutput();
 
-  const size_t size = static_cast<size_t>(std::sqrt(in.size()));
+  const auto size = static_cast<size_t>(std::sqrt(in.size()));
 
   for (size_t row = 0; row < size; ++row) {
     for (size_t col = 0; col < size; ++col) {
