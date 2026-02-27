@@ -28,7 +28,7 @@ class GolovanovDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType,
  InType input_data_{};
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(test_param[0]);
+    return std::to_string(test_param.size());
   }
 
  protected:
@@ -54,9 +54,9 @@ TEST_P(GolovanovDRunFuncTestsThreads, RadixMergeFunc) {
 }
 
 const std::array<TestType, 3> kTestParam = {
-  TestType{ 3.14, -2.71, 0.0, 42.0, -1.5 },
-  TestType{ -10.0, -5.0, -3.0, -1.0, -7.0 },
-  TestType{ 100.5, 1.1, 50.0, 2.2, 0.0001 }  
+  TestType{ 3.14, -2.71, 0.0, 42.0, -1.5, },
+  TestType{ -10.0, -5.0, -3.0, -1.0, -7.0, 6 },
+  TestType{ 100.5, 1.1, 50.0, 2.2, 0.0001, 12, 2 }  
 };
 
 const auto kTestTasksList =
