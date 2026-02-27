@@ -1,6 +1,16 @@
 name: Static analysis
 
 on:
+  push:
+    paths:
+      - '**/*.cpp'
+      - '**/*.hpp'
+      - '**/*.c'
+      - '**/*.h'
+      - '**/CMakeLists.txt'
+      - '**/*.cmake'
+      - '**/.clang-tidy'
+      - '.github/workflows/static-analysis-pr.yml'
   pull_request:
     paths:
       - '**/*.cpp'
@@ -11,6 +21,7 @@ on:
       - '**/*.cmake'
       - '**/.clang-tidy'
       - '.github/workflows/static-analysis-pr.yml'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -128,7 +139,7 @@ jobs:
           fetch-depth: 0
       - name: Search for linter suppression markers
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || format('{0}~1', github.sha) }}
           HEAD_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
