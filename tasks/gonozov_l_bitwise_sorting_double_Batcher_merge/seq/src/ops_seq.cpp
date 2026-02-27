@@ -31,9 +31,9 @@ uint64_t DoubleToSortableInt(double d) {
   uint64_t bits = 0;
   std::memcpy(&bits, &d, sizeof(double));
   if ((bits >> 63) != 0) {  // Отрицательное число
-    return ~bits;           // Инвертируем ВСЕ биты
+    return ~bits;           // Инвертируем все биты
   }  // Положительное число или ноль
-  return bits ^ 0x8000000000000000ULL;  // Инвертируем ТОЛЬКО знаковый бит
+  return bits ^ 0x8000000000000000ULL;  // Инвертируем только знаковый бит
 }
 
 // uint64_t -> double
