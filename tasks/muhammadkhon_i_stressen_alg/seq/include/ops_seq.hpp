@@ -1,0 +1,59 @@
+#pragma once
+
+#include <array>
+#include <vector>
+
+#include "muhammadkhon_i_stressen_alg/common/include/common.hpp"
+#include "task/include/task.hpp"
+
+namespace muhammadkhon_i_stressen_alg {
+
+class MuhammadkhonIStressenAlgSEQ : public BaseTask {
+ public:
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kSEQ;
+  }
+  explicit MuhammadkhonIStressenAlgSEQ(const InType &in);
+
+ private:
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
+
+  int n_{};
+  int padded_n_{};
+  std::vector<double> a_;
+  std::vector<double> b_;
+  std::vector<double> result_;
+
+  static constexpr int NextPowerOfTwo(int n) {
+    if (n <= 0) {
+      return 1;
+    }
+    int p = 1;
+    while (p < n) {
+      p <<= 1;
+    }
+    return p;
+  }
+
+  static std::vector<double> PadMatrix(const std::vector<double> &m, int old_n, int new_n);
+  static std::vector<double> UnpadMatrix(const std::vector<double> &m, int old_n, int new_n);
+  static std::vector<double> Add(const std::vector<double> &a, const std::vector<double> &b, int n);
+  static std::vector<double> Sub(const std::vector<double> &a, const std::vector<double> &b, int n);
+
+  static void Split(const std::vector<double> &parent, int n, std::vector<double> &a11, std::vector<double> &a12,
+                    std::vector<double> &a21, std::vector<double> &a22);
+
+  static std::vector<double> Merge(const std::vector<double> &c11, const std::vector<double> &c12,
+                                   const std::vector<double> &c21, const std::vector<double> &c22, int n);
+
+  static std::vector<double> NaiveMult(const std::vector<double> &a, const std::vector<double> &b, int n);
+
+  static std::vector<double> Strassen(const std::vector<double> &a, const std::vector<double> &b, int n);
+
+  static constexpr int kBaseCaseSize = 32;
+};
+
+}  // namespace muhammadkhon_i_stressen_alg
