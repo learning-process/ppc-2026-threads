@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "util/include/func_test_util.hpp"
-#include "util/include/gtest_util.hpp"
 #include "zorin_d_strassen_alg_matrix_seq/common/include/common.hpp"
 #include "zorin_d_strassen_alg_matrix_seq/seq/include/ops_seq.hpp"
 
