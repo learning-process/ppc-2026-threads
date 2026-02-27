@@ -1,6 +1,6 @@
 #include "muhammadkhon_i_stressen_alg/seq/include/ops_seq.hpp"
 
-#include <array>
+#include <algorithm>
 #include <cstddef>
 #include <stdexcept>
 #include <utility>
@@ -59,9 +59,9 @@ std::vector<double> MuhammadkhonIStressenAlgSEQ::PadMatrix(const std::vector<dou
   std::vector<double> result(new_size, 0.0);
 
   for (int i = 0; i < old_n; ++i) {
-    const auto src_start = m.begin() + static_cast<ptrdiff_t>(i * old_n);
+    const auto src_start = m.begin() + static_cast<ptrdiff_t>(i) * static_cast<ptrdiff_t>(old_n);
     const auto src_end = src_start + old_n;
-    auto dst_start = result.begin() + static_cast<ptrdiff_t>(i * new_n);
+    auto dst_start = result.begin() + static_cast<ptrdiff_t>(i) * static_cast<ptrdiff_t>(new_n);
     std::copy(src_start, src_end, dst_start);
   }
 
@@ -77,9 +77,9 @@ std::vector<double> MuhammadkhonIStressenAlgSEQ::UnpadMatrix(const std::vector<d
   std::vector<double> result(new_size);
 
   for (int i = 0; i < new_n; ++i) {
-    const auto src_start = m.begin() + static_cast<ptrdiff_t>(i * old_n);
+    const auto src_start = m.begin() + static_cast<ptrdiff_t>(i) * static_cast<ptrdiff_t>(old_n);
     const auto src_end = src_start + new_n;
-    auto dst_start = result.begin() + static_cast<ptrdiff_t>(i * new_n);
+    auto dst_start = result.begin() + static_cast<ptrdiff_t>(i) * static_cast<ptrdiff_t>(new_n);
     std::copy(src_start, src_end, dst_start);
   }
 
@@ -204,6 +204,7 @@ std::vector<double> MuhammadkhonIStressenAlgSEQ::NaiveMult(const std::vector<dou
   return c;
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 std::vector<double> MuhammadkhonIStressenAlgSEQ::Strassen(const std::vector<double> &a, const std::vector<double> &b,
                                                           int n) {
   if (n <= kBaseCaseSize) {
@@ -216,24 +217,31 @@ std::vector<double> MuhammadkhonIStressenAlgSEQ::Strassen(const std::vector<doub
 
   int half = n / 2;
 
-  std::vector<double> a11, a12, a21, a22, b11, b12, b21, b22;
+  std::vector<double> a11;
+  std::vector<double> a12;
+  std::vector<double> a21;
+  std::vector<double> a22;
+  std::vector<double> b11;
+  std::vector<double> b12;
+  std::vector<double> b21;
+  std::vector<double> b22;
   Split(a, n, a11, a12, a21, a22);
   Split(b, n, b11, b12, b21, b22);
 
   auto p1 = Strassen(Add(a11, a22, half), Add(b11, b22, half), half);
-  auto p2 = Strassen(Add(a21, a22, half), std::move(b11), half);
-  auto p3 = Strassen(std::move(a11), Sub(b12, b22, half), half);
-  auto p4 = Strassen(std::move(a22), Sub(b21, b11, half), half);
-  auto p5 = Strassen(Add(a11, a12, half), std::move(b22), half);  // a11 уже перемещено в p3
+  auto p2 = Strassen(Add(a21, a22, half), b11, half);
+  auto p3 = Strassen(a11, Sub(b12, b22, half), half);
+  auto p4 = Strassen(a22, Sub(b21, b11, half), half);
+  auto p5 = Strassen(Add(a11, a12, half), b22, half);  // a11 уже перемещено в p3
   auto p6 = Strassen(Sub(a21, a11, half), Add(b11, b12, half), half);
   auto p7 = Strassen(Sub(a12, a22, half), Add(b21, b22, half), half);
 
-  auto c11 = Add(Sub(Add(std::move(p1), std::move(p4), half), p5, half), p7, half);
-  auto c12 = Add(std::move(p3), std::move(p5), half);
-  auto c21 = Add(std::move(p2), std::move(p4), half);
-  auto c22 = Add(Sub(Add(std::move(p1), std::move(p3), half), p2, half), p6, half);
+  auto c11 = Add(Sub(Add(p1, p4, half), p5, half), p7, half);
+  auto c12 = Add(p3, p5, half);
+  auto c21 = Add(p2, p4, half);
+  auto c22 = Add(Sub(Add(p1, p3, half), p2, half), p6, half);
 
-  return Merge(std::move(c11), std::move(c12), std::move(c21), std::move(c22), half);
+  return Merge(c11, c12, c21, c22, half);
 }
 
 }  // namespace muhammadkhon_i_stressen_alg
