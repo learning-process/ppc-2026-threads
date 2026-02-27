@@ -10,7 +10,7 @@
 #include "zavyalov_a_complex_sparse_matrix_mult/common/include/common.hpp"
 #include "zavyalov_a_complex_sparse_matrix_mult/seq/include/ops_seq.hpp"
 
-namespace zavyalov_a_compl_sparse_matr_mult {  // comm for ci1
+namespace zavyalov_a_compl_sparse_matr_mult {  // comm for ci12
 
 class ZavyalovAComplexSparseMatrMultPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr size_t kCount = 15000;
