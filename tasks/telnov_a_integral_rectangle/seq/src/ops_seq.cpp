@@ -3,6 +3,8 @@
 #include <cmath>
 #include <cstdint>
 
+#include "telnov_a_integral_rectangle/common/include/common.hpp"
+
 namespace telnov_a_integral_rectangle {
 
 TelnovAIntegralRectangleSEQ::TelnovAIntegralRectangleSEQ(const InType &in) {
@@ -28,23 +30,23 @@ bool TelnovAIntegralRectangleSEQ::RunImpl() {
   const double b = 1.0;
   const double h = (b - a) / n;
 
-  const int64_t totalPoints = static_cast<int64_t>(std::pow(n, d));
+  auto total_points = static_cast<int64_t>(std::pow(n, d));
 
   double result = 0.0;
 
   for (int64_t idx = 0; idx < totalPoints; idx++) {
     int64_t tmp = idx;
-    double fValue = 0.0;
+    double f_Value = 0.0;
 
     for (int dim = 0; dim < d; dim++) {
       int coordIndex = static_cast<int>(tmp % n);
       tmp /= n;
 
       double x = a + ((coordIndex + 0.5) * h);
-      fValue += x;
+      f_Value += x;
     }
 
-    result += fValue;
+    result += f_Value;
   }
 
   result *= std::pow(h, d);
