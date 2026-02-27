@@ -1,9 +1,14 @@
 #include "dorogin_v_bin_img_conv_hull/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <array>
+#include <cstddef>
 #include <cstdint>
 #include <stack>
+#include <utility>
 #include <vector>
+
+#include "dorogin_v_bin_img_conv_hull/common/include/common.hpp"
 
 namespace dorogin_v_bin_img_conv_hull {
 
@@ -20,17 +25,17 @@ int64_t Cross(const Point &a, const Point &b, const Point &c) {
   int64_t y1 = b.y - a.y;
   int64_t x2 = c.x - a.x;
   int64_t y2 = c.y - a.y;
-  return x1 * y2 - y1 * x2;
+  return (x1 * y2) - (y1 * x2);
 }
 
 }  // namespace
 
-doroginVBinImgConvHullSeq::doroginVBinImgConvHullSeq(const InType &in) : w_(in) {
+DoroginVBinImgConvHullSeq::DoroginVBinImgConvHullSeq(const InType &in) : w_(in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
-bool doroginVBinImgConvHullSeq::ValidationImpl() {
+bool DoroginVBinImgConvHullSeq::ValidationImpl() {
   const auto &in = GetInput();
   if (in.width <= 0 || in.height <= 0) {
     return false;
@@ -38,13 +43,13 @@ bool doroginVBinImgConvHullSeq::ValidationImpl() {
   return in.pixels.size() == static_cast<size_t>(in.width) * in.height;
 }
 
-bool doroginVBinImgConvHullSeq::PreProcessingImpl() {
+bool DoroginVBinImgConvHullSeq::PreProcessingImpl() {
   w_ = GetInput();
   ThresholdImage();
   return true;
 }
 
-bool doroginVBinImgConvHullSeq::RunImpl() {
+bool DoroginVBinImgConvHullSeq::RunImpl() {
   FindComponents();
 
   w_.convex_hulls.clear();
@@ -65,28 +70,28 @@ bool doroginVBinImgConvHullSeq::RunImpl() {
   return true;
 }
 
-bool doroginVBinImgConvHullSeq::PostProcessingImpl() {
+bool DoroginVBinImgConvHullSeq::PostProcessingImpl() {
   return true;
 }
 
-size_t doroginVBinImgConvHullSeq::Index(int x, int y, int width) {
-  return static_cast<size_t>(y) * width + x;
+size_t DoroginVBinImgConvHullSeq::Index(int x, int y, int width) {
+  return (static_cast<size_t>(y) * width) + x;
 }
 
-void doroginVBinImgConvHullSeq::ThresholdImage() {
+void DoroginVBinImgConvHullSeq::ThresholdImage() {
   std::transform(w_.pixels.begin(), w_.pixels.end(), w_.pixels.begin(),
                  [](uint8_t p) { return p > kThreshold ? 255 : 0; });
 }
 
-void doroginVBinImgConvHullSeq::ExploreComponent(int start_col, int start_row, int width, int height,
+void DoroginVBinImgConvHullSeq::ExploreComponent(int start_col, int start_row, int width, int height,
                                                  std::vector<bool> &visited, std::vector<Point> &component) {
   std::stack<Point> stack;
   stack.emplace(start_col, start_row);
 
   visited[Index(start_col, start_row, width)] = true;
 
-  const int dx[4] = {1, -1, 0, 0};
-  const int dy[4] = {0, 0, 1, -1};
+  const std::array<int, 4> dx{1, -1, 0, 0};
+  const std::array<int, 4> dy{0, 0, 1, -1};
 
   while (!stack.empty()) {
     Point p = stack.top();
@@ -116,7 +121,7 @@ void doroginVBinImgConvHullSeq::ExploreComponent(int start_col, int start_row, i
   }
 }
 
-void doroginVBinImgConvHullSeq::FindComponents() {
+void DoroginVBinImgConvHullSeq::FindComponents() {
   int w = w_.width;
   int h = w_.height;
 
@@ -139,7 +144,7 @@ void doroginVBinImgConvHullSeq::FindComponents() {
   }
 }
 
-std::vector<Point> doroginVBinImgConvHullSeq::BuildHull(const std::vector<Point> &points) {
+std::vector<Point> DoroginVBinImgConvHullSeq::BuildHull(const std::vector<Point> &points) {
   std::vector<Point> pts = points;
 
   std::sort(pts.begin(), pts.end());

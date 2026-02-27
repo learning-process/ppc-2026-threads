@@ -109,10 +109,10 @@ std::vector<Point> Normalize(const std::vector<Point> &hull) {
 
 std::vector<std::vector<Point>> NormalizeAll(const std::vector<std::vector<Point>> &hulls) {
   std::vector<std::vector<Point>> result;
-result.reserve(hulls.size());
-for (const auto &h : hulls) {
-  result.push_back(Normalize(h));
-}
+  result.reserve(hulls.size());
+  for (const auto &h : hulls) {
+    result.push_back(Normalize(h));
+  }
 
   std::sort(result.begin(), result.end());
   return result;
@@ -154,7 +154,7 @@ const std::array<TestType, 5> kParams = {std::make_tuple(0, "single"), std::make
                                          std::make_tuple(4, "diamond_large")};
 
 const auto kTasks =
-    ppc::util::AddFuncTask<doroginVBinImgConvHullSeq, InType>(kParams, PPC_SETTINGS_dorogin_v_bin_img_conv_hull);
+    ppc::util::AddFuncTask<DoroginVBinImgConvHullSeq, InType>(kParams, PPC_SETTINGS_dorogin_v_bin_img_conv_hull);
 
 const auto kValues = ppc::util::ExpandToValues(kTasks);
 

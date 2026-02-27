@@ -8,13 +8,13 @@
 
 namespace dorogin_v_bin_img_conv_hull {
 
-class doroginVBinImgConvHullSeq : public BaseTask {
+class DoroginVBinImgConvHullSeq : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
 
-  explicit doroginVBinImgConvHullSeq(const InType &in);
+  explicit DoroginVBinImgConvHullSeq(const InType &in);
 
  private:
   bool ValidationImpl() override;

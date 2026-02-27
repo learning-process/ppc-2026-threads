@@ -52,7 +52,7 @@ TEST_P(DoroginVBinImgConvHullPerfTests, RunPerf) {
 namespace {
 
 const auto kPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, doroginVBinImgConvHullSeq>(PPC_SETTINGS_dorogin_v_bin_img_conv_hull);
+    ppc::util::MakeAllPerfTasks<InType, DoroginVBinImgConvHullSeq>(PPC_SETTINGS_dorogin_v_bin_img_conv_hull);
 
 const auto kValues = ppc::util::TupleToGTestValues(kPerfTasks);
 
