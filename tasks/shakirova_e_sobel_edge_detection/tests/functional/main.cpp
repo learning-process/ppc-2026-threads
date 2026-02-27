@@ -14,12 +14,11 @@
 
 namespace shakirova_e_sobel_edge_detection {
 
-class ShakirovaESobelEdgeDetectionFuncTestsThreads
-    : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class ShakirovaESobelEdgeDetectionFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType& test_param) {
+  static std::string PrintTestParam(const TestType &test_param) {
     std::string name = std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
-    for (char& c : name) {
+    for (char &c : name) {
       if ((std::isalnum(static_cast<unsigned char>(c)) == 0) && c != '_') {
         c = '_';
       }
@@ -29,19 +28,17 @@ class ShakirovaESobelEdgeDetectionFuncTestsThreads
 
  protected:
   void SetUp() override {
-    const auto& [expected, filename] =
+    const auto &[expected, filename] =
         std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     expected_edges_ = expected;
 
     const std::string abs_path =
-        ppc::util::GetAbsoluteTaskPath(
-            std::string(PPC_ID_shakirova_e_sobel_edge_detection),
-            filename);
+        ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_shakirova_e_sobel_edge_detection), filename);
     input_data_ = ImgContainer::FromFile(abs_path);
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     int edge_count = 0;
     for (int row = 1; row < input_data_.height - 1; ++row) {
       for (int col = 1; col < input_data_.width - 1; ++col) {
@@ -53,7 +50,9 @@ class ShakirovaESobelEdgeDetectionFuncTestsThreads
     return (expected_edges_ == 0) ? (edge_count == 0) : (edge_count >= expected_edges_);
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
  private:
   InType input_data_;
@@ -67,25 +66,19 @@ TEST_P(ShakirovaESobelEdgeDetectionFuncTestsThreads, SobelOnFiles) {
 }
 
 const std::array<TestType, 6> kTestParam = {
-    std::make_tuple(4,  "test_3.png"),
-    std::make_tuple(10, "test_1.png"),
-    std::make_tuple(1,  "test_2.png"),
-    std::make_tuple(0,  "test_4.txt"),
-    std::make_tuple(2,  "test_5.txt"),
-    std::make_tuple(2,  "test_6.txt"),
+    std::make_tuple(4, "test_3.png"), std::make_tuple(10, "test_1.png"), std::make_tuple(1, "test_2.png"),
+    std::make_tuple(0, "test_4.txt"), std::make_tuple(2, "test_5.txt"),  std::make_tuple(2, "test_6.txt"),
 };
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<ShakirovaESobelEdgeDetectionSEQ, InType>(
-        kTestParam, PPC_SETTINGS_shakirova_e_sobel_edge_detection);
+const auto kTestTasksList = ppc::util::AddFuncTask<ShakirovaESobelEdgeDetectionSEQ, InType>(
+    kTestParam, PPC_SETTINGS_shakirova_e_sobel_edge_detection);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName =
     ShakirovaESobelEdgeDetectionFuncTestsThreads::PrintFuncTestName<ShakirovaESobelEdgeDetectionFuncTestsThreads>;
 
-INSTANTIATE_TEST_SUITE_P(SobelEdgeTests, ShakirovaESobelEdgeDetectionFuncTestsThreads,
-                         kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(SobelEdgeTests, ShakirovaESobelEdgeDetectionFuncTestsThreads, kGtestValues, kPerfTestName);
 
 }  // namespace
 

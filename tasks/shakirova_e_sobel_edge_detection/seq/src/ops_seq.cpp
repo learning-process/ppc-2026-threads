@@ -10,7 +10,7 @@
 
 namespace shakirova_e_sobel_edge_detection {
 
-ShakirovaESobelEdgeDetectionSEQ::ShakirovaESobelEdgeDetectionSEQ(const InType& in) {
+ShakirovaESobelEdgeDetectionSEQ::ShakirovaESobelEdgeDetectionSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput().clear();
@@ -21,10 +21,10 @@ bool ShakirovaESobelEdgeDetectionSEQ::ValidationImpl() {
 }
 
 bool ShakirovaESobelEdgeDetectionSEQ::PreProcessingImpl() {
-  const auto& img = GetInput();
-  width_  = img.width;
+  const auto &img = GetInput();
+  width_ = img.width;
   height_ = img.height;
-  input_  = img.pixels;
+  input_ = img.pixels;
 
   GetOutput().assign(static_cast<size_t>(width_) * static_cast<size_t>(height_), 0);
   return true;
@@ -34,7 +34,7 @@ bool ShakirovaESobelEdgeDetectionSEQ::RunImpl() {
   const std::array<std::array<int, 3>, 3> k_gx = {{{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}}};
   const std::array<std::array<int, 3>, 3> k_gy = {{{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}}};
 
-  auto& out = GetOutput();
+  auto &out = GetOutput();
 
   for (int row = 1; row < height_ - 1; ++row) {
     for (int col = 1; col < width_ - 1; ++col) {
@@ -51,8 +51,7 @@ bool ShakirovaESobelEdgeDetectionSEQ::RunImpl() {
         }
       }
 
-      const int magnitude =
-          static_cast<int>(std::sqrt(static_cast<double>((gx * gx) + (gy * gy))));
+      const int magnitude = static_cast<int>(std::sqrt(static_cast<double>((gx * gx) + (gy * gy))));
       out[(row * width_) + col] = std::clamp(magnitude, 0, 255);
     }
   }
