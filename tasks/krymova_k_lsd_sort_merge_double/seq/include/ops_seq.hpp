@@ -20,11 +20,11 @@ class KrymovaKLsdSortMergeDoubleSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static void LSDSortDouble(double* arr, int size);
-  static void IterativeMergeSort(double* arr, int size, int portion);  // Убрали tmp
-  static void MergeSections(double* left, const double* right, int left_size, int right_size);
-  static void SortSections(double* arr, int size, int portion);
-  
+  static void LSDSortDouble(double *arr, int size);
+  static void IterativeMergeSort(double *arr, int size, int portion);  // Убрали tmp
+  static void MergeSections(double *left, const double *right, int left_size, int right_size);
+  static void SortSections(double *arr, int size, int portion);
+
   static uint64_t DoubleToULL(double d);
   static double ULLToDouble(uint64_t ull);
 };

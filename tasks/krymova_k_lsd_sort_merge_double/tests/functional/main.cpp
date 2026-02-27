@@ -13,7 +13,6 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-
 namespace krymova_k_lsd_sort_merge_double {
 
 class KrymovaKFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
@@ -72,7 +71,7 @@ class KrymovaKFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, Te
 
     if (!input_data_.empty() && !output_data.empty()) {
       OutType input_copy = input_data_;
-      const OutType& output_copy = output_data;
+      const OutType &output_copy = output_data;
 
       std::ranges::sort(input_copy);
 
@@ -100,14 +99,19 @@ TEST_P(KrymovaKFuncTests, TestSorting) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 13> kTestParam = {
-    std::make_tuple(1, "single"),
-    std::make_tuple(10, "random_small"), std::make_tuple(100, "random_medium"),
-    std::make_tuple(1000, "random_large"), std::make_tuple(10000, "random_very_large"),
-    std::make_tuple(100, "sorted"),       std::make_tuple(100, "reverse"),
-    std::make_tuple(100, "constant"),     std::make_tuple(100, "negative"),
-    std::make_tuple(1000, "negative_large"), std::make_tuple(10, "mixed"),
-    std::make_tuple(100, "mixed"),        std::make_tuple(100000, "random_huge")};
+const std::array<TestType, 13> kTestParam = {std::make_tuple(1, "single"),
+                                             std::make_tuple(10, "random_small"),
+                                             std::make_tuple(100, "random_medium"),
+                                             std::make_tuple(1000, "random_large"),
+                                             std::make_tuple(10000, "random_very_large"),
+                                             std::make_tuple(100, "sorted"),
+                                             std::make_tuple(100, "reverse"),
+                                             std::make_tuple(100, "constant"),
+                                             std::make_tuple(100, "negative"),
+                                             std::make_tuple(1000, "negative_large"),
+                                             std::make_tuple(10, "mixed"),
+                                             std::make_tuple(100, "mixed"),
+                                             std::make_tuple(100000, "random_huge")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KrymovaKLsdSortMergeDoubleSEQ, InType>(
     kTestParam, PPC_SETTINGS_krymova_k_lsd_sort_merge_double));

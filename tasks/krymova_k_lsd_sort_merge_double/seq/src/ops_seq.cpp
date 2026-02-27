@@ -15,11 +15,9 @@ KrymovaKLsdSortMergeDoubleSEQ::KrymovaKLsdSortMergeDoubleSEQ(const InType &in) {
   GetOutput() = OutType();
 }
 
-
 bool KrymovaKLsdSortMergeDoubleSEQ::ValidationImpl() {
   return !GetInput().empty();
 }
-
 
 bool KrymovaKLsdSortMergeDoubleSEQ::PreProcessingImpl() {
   GetOutput() = GetInput();
@@ -51,7 +49,7 @@ double KrymovaKLsdSortMergeDoubleSEQ::ULLToDouble(uint64_t ull) {
   return d;
 }
 
-void KrymovaKLsdSortMergeDoubleSEQ::LSDSortDouble(double* arr, int size) {
+void KrymovaKLsdSortMergeDoubleSEQ::LSDSortDouble(double *arr, int size) {
   if (size <= 1) {
     return;
   }
@@ -96,8 +94,7 @@ void KrymovaKLsdSortMergeDoubleSEQ::LSDSortDouble(double* arr, int size) {
   }
 }
 
-void KrymovaKLsdSortMergeDoubleSEQ::MergeSections(double* left, const double* right,
-                                                   int left_size, int right_size) {
+void KrymovaKLsdSortMergeDoubleSEQ::MergeSections(double *left, const double *right, int left_size, int right_size) {
   std::vector<double> temp(left_size);
   std::copy(left, left + left_size, temp.begin());
 
@@ -118,14 +115,14 @@ void KrymovaKLsdSortMergeDoubleSEQ::MergeSections(double* left, const double* ri
   }
 }
 
-void KrymovaKLsdSortMergeDoubleSEQ::SortSections(double* arr, int size, int portion) {
+void KrymovaKLsdSortMergeDoubleSEQ::SortSections(double *arr, int size, int portion) {
   for (int i = 0; i < size; i += portion) {
     int current_size = std::min(portion, size - i);
     LSDSortDouble(arr + i, current_size);
   }
 }
 
-void KrymovaKLsdSortMergeDoubleSEQ::IterativeMergeSort(double* arr, int size, int portion) {
+void KrymovaKLsdSortMergeDoubleSEQ::IterativeMergeSort(double *arr, int size, int portion) {
   if (size <= 1) {
     return;
   }
@@ -141,17 +138,16 @@ void KrymovaKLsdSortMergeDoubleSEQ::IterativeMergeSort(double* arr, int size, in
         continue;
       }
 
-      double* left = arr + i;
-      const double* right = arr + i + left_size;
+      double *left = arr + i;
+      const double *right = arr + i + left_size;
 
       MergeSections(left, right, left_size, right_size);
     }
   }
 }
 
-
 bool KrymovaKLsdSortMergeDoubleSEQ::RunImpl() {
-  OutType& output = GetOutput();
+  OutType &output = GetOutput();
   int size = static_cast<int>(output.size());
 
   if (size <= 1) {
@@ -164,9 +160,8 @@ bool KrymovaKLsdSortMergeDoubleSEQ::RunImpl() {
   return true;
 }
 
-
 bool KrymovaKLsdSortMergeDoubleSEQ::PostProcessingImpl() {
-  const OutType& output = GetOutput();
+  const OutType &output = GetOutput();
 
   for (size_t i = 1; i < output.size(); ++i) {
     if (output[i] < output[i - 1]) {
