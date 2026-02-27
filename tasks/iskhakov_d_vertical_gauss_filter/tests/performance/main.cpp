@@ -11,8 +11,8 @@
 namespace iskhakov_d_vertical_gauss_filter {
 
 class IskhakovDVerticalGaussFilterPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kWidth = 4096;
-  const int kHeight = 4096;
+  const int kWidth = 8192;
+  const int kHeight = 8192;
   InType input_data_{};
 
   void SetUp() override {
