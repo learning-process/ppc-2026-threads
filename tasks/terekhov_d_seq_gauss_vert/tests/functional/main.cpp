@@ -90,12 +90,12 @@ class TerekhovDRunFuncTestsGauss : public ppc::util::BaseRunFuncTests<InType, Ou
     return sum;
   }
 
-  [[nodiscard]] int GetActualValue(const OutType &output_data, int cx, int cy) const {
+  [[nodiscard]] static int GetActualValue(const OutType &output_data, int cx, int cy) {
     size_t out_idx = (static_cast<size_t>(cy) * static_cast<size_t>(output_data.width)) + static_cast<size_t>(cx);
     return output_data.data[out_idx];
   }
 
-  [[nodiscard]] int ClampCoordinate(int value, int min_val, int max_val) const {
+  [[nodiscard]] static int ClampCoordinate(int value, int min_val, int max_val) {
     if (value < min_val) {
       return min_val;
     }
