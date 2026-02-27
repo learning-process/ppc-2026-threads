@@ -11,7 +11,7 @@ namespace krymova_k_lsd_sort_merge_double {
 
 class KrymovaKPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
-  const int size_ = 1000000;  // 1 миллион элементов для теста производительности
+  const int size_ = 1000000;  
 
   void SetUp() override {
     std::random_device rd;

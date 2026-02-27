@@ -60,19 +60,16 @@ class KrymovaKFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, Te
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Проверяем, что массив отсортирован
     for (size_t i = 1; i < output_data.size(); ++i) {
       if (output_data[i] < output_data[i - 1]) {
         return false;
       }
     }
 
-    // Проверяем, что размер не изменился
     if (input_data_.size() != output_data.size()) {
       return false;
     }
 
-    // Для непустых массивов проверяем, что все элементы на месте
     if (!input_data_.empty() && !output_data.empty()) {
       OutType input_copy = input_data_;
       const OutType& output_copy = output_data;
