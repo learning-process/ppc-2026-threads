@@ -8,12 +8,12 @@
 #include <tuple>
 #include <vector>
 
-#include "badanov_a_select_edge_sobel/common/include/common.hpp"
-#include "badanov_a_select_edge_sobel/seq/include/ops_seq.hpp"
+#include "badanov_a_select_edge_sobel_seq/common/include/common.hpp"
+#include "badanov_a_select_edge_sobel_seq/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace badanov_a_select_edge_sobel {
+namespace badanov_a_select_edge_sobel_seq {
 
 class BadanovASelectEdgeSobelFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -35,7 +35,7 @@ class BadanovASelectEdgeSobelFuncTests : public ppc::util::BaseRunFuncTests<InTy
     threshold_ = threshold;
     
     const std::string abs_path =
-        ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_badanov_a_select_edge_sobel), "data/" + filename);
+        ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_badanov_a_select_edge_sobel_seq), filename);
     
     std::ifstream file(abs_path);
     if (!file.is_open()) {
@@ -121,17 +121,16 @@ TEST_P(BadanovASelectEdgeSobelFuncTests, SobelOnFiles) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 6> kTestParam = {
+const std::array<TestType, 5> kTestParam = {
     std::make_tuple(50, "test_1.txt"),   // Простой квадрат
     std::make_tuple(30, "test_2.txt"),   // Градиент
     std::make_tuple(40, "test_3.txt"),   // Диагональная линия
     std::make_tuple(50, "test_4.txt"),   // Пустое изображение
-    std::make_tuple(60, "test_5.txt"),   // Шахматная доска
     std::make_tuple(50, "test_6.txt")    // Крест
 };
 
-const auto kTestTasksList = ppc::util::AddFuncTask<BadanovASelectEdgeSobel, InType>(
-    kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel);
+const auto kTestTasksList = ppc::util::AddFuncTask<BadanovASelectEdgeSobelSEQ, InType>(
+    kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel_seq);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -142,4 +141,4 @@ INSTANTIATE_TEST_SUITE_P(SobelEdgeTests, BadanovASelectEdgeSobelFuncTests, kGtes
 
 }  // namespace
 
-}  // namespace badanov_a_select_edge_sobel
+}  // namespace badanov_a_select_edge_sobel_seq

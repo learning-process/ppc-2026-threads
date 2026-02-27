@@ -3,10 +3,10 @@
 #include <vector>
 #include <cstdint>
 
-#include "example_threads/common/include/common.hpp"
+#include "badanov_a_select_edge_sobel_seq/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace badanov_a_select_edge_sobel {
+namespace badanov_a_select_edge_sobel_seq {
 
 class BadanovASelectEdgeSobelSEQ : public BaseTask {
  public:

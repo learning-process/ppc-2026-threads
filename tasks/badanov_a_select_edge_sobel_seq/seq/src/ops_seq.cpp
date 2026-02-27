@@ -1,13 +1,13 @@
-#include "example_threads/seq/include/ops_seq.hpp"
+#include "badanov_a_select_edge_sobel_seq/seq/include/ops_seq.hpp"
 
 #include <cmath>
 #include <vector>
 #include <algorithm>
 
-#include "example_threads/common/include/common.hpp"
+#include "badanov_a_select_edge_sobel_seq/common/include/common.hpp"
 #include "util/include/util.hpp"
 
-namespace badanov_a_select_edge_sobel {
+namespace badanov_a_select_edge_sobel_seq {
 
 BadanovASelectEdgeSobelSEQ::BadanovASelectEdgeSobelSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -84,4 +84,4 @@ bool BadanovASelectEdgeSobelSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace badanov_a_select_edge_sobel
+}  // namespace badanov_a_select_edge_sobel_seq
