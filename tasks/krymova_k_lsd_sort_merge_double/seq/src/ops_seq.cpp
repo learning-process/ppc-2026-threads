@@ -1,10 +1,9 @@
 #include "krymova_k_lsd_sort_merge_double/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
 #include <vector>
-
-#include "krymova_k_lsd_sort_merge_double/common/include/common.hpp"
 
 namespace krymova_k_lsd_sort_merge_double {
 
@@ -23,11 +22,11 @@ bool KrymovaKLsdSortMergeDoubleSEQ::PreProcessingImpl() {
   return true;
 }
 
-unsigned long long KrymovaKLsdSortMergeDoubleSEQ::DoubleToULL(double d) {
-  unsigned long long ull;
+uint64_t KrymovaKLsdSortMergeDoubleSEQ::DoubleToULL(double d) {
+  uint64_t ull = 0;
   std::memcpy(&ull, &d, sizeof(double));
 
-  if (ull & 0x8000000000000000ULL) {
+  if ((ull & 0x8000000000000000ULL) != 0U) {
     ull = ~ull;
   } else {
     ull |= 0x8000000000000000ULL;
@@ -36,50 +35,52 @@ unsigned long long KrymovaKLsdSortMergeDoubleSEQ::DoubleToULL(double d) {
   return ull;
 }
 
-double KrymovaKLsdSortMergeDoubleSEQ::ULLToDouble(unsigned long long ull) {
-  if (ull & 0x8000000000000000ULL) {
+double KrymovaKLsdSortMergeDoubleSEQ::ULLToDouble(uint64_t ull) {
+  if ((ull & 0x8000000000000000ULL) != 0U) {
     ull &= 0x7FFFFFFFFFFFFFFFULL;
   } else {
     ull = ~ull;
   }
 
-  double d;
+  double d = 0.0;
   std::memcpy(&d, &ull, sizeof(double));
   return d;
 }
 
 void KrymovaKLsdSortMergeDoubleSEQ::LSDSortDouble(double* arr, int size) {
-  if (size <= 1) return;
+  if (size <= 1) {
+    return;
+  }
 
-  const int BITS_PER_PASS = 8;
-  const int RADIX = 1 << BITS_PER_PASS;
-  const int PASSES = static_cast<int>(sizeof(double)) * 8 / BITS_PER_PASS;
+  const int kBitsPerPass = 8;
+  const int kRadix = 1 << kBitsPerPass;
+  const int kPasses = static_cast<int>(sizeof(double)) * 8 / kBitsPerPass;
 
-  std::vector<unsigned long long> ull_arr(size);
-  std::vector<unsigned long long> ull_tmp(size);
+  std::vector<uint64_t> ull_arr(size);
+  std::vector<uint64_t> ull_tmp(size);
 
   for (int i = 0; i < size; ++i) {
     ull_arr[i] = DoubleToULL(arr[i]);
   }
 
-  std::vector<unsigned int> count(RADIX, 0);
+  std::vector<unsigned int> count(kRadix, 0U);
 
-  for (int pass = 0; pass < PASSES; ++pass) {
-    int shift = pass * BITS_PER_PASS;
+  for (int pass = 0; pass < kPasses; ++pass) {
+    int shift = pass * kBitsPerPass;
 
-    std::fill(count.begin(), count.end(), 0);
+    std::fill(count.begin(), count.end(), 0U);
 
     for (int i = 0; i < size; ++i) {
-      unsigned int digit = (ull_arr[i] >> shift) & (RADIX - 1);
+      unsigned int digit = (ull_arr[i] >> shift) & (kRadix - 1);
       ++count[digit];
     }
 
-    for (int i = 1; i < RADIX; ++i) {
+    for (int i = 1; i < kRadix; ++i) {
       count[i] += count[i - 1];
     }
 
     for (int i = size - 1; i >= 0; --i) {
-      unsigned int digit = (ull_arr[i] >> shift) & (RADIX - 1);
+      unsigned int digit = (ull_arr[i] >> shift) & (kRadix - 1);
       ull_tmp[--count[digit]] = ull_arr[i];
     }
 
@@ -91,8 +92,10 @@ void KrymovaKLsdSortMergeDoubleSEQ::LSDSortDouble(double* arr, int size) {
   }
 }
 
-void KrymovaKLsdSortMergeDoubleSEQ::IterativeMergeSort(double* arr, double* tmp, int size, int portion) {
-  if (size <= 1) return;
+void KrymovaKLsdSortMergeDoubleSEQ::IterativeMergeSort(double* arr, double* tmp, int size, int portion) const {
+  if (size <= 1) {
+    return;
+  }
 
   // ШАГ 1: Сортируем все кусочки размера portion с помощью LSD
   for (int i = 0; i < size; i += portion) {
@@ -106,7 +109,9 @@ void KrymovaKLsdSortMergeDoubleSEQ::IterativeMergeSort(double* arr, double* tmp,
       int left_size = merge_size;
       int right_size = std::min(merge_size, size - (i + merge_size));
 
-      if (right_size <= 0) continue;
+      if (right_size <= 0) {
+        continue;
+      }
 
       double* left = arr + i;
       double* right = arr + i + left_size;

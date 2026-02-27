@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "krymova_k_lsd_sort_merge_double/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -17,12 +19,12 @@ class KrymovaKLsdSortMergeDoubleSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  
-  void LSDSortDouble(double* arr, int size);
-  void IterativeMergeSort(double* arr, double* tmp, int size, int portion);
-  
-  static unsigned long long DoubleToULL(double d);
-  static double ULLToDouble(unsigned long long ull);
+
+  static void LSDSortDouble(double* arr, int size);
+  void IterativeMergeSort(double* arr, double* tmp, int size, int portion) const;
+
+  static uint64_t DoubleToULL(double d);
+  static double ULLToDouble(uint64_t ull);
 };
 
 }  // namespace krymova_k_lsd_sort_merge_double
