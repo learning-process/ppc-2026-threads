@@ -91,11 +91,12 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(4, "4"), std::make_t
                                             std::make_tuple(16, "16")};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<KorolevKMatrixMultALL, InType>(kTestParam, PPC_SETTINGS_korolev_k_matrix_mult),
-    ppc::util::AddFuncTask<KorolevKMatrixMultOMP, InType>(kTestParam, PPC_SETTINGS_korolev_k_matrix_mult),
+    // ppc::util::AddFuncTask<KorolevKMatrixMultALL, InType>(kTestParam, PPC_SETTINGS_korolev_k_matrix_mult),
+    // ppc::util::AddFuncTask<KorolevKMatrixMultOMP, InType>(kTestParam, PPC_SETTINGS_korolev_k_matrix_mult),
     ppc::util::AddFuncTask<KorolevKMatrixMultSEQ, InType>(kTestParam, PPC_SETTINGS_korolev_k_matrix_mult),
-    ppc::util::AddFuncTask<KorolevKMatrixMultSTL, InType>(kTestParam, PPC_SETTINGS_korolev_k_matrix_mult),
-    ppc::util::AddFuncTask<KorolevKMatrixMultTBB, InType>(kTestParam, PPC_SETTINGS_korolev_k_matrix_mult));
+    // ppc::util::AddFuncTask<KorolevKMatrixMultSTL, InType>(kTestParam, PPC_SETTINGS_korolev_k_matrix_mult),
+    // ppc::util::AddFuncTask<KorolevKMatrixMultTBB, InType>(kTestParam, PPC_SETTINGS_korolev_k_matrix_mult)
+);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

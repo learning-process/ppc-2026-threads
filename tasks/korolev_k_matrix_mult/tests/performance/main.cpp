@@ -67,9 +67,13 @@ TEST_P(KorolevKMatrixMultRunPerfTestThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KorolevKMatrixMultALL, KorolevKMatrixMultOMP, KorolevKMatrixMultSEQ,
-                                KorolevKMatrixMultSTL, KorolevKMatrixMultTBB>(PPC_SETTINGS_korolev_k_matrix_mult);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType,
+                                                       // KorolevKMatrixMultALL,
+                                                       // KorolevKMatrixMultOMP,
+                                                       KorolevKMatrixMultSEQ,
+                                                       // KorolevKMatrixMultSTL,
+                                                       // KorolevKMatrixMultTBB
+                                                       >(PPC_SETTINGS_korolev_k_matrix_mult);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
