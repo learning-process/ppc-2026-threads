@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <vector>
 
 #include "frolova_s_radix_sort_double/common/include/common.hpp"
 #include "frolova_s_radix_sort_double/seq/include/ops_seq.hpp"
@@ -21,18 +20,16 @@ class FrolovaSRadixSortDoubleRunPerfTests : public ppc::util::BaseRunPerfTests<I
   OutType expected_res;
 
   void SetUp() override {
-    const size_t vect_sz = 1000000;  // 1 миллион элементов
+    const size_t vect_sz = 1000000;
     input_data.resize(vect_sz);
-    
-    // Детерминированная генерация псевдослучайных double
+
     for (size_t i = 0; i < vect_sz; ++i) {
-      // Генерируем числа в диапазоне примерно [-5000, 5000)
-      uint64_t r = (i * 1103515245ULL + 12345ULL) % 1000000;
-      input_data[i] = static_cast<double>(r) / 100.0 - 5000.0;
+      auto r = (i * 1103515245ULL + 12345ULL) % 1000000;
+      input_data[i] = (static_cast<double>(r) / 100.0) - 5000.0;
     }
 
     expected_res = input_data;
-    std::sort(expected_res.begin(), expected_res.end());
+    std::ranges::sort(expected_res);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
