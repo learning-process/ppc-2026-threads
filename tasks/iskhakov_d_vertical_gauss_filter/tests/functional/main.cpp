@@ -127,8 +127,8 @@ TEST(IskhakovDVerticalGaussFilterInvalidInputTest, ZeroHeightPositiveWidth) {
 
 TEST(IskhakovDVerticalGaussFilterInvalidInputTest, DataSizeMismatch) {
   Matrix input;
-  input.width = 2;
-  input.height = 2;
+  input.width = 3;
+  input.height = 3;
   input.data = {1, 2, 3};
   auto task = std::make_shared<IskhakovDVerticalGaussFilterSEQ>(input);
   EXPECT_FALSE(task->Validation());
