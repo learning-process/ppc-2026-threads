@@ -37,8 +37,8 @@ class KruglovaAFuncTestAConjGradSle : public ppc::util::BaseRunFuncTests<InType,
       }
     } else if (type == "Diagonal") {
       for (int i = 0; i < size; ++i) {
-        input_data_.A[i * size + i] = static_cast<double>(i + 1) * 10.0;
-        input_data_.b[i] = input_data_.A[i * size + i];
+        input_data_.A[(i * size) + i] = static_cast<double>(i + 1) * 10.0;
+        input_data_.b[i] = input_data_.A[(i * size) + i];
       }
     } else {
       for (int i = 0; i < size; ++i) {
@@ -46,12 +46,12 @@ class KruglovaAFuncTestAConjGradSle : public ppc::util::BaseRunFuncTests<InType,
         for (int j = 0; j < size; ++j) {
           if (i != j) {
             double val = static_cast<double>(((i + j) % 5) + 1);
-            input_data_.A[i * size + j] = input_data_.A[j * size + i] = val;
+            input_data_.A[(i * size) + j] = input_data_.A[(j * size) + i] = val;
             sum += val;
           }
         }
-        input_data_.A[i * size + i] = sum + 10.0;
-        input_data_.b[i] = static_cast<double>(i % 3 + 1);
+        input_data_.A[(i * size) + i] = sum + 10.0;
+        input_data_.b[i] = static_cast<double>((i % 3) + 1);
       }
     }
   }
@@ -62,7 +62,7 @@ class KruglovaAFuncTestAConjGradSle : public ppc::util::BaseRunFuncTests<InType,
     for (int i = 0; i < n; ++i) {
       double ax = 0.0;
       for (int j = 0; j < n; ++j) {
-        ax += input_data_.A[i * n + j] * output_data[j];
+        ax += input_data_.A[(i * n) + j] * output_data[j];
       }
       max_err = std::max(max_err, std::abs(ax - input_data_.b[i]));
     }

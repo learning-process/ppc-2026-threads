@@ -1,6 +1,5 @@
 #include "kruglova_a_conjugate_gradient_sle/seq/include/ops_seq.hpp"
 
-#include <cmath>
 #include <cstddef>
 #include <vector>
 
