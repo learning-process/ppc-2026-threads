@@ -31,7 +31,7 @@ bool TabalaevAMatrixMulStrassenSEQ::PreProcessingImpl() {
   a_cols_b_rows_ = in.a_cols_b_rows;
   b_cols_ = in.b_cols;
 
-  int max_dim = std::max({a_rows_, a_cols_b_rows_, b_cols_});
+  size_t max_dim = std::max({a_rows_, a_cols_b_rows_, b_cols_});
   padded_n_ = 1;
   while (padded_n_ < max_dim) {
     padded_n_ *= 2;
@@ -40,14 +40,14 @@ bool TabalaevAMatrixMulStrassenSEQ::PreProcessingImpl() {
   padded_a_.assign(padded_n_ * padded_n_, 0.0);
   padded_b_.assign(padded_n_ * padded_n_, 0.0);
 
-  for (int i = 0; i < a_rows_; ++i) {
-    for (int j = 0; j < a_cols_b_rows_; ++j) {
+  for (size_t i = 0; i < a_rows_; ++i) {
+    for (size_t j = 0; j < a_cols_b_rows_; ++j) {
       padded_a_[(i * padded_n_) + j] = in.a[(i * a_cols_b_rows_) + j];
     }
   }
 
-  for (int i = 0; i < a_cols_b_rows_; ++i) {
-    for (int j = 0; j < b_cols_; ++j) {
+  for (size_t i = 0; i < a_cols_b_rows_; ++i) {
+    for (size_t j = 0; j < b_cols_; ++j) {
       padded_b_[(i * padded_n_) + j] = in.b[(i * b_cols_) + j];
     }
   }
@@ -90,6 +90,91 @@ std::vector<double> TabalaevAMatrixMulStrassenSEQ::Subtract(const std::vector<do
   return res;
 }
 
+std::vector<double> TabalaevAMatrixMulStrassenSEQ::BaseCaseMultiply(const std::vector<double> &mat_a,
+                                                                    const std::vector<double> &mat_b, int n) {
+  std::vector<double> res(n * n, 0.0);
+  for (int i = 0; i < n; ++i) {
+    for (int k = 0; k < n; ++k) {
+      for (int j = 0; j < n; ++j) {
+        res[(i * n) + j] += mat_a[(i * n) + k] * mat_b[(k * n) + j];
+      }
+    }
+  }
+  return res;
+}
+
+void TabalaevAMatrixMulStrassenSEQ::PushStrassenSubtasks(std::stack<StrassenFrame> &frames,
+                                                         const std::vector<double> &mat_a,
+                                                         const std::vector<double> &mat_b, int n) {
+  int h = n / 2;
+  int sz = h * h;
+  std::vector<double> a11(sz);
+  std::vector<double> a12(sz);
+  std::vector<double> a21(sz);
+  std::vector<double> a22(sz);
+  std::vector<double> b11(sz);
+  std::vector<double> b12(sz);
+  std::vector<double> b21(sz);
+  std::vector<double> b22(sz);
+
+  for (int i = 0; i < h; ++i) {
+    for (int j = 0; j < h; ++j) {
+      int idx_src = (i * n) + j;
+      int idx_dst = (i * h) + j;
+      a11[idx_dst] = mat_a[idx_src];
+      a12[idx_dst] = mat_a[idx_src + h];
+      a21[idx_dst] = mat_a[idx_src + (h * n)];
+      a22[idx_dst] = mat_a[idx_src + (h * n) + h];
+
+      b11[idx_dst] = mat_b[idx_src];
+      b12[idx_dst] = mat_b[idx_src + h];
+      b21[idx_dst] = mat_b[idx_src + (h * n)];
+      b22[idx_dst] = mat_b[idx_src + (h * n) + h];
+    }
+  }
+
+  frames.push({{}, {}, n, 1});
+
+  frames.push({Subtract(a12, a22), Add(b21, b22), h, 0});
+  frames.push({Subtract(a21, a11), Add(b11, b12), h, 0});
+  frames.push({Add(a11, a12), b22, h, 0});
+  frames.push({a22, Subtract(b21, b11), h, 0});
+  frames.push({a11, Subtract(b12, b22), h, 0});
+  frames.push({Add(a21, a22), b11, h, 0});
+  frames.push({Add(a11, a22), Add(b11, b22), h, 0});
+}
+
+std::vector<double> TabalaevAMatrixMulStrassenSEQ::CombineStrassenResults(std::stack<std::vector<double>> &results,
+                                                                          int n) {
+  auto p7 = std::move(results.top());
+  results.pop();
+  auto p6 = std::move(results.top());
+  results.pop();
+  auto p5 = std::move(results.top());
+  results.pop();
+  auto p4 = std::move(results.top());
+  results.pop();
+  auto p3 = std::move(results.top());
+  results.pop();
+  auto p2 = std::move(results.top());
+  results.pop();
+  auto p1 = std::move(results.top());
+  results.pop();
+
+  int h = n / 2;
+  std::vector<double> res(static_cast<size_t>(n) * n);
+  for (int i = 0; i < h; ++i) {
+    for (int j = 0; j < h; ++j) {
+      int idx = (i * h) + j;
+      res[(i * n) + j] = p1[idx] + p4[idx] - p5[idx] + p7[idx];
+      res[(i * n) + j + h] = p3[idx] + p5[idx];
+      res[((i + h) * n) + j] = p2[idx] + p4[idx];
+      res[((i + h) * n) + j + h] = p1[idx] - p2[idx] + p3[idx] + p6[idx];
+    }
+  }
+  return res;
+}
+
 std::vector<double> TabalaevAMatrixMulStrassenSEQ::StrassenMultiply(const std::vector<double> &mat_a,
                                                                     const std::vector<double> &mat_b, int n) {
   std::stack<StrassenFrame> frames;
@@ -103,83 +188,14 @@ std::vector<double> TabalaevAMatrixMulStrassenSEQ::StrassenMultiply(const std::v
 
     if (current.stage == 0) {
       if (current.n <= 32) {
-        std::vector<double> res(current.n * current.n, 0.0);
-        for (int i = 0; i < current.n; ++i) {
-          for (int k = 0; k < current.n; ++k) {
-            for (int j = 0; j < current.n; ++j) {
-              res[(i * current.n) + j] += current.mat_a[(i * current.n) + k] * current.mat_b[(k * current.n) + j];
-            }
-          }
-        }
-        results.push(std::move(res));
-        continue;
+        results.push(BaseCaseMultiply(current.mat_a, current.mat_b, current.n));
+      } else {
+        PushStrassenSubtasks(frames, current.mat_a, current.mat_b, current.n);
       }
-
-      int h = current.n / 2;
-      int sz = h * h;
-      std::vector<double> a11(sz);
-      std::vector<double> a12(sz);
-      std::vector<double> a21(sz);
-      std::vector<double> a22(sz);
-      std::vector<double> b11(sz);
-      std::vector<double> b12(sz);
-      std::vector<double> b21(sz);
-      std::vector<double> b22(sz);
-
-      for (int i = 0; i < h; ++i) {
-        for (int j = 0; j < h; ++j) {
-          a11[(i * h) + j] = current.mat_a[(i * current.n) + j];
-          a12[(i * h) + j] = current.mat_a[(i * current.n) + j + h];
-          a21[(i * h) + j] = current.mat_a[((i + h) * current.n) + j];
-          a22[(i * h) + j] = current.mat_a[((i + h) * current.n) + j + h];
-          b11[(i * h) + j] = current.mat_b[(i * current.n) + j];
-          b12[(i * h) + j] = current.mat_b[(i * current.n) + j + h];
-          b21[(i * h) + j] = current.mat_b[((i + h) * current.n) + j];
-          b22[(i * h) + j] = current.mat_b[((i + h) * current.n) + j + h];
-        }
-      }
-
-      frames.push({{}, {}, current.n, 1});
-
-      frames.push({Subtract(a12, a22), Add(b21, b22), h, 0});
-      frames.push({Subtract(a21, a11), Add(b11, b12), h, 0});
-      frames.push({Add(a11, a12), b22, h, 0});
-      frames.push({a22, Subtract(b21, b11), h, 0});
-      frames.push({a11, Subtract(b12, b22), h, 0});
-      frames.push({Add(a21, a22), b11, h, 0});
-      frames.push({Add(a11, a22), Add(b11, b22), h, 0});
-
     } else {
-      auto p7 = std::move(results.top());
-      results.pop();
-      auto p6 = std::move(results.top());
-      results.pop();
-      auto p5 = std::move(results.top());
-      results.pop();
-      auto p4 = std::move(results.top());
-      results.pop();
-      auto p3 = std::move(results.top());
-      results.pop();
-      auto p2 = std::move(results.top());
-      results.pop();
-      auto p1 = std::move(results.top());
-      results.pop();
-
-      int h = current.n / 2;
-      std::vector<double> res(static_cast<size_t>(current.n) * current.n);
-      for (int i = 0; i < h; ++i) {
-        for (int j = 0; j < h; ++j) {
-          int idx = i * h + j;
-          res[(i * current.n) + j] = p1[idx] + p4[idx] - p5[idx] + p7[idx];
-          res[(i * current.n) + j + h] = p3[idx] + p5[idx];
-          res[((i + h) * current.n) + j] = p2[idx] + p4[idx];
-          res[((i + h) * current.n) + j + h] = p1[idx] - p2[idx] + p3[idx] + p6[idx];
-        }
-      }
-      results.push(std::move(res));
+      results.push(CombineStrassenResults(results, current.n));
     }
   }
   return results.top();
 }
-
 }  // namespace tabalaev_a_matrix_mul_strassen

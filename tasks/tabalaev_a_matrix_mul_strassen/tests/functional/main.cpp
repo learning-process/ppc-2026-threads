@@ -25,9 +25,9 @@ class TabalaevAMatrixMulStrassenFuncTests : public ppc::util::BaseRunFuncTests<I
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    int r_a = std::get<0>(params);
-    int c_a_r_b = std::get<1>(params);
-    int c_b = std::get<2>(params);
+    size_t r_a = std::get<0>(params);
+    size_t c_a_r_b = std::get<1>(params);
+    size_t c_b = std::get<2>(params);
     int up_to = std::get<3>(params);
 
     input_data_.a_rows = r_a;

@@ -15,9 +15,9 @@ class TabalaevAMatrixMulStrassenPerfTests : public ppc::util::BaseRunPerfTests<I
     const size_t rc = 512;
     const size_t size = rc * rc;
 
-    input_data_.a_rows = static_cast<int>(rc);
-    input_data_.a_cols_b_rows = static_cast<int>(rc);
-    input_data_.b_cols = static_cast<int>(rc);
+    input_data_.a_rows = rc;
+    input_data_.a_cols_b_rows = rc;
+    input_data_.b_cols = rc;
 
     input_data_.a.assign(size, 0.0);
     input_data_.b.assign(size, 0.0);
