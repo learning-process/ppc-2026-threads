@@ -8,7 +8,6 @@
 #include "iskhakov_d_vertical_gauss_filter/common/include/common.hpp"
 #include "iskhakov_d_vertical_gauss_filter/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace iskhakov_d_vertical_gauss_filter {
 
