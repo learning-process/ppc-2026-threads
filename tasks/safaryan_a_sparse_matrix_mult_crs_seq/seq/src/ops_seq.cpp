@@ -9,50 +9,72 @@
 
 namespace safaryan_a_sparse_matrix_mult_crs_seq {
 
-SafaryanASparseMatrixMultCRSSeq::SafaryanASparseMatrixMultCRSSeq(const InType& in) {
+SafaryanASparseMatrixMultCRSSeq::SafaryanASparseMatrixMultCRSSeq(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
-bool SafaryanASparseMatrixMultCRSSeq::IsMatrixValid(const CRSMatrix& m) {
-  if (m.rows == 0 || m.cols == 0) return false;
+bool SafaryanASparseMatrixMultCRSSeq::IsMatrixValid(const CRSMatrix &m) {
+  if (m.rows == 0 || m.cols == 0) {
+    return false;
+  }
 
-  if (m.row_ptr.size() != m.rows + 1) return false;
+  if (m.row_ptr.size() != m.rows + 1) {
+    return false;
+  }
 
-  if (m.row_ptr.empty() || m.row_ptr[0] != 0) return false;
+  if (m.row_ptr.empty() || m.row_ptr[0] != 0) {
+    return false;
+  }
 
-  if (m.values.size() != m.col_indices.size()) return false;
-  if (m.nnz != m.values.size()) return false;
+  if (m.values.size() != m.col_indices.size()) {
+    return false;
+  }
+  if (m.nnz != m.values.size()) {
+    return false;
+  }
 
-  if (m.row_ptr[m.rows] != m.nnz) return false;
+  if (m.row_ptr[m.rows] != m.nnz) {
+    return false;
+  }
 
   for (size_t i = 0; i < m.rows; ++i) {
-    if (m.row_ptr[i] > m.row_ptr[i + 1]) return false;
-    if (m.row_ptr[i + 1] > m.nnz) return false;
+    if (m.row_ptr[i] > m.row_ptr[i + 1]) {
+      return false;
+    }
+    if (m.row_ptr[i + 1] > m.nnz) {
+      return false;
+    }
   }
 
   for (size_t idx = 0; idx < m.col_indices.size(); ++idx) {
-    if (m.col_indices[idx] >= m.cols) return false;
+    if (m.col_indices[idx] >= m.cols) {
+      return false;
+    }
   }
 
   return true;
 }
 
 bool SafaryanASparseMatrixMultCRSSeq::ValidationImpl() {
-  const auto& a = std::get<0>(GetInput());
-  const auto& b = std::get<1>(GetInput());
+  const auto &a = std::get<0>(GetInput());
+  const auto &b = std::get<1>(GetInput());
 
-  if (!IsMatrixValid(a) || !IsMatrixValid(b)) return false;
-  if (a.cols != b.rows) return false;
+  if (!IsMatrixValid(a) || !IsMatrixValid(b)) {
+    return false;
+  }
+  if (a.cols != b.rows) {
+    return false;
+  }
 
   return true;
 }
 
 bool SafaryanASparseMatrixMultCRSSeq::PreProcessingImpl() {
-  const auto& a = std::get<0>(GetInput());
-  const auto& b = std::get<1>(GetInput());
+  const auto &a = std::get<0>(GetInput());
+  const auto &b = std::get<1>(GetInput());
 
-  OutType& c = GetOutput();
+  OutType &c = GetOutput();
   c.values.clear();
   c.col_indices.clear();
   c.row_ptr.assign(a.rows + 1, 0);
@@ -65,9 +87,9 @@ bool SafaryanASparseMatrixMultCRSSeq::PreProcessingImpl() {
 }
 
 bool SafaryanASparseMatrixMultCRSSeq::RunImpl() {
-  const auto& a = std::get<0>(GetInput());
-  const auto& b = std::get<1>(GetInput());
-  OutType& c = GetOutput();
+  const auto &a = std::get<0>(GetInput());
+  const auto &b = std::get<1>(GetInput());
+  OutType &c = GetOutput();
 
   c.values.clear();
   c.col_indices.clear();

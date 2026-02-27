@@ -11,7 +11,7 @@ class SafaryanASparseMatrixMultCRSSeq : public BaseTask {
     return ppc::task::TypeOfTask::kSEQ;
   }
 
-  explicit SafaryanASparseMatrixMultCRSSeq(const InType& in);
+  explicit SafaryanASparseMatrixMultCRSSeq(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -19,7 +19,7 @@ class SafaryanASparseMatrixMultCRSSeq : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static bool IsMatrixValid(const CRSMatrix& m);
+  static bool IsMatrixValid(const CRSMatrix &m);
 };
 
 }  // namespace safaryan_a_sparse_matrix_mult_crs_seq

@@ -11,9 +11,9 @@
 namespace safaryan_a_sparse_matrix_mult_crs_seq {
 
 struct CRSMatrix {
-  std::vector<double> values;         
-  std::vector<size_t> col_indices;    
-  std::vector<size_t> row_ptr;        
+  std::vector<double> values;
+  std::vector<size_t> col_indices;
+  std::vector<size_t> row_ptr;
   size_t rows = 0;
   size_t cols = 0;
   size_t nnz = 0;
