@@ -9,7 +9,7 @@
 
 namespace shkrebko_m_calc_of_integral_rect {
 
-ShkrebkoMCalcOfIntegralRectSEQ::ShkrebkoMCalcOfIntegralRectSEQ(const InType &in) {
+ShkrebkoMCalcOfIntegralRectSEQ::ShkrebkoMCalcOfIntegralRectSEQ(const InType &in) : res_(0.0) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
@@ -26,7 +26,7 @@ bool ShkrebkoMCalcOfIntegralRectSEQ::ValidationImpl() {
     return false;
   }
 
-  if (!std::ranges::all_of(input.n_steps, [](int n) { return n > 0; })) {
+  if (!std::ranges::all_of(input.limits, [](const auto &lim) { return lim.first < lim.second; })) {
     return false;
   }
 
@@ -63,7 +63,7 @@ bool ShkrebkoMCalcOfIntegralRectSEQ::RunImpl() {
 
   while (true) {
     for (std::size_t i = 0; i < dim; ++i) {
-      point[i] = local_input_.limits[i].first + (static_cast<double>(idx[i]) + 0.5) * h[i];
+      point[i] = local_input_.limits[i].first + ((static_cast<double>(idx[i]) + 0.5) * h[i]);
     }
 
     double f_val = local_input_.func(point);

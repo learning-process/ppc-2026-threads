@@ -3,9 +3,11 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <functional>
 #include <numbers>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "shkrebko_m_calc_of_integral_rect/common/include/common.hpp"
@@ -51,7 +53,7 @@ TEST_P(ShkrebkoMRunFuncTests, MultiDimRectangleMethod) {
 InType MakeInType(std::function<double(const std::vector<double> &)> func,
                   const std::vector<std::pair<double, double>> &limits, int n_steps) {
   std::vector<int> steps(limits.size(), n_steps);
-  return InType{limits, steps, func};
+  return InType{limits, steps, std::move(func)};
 }
 
 const std::array<TestType, 10> kTestCases = {
@@ -73,7 +75,6 @@ const std::array<TestType, 10> kTestCases = {
     TestType{MakeInType([](const std::vector<double> &) { return 1.0; }, {{0.0, 1e-3}}, 100), 1e-3, "Const_1D_small"},
 };
 
-// Добавляем задачу в список тестов
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ShkrebkoMCalcOfIntegralRectSEQ, InType>(
     kTestCases, PPC_SETTINGS_shkrebko_m_calc_of_integral_rect));
 
