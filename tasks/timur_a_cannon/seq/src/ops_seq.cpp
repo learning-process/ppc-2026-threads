@@ -1,5 +1,6 @@
 #include "timur_a_cannon/seq/include/ops_seq.hpp"
 
+#include <cstddef>
 #include <utility>
 #include <vector>
 
@@ -22,7 +23,7 @@ bool TimurACannonMatrixMultiplication::ValidationImpl() {
     return false;
   }
   size_t n = mat_a.size();
-  return (n == mat_a[0].size() && n == mat_b.size() && n == mat_b[0].size() && n % b_size == 0);
+  return (n == mat_a[0].size() && n == mat_b.size() && n == mat_b[0].size() && (n % static_cast<size_t>(b_size) == 0));
 }
 
 bool TimurACannonMatrixMultiplication::PreProcessingImpl() {
@@ -85,10 +86,11 @@ bool TimurACannonMatrixMultiplication::RunImpl() {
     for (int j = 0; j < grid_sz; ++j) {
       int shift_a = (i + j) % grid_sz;
       int shift_b = (i + j) % grid_sz;
-      for (int r = 0; r < b_size; ++r) {
-        for (int c = 0; c < b_size; ++c) {
-          blocks_a[i][j][r][c] = mat_a[i * b_size + r][shift_a * b_size + c];
-          blocks_b[i][j][r][c] = mat_b[shift_b * b_size + r][j * b_size + c];
+      for (int row = 0; row < b_size; ++row) {
+        for (int col = 0; col < b_size; ++col) {
+          // Добавлены скобки для приоритетов операций
+          blocks_a[i][j][row][col] = mat_a[(i * b_size) + row][(shift_a * b_size) + col];
+          blocks_b[i][j][row][col] = mat_b[(shift_b * b_size) + row][(j * b_size) + col];
         }
       }
     }
@@ -106,18 +108,18 @@ bool TimurACannonMatrixMultiplication::RunImpl() {
     }
   }
 
-  Matrix result(n, std::vector<double>(n));
+  Matrix res_mat(n, std::vector<double>(n));
   for (int i = 0; i < grid_sz; ++i) {
     for (int j = 0; j < grid_sz; ++j) {
-      for (int r = 0; r < b_size; ++r) {
-        for (int c = 0; c < b_size; ++c) {
-          result[i * b_size + r][j * b_size + c] = blocks_c[i][j][r][c];
+      for (int row = 0; row < b_size; ++row) {
+        for (int col = 0; col < b_size; ++col) {
+          res_mat[(i * b_size) + row][(j * b_size) + col] = blocks_c[i][j][row][col];
         }
       }
     }
   }
 
-  GetOutput() = std::move(result);
+  GetOutput() = std::move(res_mat);
   return true;
 }
 
