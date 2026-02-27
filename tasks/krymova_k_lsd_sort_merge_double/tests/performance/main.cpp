@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <random>
+#include <vector>
 
 #include "krymova_k_lsd_sort_merge_double/common/include/common.hpp"
 #include "krymova_k_lsd_sort_merge_double/seq/include/ops_seq.hpp"
