@@ -10,16 +10,17 @@
 namespace gonozov_l_bitwise_sorting_double_batcher_merge {
 
 class GonozovLBitSortBatcherMergePerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr size_t kCount = 1000000;
+  static constexpr size_t kCount = 100000;
   InType input_data_;
 
   void SetUp() override {
-    std::vector<double> forming_data;
-    forming_data.reserve(kCount);
+    input_data.reserve(kCount);
     for (size_t i = 0; i < kCount; i++) {
-      forming_data[i] = (static_cast<double>(i) + 161.0) * (static_cast<double>(i) + 1.0) / (2344.0);
+      input_data[i] = (static_cast<double>(i) + 11.0) / (static_cast<double>(i) + 2.0) * (static_cast<double>(i) + 1.0);
+      if (i % 2 == 0) {
+        input_data[i] *= (-1);
+      }
     }
-    input_data_ = forming_data;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
