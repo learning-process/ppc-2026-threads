@@ -52,9 +52,9 @@ void KrymovaKLsdSortMergeDoubleSEQ::LSDSortDouble(double* arr, int size) {
     return;
   }
 
-  const int kBitsPerPass = 8;
-  const int kRadix = 1 << kBitsPerPass;
-  const int kPasses = static_cast<int>(sizeof(double)) * 8 / kBitsPerPass;
+  const int k_bits_per_pass = 8;
+  const int k_radix = 1 << k_bits_per_pass;
+  const int k_passes = static_cast<int>(sizeof(double)) * 8 / k_bits_per_pass;
 
   std::vector<uint64_t> ull_arr(size);
   std::vector<uint64_t> ull_tmp(size);
@@ -63,24 +63,24 @@ void KrymovaKLsdSortMergeDoubleSEQ::LSDSortDouble(double* arr, int size) {
     ull_arr[i] = DoubleToULL(arr[i]);
   }
 
-  std::vector<unsigned int> count(kRadix, 0U);
+  std::vector<unsigned int> count(k_radix, 0U);
 
-  for (int pass = 0; pass < kPasses; ++pass) {
-    int shift = pass * kBitsPerPass;
+  for (int pass = 0; pass < k_passes; ++pass) {
+    int shift = pass * k_bits_per_pass;
 
-    std::fill(count.begin(), count.end(), 0U);
+    std::ranges::fill(count, 0U);
 
     for (int i = 0; i < size; ++i) {
-      unsigned int digit = (ull_arr[i] >> shift) & (kRadix - 1);
+      unsigned int digit = (ull_arr[i] >> shift) & (k_radix - 1);
       ++count[digit];
     }
 
-    for (int i = 1; i < kRadix; ++i) {
+    for (int i = 1; i < k_radix; ++i) {
       count[i] += count[i - 1];
     }
 
     for (int i = size - 1; i >= 0; --i) {
-      unsigned int digit = (ull_arr[i] >> shift) & (kRadix - 1);
+      unsigned int digit = (ull_arr[i] >> shift) & (k_radix - 1);
       ull_tmp[--count[digit]] = ull_arr[i];
     }
 
@@ -92,7 +92,7 @@ void KrymovaKLsdSortMergeDoubleSEQ::LSDSortDouble(double* arr, int size) {
   }
 }
 
-void KrymovaKLsdSortMergeDoubleSEQ::IterativeMergeSort(double* arr, double* tmp, int size, int portion) const {
+void KrymovaKLsdSortMergeDoubleSEQ::IterativeMergeSort(double* arr, double* tmp, int size, int portion) {
   if (size <= 1) {
     return;
   }

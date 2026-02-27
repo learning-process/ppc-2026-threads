@@ -11,6 +11,7 @@
 #include "krymova_k_lsd_sort_merge_double/common/include/common.hpp"
 #include "krymova_k_lsd_sort_merge_double/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"  // для ppc::util::GTestParamIndex
 
 namespace krymova_k_lsd_sort_merge_double {
 

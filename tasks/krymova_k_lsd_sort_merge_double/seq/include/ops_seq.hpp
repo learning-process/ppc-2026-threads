@@ -21,7 +21,7 @@ class KrymovaKLsdSortMergeDoubleSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 
   static void LSDSortDouble(double* arr, int size);
-  void IterativeMergeSort(double* arr, double* tmp, int size, int portion) const;
+  static void IterativeMergeSort(double* arr, double* tmp, int size, int portion);
 
   static uint64_t DoubleToULL(double d);
   static double ULLToDouble(uint64_t ull);
