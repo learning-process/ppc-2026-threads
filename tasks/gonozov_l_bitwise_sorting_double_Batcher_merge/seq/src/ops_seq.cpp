@@ -92,7 +92,7 @@ void RadixSortDouble(std::vector<double> &data) {
   }
 }
 
-void MergingHalves(std::vector<double> &arr, size_t i, size_t len) {
+void MergingHalves(std::vector<double> &arr, size_t i, size_t len) {  // слияние половинок
   size_t half = len / 2;
   size_t end = std::min(i + len, arr.size());
 
