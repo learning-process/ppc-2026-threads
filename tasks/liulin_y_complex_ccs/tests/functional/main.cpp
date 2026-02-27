@@ -6,6 +6,7 @@
 #include <complex>
 #include <cstddef>
 #include <fstream>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -18,8 +19,8 @@
 
 namespace liulin_y_complex_ccs {
 
-static CCSMatrix TripletToCcsTest(int rows_count, int cols_count,
-                                  const std::vector<std::tuple<int, int, std::complex<double>>> &triplets) {
+CCSMatrix TripletToCcsTest(int rows_count, int cols_count,
+                           const std::vector<std::tuple<int, int, std::complex<double>>> &triplets) {
   CCSMatrix result{};
   result.count_rows = rows_count;
   result.count_cols = cols_count;
@@ -45,7 +46,7 @@ static CCSMatrix TripletToCcsTest(int rows_count, int cols_count,
   return result;
 }
 
-static void ReadMatrixFromFile(std::ifstream &file_stream, CCSMatrix &matrix) {
+void ReadMatrixFromFile(std::ifstream &file_stream, CCSMatrix &matrix) {
   int rows_val{0};
   int cols_val{0};
   int nnz_val{0};
@@ -65,21 +66,28 @@ static void ReadMatrixFromFile(std::ifstream &file_stream, CCSMatrix &matrix) {
   matrix = TripletToCcsTest(rows_val, cols_val, triplets);
 }
 
-static std::vector<std::complex<double>> ComputeDenseReference(const CCSMatrix &mat_a, const CCSMatrix &mat_b) {
-  int rows_total{mat_a.count_rows};
-  int cols_total{mat_b.count_cols};
-  std::vector<std::complex<double>> dense(static_cast<size_t>(rows_total) * cols_total, {0.0, 0.0});
+std::vector<std::complex<double>> ComputeDenseReference(const CCSMatrix &mat_a, const CCSMatrix &mat_b) {
+  const int rows_total{mat_a.count_rows};
+  const int cols_total{mat_b.count_cols};
+  std::vector<std::complex<double>> dense(static_cast<size_t>(rows_total) * static_cast<size_t>(cols_total),
+                                          {0.0, 0.0});
 
   for (int col_idx{0}; col_idx < cols_total; ++col_idx) {
-    for (size_t idx_b{static_cast<size_t>(mat_b.col_index[col_idx])};
-         idx_b < static_cast<size_t>(mat_b.col_index[col_idx + 1]); ++idx_b) {
-      int mid_idx{mat_b.row_index[idx_b]};
-      std::complex<double> val_b{mat_b.values[idx_b]};
+    const size_t col_start{static_cast<size_t>(mat_b.col_index[static_cast<size_t>(col_idx)])};
+    const size_t col_end{static_cast<size_t>(mat_b.col_index[static_cast<size_t>(col_idx) + 1])};
 
-      for (size_t idx_a{static_cast<size_t>(mat_a.col_index[mid_idx])};
-           idx_a < static_cast<size_t>(mat_a.col_index[mid_idx + 1]); ++idx_a) {
-        int row_idx{mat_a.row_index[idx_a]};
-        dense[(static_cast<size_t>(row_idx) * cols_total) + col_idx] += mat_a.values[idx_a] * val_b;
+    for (size_t idx_b{col_start}; idx_b < col_end; ++idx_b) {
+      const int mid_idx{mat_b.row_index[idx_b]};
+      const std::complex<double> val_b{mat_b.values[idx_b]};
+
+      const size_t row_start{static_cast<size_t>(mat_a.col_index[static_cast<size_t>(mid_idx)])};
+      const size_t row_end{static_cast<size_t>(mat_a.col_index[static_cast<size_t>(mid_idx) + 1])};
+
+      for (size_t idx_a{row_start}; idx_a < row_end; ++idx_a) {
+        const int row_idx{mat_a.row_index[idx_a]};
+        const size_t offset{(static_cast<size_t>(row_idx) * static_cast<size_t>(cols_total)) +
+                            static_cast<size_t>(col_idx)};
+        dense[offset] += mat_a.values[idx_a] * val_b;
       }
     }
   }

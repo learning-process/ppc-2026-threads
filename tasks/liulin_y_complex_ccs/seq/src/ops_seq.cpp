@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <complex>
+#include <ranges>
 #include <vector>
 
 #include "liulin_y_complex_ccs/common/include/common.hpp"
@@ -58,7 +59,7 @@ bool LiulinYComplexCcs::RunImpl() {
       }
     }
 
-    std::sort(active_rows.begin(), active_rows.end());
+    std::ranges::sort(active_rows);
 
     for (int i : active_rows) {
       if (std::abs(dense_col[i]) > 1e-15) {
