@@ -28,9 +28,6 @@ bool ZavyalovAComplSparseMatrMultSEQ::RunImpl() {
 
   GetOutput() = matr_a * matr_b;
 
-  // CheckTestOutputData works much slower than RunImpl in perf tests.
-  // That's why we use this slowing method
-  std::this_thread::sleep_for(std::chrono::milliseconds(10));
   return true;
 }
 
