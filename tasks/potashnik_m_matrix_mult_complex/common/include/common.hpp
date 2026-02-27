@@ -80,7 +80,7 @@ struct CCSMatrix {
     if (height != matr.height) {
       return false;
     }
-    if (width != matr.height) {
+    if (width != matr.width) {
       return false;
     }
 
