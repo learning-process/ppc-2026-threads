@@ -14,7 +14,7 @@
 
 namespace dergachev_a_graham_scan_omp {
 
-class DergachevAGrahamScanFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class DergachevAGrahamScanFuncTestsOmp : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -40,7 +40,7 @@ class DergachevAGrahamScanFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
 namespace {
 
-TEST_P(DergachevAGrahamScanFuncTests, MatmulFromPic) {
+TEST_P(DergachevAGrahamScanFuncTestsOmp, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
@@ -52,9 +52,9 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = DergachevAGrahamScanFuncTests::PrintFuncTestName<DergachevAGrahamScanFuncTests>;
+const auto kPerfTestName = DergachevAGrahamScanFuncTestsOmp::PrintFuncTestName<DergachevAGrahamScanFuncTestsOmp>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, DergachevAGrahamScanFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PicMatrixTests, DergachevAGrahamScanFuncTestsOmp, kGtestValues, kPerfTestName);
 
 void RunompPipeline(const std::shared_ptr<DergachevAGrahamScanOMP> &task) {
   task->Validation();
