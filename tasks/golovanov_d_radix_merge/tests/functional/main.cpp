@@ -25,7 +25,7 @@
 namespace golovanov_d_radix_merge {
 
 class GolovanovDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
-  InType input_data_{};
+  InType input_data_;
 
  public:
   static std::string PrintTestParam(const TestType &test_param) {

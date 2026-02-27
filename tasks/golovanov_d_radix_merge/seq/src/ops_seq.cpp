@@ -25,7 +25,7 @@ bool GolovanovDRadixMergeSEQ::PreProcessingImpl() {
 
 bool GolovanovDRadixMergeSEQ::RunImpl() {
   std::vector<double> input = GetInput();
-  RadixSort::sort(input);
+  RadixSort::Sort(input);
   GetOutput() = input;
   return true;
 }

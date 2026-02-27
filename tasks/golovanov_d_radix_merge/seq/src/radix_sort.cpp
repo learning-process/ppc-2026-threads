@@ -1,9 +1,18 @@
 #include "../include/radix_sort.hpp"
 
+#include <array>
 #include <cstdint>
 #include <cstring>
+#include <vector>
 
-void RadixSort::sort(std::vector<double> &arr) {
+namespace {
+constexpr int kBytes = 8;
+constexpr std::size_t kRadix = 256;
+constexpr std::uint64_t kSignMask = 1ULL << 63;
+constexpr std::uint64_t kByteMask = 0xFFULL;
+}  // namespace
+
+void RadixSort::Sort(std::vector<double> &arr) {
   const size_t n = arr.size();
   if (n == 0) {
     return;
@@ -12,13 +21,13 @@ void RadixSort::sort(std::vector<double> &arr) {
   std::vector<uint64_t> data(n);
 
   for (size_t i = 0; i < n; ++i) {
-    uint64_t bits;
+    uint64_t bits = 0;
     std::memcpy(&bits, &arr[i], sizeof(double));
 
-    if (bits >> 63) {  // отрицательное
+    if ((bits & kSignMask) != 0U) {  // отрицательное
       bits = ~bits;
     } else {  // положительное
-      bits ^= (1ULL << 63);
+      bits ^= kSignMask;
     }
 
     data[i] = bits;
@@ -26,24 +35,24 @@ void RadixSort::sort(std::vector<double> &arr) {
 
   std::vector<uint64_t> buffer(n);
 
-  for (int byte = 0; byte < 8; ++byte) {
-    size_t count[256] = {0};
+  for (int byte = 0; byte < kBytes; ++byte) {
+    std::array<size_t, kRadix> count{};
 
     for (size_t i = 0; i < n; ++i) {
-      uint8_t b = (data[i] >> (byte * 8)) & 0xFF;
-      count[b]++;
+      size_t b = static_cast<size_t>((data[i] >> (byte * 8)) & kByteMask);
+      count.at(b)++;
     }
 
     size_t sum = 0;
-    for (int i = 0; i < 256; ++i) {
-      size_t tmp = count[i];
-      count[i] = sum;
+    for (auto &c : count) {
+      size_t tmp = c;
+      c = sum;
       sum += tmp;
     }
 
     for (size_t i = 0; i < n; ++i) {
-      uint8_t b = (data[i] >> (byte * 8)) & 0xFF;
-      buffer[count[b]++] = data[i];
+      size_t b = static_cast<size_t>((data[i] >> (byte * 8)) & kByteMask);
+      buffer[count.at(b)++] = data[i];
     }
 
     data.swap(buffer);
@@ -52,8 +61,8 @@ void RadixSort::sort(std::vector<double> &arr) {
   for (size_t i = 0; i < n; ++i) {
     uint64_t bits = data[i];
 
-    if (bits >> 63) {
-      bits ^= (1ULL << 63);
+    if ((bits & kSignMask) != 0U) {
+      bits ^= kSignMask;
     } else {
       bits = ~bits;
     }

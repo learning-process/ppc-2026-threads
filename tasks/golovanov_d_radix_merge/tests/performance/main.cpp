@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <ranges>
+#include <utility>
+#include <vector>
 
 // #include "golovanov_d_radix_merge/all/include/ops_all.hpp"
 #include "golovanov_d_radix_merge/common/include/common.hpp"
@@ -14,12 +16,12 @@
 namespace golovanov_d_radix_merge {
 
 class GolovanovDRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+  InType input_data_;
   int count_ = 500000;
 
   void SetUp() override {
     std::vector<double> data;
-    data.reserve(2 * count_ + 1);
+    data.reserve((2 * count_) + 1);
     for (int i = count_; i >= -count_; --i) {
       data.push_back(static_cast<double>(i));
     }

@@ -4,5 +4,5 @@
 
 class RadixSort {
  public:
-  static void sort(std::vector<double> &arr);
+  static void Sort(std::vector<double> &arr);
 };
