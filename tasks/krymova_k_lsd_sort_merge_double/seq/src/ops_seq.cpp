@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <cstring>
 #include <vector>
-#include "common/include/common.hpp"
+
 namespace krymova_k_lsd_sort_merge_double {
 
 KrymovaKLsdSortMergeDoubleSEQ::KrymovaKLsdSortMergeDoubleSEQ(const InType &in) {
