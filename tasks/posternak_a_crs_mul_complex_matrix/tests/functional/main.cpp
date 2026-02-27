@@ -1,16 +1,12 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
+#include <cmath>
 #include <complex>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "posternak_a_crs_mul_complex_matrix/common/include/common.hpp"

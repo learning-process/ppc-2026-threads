@@ -1,12 +1,17 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <cmath>
+#include <complex>
+#include <utility>
+#include <vector>
+
 #include "posternak_a_crs_mul_complex_matrix/common/include/common.hpp"
 #include "posternak_a_crs_mul_complex_matrix/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace posternak_a_crs_mul_complex_matrix {
 
-// используем "ленточные" матрицы для предсказуемого результата
 CRSMatrix MakeBandedCRS(int size, int bandwidth) {
   CRSMatrix m;
   m.rows = size;
@@ -20,9 +25,9 @@ CRSMatrix MakeBandedCRS(int size, int bandwidth) {
     int col_end = std::min(size - 1, row + bandwidth);
 
     for (int col = col_start; col <= col_end; ++col) {
-      double real = static_cast<double>(row + 1);
-      double imag = static_cast<double>(col + 1);
-      m.values.push_back({real, imag});
+      auto real = static_cast<double>(row + 1);
+      auto imag = static_cast<double>(col + 1);
+      m.values.emplace_back(real, imag);
       m.index_col.push_back(col);
     }
     m.index_row.push_back(static_cast<int>(m.values.size()));
@@ -46,40 +51,41 @@ std::complex<double> ComputeExpectedValue(const CRSMatrix &a, const CRSMatrix &b
   return result;
 }
 
-// будем проверять только 5 ключевых значений, чтобы тест не был слишком долгим
+bool CheckSingleElement(const CRSMatrix &result, const CRSMatrix &a, const CRSMatrix &b, int row, int col) {
+  std::complex<double> expected = ComputeExpectedValue(a, b, row, col);
+
+  bool found = false;
+  for (int idx = result.index_row[row]; idx < result.index_row[row + 1]; ++idx) {
+    if (result.index_col[idx] == col) {
+      found = true;
+      if (std::abs(result.values[idx] - expected) > 1e-12) {
+        return false;
+      }
+      break;
+    }
+  }
+
+  if (std::abs(expected) > 1e-12 && !found) {
+    return false;
+  }
+  if (std::abs(expected) <= 1e-12 && found) {
+    return false;
+  }
+
+  return true;
+}
+
 bool CheckKeyElements(const CRSMatrix &result, const CRSMatrix &a, const CRSMatrix &b) {
   int n = result.rows;
 
   const std::vector<std::pair<int, int>> key_positions = {
-      {0, 0},          // левый верхний угол
-      {0, n - 1},      // правый верхний
-      {n / 2, n / 2},  // центр
-      {n - 1, 0},      // левый нижний
-      {n - 1, n - 1}   // правый нижний
-  };
+      {0, 0}, {0, n - 1}, {n / 2, n / 2}, {n - 1, 0}, {n - 1, n - 1}};
 
   for (const auto &[row, col] : key_positions) {
     if (row >= n || col >= n) {
       continue;
     }
-
-    std::complex<double> expected = ComputeExpectedValue(a, b, row, col);
-
-    bool found = false;
-    for (int idx = result.index_row[row]; idx < result.index_row[row + 1]; ++idx) {
-      if (result.index_col[idx] == col) {
-        found = true;
-        if (std::abs(result.values[idx] - expected) > 1e-12) {
-          return false;
-        }
-        break;
-      }
-    }
-
-    if (std::abs(expected) > 1e-12 && !found) {
-      return false;
-    }
-    if (std::abs(expected) <= 1e-12 && found) {
+    if (!CheckSingleElement(result, a, b, row, col)) {
       return false;
     }
   }
@@ -90,11 +96,11 @@ bool CheckKeyElements(const CRSMatrix &result, const CRSMatrix &a, const CRSMatr
 class PosternakARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    const int MATRIX_SIZE = 10000;
-    const int BANDWIDTH = 40;
+    const int matrix_size = 10000;
+    const int bandwidth = 40;
 
-    CRSMatrix a = MakeBandedCRS(MATRIX_SIZE, BANDWIDTH);
-    CRSMatrix b = MakeBandedCRS(MATRIX_SIZE, BANDWIDTH);
+    CRSMatrix a = MakeBandedCRS(matrix_size, bandwidth);
+    CRSMatrix b = MakeBandedCRS(matrix_size, bandwidth);
 
     input_data_ = {a, b};
 

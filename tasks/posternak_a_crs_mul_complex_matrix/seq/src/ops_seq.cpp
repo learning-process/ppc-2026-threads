@@ -1,8 +1,10 @@
 #include "posternak_a_crs_mul_complex_matrix/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <complex>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "posternak_a_crs_mul_complex_matrix/common/include/common.hpp"
@@ -75,8 +77,7 @@ bool PosternakACRSMulComplexMatrixSEQ::RunImpl() {
 
     // копирование и сортировка результата
     std::vector<std::pair<int, std::complex<double>>> sorted_elements(row_sum.begin(), row_sum.end());
-    std::sort(sorted_elements.begin(), sorted_elements.end(),
-              [](const auto &a, const auto &b) { return a.first < b.first; });
+    std::ranges::sort(sorted_elements, [](const auto &a, const auto &b) { return a.first < b.first; });
 
     for (const auto &[col_idx, value] : sorted_elements) {
       // добавляем только значимые ненулевые элементы
