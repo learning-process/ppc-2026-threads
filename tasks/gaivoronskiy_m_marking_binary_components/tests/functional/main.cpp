@@ -91,9 +91,13 @@ class GaivoronskiyMMarkingFuncTests : public ppc::util::BaseRunFuncTests<InType,
     }
   }
 
-  bool CheckTestOutputData(OutType &output_data) final { return output_data == expected_; }
+  bool CheckTestOutputData(OutType &output_data) final {
+    return output_data == expected_;
+  }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
  private:
   InType input_data_;
@@ -102,12 +106,13 @@ class GaivoronskiyMMarkingFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
 namespace {
 
-TEST_P(GaivoronskiyMMarkingFuncTests, MarkingComponents) { ExecuteTest(GetParam()); }
+TEST_P(GaivoronskiyMMarkingFuncTests, MarkingComponents) {
+  ExecuteTest(GetParam());
+}
 
 const std::array<TestType, 5> kTestParam = {
     std::make_tuple(0, "single_L_component"), std::make_tuple(1, "four_separate_pixels"),
-    std::make_tuple(2, "all_background"), std::make_tuple(3, "all_objects"),
-    std::make_tuple(4, "two_horizontal_bars")};
+    std::make_tuple(2, "all_background"), std::make_tuple(3, "all_objects"), std::make_tuple(4, "two_horizontal_bars")};
 
 const auto kTestTasksList = ppc::util::AddFuncTask<GaivoronskiyMMarkingBinaryComponentsSEQ, InType>(
     kTestParam, PPC_SETTINGS_gaivoronskiy_m_marking_binary_components);

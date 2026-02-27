@@ -33,10 +33,14 @@ class GaivoronskiyMMarkingPerfTests : public ppc::util::BaseRunPerfTests<InType,
     return std::any_of(output_data.begin() + 2, output_data.end(), [](int v) { return v > 0; });
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 };
 
-TEST_P(GaivoronskiyMMarkingPerfTests, RunPerfModes) { ExecuteTest(GetParam()); }
+TEST_P(GaivoronskiyMMarkingPerfTests, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
 
 namespace {
 

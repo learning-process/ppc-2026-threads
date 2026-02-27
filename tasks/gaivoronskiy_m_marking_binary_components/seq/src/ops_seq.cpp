@@ -78,6 +78,8 @@ bool GaivoronskiyMMarkingBinaryComponentsSEQ::RunImpl() {
   return true;
 }
 
-bool GaivoronskiyMMarkingBinaryComponentsSEQ::PostProcessingImpl() { return true; }
+bool GaivoronskiyMMarkingBinaryComponentsSEQ::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace gaivoronskiy_m_marking_binary_components
