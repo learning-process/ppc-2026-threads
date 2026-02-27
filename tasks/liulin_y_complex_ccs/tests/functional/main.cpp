@@ -8,7 +8,6 @@
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "liulin_y_complex_ccs/common/include/common.hpp"
 #include "liulin_y_complex_ccs/seq/include/ops_seq.hpp"
