@@ -10,6 +10,13 @@ constexpr int kBytes = 8;
 constexpr std::size_t kRadix = 256;
 constexpr std::uint64_t kSignMask = 1ULL << 63;
 constexpr std::uint64_t kByteMask = 0xFFULL;
+uint64_t ToSortable(uint64_t bits, const uint64_t sign_mask) {
+  return ((bits & sign_mask) != 0U) ? ~bits : (bits ^ sign_mask);
+}
+
+uint64_t FromSortable(uint64_t bits, const uint64_t sign_mask) {
+  return ((bits & sign_mask) != 0U) ? (bits ^ sign_mask) : ~bits;
+}
 }  // namespace
 
 void RadixSort::Sort(std::vector<double> &arr) {
@@ -24,11 +31,7 @@ void RadixSort::Sort(std::vector<double> &arr) {
     uint64_t bits = 0;
     std::memcpy(&bits, &arr[i], sizeof(double));
 
-    if ((bits & kSignMask) != 0U) {  // отрицательное
-      bits = ~bits;
-    } else {  // положительное
-      bits ^= kSignMask;
-    }
+    bits = ToSortable(bits, kSignMask);
 
     data[i] = bits;
   }
@@ -39,7 +42,7 @@ void RadixSort::Sort(std::vector<double> &arr) {
     std::array<size_t, kRadix> count{};
 
     for (size_t i = 0; i < n; ++i) {
-      size_t b = static_cast<size_t>((data[i] >> (byte * 8)) & kByteMask);
+      const auto b = static_cast<size_t>((data[i] >> (byte * 8)) & kByteMask);
       count.at(b)++;
     }
 
@@ -51,7 +54,7 @@ void RadixSort::Sort(std::vector<double> &arr) {
     }
 
     for (size_t i = 0; i < n; ++i) {
-      size_t b = static_cast<size_t>((data[i] >> (byte * 8)) & kByteMask);
+      const auto b = static_cast<size_t>((data[i] >> (byte * 8)) & kByteMask);
       buffer[count.at(b)++] = data[i];
     }
 
@@ -61,11 +64,7 @@ void RadixSort::Sort(std::vector<double> &arr) {
   for (size_t i = 0; i < n; ++i) {
     uint64_t bits = data[i];
 
-    if ((bits & kSignMask) != 0U) {
-      bits ^= kSignMask;
-    } else {
-      bits = ~bits;
-    }
+    bits = FromSortable(bits, kSignMask);
 
     std::memcpy(&arr[i], &bits, sizeof(double));
   }
