@@ -10,6 +10,7 @@ class ZorinDStrassenAlgMatrixSEQ : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
+
   explicit ZorinDStrassenAlgMatrixSEQ(const InType &in);
 
  private:

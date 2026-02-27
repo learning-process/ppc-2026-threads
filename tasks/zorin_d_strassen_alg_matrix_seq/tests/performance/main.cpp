@@ -11,17 +11,17 @@ namespace zorin_d_strassen_alg_matrix_seq {
 
 namespace {
 
-std::vector<double> MakeOnes(std::size_t n) {
+std::vector<double> make_ones(std::size_t n) {
   return std::vector<double>(n * n, 1.0);
 }
 
 class ZorinDRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    constexpr std::size_t kN = 256;
-    input_.n = kN;
-    input_.A = MakeOnes(kN);
-    input_.B = MakeOnes(kN);
+    constexpr std::size_t k_n = 256;
+    input_.n = k_n;
+    input_.a = make_ones(k_n);
+    input_.b = make_ones(k_n);
   }
 
   InType GetTestInputData() final {
@@ -40,13 +40,13 @@ TEST_P(ZorinDRunPerfTests, ZorinDSEQStrassenRunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kPerfTasks =
+const auto k_perf_tasks =
     ppc::util::MakeAllPerfTasks<InType, ZorinDStrassenAlgMatrixSEQ>(PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq);
 
-const auto kValues = ppc::util::TupleToGTestValues(kPerfTasks);
-const auto kName = ZorinDRunPerfTests::CustomPerfTestName;
+const auto k_values = ppc::util::TupleToGTestValues(k_perf_tasks);
+const auto k_name = ZorinDRunPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(StrassenPerf, ZorinDRunPerfTests, kValues, kName);
+INSTANTIATE_TEST_SUITE_P(StrassenPerf, ZorinDRunPerfTests, k_values, k_name);
 
 }  // namespace
 
