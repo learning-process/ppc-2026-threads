@@ -23,7 +23,7 @@
 
 namespace nesterov_a_test_task_threads {
 
-class NesterovARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class SafaryanASparseMatrixMultCRSSeqTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -68,7 +68,7 @@ class NesterovARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
 
 namespace {
 
-TEST_P(NesterovARunFuncTestsThreads, MatmulFromPic) {
+TEST_P(SafaryanASparseMatrixMultCRSSeqTestsThreads, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
@@ -83,9 +83,9 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = NesterovARunFuncTestsThreads::PrintFuncTestName<NesterovARunFuncTestsThreads>;
+const auto kPerfTestName = SafaryanASparseMatrixMultCRSSeqTestsThreads::PrintFuncTestName<SafaryanASparseMatrixMultCRSSeqTestsThreads>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, NesterovARunFuncTestsThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PicMatrixTests, SafaryanASparseMatrixMultCRSSeqTestsThreads, kGtestValues, kPerfTestName);
 
 }  // namespace
 

@@ -1,48 +1,152 @@
 #include <gtest/gtest.h>
 
-#include "example_threads/all/include/ops_all.hpp"
-#include "example_threads/common/include/common.hpp"
-#include "example_threads/omp/include/ops_omp.hpp"
-#include "example_threads/seq/include/ops_seq.hpp"
-#include "example_threads/stl/include/ops_stl.hpp"
-#include "example_threads/tbb/include/ops_tbb.hpp"
-#include "util/include/perf_test_util.hpp"
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <random>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
 
-namespace nesterov_a_test_task_threads {
+#include "safaryan_a_sparse_matrix_mult_crs_seq/seq/include/ops_seq.hpp"
 
-class ExampleRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 200;
-  InType input_data_{};
+namespace safaryan_a_sparse_matrix_mult_crs_seq {
 
-  void SetUp() override {
-    input_data_ = kCount_;
+// ---------- helpers: Dense <-> CRS ----------
+
+static CRSMatrix DenseToCrs(const std::vector<std::vector<double>>& dense, double eps = 0.0) {
+  CRSMatrix m;
+  m.rows = dense.size();
+  m.cols = dense.empty() ? 0 : dense[0].size();
+  m.row_ptr.assign(m.rows + 1, 0);
+
+  for (size_t i = 0; i < m.rows; ++i) {
+    m.row_ptr[i] = m.values.size();
+    for (size_t j = 0; j < m.cols; ++j) {
+      const double v = dense[i][j];
+      if (std::abs(v) > eps) {
+        m.values.push_back(v);
+        m.col_indices.push_back(j);
+      }
+    }
   }
-
-  bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
-  }
-
-  InType GetTestInputData() final {
-    return input_data_;
-  }
-};
-
-TEST_P(ExampleRunPerfTestThreads, RunPerfModes) {
-  ExecuteTest(GetParam());
+  m.nnz = m.values.size();
+  m.row_ptr[m.rows] = m.nnz;
+  return m;
 }
 
-namespace {
+static std::vector<std::vector<double>> CrsToDense(const CRSMatrix& m) {
+  std::vector<std::vector<double>> dense(m.rows, std::vector<double>(m.cols, 0.0));
+  for (size_t i = 0; i < m.rows; ++i) {
+    for (size_t idx = m.row_ptr[i]; idx < m.row_ptr[i + 1]; ++idx) {
+      dense[i][m.col_indices[idx]] += m.values[idx];
+    }
+  }
+  return dense;
+}
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NesterovATestTaskALL, NesterovATestTaskOMP, NesterovATestTaskSEQ,
-                                NesterovATestTaskSTL, NesterovATestTaskTBB>(PPC_SETTINGS_example_threads);
+static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<double>>& a,
+                                                 const std::vector<std::vector<double>>& b) {
+  const size_t n = a.size();
+  const size_t k = a.empty() ? 0 : a[0].size();
+  const size_t m = b.empty() ? 0 : b[0].size();
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+  std::vector<std::vector<double>> c(n, std::vector<double>(m, 0.0));
+  for (size_t i = 0; i < n; ++i) {
+    for (size_t t = 0; t < k; ++t) {
+      const double av = a[i][t];
+      if (av == 0.0) continue;
+      for (size_t j = 0; j < m; ++j) {
+        c[i][j] += av * b[t][j];
+      }
+    }
+  }
+  return c;
+}
 
-const auto kPerfTestName = ExampleRunPerfTestThreads::CustomPerfTestName;
+static void ExpectDenseEqual(const std::vector<std::vector<double>>& x,
+                             const std::vector<std::vector<double>>& y,
+                             double eps = 1e-9) {
+  ASSERT_EQ(x.size(), y.size());
+  if (x.empty()) return;
+  ASSERT_EQ(x[0].size(), y[0].size());
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ExampleRunPerfTestThreads, kGtestValues, kPerfTestName);
+  for (size_t i = 0; i < x.size(); ++i) {
+    for (size_t j = 0; j < x[0].size(); ++j) {
+      ASSERT_NEAR(x[i][j], y[i][j], eps) << "Mismatch at (" << i << "," << j << ")";
+    }
+  }
+}
 
+// ---------- generators ----------
+
+static std::vector<std::vector<double>> GenDense(size_t rows, size_t cols, double density, uint32_t seed) {
+  std::mt19937 rng(seed);
+  std::uniform_real_distribution<double> prob(0.0, 1.0);
+  std::uniform_real_distribution<double> val(-5.0, 5.0);
+
+  std::vector<std::vector<double>> d(rows, std::vector<double>(cols, 0.0));
+  for (size_t i = 0; i < rows; ++i) {
+    for (size_t j = 0; j < cols; ++j) {
+      if (prob(rng) < density) {
+        d[i][j] = val(rng);
+      }
+    }
+  }
+  return d;
+}
+
+// ---------- tests (unique names, no duplicates with example_threads) ----------
+
+TEST(SafaryanASparseMatrixMultCRSSeq_Perf, SmallFixedCase) {
+  // A(2x3), B(3x2)
+  std::vector<std::vector<double>> a = {
+      {1.0, 0.0, 2.0},
+      {0.0, -1.0, 3.0},
+  };
+  std::vector<std::vector<double>> b = {
+      {2.0, 1.0},
+      {0.0, 4.0},
+      {1.0, -2.0},
+  };
+
+  CRSMatrix A = DenseToCrs(a);
+  CRSMatrix B = DenseToCrs(b);
+
+  SafaryanASparseMatrixMultCRSSeq task({A, B});
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  const auto got = CrsToDense(task.GetOutput());
+  const auto ref = DenseMul(a, b);
+
+  ExpectDenseEqual(got, ref);
+}
+
+TEST(SafaryanASparseMatrixMultCRSSeq_Perf, RandomMediumCase) {
+  const size_t n = 60;
+  const size_t k = 80;
+  const size_t m = 50;
+
+  auto a_dense = GenDense(n, k, 0.08, 123);
+  auto b_dense = GenDense(k, m, 0.08, 456);
+
+  CRSMatrix A = DenseToCrs(a_dense);
+  CRSMatrix B = DenseToCrs(b_dense);
+
+  SafaryanASparseMatrixMultCRSSeq task({A, B});
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  const auto got = CrsToDense(task.GetOutput());
+  const auto ref = DenseMul(a_dense, b_dense);
+
+  ExpectDenseEqual(got, ref, 1e-8);
 }  // namespace
 
-}  // namespace nesterov_a_test_task_threads
+}  // namespace safaryan_a_sparse_matrix_mult_crs_seq
