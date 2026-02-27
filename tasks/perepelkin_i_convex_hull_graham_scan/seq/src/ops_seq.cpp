@@ -1,6 +1,7 @@
 #include "perepelkin_i_convex_hull_graham_scan/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <utility>
 #include <vector>
@@ -33,7 +34,7 @@ bool PerepelkinIConvexHullGrahamScanSEQ::RunImpl() {
 
   std::vector<std::pair<double, double>> pts = data;
 
-  // find pivot: lowest y, then lowest x
+  // Find pivot: lowest y, then lowest x
   auto pivot_it = std::ranges::min_element(pts, [](const auto &a, const auto &b) {
     if (a.second == b.second) {
       return a.first < b.first;
@@ -43,12 +44,12 @@ bool PerepelkinIConvexHullGrahamScanSEQ::RunImpl() {
   std::pair<double, double> pivot = *pivot_it;
   pts.erase(pivot_it);
 
-  // sort remaining points by polar angle around pivot (counter-clockwise)
+  // Sort remaining points by polar angle around pivot (counter-clockwise)
   std::ranges::sort(pts, [&](const std::pair<double, double> &a, const std::pair<double, double> &b) {
     return AngleCmp(a, b, pivot);
   });
 
-  // build hull
+  // Build hull
   std::vector<std::pair<double, double>> hull;
   hull.reserve(pts.size() + 1);
   hull.push_back(pivot);
@@ -68,7 +69,11 @@ bool PerepelkinIConvexHullGrahamScanSEQ::RunImpl() {
 double PerepelkinIConvexHullGrahamScanSEQ::Orientation(const std::pair<double, double> &p,
                                                        const std::pair<double, double> &q,
                                                        const std::pair<double, double> &r) {
-  return ((q.first - p.first) * (r.second - p.second)) - ((q.second - p.second) * (r.first - p.first));
+  double val = ((q.first - p.first) * (r.second - p.second)) - ((q.second - p.second) * (r.first - p.first));
+  if (std::abs(val) < 1e-9) {
+    return 0.0;
+  }
+  return val;
 }
 
 bool PerepelkinIConvexHullGrahamScanSEQ::AngleCmp(const std::pair<double, double> &a,
@@ -80,7 +85,7 @@ bool PerepelkinIConvexHullGrahamScanSEQ::AngleCmp(const std::pair<double, double
   double dy2 = b.second - pivot.second;
 
   double cross = (dx1 * dy2) - (dy1 * dx2);
-  if (cross == 0) {
+  if (std::abs(cross) < 1e-9) {
     double dist1 = (dx1 * dx1) + (dy1 * dy1);
     double dist2 = (dx2 * dx2) + (dy2 * dy2);
     return dist1 < dist2;
