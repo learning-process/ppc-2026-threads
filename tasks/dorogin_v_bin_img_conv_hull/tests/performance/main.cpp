@@ -20,14 +20,14 @@ class DoroginVBinImgConvHullPerfTests : public ppc::util::BaseRunPerfTests<InTyp
 
     // Диагональные компоненты + псевдослучайные точки
     for (size_t i = 0; i < kSize; ++i) {
-      size_t idx1 = i * kSize + i;
-      size_t idx2 = i * kSize + (kSize - i - 1);
+      size_t idx1 = (i * kSize) + i;
+      size_t idx2 = (i * kSize) + (kSize - i - 1);
 
       input_.pixels[idx1] = 255;
       input_.pixels[idx2] = 255;
 
       if (i % 17 == 0) {
-        size_t extra = i * kSize + ((i * 37 + 11) % kSize);
+        size_t extra = (i * kSize) + ((i * 37 + 11) % kSize);
         input_.pixels[extra] = 255;
       }
     }

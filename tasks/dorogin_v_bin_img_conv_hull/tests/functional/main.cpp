@@ -31,7 +31,7 @@ BinaryImage MakeImage(int width, int height) {
 }
 
 void Set(BinaryImage &img, int x, int y) {
-  img.pixels[static_cast<size_t>(y) * img.width + x] = 255;
+  img.pixels[(static_cast<size_t>(y) * img.width) + x] = 255;
 }
 
 TestCase Case0() {
@@ -54,8 +54,8 @@ TestCase Case1() {
 TestCase Case2() {
   TestCase tc;
   tc.image = MakeImage(5, 6);
-  for (int y = 1; y <= 4; ++y) {
-    Set(tc.image, 3, y);
+  for (int col = 1; col <= 4; ++col) {
+    Set(tc.image, 3, col);
   }
   tc.expected = {{{3, 1}, {3, 4}}};
   return tc;
@@ -64,9 +64,9 @@ TestCase Case2() {
 TestCase Case3() {
   TestCase tc;
   tc.image = MakeImage(10, 6);
-  for (int y = 1; y <= 4; ++y) {
-    for (int x = 2; x <= 7; ++x) {
-      Set(tc.image, x, y);
+  for (int col = 1; col <= 4; ++col) {
+    for (int row = 2; row <= 7; ++row) {
+      Set(tc.image, row, col);
     }
   }
 
@@ -78,10 +78,10 @@ TestCase Case4() {
   TestCase tc;
   tc.image = MakeImage(11, 11);
 
-  for (int y = 0; y < 11; ++y) {
-    for (int x = 0; x < 11; ++x) {
-      if (std::abs(x - 5) + std::abs(y - 5) <= 5) {
-        Set(tc.image, x, y);
+  for (int col = 0; col < 11; ++col) {
+    for (int row = 0; row < 11; ++row) {
+      if (std::abs(row - 5) + std::abs(col - 5) <= 5) {
+        Set(tc.image, row, col);
       }
     }
   }
@@ -109,9 +109,10 @@ std::vector<Point> Normalize(const std::vector<Point> &hull) {
 
 std::vector<std::vector<Point>> NormalizeAll(const std::vector<std::vector<Point>> &hulls) {
   std::vector<std::vector<Point>> result;
-  for (const auto &h : hulls) {
-    result.push_back(Normalize(h));
-  }
+result.reserve(hulls.size());
+for (const auto &h : hulls) {
+  result.push_back(Normalize(h));
+}
 
   std::sort(result.begin(), result.end());
   return result;
