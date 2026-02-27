@@ -1,6 +1,7 @@
 #include "kruglova_a_conjugate_gradient_sle/seq/include/ops_seq.hpp"
 
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 namespace kruglova_a_conjugate_gradient_sle {
@@ -38,7 +39,7 @@ bool KruglovaAConjGradSleSEQ::RunImpl() {
 
   std::vector<double> r = b;
   std::vector<double> p = r;
-  std::vector<double> Ap(n, 0.0);
+  std::vector<double> ap(n, 0.0);
 
   double rsold = 0.0;
   for (int i = 0; i < n; ++i) {
@@ -49,26 +50,26 @@ bool KruglovaAConjGradSleSEQ::RunImpl() {
 
   for (int iter = 0; iter < n * 2; ++iter) {
     for (int i = 0; i < n; ++i) {
-      Ap[i] = 0.0;
+      ap[i] = 0.0;
       for (int j = 0; j < n; ++j) {
-        Ap[i] += A[i * n + j] * p[j];
+        ap[i] += A[(i * n) + j] * p[j];
       }
     }
 
-    double pAp = 0.0;
+    double p_ap = 0.0;
     for (int i = 0; i < n; ++i) {
-      pAp += p[i] * Ap[i];
+      p_ap += p[i] * ap[i];
     }
 
-    if (pAp == 0.0) {
+    if (p_ap == 0.0) {
       break;
     }
 
-    double alpha = rsold / pAp;
+    double alpha = rsold / p_ap;
 
     for (int i = 0; i < n; ++i) {
       x[i] += alpha * p[i];
-      r[i] -= alpha * Ap[i];
+      r[i] -= alpha * ap[i];
     }
 
     double rsnew = 0.0;
