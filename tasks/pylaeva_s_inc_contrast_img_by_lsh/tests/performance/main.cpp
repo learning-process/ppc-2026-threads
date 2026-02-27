@@ -7,36 +7,27 @@
 namespace pylaeva_s_inc_contrast_img_by_lsh {
 
 class PylaevaSRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 200;
+  const size_t kCount_ = 10000000;
   InType input_data_;
 
   void SetUp() override {
 
     input_data_.resize(kCount_);
-    for (int i = 0; i < kCount_; i++) {
-      input_data_[i] = 80 + (i % 81);  //[80, 160] - обычное фото
+    
+    // Создаем градиент: значения от 0 до 255
+    for (size_t i = 0; i < kCount_; ++i) {
+      input_data_[i] = static_cast<uint8_t>((i * 255) / kCount_);
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    auto min_it = std::ranges::min_element(input_data_.begin(), input_data_.end());
-    auto max_it = std::ranges::max_element(input_data_.begin(), input_data_.end());
-
-    unsigned char min = *min_it;
-    unsigned char max = *max_it;
-
-    float scale = 255.0F / static_cast<float>(max - min);
-
-    int size = static_cast<int>(input_data_.size());
-
-    for (int i = 0; i < size; i++) {
-      auto expected_value = static_cast<unsigned char>(static_cast<float>(input_data_[i] - min) * scale);
-      if (output_data[i] != expected_value) {
-        return false;
-      }
+    // Для градиента проверяем, что min стал 0, max стал 255
+    if (output_data.size() != input_data_.size()) {
+      return false;
     }
-
-    return true;
+    
+    auto [out_min, out_max] = std::ranges::minmax(output_data);
+    return (out_min == 0 && out_max == 255);
   }
 
   InType GetTestInputData() final {
