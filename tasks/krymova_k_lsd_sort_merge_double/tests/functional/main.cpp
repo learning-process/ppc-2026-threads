@@ -33,9 +33,7 @@ class KrymovaKFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, Te
 
     input_data_.resize(size);
 
-    if (type == "empty") {
-      input_data_.clear();
-    } else if (type == "single") {
+    if (type == "single") {
       input_data_.resize(1);
       input_data_[0] = 42.0;
     } else if (type == "random") {
@@ -105,8 +103,8 @@ TEST_P(KrymovaKFuncTests, TestSorting) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 14> kTestParam = {
-    std::make_tuple(0, "empty"),         std::make_tuple(1, "single"),
+const std::array<TestType, 13> kTestParam = {
+    std::make_tuple(1, "single"),
     std::make_tuple(10, "random_small"), std::make_tuple(100, "random_medium"),
     std::make_tuple(1000, "random_large"), std::make_tuple(10000, "random_very_large"),
     std::make_tuple(100, "sorted"),       std::make_tuple(100, "reverse"),

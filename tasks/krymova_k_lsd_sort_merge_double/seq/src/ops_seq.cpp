@@ -12,12 +12,12 @@ KrymovaKLsdSortMergeDoubleSEQ::KrymovaKLsdSortMergeDoubleSEQ(const InType &in) {
   GetOutput() = OutType();
 }
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+
 bool KrymovaKLsdSortMergeDoubleSEQ::ValidationImpl() {
-  return true;
+  return !GetInput().empty();
 }
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+
 bool KrymovaKLsdSortMergeDoubleSEQ::PreProcessingImpl() {
   GetOutput() = GetInput();
   return true;
@@ -146,7 +146,7 @@ void KrymovaKLsdSortMergeDoubleSEQ::IterativeMergeSort(double* arr, int size, in
   }
 }
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+
 bool KrymovaKLsdSortMergeDoubleSEQ::RunImpl() {
   OutType& output = GetOutput();
   int size = static_cast<int>(output.size());
@@ -161,7 +161,7 @@ bool KrymovaKLsdSortMergeDoubleSEQ::RunImpl() {
   return true;
 }
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+
 bool KrymovaKLsdSortMergeDoubleSEQ::PostProcessingImpl() {
   const OutType& output = GetOutput();
 
