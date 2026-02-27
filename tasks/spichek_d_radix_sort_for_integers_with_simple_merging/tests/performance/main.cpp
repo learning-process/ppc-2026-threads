@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <random>
-#include <vector>
 
 #include "spichek_d_radix_sort_for_integers_with_simple_merging/common/include/common.hpp"
 #include "spichek_d_radix_sort_for_integers_with_simple_merging/seq/include/ops_seq.hpp"

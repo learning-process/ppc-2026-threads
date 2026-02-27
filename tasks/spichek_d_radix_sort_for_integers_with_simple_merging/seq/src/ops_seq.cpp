@@ -11,8 +11,8 @@ RadixSortSEQ::RadixSortSEQ(const InType &in) {
 }
 
 bool RadixSortSEQ::ValidationImpl() {
-  // Проверяем, что входные данные не пусты (или любые другие условия)
-  return true;
+  // Проверяем, что входные данные не пусты
+  return !GetInput().empty();
 }
 
 bool RadixSortSEQ::PreProcessingImpl() {
@@ -40,8 +40,7 @@ void RadixSortSEQ::RadixSort(std::vector<int> &data) {
     return;
   }
 
-  // Обработка отрицательных чисел: найдем минимум и сместим все значения,
-  // чтобы работать только с положительными числами (LSD Radix Sort)
+  // Обработка отрицательных чисел
   int min_val = *std::min_element(data.begin(), data.end());
   if (min_val < 0) {
     for (auto &x : data) {
@@ -54,7 +53,8 @@ void RadixSortSEQ::RadixSort(std::vector<int> &data) {
   // Сама поразрядная сортировка (LSD) по основанию 10
   for (int exp = 1; max_val / exp > 0; exp *= 10) {
     std::vector<int> output(data.size());
-    int count[10] = {0};
+    // Используем vector вместо C-style array для соответствия Core Guidelines
+    std::vector<int> count(10, 0);
 
     for (int x : data) {
       count[(x / exp) % 10]++;
@@ -72,7 +72,7 @@ void RadixSortSEQ::RadixSort(std::vector<int> &data) {
     data = output;
   }
 
-  // Возвращаем смещение назад, если оно было
+  // Возвращаем смещение назад
   if (min_val < 0) {
     for (auto &x : data) {
       x += min_val;
