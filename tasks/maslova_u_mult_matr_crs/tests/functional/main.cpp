@@ -3,7 +3,6 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <numeric>
 #include <stdexcept>
 #include <string>
 #include <tuple>

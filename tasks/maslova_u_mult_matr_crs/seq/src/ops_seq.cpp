@@ -71,7 +71,7 @@ void MaslovaUMultMatrSEQ::ProcessRow(int i, const CRSMatrix &a, const CRSMatrix 
   }
 
   if (!used_cols_.empty()) {
-    std::sort(used_cols_.begin(), used_cols_.end());
+    std::ranges::sort(used_cols_);
     for (int col_idx : used_cols_) {
       const double val = temp_row_[col_idx];
       if (std::abs(val) > 1e-15) {
@@ -102,7 +102,7 @@ bool MaslovaUMultMatrSEQ::RunImpl() {
     marker_.assign(static_cast<size_t>(b.cols), -1);
     temp_row_.assign(static_cast<size_t>(b.cols), 0.0);
   } else {
-    std::fill(marker_.begin(), marker_.end(), -1);
+    std::ranges::fill(marker_, -1);
   }
   used_cols_.clear();
 
