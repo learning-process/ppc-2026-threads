@@ -87,7 +87,7 @@ const std::vector<uint8_t> kExpected10 = {0, 36, 73, 109, 146, 182, 219, 255};
 
 // 11. КРАЙНИЙ СЛУЧАЙ: Изображение с одним элементом (минимальное)
 const std::vector<uint8_t> kImage11 = {100};
-const std::vector<uint8_t> kExpected11 = {100};  // Должно остаться без изменений
+const std::vector<uint8_t> kExpected11 = {100};
 
 // 12. КРАЙНИЙ СЛУЧАЙ: Изображение с одним элементом (максимальное)
 const std::vector<uint8_t> kImage12 = {255};

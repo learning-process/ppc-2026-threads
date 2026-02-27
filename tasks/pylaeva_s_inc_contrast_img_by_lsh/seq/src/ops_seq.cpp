@@ -1,6 +1,7 @@
 #include "pylaeva_s_inc_contrast_img_by_lsh/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <cmath>  // для std::round
 #include <cstddef>
 #include <cstdint>
 #include <vector>
