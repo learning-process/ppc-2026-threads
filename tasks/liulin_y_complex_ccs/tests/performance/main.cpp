@@ -1,9 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
-#include <complex>
+#include <cstddef>
 #include <random>
-#include <vector>
 
 #include "liulin_y_complex_ccs/common/include/common.hpp"
 #include "liulin_y_complex_ccs/seq/include/ops_seq.hpp"
@@ -63,7 +61,7 @@ class LiulinYComplexCcsPerfTest : public ppc::util::BaseRunPerfTests<InType, Out
       return false;
     }
 
-    if (output_data.col_index.size() != static_cast<size_t>(output_data.count_cols + 1)) {
+    if (output_data.col_index.size() != static_cast<size_t>(output_data.count_cols) + 1) {
       return false;
     }
 
