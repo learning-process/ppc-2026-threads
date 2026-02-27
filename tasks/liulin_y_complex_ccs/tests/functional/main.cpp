@@ -6,7 +6,6 @@
 #include <complex>
 #include <cstddef>
 #include <fstream>
-#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -18,6 +17,8 @@
 #include "util/include/util.hpp"
 
 namespace liulin_y_complex_ccs {
+
+namespace {
 
 CCSMatrix TripletToCcsTest(int rows_count, int cols_count,
                            const std::vector<std::tuple<int, int, std::complex<double>>> &triplets) {
@@ -122,7 +123,8 @@ class LiulinYComplexCcsFuncTestsFromFile : public ppc::util::BaseRunFuncTests<In
     std::vector<std::tuple<int, int, std::complex<double>>> res_triplets;
     for (int col_idx{0}; col_idx < cols_res; ++col_idx) {
       for (int row_idx{0}; row_idx < rows_res; ++row_idx) {
-        auto value{dense_data[(static_cast<size_t>(row_idx) * cols_res) + col_idx]};
+        auto value{
+            dense_data[(static_cast<size_t>(row_idx) * static_cast<size_t>(cols_res)) + static_cast<size_t>(col_idx)]};
         if (std::abs(value) > 1e-15) {
           res_triplets.emplace_back(row_idx, col_idx, value);
         }
@@ -155,7 +157,6 @@ class LiulinYComplexCcsFuncTestsFromFile : public ppc::util::BaseRunFuncTests<In
   OutType exp_output_;
 };
 
-namespace {
 TEST_P(LiulinYComplexCcsFuncTestsFromFile, SparseMultiplyFileTest) {
   ExecuteTest(GetParam());
 }
@@ -172,5 +173,6 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kFuncTestName = LiulinYComplexCcsFuncTestsFromFile::PrintFuncTestName<LiulinYComplexCcsFuncTestsFromFile>;
 
 INSTANTIATE_TEST_SUITE_P(Sequential, LiulinYComplexCcsFuncTestsFromFile, kGtestValues, kFuncTestName);
+
 }  // namespace
 }  // namespace liulin_y_complex_ccs

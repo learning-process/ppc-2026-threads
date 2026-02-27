@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cmath>
 #include <complex>
-#include <ranges>
 #include <vector>
 
 #include "liulin_y_complex_ccs/common/include/common.hpp"
