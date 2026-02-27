@@ -20,7 +20,7 @@ class MaslovaUMultMatrSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void process_row(int i, const CRSMatrix &a, const CRSMatrix &b, CRSMatrix &c);
+  void ProcessRow(int i, const CRSMatrix &a, const CRSMatrix &b, CRSMatrix &c);
 
   std::vector<double> temp_row_;
   std::vector<int> marker_;
