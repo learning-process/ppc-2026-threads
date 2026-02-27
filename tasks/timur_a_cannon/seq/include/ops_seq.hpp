@@ -18,18 +18,10 @@ class TimurACannonMatrixMultiplication : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  static void ShiftingBlocksMatrixBUp(std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks_b,
-                                      int columns_blocks);
-  static void ShiftingBlocksMatrixALeft(std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks_a,
-                                        int columns_blocks);
-  static void MultiplyingBlocks(std::vector<std::vector<double>> &block_a, std::vector<std::vector<double>> &block_b,
-                                std::vector<std::vector<double>> &block_c, int size_block);
-  static void AlgorithmCannon(std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks_a,
-                              std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks_b,
-                              std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks_c,
-                              int size_block, int columns_blocks);
-  static void FillingResultingMatrix(std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks_c,
-                                     std::vector<std::vector<double>> &matrix_c, int size_block, int columns_blocks);
+  void RotateBlocksA(std::vector<std::vector<std::vector<std::vector<double>>>> &blocks, int grid_sz);
+  void RotateBlocksB(std::vector<std::vector<std::vector<std::vector<double>>>> &blocks, int grid_sz);
+  void BlockMultiplyAccumulate(const std::vector<std::vector<double>> &a, const std::vector<std::vector<double>> &b,
+                               std::vector<std::vector<double>> &c, int b_size);
 };
 
 }  // namespace timur_a_cannon
