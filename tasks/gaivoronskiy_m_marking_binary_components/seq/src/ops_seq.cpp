@@ -33,7 +33,7 @@ bool GaivoronskiyMMarkingBinaryComponentsSEQ::PreProcessingImpl() {
   const auto &input = GetInput();
   int rows = input[0];
   int cols = input[1];
-  GetOutput().assign(static_cast<std::size_t>(rows) * static_cast<std::size_t>(cols) + 2, 0);
+  GetOutput().assign((static_cast<std::size_t>(rows) * static_cast<std::size_t>(cols)) + 2, 0);
   GetOutput()[0] = rows;
   GetOutput()[1] = cols;
   return true;
