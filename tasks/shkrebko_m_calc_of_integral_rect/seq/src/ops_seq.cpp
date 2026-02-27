@@ -9,7 +9,7 @@
 
 namespace shkrebko_m_calc_of_integral_rect {
 
-ShkrebkoMCalcOfIntegralRectSEQ::ShkrebkoMCalcOfIntegralRectSEQ(const InType &in) : res_(0.0) {
+ShkrebkoMCalcOfIntegralRectSEQ::ShkrebkoMCalcOfIntegralRectSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
@@ -21,19 +21,15 @@ bool ShkrebkoMCalcOfIntegralRectSEQ::ValidationImpl() {
   if (!input.func) {
     return false;
   }
-
   if (input.limits.size() != input.n_steps.size() || input.limits.empty()) {
+    return false;
+  }
+  if (!std::ranges::all_of(input.n_steps, [](int n) { return n > 0; })) {
     return false;
   }
 
   if (!std::ranges::all_of(input.limits, [](const auto &lim) { return lim.first < lim.second; })) {
     return false;
-  }
-
-  for (const auto &[left, right] : input.limits) {
-    if (left >= right) {
-      return false;
-    }
   }
 
   return true;
