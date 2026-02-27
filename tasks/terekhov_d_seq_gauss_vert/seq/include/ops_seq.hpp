@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "terekhov_d_seq_gauss_vert/common/include/common.hpp"
 #include "task/include/task.hpp"
+#include "terekhov_d_seq_gauss_vert/common/include/common.hpp"
 
 namespace terekhov_d_seq_gauss_vert {
 
@@ -19,10 +19,10 @@ class TerekhovDGaussVertSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  
+
   int width_ = 0;
   int height_ = 0;
-  std::vector<int> padded_image_;
+  std::vector<int> padded_image_;  // 1
 };
 
 }  // namespace terekhov_d_seq_gauss_vert
