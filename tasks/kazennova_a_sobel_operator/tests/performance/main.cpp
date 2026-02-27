@@ -1,12 +1,10 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 
 #include "kazennova_a_sobel_operator/common/include/common.hpp"
 #include "kazennova_a_sobel_operator/seq/include/ops_seq.hpp"
-// #include "kazennova_a_sobel_operator/omp/include/ops_omp.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace kazennova_a_sobel_operator {

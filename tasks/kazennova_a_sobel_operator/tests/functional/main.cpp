@@ -1,17 +1,13 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <random>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "kazennova_a_sobel_operator/common/include/common.hpp"
 #include "kazennova_a_sobel_operator/seq/include/ops_seq.hpp"
-// #include "kazennova_a_sobel_operator/omp/include/ops_omp.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -28,7 +24,7 @@ class KazennovaARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType,
     const TestType &params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     auto size = static_cast<size_t>(std::get<0>(params));
 
-    // Создаём изображение с простым градиентом или случайным шумом
+    // Создаём изображение с простым градиентом
     input_data_.resize(size * size);
     for (size_t i = 0; i < input_data_.size(); ++i) {
       input_data_[i] = static_cast<uint8_t>(i % 256);
@@ -36,7 +32,7 @@ class KazennovaARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType,
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Простая проверка: выходное изображение не пустое и размер совпадает
+    // Проверка: выходное изображение не пустое и размер совпадает
     return !output_data.empty() && output_data.size() == input_data_.size();
   }
 
@@ -58,9 +54,7 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(10, "small"), std::m
                                             std::make_tuple(100, "large")};
 
 const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<SobelSeq, InType>(kTestParam, PPC_SETTINGS_kazennova_a_sobel_operator)
-                   // , ppc::util::AddFuncTask<SobelOMP, InType>(kTestParam, PPC_SETTINGS_kazennova_a_sobel_operator)
-    );
+    std::tuple_cat(ppc::util::AddFuncTask<SobelSeq, InType>(kTestParam, PPC_SETTINGS_kazennova_a_sobel_operator));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
