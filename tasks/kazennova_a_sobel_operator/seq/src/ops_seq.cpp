@@ -24,9 +24,6 @@ uint8_t GetPixel(const std::vector<uint8_t> &img, size_t size, int x, int y) {
 
 namespace kazennova_a_sobel_operator {
 
-const int kGx[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
-const int kGy[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
-
 SobelSeq::SobelSeq(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -52,6 +49,10 @@ bool SobelSeq::RunImpl() {
 
   const auto size = static_cast<size_t>(std::sqrt(in.size()));
 
+  const std::array<std::array<int, 3>, 3> k_gx = {{{{-1, 0, 1}}, {{-2, 0, 2}}, {{-1, 0, 1}}}};
+
+  const std::array<std::array<int, 3>, 3> k_gy = {{{{-1, -2, -1}}, {{0, 0, 0}}, {{1, 2, 1}}}};
+
   for (size_t row = 0; row < size; ++row) {
     for (size_t col = 0; col < size; ++col) {
       int gx = 0;
@@ -60,8 +61,12 @@ bool SobelSeq::RunImpl() {
       for (int ky = -1; ky <= 1; ++ky) {
         for (int kx = -1; kx <= 1; ++kx) {
           const uint8_t pixel = GetPixel(in, size, static_cast<int>(col) + kx, static_cast<int>(row) + ky);
-          gx += static_cast<int>(pixel) * kGx[ky + 1][kx + 1];
-          gy += static_cast<int>(pixel) * kGy[ky + 1][kx + 1];
+
+          const size_t ky_idx = static_cast<size_t>(ky + 1);
+          const size_t kx_idx = static_cast<size_t>(kx + 1);
+
+          gx += static_cast<int>(pixel) * k_gx.at(ky_idx).at(kx_idx);
+          gy += static_cast<int>(pixel) * k_gy.at(ky_idx).at(kx_idx);
         }
       }
 
