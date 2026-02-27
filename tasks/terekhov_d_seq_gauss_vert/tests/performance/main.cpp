@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <cstddef>
 #include <random>
 #include <vector>
@@ -13,12 +14,12 @@ namespace terekhov_d_seq_gauss_vert {
 class TerekhovDGaussVertSEQPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   void SetUp() override {
-    const size_t total_pixels = 10000000;  // 10M пикселей
-    int img_size = static_cast<int>(std::sqrt(total_pixels));
+    const size_t total_pixels = 10000000;
+    int img_size = static_cast<int>(std::sqrt(static_cast<double>(total_pixels)));
 
     input_data_.width = img_size;
     input_data_.height = img_size;
-    input_data_.data.resize(input_data_.width * input_data_.height);
+    input_data_.data.resize(static_cast<size_t>(input_data_.width) * static_cast<size_t>(input_data_.height));
 
     std::random_device rd;
     std::mt19937 gen(rd());

@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -24,17 +23,17 @@ class TerekhovDRunFuncTestsGauss : public ppc::util::BaseRunFuncTests<InType, Ou
   void SetUp() override {
     TestType size = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    int img_size = static_cast<int>(std::sqrt(size));
+    int img_size = static_cast<int>(std::sqrt(static_cast<double>(size)));
     if (img_size * img_size < size) {
       img_size++;
     }
 
     input_data_.width = img_size;
     input_data_.height = img_size;
-    input_data_.data.resize(input_data_.width * input_data_.height);
+    input_data_.data.resize(static_cast<size_t>(input_data_.width) * static_cast<size_t>(input_data_.height));
 
-    for (int i = 0; i < input_data_.width * input_data_.height; ++i) {
-      input_data_.data[i] = (i % 101);
+    for (size_t i = 0; i < input_data_.data.size(); ++i) {
+      input_data_.data[i] = static_cast<int>(i % 101);
     }
   }
 
@@ -51,31 +50,23 @@ class TerekhovDRunFuncTestsGauss : public ppc::util::BaseRunFuncTests<InType, Ou
     int cx = input_data_.width / 2;
     int cy = input_data_.height / 2;
 
-    float expected = 0.0f;
+    float expected = 0.0F;
     for (int ky = -1; ky <= 1; ++ky) {
       for (int kx = -1; kx <= 1; ++kx) {
         int px = cx + kx;
         int py = cy + ky;
-        if (px < 0) {
-          px = 0;
-        }
-        if (px >= input_data_.width) {
-          px = input_data_.width - 1;
-        }
-        if (py < 0) {
-          py = 0;
-        }
-        if (py >= input_data_.height) {
-          py = input_data_.height - 1;
-        }
+        px = (px < 0) ? 0 : (px >= input_data_.width) ? input_data_.width - 1 : px;
+        py = (py < 0) ? 0 : (py >= input_data_.height) ? input_data_.height - 1 : py;
 
         int kernel_idx = (ky + 1) * 3 + (kx + 1);
-        expected += input_data_.data[py * input_data_.width + px] * kGaussKernel[kernel_idx];
+        size_t data_idx = static_cast<size_t>(py) * static_cast<size_t>(input_data_.width) + static_cast<size_t>(px);
+        expected += static_cast<float>(input_data_.data[data_idx]) * kGaussKernel[static_cast<size_t>(kernel_idx)];
       }
     }
 
-    int actual = output_data.data[cy * output_data.width + cx];
-    int expected_int = static_cast<int>(expected + 0.5f);
+    size_t out_idx = static_cast<size_t>(cy) * static_cast<size_t>(output_data.width) + static_cast<size_t>(cx);
+    int actual = output_data.data[out_idx];
+    int expected_int = static_cast<int>(std::lround(expected));
 
     return std::abs(actual - expected_int) <= 1;
   }
@@ -103,7 +94,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kTestName = TerekhovDRunFuncTestsGauss::PrintFuncTestName<TerekhovDRunFuncTestsGauss>;
 
-INSTANTIATE_TEST_SUITE_P(GaussFilterTests, TerekhovDRunFuncTestsGauss, kGtestValues, kTestName);  // 1
+INSTANTIATE_TEST_SUITE_P(GaussFilterTests, TerekhovDRunFuncTestsGauss, kGtestValues, kTestName);
 
 }  // namespace
 
