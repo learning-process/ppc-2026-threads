@@ -66,8 +66,8 @@ bool SobelSeq::RunImpl() {
           const auto ky_idx = ky + 1;
           const auto kx_idx = kx + 1;
 
-          gx += static_cast<int>(pixel) * k_gx[ky_idx][kx_idx];
-          gy += static_cast<int>(pixel) * k_gy[ky_idx][kx_idx];
+          gx += static_cast<int>(pixel) * k_gx.at(ky_idx).at(kx_idx);
+          gy += static_cast<int>(pixel) * k_gy.at(ky_idx).at(kx_idx);
         }
       }
 
