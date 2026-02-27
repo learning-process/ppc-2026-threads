@@ -1,5 +1,5 @@
 #include "golovanov_d_radix_merge/seq/include/ops_seq.hpp"
-
+#include "tasks\golovanov_d_radix_merge\seq\include\radix_sort.hpp"
 #include <numeric>
 #include <vector>
 
@@ -11,11 +11,11 @@ namespace golovanov_d_radix_merge {
 GolovanovDRadixMergeSEQ::GolovanovDRadixMergeSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = {};
 }
 
 bool GolovanovDRadixMergeSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return !GetInput().empty();
 }
 
 bool GolovanovDRadixMergeSEQ::PreProcessingImpl() {
@@ -23,7 +23,10 @@ bool GolovanovDRadixMergeSEQ::PreProcessingImpl() {
 }
 
 bool GolovanovDRadixMergeSEQ::RunImpl() {
-  
+  std::vector<double> input = GetInput();
+  RadixSort::sort(input);
+  GetOutput() = input;
+  return true;
 }
 
 bool GolovanovDRadixMergeSEQ::PostProcessingImpl() {
