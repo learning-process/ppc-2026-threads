@@ -79,7 +79,7 @@ void RadixSortDouble(std::vector<double> &data) {
     }
 
     // Распределение
-    for (int i = static_cast<int>(keys.size() - 1); i >= 0; --i) {
+    for (int i = static_cast<int>(keys.size()) - 1; i >= 0; --i) {
       uint8_t byte = (keys[i] >> shift) & 0xFF;
       temp_keys[--count[byte]] = keys[i];
     }
@@ -92,12 +92,14 @@ void RadixSortDouble(std::vector<double> &data) {
   }
 }
 
-void ComparingSwapElements(std::vector<double> &arr, size_t n, size_t block_size, size_t step, size_t i) {
-  if ((i & block_size) == 0) {
-    size_t idx1 = i;
-    size_t idx2 = i + step;
-    if (idx2 < n && arr[idx1] > arr[idx2]) {
-      std::swap(arr[idx1], arr[idx2]);
+void MergingHalves(std::vector<double> &arr, size_t i, size_t half) {
+  for (size_t step = half; step > 0; step /= 2) {
+    for (size_t j = i; j < i + len - step; ++j) {
+      size_t idx1 = j;
+      size_t idx2 = j + step;
+      if (i < arr.size() && j < arr.size() && arr[i] > arr[j]) {
+        std::swap(arr[i], arr[j]);
+      }
     }
   }
 }
@@ -107,11 +109,11 @@ void BatcherOddEvenMergeIterative(std::vector<double> &arr, size_t n) {
     return;
   }
 
-  for (size_t block_size = 1; block_size < n; block_size *= 2) {
-    for (size_t step = block_size; step > 0; step /= 2) {
-      for (size_t i = 0; i < n - step; ++i) {
-        ComparingSwapElements(arr, n, block_size, step, i);
-      }
+  // Сначала сливаем блоки размером 1, потом 2, потом 4 и т.д.
+  for (size_t len = 2; len <= n; len *= 2) {
+    for (size_t i = 0; i < n; i += len) {
+      size_t half = len / 2;
+      MergingHalves(arr, i, half);
     }
   }
 }
