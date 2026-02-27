@@ -150,7 +150,7 @@ TEST_P(ShkenevIConstrHullFuncTests, Test) {
 
 const std::array<TestType, 5> kParams = {std::make_tuple(0, "one"), std::make_tuple(1, "two"),
                                          std::make_tuple(2, "three"), std::make_tuple(3, "four"),
-                                         std::make_tuple(4, "five")};
+                                         std::make_tuple(4, "fivee")};
 
 const auto kTasks = ppc::util::AddFuncTask<ShkenevIConstrHullSeq, InType>(
     kParams, PPC_SETTINGS_shkenev_i_constr_hull_for_binary_image_seq);
