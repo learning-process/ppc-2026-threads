@@ -94,10 +94,15 @@ void RadixSortDouble(std::vector<double> &data) {
 
 void MergingHalves(std::vector<double> &arr, size_t i, size_t len) {
   size_t half = len / 2;
+
   for (size_t step = half; step > 0; step /= 2) {
     for (size_t j = i; j < i + len - step; ++j) {
-      if (i < arr.size() && j < arr.size() && arr[i] > arr[j]) {
-        std::swap(arr[i], arr[j]);
+      size_t idx = j + step;
+
+      if (idx < i + len) {
+        if (j < arr.size() && idx < arr.size() && arr[j] > arr[idx]) {
+          std::swap(arr[j], arr[idx]);
+        }
       }
     }
   }
