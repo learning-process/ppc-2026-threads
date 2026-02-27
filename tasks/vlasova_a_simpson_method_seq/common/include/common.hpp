@@ -9,16 +9,15 @@
 namespace vlasova_a_simpson_method_seq {
 
 struct SimpsonTask {
-  std::function<double(const std::vector<double>&)> func;
+  std::function<double(const std::vector<double> &)> func;
   std::vector<double> a;
   std::vector<double> b;
   std::vector<int> n;
-  
+
   SimpsonTask() = default;
-  SimpsonTask(std::function<double(const std::vector<double>&)> f,
-              const std::vector<double>& lower,
-              const std::vector<double>& upper,
-              const std::vector<int>& steps): func(f), a(lower), b(upper), n(steps) {}
+  SimpsonTask(std::function<double(const std::vector<double> &)> f, const std::vector<double> &lower,
+              const std::vector<double> &upper, const std::vector<int> &steps)
+      : func(f), a(lower), b(upper), n(steps) {}
 };
 
 using InType = SimpsonTask;

@@ -3,14 +3,14 @@
 #include <cmath>
 #include <vector>
 
+#include "util/include/perf_test_util.hpp"
 #include "vlasova_a_simpson_method_seq/common/include/common.hpp"
 #include "vlasova_a_simpson_method_seq/seq/include/ops_seq.hpp"
-#include "util/include/perf_test_util.hpp"
 
 namespace vlasova_a_simpson_method_seq {
 
-double Gaussian3D(const std::vector<double>& x) {
-  return std::exp(-(x[0]*x[0] + x[1]*x[1] + x[2]*x[2]));
+double Gaussian3D(const std::vector<double> &x) {
+  return std::exp(-(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]));
 }
 
 class VlasovaASimpsonMethodPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
@@ -18,7 +18,7 @@ class VlasovaASimpsonMethodPerfTests : public ppc::util::BaseRunPerfTests<InType
     std::vector<double> a = {-2.0, -2.0, -2.0};
     std::vector<double> b = {2.0, 2.0, 2.0};
     std::vector<int> n = {200, 200, 200};
-    
+
     input_data_ = SimpsonTask(Gaussian3D, a, b, n);
   }
 
@@ -47,6 +47,6 @@ const auto kPerfTestName = VlasovaASimpsonMethodPerfTests::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(SimpsonMethodPerfTests, VlasovaASimpsonMethodPerfTests, kGtestValues, kPerfTestName);
 
-} // namespace
+}  // namespace
 
 }  // namespace vlasova_a_simpson_method_seq
