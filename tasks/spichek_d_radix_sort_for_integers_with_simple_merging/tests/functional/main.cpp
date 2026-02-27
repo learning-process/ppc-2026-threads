@@ -4,8 +4,8 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <functional>
 #include <random>
-#include <ranges>
 #include <string>
 #include <tuple>
 
