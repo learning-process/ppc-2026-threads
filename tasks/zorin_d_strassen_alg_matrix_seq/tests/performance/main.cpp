@@ -20,8 +20,8 @@ class ZorinDRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   void SetUp() override {
     constexpr std::size_t kN = 256;
     input_.n = kN;
-    input_.A = MakeOnes(kN);
-    input_.B = MakeOnes(kN);
+    input_.a = MakeOnes(kN);
+    input_.b = MakeOnes(kN);
   }
 
   InType GetTestInputData() final {

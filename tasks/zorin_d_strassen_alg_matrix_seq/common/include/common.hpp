@@ -11,8 +11,8 @@ namespace zorin_d_strassen_alg_matrix_seq {
 
 struct MatMulInput {
   std::size_t n{};
-  std::vector<double> A;
-  std::vector<double> B;
+  std::vector<double> a;
+  std::vector<double> b;
 };
 
 using InType = MatMulInput;

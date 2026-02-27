@@ -62,10 +62,10 @@ class ZorinDRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, T
     const auto n = static_cast<std::size_t>(std::get<0>(params));
 
     input_.n = n;
-    input_.A = make_matrix_a(n);
-    input_.B = make_matrix_b(n);
+    input_.a = make_matrix_a(n);
+    input_.b = make_matrix_b(n);
 
-    naive_mul_ref(input_.A, input_.B, expected_, n);
+    naive_mul_ref(input_.a, input_.b, expected_, n);
   }
 
   InType GetTestInputData() final {
