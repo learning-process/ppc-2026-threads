@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <random>
 
 #include "kutuzov_i_convex_hull_jarvis/common/include/common.hpp"
@@ -9,12 +10,13 @@ namespace kutuzov_i_convex_hull_jarvis {
 
 class KutuzovIRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 5000;
-  InType input_data_ = {};
-  OutType expected_output_ = {};
+  InType input_data_;
+  OutType expected_output_;
 
   void SetUp() override {
     input_data_ = {};
 
+    // NOLINT(cert-msc51-cpp)
     std::mt19937 rng(1);
     std::uniform_real_distribution<double> dist(-1000, 1000);
 
@@ -22,7 +24,7 @@ class KutuzovIRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, O
       double random_x = dist(rng);
       double random_y = dist(rng);
 
-      input_data_.push_back({random_x, random_y});
+      input_data_.emplace_back(random_x, random_y);
     }
   }
 

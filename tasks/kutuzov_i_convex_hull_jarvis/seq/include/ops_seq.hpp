@@ -13,9 +13,10 @@ class KutuzovITestConvexHullSEQ : public BaseTask {
   explicit KutuzovITestConvexHullSEQ(const InType &in);
 
  private:
-
-  double DistanceSquared(double a_x, double a_y, double b_x, double b_y);
-  double CrossProduct(double o_x, double o_y, double a_x, double a_y, double b_x, double b_y);
+  static double DistanceSquared(double a_x, double a_y, double b_x, double b_y);
+  static double CrossProduct(double o_x, double o_y, double a_x, double a_y, double b_x, double b_y);
+  static bool IsBetterPoint(double cross, double epsilon, double current_x, double current_y, double i_x, double i_y,
+                            double next_x, double next_y);
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
