@@ -2,9 +2,10 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
-#include <limits>
 #include <random>
+#include <ranges>
 #include <string>
 #include <tuple>
 
@@ -26,13 +27,13 @@ class SpichekDRadixSortRunFuncTests : public ppc::util::BaseRunFuncTests<InType,
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int vector_size = std::get<0>(params);
 
-    input_data_.resize(vector_size);
+    input_data.resize(vector_size);
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<int> dist(-10000, 10000);
 
     for (int i = 0; i < vector_size; ++i) {
-      input_data_[i] = dist(gen);
+      input_data[i] = dist(gen);
     }
   }
 
@@ -41,11 +42,10 @@ class SpichekDRadixSortRunFuncTests : public ppc::util::BaseRunFuncTests<InType,
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 
-  // ⚠ Сделано protected вместо private
-  InType input_data_;
+  InType input_data;
 };
 
 namespace {
@@ -55,24 +55,24 @@ TEST_P(SpichekDRadixSortRunFuncTests, SpichekDRadixSortSequential) {
 }
 
 TEST_P(SpichekDRadixSortRunFuncTests, SpichekDRadixSortWithNegativeValues) {
-  for (auto &val : input_data_) {
+  for (auto &val : input_data) {
     val = -std::abs(val);
   }
   ExecuteTest(GetParam());
 }
 
 TEST_P(SpichekDRadixSortRunFuncTests, SpichekDRadixSortWithAllSameValues) {
-  std::fill(input_data_.begin(), input_data_.end(), 42);
+  std::ranges::fill(input_data, 42);
   ExecuteTest(GetParam());
 }
 
 TEST_P(SpichekDRadixSortRunFuncTests, SpichekDRadixSortWithSortedInput) {
-  std::sort(input_data_.begin(), input_data_.end());
+  std::ranges::sort(input_data);
   ExecuteTest(GetParam());
 }
 
 TEST_P(SpichekDRadixSortRunFuncTests, SpichekDRadixSortWithReversedInput) {
-  std::sort(input_data_.rbegin(), input_data_.rend());
+  std::ranges::sort(input_data, std::greater<>{});
   ExecuteTest(GetParam());
 }
 
