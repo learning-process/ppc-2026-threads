@@ -18,10 +18,6 @@ class ShkrebkoMCalcOfIntegralRectSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
- private:
-  InType local_input_;
-  double res_ = 0.0;
 };
 
 }  // namespace shkrebko_m_calc_of_integral_rect
