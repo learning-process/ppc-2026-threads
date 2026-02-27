@@ -1,5 +1,9 @@
 #pragma once
 
+#include <array>
+#include <cstdint>
+#include <vector>
+
 #include "badanov_a_select_edge_sobel_seq/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -20,8 +24,8 @@ class BadanovASelectEdgeSobelSEQ : public BaseTask {
 
   void ApplySobelOperator(const std::vector<uint8_t> &input, std::vector<float> &magnitude, float &max_magnitude);
   void ComputeGradientAtPixel(const std::vector<uint8_t> &input, int row, int col, float &gradient_x,
-                              float &gradient_y);
-  void ApplyThreshold(const std::vector<float> &magnitude, float max_magnitude, std::vector<uint8_t> &output);
+                              float &gradient_y) const;
+  void ApplyThreshold(const std::vector<float> &magnitude, float max_magnitude, std::vector<uint8_t> &output) const;
 
   static constexpr std::array<std::array<int, 3>, 3> kKernelX = {{{{-1, 0, 1}}, {{-2, 0, 2}}, {{-1, 0, 1}}}};
 

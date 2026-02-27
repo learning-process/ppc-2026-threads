@@ -1,6 +1,5 @@
 #include "badanov_a_select_edge_sobel_seq/seq/include/ops_seq.hpp"
 
-#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -48,43 +47,44 @@ void BadanovASelectEdgeSobelSEQ::ApplySobelOperator(const std::vector<uint8_t> &
 
       ComputeGradientAtPixel(input, row, col, gradient_x, gradient_y);
 
-      const float magnitude_value = std::sqrt(gradient_x * gradient_x + gradient_y * gradient_y);
-      const size_t idx = static_cast<size_t>(row) * static_cast<size_t>(width_) + static_cast<size_t>(col);
+      const float magnitude_value = std::sqrt((gradient_x * gradient_x) + (gradient_y * gradient_y));
+      const size_t idx = (static_cast<size_t>(row) * static_cast<size_t>(width_)) + static_cast<size_t>(col);
       magnitude[idx] = magnitude_value;
 
-      if (magnitude_value > max_magnitude) {
-        max_magnitude = magnitude_value;
-      }
+      max_magnitude = std::max(magnitude_value, max_magnitude);
     }
   }
 }
 
 void BadanovASelectEdgeSobelSEQ::ComputeGradientAtPixel(const std::vector<uint8_t> &input, int row, int col,
-                                                        float &gradient_x, float &gradient_y) {
+                                                        float &gradient_x, float &gradient_y) const {
   gradient_x = 0.0F;
   gradient_y = 0.0F;
 
   for (int kernel_row = -1; kernel_row <= 1; ++kernel_row) {
     for (int kernel_col = -1; kernel_col <= 1; ++kernel_col) {
-      const uint8_t pixel = input[static_cast<size_t>(row + kernel_row) * static_cast<size_t>(width_) +
-                                  static_cast<size_t>(col + kernel_col)];
-      gradient_x += static_cast<float>(pixel) * static_cast<float>(kKernelX[kernel_row + 1][kernel_col + 1]);
-      gradient_y += static_cast<float>(pixel) * static_cast<float>(kKernelY[kernel_row + 1][kernel_col + 1]);
+      const size_t pixel_index =
+          (static_cast<size_t>(row + kernel_row) * static_cast<size_t>(width_)) + static_cast<size_t>(col + kernel_col);
+      const uint8_t pixel = input[pixel_index];
+
+      const int kernel_x_value = kKernelX[kernel_row + 1][kernel_col + 1];
+      const int kernel_y_value = kKernelY[kernel_row + 1][kernel_col + 1];
+
+      gradient_x += static_cast<float>(pixel) * static_cast<float>(kernel_x_value);
+      gradient_y += static_cast<float>(pixel) * static_cast<float>(kernel_y_value);
     }
   }
 }
 
 void BadanovASelectEdgeSobelSEQ::ApplyThreshold(const std::vector<float> &magnitude, float max_magnitude,
-                                                std::vector<uint8_t> &output) {
+                                                std::vector<uint8_t> &output) const {
   if (max_magnitude > 0.0F) {
     const float scale = 255.0F / max_magnitude;
     for (size_t i = 0; i < magnitude.size(); ++i) {
       output[i] = (magnitude[i] * scale > static_cast<float>(threshold_)) ? 255 : 0;
     }
   } else {
-    for (size_t i = 0; i < output.size(); ++i) {
-      output[i] = 0;
-    }
+    std::fill(output.begin(), output.end(), 0);
   }
 }
 

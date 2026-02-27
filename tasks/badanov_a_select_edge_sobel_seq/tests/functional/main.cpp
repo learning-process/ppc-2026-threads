@@ -2,11 +2,14 @@
 
 #include <array>
 #include <cctype>
+#include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <fstream>
 #include <stdexcept>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "badanov_a_select_edge_sobel_seq/common/include/common.hpp"
 #include "badanov_a_select_edge_sobel_seq/seq/include/ops_seq.hpp"
@@ -59,40 +62,35 @@ class BadanovASelectEdgeSobelFuncTests : public ppc::util::BaseRunFuncTests<InTy
     file.close();
   }
 
-  bool CheckAllPixelsZero(const std::vector<uint8_t> &data) const {
-    for (const uint8_t pixel : data) {
-      if (pixel != 0) {
-        return false;
-      }
-    }
-    return true;
+  static bool CheckAllPixelsZero(const std::vector<uint8_t> &data) {
+    return std::all_of(data.begin(), data.end(), [](uint8_t pixel) { return pixel == 0; });
   }
 
-  bool CheckImageBorders(const std::vector<uint8_t> &data, int image_width, int image_height) const {
+  static bool CheckImageBorders(const std::vector<uint8_t> &data, int image_width, int image_height) {
     for (int column = 0; column < image_width; ++column) {
-      const size_t index = static_cast<size_t>(column);
+      const auto index = static_cast<size_t>(column);
       if (data[index] != 0) {
         return false;
       }
     }
 
     for (int column = 0; column < image_width; ++column) {
-      const size_t index = static_cast<size_t>((image_height - 1) * image_width + column);
+      const auto index = static_cast<size_t>(((image_height - 1) * image_width) + column);
       if (data[index] != 0) {
         return false;
       }
     }
 
     for (int row = 0; row < image_height; ++row) {
-      const size_t index = static_cast<size_t>(row) * static_cast<size_t>(image_width);
+      const auto index = static_cast<size_t>(row) * static_cast<size_t>(image_width);
       if (data[index] != 0) {
         return false;
       }
     }
 
     for (int row = 0; row < image_height; ++row) {
-      const size_t index =
-          static_cast<size_t>(row) * static_cast<size_t>(image_width) + static_cast<size_t>(image_width - 1);
+      const auto index =
+          (static_cast<size_t>(row) * static_cast<size_t>(image_width)) + static_cast<size_t>(image_width - 1);
       if (data[index] != 0) {
         return false;
       }
@@ -126,7 +124,8 @@ class BadanovASelectEdgeSobelFuncTests : public ppc::util::BaseRunFuncTests<InTy
     bool has_edges = false;
     for (int row = 1; row < image_height - 1 && !has_edges; ++row) {
       for (int column = 1; column < image_width - 1 && !has_edges; ++column) {
-        const size_t index = static_cast<size_t>(row) * static_cast<size_t>(image_width) + static_cast<size_t>(column);
+        const size_t index =
+            (static_cast<size_t>(row) * static_cast<size_t>(image_width)) + static_cast<size_t>(column);
         if (output_data[index] > 0) {
           has_edges = true;
         }
