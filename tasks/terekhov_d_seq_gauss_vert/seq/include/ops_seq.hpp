@@ -1,7 +1,9 @@
 #pragma once
 
-#include "task/include/task.hpp"
+#include <vector>
+
 #include "terekhov_d_seq_gauss_vert/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace terekhov_d_seq_gauss_vert {
 
@@ -17,9 +19,9 @@ class TerekhovDGaussVertSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
-  int width_;
-  int height_;
+  
+  int width_ = 0;
+  int height_ = 0;
   std::vector<int> padded_image_;
 };
 
