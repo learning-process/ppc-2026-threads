@@ -8,6 +8,10 @@
 
 namespace shakirova_e_sobel_edge_detection {
 
+namespace {
+constexpr double kPi = 3.14159265358979323846;
+}  // namespace
+
 class ShakirovaESobelEdgeDetectionPerfTestThreads
     : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr int kWidth  = 3840;
@@ -20,8 +24,8 @@ class ShakirovaESobelEdgeDetectionPerfTestThreads
     for (int row = 0; row < kHeight; ++row) {
       for (int col = 0; col < kWidth; ++col) {
         const double val =
-            std::sin(2.0 * M_PI * col / 8.0) *
-            std::sin(2.0 * M_PI * row / 8.0);
+            std::sin(2.0 * kPi * col / 8.0) *
+            std::sin(2.0 * kPi * row / 8.0);
         input_data_.pixels[(row * kWidth) + col] =
             static_cast<int>((val + 1.0) * 0.5 * 255.0);
       }

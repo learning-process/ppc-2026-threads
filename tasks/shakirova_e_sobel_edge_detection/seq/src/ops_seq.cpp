@@ -44,8 +44,10 @@ bool ShakirovaESobelEdgeDetectionSEQ::RunImpl() {
       for (int ky = -1; ky <= 1; ++ky) {
         for (int kx = -1; kx <= 1; ++kx) {
           const int pixel = input_[((row + ky) * width_) + (col + kx)];
-          gx += pixel * k_gx[static_cast<size_t>(ky + 1)][static_cast<size_t>(kx + 1)];
-          gy += pixel * k_gy[static_cast<size_t>(ky + 1)][static_cast<size_t>(kx + 1)];
+          const auto ky_idx = static_cast<size_t>(ky + 1);
+          const auto kx_idx = static_cast<size_t>(kx + 1);
+          gx += pixel * k_gx.at(ky_idx).at(kx_idx);
+          gy += pixel * k_gy.at(ky_idx).at(kx_idx);
         }
       }
 
