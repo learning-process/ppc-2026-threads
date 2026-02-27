@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <tuple>
 #include <vector>
 
 #include "task/include/task.hpp"
@@ -75,7 +76,7 @@ struct CCSMatrix {
     return val.size();
   }
 
-  bool Сompare(const CCSMatrix &matr) {
+  bool Compare(const CCSMatrix &matr) {
     if (height != matr.height) {
       return false;
     }

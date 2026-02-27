@@ -64,12 +64,10 @@ class PotashnikMMatrixMultComplexFuncTests : public ppc::util::BaseRunFuncTests<
     std::vector<size_t> row_ind_left = matrix_left.row_ind;
     std::vector<size_t> col_ptr_left = matrix_left.col_ptr;
     size_t height_left = matrix_left.height;
-    // size_t width_left = matrix_left.width;
 
     std::vector<Complex> val_right = matrix_right.val;
     std::vector<size_t> row_ind_right = matrix_right.row_ind;
     std::vector<size_t> col_ptr_right = matrix_right.col_ptr;
-    // size_t height_right = matrix_right.height;
     size_t width_right = matrix_right.width;
 
     std::map<std::pair<size_t, size_t>, Complex> buffer;
@@ -100,7 +98,7 @@ class PotashnikMMatrixMultComplexFuncTests : public ppc::util::BaseRunFuncTests<
       matrix_res.col_ptr.push_back(key.second);
     }
 
-    return output_data.Сompare(matrix_res);
+    return output_data.Compare(matrix_res);
   }
 
   InType GetTestInputData() final {
