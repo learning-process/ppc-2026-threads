@@ -4,20 +4,48 @@
 #include <random>
 #include <vector>
 
-// Заменяем пути example_threads на ваше название задачи
 #include "spichek_d_radix_sort_for_integers_with_simple_merging/common/include/common.hpp"
 #include "spichek_d_radix_sort_for_integers_with_simple_merging/seq/include/ops_seq.hpp"
-// В будущем здесь будут:
-// #include "spichek_d_radix_sort_for_integers_with_simple_merging/omp/include/ops_omp.hpp"
-// #include "spichek_d_radix_sort_for_integers_with_simple_merging/tbb/include/ops_tbb.hpp"
-
 #include "util/include/perf_test_util.hpp"
 
 namespace spichek_d_radix_sort_for_integers_with_simple_merging {
 
+// Создаем заглушки для других типов задач, наследуясь от последовательной версии.
+// Это необходимо, чтобы MakeAllPerfTasks мог создать уникальные имена тестов.
+class RadixSortOMP : public RadixSortSEQ {
+ public:
+  using RadixSortSEQ::RadixSortSEQ;
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kOMP;
+  }
+};
+
+class RadixSortTBB : public RadixSortSEQ {
+ public:
+  using RadixSortSEQ::RadixSortSEQ;
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kTBB;
+  }
+};
+
+class RadixSortSTL : public RadixSortSEQ {
+ public:
+  using RadixSortSEQ::RadixSortSEQ;
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kSTL;
+  }
+};
+
+class RadixSortALL : public RadixSortSEQ {
+ public:
+  using RadixSortSEQ::RadixSortSEQ;
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kALL;
+  }
+};
+
 class RadixSortRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  // Для теста производительности берем большое количество элементов
   const int kCount_ = 1000000;
   InType input_data_{};
 
@@ -33,7 +61,6 @@ class RadixSortRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType>
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Для перформанс-теста достаточно убедиться, что массив отсортирован
     return std::is_sorted(output_data.begin(), output_data.end());
   }
 
@@ -48,16 +75,11 @@ TEST_P(RadixSortRunPerfTest, RunPerfModes) {
 
 namespace {
 
-// Если у вас еще нет OMP/TBB/STL версий, замените их на RadixSortSEQ
-// или закомментируйте соответствующие аргументы в шаблоне MakeAllPerfTasks.
+// Используем MakeAllPerfTasks точно так же, как в образце.
+// Теперь каждый аргумент имеет уникальный тип и уникальный статический ID задачи.
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType,
-                                RadixSortSEQ,  // Заглушка для ALL
-                                RadixSortSEQ,  // Заглушка для OMP
-                                RadixSortSEQ,  // SEQ
-                                RadixSortSEQ,  // Заглушка для STL
-                                RadixSortSEQ   // Заглушка для TBB
-                                >(PPC_SETTINGS_spichek_d_radix_sort_for_integers_with_simple_merging);
+    ppc::util::MakeAllPerfTasks<InType, RadixSortALL, RadixSortOMP, RadixSortSEQ, RadixSortSTL, RadixSortTBB>(
+        PPC_SETTINGS_spichek_d_radix_sort_for_integers_with_simple_merging);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
