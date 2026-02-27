@@ -2,12 +2,14 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <complex>
 #include <cstddef>
 #include <fstream>
 #include <stdexcept>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "liulin_y_complex_ccs/common/include/common.hpp"
 #include "liulin_y_complex_ccs/seq/include/ops_seq.hpp"
@@ -16,15 +18,15 @@
 
 namespace liulin_y_complex_ccs {
 
-static CCSMatrix triplet_to_ccs_test(int rows, int cols,
-                                     const std::vector<std::tuple<int, int, std::complex<double>>> &triplets) {
-  CCSMatrix result;
-  result.count_rows = rows;
-  result.count_cols = cols;
-  result.col_index.assign(static_cast<size_t>(cols) + 1, 0);
+static CCSMatrix TripletToCcsTest(int rows_count, int cols_count,
+                                  const std::vector<std::tuple<int, int, std::complex<double>>> &triplets) {
+  CCSMatrix result{};
+  result.count_rows = rows_count;
+  result.count_cols = cols_count;
+  result.col_index.assign(static_cast<size_t>(cols_count) + 1, 0);
 
-  auto sorted_triplets = triplets;
-  std::sort(sorted_triplets.begin(), sorted_triplets.end(), [](const auto &lhs, const auto &rhs) {
+  auto sorted_triplets{triplets};
+  std::ranges::sort(sorted_triplets, [](const auto &lhs, const auto &rhs) {
     if (std::get<1>(lhs) != std::get<1>(rhs)) {
       return std::get<1>(lhs) < std::get<1>(rhs);
     }
@@ -37,10 +39,51 @@ static CCSMatrix triplet_to_ccs_test(int rows, int cols,
     result.col_index[static_cast<size_t>(std::get<1>(triplet)) + 1]++;
   }
 
-  for (int col_idx = 0; col_idx < cols; ++col_idx) {
+  for (int col_idx{0}; col_idx < cols_count; ++col_idx) {
     result.col_index[static_cast<size_t>(col_idx) + 1] += result.col_index[static_cast<size_t>(col_idx)];
   }
   return result;
+}
+
+static void ReadMatrixFromFile(std::ifstream &file_stream, CCSMatrix &matrix) {
+  int rows_val{0};
+  int cols_val{0};
+  int nnz_val{0};
+  if (!(file_stream >> rows_val >> cols_val >> nnz_val)) {
+    return;
+  }
+  std::vector<std::tuple<int, int, std::complex<double>>> triplets;
+  for (int idx{0}; idx < nnz_val; ++idx) {
+    int row_idx{0};
+    int col_idx{0};
+    double real_part{0.0};
+    double imag_part{0.0};
+    if (file_stream >> row_idx >> col_idx >> real_part >> imag_part) {
+      triplets.emplace_back(row_idx, col_idx, std::complex<double>{real_part, imag_part});
+    }
+  }
+  matrix = TripletToCcsTest(rows_val, cols_val, triplets);
+}
+
+static std::vector<std::complex<double>> ComputeDenseReference(const CCSMatrix &mat_a, const CCSMatrix &mat_b) {
+  int rows_total{mat_a.count_rows};
+  int cols_total{mat_b.count_cols};
+  std::vector<std::complex<double>> dense(static_cast<size_t>(rows_total) * cols_total, {0.0, 0.0});
+
+  for (int col_idx{0}; col_idx < cols_total; ++col_idx) {
+    for (size_t idx_b{static_cast<size_t>(mat_b.col_index[col_idx])};
+         idx_b < static_cast<size_t>(mat_b.col_index[col_idx + 1]); ++idx_b) {
+      int mid_idx{mat_b.row_index[idx_b]};
+      std::complex<double> val_b{mat_b.values[idx_b]};
+
+      for (size_t idx_a{static_cast<size_t>(mat_a.col_index[mid_idx])};
+           idx_a < static_cast<size_t>(mat_a.col_index[mid_idx + 1]); ++idx_a) {
+        int row_idx{mat_a.row_index[idx_a]};
+        dense[(static_cast<size_t>(row_idx) * cols_total) + col_idx] += mat_a.values[idx_a] * val_b;
+      }
+    }
+  }
+  return dense;
 }
 
 class LiulinYComplexCcsFuncTestsFromFile : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
@@ -51,85 +94,43 @@ class LiulinYComplexCcsFuncTestsFromFile : public ppc::util::BaseRunFuncTests<In
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    std::string filename = std::get<1>(params);
-    std::string abs_path = ppc::util::GetAbsoluteTaskPath("liulin_y_complex_ccs", "seq/" + filename);
+    TestType params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    std::string filename{std::get<1>(params)};
+    std::string abs_path{ppc::util::GetAbsoluteTaskPath("liulin_y_complex_ccs", "seq/" + filename)};
 
-    std::ifstream file(abs_path + ".txt");
-    if (!file.is_open()) {
+    std::ifstream file_stream(abs_path + ".txt");
+    if (!file_stream.is_open()) {
       throw std::runtime_error("Cannot open test file: " + abs_path + ".txt");
     }
 
-    auto read_matrix = [&](CCSMatrix &matrix) {
-      int rows_val = 0;
-      int cols_val = 0;
-      int nnz_val = 0;
-      if (!(file >> rows_val >> cols_val >> nnz_val)) {
-        return;
-      }
-      std::vector<std::tuple<int, int, std::complex<double>>> triplets;
-      for (int idx = 0; idx < nnz_val; ++idx) {
-        int row_idx = 0;
-        int col_idx = 0;
-        double real_part = 0.0;
-        double imag_part = 0.0;
-        if (file >> row_idx >> col_idx >> real_part >> imag_part) {
-          triplets.emplace_back(row_idx, col_idx, std::complex<double>(real_part, imag_part));
-        }
-      }
-      matrix = triplet_to_ccs_test(rows_val, cols_val, triplets);
-    };
+    ReadMatrixFromFile(file_stream, input_data_.first);
+    ReadMatrixFromFile(file_stream, input_data_.second);
+    file_stream.close();
 
-    read_matrix(input_data_.first);
-    read_matrix(input_data_.second);
-
-    int rows_total = input_data_.first.count_rows;
-    int cols_total = input_data_.second.count_cols;
-    std::vector<std::complex<double>> dense(static_cast<size_t>(rows_total) * cols_total, {0.0, 0.0});
-
-    for (int col_idx = 0; col_idx < cols_total; ++col_idx) {
-      for (int idx_b = input_data_.second.col_index[static_cast<size_t>(col_idx)];
-           idx_b < input_data_.second.col_index[static_cast<size_t>(col_idx) + 1]; ++idx_b) {
-        int mid_idx = input_data_.second.row_index[static_cast<size_t>(idx_b)];
-        std::complex<double> val_b = input_data_.second.values[static_cast<size_t>(idx_b)];
-        for (int idx_a = input_data_.first.col_index[static_cast<size_t>(mid_idx)];
-             idx_a < input_data_.first.col_index[static_cast<size_t>(mid_idx) + 1]; ++idx_a) {
-          int row_idx = input_data_.first.row_index[static_cast<size_t>(idx_a)];
-          dense[(static_cast<size_t>(row_idx) * cols_total) + col_idx] +=
-              input_data_.first.values[static_cast<size_t>(idx_a)] * val_b;
-        }
-      }
-    }
+    int rows_res{input_data_.first.count_rows};
+    int cols_res{input_data_.second.count_cols};
+    auto dense_data{ComputeDenseReference(input_data_.first, input_data_.second)};
 
     std::vector<std::tuple<int, int, std::complex<double>>> res_triplets;
-    for (int col_idx = 0; col_idx < cols_total; ++col_idx) {
-      for (int row_idx = 0; row_idx < rows_total; ++row_idx) {
-        if (std::abs(dense[(static_cast<size_t>(row_idx) * cols_total) + col_idx]) > 1e-15) {
-          res_triplets.emplace_back(row_idx, col_idx, dense[(static_cast<size_t>(row_idx) * cols_total) + col_idx]);
+    for (int col_idx{0}; col_idx < cols_res; ++col_idx) {
+      for (int row_idx{0}; row_idx < rows_res; ++row_idx) {
+        auto value{dense_data[(static_cast<size_t>(row_idx) * cols_res) + col_idx]};
+        if (std::abs(value) > 1e-15) {
+          res_triplets.emplace_back(row_idx, col_idx, value);
         }
       }
     }
-    exp_output_ = triplet_to_ccs_test(rows_total, cols_total, res_triplets);
-    file.close();
+    exp_output_ = TripletToCcsTest(rows_res, cols_res, res_triplets);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.count_rows != exp_output_.count_rows) {
+    if (output_data.count_rows != exp_output_.count_rows || output_data.count_cols != exp_output_.count_cols) {
       return false;
     }
-    if (output_data.count_cols != exp_output_.count_cols) {
+    if (output_data.col_index != exp_output_.col_index || output_data.row_index != exp_output_.row_index) {
       return false;
     }
-    if (output_data.col_index != exp_output_.col_index) {
-      return false;
-    }
-    if (output_data.row_index != exp_output_.row_index) {
-      return false;
-    }
-    if (output_data.values.size() != exp_output_.values.size()) {
-      return false;
-    }
-    for (size_t idx = 0; idx < output_data.values.size(); ++idx) {
+    for (size_t idx{0}; idx < output_data.values.size(); ++idx) {
       if (std::abs(output_data.values[idx] - exp_output_.values[idx]) > 1e-9) {
         return false;
       }

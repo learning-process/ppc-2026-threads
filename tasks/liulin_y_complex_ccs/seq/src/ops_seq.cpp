@@ -1,12 +1,11 @@
 #include "liulin_y_complex_ccs/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <complex>
-#include <numeric>
 #include <vector>
 
 #include "liulin_y_complex_ccs/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace liulin_y_complex_ccs {
 
@@ -16,46 +15,46 @@ LiulinYComplexCcs::LiulinYComplexCcs(const InType &in) : BaseTask() {
 }
 
 bool LiulinYComplexCcs::ValidationImpl() {
-  const auto &A = GetInput().first;
-  const auto &B = GetInput().second;
-  return A.count_cols == B.count_rows;
+  const auto &first = GetInput().first;
+  const auto &second = GetInput().second;
+  return first.count_cols == second.count_rows;
 }
 
 bool LiulinYComplexCcs::PreProcessingImpl() {
-  const auto &A = GetInput().first;
-  const auto &B = GetInput().second;
+  const auto &first = GetInput().first;
+  const auto &second = GetInput().second;
 
-  auto &Result = GetOutput();
-  Result.count_rows = A.count_rows;
-  Result.count_cols = B.count_cols;
-  Result.values.clear();
-  Result.row_index.clear();
-  Result.col_index.assign(Result.count_cols + 1, 0);
+  auto &result = GetOutput();
+  result.count_rows = first.count_rows;
+  result.count_cols = second.count_cols;
+  result.values.clear();
+  result.row_index.clear();
+  result.col_index.assign(result.count_cols + 1, 0);
 
   return true;
 }
 
 bool LiulinYComplexCcs::RunImpl() {
-  const auto &A = GetInput().first;
-  const auto &B = GetInput().second;
-  auto &Result = GetOutput();
+  const auto &first = GetInput().first;
+  const auto &second = GetInput().second;
+  auto &result = GetOutput();
 
-  std::vector<std::complex<double>> dense_col(A.count_rows, {0.0, 0.0});
+  std::vector<std::complex<double>> dense_col(first.count_rows, {0.0, 0.0});
   std::vector<int> active_rows;
-  std::vector<bool> is_active(A.count_rows, false);
+  std::vector<bool> is_active(first.count_rows, false);
 
-  for (int j = 0; j < B.count_cols; ++j) {
-    for (int kb = B.col_index[j]; kb < B.col_index[j + 1]; ++kb) {
-      int k = B.row_index[kb];
-      std::complex<double> b_val = B.values[kb];
+  for (int j = 0; j < second.count_cols; ++j) {
+    for (int kb = second.col_index[j]; kb < second.col_index[j + 1]; ++kb) {
+      int k = second.row_index[kb];
+      std::complex<double> b_val = second.values[kb];
 
-      for (int ka = A.col_index[k]; ka < A.col_index[k + 1]; ++ka) {
-        int i = A.row_index[ka];
+      for (int ka = first.col_index[k]; ka < first.col_index[k + 1]; ++ka) {
+        int i = first.row_index[ka];
         if (!is_active[i]) {
           is_active[i] = true;
           active_rows.push_back(i);
         }
-        dense_col[i] += A.values[ka] * b_val;
+        dense_col[i] += first.values[ka] * b_val;
       }
     }
 
@@ -63,13 +62,13 @@ bool LiulinYComplexCcs::RunImpl() {
 
     for (int i : active_rows) {
       if (std::abs(dense_col[i]) > 1e-15) {
-        Result.values.push_back(dense_col[i]);
-        Result.row_index.push_back(i);
+        result.values.push_back(dense_col[i]);
+        result.row_index.push_back(i);
       }
       dense_col[i] = {0.0, 0.0};
       is_active[i] = false;
     }
-    Result.col_index[j + 1] = static_cast<int>(Result.values.size());
+    result.col_index[j + 1] = static_cast<int>(result.values.size());
     active_rows.clear();
   }
 

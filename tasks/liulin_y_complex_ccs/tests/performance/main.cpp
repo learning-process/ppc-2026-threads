@@ -2,6 +2,8 @@
 
 #include <cstddef>
 #include <random>
+#include <utility>
+#include <vector>
 
 #include "liulin_y_complex_ccs/common/include/common.hpp"
 #include "liulin_y_complex_ccs/seq/include/ops_seq.hpp"
