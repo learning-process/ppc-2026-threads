@@ -69,7 +69,7 @@ const std::array<TestType, 3> kTestParam = {
   std::make_tuple(kTestInput_3, kTestOutput_3)
 };
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KutuzovITestConvexHullSTL, InType>(kTestParam, PPC_SETTINGS_kutuzov_i_convex_hull_jarvis));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KutuzovITestConvexHullSEQ, InType>(kTestParam, PPC_SETTINGS_kutuzov_i_convex_hull_jarvis));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

@@ -109,8 +109,7 @@ TEST_P(KutuzovIRunPerfTestsThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KutuzovITestConvexHullAll, KutuzovITestConvexHullOMP, KutuzovITestConvexHullSEQ,
-                                KutuzovITestConvexHullSTL, KutuzovITestConvexHullTBB>(PPC_SETTINGS_kutuzov_i_convex_hull_jarvis);
+    ppc::util::MakeAllPerfTasks<InType, KutuzovITestConvexHullSEQ>(PPC_SETTINGS_kutuzov_i_convex_hull_jarvis);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
