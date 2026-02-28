@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "ivanova_p_marking_components_on_binary_image/common/include/common.hpp"
+#include "ivanova_p_marking_components_on_binary_image/data/image_generator.hpp"
 #include "ivanova_p_marking_components_on_binary_image/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 

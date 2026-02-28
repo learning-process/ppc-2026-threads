@@ -8,6 +8,7 @@
 
 // Явно включаем заголовки, которые предоставляют используемые типы и функции
 #include "ivanova_p_marking_components_on_binary_image/common/include/common.hpp"  // Для InType, test_image, LoadImageFromTxt, CreateTestImage
+#include "ivanova_p_marking_components_on_binary_image/data/image_generator.hpp"
 
 namespace ivanova_p_marking_components_on_binary_image {
 
