@@ -49,7 +49,7 @@ bool KutuzovITestConvexHullSEQ::RunImpl() {
   }
 
   // Finding left-most point
-  int leftmost = 0;
+  size_t leftmost = 0;
   double leftmost_x = std::get<0>(GetInput()[leftmost]);
   double leftmost_y = std::get<1>(GetInput()[leftmost]);
 
