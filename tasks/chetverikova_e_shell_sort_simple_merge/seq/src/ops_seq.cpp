@@ -1,9 +1,8 @@
 #include "chetverikova_e_shell_sort_simple_merge/seq/include/ops_seq.hpp"
 
+#include <cstddef>
 #include <numeric>
 #include <vector>
-#include <vector>
-#include <cstddef>
 
 #include "chetverikova_e_shell_sort_simple_merge/common/include/common.hpp"
 

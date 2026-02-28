@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 
-#include <fstream> 
+#include <cstddef>
+#include <fstream>
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <cstddef>  
 
 #include "chetverikova_e_shell_sort_simple_merge/common/include/common.hpp"
 #include "chetverikova_e_shell_sort_simple_merge/seq/include/ops_seq.hpp"
