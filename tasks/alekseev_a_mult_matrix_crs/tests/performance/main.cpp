@@ -8,6 +8,7 @@
 
 #include "alekseev_a_mult_matrix_crs/common/include/common.hpp"
 #include "alekseev_a_mult_matrix_crs/seq/include/ops_seq.hpp"
+#include "performance/include/performance.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace alekseev_a_mult_matrix_crs {

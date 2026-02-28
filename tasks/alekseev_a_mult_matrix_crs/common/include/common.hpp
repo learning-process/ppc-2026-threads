@@ -10,9 +10,9 @@
 namespace alekseev_a_mult_matrix_crs {
 
 struct CRSMatrix {
-  std::vector<double> values{};
-  std::vector<std::size_t> col_indices{};
-  std::vector<std::size_t> row_ptr{};
+  std::vector<double> values;
+  std::vector<std::size_t> col_indices;
+  std::vector<std::size_t> row_ptr;
   std::size_t rows = 0;
   std::size_t cols = 0;
 };

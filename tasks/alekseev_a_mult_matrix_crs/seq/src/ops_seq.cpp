@@ -3,7 +3,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <utility>
 #include <vector>
+
+#include "alekseev_a_mult_matrix_crs/common/include/common.hpp"
 
 namespace alekseev_a_mult_matrix_crs {
 
@@ -69,7 +72,7 @@ bool AlekseevAMultMatrixCRSSEQ::RunImpl() {
       for (std::size_t pos_b = b.row_ptr[k]; pos_b < b.row_ptr[k + 1]; ++pos_b) {
         std::size_t j = b.col_indices[pos_b];
 
-        if (touched_flag[j] != static_cast<int>(i)) {
+        if (std::cmp_not_equal(touched_flag[j], i)) {
           touched_flag[j] = static_cast<int>(i);
           touched_cols.push_back(j);
           accum[j] = 0.0;
@@ -78,7 +81,7 @@ bool AlekseevAMultMatrixCRSSEQ::RunImpl() {
       }
     }
 
-    std::sort(touched_cols.begin(), touched_cols.end());
+    std::ranges::sort(touched_cols);
 
     for (auto col : touched_cols) {
       if (std::abs(accum[col]) > 1e-15) {
