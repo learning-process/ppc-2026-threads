@@ -8,6 +8,18 @@
 
 namespace kruglova_a_conjugate_gradient_sle {
 
+namespace {
+void matrix_vector_multiply(const std::vector<double> &a, const std::vector<double> &p, std::vector<double> &ap,
+                            int n) {
+  for (int i = 0; i < n; ++i) {
+    ap[i] = 0.0;
+    for (int j = 0; j < n; ++j) {
+      ap[i] += a[(i * n) + j] * p[j];
+    }
+  }
+}
+}  // namespace
+
 KruglovaAConjGradSleSEQ::KruglovaAConjGradSleSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -31,16 +43,6 @@ bool KruglovaAConjGradSleSEQ::ValidationImpl() {
 bool KruglovaAConjGradSleSEQ::PreProcessingImpl() {
   GetOutput().assign(GetInput().size, 0.0);
   return true;
-}
-
-void matrix_vector_multiply(const std::vector<double> &a, const std::vector<double> &p, std::vector<double> &ap,
-                            int n) {
-  for (int i = 0; i < n; ++i) {
-    ap[i] = 0.0;
-    for (int j = 0; j < n; ++j) {
-      ap[i] += a[(i * n) + j] * p[j];
-    }
-  }
 }
 
 bool KruglovaAConjGradSleSEQ::RunImpl() {
