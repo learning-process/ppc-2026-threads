@@ -64,7 +64,7 @@ class BadanovASelectEdgeSobelFuncTests : public ppc::util::BaseRunFuncTests<InTy
   }
 
   static bool CheckAllPixelsZero(const std::vector<uint8_t> &data) {
-    return std::all_of(data.begin(), data.end(), [](uint8_t pixel) { return pixel == 0; });
+    return std::ranges::all_of(data.begin(), data.end(), [](uint8_t pixel) { return pixel == 0; });
   }
 
   static bool CheckImageBorders(const std::vector<uint8_t> &data, int image_width, int image_height) {
@@ -76,8 +76,8 @@ class BadanovASelectEdgeSobelFuncTests : public ppc::util::BaseRunFuncTests<InTy
     }
 
     for (int column = 0; column < image_width; ++column) {
-      const long long flat_index = (static_cast<long long>((image_height - 1)) * static_cast<long long>(image_width)) +
-                                   static_cast<long long>(column);
+      const int64_t flat_index =
+          (static_cast<int64_t>(image_height - 1) * static_cast<int64_t>(image_width)) + static_cast<int64_t>(column);
       const auto index = static_cast<size_t>(flat_index);
       if (data[index] != 0) {
         return false;

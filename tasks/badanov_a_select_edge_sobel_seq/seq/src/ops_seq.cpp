@@ -70,8 +70,8 @@ void BadanovASelectEdgeSobelSEQ::ComputeGradientAtPixel(const std::vector<uint8_
 
       const int kx_idx = kernel_row + 1;
       const int ky_idx = kernel_col + 1;
-      const int kernel_x_value = kKernelX[kx_idx][ky_idx];
-      const int kernel_y_value = kKernelY[kx_idx][ky_idx];
+      const int kernel_x_value = kKernelX.at(static_cast<size_t>(kx_idx)).at(static_cast<size_t>(ky_idx));
+      const int kernel_y_value = kKernelY.at(static_cast<size_t>(kx_idx)).at(static_cast<size_t>(ky_idx));
 
       gradient_x += static_cast<float>(pixel) * static_cast<float>(kernel_x_value);
       gradient_y += static_cast<float>(pixel) * static_cast<float>(kernel_y_value);
