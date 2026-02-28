@@ -32,13 +32,13 @@ CompressedRowMatrix CreateRandomCompressedRowMatrix(int row_count, int column_co
 
   density_factor = std::clamp(density_factor, 0.0, 1.0);
 
-  std::mt19937 rng(static_cast<std::mt19937::resulttype>(seed));
+  std::mt19937 rng(static_cast<std::mt19937::result_type>(seed));
 
   std::hash<std::string> hasher;
   const std::string param_hash =
       std::to_string(row_count) + "_" + std::to_string(column_count) + "_" + std::to_string(density_factor);
-  const auto hash_value = static_cast<std::mt19937::resulttype>(hasher(param_hash));
-  rng.seed(static_cast<std::mt19937::resulttype>(seed) + hash_value);
+  const auto hash_value = static_cast<std::mt19937::result_type>(hasher(param_hash));
+  rng.seed(static_cast<std::mt19937::result_type>(seed) + hash_value);
 
   std::uniform_real_distribution<double> val_dist(0.1, 10.0);
   std::uniform_real_distribution<double> prob_dist(0.0, 1.0);
