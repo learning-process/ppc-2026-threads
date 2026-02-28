@@ -1,12 +1,11 @@
+#include "yurkin_g_graham_scan/common/include/common.hpp"
 #include "yurkin_g_graham_scan/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <cmath>
 #include <cstddef>
-#include <vector>
+#include <cmath>
 #include <ranges>
-
-#include "yurkin_g_graham_scan/common/include/common.hpp"
+#include <vector>
 
 namespace yurkin_g_graham_scan {
 
@@ -30,15 +29,19 @@ bool YurkinGGrahamScanSEQ::ValidationImpl() {
 
 bool YurkinGGrahamScanSEQ::PreProcessingImpl() {
   auto &pts = GetInput();
-  if (pts.empty()) return true;
+  if (pts.empty()) {
+    return true;
+  }
 
   // Sort using ranges
   std::ranges::sort(pts, [](const Point &a, const Point &b) {
-    if (a.x != b.x) return a.x < b.x;
+    if (a.x != b.x) {
+      return a.x < b.x;
+    }
     return a.y < b.y;
   });
 
-  // Remove exact duplicates explicitly (stable, clear, avoids std::unique warning)
+  // Remove exact duplicates explicitly (stable, clear)
   std::vector<Point> tmp;
   tmp.reserve(pts.size());
   for (const auto &p : pts) {
@@ -65,7 +68,9 @@ bool YurkinGGrahamScanSEQ::RunImpl() {
 
   InType pts = pts_in;
   std::ranges::sort(pts, [](const Point &a, const Point &b) {
-    if (a.x != b.x) return a.x < b.x;
+    if (a.x != b.x) {
+      return a.x < b.x;
+    }
     return a.y < b.y;
   });
 
@@ -91,15 +96,21 @@ bool YurkinGGrahamScanSEQ::RunImpl() {
 
   OutType hull;
   hull.reserve(lower.size() + upper.size());
-  for (const auto &pt : lower) hull.push_back(pt);
-  for (std::size_t i = 1; i + 1 < upper.size(); ++i) hull.push_back(upper[i]);
+  for (const auto &pt : lower) {
+    hull.push_back(pt);
+  }
+  for (std::size_t i = 1; i + 1 < upper.size(); ++i) {
+    hull.push_back(upper[i]);
+  }
 
   GetOutput() = hull;
   return true;
 }
 
 bool YurkinGGrahamScanSEQ::PostProcessingImpl() {
-  if (GetInput().empty()) return true;
+  if (GetInput().empty()) {
+    return true;
+  }
   return !GetOutput().empty();
 }
 

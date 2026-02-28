@@ -1,3 +1,6 @@
+#include "yurkin_g_graham_scan/common/include/common.hpp"
+#include "yurkin_g_graham_scan/seq/include/ops_seq.hpp"
+
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -6,9 +9,6 @@
 #include <string>
 #include <tuple>
 #include <vector>
-
-#include "yurkin_g_graham_scan/common/include/common.hpp"
-#include "yurkin_g_graham_scan/seq/include/ops_seq.hpp"
 
 #include "util/include/func_test_util.hpp"
 
@@ -36,7 +36,9 @@ class YurkinGGrahamScanFuncTets : public ppc::util::BaseRunFuncTests<InType, Out
 
   bool CheckTestOutputData(OutType &output_data) final {
     std::vector<Point> expected = {{0.0, 0.0}, {0.0, 1.0}, {1.0, 0.0}, {1.0, 1.0}};
-    if (output_data.size() != expected.size()) return false;
+    if (output_data.size() != expected.size()) {
+      return false;
+    }
 
     auto contains = [](const std::vector<Point> &vec, const Point &p) {
       return std::ranges::any_of(vec, [&](const Point &q) {

@@ -1,13 +1,12 @@
+#include "util/include/perf_test_util.hpp"
+#include "yurkin_g_graham_scan/common/include/common.hpp"
+#include "yurkin_g_graham_scan/seq/include/ops_seq.hpp"
+
 #include <gtest/gtest.h>
 
 #include <cstddef>
 #include <random>
-#include <ranges>
 #include <vector>
-
-#include "yurkin_g_graham_scan/common/include/common.hpp"
-#include "yurkin_g_graham_scan/seq/include/ops_seq.hpp"
-#include "util/include/perf_test_util.hpp"
 
 namespace yurkin_g_graham_scan {
 
@@ -17,7 +16,7 @@ class YurkinGGrahamScanPerfTets : public ppc::util::BaseRunPerfTests<InType, Out
   InType input_data;
 
   void SetUp() override {
-    std::mt19937_64 rng(123456789);  // deterministic seed is acceptable for perf tests
+    std::mt19937_64 rng(123456789);  // deterministic seed for reproducible perf runs
     std::uniform_real_distribution<double> dist(-1000.0, 1000.0);
     input_data.clear();
     input_data.reserve(static_cast<std::size_t>(k_count));
@@ -27,14 +26,20 @@ class YurkinGGrahamScanPerfTets : public ppc::util::BaseRunPerfTests<InType, Out
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.empty()) return false;
-    if (output_data.size() > input_data.size()) return false;
+    if (output_data.empty()) {
+      return false;
+    }
+    if (output_data.size() > input_data.size()) {
+      return false;
+    }
 
     auto cross = [](const Point &a, const Point &b, const Point &c) {
       return ((b.x - a.x) * (c.y - a.y)) - ((b.y - a.y) * (c.x - a.x));
     };
     const std::size_t m = output_data.size();
-    if (m < 3) return true;
+    if (m < 3) {
+      return true;
+    }
     for (std::size_t i = 0; i < m; ++i) {
       const Point &p0 = output_data[i];
       const Point &p1 = output_data[(i + 1) % m];
