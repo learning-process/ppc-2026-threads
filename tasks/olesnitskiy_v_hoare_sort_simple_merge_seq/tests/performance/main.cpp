@@ -45,8 +45,8 @@ TEST_P(OlesnitskiyVRunPerfTestSEQ, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, OlesnitskiyVHoareSortSimpleMergeSEQ>(PPC_SETTINGS_olesnitskiy_v_hoare_sort_simple_merge_seq);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, OlesnitskiyVHoareSortSimpleMergeSEQ>(
+    PPC_SETTINGS_olesnitskiy_v_hoare_sort_simple_merge_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

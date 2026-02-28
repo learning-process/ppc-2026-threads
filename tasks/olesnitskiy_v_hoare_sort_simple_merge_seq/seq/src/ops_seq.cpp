@@ -65,7 +65,7 @@ void OlesnitskiyVHoareSortSimpleMergeSEQ::HoareQuickSort(std::vector<int> &array
 }
 
 std::vector<int> OlesnitskiyVHoareSortSimpleMergeSEQ::SimpleMerge(const std::vector<int> &left_part,
-                                                                   const std::vector<int> &right_part) {
+                                                                  const std::vector<int> &right_part) {
   std::vector<int> result;
   result.reserve(left_part.size() + right_part.size());
 
@@ -135,7 +135,8 @@ bool OlesnitskiyVHoareSortSimpleMergeSEQ::RunImpl() {
         std::vector<int> merged_part = SimpleMerge(left_part, right_part);
         std::ranges::copy(merged_part, merged_data.begin() + static_cast<std::ptrdiff_t>(left));
       } else {
-        std::ranges::copy(data_.begin() + static_cast<std::ptrdiff_t>(left), data_.begin() + static_cast<std::ptrdiff_t>(right),
+        std::ranges::copy(data_.begin() + static_cast<std::ptrdiff_t>(left),
+                          data_.begin() + static_cast<std::ptrdiff_t>(right),
                           merged_data.begin() + static_cast<std::ptrdiff_t>(left));
       }
     }

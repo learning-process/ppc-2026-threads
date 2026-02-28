@@ -53,9 +53,8 @@ const std::array<TestType, 8> kTestParam = {
     TestType{InType{10, -5, 0, 10, -5, 8, 2, 2}, OutType{-5, -5, 0, 2, 2, 8, 10, 10}, "mixed_values"},
     TestType{InType{15, 3, 27, 9, 1, 8, 2, 11, 6, 4, 5}, OutType{1, 2, 3, 4, 5, 6, 8, 9, 11, 15, 27}, "odd_size"}};
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<OlesnitskiyVHoareSortSimpleMergeSEQ, InType>(kTestParam,
-                                                                         PPC_SETTINGS_olesnitskiy_v_hoare_sort_simple_merge_seq);
+const auto kTestTasksList = ppc::util::AddFuncTask<OlesnitskiyVHoareSortSimpleMergeSEQ, InType>(
+    kTestParam, PPC_SETTINGS_olesnitskiy_v_hoare_sort_simple_merge_seq);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
