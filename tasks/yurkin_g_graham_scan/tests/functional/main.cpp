@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -65,10 +64,10 @@ TEST_P(YurkinGGrahamScanFuncTets, SquareWithInterior) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 1> k_test_param = {std::make_tuple(1, "square")};
+const std::array<TestType, 1> kTestParam = {std::make_tuple(1, "square")};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<YurkinGGrahamScanSEQ, InType>(k_test_param, PPC_SETTINGS_yurkin_g_graham_scan));
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<YurkinGGrahamScanSEQ, InType>(kTestParam, PPC_SETTINGS_yurkin_g_graham_scan));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

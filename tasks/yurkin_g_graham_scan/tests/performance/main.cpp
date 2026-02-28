@@ -1,9 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <cstddef>
 #include <random>
-#include <string>
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
@@ -14,15 +12,16 @@ namespace yurkin_g_graham_scan {
 
 class YurkinGGrahamScanPerfTets : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  const int k_count = 2000;
+  const int kCount = 2000;
   InType input_data;
 
   void SetUp() override {
-    std::mt19937_64 rng(123456789);
+    std::random_device rd;
+    std::mt19937_64 rng(rd());  // seed from non-deterministic source to avoid cert-msc51-cpp warning
     std::uniform_real_distribution<double> dist(-1000.0, 1000.0);
     input_data.clear();
-    input_data.reserve(static_cast<std::size_t>(k_count));
-    for (int i = 0; i < k_count; ++i) {
+    input_data.reserve(static_cast<std::size_t>(kCount));
+    for (int i = 0; i < kCount; ++i) {
       input_data.push_back({dist(rng), dist(rng)});
     }
   }
@@ -36,7 +35,7 @@ class YurkinGGrahamScanPerfTets : public ppc::util::BaseRunPerfTests<InType, Out
     }
 
     auto cross = [](const Point &a, const Point &b, const Point &c) {
-      return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+      return ((b.x - a.x) * (c.y - a.y)) - ((b.y - a.y) * (c.x - a.x));
     };
     const std::size_t m = output_data.size();
     if (m < 3) {
