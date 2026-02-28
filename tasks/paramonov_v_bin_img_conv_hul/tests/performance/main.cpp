@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <chrono>
+#include <cstddef>
 #include <random>
 #include <vector>
 
@@ -22,16 +24,16 @@ class ConvexHullPerformanceTest : public ppc::util::BaseRunPerfTests<InputType, 
     std::uniform_int_distribution<int> dist(0, kImageSize - 1);
 
     // Создаем 5 случайных прямоугольников
-    for (int comp = 0; comp < 5; ++comp) {
+    for (int component = 0; component < 5; ++component) {
       int x1 = dist(rng) % (kImageSize - 30);
       int y1 = dist(rng) % (kImageSize - 30);
-      int x2 = x1 + 20 + dist(rng) % 20;
-      int y2 = y1 + 20 + dist(rng) % 20;
+      int x2 = x1 + 20 + (dist(rng) % 20);
+      int y2 = y1 + 20 + (dist(rng) % 20);
 
-      for (int r = y1; r <= y2; ++r) {
-        for (int c = x1; c <= x2; ++c) {
-          if (r >= 0 && r < kImageSize && c >= 0 && c < kImageSize) {
-            size_t idx = static_cast<size_t>(r) * kImageSize + c;
+      for (int row = y1; row <= y2; ++row) {
+        for (int col = x1; col <= x2; ++col) {
+          if (row >= 0 && row < kImageSize && col >= 0 && col < kImageSize) {
+            size_t idx = (static_cast<size_t>(row) * kImageSize) + col;
             input_image_.pixels[idx] = 255;
           }
         }
@@ -40,10 +42,10 @@ class ConvexHullPerformanceTest : public ppc::util::BaseRunPerfTests<InputType, 
 
     // Добавляем несколько диагональных линий
     for (int i = 0; i < kImageSize; i += 17) {
-      int r = i;
-      int c = i;
-      if (r < kImageSize && c < kImageSize) {
-        size_t idx = static_cast<size_t>(r) * kImageSize + c;
+      int row = i;
+      int col = i;
+      if (row < kImageSize && col < kImageSize) {
+        size_t idx = (static_cast<size_t>(row) * kImageSize) + col;
         input_image_.pixels[idx] = 255;
       }
     }
@@ -53,7 +55,7 @@ class ConvexHullPerformanceTest : public ppc::util::BaseRunPerfTests<InputType, 
     if (output.empty()) {
       return false;
     }
-    return std::all_of(output.begin(), output.end(), [](const auto &hull) { return !hull.empty(); });
+    return std::ranges::all_of(output, [](const auto &hull) { return !hull.empty(); });
   }
 
   InputType GetTestInputData() override {

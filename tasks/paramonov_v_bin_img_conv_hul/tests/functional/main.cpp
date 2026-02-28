@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -26,20 +28,20 @@ GrayImage CreateTestImage(int rows, int cols) {
 
 void SetPixel(GrayImage &img, int row, int col, uint8_t value = 255) {
   if (row >= 0 && row < img.rows && col >= 0 && col < img.cols) {
-    img.pixels[static_cast<size_t>(row) * img.cols + col] = value;
+    img.pixels[(static_cast<size_t>(row) * img.cols) + col] = value;
   }
 }
 
-void DrawRectangle(GrayImage &img, int r1, int c1, int r2, int c2) {
-  for (int r = r1; r <= r2; ++r) {
-    for (int c = c1; c <= c2; ++c) {
-      SetPixel(img, r, c);
+void DrawRectangle(GrayImage &img, int start_row, int start_col, int end_row, int end_col) {
+  for (int row = start_row; row <= end_row; ++row) {
+    for (int col = start_col; col <= end_col; ++col) {
+      SetPixel(img, row, col);
     }
   }
 }
 
-std::vector<PixelPoint> GetRectangleHull(int r1, int c1, int r2, int c2) {
-  return {{r1, c1}, {r1, c2}, {r2, c2}, {r2, c1}};
+std::vector<PixelPoint> GetRectangleHull(int start_row, int start_col, int end_row, int end_col) {
+  return {{start_row, start_col}, {start_row, end_col}, {end_row, end_col}, {end_row, start_col}};
 }
 
 bool PointsEqual(const PixelPoint &a, const PixelPoint &b) {
@@ -47,16 +49,16 @@ bool PointsEqual(const PixelPoint &a, const PixelPoint &b) {
 }
 
 void SortPoints(std::vector<PixelPoint> &points) {
-  std::sort(points.begin(), points.end());
+  std::ranges::sort(points);
 }
 
-bool HullsEqual(const std::vector<PixelPoint> &h1, const std::vector<PixelPoint> &h2) {
-  if (h1.size() != h2.size()) {
+bool HullsEqual(const std::vector<PixelPoint> &hull1, const std::vector<PixelPoint> &hull2) {
+  if (hull1.size() != hull2.size()) {
     return false;
   }
 
-  std::vector<PixelPoint> sorted1 = h1;
-  std::vector<PixelPoint> sorted2 = h2;
+  std::vector<PixelPoint> sorted1 = hull1;
+  std::vector<PixelPoint> sorted2 = hull2;
 
   SortPoints(sorted1);
   SortPoints(sorted2);
@@ -74,7 +76,7 @@ void SortHulls(std::vector<std::vector<PixelPoint>> &hulls) {
     SortPoints(hull);
   }
 
-  std::sort(hulls.begin(), hulls.end(), [](const std::vector<PixelPoint> &a, const std::vector<PixelPoint> &b) {
+  std::ranges::sort(hulls, [](const std::vector<PixelPoint> &a, const std::vector<PixelPoint> &b) {
     if (a.empty() || b.empty()) {
       return a.size() < b.size();
     }
@@ -154,8 +156,8 @@ const std::array<TestCase, 8> kTestCases = {{
     std::make_tuple(
         []() {
           auto img = CreateTestImage(7, 7);
-          for (int r = 1; r <= 5; ++r) {
-            SetPixel(img, r, 3);
+          for (int row = 1; row <= 5; ++row) {
+            SetPixel(img, row, 3);
           }
           return img;
         }(),
@@ -166,8 +168,8 @@ const std::array<TestCase, 8> kTestCases = {{
     std::make_tuple(
         []() {
           auto img = CreateTestImage(7, 7);
-          for (int c = 1; c <= 5; ++c) {
-            SetPixel(img, 3, c);
+          for (int col = 1; col <= 5; ++col) {
+            SetPixel(img, 3, col);
           }
           return img;
         }(),

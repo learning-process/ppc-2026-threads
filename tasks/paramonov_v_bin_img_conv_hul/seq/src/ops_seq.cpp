@@ -2,9 +2,10 @@
 
 #include <algorithm>
 #include <array>
-#include <iterator>
-#include <numeric>
+#include <cstdint>
+#include <iterator>  // для std::back_inserter
 #include <stack>
+#include <utility>  // для std::pair
 #include <vector>
 
 namespace paramonov_v_bin_img_conv_hul {
@@ -45,12 +46,12 @@ bool ConvexHullSequential::PostProcessingImpl() {
 }
 
 void ConvexHullSequential::BinarizeImage(uint8_t threshold) {
-  std::transform(working_image_.pixels.begin(), working_image_.pixels.end(), working_image_.pixels.begin(),
-                 [threshold](uint8_t pixel) { return pixel > threshold ? uint8_t{255} : uint8_t{0}; });
+  std::ranges::transform(working_image_.pixels, working_image_.pixels.begin(),
+                         [threshold](uint8_t pixel) { return pixel > threshold ? uint8_t{255} : uint8_t{0}; });
 }
 
 void ConvexHullSequential::FloodFill(int start_row, int start_col, std::vector<bool> &visited,
-                                     std::vector<PixelPoint> &component) {
+                                     std::vector<PixelPoint> &component) const {
   std::stack<PixelPoint> pixel_stack;
   pixel_stack.emplace(start_row, start_col);
 
@@ -66,14 +67,14 @@ void ConvexHullSequential::FloodFill(int start_row, int start_col, std::vector<b
     component.push_back(current);
 
     for (const auto &[dr, dc] : kNeighbors) {
-      int nr = current.row + dr;
-      int nc = current.col + dc;
+      int next_row = current.row + dr;
+      int next_col = current.col + dc;
 
-      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
-        size_t idx = PixelIndex(nr, nc, cols);
+      if (next_row >= 0 && next_row < rows && next_col >= 0 && next_col < cols) {
+        size_t idx = PixelIndex(next_row, next_col, cols);
         if (!visited[idx] && working_image_.pixels[idx] == 255) {
           visited[idx] = true;
-          pixel_stack.emplace(nr, nc);
+          pixel_stack.emplace(next_row, next_col);
         }
       }
     }
@@ -88,13 +89,13 @@ void ConvexHullSequential::ExtractConnectedComponents() {
   std::vector<bool> visited(total_pixels, false);
   auto &output_hulls = GetOutput();
 
-  for (int r = 0; r < rows; ++r) {
-    for (int c = 0; c < cols; ++c) {
-      size_t idx = PixelIndex(r, c, cols);
+  for (int row = 0; row < rows; ++row) {
+    for (int col = 0; col < cols; ++col) {
+      size_t idx = PixelIndex(row, col, cols);
 
       if (working_image_.pixels[idx] == 255 && !visited[idx]) {
         std::vector<PixelPoint> component;
-        FloodFill(r, c, visited, component);
+        FloodFill(row, col, visited, component);
 
         if (!component.empty()) {
           std::vector<PixelPoint> hull = ComputeConvexHull(component);
@@ -110,26 +111,26 @@ int64_t ConvexHullSequential::Orientation(const PixelPoint &p, const PixelPoint 
          (static_cast<int64_t>(q.row - p.row) * (r.col - p.col));
 }
 
-std::vector<PixelPoint> ConvexHullSequential::ComputeConvexHull(const std::vector<PixelPoint> &points) {
+std::vector<PixelPoint> ConvexHullSequential::ComputeConvexHull(const std::vector<PixelPoint> &points) const {
   if (points.size() <= 2) {
     return points;
   }
 
   // Находим точку с наименьшими координатами
-  auto lowest_point = *std::min_element(points.begin(), points.end());
+  auto lowest_point = *std::ranges::min_element(points);
 
   // Копируем и сортируем по полярному углу
   std::vector<PixelPoint> sorted_points;
-  std::copy_if(points.begin(), points.end(), std::back_inserter(sorted_points),
-               [&lowest_point](const PixelPoint &p) { return !(p == lowest_point); });
+  std::ranges::copy_if(points, std::back_inserter(sorted_points),
+                       [&lowest_point](const PixelPoint &p) { return !(p == lowest_point); });
 
-  std::sort(sorted_points.begin(), sorted_points.end(), [&lowest_point](const PixelPoint &a, const PixelPoint &b) {
+  std::ranges::sort(sorted_points, [&lowest_point](const PixelPoint &a, const PixelPoint &b) {
     int64_t orient = Orientation(lowest_point, a, b);
     if (orient == 0) {
-      int64_t dist_a = (a.row - lowest_point.row) * (a.row - lowest_point.row) +
-                       (a.col - lowest_point.col) * (a.col - lowest_point.col);
-      int64_t dist_b = (b.row - lowest_point.row) * (b.row - lowest_point.row) +
-                       (b.col - lowest_point.col) * (b.col - lowest_point.col);
+      int64_t dist_a = ((a.row - lowest_point.row) * (a.row - lowest_point.row)) +
+                       ((a.col - lowest_point.col) * (a.col - lowest_point.col));
+      int64_t dist_b = ((b.row - lowest_point.row) * (b.row - lowest_point.row)) +
+                       ((b.col - lowest_point.col) * (b.col - lowest_point.col));
       return dist_a < dist_b;
     }
     return orient > 0;
