@@ -1,47 +1,50 @@
-#include <gtest/gtest.h>
-
-#include <algorithm>
-#include <array>
 #include <cstddef>
+#include <vector>
 #include <string>
 #include <tuple>
-#include <vector>
+#include <array>
+#include <algorithm>
+
+#include <gtest/gtest.h>
+#include "util/include/func_test_util.hpp"
 
 #include "trofimov_n_hoar_sort_batcher/common/include/common.hpp"
 #include "trofimov_n_hoar_sort_batcher/seq/include/ops_seq.hpp"
-#include "util/include/func_test_util.hpp"
 
 namespace trofimov_n_hoar_sort_batcher {
 
 using InType = std::vector<int>;
 using OutType = std::vector<int>;
-using TestType = std::tuple<InType, std::string>;
+using TestType = std::tuple<InType,std::string>;
 
-class TrofimovNHoarSortBatcherFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
- public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return std::get<1>(test_param);
-  }
+class TrofimovNHoarSortBatcherFuncTests :
+    public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+public:
+    static std::string PrintTestParam(const TestType &test_param){
+        return std::get<1>(test_param);
+    }
 
- protected:
-  void SetUp() override {
-    input_data_ = std::get<0>(std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()));
-  }
+protected:
+    void SetUp() override {
+        input_data_ = std::get<0>(
+            std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam())
+        );
+    }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return std::ranges::is_sorted(output_data);
-  }
+    bool CheckTestOutputData(OutType& out) final {
+        return std::ranges::is_sorted(out);
+    }
 
-  InType GetTestInputData() final {
-    return input_data_;
-  }
+    InType GetTestInputData() final { return input_data_; }
 
- private:
-  InType input_data_;
+private:
+    InType input_data_;
 };
 
-TEST_P(TrofimovNHoarSortBatcherFuncTests, RunFuncTests) {
-  ExecuteTest(GetParam());
+// ------------------- Тесты ----------------------
+
+TEST_P(TrofimovNHoarSortBatcherFuncTests, RunFuncTests){
+    ExecuteTest(GetParam());
 }
 
 namespace {
@@ -59,14 +62,21 @@ const std::array<TestType, 12> kTestParam = {
     std::make_tuple(std::vector<int>{2, 1}, "two_elements"),
     std::make_tuple(std::vector<int>{9, 1, 8, 2, 7, 3, 6, 4, 5}, "odd_count")};
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<TrofimovNHoarSortBatcherSEQ, InType>(kTestParam, PPC_SETTINGS_trofimov_n_hoar_sort_batcher);
+const auto kTestTasksList = ppc::util::AddFuncTask<TrofimovNHoarSortBatcherSEQ,InType>(
+    kTestParam, PPC_SETTINGS_trofimov_n_hoar_sort_batcher
+);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-const auto kTestName = TrofimovNHoarSortBatcherFuncTests::PrintFuncTestName<TrofimovNHoarSortBatcherFuncTests>;
+const auto kTestName = TrofimovNHoarSortBatcherFuncTests::PrintFuncTestName<
+    TrofimovNHoarSortBatcherFuncTests
+>;
 
-INSTANTIATE_TEST_SUITE_P(TrofimovNHoarSortBatcherTests, TrofimovNHoarSortBatcherFuncTests, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(
+    TrofimovNHoarSortBatcherTests,
+    TrofimovNHoarSortBatcherFuncTests,
+    kGtestValues,
+    kTestName
+);
 
-}  // namespace
-
-}  // namespace trofimov_n_hoar_sort_batcher
+} // namespace
+} // namespace trofimov_n_hoar_sort_batcher
