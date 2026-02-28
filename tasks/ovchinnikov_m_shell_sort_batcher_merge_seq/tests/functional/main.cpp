@@ -57,7 +57,6 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = OvchinnikovMRunFuncTestsThreads::PrintFuncTestName<OvchinnikovMRunFuncTestsThreads>;
 
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 INSTANTIATE_TEST_SUITE_P(ShellSortBatcherMergeTests, OvchinnikovMRunFuncTestsThreads, kGtestValues, kPerfTestName);
 
 }  // namespace
