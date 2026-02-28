@@ -1,7 +1,10 @@
 #include "remizov_k_dense_matrix_multiplication_cannon_algorithm/seq/include/ops_seq.hpp"
 
+#include <cstddef>
 #include <utility>
 #include <vector>
+
+#include "remizov_k_dense_matrix_multiplication_cannon_algorithm/common/include/common.hpp"
 
 namespace remizov_k_dense_matrix_multiplication_cannon_algorithm {
 
@@ -88,13 +91,14 @@ void RemizovKDenseMatrixMultiplicationCannonAlgorithm::RunCannonCycle(
   for (int step = 0; step < block_count; ++step) {
     for (int i = 0; i < block_count; ++i) {
       for (int j = 0; j < block_count; ++j) {
-        MultiplyBlock(a_blocks[i][j], b_blocks[i][j], c_blocks[i][j], block_size);
+        RemizovKDenseMatrixMultiplicationCannonAlgorithm::MultiplyBlock(a_blocks[i][j], b_blocks[i][j], c_blocks[i][j],
+                                                                        block_size);
       }
     }
 
     if (step < block_count - 1) {
-      ShiftBlocksLeft(a_blocks, block_count);
-      ShiftBlocksUp(b_blocks, block_count);
+      RemizovKDenseMatrixMultiplicationCannonAlgorithm::ShiftBlocksLeft(a_blocks, block_count);
+      RemizovKDenseMatrixMultiplicationCannonAlgorithm::ShiftBlocksUp(b_blocks, block_count);
     }
   }
 }
@@ -109,8 +113,8 @@ void RemizovKDenseMatrixMultiplicationCannonAlgorithm::InitializeBlocks(
 
       for (int bi = 0; bi < block_size; ++bi) {
         for (int bj = 0; bj < block_size; ++bj) {
-          a_blocks[i][j][bi][bj] = matrix_a[i * block_size + bi][shift_value * block_size + bj];
-          b_blocks[i][j][bi][bj] = matrix_b[shift_value * block_size + bi][j * block_size + bj];
+          a_blocks[i][j][bi][bj] = matrix_a[(i * block_size) + bi][(shift_value * block_size) + bj];
+          b_blocks[i][j][bi][bj] = matrix_b[(shift_value * block_size) + bi][(j * block_size) + bj];
         }
       }
     }
@@ -124,7 +128,7 @@ void RemizovKDenseMatrixMultiplicationCannonAlgorithm::AssembleOutput(
     for (int j = 0; j < block_count; ++j) {
       for (int bi = 0; bi < block_size; ++bi) {
         for (int bj = 0; bj < block_size; ++bj) {
-          output[i * block_size + bi][j * block_size + bj] = c_blocks[i][j][bi][bj];
+          output[(i * block_size) + bi][(j * block_size) + bj] = c_blocks[i][j][bi][bj];
         }
       }
     }
@@ -157,7 +161,6 @@ bool RemizovKDenseMatrixMultiplicationCannonAlgorithm::RunImpl() {
           blocks_per_dim, std::vector<std::vector<double>>(block_dim, std::vector<double>(block_dim, 0.0))));
 
   InitializeBlocks(source_a, source_b, blocks_a, blocks_b, block_dim, blocks_per_dim);
-
   RunCannonCycle(blocks_a, blocks_b, blocks_c, block_dim, blocks_per_dim);
 
   std::vector<std::vector<double>> result(matrix_size, std::vector<double>(matrix_size, 0.0));
