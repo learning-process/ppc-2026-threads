@@ -64,17 +64,16 @@ const std::array<TestType, 8> kTestParam = {std::make_tuple(20, 1, "test"), std:
                                             std::make_tuple(40, 1, "test"), std::make_tuple(40, 2, "test"),
                                             std::make_tuple(40, 3, "test"), std::make_tuple(40, 4, "test")};
 
-const auto kTestTasksList = std::tuple_cat(
-                                           ppc::util::AddFuncTask<KosolapovVCalcMultIntegralsMRectanglesSEQ, InType>(
-                                               kTestParam, PPC_SETTINGS_kosolapov_v_calc_mult_integrals_m_rectangles));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KosolapovVCalcMultIntegralsMRectanglesSEQ, InType>(
+    kTestParam, PPC_SETTINGS_kosolapov_v_calc_mult_integrals_m_rectangles));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = KosolapovVCalcMultIntegralsMRectanglesFuncTestsProcesses::PrintFuncTestName<
     KosolapovVCalcMultIntegralsMRectanglesFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(CalcMultIntegralsMRectangles, KosolapovVCalcMultIntegralsMRectanglesFuncTestsProcesses, kGtestValues,
-                         kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(CalcMultIntegralsMRectangles, KosolapovVCalcMultIntegralsMRectanglesFuncTestsProcesses,
+                         kGtestValues, kPerfTestName);
 
 }  // namespace
 

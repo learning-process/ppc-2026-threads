@@ -31,9 +31,8 @@ TEST_P(KosolapovVCalcMultIntegralsMRectanglesPerfTestProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KosolapovVCalcMultIntegralsMRectanglesSEQ>(
-        PPC_SETTINGS_kosolapov_v_calc_mult_integrals_m_rectangles);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KosolapovVCalcMultIntegralsMRectanglesSEQ>(
+    PPC_SETTINGS_kosolapov_v_calc_mult_integrals_m_rectangles);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

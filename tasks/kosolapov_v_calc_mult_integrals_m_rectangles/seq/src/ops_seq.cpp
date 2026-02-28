@@ -84,8 +84,8 @@ std::tuple<double, double, double, double> KosolapovVCalcMultIntegralsMRectangle
       return {0.0, 1.0, 0.0, 1.0};
   }
 }
-double KosolapovVCalcMultIntegralsMRectanglesSEQ::RectanglesIntegral(int func_id, int steps, double a, double b, double c,
-                                                               double d) {
+double KosolapovVCalcMultIntegralsMRectanglesSEQ::RectanglesIntegral(int func_id, int steps, double a, double b,
+                                                                     double c, double d) {
   double hx = (b - a) / steps;
   double hy = (d - c) / steps;
   double result = 0.0;
