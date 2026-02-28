@@ -7,6 +7,23 @@
 
 #include "baranov_a_mult_matrix_fox_algorithm/common/include/common.hpp"
 
+namespace {
+
+void ProcessBlock(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b, std::vector<double> &output,
+                  size_t n, size_t i_start, size_t i_end, size_t j_start, size_t j_end, size_t k_start, size_t k_end) {
+  for (size_t i = i_start; i < i_end; ++i) {
+    for (size_t j = j_start; j < j_end; ++j) {
+      double sum = 0.0;
+      for (size_t k = k_start; k < k_end; ++k) {
+        sum += matrix_a[(i * n) + k] * matrix_b[(k * n) + j];
+      }
+      output[(i * n) + j] += sum;
+    }
+  }
+}
+
+}  // namespace
+
 namespace baranov_a_mult_matrix_fox_algorithm_seq {
 
 BaranovAMultMatrixFoxAlgorithmSEQ::BaranovAMultMatrixFoxAlgorithmSEQ(
@@ -40,20 +57,6 @@ void BaranovAMultMatrixFoxAlgorithmSEQ::StandardMultiplication(size_t n) {
         sum += matrix_a[(i * n) + k] * matrix_b[(k * n) + j];
       }
       output[(i * n) + j] = sum;
-    }
-  }
-}
-
-static void ProcessBlock(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b,
-                         std::vector<double> &output, size_t n, size_t i_start, size_t i_end, size_t j_start,
-                         size_t j_end, size_t k_start, size_t k_end) {
-  for (size_t i = i_start; i < i_end; ++i) {
-    for (size_t j = j_start; j < j_end; ++j) {
-      double sum = 0.0;
-      for (size_t k = k_start; k < k_end; ++k) {
-        sum += matrix_a[(i * n) + k] * matrix_b[(k * n) + j];
-      }
-      output[(i * n) + j] += sum;
     }
   }
 }
