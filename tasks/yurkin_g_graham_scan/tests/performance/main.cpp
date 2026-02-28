@@ -2,45 +2,39 @@
 
 #include <cstddef>
 #include <random>
+#include <ranges>
 #include <vector>
 
-#include "util/include/perf_test_util.hpp"
 #include "yurkin_g_graham_scan/common/include/common.hpp"
 #include "yurkin_g_graham_scan/seq/include/ops_seq.hpp"
+#include "util/include/perf_test_util.hpp"
 
 namespace yurkin_g_graham_scan {
 
 class YurkinGGrahamScanPerfTets : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  const int kCount = 2000;
+  const int k_count = 2000;
   InType input_data;
 
   void SetUp() override {
-    std::random_device rd;
-    std::mt19937_64 rng(rd());  // seed from non-deterministic source to avoid cert-msc51-cpp warning
+    std::mt19937_64 rng(123456789);  // deterministic seed is acceptable for perf tests
     std::uniform_real_distribution<double> dist(-1000.0, 1000.0);
     input_data.clear();
-    input_data.reserve(static_cast<std::size_t>(kCount));
-    for (int i = 0; i < kCount; ++i) {
+    input_data.reserve(static_cast<std::size_t>(k_count));
+    for (int i = 0; i < k_count; ++i) {
       input_data.push_back({dist(rng), dist(rng)});
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.empty()) {
-      return false;
-    }
-    if (output_data.size() > input_data.size()) {
-      return false;
-    }
+    if (output_data.empty()) return false;
+    if (output_data.size() > input_data.size()) return false;
 
     auto cross = [](const Point &a, const Point &b, const Point &c) {
       return ((b.x - a.x) * (c.y - a.y)) - ((b.y - a.y) * (c.x - a.x));
     };
     const std::size_t m = output_data.size();
-    if (m < 3) {
-      return true;
-    }
+    if (m < 3) return true;
     for (std::size_t i = 0; i < m; ++i) {
       const Point &p0 = output_data[i];
       const Point &p1 = output_data[(i + 1) % m];
@@ -63,7 +57,8 @@ TEST_P(YurkinGGrahamScanPerfTets, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, YurkinGGrahamScanSEQ>(PPC_SETTINGS_yurkin_g_graham_scan);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, YurkinGGrahamScanSEQ>(PPC_SETTINGS_yurkin_g_graham_scan);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
