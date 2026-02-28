@@ -7,6 +7,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <ranges>
 
 #include "dorogin_v_bin_img_conv_hull/common/include/common.hpp"
 #include "dorogin_v_bin_img_conv_hull/seq/include/ops_seq.hpp"
@@ -100,9 +101,13 @@ const TestCase &GetCase(int id) {
 
 std::vector<Point> Normalize(const std::vector<Point> &hull) {
   std::vector<Point> result = hull;
-  std::sort(result.begin(), result.end(),
-            [](const Point &a, const Point &b) { return (a.y == b.y) ? a.x < b.x : a.y < b.y; });
-  result.erase(std::unique(result.begin(), result.end()), result.end());
+  std::ranges::sort(result,
+    [](const Point &a, const Point &b) {
+        return (a.y == b.y) ? a.x < b.x : a.y < b.y;
+    });
+
+auto unique_end = std::ranges::unique(result).begin();
+result.erase(unique_end, result.end());
   return result;
 }
 
@@ -113,7 +118,7 @@ std::vector<std::vector<Point>> NormalizeAll(const std::vector<std::vector<Point
     result.push_back(Normalize(h));
   }
 
-  std::sort(result.begin(), result.end());
+  std::ranges::sort(result);
   return result;
 }
 

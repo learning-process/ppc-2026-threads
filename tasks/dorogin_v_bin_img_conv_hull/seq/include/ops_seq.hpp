@@ -25,7 +25,7 @@ class DoroginVBinImgConvHullSeq : public BaseTask {
   void ThresholdImage();
   void FindComponents();
   static std::vector<Point> BuildHull(const std::vector<Point> &points);
-  static size_t Index(int x, int y, int width);
+  static size_t Index(int col, int row, int width);
   void ExploreComponent(int start_col, int start_row, int width, int height, std::vector<bool> &visited,
                         std::vector<Point> &component);
 
