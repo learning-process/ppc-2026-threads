@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -26,7 +27,7 @@ std::size_t NextPow2(std::size_t x) {
 }
 
 void NaiveMul(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, std::size_t n) {
-  std::fill(c.begin(), c.end(), 0.0);
+  std::ranges::fill(c, 0.0);
   for (std::size_t i = 0; i < n; ++i) {
     const std::size_t i_row = i * n;
     for (std::size_t k = 0; k < n; ++k) {
@@ -121,7 +122,6 @@ struct Frame {
   Frame(std::vector<double> a_in, std::vector<double> b_in, std::size_t n_in, int parent_slot_in)
       : n(n_in),
         half(n_in / 2),
-        stage(0),
         parent_slot(parent_slot_in),
         a(std::move(a_in)),
         b(std::move(b_in)),
