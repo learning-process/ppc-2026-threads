@@ -34,7 +34,6 @@ bool YurkinGGrahamScanSEQ::PreProcessingImpl() {
     return true;
   }
 
-  // Sort using ranges
   std::ranges::sort(pts, [](const Point &a, const Point &b) {
     if (a.x != b.x) {
       return a.x < b.x;
@@ -42,7 +41,6 @@ bool YurkinGGrahamScanSEQ::PreProcessingImpl() {
     return a.y < b.y;
   });
 
-  // Remove exact duplicates explicitly (stable, clear)
   std::vector<Point> tmp;
   tmp.reserve(pts.size());
   for (const auto &p : pts) {

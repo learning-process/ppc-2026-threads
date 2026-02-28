@@ -15,7 +15,8 @@ class YurkinGGrahamScanPerfTets : public ppc::util::BaseRunPerfTests<InType, Out
   InType input_data;
 
   void SetUp() override {
-    std::mt19937_64 rng(123456789);  // deterministic seed for reproducible perf runs
+    std::random_device rd;
+    std::mt19937_64 rng(rd());  // seed from non-deterministic source to satisfy clang-tidy
     std::uniform_real_distribution<double> dist(-1000.0, 1000.0);
     input_data.clear();
     input_data.reserve(static_cast<std::size_t>(k_count));
