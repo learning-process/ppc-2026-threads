@@ -1,18 +1,16 @@
 #include "vlasova_a_simpson_method_seq/seq/include/ops_seq.hpp"
 
 #include <cmath>
+#include <cstddef>
 #include <functional>
-#include <stdexcept>
+#include <vector>
 
-#include "util/include/util.hpp"
 #include "vlasova_a_simpson_method_seq/common/include/common.hpp"
 
 namespace vlasova_a_simpson_method_seq {
 
-VlasovaASimpsonMethodSEQ::VlasovaASimpsonMethodSEQ(const InType &in) {
+VlasovaASimpsonMethodSEQ::VlasovaASimpsonMethodSEQ(const InType &in) : task_data_(in), result_(0.0) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  task_data_ = in;
-  result_ = 0.0;
   GetOutput() = 0.0;
 }
 
@@ -63,7 +61,7 @@ double VlasovaASimpsonMethodSEQ::SimpsonRecursive(size_t dim, std::vector<double
   int steps = task_data_.n[dim];
 
   for (int i = 0; i <= steps; ++i) {
-    point[dim] = task_data_.a[dim] + i * h_[dim];
+    point[dim] = task_data_.a[dim] + (i * h_[dim]);
 
     double weight = 1.0;
     if (i == 0 || i == steps) {
@@ -74,7 +72,7 @@ double VlasovaASimpsonMethodSEQ::SimpsonRecursive(size_t dim, std::vector<double
       weight = 4.0;
     }
 
-    result += weight * SimpsonRecursive(dim + 1, point);
+    result = result + (weight * SimpsonRecursive(dim + 1, point));
   }
 
   return result;

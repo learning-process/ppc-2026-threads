@@ -1,4 +1,6 @@
 #pragma once
+#include <cstddef>
+#include <functional>
 #include <vector>
 
 #include "task/include/task.hpp"

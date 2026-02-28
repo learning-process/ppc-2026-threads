@@ -2,6 +2,8 @@
 
 #include <functional>
 #include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 #include "task/include/task.hpp"
@@ -17,7 +19,7 @@ struct SimpsonTask {
   SimpsonTask() = default;
   SimpsonTask(std::function<double(const std::vector<double> &)> f, const std::vector<double> &lower,
               const std::vector<double> &upper, const std::vector<int> &steps)
-      : func(f), a(lower), b(upper), n(steps) {}
+      : func(std::move(f)), a(lower), b(upper), n(steps) {}
 };
 
 using InType = SimpsonTask;

@@ -9,9 +9,11 @@
 
 namespace vlasova_a_simpson_method_seq {
 
+namespace {
 double Gaussian3D(const std::vector<double> &x) {
-  return std::exp(-(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]));
+  return std::exp(-((x[0] * x[0]) + (x[1] * x[1]) + (x[2] * x[2])));
 }
+}  // namespace
 
 class VlasovaASimpsonMethodPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   void SetUp() override {
