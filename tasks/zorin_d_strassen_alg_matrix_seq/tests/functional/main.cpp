@@ -58,7 +58,7 @@ class ZorinDRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, T
 
  protected:
   void SetUp() override {
-    const auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    const auto params = std::get<2>(GetParam());
     const auto n = static_cast<std::size_t>(std::get<0>(params));
 
     input_.n = n;
