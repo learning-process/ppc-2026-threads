@@ -12,7 +12,7 @@ namespace safaryan_a_sparse_matrix_mult_crs_seq {
 
 // ---------- helpers: Dense <-> CRS ----------
 
-static CRSMatrix DenseToCrs(const std::vector<std::vector<double>>& dense, double eps = 0.0) {
+static CRSMatrix DenseToCrs(const std::vector<std::vector<double>> &dense, double eps = 0.0) {
   CRSMatrix m;
   m.rows = dense.size();
   m.cols = dense.empty() ? 0 : dense[0].size();
@@ -34,7 +34,7 @@ static CRSMatrix DenseToCrs(const std::vector<std::vector<double>>& dense, doubl
   return m;
 }
 
-static std::vector<std::vector<double>> CrsToDense(const CRSMatrix& m) {
+static std::vector<std::vector<double>> CrsToDense(const CRSMatrix &m) {
   std::vector<std::vector<double>> dense(m.rows, std::vector<double>(m.cols, 0.0));
 
   for (size_t i = 0; i < m.rows; ++i) {
@@ -46,8 +46,8 @@ static std::vector<std::vector<double>> CrsToDense(const CRSMatrix& m) {
   return dense;
 }
 
-static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<double>>& a,
-                                                 const std::vector<std::vector<double>>& b) {
+static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<double>> &a,
+                                                 const std::vector<std::vector<double>> &b) {
   const size_t n = a.size();
   const size_t k = a.empty() ? 0 : a[0].size();
   const size_t m = b.empty() ? 0 : b[0].size();
@@ -69,14 +69,13 @@ static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<d
   return c;
 }
 
-static void RequireOk(bool ok, const char* step_name) {
+static void RequireOk(bool ok, const char *step_name) {
   if (!ok) {
     GTEST_FAIL() << "Step failed: " << step_name;
   }
 }
 
-static void ExpectDenseEqual(const std::vector<std::vector<double>>& x,
-                             const std::vector<std::vector<double>>& y,
+static void ExpectDenseEqual(const std::vector<std::vector<double>> &x, const std::vector<std::vector<double>> &y,
                              double eps = 1e-9) {
   if (x.size() != y.size()) {
     GTEST_FAIL() << "Different row count: got=" << x.size() << " expected=" << y.size();
@@ -174,6 +173,6 @@ TEST(SafaryanASparseMatrixMultCRSSeqPerf, RandomMediumCase) {
   const auto ref = DenseMul(a_dense, b_dense);
 
   ExpectDenseEqual(got, ref, 1e-8);
-}   // namespace
+}  // namespace
 
 }  // namespace safaryan_a_sparse_matrix_mult_crs_seq
