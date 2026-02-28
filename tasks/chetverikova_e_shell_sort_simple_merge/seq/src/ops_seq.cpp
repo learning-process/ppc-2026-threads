@@ -1,7 +1,6 @@
 #include "chetverikova_e_shell_sort_simple_merge/seq/include/ops_seq.hpp"
 
 #include <cstddef>
-#include <numeric>
 #include <vector>
 
 #include "chetverikova_e_shell_sort_simple_merge/common/include/common.hpp"
@@ -33,8 +32,9 @@ void ChetverikovaEShellSortSimpleMergeSEQ::ShellSort(std::vector<int> &data) {
       int temp = data[i];
       size_t j = i;
 
-      for (j = i; j >= gap && data[j - gap] > temp; j -= gap) {
+      while (j >= gap && data[j - gap] > temp) {
         data[j] = data[j - gap];
+        j -= gap;
       }
 
       data[j] = temp;

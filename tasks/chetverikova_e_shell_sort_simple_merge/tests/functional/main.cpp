@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <tuple>
+#include <array>
 
 #include "chetverikova_e_shell_sort_simple_merge/common/include/common.hpp"
 #include "chetverikova_e_shell_sort_simple_merge/seq/include/ops_seq.hpp"
