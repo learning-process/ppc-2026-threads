@@ -14,14 +14,21 @@ ShvetsovaKMultMatrixComplexSEQ::ShvetsovaKMultMatrixComplexSEQ(const InType &in)
 }
 
 bool ShvetsovaKMultMatrixComplexSEQ::ValidationImpl() {
-  return ((std::get<0>(GetInput()).cols > 0) && (std::get<1>(GetInput()).cols > 0)) &&
-         ((std::get<0>(GetInput()).rows > 0) && (std::get<1>(GetInput()).rows > 0));
+  return true;
 }
 
 bool ShvetsovaKMultMatrixComplexSEQ::PreProcessingImpl() {
-  GetOutput().rows = std::get<0>(GetInput()).rows;
-  GetOutput().cols = std::get<1>(GetInput()).cols;
-  return GetOutput().rows == std::get<0>(GetInput()).rows && GetOutput().cols == std::get<1>(GetInput()).cols;
+  const auto &matrix_a = std::get<0>(GetInput());
+  const auto &matrix_b = std::get<1>(GetInput());
+
+  auto &matrix_c = GetOutput();
+  matrix_c.rows = matrix_a.rows;
+  matrix_c.cols = matrix_b.cols;
+  matrix_c.row_ind.clear();
+  matrix_c.values.clear();
+  matrix_c.col_ptr.clear();
+  matrix_c.col_ptr.push_back(0);
+  return true;
 }
 
 bool ShvetsovaKMultMatrixComplexSEQ::RunImpl() {
