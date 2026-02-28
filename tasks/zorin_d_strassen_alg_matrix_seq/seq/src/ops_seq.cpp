@@ -48,7 +48,7 @@ std::vector<double> AddVec(const std::vector<double> &x, const std::vector<doubl
   return r;
 }
 
-std::vector<double> sub_vec(const std::vector<double> &x, const std::vector<double> &y) {
+std::vector<double> SubVec(const std::vector<double> &x, const std::vector<double> &y) {
   assert(x.size() == y.size());
   std::vector<double> r(x.size());
   for (std::size_t i = 0; i < x.size(); ++i) {
@@ -57,8 +57,8 @@ std::vector<double> sub_vec(const std::vector<double> &x, const std::vector<doub
   return r;
 }
 
-void split_mat(const std::vector<double> &m, std::size_t n, std::vector<double> &m11, std::vector<double> &m12,
-               std::vector<double> &m21, std::vector<double> &m22) {
+void SplitMat(const std::vector<double> &m, std::size_t n, std::vector<double> &m11, std::vector<double> &m12,
+              std::vector<double> &m21, std::vector<double> &m22) {
   const std::size_t k = n / 2;
   m11.assign(k * k, 0.0);
   m12.assign(k * k, 0.0);
@@ -75,8 +75,8 @@ void split_mat(const std::vector<double> &m, std::size_t n, std::vector<double> 
   }
 }
 
-std::vector<double> join_mat(const std::vector<double> &c11, const std::vector<double> &c12,
-                             const std::vector<double> &c21, const std::vector<double> &c22, std::size_t n) {
+std::vector<double> JoinMat(const std::vector<double> &c11, const std::vector<double> &c12,
+                            const std::vector<double> &c21, const std::vector<double> &c22, std::size_t n) {
   const std::size_t k = n / 2;
   std::vector<double> c(n * n, 0.0);
   for (std::size_t i = 0; i < k; ++i) {
@@ -90,7 +90,7 @@ std::vector<double> join_mat(const std::vector<double> &c11, const std::vector<d
   return c;
 }
 
-struct frame {
+struct Frame {
   std::size_t n{};
   std::size_t half{};
   int stage{};
@@ -118,7 +118,7 @@ struct frame {
   std::vector<double> m6;
   std::vector<double> m7;
 
-  frame(std::vector<double> a_in, std::vector<double> b_in, std::size_t n_in, int parent_slot_in)
+  Frame(std::vector<double> a_in, std::vector<double> b_in, std::size_t n_in, int parent_slot_in)
       : n(n_in),
         half(n_in / 2),
         stage(0),
@@ -128,7 +128,7 @@ struct frame {
         c(n_in * n_in, 0.0) {}
 };
 
-std::vector<double> &select_m(frame &f, int slot) {
+std::vector<double> &SelectM(Frame &f, int slot) {
   if (slot == 1) {
     return f.m1;
   }
@@ -150,7 +150,7 @@ std::vector<double> &select_m(frame &f, int slot) {
   return f.m7;
 }
 
-frame make_child_for_slot(const frame &f, int slot) {
+Frame MakeChildForSlot(const Frame &f, int slot) {
   const std::size_t k = f.half;
   if (slot == 1) {
     return {AddVec(f.a11, f.a22), AddVec(f.b11, f.b22), k, 1};
@@ -159,33 +159,33 @@ frame make_child_for_slot(const frame &f, int slot) {
     return {AddVec(f.a21, f.a22), f.b11, k, 2};
   }
   if (slot == 3) {
-    return {f.a11, sub_vec(f.b12, f.b22), k, 3};
+    return {f.a11, SubVec(f.b12, f.b22), k, 3};
   }
   if (slot == 4) {
-    return {f.a22, sub_vec(f.b21, f.b11), k, 4};
+    return {f.a22, SubVec(f.b21, f.b11), k, 4};
   }
   if (slot == 5) {
     return {AddVec(f.a11, f.a12), f.b22, k, 5};
   }
   if (slot == 6) {
-    return {sub_vec(f.a21, f.a11), AddVec(f.b11, f.b12), k, 6};
+    return {SubVec(f.a21, f.a11), AddVec(f.b11, f.b12), k, 6};
   }
-  return {sub_vec(f.a12, f.a22), AddVec(f.b21, f.b22), k, 7};
+  return {SubVec(f.a12, f.a22), AddVec(f.b21, f.b22), k, 7};
 }
 
-std::vector<double> strassen_iter(std::vector<double> a, std::vector<double> b, std::size_t n) {
-  std::vector<frame> st;
+std::vector<double> StrassenIter(std::vector<double> a, std::vector<double> b, std::size_t n) {
+  std::vector<Frame> st;
   st.emplace_back(std::move(a), std::move(b), n, -1);
 
   std::vector<double> root_out;
 
   while (!st.empty()) {
-    frame &f = st.back();
+    Frame &f = st.back();
 
     if (f.n <= kCutoff) {
       NaiveMul(f.a, f.b, f.c, f.n);
 
-      frame finished = std::move(f);
+      Frame finished = std::move(f);
       st.pop_back();
 
       if (st.empty()) {
@@ -193,33 +193,33 @@ std::vector<double> strassen_iter(std::vector<double> a, std::vector<double> b, 
         continue;
       }
 
-      frame &parent = st.back();
-      select_m(parent, finished.parent_slot) = std::move(finished.c);
+      Frame &parent = st.back();
+      SelectM(parent, finished.parent_slot) = std::move(finished.c);
       parent.stage += 1;
       continue;
     }
 
     if (f.stage == 0) {
-      split_mat(f.a, f.n, f.a11, f.a12, f.a21, f.a22);
-      split_mat(f.b, f.n, f.b11, f.b12, f.b21, f.b22);
-      st.push_back(make_child_for_slot(f, 1));
+      SplitMat(f.a, f.n, f.a11, f.a12, f.a21, f.a22);
+      SplitMat(f.b, f.n, f.b11, f.b12, f.b21, f.b22);
+      st.push_back(MakeChildForSlot(f, 1));
       continue;
     }
 
     if (f.stage >= 1 && f.stage <= 6) {
       const int next_slot = f.stage + 1;
-      st.push_back(make_child_for_slot(f, next_slot));
+      st.push_back(MakeChildForSlot(f, next_slot));
       continue;
     }
 
-    const auto c11 = AddVec(sub_vec(AddVec(f.m1, f.m4), f.m5), f.m7);
+    const auto c11 = AddVec(SubVec(AddVec(f.m1, f.m4), f.m5), f.m7);
     const auto c12 = AddVec(f.m3, f.m5);
     const auto c21 = AddVec(f.m2, f.m4);
-    const auto c22 = AddVec(AddVec(sub_vec(f.m1, f.m2), f.m3), f.m6);
+    const auto c22 = AddVec(AddVec(SubVec(f.m1, f.m2), f.m3), f.m6);
 
-    f.c = join_mat(c11, c12, c21, c22, f.n);
+    f.c = JoinMat(c11, c12, c21, c22, f.n);
 
-    frame finished = std::move(f);
+    Frame finished = std::move(f);
     st.pop_back();
 
     if (st.empty()) {
@@ -227,8 +227,8 @@ std::vector<double> strassen_iter(std::vector<double> a, std::vector<double> b, 
       continue;
     }
 
-    frame &parent = st.back();
-    select_m(parent, finished.parent_slot) = std::move(finished.c);
+    Frame &parent = st.back();
+    SelectM(parent, finished.parent_slot) = std::move(finished.c);
     parent.stage += 1;
   }
 
@@ -279,7 +279,7 @@ bool ZorinDStrassenAlgMatrixSEQ::RunImpl() {
     std::copy_n(&in.b[i * n], n, &b_pad[i * m]);
   }
 
-  const auto c_pad = strassen_iter(std::move(a_pad), std::move(b_pad), m);
+  const auto c_pad = StrassenIter(std::move(a_pad), std::move(b_pad), m);
 
   auto &out = GetOutput();
   for (std::size_t i = 0; i < n; ++i) {

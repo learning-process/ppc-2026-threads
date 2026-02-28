@@ -99,10 +99,10 @@ const std::array<TestType, 7> kParams = {
     std::make_tuple(8, "n8"), std::make_tuple(9, "n9"), std::make_tuple(16, "n16"),
 };
 
-const auto k_tasks =
+const auto kTasks =
     ppc::util::AddFuncTask<ZorinDStrassenAlgMatrixSEQ, InType>(kParams, PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq);
 
-const auto kValues = ppc::util::ExpandToValues(k_tasks);
+const auto kValues = ppc::util::ExpandToValues(kTasks);
 const auto kName = ZorinDRunFuncTests::PrintFuncTestName<ZorinDRunFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(StrassenMatrixTests, ZorinDRunFuncTests, kValues, kName);
