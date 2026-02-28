@@ -16,8 +16,8 @@ class KutuzovIRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, O
   void SetUp() override {
     input_data_ = {};
 
-    // NOLINT(cert-msc51-cpp)
-    std::mt19937 rng(1);
+    std::random_device rd;
+    std::mt19937 rng(rd());
     std::uniform_real_distribution<double> dist(-1000, 1000);
 
     for (int i = 0; i < kCount_; i++) {
