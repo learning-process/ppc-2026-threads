@@ -124,14 +124,6 @@ class LobanovDMultiplyMatrixFuncTest : public ::testing::Test {
   CompressedRowMatrix result;
 };
 
-[[nodiscard]] bool CheckResult(const CompressedRowMatrix &result, const CompressedRowMatrix &expected) {
-  if (result.row_count != expected.row_count || result.column_count != expected.column_count) {
-    return false;
-  }
-
-  return result.row_pointer_data.size() == expected.row_pointer_data.size();
-}
-
 TEST_F(LobanovDMultiplyMatrixFuncTest, SmallMatrices) {
   const auto matrix_a = CreateRandomCompressedRowMatrix(10, 10, 0.3, 1);
   const auto matrix_b = CreateRandomCompressedRowMatrix(10, 10, 0.3, 2);
