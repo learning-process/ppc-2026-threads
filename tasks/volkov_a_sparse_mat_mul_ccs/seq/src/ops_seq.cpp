@@ -52,7 +52,7 @@ bool VolkovASparseMatMulCcsSeq::RunImpl() {
       for (int idx = a_start; idx < a_end; ++idx) {
         int a_row = matrix_a.row_indices[idx];
         double a_val = matrix_a.values[idx];
-        
+
         col_accumulator[a_row] += a_val * b_val;
       }
     }

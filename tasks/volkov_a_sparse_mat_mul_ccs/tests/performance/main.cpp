@@ -31,7 +31,7 @@ class VolkovAPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
 
     for (int j = 0; j < cols; ++j) {
       mat.col_ptrs[j] = static_cast<int>(mat.row_indices.size());
-      
+
       int min_row = std::max(0, j - band);
       int max_row = std::min(rows - 1, j + band);
       std::uniform_int_distribution<int> row_dist(min_row, max_row);
@@ -54,13 +54,13 @@ class VolkovAPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
       }
 
       std::ranges::sort(col_rows);
-      
+
       for (int r : col_rows) {
         mat.row_indices.push_back(r);
         mat.values.push_back(val_dist(gen));
       }
     }
-    
+
     mat.col_ptrs[cols] = static_cast<int>(mat.row_indices.size());
     mat.non_zeros = static_cast<int>(mat.row_indices.size());
     return mat;

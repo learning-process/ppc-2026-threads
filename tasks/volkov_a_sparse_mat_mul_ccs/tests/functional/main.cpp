@@ -180,16 +180,12 @@ TEST_P(VolkovAFuncTests, RunIndependentTests) {
 }
 
 const std::array<TestType, 5> kTestParams = {
-    std::make_tuple("BasicMultiplication", ""),
-    std::make_tuple("EmptyResultTest", ""),
-    std::make_tuple("VectorMultiplication", ""),
-    std::make_tuple("IdentityMatrixTest", ""),
-    std::make_tuple("NegativeValuesTest", "")
-};
+    std::make_tuple("BasicMultiplication", ""), std::make_tuple("EmptyResultTest", ""),
+    std::make_tuple("VectorMultiplication", ""), std::make_tuple("IdentityMatrixTest", ""),
+    std::make_tuple("NegativeValuesTest", "")};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<VolkovASparseMatMulCcsSeq, InType>(
-        kTestParams, PPC_SETTINGS_volkov_a_sparse_mat_mul_ccs));
+    ppc::util::AddFuncTask<VolkovASparseMatMulCcsSeq, InType>(kTestParams, PPC_SETTINGS_volkov_a_sparse_mat_mul_ccs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = VolkovAFuncTests::PrintFuncTestName<VolkovAFuncTests>;
