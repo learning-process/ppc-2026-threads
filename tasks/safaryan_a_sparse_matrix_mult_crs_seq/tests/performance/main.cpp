@@ -9,10 +9,9 @@
 #include "safaryan_a_sparse_matrix_mult_crs_seq/seq/include/ops_seq.hpp"
 
 namespace safaryan_a_sparse_matrix_mult_crs_seq {
+namespace {
 
-// ---------- helpers: Dense <-> CRS ----------
-
-static CRSMatrix DenseToCrs(const std::vector<std::vector<double>> &dense, double eps = 0.0) {
+CRSMatrix DenseToCrs(const std::vector<std::vector<double>> &dense, double eps = 0.0) {
   CRSMatrix m;
   m.rows = dense.size();
   m.cols = dense.empty() ? 0 : dense[0].size();
@@ -34,7 +33,7 @@ static CRSMatrix DenseToCrs(const std::vector<std::vector<double>> &dense, doubl
   return m;
 }
 
-static std::vector<std::vector<double>> CrsToDense(const CRSMatrix &m) {
+std::vector<std::vector<double>> CrsToDense(const CRSMatrix &m) {
   std::vector<std::vector<double>> dense(m.rows, std::vector<double>(m.cols, 0.0));
 
   for (size_t i = 0; i < m.rows; ++i) {
@@ -46,8 +45,8 @@ static std::vector<std::vector<double>> CrsToDense(const CRSMatrix &m) {
   return dense;
 }
 
-static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<double>> &a,
-                                                 const std::vector<std::vector<double>> &b) {
+std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<double>> &a,
+                                          const std::vector<std::vector<double>> &b) {
   const size_t n = a.size();
   const size_t k = a.empty() ? 0 : a[0].size();
   const size_t m = b.empty() ? 0 : b[0].size();
@@ -55,13 +54,13 @@ static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<d
   std::vector<std::vector<double>> c(n, std::vector<double>(m, 0.0));
 
   for (size_t i = 0; i < n; ++i) {
-    for (size_t t = 0; t < k; ++t) {
-      const double av = a[i][t];
+    for (size_t kk = 0; kk < k; ++kk) {
+      const double av = a[i][kk];
       if (av == 0.0) {
         continue;
       }
       for (size_t j = 0; j < m; ++j) {
-        c[i][j] += av * b[t][j];
+        c[i][j] += av * b[kk][j];
       }
     }
   }
@@ -69,14 +68,14 @@ static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<d
   return c;
 }
 
-static void RequireOk(bool ok, const char *step_name) {
+void RequireOk(bool ok, const char *step_name) {
   if (!ok) {
     GTEST_FAIL() << "Step failed: " << step_name;
   }
 }
 
-static void ExpectDenseEqual(const std::vector<std::vector<double>> &x, const std::vector<std::vector<double>> &y,
-                             double eps = 1e-9) {
+void ExpectDenseEqual(const std::vector<std::vector<double>> &x, const std::vector<std::vector<double>> &y,
+                      double eps = 1e-9) {
   if (x.size() != y.size()) {
     GTEST_FAIL() << "Different row count: got=" << x.size() << " expected=" << y.size();
     return;
@@ -100,9 +99,7 @@ static void ExpectDenseEqual(const std::vector<std::vector<double>> &x, const st
   }
 }
 
-// ---------- generators ----------
-
-static std::vector<std::vector<double>> GenDense(size_t rows, size_t cols, double density, std::uint32_t seed) {
+std::vector<std::vector<double>> GenDense(size_t rows, size_t cols, double density, std::uint32_t seed) {
   std::mt19937 rng(seed);
   std::uniform_real_distribution<double> prob(0.0, 1.0);
   std::uniform_real_distribution<double> val(-5.0, 5.0);
@@ -120,7 +117,7 @@ static std::vector<std::vector<double>> GenDense(size_t rows, size_t cols, doubl
   return d;
 }
 
-// ---------- tests ----------
+}  // namespace
 
 TEST(SafaryanASparseMatrixMultCRSSeqPerf, SmallFixedCase) {
   const std::vector<std::vector<double>> a_dense = {
@@ -138,7 +135,6 @@ TEST(SafaryanASparseMatrixMultCRSSeqPerf, SmallFixedCase) {
 
   SafaryanASparseMatrixMultCRSSeq task({a_crs, b_crs});
 
-  SCOPED_TRACE("Task pipeline");
   RequireOk(task.Validation(), "Validation");
   RequireOk(task.PreProcessing(), "PreProcessing");
   RequireOk(task.Run(), "Run");
@@ -163,7 +159,6 @@ TEST(SafaryanASparseMatrixMultCRSSeqPerf, RandomMediumCase) {
 
   SafaryanASparseMatrixMultCRSSeq task({a_crs, b_crs});
 
-  SCOPED_TRACE("Task pipeline");
   RequireOk(task.Validation(), "Validation");
   RequireOk(task.PreProcessing(), "PreProcessing");
   RequireOk(task.Run(), "Run");
