@@ -4,11 +4,11 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <ranges>
 #include <stack>
 #include <utility>
 #include <vector>
-#include <functional>
 
 #include "dorogin_v_bin_img_conv_hull/common/include/common.hpp"
 
