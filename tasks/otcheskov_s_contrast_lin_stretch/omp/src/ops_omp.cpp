@@ -32,22 +32,19 @@ bool OtcheskovSContrastLinStretchOMP::RunImpl() {
   const InType &input = GetInput();
   OutType &output = GetOutput();
 
-  uint8_t min_val = 255, max_val = 0;
+  uint8_t min_val = 255;
+  uint8_t max_val = 0;
 
-#pragma omp parallel for reduction(min : min_val) reduction(max : max_val)
+#pragma omp parallel for default(none) shared(input) reduction(min : min_val) reduction(max : max_val)
   for (size_t i = 0; i < input.size(); ++i) {
     uint8_t pixel = input[i];
-    if (pixel < min_val) {
-      min_val = pixel;
-    }
-    if (pixel > max_val) {
-      max_val = pixel;
-    }
+    min_val = std::min(pixel, min_val);
+    max_val = std::max(pixel, max_val);
   }
 
   const size_t min_copy_size = 1000000;
   if (min_val == max_val) {
-#pragma omp parallel for if (input.size() > min_copy_size)
+#pragma omp parallel for if (input.size() > min_copy_size) default(none) shared(input, output) 
     for (size_t i = 0; i < input.size(); ++i) {
       output[i] = input[i];
     }
@@ -58,7 +55,7 @@ bool OtcheskovSContrastLinStretchOMP::RunImpl() {
   const int min_i = static_cast<int>(min_val);
   const int range = static_cast<int>(max_val) - min_i;
 
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(input, output, min_i, range)
   for (size_t i = 0; i < input.size(); ++i) {
     int pixel = static_cast<int>(input[i]);
     int value = (pixel - min_i) * 255 / range;
