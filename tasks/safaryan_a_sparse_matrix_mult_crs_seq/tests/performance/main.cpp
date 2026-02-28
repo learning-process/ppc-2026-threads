@@ -2,8 +2,8 @@
 
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <random>
-#include <string>
 #include <vector>
 
 #include "safaryan_a_sparse_matrix_mult_crs_seq/seq/include/ops_seq.hpp"
@@ -80,18 +80,22 @@ static void ExpectDenseEqual(const std::vector<std::vector<double>>& x,
                              double eps = 1e-9) {
   if (x.size() != y.size()) {
     GTEST_FAIL() << "Different row count: got=" << x.size() << " expected=" << y.size();
+    return;
   }
   if (x.empty()) {
     return;
   }
   if (x[0].size() != y[0].size()) {
     GTEST_FAIL() << "Different col count: got=" << x[0].size() << " expected=" << y[0].size();
+    return;
   }
 
   for (size_t i = 0; i < x.size(); ++i) {
     for (size_t j = 0; j < x[0].size(); ++j) {
-      if (std::abs(x[i][j] - y[i][j]) > eps) {
+      const double diff = std::abs(x[i][j] - y[i][j]);
+      if (diff > eps) {
         GTEST_FAIL() << "Mismatch at (" << i << "," << j << "): got=" << x[i][j] << " expected=" << y[i][j];
+        return;
       }
     }
   }
@@ -99,7 +103,7 @@ static void ExpectDenseEqual(const std::vector<std::vector<double>>& x,
 
 // ---------- generators ----------
 
-static std::vector<std::vector<double>> GenDense(size_t rows, size_t cols, double density, uint32_t seed) {
+static std::vector<std::vector<double>> GenDense(size_t rows, size_t cols, double density, std::uint32_t seed) {
   std::mt19937 rng(seed);
   std::uniform_real_distribution<double> prob(0.0, 1.0);
   std::uniform_real_distribution<double> val(-5.0, 5.0);
@@ -135,6 +139,7 @@ TEST(SafaryanASparseMatrixMultCRSSeqPerf, SmallFixedCase) {
 
   SafaryanASparseMatrixMultCRSSeq task({a_crs, b_crs});
 
+  SCOPED_TRACE("Task pipeline");
   RequireOk(task.Validation(), "Validation");
   RequireOk(task.PreProcessing(), "PreProcessing");
   RequireOk(task.Run(), "Run");
@@ -151,14 +156,15 @@ TEST(SafaryanASparseMatrixMultCRSSeqPerf, RandomMediumCase) {
   const size_t k = 80;
   const size_t m = 50;
 
-  const auto a_dense = GenDense(n, k, 0.08, 123);
-  const auto b_dense = GenDense(k, m, 0.08, 456);
+  const auto a_dense = GenDense(n, k, 0.08, 123U);
+  const auto b_dense = GenDense(k, m, 0.08, 456U);
 
   const CRSMatrix a_crs = DenseToCrs(a_dense);
   const CRSMatrix b_crs = DenseToCrs(b_dense);
 
   SafaryanASparseMatrixMultCRSSeq task({a_crs, b_crs});
 
+  SCOPED_TRACE("Task pipeline");
   RequireOk(task.Validation(), "Validation");
   RequireOk(task.PreProcessing(), "PreProcessing");
   RequireOk(task.Run(), "Run");
@@ -168,6 +174,6 @@ TEST(SafaryanASparseMatrixMultCRSSeqPerf, RandomMediumCase) {
   const auto ref = DenseMul(a_dense, b_dense);
 
   ExpectDenseEqual(got, ref, 1e-8);
-}   // namespasce 
+}   // namespace
 
 }  // namespace safaryan_a_sparse_matrix_mult_crs_seq
