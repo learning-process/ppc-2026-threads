@@ -10,7 +10,7 @@
 
 namespace urin_o_graham_passage {
 
-bool IsConvexHull(const std::vector<Point> &hull) {
+static bool IsConvexHull(const std::vector<Point> &hull) {
   if (hull.size() < 3) {
     return true;
   }

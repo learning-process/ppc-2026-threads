@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include <vector>  // NOLINT(misc-include-cleaner) - используется в шаблоне
 
 #include "task/include/task.hpp"
 #include "urin_o_graham_passage/common/include/common.hpp"
@@ -15,22 +15,13 @@ class UrinOGrahamPassageSEQ : public BaseTask {
 
   explicit UrinOGrahamPassageSEQ(const InType &in);
 
-  // Публичные вспомогательные функции для тестов
-  static Point FindLowestPoint(const InType &points);
-  static double PolarAngle(const Point &base, const Point &p);
-  static int Orientation(const Point &p, const Point &q, const Point &r);
-  static double DistanceSquared(const Point &p1, const Point &p2);
+  // Статические вспомогательные функции
+  [[nodiscard]] static Point FindLowestPoint(const InType &points);
+  [[nodiscard]] static double PolarAngle(const Point &base, const Point &p);
+  [[nodiscard]] static int Orientation(const Point &p, const Point &q, const Point &r);
+  [[nodiscard]] static double DistanceSquared(const Point &p1, const Point &p2);
 
-  // Константные геттеры для тестов
-  const InType &GetInputPoints() const {
-    return const_cast<UrinOGrahamPassageSEQ *>(this)->GetInput();
-  }
-
-  const OutType &GetHull() const {
-    return const_cast<UrinOGrahamPassageSEQ *>(this)->GetOutput();
-  }
-
- private:
+ protected:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;

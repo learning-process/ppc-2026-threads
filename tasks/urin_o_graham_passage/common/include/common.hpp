@@ -14,7 +14,7 @@ struct Point {
   double y;
 
   Point() : x(0.0), y(0.0) {}
-  Point(double x_, double y_) : x(x_), y(y_) {}
+  Point(double x_val, double y_val) : x(x_val), y(y_val) {}  // Исправлено: x_, y_ -> x_val, y_val
 
   bool operator==(const Point &other) const {
     const double eps = 1e-10;
