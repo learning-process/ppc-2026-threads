@@ -114,25 +114,22 @@ class LobanovDMultiplyMatrixPerfTest : public ::testing::TestWithParam<std::tupl
     test_name = std::get<2>(params);
   }
 
-  // Функция для подготовки данных
-  std::pair<CompressedRowMatrix, CompressedRowMatrix> PrepareMatrices() const {
+  [[nodiscard]] std::pair<CompressedRowMatrix, CompressedRowMatrix> PrepareMatrices() const {
     return {CreateRandomCompressedRowMatrix(dimension, dimension, density, 100),
             CreateRandomCompressedRowMatrix(dimension, dimension, density, 200)};
   }
 
-  // Функция для выполнения задачи
-  bool ExecuteTask(LobanovMultyMatrixSEQ &task) const {
+  static bool ExecuteTask(LobanovMultyMatrixSEQ &task)  {
     return task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing();
   }
 
-  // Функция для измерения времени выполнения
-  template <typename Func>
-  auto MeasureTime(Func &&func) const {
+  template<typename Func>
+  auto MeasureTime(Func&& func) const {
     const auto start = std::chrono::high_resolution_clock::now();
-    func();
+    std::forward<Func>(func)();  // используем std::forward
     const auto end = std::chrono::high_resolution_clock::now();
     return std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-  }
+}
 
   // Функция для проверки результатов
   void ValidateResult(const CompressedRowMatrix &result) const {

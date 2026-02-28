@@ -106,34 +106,27 @@ class LobanovDMultiplyMatrixFuncTest : public ::testing::Test {
  protected:
   void SetUp() override {}
 
-  // Разбиваем RunTest на несколько функций
-  bool ValidateTask(LobanovMultyMatrixSEQ &task) {
-    return task.Validation();
-  }
-
-  bool PreProcessTask(LobanovMultyMatrixSEQ &task) {
-    return task.PreProcessing();
-  }
-
-  bool ExecuteTask(LobanovMultyMatrixSEQ &task) {
-    return task.Run();
-  }
-
-  bool PostProcessTask(LobanovMultyMatrixSEQ &task) {
-    return task.PostProcessing();
+  static bool ExecuteFullTask(LobanovMultyMatrixSEQ &task) {
+    return task.Validation() && 
+           task.PreProcessing() && 
+           task.Run() && 
+           task.PostProcessing();
   }
 
   void RunTest(const CompressedRowMatrix &matrix_a, const CompressedRowMatrix &matrix_b) {
     LobanovMultyMatrixSEQ task(std::make_pair(matrix_a, matrix_b));
-
-    // Каждый ASSERT теперь вызывает отдельную функцию
-    ASSERT_TRUE(ValidateTask(task));
-    ASSERT_TRUE(PreProcessTask(task));
-    ASSERT_TRUE(ExecuteTask(task));
-    ASSERT_TRUE(PostProcessTask(task));
-
+    ASSERT_TRUE(ExecuteFullTask(task));
     result = task.GetOutput();
   }
+
+  [[nodiscard]] bool CheckResult(const CompressedRowMatrix &expected) const {
+    return result.row_count == expected.row_count && 
+           result.column_count == expected.column_count &&
+           result.row_pointer_data.size() == expected.row_pointer_data.size();
+  }
+
+  CompressedRowMatrix result;
+};
 
   [[nodiscard]] bool CheckResult(const CompressedRowMatrix &expected) const {
     if (result.row_count != expected.row_count || result.column_count != expected.column_count) {
