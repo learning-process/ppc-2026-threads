@@ -51,8 +51,6 @@ class IvanovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
 
  protected:
   void SetUp() override {
-    // GetParam() возвращает FuncTestParam, который содержит (функция, имя, TestType)
-    // TestType это std::tuple<int, std::string>
     const TestType &test_param = std::get<2>(GetParam());
     current_test_case_ = std::get<0>(test_param);
 
@@ -60,7 +58,6 @@ class IvanovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
     is_file_test_ = (current_test_case_ >= 11 && current_test_case_ <= 14);
   }
 
-  // main.cpp (часть с CheckTestOutputData)
   bool CheckTestOutputData(OutType &output_data) final {
     if (output_data.size() < 3) {
       return false;
@@ -167,7 +164,6 @@ TEST_P(IvanovaPRunFuncTestsThreads, MarkingComponentsTest) {
   ExecuteTest(GetParam());
 }
 
-// Тестовые случаи: (код_теста, описание)
 const std::array<TestType, 14> kTestParam = {
     std::make_tuple(1, "single_component"),   std::make_tuple(2, "two_components"),
     std::make_tuple(3, "three_components"),   std::make_tuple(4, "connected_components"),

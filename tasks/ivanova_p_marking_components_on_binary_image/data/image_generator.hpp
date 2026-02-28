@@ -1,10 +1,9 @@
-// image_generator.hpp
 #pragma once
 
-#include <cstddef>  // Для size_t
-#include <cstdint>  // Для uint8_t
-#include <fstream>  // Для std::ifstream
-#include <ios>      // Для std::ios
+#include <cstddef>
+#include <cstdint>
+#include <fstream>
+#include <ios>
 #include <string>
 
 #include "ivanova_p_marking_components_on_binary_image/common/include/common.hpp"

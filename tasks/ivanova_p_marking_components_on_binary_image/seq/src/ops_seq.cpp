@@ -1,13 +1,12 @@
 #include "ivanova_p_marking_components_on_binary_image/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <cstddef>  // Для size_t
+#include <cstddef>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-// Явно включаем заголовки, которые предоставляют используемые типы и функции
-#include "ivanova_p_marking_components_on_binary_image/common/include/common.hpp"  // Для InType, test_image, LoadImageFromTxt, CreateTestImage
+#include "ivanova_p_marking_components_on_binary_image/common/include/common.hpp"
 #include "ivanova_p_marking_components_on_binary_image/data/image_generator.hpp"
 
 namespace ivanova_p_marking_components_on_binary_image {
@@ -68,7 +67,6 @@ bool IvanovaPMarkingComponentsOnBinaryImageSEQ::ValidationImpl() {
   return true;
 }
 
-// Упрощенная версия FirstPass с меньшей когнитивной сложностью
 void IvanovaPMarkingComponentsOnBinaryImageSEQ::FirstPass() {
   for (int yy = 0; yy < height_; ++yy) {
     for (int xx = 0; xx < width_; ++xx) {
