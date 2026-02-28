@@ -8,7 +8,6 @@
 
 #include "alekseev_a_mult_matrix_crs/common/include/common.hpp"
 #include "alekseev_a_mult_matrix_crs/seq/include/ops_seq.hpp"
-#include "performance/include/performance.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace alekseev_a_mult_matrix_crs {
@@ -43,7 +42,6 @@ class AlekseevAMultMatrixCRSPerfTests : public ppc::util::BaseRunPerfTests<InTyp
 
   void SetPerfAttributes(ppc::performance::PerfAttr &perf_attrs) override {
     ppc::util::BaseRunPerfTests<InType, OutType>::SetPerfAttributes(perf_attrs);
-    // Measure one heavy run; this keeps wall time reasonable and metric readable.
     perf_attrs.num_running = 1;
   }
 
@@ -51,7 +49,6 @@ class AlekseevAMultMatrixCRSPerfTests : public ppc::util::BaseRunPerfTests<InTyp
     CRSMatrix a = GenerateBandMatrix(kSize, kBandwidth, 2.0);
     CRSMatrix b = GenerateBandMatrix(kSize, kBandwidth, 3.0);
     input_data_ = std::make_tuple(a, b);
-    // The exact product values are not used in perf test verification.
     expected_.rows = kSize;
     expected_.cols = kSize;
   }

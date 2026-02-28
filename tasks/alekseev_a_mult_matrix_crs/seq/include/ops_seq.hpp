@@ -1,7 +1,7 @@
 #pragma once
 
 #include "alekseev_a_mult_matrix_crs/common/include/common.hpp"
-#include "core/task/include/task.hpp"
+#include "task/include/task.hpp"
 
 namespace alekseev_a_mult_matrix_crs {
 
