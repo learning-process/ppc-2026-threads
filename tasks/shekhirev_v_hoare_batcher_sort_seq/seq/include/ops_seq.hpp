@@ -20,9 +20,8 @@ class ShekhirevHoareBatcherSortSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static void RunHoarePartition(std::vector<int> &arr, int pivot, int &i, int &j);
   static void HoareSort(std::vector<int> &arr, int left, int right);
-  static void BatcherMerge(std::vector<int> &arr, int left, int right, int step);
+  static void BatcherMerge(std::vector<int> &arr, int left, int right, int r);
 };
 
 }  // namespace shekhirev_v_hoare_batcher_sort_seq

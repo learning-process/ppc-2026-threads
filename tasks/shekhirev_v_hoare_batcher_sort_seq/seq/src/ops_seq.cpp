@@ -2,8 +2,6 @@
 
 #include <algorithm>
 #include <climits>
-#include <cstddef>
-#include <stack>
 #include <utility>
 #include <vector>
 
@@ -23,8 +21,12 @@ bool ShekhirevHoareBatcherSortSEQ::ValidationImpl() {
 
 bool ShekhirevHoareBatcherSortSEQ::PreProcessingImpl() {
   const auto &in = GetInput();
-  size_t original_size = in.size();
+  if (in.empty()) {
+    GetOutput().clear();
+    return true;
+  }
 
+  size_t original_size = in.size();
   size_t p2 = 1;
   while (p2 < original_size) {
     p2 *= 2;
@@ -35,7 +37,15 @@ bool ShekhirevHoareBatcherSortSEQ::PreProcessingImpl() {
   return true;
 }
 
-void ShekhirevHoareBatcherSortSEQ::RunHoarePartition(std::vector<int> &arr, int pivot, int &i, int &j) {
+void ShekhirevHoareBatcherSortSEQ::HoareSort(std::vector<int> &arr, int left, int right) {
+  if (left >= right) {
+    return;
+  }
+
+  int pivot = arr[left + (right - left) / 2];
+  int i = left;
+  int j = right;
+
   while (i <= j) {
     while (arr[i] < pivot) {
       i++;
@@ -49,69 +59,33 @@ void ShekhirevHoareBatcherSortSEQ::RunHoarePartition(std::vector<int> &arr, int 
       j--;
     }
   }
-}
 
-void ShekhirevHoareBatcherSortSEQ::HoareSort(std::vector<int> &arr, int left, int right) {
-  if (left >= right) {
-    return;
+  if (left < j) {
+    HoareSort(arr, left, j);
   }
-
-  std::stack<std::pair<int, int>> tasks;
-  tasks.emplace(left, right);
-
-  while (!tasks.empty()) {
-    auto [l, r] = tasks.top();
-    tasks.pop();
-
-    if (l >= r) {
-      continue;
-    }
-
-    int pivot = arr[l + ((r - l) / 2)];
-    int i = l;
-    int j = r;
-
-    RunHoarePartition(arr, pivot, i, j);
-
-    if (i < r) {
-      tasks.emplace(i, r);
-    }
-    if (l < j) {
-      tasks.emplace(l, j);
-    }
+  if (i < right) {
+    HoareSort(arr, i, right);
   }
 }
 
-void ShekhirevHoareBatcherSortSEQ::BatcherMerge(std::vector<int> &arr, int left, int right, int step) {
-  struct MergeTask {
-    int l;
-    int r;
-    int s;
-    bool process;
-  };
+void ShekhirevHoareBatcherSortSEQ::BatcherMerge(std::vector<int> &arr, int left, int right, int r) {
+  int n = right - left + 1;
+  int m = r * 2;
 
-  std::stack<MergeTask> tasks;
-  tasks.push({left, right, step, false});
+  if (m < n) {
+    BatcherMerge(arr, left, right, m);
+    BatcherMerge(arr, left + r, right, m);
 
-  while (!tasks.empty()) {
-    MergeTask task = tasks.top();
-    tasks.pop();
-
-    int n = task.r - task.l + 1;
-    if (n <= task.s) {
-      continue;
-    }
-
-    if (task.process) {
-      for (int i = task.l + task.s; i + task.s <= task.r; i += task.s * 2) {
-        if (arr[i] > arr[i + task.s]) {
-          std::swap(arr[i], arr[i + task.s]);
-        }
+    for (int i = left + r; i + r <= right; i += m) {
+      if (arr[i] > arr[i + r]) {
+        std::swap(arr[i], arr[i + r]);
       }
-    } else {
-      tasks.push({task.l, task.r, task.s, true});
-      tasks.push({task.l + task.s, task.r, task.s * 2, false});
-      tasks.push({task.l, task.r, task.s * 2, false});
+    }
+  } else {
+    if (left + r <= right) {
+      if (arr[left] > arr[left + r]) {
+        std::swap(arr[left], arr[left + r]);
+      }
     }
   }
 }
