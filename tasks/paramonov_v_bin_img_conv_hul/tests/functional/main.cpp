@@ -2,9 +2,8 @@
 
 #include <algorithm>
 #include <array>
-#include <random>
-#include <set>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "paramonov_v_bin_img_conv_hul/common/include/common.hpp"
@@ -13,7 +12,10 @@
 
 namespace paramonov_v_bin_img_conv_hul {
 
+using TestCase = std::tuple<GrayImage, std::vector<std::vector<PixelPoint>>, std::string>;
+
 namespace {
+
 GrayImage CreateTestImage(int rows, int cols) {
   GrayImage img;
   img.rows = rows;
@@ -28,8 +30,24 @@ void SetPixel(GrayImage &img, int row, int col, uint8_t value = 255) {
   }
 }
 
+void DrawRectangle(GrayImage &img, int r1, int c1, int r2, int c2) {
+  for (int r = r1; r <= r2; ++r) {
+    for (int c = c1; c <= c2; ++c) {
+      SetPixel(img, r, c);
+    }
+  }
+}
+
+std::vector<PixelPoint> GetRectangleHull(int r1, int c1, int r2, int c2) {
+  return {{r1, c1}, {r1, c2}, {r2, c2}, {r2, c1}};
+}
+
 bool PointsEqual(const PixelPoint &a, const PixelPoint &b) {
   return a.row == b.row && a.col == b.col;
+}
+
+void SortPoints(std::vector<PixelPoint> &points) {
+  std::sort(points.begin(), points.end());
 }
 
 bool HullsEqual(const std::vector<PixelPoint> &h1, const std::vector<PixelPoint> &h2) {
@@ -40,137 +58,55 @@ bool HullsEqual(const std::vector<PixelPoint> &h1, const std::vector<PixelPoint>
   std::vector<PixelPoint> sorted1 = h1;
   std::vector<PixelPoint> sorted2 = h2;
 
-  std::sort(sorted1.begin(), sorted1.end());
-  std::sort(sorted2.begin(), sorted2.end());
+  SortPoints(sorted1);
+  SortPoints(sorted2);
 
-  return std::equal(sorted1.begin(), sorted1.end(), sorted2.begin(), PointsEqual);
+  for (size_t i = 0; i < sorted1.size(); ++i) {
+    if (!PointsEqual(sorted1[i], sorted2[i])) {
+      return false;
+    }
+  }
+  return true;
 }
 
-struct TestScenario {
-  GrayImage image;
-  std::vector<std::vector<PixelPoint>> expected_hulls;
-  std::string description;
-};
-
-std::vector<TestScenario> GenerateTestScenarios() {
-  std::vector<TestScenario> scenarios;
-
-  // Сценарий 1: Одна точка
-  {
-    TestScenario ts;
-    ts.image = CreateTestImage(5, 5);
-    SetPixel(ts.image, 2, 2);
-    ts.expected_hulls = {{{2, 2}}};
-    ts.description = "single_pixel";
-    scenarios.push_back(ts);
+void SortHulls(std::vector<std::vector<PixelPoint>> &hulls) {
+  for (auto &hull : hulls) {
+    SortPoints(hull);
   }
 
-  // Сценарий 2: Две отдельные точки
-  {
-    TestScenario ts;
-    ts.image = CreateTestImage(8, 8);
-    SetPixel(ts.image, 1, 1);
-    SetPixel(ts.image, 6, 6);
-    ts.expected_hulls = {{{1, 1}}, {{6, 6}}};
-    ts.description = "two_isolated_pixels";
-    scenarios.push_back(ts);
-  }
-
-  // Сценарий 3: Вертикальная линия
-  {
-    TestScenario ts;
-    ts.image = CreateTestImage(7, 7);
-    for (int r = 1; r <= 5; ++r) {
-      SetPixel(ts.image, r, 3);
+  std::sort(hulls.begin(), hulls.end(), [](const std::vector<PixelPoint> &a, const std::vector<PixelPoint> &b) {
+    if (a.empty() || b.empty()) {
+      return a.size() < b.size();
     }
-    ts.expected_hulls = {{{1, 3}, {5, 3}}};
-    ts.description = "vertical_line";
-    scenarios.push_back(ts);
-  }
-
-  // Сценарий 4: Горизонтальная линия
-  {
-    TestScenario ts;
-    ts.image = CreateTestImage(7, 7);
-    for (int c = 1; c <= 5; ++c) {
-      SetPixel(ts.image, 3, c);
-    }
-    ts.expected_hulls = {{{3, 1}, {3, 5}}};
-    ts.description = "horizontal_line";
-    scenarios.push_back(ts);
-  }
-
-  // Сценарий 5: Прямоугольник 4x3
-  {
-    TestScenario ts;
-    ts.image = CreateTestImage(10, 10);
-    for (int r = 2; r <= 5; ++r) {
-      for (int c = 3; c <= 6; ++c) {
-        SetPixel(ts.image, r, c);
-      }
-    }
-    ts.expected_hulls = {{{2, 3}, {2, 6}, {5, 6}, {5, 3}}};
-    ts.description = "rectangle_4x3";
-    scenarios.push_back(ts);
-  }
-
-  // Сценарий 6: Два отдельных прямоугольника
-  {
-    TestScenario ts;
-    ts.image = CreateTestImage(15, 15);
-
-    for (int r = 2; r <= 4; ++r) {
-      for (int c = 2; c <= 4; ++c) {
-        SetPixel(ts.image, r, c);
-      }
-    }
-
-    for (int r = 9; r <= 11; ++r) {
-      for (int c = 9; c <= 11; ++c) {
-        SetPixel(ts.image, r, c);
-      }
-    }
-
-    ts.expected_hulls = {{{2, 2}, {2, 4}, {4, 4}, {4, 2}}, {{9, 9}, {9, 11}, {11, 11}, {11, 9}}};
-    ts.description = "two_separate_rectangles";
-    scenarios.push_back(ts);
-  }
-
-  // Сценарий 7: Пустое изображение
-  {
-    TestScenario ts;
-    ts.image = CreateTestImage(10, 10);
-    ts.expected_hulls = {};
-    ts.description = "empty_image";
-    scenarios.push_back(ts);
-  }
-
-  return scenarios;
+    return std::tie(a[0].row, a[0].col) < std::tie(b[0].row, b[0].col);
+  });
 }
 
 }  // namespace
 
-class ConvexHullFunctionalTest : public ppc::util::BaseRunFuncTests<InputType, OutputType, TestScenario> {
- protected:
-  bool CheckTestOutputData(OutputType &output) override {
-    TestScenario param = std::get<2>(GetParam());
+class ConvexHullFuncTest : public ppc::util::BaseRunFuncTests<InputType, OutputType, TestCase> {
+ public:
+  static std::string PrintTestParam(const TestCase &test_param) {
+    return std::get<2>(test_param);
+  }
 
-    if (output.size() != param.expected_hulls.size()) {
+ protected:
+  void SetUp() override {
+    TestCase params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    input_image_ = std::get<0>(params);
+    expected_hulls_ = std::get<1>(params);
+  }
+
+  bool CheckTestOutputData(OutputType &output) override {
+    if (output.size() != expected_hulls_.size()) {
       return false;
     }
 
-    auto hull_comparator = [](const std::vector<PixelPoint> &a, const std::vector<PixelPoint> &b) {
-      if (a.empty() || b.empty()) {
-        return a.size() < b.size();
-      }
-      return (a[0].row == b[0].row) ? a[0].col < b[0].col : a[0].row < b[0].row;
-    };
-
     std::vector<std::vector<PixelPoint>> sorted_output = output;
-    std::vector<std::vector<PixelPoint>> sorted_expected = param.expected_hulls;
+    std::vector<std::vector<PixelPoint>> sorted_expected = expected_hulls_;
 
-    std::sort(sorted_output.begin(), sorted_output.end(), hull_comparator);
-    std::sort(sorted_expected.begin(), sorted_expected.end(), hull_comparator);
+    SortHulls(sorted_output);
+    SortHulls(sorted_expected);
 
     for (size_t i = 0; i < sorted_output.size(); ++i) {
       if (!HullsEqual(sorted_output[i], sorted_expected[i])) {
@@ -182,27 +118,121 @@ class ConvexHullFunctionalTest : public ppc::util::BaseRunFuncTests<InputType, O
   }
 
   InputType GetTestInputData() override {
-    return std::get<2>(GetParam()).image;
+    return input_image_;
   }
-};
 
-TEST_P(ConvexHullFunctionalTest, Run) {
-  ExecuteTest(GetParam());
-}
+ private:
+  InputType input_image_;
+  OutputType expected_hulls_;
+};
 
 namespace {
 
-const auto kTestScenarios = GenerateTestScenarios();
+const std::array<TestCase, 8> kTestCases = {{
+    // Тест 1: Одна точка
+    std::make_tuple(
+        []() {
+          auto img = CreateTestImage(5, 5);
+          SetPixel(img, 2, 2);
+          return img;
+        }(),
+        std::vector<std::vector<PixelPoint>>{{{2, 2}}},
+        "single_pixel"),
 
-const auto kTestTasks =
-    ppc::util::AddFuncTask<ConvexHullSequential, InputType>(kTestScenarios, PPC_SETTINGS_paramonov_v_bin_img_conv_hul);
+    // Тест 2: Две отдельные точки
+    std::make_tuple(
+        []() {
+          auto img = CreateTestImage(8, 8);
+          SetPixel(img, 1, 1);
+          SetPixel(img, 6, 6);
+          return img;
+        }(),
+        std::vector<std::vector<PixelPoint>>{{{1, 1}}, {{6, 6}}},
+        "two_isolated_pixels"),
 
-const auto kTestValues = ppc::util::ExpandToValues(kTestTasks);
+    // Тест 3: Вертикальная линия
+    std::make_tuple(
+        []() {
+          auto img = CreateTestImage(7, 7);
+          for (int r = 1; r <= 5; ++r) {
+            SetPixel(img, r, 3);
+          }
+          return img;
+        }(),
+        std::vector<std::vector<PixelPoint>>{{{1, 3}, {5, 3}}},
+        "vertical_line"),
 
-INSTANTIATE_TEST_SUITE_P(ParamonovHullTests, ConvexHullFunctionalTest, kTestValues,
-                         [](const testing::TestParamInfo<ConvexHullFunctionalTest::ParamType> &info) {
-                           return std::get<2>(info.param).description;
-                         });
+    // Тест 4: Горизонтальная линия
+    std::make_tuple(
+        []() {
+          auto img = CreateTestImage(7, 7);
+          for (int c = 1; c <= 5; ++c) {
+            SetPixel(img, 3, c);
+          }
+          return img;
+        }(),
+        std::vector<std::vector<PixelPoint>>{{{3, 1}, {3, 5}}},
+        "horizontal_line"),
+
+    // Тест 5: Прямоугольник
+    std::make_tuple(
+        []() {
+          auto img = CreateTestImage(10, 10);
+          DrawRectangle(img, 2, 3, 5, 6);
+          return img;
+        }(),
+        std::vector<std::vector<PixelPoint>>{GetRectangleHull(2, 3, 5, 6)},
+        "rectangle"),
+
+    // Тест 6: Два прямоугольника
+    std::make_tuple(
+        []() {
+          auto img = CreateTestImage(15, 15);
+          DrawRectangle(img, 2, 2, 4, 4);
+          DrawRectangle(img, 9, 9, 11, 11);
+          return img;
+        }(),
+        std::vector<std::vector<PixelPoint>>{
+          GetRectangleHull(2, 2, 4, 4),
+          GetRectangleHull(9, 9, 11, 11)
+        },
+        "two_rectangles"),
+
+    // Тест 7: Три компоненты
+    std::make_tuple(
+        []() {
+          auto img = CreateTestImage(30, 30);
+          DrawRectangle(img, 1, 1, 3, 3);
+          DrawRectangle(img, 10, 10, 12, 12);
+          DrawRectangle(img, 20, 5, 22, 7);
+          return img;
+        }(),
+        std::vector<std::vector<PixelPoint>>{
+          GetRectangleHull(1, 1, 3, 3),
+          GetRectangleHull(10, 10, 12, 12),
+          GetRectangleHull(20, 5, 22, 7)
+        },
+        "three_components"),
+
+    // Тест 8: Пустое изображение
+    std::make_tuple(
+        CreateTestImage(10, 10),
+        std::vector<std::vector<PixelPoint>>{},
+        "empty_image")
+}};
+
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<ConvexHullSequential, InputType>(kTestCases, PPC_SETTINGS_paramonov_v_bin_img_conv_hul));
+
+const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+
+const auto kFuncTestName = ConvexHullFuncTest::PrintFuncTestName<ConvexHullFuncTest>;
+
+INSTANTIATE_TEST_SUITE_P(ParamonovHullTests, ConvexHullFuncTest, kGtestValues, kFuncTestName);
+
+TEST_P(ConvexHullFuncTest, RunFunctionalTests) {
+  ExecuteTest(GetParam());
+}
 
 }  // namespace
 
