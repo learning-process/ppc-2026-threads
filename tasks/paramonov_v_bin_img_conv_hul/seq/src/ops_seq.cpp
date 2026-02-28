@@ -4,12 +4,11 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <iterator>  // для std::back_inserter
+#include <iterator>
 #include <stack>
-#include <utility>  // для std::pair
+#include <utility>
 #include <vector>
 
-// Добавляем include для типов из common.hpp
 #include "paramonov_v_bin_img_conv_hul/common/include/common.hpp"
 
 namespace paramonov_v_bin_img_conv_hul {
@@ -128,10 +127,8 @@ std::vector<PixelPoint> ConvexHullSequential::ComputeConvexHull(const std::vecto
     return points;
   }
 
-  // Находим точку с наименьшими координатами
   auto lowest_point = *std::ranges::min_element(points, ComparePoints);
 
-  // Копируем и сортируем по полярному углу
   std::vector<PixelPoint> sorted_points;
   std::ranges::copy_if(points, std::back_inserter(sorted_points), [&lowest_point](const PixelPoint &p) {
     return (p.row != lowest_point.row) || (p.col != lowest_point.col);
@@ -149,7 +146,6 @@ std::vector<PixelPoint> ConvexHullSequential::ComputeConvexHull(const std::vecto
     return orient > 0;
   });
 
-  // Строим выпуклую оболочку
   std::vector<PixelPoint> hull;
   hull.push_back(lowest_point);
 

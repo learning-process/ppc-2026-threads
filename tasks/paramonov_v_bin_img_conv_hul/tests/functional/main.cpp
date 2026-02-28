@@ -143,98 +143,69 @@ class ConvexHullFuncTest : public ppc::util::BaseRunFuncTests<InputType, OutputT
 
 namespace {
 
-const std::array<TestCase, 8> kTestCases = {{
-    // Тест 1: Одна точка
-    std::make_tuple(
-        []() {
-          auto img = CreateTestImage(5, 5);
-          SetPixel(img, 2, 2);
-          return img;
-        }(),
-        std::vector<std::vector<PixelPoint>>{{{2, 2}}},
-        "single_pixel"),
+const std::array<TestCase, 8> kTestCases = {
+    {std::make_tuple(
+         []() {
+  auto img = CreateTestImage(5, 5);
+  SetPixel(img, 2, 2);
+  return img;
+}(), std::vector<std::vector<PixelPoint>>{{{2, 2}}}, "single_pixel"),
 
-    // Тест 2: Две отдельные точки
-    std::make_tuple(
-        []() {
-          auto img = CreateTestImage(8, 8);
-          SetPixel(img, 1, 1);
-          SetPixel(img, 6, 6);
-          return img;
-        }(),
-        std::vector<std::vector<PixelPoint>>{{{1, 1}}, {{6, 6}}},
-        "two_isolated_pixels"),
+     std::make_tuple(
+         []() {
+  auto img = CreateTestImage(8, 8);
+  SetPixel(img, 1, 1);
+  SetPixel(img, 6, 6);
+  return img;
+}(), std::vector<std::vector<PixelPoint>>{{{1, 1}}, {{6, 6}}}, "two_isolated_pixels"),
 
-    // Тест 3: Вертикальная линия
-    std::make_tuple(
-        []() {
-          auto img = CreateTestImage(7, 7);
-          for (int row = 1; row <= 5; ++row) {
-            SetPixel(img, row, 3);
-          }
-          return img;
-        }(),
-        std::vector<std::vector<PixelPoint>>{{{1, 3}, {5, 3}}},
-        "vertical_line"),
+     std::make_tuple(
+         []() {
+  auto img = CreateTestImage(7, 7);
+  for (int row = 1; row <= 5; ++row) {
+    SetPixel(img, row, 3);
+  }
+  return img;
+}(), std::vector<std::vector<PixelPoint>>{{{1, 3}, {5, 3}}}, "vertical_line"),
 
-    // Тест 4: Горизонтальная линия
-    std::make_tuple(
-        []() {
-          auto img = CreateTestImage(7, 7);
-          for (int col = 1; col <= 5; ++col) {
-            SetPixel(img, 3, col);
-          }
-          return img;
-        }(),
-        std::vector<std::vector<PixelPoint>>{{{3, 1}, {3, 5}}},
-        "horizontal_line"),
+     std::make_tuple(
+         []() {
+  auto img = CreateTestImage(7, 7);
+  for (int col = 1; col <= 5; ++col) {
+    SetPixel(img, 3, col);
+  }
+  return img;
+}(), std::vector<std::vector<PixelPoint>>{{{3, 1}, {3, 5}}}, "horizontal_line"),
 
-    // Тест 5: Прямоугольник
-    std::make_tuple(
-        []() {
-          auto img = CreateTestImage(10, 10);
-          DrawRectangle(img, 2, 3, 5, 6);
-          return img;
-        }(),
-        std::vector<std::vector<PixelPoint>>{GetRectangleHull(2, 3, 5, 6)},
-        "rectangle"),
+     std::make_tuple(
+         []() {
+  auto img = CreateTestImage(10, 10);
+  DrawRectangle(img, 2, 3, 5, 6);
+  return img;
+}(), std::vector<std::vector<PixelPoint>>{GetRectangleHull(2, 3, 5, 6)}, "rectangle"),
 
-    // Тест 6: Два прямоугольника
-    std::make_tuple(
-        []() {
-          auto img = CreateTestImage(15, 15);
-          DrawRectangle(img, 2, 2, 4, 4);
-          DrawRectangle(img, 9, 9, 11, 11);
-          return img;
-        }(),
-        std::vector<std::vector<PixelPoint>>{
-          GetRectangleHull(2, 2, 4, 4),
-          GetRectangleHull(9, 9, 11, 11)
-        },
-        "two_rectangles"),
+     std::make_tuple(
+         []() {
+  auto img = CreateTestImage(15, 15);
+  DrawRectangle(img, 2, 2, 4, 4);
+  DrawRectangle(img, 9, 9, 11, 11);
+  return img;
+}(), std::vector<std::vector<PixelPoint>>{GetRectangleHull(2, 2, 4, 4), GetRectangleHull(9, 9, 11, 11)},
+         "two_rectangles"),
 
-    // Тест 7: Три компоненты
-    std::make_tuple(
-        []() {
-          auto img = CreateTestImage(30, 30);
-          DrawRectangle(img, 1, 1, 3, 3);
-          DrawRectangle(img, 10, 10, 12, 12);
-          DrawRectangle(img, 20, 5, 22, 7);
-          return img;
-        }(),
-        std::vector<std::vector<PixelPoint>>{
-          GetRectangleHull(1, 1, 3, 3),
-          GetRectangleHull(10, 10, 12, 12),
-          GetRectangleHull(20, 5, 22, 7)
-        },
-        "three_components"),
+     std::make_tuple(
+         []() {
+  auto img = CreateTestImage(30, 30);
+  DrawRectangle(img, 1, 1, 3, 3);
+  DrawRectangle(img, 10, 10, 12, 12);
+  DrawRectangle(img, 20, 5, 22, 7);
+  return img;
+}(),
+         std::vector<std::vector<PixelPoint>>{GetRectangleHull(1, 1, 3, 3), GetRectangleHull(10, 10, 12, 12),
+                                              GetRectangleHull(20, 5, 22, 7)},
+         "three_components"),
 
-    // Тест 8: Пустое изображение
-    std::make_tuple(
-        CreateTestImage(10, 10),
-        std::vector<std::vector<PixelPoint>>{},
-        "empty_image")
-}};
+     std::make_tuple(CreateTestImage(10, 10), std::vector<std::vector<PixelPoint>>{}, "empty_image")}};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ConvexHullSequential, InputType>(kTestCases, PPC_SETTINGS_paramonov_v_bin_img_conv_hul));

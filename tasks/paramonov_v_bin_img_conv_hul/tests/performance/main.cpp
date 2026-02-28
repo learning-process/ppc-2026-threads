@@ -23,7 +23,6 @@ class ConvexHullPerformanceTest : public ppc::util::BaseRunPerfTests<InputType, 
     std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
     std::uniform_int_distribution<int> dist(0, kImageSize - 1);
 
-    // Создаем 5 случайных прямоугольников
     for (int component = 0; component < 5; ++component) {
       int x1 = dist(rng) % (kImageSize - 30);
       int y1 = dist(rng) % (kImageSize - 30);
@@ -40,7 +39,6 @@ class ConvexHullPerformanceTest : public ppc::util::BaseRunPerfTests<InputType, 
       }
     }
 
-    // Добавляем несколько диагональных линий
     for (int i = 0; i < kImageSize; i += 17) {
       int row = i;
       int col = i;
