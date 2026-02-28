@@ -9,8 +9,7 @@
 namespace kruglova_a_conjugate_gradient_sle {
 
 namespace {
-void matrix_vector_multiply(const std::vector<double> &a, const std::vector<double> &p, std::vector<double> &ap,
-                            int n) {
+void MatrixVectorMultiply(const std::vector<double> &a, const std::vector<double> &p, std::vector<double> &ap, int n) {
   for (int i = 0; i < n; ++i) {
     ap[i] = 0.0;
     for (int j = 0; j < n; ++j) {
@@ -63,7 +62,7 @@ bool KruglovaAConjGradSleSEQ::RunImpl() {
   const double tolerance = 1e-8;
 
   for (int iter = 0; iter < n * 2; ++iter) {
-    matrix_vector_multiply(a, p, ap, n);
+    MatrixVectorMultiply(a, p, ap, n);
 
     double p_ap = 0.0;
     for (int i = 0; i < n; ++i) {
