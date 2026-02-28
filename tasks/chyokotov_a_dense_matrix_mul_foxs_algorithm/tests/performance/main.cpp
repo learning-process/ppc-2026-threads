@@ -23,8 +23,8 @@ class ChyokotovARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, 
 
     for (size_t i = 0; i < n; i++) {
       for (size_t j = 0; j < n; j++) {
-        a[(i * n) + j] = i + j;
-        b[(i * n) + j] = i - j;
+        a[(i * n) + j] = static_cast<double>(i + j);
+        b[(i * n) + j] = static_cast<double>(i - j);
       }
     }
     for (size_t i = 0; i < n; i++) {
