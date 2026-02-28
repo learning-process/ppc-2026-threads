@@ -11,9 +11,7 @@
 #include "paramonov_v_bin_img_conv_hul/common/include/common.hpp"
 #include "paramonov_v_bin_img_conv_hul/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-
-// Этот include не нужен напрямую, так как GTestParamIndex используется через func_test_util.hpp
-// NOLINTNEXTLINE(misc-include-cleaner)
+// GTestParamIndex используется через func_test_util.hpp, поэтому отдельный include не требуется
 
 namespace paramonov_v_bin_img_conv_hul {
 
@@ -109,9 +107,11 @@ class ConvexHullFuncTest : public ppc::util::BaseRunFuncTests<InputType, OutputT
 
  protected:
   void SetUp() override {
-    TestCase params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_image_ = std::get<0>(params);
-    expected_hulls_ = std::get<1>(params);
+    // Используем прямой доступ к параметрам через индексы, чтобы избежать предупреждения
+    const auto &param_tuple = GetParam();
+    const auto &test_params = std::get<2>(param_tuple);
+    input_image_ = std::get<0>(test_params);
+    expected_hulls_ = std::get<1>(test_params);
   }
 
   bool CheckTestOutputData(OutputType &output) override {
