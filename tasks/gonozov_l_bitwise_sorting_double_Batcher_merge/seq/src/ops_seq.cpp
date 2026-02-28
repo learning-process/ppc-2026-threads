@@ -38,13 +38,13 @@ uint64_t DoubleToSortableInt(double d) {
 
 // uint64_t -> double
 double SortableIntToDouble(uint64_t bits) {
-  if ((bits >> 63) != 0) {                // Если старший бит установлен (было положительное)
-    bits = bits ^ 0x8000000000000000ULL;  // Возвращаем знаковый бит
-  } else {                                // Если старший бит не установлен (было отрицательное число)
-    bits = ~bits;                         // Инвертируем все биты обратно
+  if ((bits >> 63) != 0) {           // Если старший бит установлен (было положительное)
+    bits &= ~0x8000000000000000ULL;  // Убираем старший бит
+  } else {                           // Если старший бит не установлен (было отрицательное число)
+    bits = ~bits;                    // Инвертируем все биты обратно
   }
 
-  double result = NAN;
+  double result = 0.0;
   std::memcpy(&result, &bits, sizeof(double));
   return result;
 }
