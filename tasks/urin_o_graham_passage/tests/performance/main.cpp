@@ -64,11 +64,29 @@ bool PostProcessTask(UrinOGrahamPassageSEQ &task) {
   return task.PostProcessing();
 }
 
-void RunTaskPipeline(UrinOGrahamPassageSEQ &task) {
+// Отдельные функции для EXPECT_
+void ExpectValidation(UrinOGrahamPassageSEQ &task) {
   EXPECT_TRUE(ValidateTask(task));
+}
+
+void ExpectPreProcessing(UrinOGrahamPassageSEQ &task) {
   EXPECT_TRUE(PreProcessTask(task));
+}
+
+void ExpectRun(UrinOGrahamPassageSEQ &task) {
   EXPECT_TRUE(RunTask(task));
+}
+
+void ExpectPostProcessing(UrinOGrahamPassageSEQ &task) {
   EXPECT_TRUE(PostProcessTask(task));
+}
+
+// Теперь эта функция имеет низкую когнитивную сложность
+void RunTaskPipeline(UrinOGrahamPassageSEQ &task) {
+  ExpectValidation(task);
+  ExpectPreProcessing(task);
+  ExpectRun(task);
+  ExpectPostProcessing(task);
 }
 
 void CheckHullValidity(const std::vector<Point> &hull) {

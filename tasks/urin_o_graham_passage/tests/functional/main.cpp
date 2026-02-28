@@ -28,7 +28,7 @@ bool IsConvexHull(const std::vector<Point> &hull) {
   return true;
 }
 
-// Разбиваем RunAndCheckHull на несколько маленьких функций
+// Еще более мелкие функции для каждого шага
 bool ValidateTask(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
   return task->Validation();
 }
@@ -45,19 +45,37 @@ bool PostProcessTask(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
   return task->PostProcessing();
 }
 
+// Отдельные функции для проверок с EXPECT_
+void ExpectValidation(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+  EXPECT_TRUE(ValidateTask(task));
+}
+
+void ExpectPreProcessing(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+  EXPECT_TRUE(PreProcessTask(task));
+}
+
+void ExpectRun(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+  EXPECT_TRUE(RunTask(task));
+}
+
+void ExpectPostProcessing(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+  EXPECT_TRUE(PostProcessTask(task));
+}
+
+// Теперь эта функция будет иметь низкую когнитивную сложность
+void ExecuteTaskPipeline(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+  ExpectValidation(task);
+  ExpectPreProcessing(task);
+  ExpectRun(task);
+  ExpectPostProcessing(task);
+}
+
 void CheckHullSize(const std::vector<Point> &hull, size_t expected_size) {
   EXPECT_EQ(hull.size(), expected_size);
 }
 
 void CheckHullConvexity(const std::vector<Point> &hull) {
   EXPECT_TRUE(IsConvexHull(hull));
-}
-
-void ExecuteTaskPipeline(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
-  EXPECT_TRUE(ValidateTask(task));
-  EXPECT_TRUE(PreProcessTask(task));
-  EXPECT_TRUE(RunTask(task));
-  EXPECT_TRUE(PostProcessTask(task));
 }
 
 void VerifyHull(const std::vector<Point> &hull, size_t expected_size) {
@@ -136,9 +154,8 @@ TEST(UrinOGrahamPassageSeq, LargeRandomSet) {
   const int num_points = 100;
   pts.reserve(static_cast<size_t>(num_points));
 
-  const double pi = 3.14159265358979323846;
   for (int i = 0; i < num_points; ++i) {
-    double angle = 2.0 * pi * static_cast<double>(i) / static_cast<double>(num_points);
+    const double angle = 2.0 * std::numbers::pi * static_cast<double>(i) / static_cast<double>(num_points);
     pts.emplace_back(std::cos(angle) * 10.0, std::sin(angle) * 10.0);
   }
 
