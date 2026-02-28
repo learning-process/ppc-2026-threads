@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -13,6 +12,7 @@
 #include "dergynov_s_integrals_multistep_rectangle/common/include/common.hpp"
 #include "dergynov_s_integrals_multistep_rectangle/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace dergynov_s_integrals_multistep_rectangle {
 namespace {

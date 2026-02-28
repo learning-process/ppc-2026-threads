@@ -1,12 +1,15 @@
 #include "dergynov_s_integrals_multistep_rectangle/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cmath>
+#include <utility>
 #include <vector>
 
 #include "dergynov_s_integrals_multistep_rectangle/common/include/common.hpp"
 
 namespace dergynov_s_integrals_multistep_rectangle {
 namespace {
+
 bool ValidateBorders(const std::vector<std::pair<double, double>> &borders) {
   return std::ranges::all_of(
       borders, [](const auto &p) { return std::isfinite(p.first) && std::isfinite(p.second) && p.first < p.second; });
