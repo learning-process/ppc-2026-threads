@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <tuple>
+
 #include "sabutay_sparse_complex_ccs_mult/common/include/common.hpp"
 #include "sabutay_sparse_complex_ccs_mult/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
@@ -7,11 +9,12 @@
 namespace sabutay_sparse_complex_ccs_mult {
 
 class SabutayRunPerfSeq : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
     // simple fixed matrices for performance measurement
-    CCS a, b;
+    CCS a;
+    CCS b;
     a.m = 100; a.n = 100;
     a.col_ptr.resize(a.n+1);
     b.m = 100; b.n = 100;
@@ -27,13 +30,12 @@ class SabutayRunPerfSeq : public ppc::util::BaseRunPerfTests<InType, OutType> {
     }
     a.col_ptr[100] = 100;
     b.col_ptr[100] = 100;
-    input_data_ = std::make_tuple(a, b);
+    input_data_ = std::tuple<CCS, CCS>(a, b);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
+  bool CheckTestOutputData(OutType& output_data) final {
     // result should equal identity multiplication
-    bool ok = (output_data.m == 100 && output_data.n == 100);
-    return ok;
+    return (output_data.m == 100 && output_data.n == 100);
   }
 
   InType GetTestInputData() final {

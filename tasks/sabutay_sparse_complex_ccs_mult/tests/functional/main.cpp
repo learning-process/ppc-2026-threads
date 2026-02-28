@@ -2,17 +2,17 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <complex>
 #include <cstddef>
 #include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
 
-#include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 #include "sabutay_sparse_complex_ccs_mult/common/include/common.hpp"
 #include "sabutay_sparse_complex_ccs_mult/seq/include/ops_seq.hpp"
+#include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace sabutay_sparse_complex_ccs_mult {
 
@@ -77,7 +77,7 @@ class SabutayARunFuncTestsSeq : public ppc::util::BaseRunFuncTests<InType, OutTy
     }
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
+  bool CheckTestOutputData(OutType& output_data) final {
     bool result = true;
     double eps = 1e-14;
     if (test_result_.m != output_data.m || test_result_.n != output_data.n ||
@@ -88,7 +88,9 @@ class SabutayARunFuncTestsSeq : public ppc::util::BaseRunFuncTests<InType, OutTy
     }
 
     for (size_t i = 0; i < test_result_.col_ptr.size(); ++i) {
-      if (test_result_.col_ptr[i] != output_data.col_ptr[i]) return false;
+      if (test_result_.col_ptr[i] != output_data.col_ptr[i]) {
+        return false;
+      }
     }
 
     for (int j = 0; j < test_result_.n; ++j) {
