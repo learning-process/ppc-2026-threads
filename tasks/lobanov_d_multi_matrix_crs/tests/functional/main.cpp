@@ -116,7 +116,7 @@ class LobanovDMultiplyMatrixFuncTest : public ::testing::Test {
     result = task.GetOutput();
   }
 
-  [[nodiscard]] bool CheckResult(const CompressedRowMatrix &expected) {
+  [[nodiscard]] bool CheckResult(const CompressedRowMatrix &expected) const {
     return result.row_count == expected.row_count && result.column_count == expected.column_count &&
            result.row_pointer_data.size() == expected.row_pointer_data.size();
   }
