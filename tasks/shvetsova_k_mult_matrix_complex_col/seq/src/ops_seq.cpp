@@ -41,14 +41,14 @@ bool ShvetsovaKMultMatrixComplexSEQ::RunImpl() {
       }
     }
     int counter = 0;
-    for (int k = 0; k < column_C.size(); k++) {
+    for (int k = 0; k < static_cast<int>(column_C.size()); k++) {
       if (column_C[k] != 0.0) {
         matrix_C.row_ind.push_back(k);
         matrix_C.values.push_back(column_C[k]);
         counter++;
       }
     }
-    matrix_C.col_ptr.push_back(matrix_C.col_ptr[matrix_C.col_ptr.size() - 1] + counter);
+    matrix_C.col_ptr.push_back(matrix_C.col_ptr[static_cast<int>(matrix_C.col_ptr.size()) - 1] + counter);
   }
   return true;
 }
