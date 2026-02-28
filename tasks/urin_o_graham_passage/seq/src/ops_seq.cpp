@@ -15,7 +15,6 @@ UrinOGrahamPassageSEQ::UrinOGrahamPassageSEQ(const InType &in) {
 bool UrinOGrahamPassageSEQ::ValidationImpl() {
   const auto &points = GetInput();
 
-  // Проверяем, что точек достаточно
   if (points.size() < 3) {
     return false;
   }
@@ -30,7 +29,6 @@ bool UrinOGrahamPassageSEQ::ValidationImpl() {
     }
   }
 
-  // Если все точки одинаковые - валидация не проходит
   if (all_same) {
     return false;
   }
@@ -68,7 +66,6 @@ double UrinOGrahamPassageSEQ::PolarAngle(const Point &base, const Point &p) {
 }
 
 int UrinOGrahamPassageSEQ::Orientation(const Point &p, const Point &q, const Point &r) {
-  // Правильная формула для определения поворота
   double val = (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
 
   if (std::abs(val) < 1e-10) {
@@ -90,10 +87,8 @@ bool UrinOGrahamPassageSEQ::RunImpl() {
     return false;
   }
 
-  // Шаг 1: Находим самую нижнюю левую точку
   Point p0 = FindLowestPoint(points);
 
-  // Шаг 2: Копируем все точки, кроме p0
   std::vector<Point> other_points;
   for (const auto &point : points) {
     if (!(point == p0)) {
@@ -101,18 +96,24 @@ bool UrinOGrahamPassageSEQ::RunImpl() {
     }
   }
 
-  // Шаг 3: Сортируем по полярному углу относительно p0
-  std::sort(other_points.begin(), other_points.end(), [this, &p0](const Point &a, const Point &b) {
-    double angle_a = PolarAngle(p0, a);
-    double angle_b = PolarAngle(p0, b);
+  // ИСПРАВЛЕНО: убрали захват this
+  std::sort(other_points.begin(), other_points.end(), [&p0](const Point &a, const Point &b) {
+    double dx1 = a.x - p0.x;
+    double dy1 = a.y - p0.y;
+    double dx2 = b.x - p0.x;
+    double dy2 = b.y - p0.y;
+
+    double angle_a = std::atan2(dy1, dx1);
+    double angle_b = std::atan2(dy2, dx2);
 
     if (std::abs(angle_a - angle_b) < 1e-10) {
-      return DistanceSquared(p0, a) < DistanceSquared(p0, b);
+      // Если углы равны, ближе та, у которой меньше расстояние
+      return (dx1 * dx1 + dy1 * dy1) < (dx2 * dx2 + dy2 * dy2);
     }
     return angle_a < angle_b;
   });
 
-  // Шаг 4: Проверяем, не все ли точки коллинеарны
+  // Проверяем, не все ли точки коллинеарны
   bool all_collinear = true;
   for (size_t i = 1; i < other_points.size(); i++) {
     if (Orientation(p0, other_points[0], other_points[i]) != 0) {
@@ -122,12 +123,11 @@ bool UrinOGrahamPassageSEQ::RunImpl() {
   }
 
   if (all_collinear) {
-    // Все точки на одной прямой - возвращаем две крайние
     GetOutput() = {p0, other_points.back()};
     return true;
   }
 
-  // Шаг 5: Классический алгоритм Грэхема
+  // Строим выпуклую оболочку
   std::vector<Point> hull;
   hull.push_back(p0);
   hull.push_back(other_points[0]);
@@ -138,7 +138,7 @@ bool UrinOGrahamPassageSEQ::RunImpl() {
       Point &q = hull[hull.size() - 1];
       int orient = Orientation(p, q, other_points[i]);
 
-      if (orient <= 0) {  // Правый поворот или коллинеарны - удаляем
+      if (orient <= 0) {
         hull.pop_back();
       } else {
         break;

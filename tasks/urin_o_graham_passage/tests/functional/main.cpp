@@ -29,29 +29,12 @@ bool IsConvexHull(const std::vector<Point> &hull) {
   return true;
 }
 
-// Вспомогательная функция для запуска пайплайна задачи
-void RunSeqPipeline(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
-  // Сначала вызываем Validation
-  ASSERT_TRUE(task->Validation()) << "Validation failed";
-
-  // Затем PreProcessing
-  ASSERT_TRUE(task->PreProcessing()) << "PreProcessing failed";
-
-  // Затем Run
-  ASSERT_TRUE(task->Run()) << "Run failed";
-
-  // Затем PostProcessing
-  ASSERT_TRUE(task->PostProcessing()) << "PostProcessing failed";
-}
-
 // Тест с пустым входом
 TEST(UrinOGrahamPassageSeq, EmptyInput) {
   InType empty_points;
   auto task = std::make_shared<UrinOGrahamPassageSEQ>(empty_points);
 
-  EXPECT_FALSE(task->Validation());  // Валидация должна вернуть false
-
-  // Не вызываем остальные методы, так как Validation вернул false
+  EXPECT_FALSE(task->Validation());
   EXPECT_TRUE(task->GetOutput().empty());
 }
 
@@ -60,9 +43,7 @@ TEST(UrinOGrahamPassageSeq, SinglePoint) {
   InType pts = {Point(5.0, 3.0)};
   auto task = std::make_shared<UrinOGrahamPassageSEQ>(pts);
 
-  EXPECT_FALSE(task->Validation());  // Валидация должна вернуть false
-
-  // Не вызываем остальные методы, так как Validation вернул false
+  EXPECT_FALSE(task->Validation());
   EXPECT_TRUE(task->GetOutput().empty());
 }
 
@@ -71,9 +52,7 @@ TEST(UrinOGrahamPassageSeq, TwoDistinctPoints) {
   InType pts = {Point(0.0, 0.0), Point(3.0, 4.0)};
   auto task = std::make_shared<UrinOGrahamPassageSEQ>(pts);
 
-  EXPECT_FALSE(task->Validation());  // Валидация должна вернуть false
-
-  // Не вызываем остальные методы, так как Validation вернул false
+  EXPECT_FALSE(task->Validation());
   EXPECT_TRUE(task->GetOutput().empty());
 }
 
@@ -82,20 +61,14 @@ TEST(UrinOGrahamPassageSeq, CollinearPoints) {
   InType pts = {Point(0.0, 0.0), Point(1.0, 0.0), Point(2.0, 0.0), Point(3.0, 0.0), Point(4.0, 0.0)};
   auto task = std::make_shared<UrinOGrahamPassageSEQ>(pts);
 
-  // Валидация должна пройти
   EXPECT_TRUE(task->Validation());
-
-  // PreProcessing должен пройти
   EXPECT_TRUE(task->PreProcessing());
-
-  // Run должен пройти
   EXPECT_TRUE(task->Run());
-
-  // PostProcessing должен пройти
   EXPECT_TRUE(task->PostProcessing());
 
   const auto &hull = task->GetOutput();
-  EXPECT_EQ(hull.size(), 2);  // Должны получить две крайние точки
+  // ИСПРАВЛЕНО: сравниваем size_t с size_t
+  EXPECT_EQ(hull.size(), size_t(2));  // Должны получить две крайние точки
   EXPECT_TRUE(IsConvexHull(hull));
 }
 
@@ -110,7 +83,7 @@ TEST(UrinOGrahamPassageSeq, TrianglePoints) {
   EXPECT_TRUE(task->PostProcessing());
 
   const auto &hull = task->GetOutput();
-  EXPECT_EQ(hull.size(), 3);
+  EXPECT_EQ(hull.size(), size_t(3));
   EXPECT_TRUE(IsConvexHull(hull));
 }
 
@@ -125,7 +98,7 @@ TEST(UrinOGrahamPassageSeq, SquarePoints) {
   EXPECT_TRUE(task->PostProcessing());
 
   const auto &hull = task->GetOutput();
-  EXPECT_EQ(hull.size(), 4);
+  EXPECT_EQ(hull.size(), size_t(4));
   EXPECT_TRUE(IsConvexHull(hull));
 }
 
@@ -140,7 +113,7 @@ TEST(UrinOGrahamPassageSeq, SquareWithInteriorPoint) {
   EXPECT_TRUE(task->PostProcessing());
 
   const auto &hull = task->GetOutput();
-  EXPECT_EQ(hull.size(), 4);
+  EXPECT_EQ(hull.size(), size_t(4));
   EXPECT_TRUE(IsConvexHull(hull));
 }
 
@@ -156,7 +129,7 @@ TEST(UrinOGrahamPassageSeq, RectangleWithCollinearPoints) {
   EXPECT_TRUE(task->PostProcessing());
 
   const auto &hull = task->GetOutput();
-  EXPECT_EQ(hull.size(), 4);  // Должны получить 4 вершины прямоугольника
+  EXPECT_EQ(hull.size(), size_t(4));  // Должны получить 4 вершины прямоугольника
   EXPECT_TRUE(IsConvexHull(hull));
 }
 
@@ -166,8 +139,6 @@ TEST(UrinOGrahamPassageSeq, AllIdenticalPoints) {
   auto task = std::make_shared<UrinOGrahamPassageSEQ>(pts);
 
   EXPECT_FALSE(task->Validation());  // Валидация должна вернуть false
-
-  // Не вызываем остальные методы
   EXPECT_TRUE(task->GetOutput().empty());
 }
 
@@ -182,7 +153,7 @@ TEST(UrinOGrahamPassageSeq, PointOnBoundary) {
   EXPECT_TRUE(task->PostProcessing());
 
   const auto &hull = task->GetOutput();
-  EXPECT_EQ(hull.size(), 4);  // Точка (2,0) лежит на стороне
+  EXPECT_EQ(hull.size(), size_t(4));  // Точка (2,0) лежит на стороне
   EXPECT_TRUE(IsConvexHull(hull));
 }
 
@@ -197,7 +168,7 @@ TEST(UrinOGrahamPassageSeq, VerticalCollinear) {
   EXPECT_TRUE(task->PostProcessing());
 
   const auto &hull = task->GetOutput();
-  EXPECT_EQ(hull.size(), 2);  // Две крайние точки
+  EXPECT_EQ(hull.size(), size_t(2));  // Две крайние точки
   EXPECT_TRUE(IsConvexHull(hull));
 }
 
@@ -220,7 +191,8 @@ TEST(UrinOGrahamPassageSeq, LargeRandomSet) {
   EXPECT_TRUE(task->PostProcessing());
 
   const auto &hull = task->GetOutput();
-  EXPECT_GE(hull.size(), 3);
+  // ИСПРАВЛЕНО: сравниваем беззнаковые типы
+  EXPECT_GE(hull.size(), size_t(3));
   EXPECT_TRUE(IsConvexHull(hull));
 }
 
@@ -236,7 +208,7 @@ TEST(UrinOGrahamPassageSeq, HexagonWithCenter) {
   EXPECT_TRUE(task->PostProcessing());
 
   const auto &hull = task->GetOutput();
-  EXPECT_EQ(hull.size(), 6);  // Шестиугольник без центра
+  EXPECT_EQ(hull.size(), size_t(6));  // Шестиугольник без центра
   EXPECT_TRUE(IsConvexHull(hull));
 }
 
