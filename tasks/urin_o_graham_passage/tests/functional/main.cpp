@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstddef>
 #include <memory>
+#include <numbers>
 #include <vector>
 
 #include "urin_o_graham_passage/common/include/common.hpp"
@@ -52,17 +53,22 @@ void CheckHullConvexity(const std::vector<Point> &hull) {
   EXPECT_TRUE(IsConvexHull(hull));
 }
 
-void RunAndCheckHull(const InType &points, size_t expected_size) {
-  auto task = std::make_shared<UrinOGrahamPassageSEQ>(points);
-
+void ExecuteTaskPipeline(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
   EXPECT_TRUE(ValidateTask(task));
   EXPECT_TRUE(PreProcessTask(task));
   EXPECT_TRUE(RunTask(task));
   EXPECT_TRUE(PostProcessTask(task));
+}
 
-  const auto &hull = task->GetOutput();
+void VerifyHull(const std::vector<Point> &hull, size_t expected_size) {
   CheckHullSize(hull, expected_size);
   CheckHullConvexity(hull);
+}
+
+void RunAndCheckHull(const InType &points, size_t expected_size) {
+  auto task = std::make_shared<UrinOGrahamPassageSEQ>(points);
+  ExecuteTaskPipeline(task);
+  VerifyHull(task->GetOutput(), expected_size);
 }
 
 void RunAndExpectFailure(const InType &points) {

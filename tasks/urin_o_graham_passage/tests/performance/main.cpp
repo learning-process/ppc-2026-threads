@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include <random>
 #include <vector>
@@ -47,12 +48,27 @@ class UrinOGrahamPassagePerfTest : public ::testing::Test {
   }
 };
 
-// Вспомогательные функции для уменьшения когнитивной сложности
+bool ValidateTask(UrinOGrahamPassageSEQ &task) {
+  return task.Validation();
+}
+
+bool PreProcessTask(UrinOGrahamPassageSEQ &task) {
+  return task.PreProcessing();
+}
+
+bool RunTask(UrinOGrahamPassageSEQ &task) {
+  return task.Run();
+}
+
+bool PostProcessTask(UrinOGrahamPassageSEQ &task) {
+  return task.PostProcessing();
+}
+
 void RunTaskPipeline(UrinOGrahamPassageSEQ &task) {
-  EXPECT_TRUE(task.Validation());
-  EXPECT_TRUE(task.PreProcessing());
-  EXPECT_TRUE(task.Run());
-  EXPECT_TRUE(task.PostProcessing());
+  EXPECT_TRUE(ValidateTask(task));
+  EXPECT_TRUE(PreProcessTask(task));
+  EXPECT_TRUE(RunTask(task));
+  EXPECT_TRUE(PostProcessTask(task));
 }
 
 void CheckHullValidity(const std::vector<Point> &hull) {
@@ -60,7 +76,7 @@ void CheckHullValidity(const std::vector<Point> &hull) {
   EXPECT_TRUE(IsConvexHull(hull));
 }
 
-void PrintPerformanceResult(size_t num_points, long long ms, size_t hull_size) {
+void PrintPerformanceResult(size_t num_points, int64_t ms, size_t hull_size) {
   std::cout << "SEQ version with " << num_points << " points took " << ms << " ms\n";
   std::cout << "Convex hull size: " << hull_size << "\n";
 }
@@ -78,7 +94,7 @@ TEST_F(UrinOGrahamPassagePerfTest, SeqPerformance) {
 
   const auto &hull = task.GetOutput();
   CheckHullValidity(hull);
-  PrintPerformanceResult(num_points, duration.count(), hull.size());
+  PrintPerformanceResult(num_points, static_cast<int64_t>(duration.count()), hull.size());
 }
 
 TEST_F(UrinOGrahamPassagePerfTest, DifferentSizes) {
