@@ -119,9 +119,9 @@ class LobanovDMultiplyMatrixPerfTest : public ::testing::TestWithParam<std::tupl
     ASSERT_TRUE(task.PreProcessing());
 
     auto start = std::chrono::high_resolution_clock::now();
-    
+
     ASSERT_TRUE(task.Run());
-    
+
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
@@ -131,7 +131,7 @@ class LobanovDMultiplyMatrixPerfTest : public ::testing::TestWithParam<std::tupl
 
     EXPECT_EQ(result.row_count, dimension_);
     EXPECT_EQ(result.column_count, dimension_);
-    
+
     std::cout << "Test: " << test_name_ << std::endl;
     std::cout << "Matrix size: " << dimension_ << "x" << dimension_ << std::endl;
     std::cout << "Density: " << density_ << std::endl;
@@ -151,14 +151,9 @@ TEST_P(LobanovDMultiplyMatrixPerfTest, PerformanceTest) {
   RunPerformanceTest();
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    MatrixMultiplicationPerfTests,
-    LobanovDMultiplyMatrixPerfTest,
-    ::testing::Values(
-        std::make_tuple(100, 0.2, "Small_100x100_dense_20%"),
-        std::make_tuple(500, 0.1, "Medium_500x500_sparse_10%"),
-        std::make_tuple(1000, 0.05, "Large_1000x1000_sparse_5%"),
-        std::make_tuple(2000, 0.02, "ExtraLarge_2000x2000_sparse_2%")
-    )
-);
-} // namespace lobanov_d_multi_matrix_crs
+INSTANTIATE_TEST_SUITE_P(MatrixMultiplicationPerfTests, LobanovDMultiplyMatrixPerfTest,
+                         ::testing::Values(std::make_tuple(100, 0.2, "Small_100x100_dense_20%"),
+                                           std::make_tuple(500, 0.1, "Medium_500x500_sparse_10%"),
+                                           std::make_tuple(1000, 0.05, "Large_1000x1000_sparse_5%"),
+                                           std::make_tuple(2000, 0.02, "ExtraLarge_2000x2000_sparse_2%")));
+}  // namespace lobanov_d_multi_matrix_crs

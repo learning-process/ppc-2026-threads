@@ -70,8 +70,7 @@ using OutType = CompressedRowMatrix;
 using TestType = std::tuple<std::string, CompressedRowMatrix, CompressedRowMatrix, CompressedRowMatrix>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-CompressedRowMatrix CreateRandomCompressedRowMatrix(int row_count, int column_count, double density_factor,
-                                                    int seed);
+CompressedRowMatrix CreateRandomCompressedRowMatrix(int row_count, int column_count, double density_factor, int seed);
 
 inline std::ostream &operator<<(std::ostream &os, const CompressedRowMatrix &matrix) {
   os << "CompressedRowMatrix{"

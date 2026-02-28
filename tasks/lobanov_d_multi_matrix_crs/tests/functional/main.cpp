@@ -12,7 +12,7 @@
 
 #include "lobanov_d_multi_matrix_crs/common/include/common.hpp"
 #include "lobanov_d_multi_matrix_crs/seq/include/ops_seq.hpp"
-#include "util/include/func_test_util.hpp" 
+#include "util/include/func_test_util.hpp"
 
 namespace lobanov_d_multi_matrix_crs {
 
@@ -102,33 +102,31 @@ CompressedRowMatrix CreateRandomCompressedRowMatrix(int row_count, int column_co
 
 class LobanovDMultiplyMatrixFuncTest : public ::testing::Test {
  protected:
-  void SetUp() override {
-  }
+  void SetUp() override {}
 
-  void RunTest(const CompressedRowMatrix& matrix_a, const CompressedRowMatrix& matrix_b) {
+  void RunTest(const CompressedRowMatrix &matrix_a, const CompressedRowMatrix &matrix_b) {
     LobanovMultyMatrixSEQ task(std::make_pair(matrix_a, matrix_b));
-    
+
     ASSERT_TRUE(task.Validation());
-    
+
     ASSERT_TRUE(task.PreProcessing());
-    
+
     ASSERT_TRUE(task.Run());
-    
+
     ASSERT_TRUE(task.PostProcessing());
-    
+
     result_ = task.GetOutput();
   }
 
-  bool CheckResult(const CompressedRowMatrix& expected) {
-    if (result_.row_count != expected.row_count || 
-        result_.column_count != expected.column_count) {
+  bool CheckResult(const CompressedRowMatrix &expected) {
+    if (result_.row_count != expected.row_count || result_.column_count != expected.column_count) {
       return false;
     }
-    
+
     if (result_.row_pointer_data.size() != expected.row_pointer_data.size()) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -139,9 +137,9 @@ class LobanovDMultiplyMatrixFuncTest : public ::testing::Test {
 TEST_F(LobanovDMultiplyMatrixFuncTest, SmallMatrices) {
   auto matrix_a = CreateRandomCompressedRowMatrix(10, 10, 0.3, 1);
   auto matrix_b = CreateRandomCompressedRowMatrix(10, 10, 0.3, 2);
-  
+
   RunTest(matrix_a, matrix_b);
-  
+
   EXPECT_EQ(result_.row_count, 10);
   EXPECT_EQ(result_.column_count, 10);
   EXPECT_GE(result_.non_zero_count, 0);
@@ -150,9 +148,9 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, SmallMatrices) {
 TEST_F(LobanovDMultiplyMatrixFuncTest, RectangularMatrices) {
   auto matrix_a = CreateRandomCompressedRowMatrix(10, 5, 0.3, 1);
   auto matrix_b = CreateRandomCompressedRowMatrix(5, 8, 0.3, 2);
-  
+
   RunTest(matrix_a, matrix_b);
-  
+
   EXPECT_EQ(result_.row_count, 10);
   EXPECT_EQ(result_.column_count, 8);
   EXPECT_GE(result_.non_zero_count, 0);
@@ -161,9 +159,9 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, RectangularMatrices) {
 TEST_F(LobanovDMultiplyMatrixFuncTest, SparseMatrices) {
   auto matrix_a = CreateRandomCompressedRowMatrix(50, 50, 0.05, 1);
   auto matrix_b = CreateRandomCompressedRowMatrix(50, 50, 0.05, 2);
-  
+
   RunTest(matrix_a, matrix_b);
-  
+
   EXPECT_EQ(result_.row_count, 50);
   EXPECT_EQ(result_.column_count, 50);
   EXPECT_GE(result_.non_zero_count, 0);
@@ -172,9 +170,9 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, SparseMatrices) {
 TEST_F(LobanovDMultiplyMatrixFuncTest, DenseMatrices) {
   auto matrix_a = CreateRandomCompressedRowMatrix(20, 20, 0.8, 1);
   auto matrix_b = CreateRandomCompressedRowMatrix(20, 20, 0.8, 2);
-  
+
   RunTest(matrix_a, matrix_b);
-  
+
   EXPECT_EQ(result_.row_count, 20);
   EXPECT_EQ(result_.column_count, 20);
   EXPECT_GE(result_.non_zero_count, 0);
@@ -183,9 +181,9 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, DenseMatrices) {
 TEST_F(LobanovDMultiplyMatrixFuncTest, LargeRowsSmallCols) {
   auto matrix_a = CreateRandomCompressedRowMatrix(100, 3, 0.3, 1);
   auto matrix_b = CreateRandomCompressedRowMatrix(3, 5, 0.3, 2);
-  
+
   RunTest(matrix_a, matrix_b);
-  
+
   EXPECT_EQ(result_.row_count, 100);
   EXPECT_EQ(result_.column_count, 5);
   EXPECT_GE(result_.non_zero_count, 0);
@@ -194,9 +192,9 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, LargeRowsSmallCols) {
 TEST_F(LobanovDMultiplyMatrixFuncTest, SmallRowsLargeCols) {
   auto matrix_a = CreateRandomCompressedRowMatrix(3, 100, 0.3, 1);
   auto matrix_b = CreateRandomCompressedRowMatrix(100, 5, 0.3, 2);
-  
+
   RunTest(matrix_a, matrix_b);
-  
+
   EXPECT_EQ(result_.row_count, 3);
   EXPECT_EQ(result_.column_count, 5);
   EXPECT_GE(result_.non_zero_count, 0);
@@ -210,11 +208,11 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, IdentityMultiplication) {
   identity.row_pointer_data = {0, 1, 2, 3, 4, 5};
   identity.column_index_data = {0, 1, 2, 3, 4};
   identity.value_data = {1.0, 1.0, 1.0, 1.0, 1.0};
-  
+
   auto matrix_b = CreateRandomCompressedRowMatrix(5, 5, 0.3, 1);
-  
+
   RunTest(identity, matrix_b);
-  
+
   EXPECT_EQ(result_.row_count, 5);
   EXPECT_EQ(result_.column_count, 5);
 }
@@ -225,11 +223,11 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, ZeroMatrix) {
   zero_matrix.column_count = 5;
   zero_matrix.non_zero_count = 0;
   zero_matrix.row_pointer_data = {0, 0, 0, 0, 0, 0};
-  
+
   auto matrix_b = CreateRandomCompressedRowMatrix(5, 5, 0.3, 1);
-  
+
   RunTest(zero_matrix, matrix_b);
-  
+
   EXPECT_EQ(result_.row_count, 5);
   EXPECT_EQ(result_.column_count, 5);
   EXPECT_EQ(result_.non_zero_count, 0);
@@ -237,10 +235,10 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, ZeroMatrix) {
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, ValidationFailure) {
   auto matrix_a = CreateRandomCompressedRowMatrix(5, 3, 0.3, 1);
-  auto matrix_b = CreateRandomCompressedRowMatrix(4, 5, 0.3, 2); // Несовместимые размеры
-  
+  auto matrix_b = CreateRandomCompressedRowMatrix(4, 5, 0.3, 2);  // Несовместимые размеры
+
   LobanovMultyMatrixSEQ task(std::make_pair(matrix_a, matrix_b));
-  
+
   EXPECT_FALSE(task.Validation());
 }
 

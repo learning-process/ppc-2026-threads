@@ -34,16 +34,10 @@ bool LobanovMultyMatrixSEQ::PreProcessingImpl() {
 
 namespace {
 
-void MultiplyRowByMatrix(const std::vector<double> &a_row_values, 
-                         const std::vector<int> &a_row_columns,
-                         const CompressedRowMatrix &matrix_b,
-                         std::vector<double> &temp_row,
-                         std::vector<int> &temp_col_markers,
-                         int row_index,
-                         std::vector<double> &result_values,
-                         std::vector<int> &result_col_indices,
-                         int &result_row_start) {
-  
+void MultiplyRowByMatrix(const std::vector<double> &a_row_values, const std::vector<int> &a_row_columns,
+                         const CompressedRowMatrix &matrix_b, std::vector<double> &temp_row,
+                         std::vector<int> &temp_col_markers, int row_index, std::vector<double> &result_values,
+                         std::vector<int> &result_col_indices, int &result_row_start) {
   // Обнуляем временный массив для этой строки
   for (size_t i = 0; i < temp_row.size(); ++i) {
     if (temp_col_markers[i] == row_index) {
@@ -57,8 +51,7 @@ void MultiplyRowByMatrix(const std::vector<double> &a_row_values,
     int b_row = a_row_columns[k];
     double a_value = a_row_values[k];
 
-    for (int b_ptr = matrix_b.row_pointer_data[b_row]; 
-         b_ptr < matrix_b.row_pointer_data[b_row + 1]; ++b_ptr) {
+    for (int b_ptr = matrix_b.row_pointer_data[b_row]; b_ptr < matrix_b.row_pointer_data[b_row + 1]; ++b_ptr) {
       int b_col = matrix_b.column_index_data[b_ptr];
       double b_value = matrix_b.value_data[b_ptr];
 
@@ -78,22 +71,21 @@ void MultiplyRowByMatrix(const std::vector<double> &a_row_values,
       result_col_indices.push_back(col);
     }
   }
-  
+
   result_row_start = static_cast<int>(result_values.size());
 }
 
 }  // namespace
 
 void LobanovMultyMatrixSEQ::PerformMatrixMultiplication(const CompressedRowMatrix &first_matrix,
-                                                            const CompressedRowMatrix &second_matrix,
-                                                            CompressedRowMatrix &product_result) {
-  
+                                                        const CompressedRowMatrix &second_matrix,
+                                                        CompressedRowMatrix &product_result) {
   product_result.row_count = first_matrix.row_count;
   product_result.column_count = second_matrix.column_count;
-  
+
   product_result.row_pointer_data.clear();
   product_result.row_pointer_data.push_back(0);
-  
+
   product_result.value_data.clear();
   product_result.column_index_data.clear();
 
@@ -106,7 +98,7 @@ void LobanovMultyMatrixSEQ::PerformMatrixMultiplication(const CompressedRowMatri
   for (int i = 0; i < first_matrix.row_count; ++i) {
     int row_start = first_matrix.row_pointer_data[i];
     int row_end = first_matrix.row_pointer_data[i + 1];
-    
+
     if (row_start == row_end) {
       // Пустая строка в A
       product_result.row_pointer_data.push_back(static_cast<int>(product_result.value_data.size()));
@@ -116,7 +108,7 @@ void LobanovMultyMatrixSEQ::PerformMatrixMultiplication(const CompressedRowMatri
     // Извлекаем значения и индексы колонок для текущей строки A
     std::vector<double> a_row_values;
     std::vector<int> a_row_columns;
-    
+
     for (int ptr = row_start; ptr < row_end; ++ptr) {
       a_row_values.push_back(first_matrix.value_data[ptr]);
       a_row_columns.push_back(first_matrix.column_index_data[ptr]);
@@ -124,11 +116,8 @@ void LobanovMultyMatrixSEQ::PerformMatrixMultiplication(const CompressedRowMatri
 
     // Умножаем строку на матрицу B
     int result_row_start = 0;
-    MultiplyRowByMatrix(a_row_values, a_row_columns, second_matrix, 
-                        temp_row, temp_col_markers, i,
-                        product_result.value_data, 
-                        product_result.column_index_data,
-                        result_row_start);
+    MultiplyRowByMatrix(a_row_values, a_row_columns, second_matrix, temp_row, temp_col_markers, i,
+                        product_result.value_data, product_result.column_index_data, result_row_start);
 
     product_result.row_pointer_data.push_back(static_cast<int>(product_result.value_data.size()));
   }
