@@ -19,7 +19,6 @@ bool ChetverikovaEShellSortSimpleMergeSEQ::ValidationImpl() {
 }
 
 bool ChetverikovaEShellSortSimpleMergeSEQ::PreProcessingImpl() {
-  //GetOutput().assign(GetInput().size(), 0);
   return true;
 }
 
@@ -27,7 +26,7 @@ void ChetverikovaEShellSortSimpleMergeSEQ::ShellSort(std::vector<int> &data) {
   if (data.empty()) {
     return;
   }
-
+  
   int n = data.size();
   for (int gap = n / 2; gap > 0; gap /= 2) {
         for (int i = gap; i < n; i++) {
@@ -45,8 +44,8 @@ void ChetverikovaEShellSortSimpleMergeSEQ::ShellSort(std::vector<int> &data) {
 
 std::vector<int> ChetverikovaEShellSortSimpleMergeSEQ::MergeSort(const std::vector<int> &left, const std::vector<int> &right) {
   std::vector<int> result;
+  result.reserve(left.size() + right.size());
   int i = 0, j = 0;
-
   while (i < left.size() && j < right.size()) {
       if (left[i] <= right[j]) {
           result.push_back(left[i++]);
@@ -59,7 +58,6 @@ std::vector<int> ChetverikovaEShellSortSimpleMergeSEQ::MergeSort(const std::vect
 
   return result;
 }
-
 
 bool ChetverikovaEShellSortSimpleMergeSEQ::RunImpl() {
   const auto &input = GetInput();
