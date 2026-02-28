@@ -42,9 +42,9 @@ bool OtcheskovSContrastLinStretchOMP::RunImpl() {
     max_val = std::max(pixel, max_val);
   }
 
-  const size_t threshold_size  = 1000000;
+  const size_t threshold_size = 1000000;
   if (min_val == max_val) {
-#pragma omp parallel for if (input.size() > threshold_size ) default(none) shared(input, output) 
+#pragma omp parallel for if (input.size() > threshold_size) default(none) shared(input, output)
     for (size_t i = 0; i < input.size(); ++i) {
       output[i] = input[i];
     }
