@@ -37,7 +37,6 @@ void MultiplyRowByMatrix(const std::vector<double> &a_row_values, const std::vec
                          const CompressedRowMatrix &matrix_b, std::vector<double> &temp_row,
                          std::vector<int> &temp_col_markers, int row_index, std::vector<double> &result_values,
                          std::vector<int> &result_col_indices, int &result_row_start) {
-  // Обнуляем временный массив для этой строки
   for (size_t i = 0; i < temp_row.size(); ++i) {
     if (temp_col_markers[i] == row_index) {
       temp_row[i] = 0.0;
@@ -63,7 +62,6 @@ void MultiplyRowByMatrix(const std::vector<double> &a_row_values, const std::vec
     }
   }
 
-  // Собираем ненулевые элементы результата
   for (int col = 0; col < matrix_b.column_count; ++col) {
     if (temp_col_markers[col] == row_index && std::abs(temp_row[col]) > kEpsilonThreshold) {
       result_values.push_back(temp_row[col]);
@@ -88,23 +86,19 @@ void LobanovMultyMatrixSEQ::PerformMatrixMultiplication(const CompressedRowMatri
   product_result.value_data.clear();
   product_result.column_index_data.clear();
 
-  // Временные массивы для вычисления одной строки результата
   int cols = second_matrix.column_count;
   std::vector<double> temp_row(cols, 0.0);
   std::vector<int> temp_col_markers(cols, -1);
 
-  // Обрабатываем каждую строку первой матрицы
   for (int i = 0; i < first_matrix.row_count; ++i) {
     int row_start = first_matrix.row_pointer_data[i];
     int row_end = first_matrix.row_pointer_data[i + 1];
 
     if (row_start == row_end) {
-      // Пустая строка в A
       product_result.row_pointer_data.push_back(static_cast<int>(product_result.value_data.size()));
       continue;
     }
 
-    // Извлекаем значения и индексы колонок для текущей строки A
     std::vector<double> a_row_values;
     std::vector<int> a_row_columns;
 
@@ -113,7 +107,6 @@ void LobanovMultyMatrixSEQ::PerformMatrixMultiplication(const CompressedRowMatri
       a_row_columns.push_back(first_matrix.column_index_data[ptr]);
     }
 
-    // Умножаем строку на матрицу B
     int result_row_start = 0;
     MultiplyRowByMatrix(a_row_values, a_row_columns, second_matrix, temp_row, temp_col_markers, i,
                         product_result.value_data, product_result.column_index_data, result_row_start);

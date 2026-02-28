@@ -116,7 +116,7 @@ class LobanovDMultiplyMatrixFuncTest : public ::testing::Test {
     result = task.GetOutput();
   }
 
-  [[nodiscard]] bool CheckResult(const CompressedRowMatrix &expected) const {
+  [[nodiscard]] bool CheckResult(const CompressedRowMatrix &expected) {
     return result.row_count == expected.row_count && result.column_count == expected.column_count &&
            result.row_pointer_data.size() == expected.row_pointer_data.size();
   }
@@ -124,16 +124,13 @@ class LobanovDMultiplyMatrixFuncTest : public ::testing::Test {
   CompressedRowMatrix result;
 };
 
-[[nodiscard]] bool CheckResult(const CompressedRowMatrix &expected) const {
+[[nodiscard]] bool CheckResult(const CompressedRowMatrix &result, const CompressedRowMatrix &expected) {
   if (result.row_count != expected.row_count || result.column_count != expected.column_count) {
     return false;
   }
 
   return result.row_pointer_data.size() == expected.row_pointer_data.size();
 }
-
-CompressedRowMatrix result;
-};
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, SmallMatrices) {
   const auto matrix_a = CreateRandomCompressedRowMatrix(10, 10, 0.3, 1);
