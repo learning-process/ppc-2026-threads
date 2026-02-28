@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
-#include <ranges>
 #include <utility>
 #include <vector>
 
