@@ -1,0 +1,33 @@
+#pragma once
+
+#include "rysev_m_linear_filter_gauss_kernel/common/include/common.hpp"
+
+namespace rysev_m_linear_filter_gauss_kernel {
+
+class RysevMGaussFilterSEQ : public BaseTask {
+ public:
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kSEQ;
+  }
+  explicit RysevMGaussFilterSEQ(const InType &in);
+
+  const std::vector<uint8_t>& GetInputImage() const { return input_image_; }
+  const std::vector<uint8_t>& GetOutputImage() const { return output_image_; }
+  int GetWidth() const { return width_; }
+  int GetHeight() const { return height_; }
+  int GetChannels() const { return channels_; }
+
+ private:
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
+
+  std::vector<uint8_t> input_image_;
+  std::vector<uint8_t> output_image_;
+  int width_ = 0;
+  int height_ = 0;
+  int channels_ = 3;
+};
+
+}  // namespace rysev_m_linear_filter_gauss_kernel
