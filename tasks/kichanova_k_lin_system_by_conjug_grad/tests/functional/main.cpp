@@ -11,6 +11,7 @@
 #include "kichanova_k_lin_system_by_conjug_grad/common/include/common.hpp"
 #include "kichanova_k_lin_system_by_conjug_grad/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace kichanova_k_lin_system_by_conjug_grad {
 
