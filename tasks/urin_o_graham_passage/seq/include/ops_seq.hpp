@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include <vector>  // IWYU pragma: keep
 
 #include "task/include/task.hpp"
 #include "urin_o_graham_passage/common/include/common.hpp"

@@ -60,7 +60,7 @@ double UrinOGrahamPassageSEQ::PolarAngle(const Point &base, const Point &p) {
 }
 
 int UrinOGrahamPassageSEQ::Orientation(const Point &p, const Point &q, const Point &r) {
-  const double val = (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+  const double val = ((q.x - p.x) * (r.y - p.y)) - ((q.y - p.y) * (r.x - p.x));
 
   if (std::abs(val) < 1e-10) {
     return 0;
