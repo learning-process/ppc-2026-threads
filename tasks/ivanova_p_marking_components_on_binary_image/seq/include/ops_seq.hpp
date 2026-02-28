@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #include "ivanova_p_marking_components_on_binary_image/common/include/common.hpp"
 #include "task/include/task.hpp"
@@ -20,14 +20,14 @@ class IvanovaPMarkingComponentsOnBinaryImageSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  
+
   Image input_image_;
   std::vector<int> labels_;
   std::unordered_map<int, int> parent_;
   int current_label_;
   int width_;
   int height_;
-  
+
   void FirstPass();
   void SecondPass();
   int FindRoot(int label);
