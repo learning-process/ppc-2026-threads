@@ -2,6 +2,9 @@
 
 #include <cstddef>
 #include <unordered_map>
+#include <utility>
+
+#include "ashihmin_d_mult_matr_crs/common/include/common.hpp"
 
 namespace ashihmin_d_mult_matr_crs {
 
@@ -17,10 +20,10 @@ bool AshihminDMultMatrCrsSEQ::ValidationImpl() {
   if (matrix_a.cols != matrix_b.rows) {
     return false;
   }
-  if (matrix_a.row_ptr.size() != static_cast<std::size_t>(matrix_a.rows + 1)) {
+  if (matrix_a.row_ptr.size() != static_cast<std::size_t>(matrix_a.rows) + 1) {
     return false;
   }
-  if (matrix_b.row_ptr.size() != static_cast<std::size_t>(matrix_b.rows + 1)) {
+  if (matrix_b.row_ptr.size() != static_cast<std::size_t>(matrix_b.rows) + 1) {
     return false;
   }
   if (matrix_a.values.size() != matrix_a.col_index.size()) {
@@ -49,16 +52,20 @@ bool AshihminDMultMatrCrsSEQ::RunImpl() {
   matrix_c.values.clear();
   matrix_c.col_index.clear();
 
-  for (std::size_t row_index = 0; row_index < static_cast<std::size_t>(matrix_a.rows); ++row_index) {
+  for (int row_index = 0; row_index < matrix_a.rows; ++row_index) {
     std::unordered_map<int, double> accumulator;
 
-    for (std::size_t index_a = static_cast<std::size_t>(matrix_a.row_ptr[row_index]);
-         index_a < static_cast<std::size_t>(matrix_a.row_ptr[row_index + 1]); ++index_a) {
+    std::size_t row_start = static_cast<std::size_t>(matrix_a.row_ptr[row_index]);
+    std::size_t row_end = static_cast<std::size_t>(matrix_a.row_ptr[row_index + 1]);
+
+    for (std::size_t index_a = row_start; index_a < row_end; ++index_a) {
       int col_a = matrix_a.col_index[index_a];
       double value_a = matrix_a.values[index_a];
 
-      for (std::size_t index_b = static_cast<std::size_t>(matrix_b.row_ptr[col_a]);
-           index_b < static_cast<std::size_t>(matrix_b.row_ptr[col_a + 1]); ++index_b) {
+      std::size_t col_start = static_cast<std::size_t>(matrix_b.row_ptr[col_a]);
+      std::size_t col_end = static_cast<std::size_t>(matrix_b.row_ptr[col_a + 1]);
+
+      for (std::size_t index_b = col_start; index_b < col_end; ++index_b) {
         int col_b = matrix_b.col_index[index_b];
         double value_b = matrix_b.values[index_b];
         accumulator[col_b] += value_a * value_b;

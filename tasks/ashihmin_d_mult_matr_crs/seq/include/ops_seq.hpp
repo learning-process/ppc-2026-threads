@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ashihmin_d_mult_matr_crs/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace ashihmin_d_mult_matr_crs {
 
