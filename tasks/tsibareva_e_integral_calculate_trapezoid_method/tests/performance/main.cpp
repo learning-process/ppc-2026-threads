@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 
-//#include "tsibareva_e_integral_calculate_trapezoid_method/all/include/ops_all.hpp"
+// #include "tsibareva_e_integral_calculate_trapezoid_method/all/include/ops_all.hpp"
 #include "tsibareva_e_integral_calculate_trapezoid_method/common/include/common.hpp"
-//#include "tsibareva_e_integral_calculate_trapezoid_method/omp/include/ops_omp.hpp"
+// #include "tsibareva_e_integral_calculate_trapezoid_method/omp/include/ops_omp.hpp"
 #include "tsibareva_e_integral_calculate_trapezoid_method/seq/include/ops_seq.hpp"
-//#include "tsibareva_e_integral_calculate_trapezoid_method/stl/include/ops_stl.hpp"
-//#include "tsibareva_e_integral_calculate_trapezoid_method/tbb/include/ops_tbb.hpp"
+// #include "tsibareva_e_integral_calculate_trapezoid_method/stl/include/ops_stl.hpp"
+// #include "tsibareva_e_integral_calculate_trapezoid_method/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace tsibareva_e_integral_calculate_trapezoid_method {
@@ -18,9 +18,7 @@ class TsibarevaERunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, 
     input_data_.lower_bounds = {0.0, 0.0, 0.0};
     input_data_.upper_bounds = {1.0, 1.0, 1.0};
     input_data_.num_steps = {200, 200, 200};
-    input_data_.function = [](const std::vector<double>& x) { 
-      return x[0] * x[0] + x[1] * x[1] + x[2] * x[2]; 
-    };
+    input_data_.function = [](const std::vector<double> &x) { return x[0] * x[0] + x[1] * x[1] + x[2] * x[2]; };
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -39,12 +37,11 @@ TEST_P(TsibarevaERunPerfTestThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, 
-    /*TsibarevaEIntegralCalculateTrapezoidMethodALL, */
-    /*TsibarevaEIntegralCalculateTrapezoidMethodOMP, */
-    TsibarevaEIntegralCalculateTrapezoidMethodSEQ>      
-    /*TsibarevaEIntegralCalculateTrapezoidMethodSTL,*/ 
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType,
+                                                       /*TsibarevaEIntegralCalculateTrapezoidMethodALL, */
+                                                       /*TsibarevaEIntegralCalculateTrapezoidMethodOMP, */
+                                                       TsibarevaEIntegralCalculateTrapezoidMethodSEQ>
+    /*TsibarevaEIntegralCalculateTrapezoidMethodSTL,*/
     /*TsibarevaEIntegralCalculateTrapezoidMethodTBB>,*/
     (PPC_SETTINGS_tsibareva_e_integral_calculate_trapezoid_method);
 

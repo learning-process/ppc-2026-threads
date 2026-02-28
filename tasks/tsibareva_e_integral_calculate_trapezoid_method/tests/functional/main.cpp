@@ -22,7 +22,7 @@ class TsibarevaERunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType,
   void SetUp() override {
     auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     IntegralTestType test_type = std::get<0>(params);
-    
+
     input_data_ = GenerateIntegralInput(test_type);
     expected_output_ = GenerateExpectedOutput(test_type);
   }
@@ -54,12 +54,11 @@ const std::array<TestType, 7> kTestParams = {
     std::make_tuple(IntegralTestType::SUCCESS_CONSTANT_3D, "3d_constant"),
     std::make_tuple(IntegralTestType::INVALID_LOWER_BOUND_EQUAL, "invalid_lower_bound_equal"),
     std::make_tuple(IntegralTestType::INVALID_STEPS_NEGATIVE, "invalid_steps_negative"),
-    std::make_tuple(IntegralTestType::INVALID_EMPTY_BOUNDS, "invalid_empty_bounds")
-};
+    std::make_tuple(IntegralTestType::INVALID_EMPTY_BOUNDS, "invalid_empty_bounds")};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<TsibarevaEIntegralCalculateTrapezoidMethodSEQ, InType>(kTestParams, PPC_SETTINGS_tsibareva_e_integral_calculate_trapezoid_method)
-);
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<TsibarevaEIntegralCalculateTrapezoidMethodSEQ, InType>(
+        kTestParams, PPC_SETTINGS_tsibareva_e_integral_calculate_trapezoid_method));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
