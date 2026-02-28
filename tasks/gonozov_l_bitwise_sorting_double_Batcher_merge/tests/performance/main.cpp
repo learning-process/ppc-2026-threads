@@ -15,10 +15,10 @@ class GonozovLBitSortBatcherMergePerfTest : public ppc::util::BaseRunPerfTests<I
   void SetUp() override {
     input_data_.resize(kCount);
     for (size_t i = 0; i < kCount; i++) {
-      res[i] = (static_cast<double>(i % 1000) + 11.0) / (static_cast<double>(i % 1000) + 3.0) *
-               (static_cast<double>(i % 1000) + 2.0);
+      input_data_[i] = (static_cast<double>(i % 1000) + 11.0) / (static_cast<double>(i % 1000) + 3.0) *
+                       (static_cast<double>(i % 1000) + 2.0);
       if (i % 2 == 0) {
-        res[i] *= (-1);
+        input_data_[i] *= (-1);
       }
     }
   }
