@@ -51,13 +51,13 @@ std::function<double(const std::vector<double> &)> GetIntegrationFunction(int ch
 }
 }  // namespace
 
-SamoylenkoITrapezoidIntegrationSEQ::SamoylenkoITrapezoidIntegrationSEQ(const InType &in) {
+SamoylenkoIIntegralTrapezoidSEQ::SamoylenkoIIntegralTrapezoidSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
 }
 
-bool SamoylenkoITrapezoidIntegrationSEQ::ValidationImpl() {
+bool SamoylenkoIIntegralTrapezoidSEQ::ValidationImpl() {
   const auto &in = GetInput();
 
   if (in.a.empty() || in.a.size() != in.b.size() || in.a.size() != in.n.size()) {
@@ -73,12 +73,12 @@ bool SamoylenkoITrapezoidIntegrationSEQ::ValidationImpl() {
   return in.function_choice >= 0 && in.function_choice <= 3;
 }
 
-bool SamoylenkoITrapezoidIntegrationSEQ::PreProcessingImpl() {
+bool SamoylenkoIIntegralTrapezoidSEQ::PreProcessingImpl() {
   GetOutput() = 0.0;
   return true;
 }
 
-bool SamoylenkoITrapezoidIntegrationSEQ::RunImpl() {
+bool SamoylenkoIIntegralTrapezoidSEQ::RunImpl() {
   const auto &in = GetInput();
   const int dimensions = static_cast<int>(in.a.size());
   auto integral_function = GetIntegrationFunction(in.function_choice);
@@ -127,7 +127,7 @@ bool SamoylenkoITrapezoidIntegrationSEQ::RunImpl() {
   return true;
 }
 
-bool SamoylenkoITrapezoidIntegrationSEQ::PostProcessingImpl() {
+bool SamoylenkoIIntegralTrapezoidSEQ::PostProcessingImpl() {
   return true;
 }
 

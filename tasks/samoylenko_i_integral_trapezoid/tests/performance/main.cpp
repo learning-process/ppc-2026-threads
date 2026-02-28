@@ -8,7 +8,7 @@
 
 namespace samoylenko_i_integral_trapezoid {
 
-class SamoylenkoITrapezoidIntegrationPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class SamoylenkoIIntegralTrapezoidPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
 
   void SetUp() override {
@@ -25,20 +25,20 @@ class SamoylenkoITrapezoidIntegrationPerfTests : public ppc::util::BaseRunPerfTe
   }
 };
 
-TEST_P(SamoylenkoITrapezoidIntegrationPerfTests, RunPerfModes) {
+TEST_P(SamoylenkoIIntegralTrapezoidPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SamoylenkoITrapezoidIntegrationSEQ>(
-    PPC_SETTINGS_samoylenko_i_integral_trapezoid);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, SamoylenkoIIntegralTrapezoidSEQ>(PPC_SETTINGS_samoylenko_i_integral_trapezoid);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = SamoylenkoITrapezoidIntegrationPerfTests::CustomPerfTestName;
+const auto kPerfTestName = SamoylenkoIIntegralTrapezoidPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, SamoylenkoITrapezoidIntegrationPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, SamoylenkoIIntegralTrapezoidPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 }  // namespace samoylenko_i_integral_trapezoid

@@ -5,13 +5,13 @@
 
 namespace samoylenko_i_integral_trapezoid {
 
-class SamoylenkoITrapezoidIntegrationSEQ : public BaseTask {
+class SamoylenkoIIntegralTrapezoidSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
 
-  explicit SamoylenkoITrapezoidIntegrationSEQ(const InType &in);
+  explicit SamoylenkoIIntegralTrapezoidSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
