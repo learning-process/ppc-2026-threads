@@ -137,7 +137,7 @@ class IvanovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
   int current_test_case_ = 0;
   bool is_file_test_ = false;
 
-  bool ValidatePixel(int label, uint8_t original_pixel, int num_components, std::vector<bool> &found_labels) const {
+  static bool ValidatePixel(int label, uint8_t original_pixel, int num_components, std::vector<bool> &found_labels) {
     if (original_pixel == 0) {
       return label == 0;
     }
@@ -150,7 +150,7 @@ class IvanovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
     return true;
   }
 
-  bool AreAllLabelsUsed(const std::vector<bool> &found_labels, int num_components) const {
+  [[nodiscard]] static bool AreAllLabelsUsed(const std::vector<bool> &found_labels, int num_components) {
     for (int i = 1; i <= num_components; ++i) {
       if (!found_labels[static_cast<size_t>(i)]) {
         return false;

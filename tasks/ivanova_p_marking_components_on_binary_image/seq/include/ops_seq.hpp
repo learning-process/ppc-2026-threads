@@ -32,6 +32,7 @@ class IvanovaPMarkingComponentsOnBinaryImageSEQ : public BaseTask {
   void SecondPass();
   int FindRoot(int label);
   void UnionLabels(int label1, int label2);
+  void ProcessPixel(int xx, int yy, int idx);  // Добавлено для уменьшения сложности FirstPass
 };
 
 }  // namespace ivanova_p_marking_components_on_binary_image

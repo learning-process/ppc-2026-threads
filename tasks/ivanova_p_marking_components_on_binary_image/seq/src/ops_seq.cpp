@@ -7,8 +7,7 @@
 
 namespace ivanova_p_marking_components_on_binary_image {
 
-IvanovaPMarkingComponentsOnBinaryImageSEQ::IvanovaPMarkingComponentsOnBinaryImageSEQ(const InType &in)
-    : current_label_(0), width_(0), height_(0) {
+IvanovaPMarkingComponentsOnBinaryImageSEQ::IvanovaPMarkingComponentsOnBinaryImageSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = OutType();
@@ -62,6 +61,47 @@ bool IvanovaPMarkingComponentsOnBinaryImageSEQ::ValidationImpl() {
     return false;
   }
   return true;
+}
+
+// Упрощенная версия FirstPass с меньшей когнитивной сложностью
+void IvanovaPMarkingComponentsOnBinaryImageSEQ::FirstPass() {
+  for (int yy = 0; yy < height_; ++yy) {
+    for (int xx = 0; xx < width_; ++xx) {
+      int idx = (yy * width_) + xx;
+
+      // Пропускаем фоновые пиксели
+      if (input_image_.data[idx] == 0) {
+        continue;
+      }
+
+      ProcessPixel(xx, yy, idx);
+    }
+  }
+}
+
+// Вспомогательная функция для обработки одного пикселя
+void IvanovaPMarkingComponentsOnBinaryImageSEQ::ProcessPixel(int xx, int yy, int idx) {
+  int left_label = (xx > 0) ? labels_[idx - 1] : 0;
+  int top_label = (yy > 0) ? labels_[idx - width_] : 0;
+
+  bool left_exists = (left_label != 0);
+  bool top_exists = (top_label != 0);
+
+  if (!left_exists && !top_exists) {
+    // Новая компонента
+    current_label_++;
+    labels_[idx] = current_label_;
+    parent_[current_label_] = current_label_;
+  } else {
+    // Хотя бы один сосед имеет метку
+    int label = left_exists ? left_label : top_label;
+    labels_[idx] = label;
+
+    // Если оба соседа имеют разные метки - нужно объединить
+    if (left_exists && top_exists && left_label != top_label) {
+      UnionLabels(std::min(left_label, top_label), std::max(left_label, top_label));
+    }
+  }
 }
 
 bool IvanovaPMarkingComponentsOnBinaryImageSEQ::PreProcessingImpl() {
@@ -141,39 +181,6 @@ void IvanovaPMarkingComponentsOnBinaryImageSEQ::UnionLabels(int label1, int labe
       parent_[root2] = root1;
     } else {
       parent_[root1] = root2;
-    }
-  }
-}
-
-void IvanovaPMarkingComponentsOnBinaryImageSEQ::FirstPass() {
-  for (int yy = 0; yy < height_; ++yy) {
-    for (int xx = 0; xx < width_; ++xx) {
-      int idx = (yy * width_) + xx;
-
-      if (input_image_.data[idx] == 0) {
-        continue;
-      }
-
-      int left_label = (xx > 0) ? labels_[idx - 1] : 0;
-      int top_label = (yy > 0) ? labels_[idx - width_] : 0;
-
-      if (left_label == 0 && top_label == 0) {
-        // Новая компонента
-        current_label_++;
-        labels_[idx] = current_label_;
-        parent_[current_label_] = current_label_;
-      } else if (left_label != 0 || top_label != 0) {
-        // Хотя бы один сосед имеет метку
-        int label = (left_label != 0) ? left_label : top_label;
-        labels_[idx] = label;
-
-        // Если оба соседа имеют разные метки - нужно объединить
-        if (left_label != 0 && top_label != 0 && left_label != top_label) {
-          int min_label = std::min(left_label, top_label);
-          int max_label = std::max(left_label, top_label);
-          UnionLabels(min_label, max_label);
-        }
-      }
     }
   }
 }
