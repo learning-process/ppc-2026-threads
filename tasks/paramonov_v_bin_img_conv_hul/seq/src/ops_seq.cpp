@@ -123,7 +123,6 @@ void ConvexHullSequential::ExtractConnectedComponents() {
   }
 }
 
-// Убираем статическую функцию и возвращаемся к обычному методу
 std::vector<PixelPoint> ConvexHullSequential::ComputeConvexHull(const std::vector<PixelPoint> &points) const {
   if (points.size() <= 2) {
     return points;
@@ -138,8 +137,7 @@ std::vector<PixelPoint> ConvexHullSequential::ComputeConvexHull(const std::vecto
     return (p.row != lowest_point.row) || (p.col != lowest_point.col);
   });
 
-  std::sort(sorted_points.begin(), sorted_points.end(),
-            [&lowest_point, this](const PixelPoint &a, const PixelPoint &b) {
+  std::sort(sorted_points.begin(), sorted_points.end(), [&lowest_point](const PixelPoint &a, const PixelPoint &b) {
     int64_t orient = Orientation(lowest_point, a, b);
     if (orient == 0) {
       int64_t dist_a = ((a.row - lowest_point.row) * (a.row - lowest_point.row)) +
