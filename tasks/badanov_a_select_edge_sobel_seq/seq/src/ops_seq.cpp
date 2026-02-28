@@ -1,5 +1,6 @@
 #include "badanov_a_select_edge_sobel_seq/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -67,8 +68,10 @@ void BadanovASelectEdgeSobelSEQ::ComputeGradientAtPixel(const std::vector<uint8_
           (static_cast<size_t>(row + kernel_row) * static_cast<size_t>(width_)) + static_cast<size_t>(col + kernel_col);
       const uint8_t pixel = input[pixel_index];
 
-      const int kernel_x_value = kKernelX[kernel_row + 1][kernel_col + 1];
-      const int kernel_y_value = kKernelY[kernel_row + 1][kernel_col + 1];
+      const int kx_idx = kernel_row + 1;
+      const int ky_idx = kernel_col + 1;
+      const int kernel_x_value = kKernelX[kx_idx][ky_idx];
+      const int kernel_y_value = kKernelY[kx_idx][ky_idx];
 
       gradient_x += static_cast<float>(pixel) * static_cast<float>(kernel_x_value);
       gradient_y += static_cast<float>(pixel) * static_cast<float>(kernel_y_value);
@@ -84,7 +87,7 @@ void BadanovASelectEdgeSobelSEQ::ApplyThreshold(const std::vector<float> &magnit
       output[i] = (magnitude[i] * scale > static_cast<float>(threshold_)) ? 255 : 0;
     }
   } else {
-    std::fill(output.begin(), output.end(), 0);
+    std::ranges::fill(output, 0);
   }
 }
 

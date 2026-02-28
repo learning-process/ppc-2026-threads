@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 
 #include "badanov_a_select_edge_sobel_seq/common/include/common.hpp"
 #include "badanov_a_select_edge_sobel_seq/seq/include/ops_seq.hpp"

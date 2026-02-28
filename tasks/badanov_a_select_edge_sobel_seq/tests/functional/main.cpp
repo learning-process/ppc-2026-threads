@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cctype>
 #include <cmath>
@@ -75,7 +76,9 @@ class BadanovASelectEdgeSobelFuncTests : public ppc::util::BaseRunFuncTests<InTy
     }
 
     for (int column = 0; column < image_width; ++column) {
-      const auto index = static_cast<size_t>(((image_height - 1) * image_width) + column);
+      const long long flat_index = (static_cast<long long>((image_height - 1)) * static_cast<long long>(image_width)) +
+                                   static_cast<long long>(column);
+      const auto index = static_cast<size_t>(flat_index);
       if (data[index] != 0) {
         return false;
       }
