@@ -6,6 +6,7 @@
 #include <complex>
 #include <cstddef>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -64,7 +65,7 @@ class SabutayARunFuncTestsSeq : public ppc::util::BaseRunFuncTests<InType, OutTy
       c.m = 2;
       c.n = 2;
       c.col_ptr = {0, 1, 2};
-      c.row_ind = {0, 1};
+      c.row_ind = {1, 0};
       c.values = {{6.0, 0.0}, {4.0, 0.0}};
     }
     if (params == 2) {
@@ -112,8 +113,8 @@ class SabutayARunFuncTestsSeq : public ppc::util::BaseRunFuncTests<InType, OutTy
         output.emplace_back(output_data.row_ind[k], output_data.values[k]);
       }
       auto cmp = [](const auto &x, const auto &y) { return x.first < y.first; };
-      std::ranges::sort(test, cmp);
-      std::ranges::sort(output, cmp);
+      std::sort(test.begin(), test.end(), cmp);
+      std::sort(output.begin(), output.end(), cmp);
       for (size_t i = 0; i < test.size(); ++i) {
         if (test[i].first != output[i].first || std::abs(test[i].second - output[i].second) > eps) {
           result = false;
