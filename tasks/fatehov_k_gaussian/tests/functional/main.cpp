@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -29,7 +30,7 @@ class FatehovKGaussianFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
     for (size_t i = 0; i < input_data_.image.data.size(); i++) {
       input_data_.image.data[i] = static_cast<uint8_t>(i % 256);
     }
-    input_data_.sigma = 1.0f;
+    input_data_.sigma = 1.0F;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
