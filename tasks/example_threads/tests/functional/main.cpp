@@ -83,7 +83,8 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = SafaryanASparseMatrixMultCRSSeqTestsThreads::PrintFuncTestName<SafaryanASparseMatrixMultCRSSeqTestsThreads>;
+const auto kPerfTestName =
+    SafaryanASparseMatrixMultCRSSeqTestsThreads::PrintFuncTestName<SafaryanASparseMatrixMultCRSSeqTestsThreads>;
 
 INSTANTIATE_TEST_SUITE_P(PicMatrixTests, SafaryanASparseMatrixMultCRSSeqTestsThreads, kGtestValues, kPerfTestName);
 

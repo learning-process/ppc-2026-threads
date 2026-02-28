@@ -15,7 +15,7 @@ namespace safaryan_a_sparse_matrix_mult_crs_seq {
 
 // ---------- helpers: Dense <-> CRS ----------
 
-static CRSMatrix DenseToCrs(const std::vector<std::vector<double>>& dense, double eps = 0.0) {
+static CRSMatrix DenseToCrs(const std::vector<std::vector<double>> &dense, double eps = 0.0) {
   CRSMatrix m;
   m.rows = dense.size();
   m.cols = dense.empty() ? 0 : dense[0].size();
@@ -36,7 +36,7 @@ static CRSMatrix DenseToCrs(const std::vector<std::vector<double>>& dense, doubl
   return m;
 }
 
-static std::vector<std::vector<double>> CrsToDense(const CRSMatrix& m) {
+static std::vector<std::vector<double>> CrsToDense(const CRSMatrix &m) {
   std::vector<std::vector<double>> dense(m.rows, std::vector<double>(m.cols, 0.0));
   for (size_t i = 0; i < m.rows; ++i) {
     for (size_t idx = m.row_ptr[i]; idx < m.row_ptr[i + 1]; ++idx) {
@@ -46,8 +46,8 @@ static std::vector<std::vector<double>> CrsToDense(const CRSMatrix& m) {
   return dense;
 }
 
-static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<double>>& a,
-                                                 const std::vector<std::vector<double>>& b) {
+static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<double>> &a,
+                                                 const std::vector<std::vector<double>> &b) {
   const size_t n = a.size();
   const size_t k = a.empty() ? 0 : a[0].size();
   const size_t m = b.empty() ? 0 : b[0].size();
@@ -56,7 +56,9 @@ static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<d
   for (size_t i = 0; i < n; ++i) {
     for (size_t t = 0; t < k; ++t) {
       const double av = a[i][t];
-      if (av == 0.0) continue;
+      if (av == 0.0) {
+        continue;
+      }
       for (size_t j = 0; j < m; ++j) {
         c[i][j] += av * b[t][j];
       }
@@ -65,11 +67,12 @@ static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<d
   return c;
 }
 
-static void ExpectDenseEqual(const std::vector<std::vector<double>>& x,
-                             const std::vector<std::vector<double>>& y,
+static void ExpectDenseEqual(const std::vector<std::vector<double>> &x, const std::vector<std::vector<double>> &y,
                              double eps = 1e-9) {
   ASSERT_EQ(x.size(), y.size());
-  if (x.empty()) return;
+  if (x.empty()) {
+    return;
+  }
   ASSERT_EQ(x[0].size(), y[0].size());
 
   for (size_t i = 0; i < x.size(); ++i) {
@@ -97,7 +100,7 @@ static std::vector<std::vector<double>> GenDense(size_t rows, size_t cols, doubl
   return d;
 }
 
-// ---------- tests (unique names, no duplicates with example_threads) ----------
+
 
 TEST(SafaryanASparseMatrixMultCRSSeq_Perf, SmallFixedCase) {
   // A(2x3), B(3x2)
