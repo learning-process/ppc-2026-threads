@@ -34,15 +34,20 @@ bool OtcheskovSContrastLinStretchOMP::RunImpl() {
 
   uint8_t min_val = 255, max_val = 0;
 
-#pragma omp parallel for reduction(min:min_val) reduction(max:max_val)
+#pragma omp parallel for reduction(min : min_val) reduction(max : max_val)
   for (size_t i = 0; i < input.size(); ++i) {
     uint8_t pixel = input[i];
-    if (pixel < min_val) min_val = pixel;
-    if (pixel > max_val) max_val = pixel;
+    if (pixel < min_val) {
+      min_val = pixel;
+    }
+    if (pixel > max_val) {
+      max_val = pixel;
+    }
   }
 
+  const size_t min_copy_size = 1000000;
   if (min_val == max_val) {
-#pragma omp parallel for
+#pragma omp parallel for if (input.size() > min_copy_size)
     for (size_t i = 0; i < input.size(); ++i) {
       output[i] = input[i];
     }
