@@ -47,7 +47,6 @@ class KazennovaAFuncTestSeq : public ppc::util::BaseRunFuncTests<InType, OutType
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Проверяем размер результирующей матрицы
     if (output_data.rows != input_data_.A.rows || output_data.cols != input_data_.B.cols) {
       return false;
     }

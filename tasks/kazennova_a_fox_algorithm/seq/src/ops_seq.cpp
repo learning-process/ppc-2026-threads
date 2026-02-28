@@ -15,17 +15,14 @@ KazennovaATestTaskSEQ::KazennovaATestTaskSEQ(const InType &in) {
 bool KazennovaATestTaskSEQ::ValidationImpl() {
   const auto &in = GetInput();
 
-  // Проверка на пустые данные
   if (in.A.data.empty() || in.B.data.empty()) {
     return false;
   }
 
-  // Проверка размеров
   if (in.A.rows <= 0 || in.A.cols <= 0 || in.B.rows <= 0 || in.B.cols <= 0) {
     return false;
   }
 
-  // Проверка согласованности матриц (A.cols == B.rows)
   if (in.A.cols != in.B.rows) {
     return false;
   }
@@ -36,7 +33,6 @@ bool KazennovaATestTaskSEQ::ValidationImpl() {
 bool KazennovaATestTaskSEQ::PreProcessingImpl() {
   const auto &in = GetInput();
 
-  // Выделяем память под результирующую матрицу C (размер A.rows × B.cols)
   GetOutput().rows = in.A.rows;
   GetOutput().cols = in.B.cols;
   GetOutput().data.assign(static_cast<size_t>(in.A.rows) * static_cast<size_t>(in.B.cols), 0.0);
@@ -60,11 +56,11 @@ bool KazennovaATestTaskSEQ::RunImpl() {
     for (int j = 0; j < n; ++j) {
       double sum = 0.0;
       for (int k_idx = 0; k_idx < k; ++k_idx) {
-        const size_t a_idx = static_cast<size_t>(i) * k + k_idx;
-        const size_t b_idx = static_cast<size_t>(k_idx) * n + j;
+        const size_t a_idx = (static_cast<size_t>(i) * k) + k_idx;
+        const size_t b_idx = (static_cast<size_t>(k_idx) * n) + j;
         sum += a[a_idx] * b[b_idx];
       }
-      c[static_cast<size_t>(i) * n + j] = sum;
+      c[(static_cast<size_t>(i) * n) + j] = sum;
     }
   }
 

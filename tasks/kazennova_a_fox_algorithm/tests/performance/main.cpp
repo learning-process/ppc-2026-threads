@@ -22,7 +22,7 @@ class KazennovaAPerfTestSeq : public ppc::util::BaseRunPerfTests<InType, OutType
     // Матрица A (kMatrixSize × kMatrixSize)
     input_data_.A.rows = kMatrixSize;
     input_data_.A.cols = kMatrixSize;
-    input_data_.A.data.resize(static_cast<size_t>(kMatrixSize * kMatrixSize));
+    input_data_.A.data.resize(static_cast<size_t>(kMatrixSize) * kMatrixSize);
     for (int i = 0; i < kMatrixSize * kMatrixSize; ++i) {
       input_data_.A.data[i] = dis(gen);
     }
@@ -30,7 +30,7 @@ class KazennovaAPerfTestSeq : public ppc::util::BaseRunPerfTests<InType, OutType
     // Матрица B (kMatrixSize × kMatrixSize)
     input_data_.B.rows = kMatrixSize;
     input_data_.B.cols = kMatrixSize;
-    input_data_.B.data.resize(static_cast<size_t>(kMatrixSize * kMatrixSize));
+    input_data_.B.data.resize(static_cast<size_t>(kMatrixSize) * kMatrixSize);
     for (int i = 0; i < kMatrixSize * kMatrixSize; ++i) {
       input_data_.B.data[i] = dis(gen);
     }
@@ -38,7 +38,7 @@ class KazennovaAPerfTestSeq : public ppc::util::BaseRunPerfTests<InType, OutType
 
   bool CheckTestOutputData(OutType &output_data) final {
     return output_data.rows == input_data_.A.rows && output_data.cols == input_data_.B.cols &&
-           output_data.data.size() == static_cast<size_t>(output_data.rows * output_data.cols);
+           output_data.data.size() == static_cast<size_t>(output_data.rows) * output_data.cols;
   }
 
   InType GetTestInputData() final {
