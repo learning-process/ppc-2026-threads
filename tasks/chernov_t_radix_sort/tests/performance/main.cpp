@@ -12,7 +12,7 @@ namespace chernov_t_radix_sort {
 class ChernovTRadixSortPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    const int size = 10'000'000;
+    const int size = 20'000'000;
 
     input_data_.resize(size);
 
