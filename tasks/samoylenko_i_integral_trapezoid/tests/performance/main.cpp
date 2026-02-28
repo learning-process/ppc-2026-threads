@@ -31,8 +31,8 @@ TEST_P(SamoylenkoITrapezoidIntegrationPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, SamoylenkoITrapezoidIntegrationSEQ>(PPC_SETTINGS_samoylenko_i_integral_trapezoid);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SamoylenkoITrapezoidIntegrationSEQ>(
+    PPC_SETTINGS_samoylenko_i_integral_trapezoid);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

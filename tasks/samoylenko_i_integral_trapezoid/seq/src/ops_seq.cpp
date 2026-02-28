@@ -11,34 +11,34 @@
 namespace samoylenko_i_integral_trapezoid {
 
 namespace {
-std::function<double(const std::vector<double>&)> GetIntegrationFunction(int choice) {
+std::function<double(const std::vector<double> &)> GetIntegrationFunction(int choice) {
   switch (choice) {
-    case 0: // x + y + ...
-      return [](const std::vector<double>& values) {
+    case 0:  // x + y + ...
+      return [](const std::vector<double> &values) {
         double sum = 0.0;
         for (double val : values) {
           sum += val;
         }
         return sum;
       };
-    case 1: // x * y * ...
-      return [](const std::vector<double>& values) {
+    case 1:  // x * y * ...
+      return [](const std::vector<double> &values) {
         double mult = 1.0;
         for (double val : values) {
           mult *= val;
         }
         return mult;
       };
-    case 2: // x^2 + y^2 + ...
-      return [](const std::vector<double>& values) {
+    case 2:  // x^2 + y^2 + ...
+      return [](const std::vector<double> &values) {
         double sum = 0.0;
         for (double val : values) {
           sum += val * val;
         }
         return sum;
       };
-    case 3: // sin(x + y + ...)
-      return [](const std::vector<double>& values) {
+    case 3:  // sin(x + y + ...)
+      return [](const std::vector<double> &values) {
         double sum = 0.0;
         for (double val : values) {
           sum += val;
@@ -46,7 +46,7 @@ std::function<double(const std::vector<double>&)> GetIntegrationFunction(int cho
         return std::sin(sum);
       };
     default:
-      return [](const std::vector<double>&) { return 0.0; };
+      return [](const std::vector<double> &) { return 0.0; };
   }
 }
 }  // namespace
@@ -103,7 +103,6 @@ bool SamoylenkoITrapezoidIntegrationSEQ::RunImpl() {
     int weight = 1;
 
     for (int dim = 0; dim < dimensions; dim++) {
-
       // convert point index to its coordinate in dimension "dim"
       int dim_coord = static_cast<int>(rem_index % dim_sizes[dim]);
       rem_index /= dim_sizes[dim];
@@ -123,7 +122,7 @@ bool SamoylenkoITrapezoidIntegrationSEQ::RunImpl() {
     h_mult *= h[i];
   }
 
-  GetOutput() = sum * (h_mult / std::pow(2.0, dimensions)); // h1 * h2 * ... * hn / 2^n
+  GetOutput() = sum * (h_mult / std::pow(2.0, dimensions));  // h1 * h2 * ... * hn / 2^n
 
   return true;
 }

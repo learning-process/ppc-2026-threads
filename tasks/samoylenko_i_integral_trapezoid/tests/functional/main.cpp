@@ -54,15 +54,15 @@ const std::array<TestType, 5> kTestParam = {
     std::make_pair(InType{{0.0, 0.0}, {2.0, 2.0}, {100, 100}, 0}, 8.0),
     std::make_pair(InType{{0.0, 0.0}, {2.0, 3.0}, {100, 100}, 1}, 9.0),
     std::make_pair(InType{{0.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {50, 50, 50}, 2}, 1.0),
-    std::make_pair(InType{{0.0}, {std::numbers::pi}, {1000}, 3}, 2.0)
-};
+    std::make_pair(InType{{0.0}, {std::numbers::pi}, {1000}, 3}, 2.0)};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<SamoylenkoITrapezoidIntegrationSEQ, InType>(kTestParam, PPC_SETTINGS_samoylenko_i_integral_trapezoid));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SamoylenkoITrapezoidIntegrationSEQ, InType>(
+    kTestParam, PPC_SETTINGS_samoylenko_i_integral_trapezoid));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kFuncTestName = SamoylenkoITrapezoidIntegrationFuncTests::PrintFuncTestName<SamoylenkoITrapezoidIntegrationFuncTests>;
+const auto kFuncTestName =
+    SamoylenkoITrapezoidIntegrationFuncTests::PrintFuncTestName<SamoylenkoITrapezoidIntegrationFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(BasicTests, SamoylenkoITrapezoidIntegrationFuncTests, kGtestValues, kFuncTestName);
 
