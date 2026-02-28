@@ -149,7 +149,7 @@ TEST(SafaryanASparseMatrixMultCRSSeq_Functional, RandomCaseMatchesDense) {
 }
 
 TEST(SafaryanASparseMatrixMultCRSSeq_Functional, ValidationFailsOnBadSizes) {
-  // A: 2x3, B: 4x2 -> несовместимо (3 != 4)
+  
   CRSMatrix A;
   A.rows = 2;
   A.cols = 3;
