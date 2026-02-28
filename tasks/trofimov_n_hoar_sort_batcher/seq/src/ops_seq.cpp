@@ -1,6 +1,7 @@
 #include "trofimov_n_hoar_sort_batcher/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <stack>
 #include <vector>
 
 #include "trofimov_n_hoar_sort_batcher/common/include/common.hpp"
@@ -19,12 +20,10 @@ int HoarePartition(std::vector<int> &arr, int left, int right) {
     while (arr[i] < pivot) {
       ++i;
     }
-
     --j;
     while (arr[j] > pivot) {
       --j;
     }
-
     if (i >= j) {
       return j;
     }
@@ -32,31 +31,44 @@ int HoarePartition(std::vector<int> &arr, int left, int right) {
   }
 }
 
+void CompareExchange(int &a, int &b) {
+  if (a > b) {
+    std::swap(a, b);
+  }
+}
+
 void OddEvenMergeIter(std::vector<int> &arr, int left, int right) {
   int n = right - left + 1;
   for (int step = 1; step < n; step *= 2) {
-    for (int i = left; i + step < left + n; i += step * 2) {
-      int j = i + step;
-      if (j <= right) {
-        if (arr[i] > arr[j]) {
-          std::swap(arr[i], arr[j]);
-        }
-      }
+    for (int i = left; i + step <= right; i += step * 2) {
+      CompareExchange(arr[i], arr[i + step]);
     }
   }
 }
 
-void QuickBatcherHybrid(std::vector<int> &arr, int left, int right) {
-  if (left >= right) {
-    return;
+void QuickBatcherIterative(std::vector<int> &arr, int left, int right) {
+  std::stack<std::pair<int, int>> stk;
+  stk.emplace(left, right);
+
+  while (!stk.empty()) {
+    auto [l, r] = stk.top();
+    stk.pop();
+    if (l >= r) {
+      continue;
+    }
+
+    int pivot_index = HoarePartition(arr, l, r);
+
+    if (pivot_index - l > r - pivot_index - 1) {
+      stk.emplace(l, pivot_index);
+      stk.emplace(pivot_index + 1, r);
+    } else {
+      stk.emplace(pivot_index + 1, r);
+      stk.emplace(l, pivot_index);
+    }
+
+    OddEvenMergeIter(arr, l, r);
   }
-
-  int pivot_index = HoarePartition(arr, left, right);
-
-  QuickBatcherHybrid(arr, left, pivot_index);
-  QuickBatcherHybrid(arr, pivot_index + 1, right);
-
-  OddEvenMergeIter(arr, left, right);
 }
 
 }  // namespace
@@ -78,7 +90,7 @@ bool TrofimovNHoarSortBatcherSEQ::PreProcessingImpl() {
 bool TrofimovNHoarSortBatcherSEQ::RunImpl() {
   auto &data = GetOutput();
   if (data.size() > 1) {
-    QuickBatcherHybrid(data, 0, static_cast<int>(data.size()) - 1);
+    QuickBatcherIterative(data, 0, static_cast<int>(data.size()) - 1);
   }
   return true;
 }
