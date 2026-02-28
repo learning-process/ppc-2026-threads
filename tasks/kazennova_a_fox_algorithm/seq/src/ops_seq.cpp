@@ -48,22 +48,23 @@ bool KazennovaATestTaskSEQ::RunImpl() {
   const auto &in = GetInput();
   auto &out = GetOutput();
 
-  const int M = in.A.rows;  // число строк A
-  const int N = in.B.cols;  // число столбцов B
-  const int K = in.A.cols;  // общая размерность (столбцы A / строки B)
+  const int m = in.A.rows;
+  const int n = in.B.cols;
+  const int k = in.A.cols;
 
-  const auto &A = in.A.data;
-  const auto &B = in.B.data;
-  auto &C = out.data;
+  const auto &a = in.A.data;
+  const auto &b = in.B.data;
+  auto &c = out.data;
 
-  // Классическое умножение матриц: C[i][j] = sum_{k=0}^{K-1} A[i][k] * B[k][j]
-  for (int i = 0; i < M; ++i) {
-    for (int j = 0; j < N; ++j) {
+  for (int i = 0; i < m; ++i) {
+    for (int j = 0; j < n; ++j) {
       double sum = 0.0;
-      for (int k = 0; k < K; ++k) {
-        sum += A[static_cast<size_t>(i) * K + k] * B[static_cast<size_t>(k) * N + j];
+      for (int k_idx = 0; k_idx < k; ++k_idx) {
+        const size_t a_idx = static_cast<size_t>(i) * k + k_idx;
+        const size_t b_idx = static_cast<size_t>(k_idx) * n + j;
+        sum += a[a_idx] * b[b_idx];
       }
-      C[static_cast<size_t>(i) * N + j] = sum;
+      c[static_cast<size_t>(i) * n + j] = sum;
     }
   }
 

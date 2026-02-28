@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -11,8 +10,8 @@ namespace kazennova_a_fox_algorithm {
 
 struct Matrix {
   std::vector<double> data;  // элементы по строкам
-  int rows;
-  int cols;
+  int rows = 0;
+  int cols = 0;
 };
 
 struct MatricesPair {

@@ -32,7 +32,7 @@ class KazennovaAFuncTestSeq : public ppc::util::BaseRunFuncTests<InType, OutType
     // Матрица A (size × size)
     input_data_.A.rows = size;
     input_data_.A.cols = size;
-    input_data_.A.data.resize(static_cast<size_t>(size * size));
+    input_data_.A.data.resize(static_cast<size_t>(size) * size);
     for (int i = 0; i < size * size; ++i) {
       input_data_.A.data[i] = dis(gen);
     }
@@ -40,7 +40,7 @@ class KazennovaAFuncTestSeq : public ppc::util::BaseRunFuncTests<InType, OutType
     // Матрица B (size × size)
     input_data_.B.rows = size;
     input_data_.B.cols = size;
-    input_data_.B.data.resize(static_cast<size_t>(size * size));
+    input_data_.B.data.resize(static_cast<size_t>(size) * size);
     for (int i = 0; i < size * size; ++i) {
       input_data_.B.data[i] = dis(gen);
     }
@@ -51,7 +51,7 @@ class KazennovaAFuncTestSeq : public ppc::util::BaseRunFuncTests<InType, OutType
     if (output_data.rows != input_data_.A.rows || output_data.cols != input_data_.B.cols) {
       return false;
     }
-    if (output_data.data.size() != static_cast<size_t>(output_data.rows * output_data.cols)) {
+    if (output_data.data.size() != static_cast<size_t>(output_data.rows) * output_data.cols) {
       return false;
     }
     return true;
