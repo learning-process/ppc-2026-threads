@@ -1,7 +1,10 @@
 #include "kruglova_a_conjugate_gradient_sle/seq/include/ops_seq.hpp"
 
+#include <cmath>
 #include <cstddef>
 #include <vector>
+
+#include "kruglova_a_conjugate_gradient_sle/common/include/common.hpp"
 
 namespace kruglova_a_conjugate_gradient_sle {
 
@@ -30,6 +33,16 @@ bool KruglovaAConjGradSleSEQ::PreProcessingImpl() {
   return true;
 }
 
+void matrix_vector_multiply(const std::vector<double> &a, const std::vector<double> &p, std::vector<double> &ap,
+                            int n) {
+  for (int i = 0; i < n; ++i) {
+    ap[i] = 0.0;
+    for (int j = 0; j < n; ++j) {
+      ap[i] += a[(i * n) + j] * p[j];
+    }
+  }
+}
+
 bool KruglovaAConjGradSleSEQ::RunImpl() {
   const auto &a = GetInput().A;
   const auto &b = GetInput().b;
@@ -48,24 +61,18 @@ bool KruglovaAConjGradSleSEQ::RunImpl() {
   const double tolerance = 1e-8;
 
   for (int iter = 0; iter < n * 2; ++iter) {
-    for (int i = 0; i < n; ++i) {
-      ap[i] = 0.0;
-      for (int j = 0; j < n; ++j) {
-        ap[i] += a[(i * n) + j] * p[j];
-      }
-    }
+    matrix_vector_multiply(a, p, ap, n);
 
     double p_ap = 0.0;
     for (int i = 0; i < n; ++i) {
       p_ap += p[i] * ap[i];
     }
 
-    if (p_ap == 0.0) {
+    if (std::abs(p_ap) < 1e-15) {
       break;
     }
 
     double alpha = rsold / p_ap;
-
     for (int i = 0; i < n; ++i) {
       x[i] += alpha * p[i];
       r[i] -= alpha * ap[i];
@@ -85,7 +92,6 @@ bool KruglovaAConjGradSleSEQ::RunImpl() {
     }
     rsold = rsnew;
   }
-
   return true;
 }
 

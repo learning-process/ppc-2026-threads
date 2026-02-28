@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -21,60 +20,74 @@ class KruglovaAFuncTestAConjGradSle : public ppc::util::BaseRunFuncTests<InType,
   }
 
  protected:
+  // Исправление: Правильное объявление SetUp внутри класса
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int size = std::get<0>(params);
     std::string type = std::get<1>(params);
 
-    input_data_.size = size;
-    input_data_.A.assign(static_cast<size_t>(size) * static_cast<size_t>(size), 0.0);
-    input_data_.b.assign(size, 0.0);
+    input_data.size = size;
+    input_data.A.assign(static_cast<size_t>(size) * static_cast<size_t>(size), 0.0);
+    input_data.b.assign(size, 0.0);
 
     if (type == "Identity") {
-      for (int i = 0; i < size; ++i) {
-        input_data_.A[(i * size) + i] = 1.0;
-        input_data_.b[i] = static_cast<double>(i + 1);
-      }
+      fill_identity(size);
     } else if (type == "Diagonal") {
-      for (int i = 0; i < size; ++i) {
-        input_data_.A[(i * size) + i] = static_cast<double>(i + 1) * 10.0;
-        input_data_.b[i] = input_data_.A[(i * size) + i];
-      }
+      fill_diagonal(size);
     } else {
-      for (int i = 0; i < size; ++i) {
-        double sum = 0.0;
-        for (int j = 0; j < size; ++j) {
-          if (i != j) {
-            double val = static_cast<double>(((i + j) % 5) + 1);
-            input_data_.A[(i * size) + j] = input_data_.A[(j * size) + i] = val;
-            sum += val;
-          }
-        }
-        input_data_.A[(i * size) + i] = sum + 10.0;
-        input_data_.b[i] = static_cast<double>((i % 3) + 1);
-      }
+      fill_spd(size);
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int n = input_data_.size;
+    int n = input_data.size;
     double max_err = 0.0;
     for (int i = 0; i < n; ++i) {
       double ax = 0.0;
       for (int j = 0; j < n; ++j) {
-        ax += input_data_.A[(i * n) + j] * output_data[j];
+        ax += input_data.A[(i * n) + j] * output_data[j];
       }
-      max_err = std::max(max_err, std::abs(ax - input_data_.b[i]));
+      // Исправление: std::max теперь получит корректные типы
+      max_err = std::max(max_err, std::abs(ax - input_data.b[i]));
     }
     return max_err < 1e-4;
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 
  private:
-  InType input_data_;
+  InType input_data;
+
+  void fill_identity(int size) {
+    for (int i = 0; i < size; ++i) {
+      input_data.A[(i * size) + i] = 1.0;
+      input_data.b[i] = static_cast<double>(i + 1);
+    }
+  }
+
+  void fill_diagonal(int size) {
+    for (int i = 0; i < size; ++i) {
+      input_data.A[(i * size) + i] = static_cast<double>(i + 1) * 10.0;
+      input_data.b[i] = input_data.A[(i * size) + i];
+    }
+  }
+
+  void fill_spd(int size) {
+    for (int i = 0; i < size; ++i) {
+      double sum = 0.0;
+      for (int j = 0; j < size; ++j) {
+        if (i != j) {
+          auto val = static_cast<double>(((i + j) % 5) + 1);
+          input_data.A[(i * size) + j] = input_data.A[(j * size) + i] = val;
+          sum += val;
+        }
+      }
+      input_data.A[(i * size) + i] = sum + 10.0;
+      input_data.b[i] = static_cast<double>((i % 3) + 1);
+    }
+  }
 };
 
 TEST_P(KruglovaAFuncTestAConjGradSle, SolveSystem) {

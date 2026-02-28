@@ -12,22 +12,21 @@ namespace kruglova_a_conjugate_gradient_sle {
 class KruglovaAPerfTestAConjGradSle : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   const int k_size = 2000;
-  InType input_data_{};
-
+  InType input_data{};
   void SetUp() override {
-    input_data_.size = k_size;
-    input_data_.A.resize(static_cast<size_t>(k_size) * static_cast<size_t>(k_size));
-    input_data_.b.resize(k_size);
+    input_data.size = k_size;
+    input_data.A.resize(static_cast<size_t>(k_size) * static_cast<size_t>(k_size));
+    input_data.b.resize(k_size);
 
     for (int i = 0; i < k_size; ++i) {
       for (int j = 0; j < k_size; ++j) {
         if (i == j) {
-          input_data_.A[i * k_size + j] = static_cast<double>(k_size + 10);
+          input_data.A[(i * k_size) + j] = static_cast<double>(k_size + 10);
         } else {
-          input_data_.A[i * k_size + j] = 1.0;
+          input_data.A[(i * k_size) + j] = 1.0;
         }
       }
-      input_data_.b[i] = static_cast<double>((i % 10) + 1);
+      input_data.b[i] = static_cast<double>((i % 10) + 1);
     }
   }
 
@@ -36,7 +35,7 @@ class KruglovaAPerfTestAConjGradSle : public ppc::util::BaseRunPerfTests<InType,
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 };
 
