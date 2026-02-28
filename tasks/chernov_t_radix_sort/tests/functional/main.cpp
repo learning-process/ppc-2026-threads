@@ -1,15 +1,11 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
 #include <algorithm>
 #include <array>
+#include <climits>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "chernov_t_radix_sort/common/include/common.hpp"
@@ -22,36 +18,20 @@ namespace chernov_t_radix_sort {
 class ChernovTRadixSortFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return std::get<0>(test_param);
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_chernov_t_radix_sort), "pic.ppm");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    input_data_ = std::get<1>(params);
+
+    ref_data_ = input_data_;
+    std::ranges::sort(ref_data_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    return output_data == ref_data_;
   }
 
   InType GetTestInputData() final {
@@ -59,25 +39,35 @@ class ChernovTRadixSortFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  InType ref_data_;
 };
 
 namespace {
 
-TEST_P(ChernovTRadixSortFuncTests, MatmulFromPic) {
+TEST_P(ChernovTRadixSortFuncTests, RadixSortTest) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 8> kTestParam = {
+    std::make_tuple("NoElements", std::vector<int>{}),
+    std::make_tuple("JustOneItem", std::vector<int>{42}),
+    std::make_tuple("AscendingOrder", std::vector<int>{1, 2, 3, 4, 5, 10, 20}),
+    std::make_tuple("OnlyNegatives", std::vector<int>{-10, -50, -1, -100, -2}),
+    std::make_tuple("PosAndNegMixed", std::vector<int>{-10, 50, -1, 0, 100, -200, 5}),
+    std::make_tuple("AllZeroes", std::vector<int>{0, 0, 0, 0, 0}),
+    std::make_tuple("PowersOfTwo", std::vector<int>{1024, 256, 512, 128, 64, 32, 16, 8, 4, 2, 1}),
+    std::make_tuple("BigNums", std::vector<int>{3243423, -1221313, 2929299, -482348, 2342453, -9876543})
+};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<ChernovTRadixSortSEQ, InType>(kTestParam, PPC_SETTINGS_chernov_t_radix_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = ChernovTRadixSortFuncTests::PrintFuncTestName<ChernovTRadixSortFuncTests>;
+const auto kTestName = ChernovTRadixSortFuncTests::PrintFuncTestName<ChernovTRadixSortFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, ChernovTRadixSortFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(ChernovTRadixSortTests, ChernovTRadixSortFuncTests, kGtestValues, kTestName);
 
 }  // namespace
 
