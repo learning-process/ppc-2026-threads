@@ -14,8 +14,8 @@
 
 namespace baranov_a_mult_matrix_fox_algorithm_seq {
 
-class BaranovAFuncTest : public ppc::util::BaseRunFuncTests<baranov_a_mult_matrix_fox_algorithm::InType, 
-                                                            baranov_a_mult_matrix_fox_algorithm::OutType, 
+class BaranovAFuncTest : public ppc::util::BaseRunFuncTests<baranov_a_mult_matrix_fox_algorithm::InType,
+                                                            baranov_a_mult_matrix_fox_algorithm::OutType,
                                                             baranov_a_mult_matrix_fox_algorithm::TestType> {
  public:
   static std::string PrintTestParam(const baranov_a_mult_matrix_fox_algorithm::TestType &test_param) {
@@ -57,30 +57,28 @@ class BaranovAFuncTest : public ppc::util::BaseRunFuncTests<baranov_a_mult_matri
 
   bool CheckTestOutputData(baranov_a_mult_matrix_fox_algorithm::OutType &output_data) final {
     if (expected_output_.size() != output_data.size()) {
-      ADD_FAILURE() << "Size mismatch: expected " << expected_output_.size() 
-                    << ", got " << output_data.size();
+      ADD_FAILURE() << "Size mismatch: expected " << expected_output_.size() << ", got " << output_data.size();
       return false;
     }
 
     const double epsilon = 1e-8;
     size_t mismatches = 0;
     double max_diff = 0.0;
-    
+
     for (size_t i = 0; i < expected_output_.size(); ++i) {
       double diff = std::abs(expected_output_[i] - output_data[i]);
       max_diff = std::max(max_diff, diff);
       if (diff > epsilon) {
         mismatches++;
         if (mismatches <= 5) {
-          ADD_FAILURE() << "Mismatch at index " << i << ": expected " 
-                        << expected_output_[i] << ", got " << output_data[i];
+          ADD_FAILURE() << "Mismatch at index " << i << ": expected " << expected_output_[i] << ", got "
+                        << output_data[i];
         }
       }
     }
-    
+
     if (mismatches > 0) {
-      ADD_FAILURE() << "Total mismatches: " << mismatches 
-                    << ", max difference: " << max_diff;
+      ADD_FAILURE() << "Total mismatches: " << mismatches << ", max difference: " << max_diff;
       return false;
     }
     return true;
@@ -91,8 +89,8 @@ class BaranovAFuncTest : public ppc::util::BaseRunFuncTests<baranov_a_mult_matri
   }
 
  private:
-  static void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, 
-                                std::vector<double> &c, size_t n) {
+  static void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c,
+                                size_t n) {
     for (size_t i = 0; i < n; ++i) {
       for (size_t j = 0; j < n; ++j) {
         double sum = 0.0;
@@ -126,7 +124,7 @@ class BaranovAFuncTest : public ppc::util::BaseRunFuncTests<baranov_a_mult_matri
   static void GenerateRandomMatrices(std::vector<double> &a, std::vector<double> &b, size_t n, int seed) {
     std::mt19937 gen(seed);
     std::uniform_real_distribution<double> dist(-100.0, 100.0);
-    
+
     for (size_t i = 0; i < n * n; ++i) {
       a[i] = dist(gen);
       b[i] = dist(gen);
@@ -171,7 +169,7 @@ class BaranovAFuncTest : public ppc::util::BaseRunFuncTests<baranov_a_mult_matri
   static void GenerateConstantMatrices(std::vector<double> &a, std::vector<double> &b, size_t n) {
     double const_a = 2.5;
     double const_b = 1.5;
-    
+
     for (size_t i = 0; i < n * n; ++i) {
       a[i] = const_a;
       b[i] = const_b;
@@ -189,36 +187,24 @@ TEST_P(BaranovAFuncTest, MatrixMultiplicationTest) {
 }
 
 const std::array<baranov_a_mult_matrix_fox_algorithm::TestType, 20> kTestParams = {
-    std::make_tuple(1, "size1_simple"),
-    std::make_tuple(2, "size2_simple"),
-    std::make_tuple(3, "size3_simple"),
-    
-    std::make_tuple(2, "identity_2"),
-    std::make_tuple(4, "identity_4"),
-    std::make_tuple(8, "identity_8"),
-    
-    std::make_tuple(3, "random_seed123"),
-    std::make_tuple(5, "random_seed456"),
-    std::make_tuple(7, "random_seed789"),
-    
-    std::make_tuple(4, "extreme_4"),
-    std::make_tuple(6, "extreme_6"),
-    
-    std::make_tuple(4, "sparse_4"),
-    std::make_tuple(8, "sparse_8"),
-    
-    std::make_tuple(3, "constant_3"),
-    std::make_tuple(5, "constant_5"),
-    std::make_tuple(7, "constant_7"),
-    
-    std::make_tuple(16, "size16_block"),
-    std::make_tuple(32, "size32_block"),
-    std::make_tuple(64, "size64_block"),
-    std::make_tuple(128, "size128_block")
-};
+    std::make_tuple(1, "size1_simple"),   std::make_tuple(2, "size2_simple"),   std::make_tuple(3, "size3_simple"),
 
-const auto kTestTasksList = ppc::util::AddFuncTask<BaranovAMultMatrixFoxAlgorithmSEQ, baranov_a_mult_matrix_fox_algorithm::InType>(
-    kTestParams, PPC_SETTINGS_baranov_a_mult_matrix_fox_algorithm);
+    std::make_tuple(2, "identity_2"),     std::make_tuple(4, "identity_4"),     std::make_tuple(8, "identity_8"),
+
+    std::make_tuple(3, "random_seed123"), std::make_tuple(5, "random_seed456"), std::make_tuple(7, "random_seed789"),
+
+    std::make_tuple(4, "extreme_4"),      std::make_tuple(6, "extreme_6"),
+
+    std::make_tuple(4, "sparse_4"),       std::make_tuple(8, "sparse_8"),
+
+    std::make_tuple(3, "constant_3"),     std::make_tuple(5, "constant_5"),     std::make_tuple(7, "constant_7"),
+
+    std::make_tuple(16, "size16_block"),  std::make_tuple(32, "size32_block"),  std::make_tuple(64, "size64_block"),
+    std::make_tuple(128, "size128_block")};
+
+const auto kTestTasksList =
+    ppc::util::AddFuncTask<BaranovAMultMatrixFoxAlgorithmSEQ, baranov_a_mult_matrix_fox_algorithm::InType>(
+        kTestParams, PPC_SETTINGS_baranov_a_mult_matrix_fox_algorithm);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

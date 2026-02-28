@@ -46,7 +46,7 @@ void BaranovAMultMatrixFoxAlgorithmSEQ::StandardMultiplication(size_t n) {
 void BaranovAMultMatrixFoxAlgorithmSEQ::FoxBlockMultiplication(size_t n, size_t block_size) {
   const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
   auto &output = GetOutput();
-  
+
   size_t num_blocks = n / block_size;
   if (n % block_size != 0) {
     num_blocks++;
@@ -57,7 +57,7 @@ void BaranovAMultMatrixFoxAlgorithmSEQ::FoxBlockMultiplication(size_t n, size_t 
     for (size_t bj = 0; bj < num_blocks; ++bj) {
       for (size_t bk = 0; bk < num_blocks; ++bk) {
         size_t broadcast_block = (bi + bk) % num_blocks;
-        
+
         size_t i_start = bi * block_size;
         size_t i_end = std::min(i_start + block_size, n);
         size_t j_start = bj * block_size;

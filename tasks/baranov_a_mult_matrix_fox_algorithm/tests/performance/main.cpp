@@ -11,7 +11,7 @@
 
 namespace baranov_a_mult_matrix_fox_algorithm_seq {
 
-class BaranovAPerfTest : public ppc::util::BaseRunPerfTests<baranov_a_mult_matrix_fox_algorithm::InType, 
+class BaranovAPerfTest : public ppc::util::BaseRunPerfTests<baranov_a_mult_matrix_fox_algorithm::InType,
                                                             baranov_a_mult_matrix_fox_algorithm::OutType> {
   baranov_a_mult_matrix_fox_algorithm::InType input_data_;
   baranov_a_mult_matrix_fox_algorithm::OutType expected_output_;
@@ -23,7 +23,7 @@ class BaranovAPerfTest : public ppc::util::BaseRunPerfTests<baranov_a_mult_matri
 
     std::vector<double> a(size);
     std::vector<double> b(size);
-    
+
     for (size_t i = 0; i < size; ++i) {
       a[i] = std::pow(2.0, static_cast<double>(i % 20));
       b[i] = std::sqrt(static_cast<double>(i + 1));
@@ -61,8 +61,8 @@ class BaranovAPerfTest : public ppc::util::BaseRunPerfTests<baranov_a_mult_matri
     return true;
   }
 
-  static void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, 
-                                std::vector<double> &c, size_t n) {
+  static void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c,
+                                size_t n) {
     for (size_t j = 0; j < n; ++j) {
       for (size_t i = 0; i < n; ++i) {
         double sum = 0.0;
@@ -85,9 +85,9 @@ TEST_P(BaranovAPerfTest, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<baranov_a_mult_matrix_fox_algorithm::InType, 
-                                                        BaranovAMultMatrixFoxAlgorithmSEQ>(
-    PPC_SETTINGS_baranov_a_mult_matrix_fox_algorithm);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<baranov_a_mult_matrix_fox_algorithm::InType, BaranovAMultMatrixFoxAlgorithmSEQ>(
+        PPC_SETTINGS_baranov_a_mult_matrix_fox_algorithm);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
