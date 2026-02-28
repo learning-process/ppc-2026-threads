@@ -1,5 +1,9 @@
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+
 #include "leonova_a_radix_merge_sort/common/include/common.hpp"
 #include "task/include/task.hpp"
 
