@@ -48,8 +48,15 @@ bool PointsEqual(const PixelPoint &a, const PixelPoint &b) {
   return a.row == b.row && a.col == b.col;
 }
 
+bool ComparePoints(const PixelPoint &a, const PixelPoint &b) {
+  if (a.row != b.row) {
+    return a.row < b.row;
+  }
+  return a.col < b.col;
+}
+
 void SortPoints(std::vector<PixelPoint> &points) {
-  std::ranges::sort(points);
+  std::sort(points.begin(), points.end(), ComparePoints);
 }
 
 bool HullsEqual(const std::vector<PixelPoint> &hull1, const std::vector<PixelPoint> &hull2) {
@@ -71,17 +78,22 @@ bool HullsEqual(const std::vector<PixelPoint> &hull1, const std::vector<PixelPoi
   return true;
 }
 
+bool CompareHulls(const std::vector<PixelPoint> &a, const std::vector<PixelPoint> &b) {
+  if (a.empty() || b.empty()) {
+    return a.size() < b.size();
+  }
+  if (a[0].row != b[0].row) {
+    return a[0].row < b[0].row;
+  }
+  return a[0].col < b[0].col;
+}
+
 void SortHulls(std::vector<std::vector<PixelPoint>> &hulls) {
   for (auto &hull : hulls) {
     SortPoints(hull);
   }
 
-  std::ranges::sort(hulls, [](const std::vector<PixelPoint> &a, const std::vector<PixelPoint> &b) {
-    if (a.empty() || b.empty()) {
-      return a.size() < b.size();
-    }
-    return std::tie(a[0].row, a[0].col) < std::tie(b[0].row, b[0].col);
-  });
+  std::sort(hulls.begin(), hulls.end(), CompareHulls);
 }
 
 }  // namespace
