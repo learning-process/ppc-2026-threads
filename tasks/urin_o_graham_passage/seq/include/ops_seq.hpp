@@ -27,9 +27,10 @@ class UrinOGrahamPassageSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 
  private:
-  [[nodiscard]] std::vector<Point> PrepareOtherPoints(const InType &points, const Point &p0);
-  [[nodiscard]] bool AreAllCollinear(const Point &p0, const std::vector<Point> &points);
-  [[nodiscard]] std::vector<Point> BuildConvexHull(const Point &p0, const std::vector<Point> &points);
+  // Статические вспомогательные функции
+  [[nodiscard]] static std::vector<Point> PrepareOtherPoints(const InType &points, const Point &p0);
+  [[nodiscard]] static bool AreAllCollinear(const Point &p0, const std::vector<Point> &points);
+  [[nodiscard]] static std::vector<Point> BuildConvexHull(const Point &p0, const std::vector<Point> &points);
 };
 
 }  // namespace urin_o_graham_passage

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <cmath>    // для std::cos, std::sin
-#include <cstddef>  // для size_t
+#include <cmath>
+#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -27,17 +27,42 @@ bool IsConvexHull(const std::vector<Point> &hull) {
   return true;
 }
 
+// Разбиваем RunAndCheckHull на несколько маленьких функций
+bool ValidateTask(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+  return task->Validation();
+}
+
+bool PreProcessTask(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+  return task->PreProcessing();
+}
+
+bool RunTask(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+  return task->Run();
+}
+
+bool PostProcessTask(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+  return task->PostProcessing();
+}
+
+void CheckHullSize(const std::vector<Point> &hull, size_t expected_size) {
+  EXPECT_EQ(hull.size(), expected_size);
+}
+
+void CheckHullConvexity(const std::vector<Point> &hull) {
+  EXPECT_TRUE(IsConvexHull(hull));
+}
+
 void RunAndCheckHull(const InType &points, size_t expected_size) {
   auto task = std::make_shared<UrinOGrahamPassageSEQ>(points);
 
-  EXPECT_TRUE(task->Validation());
-  EXPECT_TRUE(task->PreProcessing());
-  EXPECT_TRUE(task->Run());
-  EXPECT_TRUE(task->PostProcessing());
+  EXPECT_TRUE(ValidateTask(task));
+  EXPECT_TRUE(PreProcessTask(task));
+  EXPECT_TRUE(RunTask(task));
+  EXPECT_TRUE(PostProcessTask(task));
 
   const auto &hull = task->GetOutput();
-  EXPECT_EQ(hull.size(), expected_size);
-  EXPECT_TRUE(IsConvexHull(hull));
+  CheckHullSize(hull, expected_size);
+  CheckHullConvexity(hull);
 }
 
 void RunAndExpectFailure(const InType &points) {
@@ -46,6 +71,7 @@ void RunAndExpectFailure(const InType &points) {
   EXPECT_TRUE(task->GetOutput().empty());
 }
 
+// Тесты
 TEST(UrinOGrahamPassageSeq, EmptyInput) {
   RunAndExpectFailure({});
 }
@@ -104,9 +130,9 @@ TEST(UrinOGrahamPassageSeq, LargeRandomSet) {
   const int num_points = 100;
   pts.reserve(static_cast<size_t>(num_points));
 
-  // const double pi = 3.14159265358979323846;  // Явно определяем pi
+  const double pi = 3.14159265358979323846;
   for (int i = 0; i < num_points; ++i) {
-    double angle = 2.0 * 3.14159 * static_cast<double>(i) / static_cast<double>(num_points);
+    double angle = 2.0 * pi * static_cast<double>(i) / static_cast<double>(num_points);
     pts.emplace_back(std::cos(angle) * 10.0, std::sin(angle) * 10.0);
   }
 
