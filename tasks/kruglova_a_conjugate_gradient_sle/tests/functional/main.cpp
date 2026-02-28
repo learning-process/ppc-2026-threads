@@ -22,7 +22,7 @@ class KruglovaAFuncTestAConjGradSle : public ppc::util::BaseRunFuncTests<InType,
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int size = std::get<0>(params);
     std::string type = std::get<1>(params);
 
