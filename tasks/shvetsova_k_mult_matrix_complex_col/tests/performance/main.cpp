@@ -49,7 +49,7 @@ class ShvetsovaKRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, 
 
   bool CheckTestOutputData(OutType &output_data) final {
     const auto &matrix_C = output_data;
-    return (matrix_C.cols > 0 && matrix_C.rows > 0) && matrix_C.col_ptr.size() == matrix_C.cols + 1;
+    return (matrix_C.cols > 0 && matrix_C.rows > 0) && static_cast<int>(matrix_C.col_ptr.size()) == matrix_C.cols + 1;
   }
 
   InType GetTestInputData() final {
