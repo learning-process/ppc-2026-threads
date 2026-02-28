@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <cstdint>
 
 #include "ivanova_p_marking_components_on_binary_image/common/include/common.hpp"
@@ -16,11 +17,11 @@ class IvanovaPRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, O
     // Создаем тестовое изображение
     test_image.width = kSize_;
     test_image.height = kSize_;
-    test_image.data.resize(static_cast<size_t>(kSize_ * kSize_));
+    test_image.data.resize(static_cast<size_t>(kSize_) * static_cast<size_t>(kSize_));
 
     for (int yy = 0; yy < kSize_; ++yy) {
       for (int xx = 0; xx < kSize_; ++xx) {
-        int idx = yy * kSize_ + xx;
+        int idx = (yy * kSize_) + xx;
         uint8_t pixel = 0;
 
         if ((xx > 50 && xx < 150 && yy > 50 && yy < 150) || (xx > 300 && xx < 400 && yy > 100 && yy < 200) ||

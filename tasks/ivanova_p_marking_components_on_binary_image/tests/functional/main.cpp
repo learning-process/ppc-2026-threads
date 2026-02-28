@@ -14,10 +14,45 @@ namespace ivanova_p_marking_components_on_binary_image {
 
 class IvanovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  IvanovaPRunFuncTestsThreads() : current_test_case_(0), is_file_test_(false) {}
+  IvanovaPRunFuncTestsThreads() = default;
 
   static std::string PrintTestParam(const TestType &test_param) {
     return "test_" + std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+  }
+
+  static int GetExpectedComponents(int test_case) {
+    switch (test_case) {
+      case 1:
+        return 1;
+      case 2:
+        return 2;
+      case 3:
+        return 3;
+      case 4:
+        return 1;
+      case 5:
+        return 0;
+      case 6:
+        return 1;
+      case 7:
+        return 4;
+      case 8:
+        return 9;
+      case 9:
+        return 1;
+      case 10:
+        return 1;
+      case 11:
+        return 1;
+      case 12:
+        return 2;
+      case 13:
+        return 2;
+      case 14:
+        return 9;
+      default:
+        return 0;
+    }
   }
 
  protected:
@@ -46,54 +81,7 @@ class IvanovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
     }
 
     // Проверяем количество компонент
-    int expected_components = 0;
-
-    switch (current_test_case_) {
-      case 1:
-        expected_components = 1;
-        break;
-      case 2:
-        expected_components = 2;
-        break;
-      case 3:
-        expected_components = 3;
-        break;
-      case 4:
-        expected_components = 1;
-        break;
-      case 5:
-        expected_components = 0;
-        break;  // Все фон
-      case 6:
-        expected_components = 1;
-        break;  // Одиночный пиксель
-      case 7:
-        expected_components = 4;
-        break;  // Диагональные соседи - 4 компоненты
-      case 8:
-        expected_components = 9;
-        break;  // 9 маленьких компонент
-      case 9:
-        expected_components = 1;
-        break;  // Горизонтальная линия
-      case 10:
-        expected_components = 1;
-        break;  // Вертикальная линия
-      case 11:
-        expected_components = 1;
-        break;  // image.txt - 1 компонента
-      case 12:
-        expected_components = 2;
-        break;  // image2.txt - 2 компоненты
-      case 13:
-        expected_components = 2;
-        break;  // image3.txt - 2 компоненты
-      case 14:
-        expected_components = 9;
-        break;  // image4.txt - 9 компонент
-      default:
-        expected_components = num_components;
-    }
+    int expected_components = GetExpectedComponents(current_test_case_);
 
     if (num_components != expected_components) {
       return false;

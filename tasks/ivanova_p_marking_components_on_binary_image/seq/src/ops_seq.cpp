@@ -7,7 +7,8 @@
 
 namespace ivanova_p_marking_components_on_binary_image {
 
-IvanovaPMarkingComponentsOnBinaryImageSEQ::IvanovaPMarkingComponentsOnBinaryImageSEQ(const InType &in) {
+IvanovaPMarkingComponentsOnBinaryImageSEQ::IvanovaPMarkingComponentsOnBinaryImageSEQ(const InType &in)
+    : current_label_(0), width_(0), height_(0) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = OutType();
@@ -114,11 +115,21 @@ int IvanovaPMarkingComponentsOnBinaryImageSEQ::FindRoot(int label) {
     return label;
   }
 
-  if (parent_[label] != label) {
-    parent_[label] = FindRoot(parent_[label]);
+  // Итеративный поиск корня с path compression
+  int root = label;
+  while (parent_[root] != root) {
+    root = parent_[root];
   }
 
-  return parent_[label];
+  // Path compression: указываем все узлы напрямую на корень
+  int current = label;
+  while (parent_[current] != root) {
+    int next = parent_[current];
+    parent_[current] = root;
+    current = next;
+  }
+
+  return root;
 }
 
 void IvanovaPMarkingComponentsOnBinaryImageSEQ::UnionLabels(int label1, int label2) {
@@ -137,7 +148,7 @@ void IvanovaPMarkingComponentsOnBinaryImageSEQ::UnionLabels(int label1, int labe
 void IvanovaPMarkingComponentsOnBinaryImageSEQ::FirstPass() {
   for (int yy = 0; yy < height_; ++yy) {
     for (int xx = 0; xx < width_; ++xx) {
-      int idx = yy * width_ + xx;
+      int idx = (yy * width_) + xx;
 
       if (input_image_.data[idx] == 0) {
         continue;
@@ -147,16 +158,21 @@ void IvanovaPMarkingComponentsOnBinaryImageSEQ::FirstPass() {
       int top_label = (yy > 0) ? labels_[idx - width_] : 0;
 
       if (left_label == 0 && top_label == 0) {
+        // Новая компонента
         current_label_++;
         labels_[idx] = current_label_;
         parent_[current_label_] = current_label_;
       } else if (left_label != 0 && top_label == 0) {
+        // Только левый сосед
         labels_[idx] = left_label;
       } else if (left_label == 0 && top_label != 0) {
+        // Только верхний сосед
         labels_[idx] = top_label;
       } else if (left_label == top_label) {
+        // Оба соседа имеют одинаковую метку
         labels_[idx] = left_label;
       } else {
+        // Разные метки - нужно объединить
         int min_label = std::min(left_label, top_label);
         int max_label = std::max(left_label, top_label);
         labels_[idx] = min_label;
@@ -170,15 +186,15 @@ void IvanovaPMarkingComponentsOnBinaryImageSEQ::SecondPass() {
   std::unordered_map<int, int> new_labels;
   int next_label = 1;
 
-  for (int ii = 0; ii < static_cast<int>(labels_.size()); ++ii) {
-    if (labels_[ii] != 0) {
-      int root = FindRoot(labels_[ii]);
+  for (int &label : labels_) {
+    if (label != 0) {
+      int root = FindRoot(label);
 
       if (!new_labels.contains(root)) {
         new_labels[root] = next_label++;
       }
 
-      labels_[ii] = new_labels[root];
+      label = new_labels[root];
     }
   }
 
@@ -207,8 +223,8 @@ bool IvanovaPMarkingComponentsOnBinaryImageSEQ::PostProcessingImpl() {
   output.push_back(height_);
   output.push_back(current_label_);
 
-  for (int jj = 0; jj < static_cast<int>(labels_.size()); ++jj) {
-    output.push_back(labels_[jj]);
+  for (int label : labels_) {
+    output.push_back(label);
   }
 
   return true;

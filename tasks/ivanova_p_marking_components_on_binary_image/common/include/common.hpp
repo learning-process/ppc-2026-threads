@@ -1,8 +1,9 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <fstream>
-#include <iomanip>
+#include <ios>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -44,9 +45,9 @@ inline Image LoadImageFromTxt(const std::string &filename) {
     return img;
   }
 
-  img.data.resize(static_cast<size_t>(img.width * img.height));
+  img.data.resize(static_cast<size_t>(img.width) * static_cast<size_t>(img.height));
 
-  for (int i = 0; i < img.width * img.height; ++i) {
+  for (int i = 0; i < static_cast<int>(img.data.size()); ++i) {
     int pixel_value = 0;
     if (!(file >> pixel_value)) {
       img.width = 0;
@@ -86,26 +87,28 @@ inline Image LoadPPMImage(const std::string &filename) {
   file >> img.width >> img.height >> max_val;
   file.get();  // Пропускаем пробел после max_val
 
-  img.data.resize(static_cast<size_t>(img.width * img.height));
+  img.data.resize(static_cast<size_t>(img.width) * static_cast<size_t>(img.height));
 
   if (magic == "P5") {
     // Grayscale
-    std::vector<uint8_t> gray_data(static_cast<size_t>(img.width * img.height));
-    file.read(reinterpret_cast<char *>(gray_data.data()), static_cast<std::streamsize>(img.width * img.height));
+    std::vector<uint8_t> gray_data(static_cast<size_t>(img.width) * static_cast<size_t>(img.height));
+    file.read(reinterpret_cast<char *>(gray_data.data()),
+              static_cast<std::streamsize>(static_cast<size_t>(img.width) * static_cast<size_t>(img.height)));
 
-    for (int i = 0; i < img.width * img.height; ++i) {
+    for (int i = 0; i < static_cast<int>(gray_data.size()); ++i) {
       // Преобразуем в бинарное: если пиксель темный (< 128), то 1, иначе 0
       img.data[i] = (gray_data[i] < 128) ? 1 : 0;
     }
   } else {
     // RGB
-    std::vector<uint8_t> rgb_data(static_cast<size_t>(img.width * img.height * 3));
-    file.read(reinterpret_cast<char *>(rgb_data.data()), static_cast<std::streamsize>(img.width * img.height * 3));
+    std::vector<uint8_t> rgb_data(static_cast<size_t>(img.width) * static_cast<size_t>(img.height) * 3U);
+    file.read(reinterpret_cast<char *>(rgb_data.data()),
+              static_cast<std::streamsize>(static_cast<size_t>(img.width) * static_cast<size_t>(img.height) * 3U));
 
-    for (int i = 0; i < img.width * img.height; ++i) {
-      uint8_t r = rgb_data[static_cast<size_t>(i * 3)];
-      uint8_t g = rgb_data[static_cast<size_t>((i * 3) + 1)];
-      uint8_t b = rgb_data[static_cast<size_t>((i * 3) + 2)];
+    for (int i = 0; i < static_cast<int>(img.data.size()); ++i) {
+      uint8_t r = rgb_data[static_cast<size_t>(i) * 3U];
+      uint8_t g = rgb_data[static_cast<size_t>(i) * 3U + 1U];
+      uint8_t b = rgb_data[static_cast<size_t>(i) * 3U + 2U];
 
       // Преобразуем в бинарное: если пиксель темный, то 1, иначе 0
       uint8_t gray = (r + g + b) / 3;
@@ -117,92 +120,89 @@ inline Image LoadPPMImage(const std::string &filename) {
   return img;
 }
 
+// Вспомогательные функции для создания тестовых изображений
+namespace {
+
+inline bool IsPixelInTestCase1(int xx, int yy, int width, int height) {
+  return xx > width / 4 && xx < (3 * width) / 4 && yy > height / 4 && yy < (3 * height) / 4;
+}
+
+inline bool IsPixelInTestCase2(int xx, int yy, int width, int height) {
+  return (xx > width / 8 && xx < (3 * width) / 8 && yy > height / 8 && yy < (3 * height) / 8) ||
+         (xx > (5 * width) / 8 && xx < (7 * width) / 8 && yy > (5 * height) / 8 && yy < (7 * height) / 8);
+}
+
+inline bool IsPixelInTestCase3(int xx, int yy, int width, int height) {
+  return (xx > width / 10 && xx < (3 * width) / 10 && yy > height / 10 && yy < (3 * height) / 10) ||
+         (xx > (4 * width) / 10 && xx < (6 * width) / 10 && yy > (4 * height) / 10 && yy < (6 * height) / 10) ||
+         (xx > (7 * width) / 10 && xx < (9 * width) / 10 && yy > (7 * height) / 10 && yy < (9 * height) / 10);
+}
+
+inline bool IsPixelInTestCase4(int xx, int yy, int width, int height) {
+  return (xx > width / 3 && xx < ((width / 3) + 5) && yy > height / 4 && yy < (3 * height) / 4) ||
+         (xx > (2 * width) / 3 && xx < (((2 * width) / 3) + 5) && yy > height / 4 && yy < (3 * height) / 4) ||
+         (xx > width / 3 && xx < (((2 * width) / 3) + 5) && yy > ((height / 2) - 2) && yy < ((height / 2) + 2));
+}
+
+inline bool IsPixelInTestCase7(int xx, int yy, int width, int height) {
+  return (xx == width / 2 && yy == height / 4) || (xx == (3 * width) / 4 && yy == height / 4) ||
+         (xx == width / 4 && yy == (3 * height) / 4) || (xx == (3 * width) / 4 && yy == (3 * height) / 4);
+}
+
+inline bool IsPixelInTestCase8(int xx, int yy, int width, int height) {
+  int cell_width = width / 3;
+  int cell_height = height / 3;
+  int local_x = xx % cell_width;
+  int local_y = yy % cell_height;
+  return local_x > cell_width / 4 && local_x < (3 * cell_width) / 4 && local_y > cell_height / 4 &&
+         local_y < (3 * cell_height) / 4;
+}
+
+}  // namespace
+
 // Вспомогательная функция для создания тестовых изображений
 inline Image CreateTestImage(int width, int height, int test_case) {
   Image img;
   img.width = width;
   img.height = height;
-  img.data.resize(static_cast<size_t>(width * height));
+  img.data.resize(static_cast<size_t>(width) * static_cast<size_t>(height));
 
   for (int yy = 0; yy < height; ++yy) {
     for (int xx = 0; xx < width; ++xx) {
-      int idx = yy * width + xx;
+      int idx = (yy * width) + xx;
       uint8_t pixel = 0;  // фон по умолчанию
 
       switch (test_case) {
-        case 1:  // Один прямоугольник в центре
-          if (xx > width / 4 && xx < 3 * width / 4 && yy > height / 4 && yy < 3 * height / 4) {
-            pixel = 1;
-          }
+        case 1:
+          pixel = IsPixelInTestCase1(xx, yy, width, height) ? 1 : 0;
           break;
-
-        case 2:  // Два отдельных прямоугольника
-          if ((xx > width / 8 && xx < 3 * width / 8 && yy > height / 8 && yy < 3 * height / 8) ||
-              (xx > 5 * width / 8 && xx < 7 * width / 8 && yy > 5 * height / 8 && yy < 7 * height / 8)) {
-            pixel = 1;
-          }
+        case 2:
+          pixel = IsPixelInTestCase2(xx, yy, width, height) ? 1 : 0;
           break;
-
-        case 3:  // Три отдельных компонента
-          if ((xx > width / 10 && xx < 3 * width / 10 && yy > height / 10 && yy < 3 * height / 10) ||
-              (xx > 4 * width / 10 && xx < 6 * width / 10 && yy > 4 * height / 10 && yy < 6 * height / 10) ||
-              (xx > 7 * width / 10 && xx < 9 * width / 10 && yy > 7 * height / 10 && yy < 9 * height / 10)) {
-            pixel = 1;
-          }
+        case 3:
+          pixel = IsPixelInTestCase3(xx, yy, width, height) ? 1 : 0;
           break;
-
-        case 4:  // Связанные компоненты (буква "H")
-          if ((xx > width / 3 && xx < (width / 3 + 5) && yy > height / 4 && yy < 3 * height / 4) ||
-              (xx > 2 * width / 3 && xx < (2 * width / 3 + 5) && yy > height / 4 && yy < 3 * height / 4) ||
-              (xx > width / 3 && xx < (2 * width / 3 + 5) && yy > (height / 2 - 2) && yy < (height / 2 + 2))) {
-            pixel = 1;
-          }
+        case 4:
+          pixel = IsPixelInTestCase4(xx, yy, width, height) ? 1 : 0;
           break;
-
-        case 5:  // Все фон (нет объектов)
+        case 5:
           pixel = 0;
           break;
-
-        case 6:  // Одиночный пиксель в центре
-          if (xx == width / 2 && yy == height / 2) {
-            pixel = 1;
-          }
+        case 6:
+          pixel = (xx == width / 2 && yy == height / 2) ? 1 : 0;
           break;
-
-        case 7:  // Диагональные соседи (не должны объединяться)
-          // 4 пикселя по диагонали - каждый отдельная компонента
-          if ((xx == width / 4 && yy == height / 4) || (xx == 3 * width / 4 && yy == height / 4) ||
-              (xx == width / 4 && yy == 3 * height / 4) || (xx == 3 * width / 4 && yy == 3 * height / 4)) {
-            pixel = 1;
-          }
+        case 7:
+          pixel = IsPixelInTestCase7(xx, yy, width, height) ? 1 : 0;
           break;
-
-        case 8:  // 9 маленьких компонент (3x3 сетка)
-        {
-          int cell_width = width / 3;
-          int cell_height = height / 3;
-          int local_x = xx % cell_width;
-          int local_y = yy % cell_height;
-
-          // Маленький квадрат в центре каждой ячейки
-          if (local_x > cell_width / 4 && local_x < 3 * cell_width / 4 && local_y > cell_height / 4 &&
-              local_y < 3 * cell_height / 4) {
-            pixel = 1;
-          }
-        } break;
-
-        case 9:  // Горизонтальная линия в центре
-          if (yy == height / 2) {
-            pixel = 1;
-          }
+        case 8:
+          pixel = IsPixelInTestCase8(xx, yy, width, height) ? 1 : 0;
           break;
-
-        case 10:  // Вертикальная линия в центре
-          if (xx == width / 2) {
-            pixel = 1;
-          }
+        case 9:
+          pixel = (yy == height / 2) ? 1 : 0;
           break;
-
+        case 10:
+          pixel = (xx == width / 2) ? 1 : 0;
+          break;
         default:
           pixel = 0;
           break;
