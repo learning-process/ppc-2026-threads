@@ -1,16 +1,10 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
-#include <algorithm>
-#include <array>
-#include <cstddef>
-#include <cstdint>
-#include <numeric>
+#include <fstream> 
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
+#include <cstddef>  
 
 #include "chetverikova_e_shell_sort_simple_merge/common/include/common.hpp"
 #include "chetverikova_e_shell_sort_simple_merge/seq/include/ops_seq.hpp"
@@ -23,7 +17,7 @@ class ChetverikovaERunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InTy
  private:
   InType input_data_;
   OutType expected_data_;
-  int n{};
+  int n_{};
 
  public:
   static std::string PrintTestParam(const TestType &test_param) {
@@ -40,19 +34,19 @@ class ChetverikovaERunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InTy
       throw std::runtime_error("Failed to open file: " + filename);
     }
 
-    if (!(file >> n)) {
+    if (!(file >> n_)) {
       throw std::runtime_error("Failed to read required parameters");
     }
-    input_data_.resize(n);
-    expected_data_.resize(n);
+    input_data_.resize(n_);
+    expected_data_.resize(n_);
 
-    for (int i = 0; i < n; ++i) {
+    for (int i = 0; i < n_; ++i) {
       if (!(file >> input_data_[i])) {
         throw std::runtime_error("Failed to read input data at index " + std::to_string(i));
       }
     }
 
-    for (int i = 0; i < n; ++i) {
+    for (int i = 0; i < n_; ++i) {
       if (!(file >> expected_data_[i])) {
         throw std::runtime_error("Failed to read expected data at index " + std::to_string(i));
       }

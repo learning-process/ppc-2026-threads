@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "chetverikova_e_shell_sort_simple_merge/common/include/common.hpp"
 #include "task/include/task.hpp"
 

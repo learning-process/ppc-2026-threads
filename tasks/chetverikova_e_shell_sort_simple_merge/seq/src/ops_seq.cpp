@@ -2,9 +2,10 @@
 
 #include <numeric>
 #include <vector>
+#include <vector>
+#include <cstddef>
 
 #include "chetverikova_e_shell_sort_simple_merge/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace chetverikova_e_shell_sort_simple_merge {
 
@@ -31,7 +32,7 @@ void ChetverikovaEShellSortSimpleMergeSEQ::ShellSort(std::vector<int> &data) {
   for (size_t gap = n / 2; gap > 0; gap /= 2) {
     for (size_t i = gap; i < n; i++) {
       int temp = data[i];
-      size_t j;
+      size_t j = i;
 
       for (j = i; j >= gap && data[j - gap] > temp; j -= gap) {
         data[j] = data[j - gap];
@@ -46,7 +47,8 @@ std::vector<int> ChetverikovaEShellSortSimpleMergeSEQ::MergeSort(const std::vect
                                                                  const std::vector<int> &right) {
   std::vector<int> result;
   result.reserve(left.size() + right.size());
-  size_t i = 0, j = 0;
+  size_t i = 0;
+  size_t j = 0;
   while (i < left.size() && j < right.size()) {
     if (left[i] <= right[j]) {
       result.push_back(left[i++]);
