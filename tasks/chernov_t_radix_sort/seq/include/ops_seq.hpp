@@ -17,6 +17,11 @@ class ChernovTRadixSortSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  void RadixSortLSD(std::vector<int>& data);
+  void SimpleMerge(const std::vector<int>& left,
+                 const std::vector<int>& right,
+                 std::vector<int>& result);
 };
 
 }  // namespace chernov_t_radix_sort
