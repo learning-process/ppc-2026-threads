@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
 #include <algorithm>
 #include <array>
@@ -12,8 +11,8 @@
 #include <utility>
 #include <vector>
 
-#include "chyokotov_a_dense_matrix_mul_foxs_algorithm\common\include\common.hpp"
-#include "chyokotov_a_dense_matrix_mul_foxs_algorithm\seq\include\ops_seq.hpp"
+#include "chyokotov_a_dense_matrix_mul_foxs_algorithm/common/include/common.hpp"
+#include "chyokotov_a_dense_matrix_mul_foxs_algorithm/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 

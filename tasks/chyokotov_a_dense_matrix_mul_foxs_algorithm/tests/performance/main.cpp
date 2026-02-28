@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "chyokotov_a_dense_matrix_mul_foxs_algorithm\common\include\common.hpp"
-#include "chyokotov_a_dense_matrix_mul_foxs_algorithm\seq\include\ops_seq.hpp"
+#include "chyokotov_a_dense_matrix_mul_foxs_algorithm/common/include/common.hpp"
+#include "chyokotov_a_dense_matrix_mul_foxs_algorithm/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace chyokotov_a_dense_matrix_mul_foxs_algorithm {

@@ -1,10 +1,10 @@
-#include "chyokotov_a_dense_matrix_mul_foxs_algorithm\seq\include\ops_seq.hpp"
+#include "chyokotov_a_dense_matrix_mul_foxs_algorithm/seq/include/ops_seq.hpp"
 
 #include <cmath>
 #include <numeric>
 #include <vector>
 
-#include "chyokotov_a_dense_matrix_mul_foxs_algorithm\common\include\common.hpp"
+#include "chyokotov_a_dense_matrix_mul_foxs_algorithm/common/include/common.hpp"
 #include "util/include/util.hpp"
 
 namespace chyokotov_a_dense_matrix_mul_foxs_algorithm {
