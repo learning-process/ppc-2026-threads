@@ -19,6 +19,7 @@ class ChernovTRadixSortSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 
   void RadixSortLSD(std::vector<int>& data);
+
   void SimpleMerge(const std::vector<int>& left,
                  const std::vector<int>& right,
                  std::vector<int>& result);

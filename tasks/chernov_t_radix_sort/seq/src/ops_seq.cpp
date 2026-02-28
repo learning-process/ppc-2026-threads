@@ -28,7 +28,7 @@ constexpr int kBitsPerDigit = 8;
 constexpr int kRadix = 1 << kBitsPerDigit;
 constexpr uint32_t kSignMask = 0x80000000u;
 
-void RadixSortLSD(std::vector<int>& data) {
+void ChernovTRadixSortSEQ::RadixSortLSD(std::vector<int>& data) {
     if (data.empty()) {
         return;
     }
@@ -65,7 +65,7 @@ void RadixSortLSD(std::vector<int>& data) {
     }
 }
 
-void SimpleMerge(const std::vector<int>& left,
+void ChernovTRadixSortSEQ::SimpleMerge(const std::vector<int>& left,
                  const std::vector<int>& right,
                  std::vector<int>& result) {
     result.resize(left.size() + right.size());
