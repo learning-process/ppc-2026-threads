@@ -12,9 +12,9 @@ namespace zorin_d_strassen_alg_matrix_seq {
 
 namespace {
 
-constexpr std::size_t k_cutoff = 64;
+constexpr std::size_t kCutoff = 64;
 
-std::size_t next_pow2(std::size_t x) {
+std::size_t NextPow2(std::size_t x) {
   if (x <= 1) {
     return 1;
   }
@@ -25,7 +25,7 @@ std::size_t next_pow2(std::size_t x) {
   return p;
 }
 
-void naive_mul(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, std::size_t n) {
+void NaiveMul(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, std::size_t n) {
   std::fill(c.begin(), c.end(), 0.0);
   for (std::size_t i = 0; i < n; ++i) {
     const std::size_t i_row = i * n;
@@ -39,7 +39,7 @@ void naive_mul(const std::vector<double> &a, const std::vector<double> &b, std::
   }
 }
 
-std::vector<double> add_vec(const std::vector<double> &x, const std::vector<double> &y) {
+std::vector<double> AddVec(const std::vector<double> &x, const std::vector<double> &y) {
   assert(x.size() == y.size());
   std::vector<double> r(x.size());
   for (std::size_t i = 0; i < x.size(); ++i) {
@@ -153,10 +153,10 @@ std::vector<double> &select_m(frame &f, int slot) {
 frame make_child_for_slot(const frame &f, int slot) {
   const std::size_t k = f.half;
   if (slot == 1) {
-    return {add_vec(f.a11, f.a22), add_vec(f.b11, f.b22), k, 1};
+    return {AddVec(f.a11, f.a22), AddVec(f.b11, f.b22), k, 1};
   }
   if (slot == 2) {
-    return {add_vec(f.a21, f.a22), f.b11, k, 2};
+    return {AddVec(f.a21, f.a22), f.b11, k, 2};
   }
   if (slot == 3) {
     return {f.a11, sub_vec(f.b12, f.b22), k, 3};
@@ -165,12 +165,12 @@ frame make_child_for_slot(const frame &f, int slot) {
     return {f.a22, sub_vec(f.b21, f.b11), k, 4};
   }
   if (slot == 5) {
-    return {add_vec(f.a11, f.a12), f.b22, k, 5};
+    return {AddVec(f.a11, f.a12), f.b22, k, 5};
   }
   if (slot == 6) {
-    return {sub_vec(f.a21, f.a11), add_vec(f.b11, f.b12), k, 6};
+    return {sub_vec(f.a21, f.a11), AddVec(f.b11, f.b12), k, 6};
   }
-  return {sub_vec(f.a12, f.a22), add_vec(f.b21, f.b22), k, 7};
+  return {sub_vec(f.a12, f.a22), AddVec(f.b21, f.b22), k, 7};
 }
 
 std::vector<double> strassen_iter(std::vector<double> a, std::vector<double> b, std::size_t n) {
@@ -183,7 +183,7 @@ std::vector<double> strassen_iter(std::vector<double> a, std::vector<double> b, 
     frame &f = st.back();
 
     if (f.n <= k_cutoff) {
-      naive_mul(f.a, f.b, f.c, f.n);
+      NaiveMul(f.a, f.b, f.c, f.n);
 
       frame finished = std::move(f);
       st.pop_back();
@@ -212,10 +212,10 @@ std::vector<double> strassen_iter(std::vector<double> a, std::vector<double> b, 
       continue;
     }
 
-    const auto c11 = add_vec(sub_vec(add_vec(f.m1, f.m4), f.m5), f.m7);
-    const auto c12 = add_vec(f.m3, f.m5);
-    const auto c21 = add_vec(f.m2, f.m4);
-    const auto c22 = add_vec(add_vec(sub_vec(f.m1, f.m2), f.m3), f.m6);
+    const auto c11 = AddVec(sub_vec(AddVec(f.m1, f.m4), f.m5), f.m7);
+    const auto c12 = AddVec(f.m3, f.m5);
+    const auto c21 = AddVec(f.m2, f.m4);
+    const auto c22 = AddVec(AddVec(sub_vec(f.m1, f.m2), f.m3), f.m6);
 
     f.c = join_mat(c11, c12, c21, c22, f.n);
 
@@ -269,7 +269,7 @@ bool ZorinDStrassenAlgMatrixSEQ::PreProcessingImpl() {
 bool ZorinDStrassenAlgMatrixSEQ::RunImpl() {
   const auto &in = GetInput();
   const std::size_t n = in.n;
-  const std::size_t m = next_pow2(n);
+  const std::size_t m = NextPow2(n);
 
   std::vector<double> a_pad(m * m, 0.0);
   std::vector<double> b_pad(m * m, 0.0);

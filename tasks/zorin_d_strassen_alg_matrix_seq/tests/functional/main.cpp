@@ -15,7 +15,7 @@ namespace zorin_d_strassen_alg_matrix_seq {
 
 namespace {
 
-void naive_mul_ref(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, std::size_t n) {
+void NaiveMulRef(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, std::size_t n) {
   c.assign(n * n, 0.0);
   for (std::size_t i = 0; i < n; ++i) {
     const std::size_t i_row = i * n;
@@ -29,7 +29,7 @@ void naive_mul_ref(const std::vector<double> &a, const std::vector<double> &b, s
   }
 }
 
-std::vector<double> make_matrix_a(std::size_t n) {
+std::vector<double> MakeMatrixA(std::size_t n) {
   std::vector<double> a(n * n);
   for (std::size_t i = 0; i < n; ++i) {
     for (std::size_t j = 0; j < n; ++j) {
@@ -40,7 +40,7 @@ std::vector<double> make_matrix_a(std::size_t n) {
   return a;
 }
 
-std::vector<double> make_matrix_b(std::size_t n) {
+std::vector<double> MakeMatrixB(std::size_t n) {
   std::vector<double> b(n * n);
   for (std::size_t i = 0; i < n; ++i) {
     for (std::size_t j = 0; j < n; ++j) {
@@ -62,10 +62,10 @@ class ZorinDRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, T
     const auto n = static_cast<std::size_t>(std::get<0>(params));
 
     input_.n = n;
-    input_.a = make_matrix_a(n);
-    input_.b = make_matrix_b(n);
+    input_.a = MakeMatrixA(n);
+    input_.b = MakeMatrixB(n);
 
-    naive_mul_ref(input_.a, input_.b, expected_, n);
+    NaiveMulRef(input_.a, input_.b, expected_, n);
   }
 
   InType GetTestInputData() final {
@@ -73,12 +73,12 @@ class ZorinDRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, T
   }
 
   bool CheckTestOutputData(OutType &output) final {
-    constexpr double k_eps = 1e-9;
+    constexpr double kEps = 1e-9;
     if (output.size() != expected_.size()) {
       return false;
     }
     for (std::size_t i = 0; i < output.size(); ++i) {
-      if (std::abs(output[i] - expected_[i]) > k_eps) {
+      if (std::abs(output[i] - expected_[i]) > kEps) {
         return false;
       }
     }
@@ -94,18 +94,18 @@ TEST_P(ZorinDRunFuncTests, ZorinDSEQStrassenRunFuncModes) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 7> k_params = {
+const std::array<TestType, 7> kParams = {
     std::make_tuple(1, "n1"), std::make_tuple(2, "n2"), std::make_tuple(3, "n3"),   std::make_tuple(5, "n5"),
     std::make_tuple(8, "n8"), std::make_tuple(9, "n9"), std::make_tuple(16, "n16"),
 };
 
 const auto k_tasks =
-    ppc::util::AddFuncTask<ZorinDStrassenAlgMatrixSEQ, InType>(k_params, PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq);
+    ppc::util::AddFuncTask<ZorinDStrassenAlgMatrixSEQ, InType>(kParams, PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq);
 
-const auto k_values = ppc::util::ExpandToValues(k_tasks);
-const auto k_name = ZorinDRunFuncTests::PrintFuncTestName<ZorinDRunFuncTests>;
+const auto kValues = ppc::util::ExpandToValues(k_tasks);
+const auto kName = ZorinDRunFuncTests::PrintFuncTestName<ZorinDRunFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(StrassenMatrixTests, ZorinDRunFuncTests, k_values, k_name);
+INSTANTIATE_TEST_SUITE_P(StrassenMatrixTests, ZorinDRunFuncTests, kValues, kName);
 
 }  // namespace
 
