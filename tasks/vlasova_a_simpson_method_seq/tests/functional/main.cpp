@@ -23,13 +23,13 @@ class VlasovaASimpsonMethodFuncTests : public ppc::util::BaseRunFuncTests<InType
 
  protected:
   void SetUp() override {
-    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    const auto &params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    auto a = std::get<0>(params);
-    auto b = std::get<1>(params);
-    auto n = std::get<2>(params);
+    const auto &a = std::get<0>(params);
+    const auto &b = std::get<1>(params);
+    const auto &n = std::get<2>(params);
     expected_ = std::get<3>(params);
-    std::string func_name = std::get<4>(params);
+    const std::string &func_name = std::get<4>(params);
 
     std::function<double(const std::vector<double> &)> func;
 

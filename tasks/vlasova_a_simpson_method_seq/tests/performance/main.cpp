@@ -16,6 +16,7 @@ double Gaussian3D(const std::vector<double> &x) {
 }  // namespace
 
 class VlasovaASimpsonMethodPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+ protected:
   void SetUp() override {
     std::vector<double> a = {-2.0, -2.0, -2.0};
     std::vector<double> b = {2.0, 2.0, 2.0};

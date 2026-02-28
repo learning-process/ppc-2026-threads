@@ -9,7 +9,7 @@
 
 namespace vlasova_a_simpson_method_seq {
 
-VlasovaASimpsonMethodSEQ::VlasovaASimpsonMethodSEQ(const InType &in) : task_data_(in), result_(0.0) {
+VlasovaASimpsonMethodSEQ::VlasovaASimpsonMethodSEQ(InType in) : task_data_(std::move(in)) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetOutput() = 0.0;
 }
@@ -53,23 +53,23 @@ bool VlasovaASimpsonMethodSEQ::PreProcessingImpl() {
   return true;
 }
 
-void VlasovaASimpsonMethodSEQ::NextIndex(std::vector<int> &Index) {
-  size_t dim = Index.size();
+void VlasovaASimpsonMethodSEQ::Nextindex(std::vector<int> &index) {
+  size_t dim = index.size();
   for (size_t i = 0; i < dim; ++i) {
-    Index[i]++;
-    if (Index[i] < dimensions_[i]) {
+    index[i]++;
+    if (index[i] < dimensions_[i]) {
       return;
     }
-    Index[i] = 0;
+    index[i] = 0;
   }
 }
 
-double VlasovaASimpsonMethodSEQ::GetWeight(const std::vector<int> &Index) const {
-  double weight = 1.0;
-  size_t dim = Index.size();
+void VlasovaASimpsonMethodSEQ::ComputeWeight(const std::vector<int> &index, double &weight) const {
+  weight = 1.0;
+  size_t dim = index.size();
 
   for (size_t i = 0; i < dim; ++i) {
-    int idx = Index[i];
+    int idx = index[i];
     int steps = task_data_.n[i];
 
     if (idx == 0 || idx == steps) {
@@ -80,36 +80,36 @@ double VlasovaASimpsonMethodSEQ::GetWeight(const std::vector<int> &Index) const 
       weight *= 4.0;
     }
   }
-
-  return weight;
 }
 
-std::vector<double> VlasovaASimpsonMethodSEQ::GetPoint(const std::vector<int> &Index) const {
-  size_t dim = Index.size();
-  std::vector<double> point(dim);
+void VlasovaASimpsonMethodSEQ::ComputePoint(const std::vector<int> &index, std::vector<double> &point) const {
+  size_t dim = index.size();
+  point.resize(dim);
 
   for (size_t i = 0; i < dim; ++i) {
-    point[i] = task_data_.a[i] + (Index[i] * h_[i]);
+    point[i] = task_data_.a[i] + (index[i] * h_[i]);
   }
-
-  return point;
 }
 
 bool VlasovaASimpsonMethodSEQ::RunImpl() {
   size_t dim = task_data_.a.size();
-  std::vector<int> cur_Index(dim, 0);
 
+  std::vector<int> cur_index(dim, 0);
+  std::vector<double> cur_point;
   double sum = 0.0;
   bool has_more = true;
 
   while (has_more) {
-    double weight = GetWeight(cur_Index);
-    std::vector<double> cur_point = GetPoint(cur_Index);
+    double weight = 0.0;
+
+    ComputeWeight(cur_index, weight);
+    ComputePoint(cur_index, cur_point);
+
     sum += weight * task_data_.func(cur_point);
-    NextIndex(cur_Index);
+    Nextindex(cur_index);
     has_more = false;
     for (size_t i = 0; i < dim; ++i) {
-      if (cur_Index[i] != 0) {
+      if (cur_index[i] != 0) {
         has_more = true;
         break;
       }

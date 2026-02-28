@@ -1,5 +1,4 @@
 #pragma once
-#include <cstddef>
 #include <vector>
 
 #include "task/include/task.hpp"
@@ -13,7 +12,7 @@ class VlasovaASimpsonMethodSEQ : public BaseTask {
     return ppc::task::TypeOfTask::kSEQ;
   }
 
-  explicit VlasovaASimpsonMethodSEQ(const InType &in);
+  explicit VlasovaASimpsonMethodSEQ(InType in);
 
  private:
   bool ValidationImpl() override;
@@ -21,12 +20,12 @@ class VlasovaASimpsonMethodSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void NextIndex(std::vector<int> &Index);
-  double GetWeight(const std::vector<int> &Index) const;
-  std::vector<double> GetPoint(const std::vector<int> &Index) const;
+  void Nextindex(std::vector<int> &index);
+  void ComputeWeight(const std::vector<int> &index, double &weight) const;
+  void ComputePoint(const std::vector<int> &index, std::vector<double> &point) const;
 
   InType task_data_;
-  double result_;
+  double result_ = 0.0;
   std::vector<double> h_;        // шаги интегрирования
   std::vector<int> dimensions_;  // количество точек по каждому измерению (n[i] + 1
 };
