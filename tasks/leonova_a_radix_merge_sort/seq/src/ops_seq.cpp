@@ -1,8 +1,8 @@
 #include "leonova_a_radix_merge_sort/seq/include/ops_seq.hpp"
 
-#include <algorithm>  // для std::ranges::copy
-#include <cstddef>    // для size_t
-#include <cstdint>    // для uint64_t, int64_t, uint8_t
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "leonova_a_radix_merge_sort/common/include/common.hpp"
@@ -86,8 +86,7 @@ void LeonovaARadixMergeSortSEQ::RadixSort(std::vector<int64_t> &arr, size_t left
   }
 }
 
-void LeonovaARadixMergeSortSEQ::SimpleMerge(std::vector<int64_t> &arr, 
-                                            size_t left, size_t mid, size_t right) {
+void LeonovaARadixMergeSortSEQ::SimpleMerge(std::vector<int64_t> &arr, size_t left, size_t mid, size_t right) {
   size_t left_size = mid - left;
   size_t right_size = right - mid;
 
@@ -116,8 +115,7 @@ void LeonovaARadixMergeSortSEQ::SimpleMerge(std::vector<int64_t> &arr,
   std::ranges::copy(merged, left_it);
 }
 
-void LeonovaARadixMergeSortSEQ::RadixMergeSort(std::vector<int64_t> &arr, 
-                                               size_t left, size_t right) {
+void LeonovaARadixMergeSortSEQ::RadixMergeSort(std::vector<int64_t> &arr, size_t left, size_t right) {
   struct SortTask {
     size_t left;
     size_t right;

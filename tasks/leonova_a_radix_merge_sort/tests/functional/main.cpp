@@ -8,17 +8,13 @@
 #include <vector>
 
 #include "leonova_a_radix_merge_sort/common/include/common.hpp"
-
 #include "leonova_a_radix_merge_sort/seq/include/ops_seq.hpp"
-
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
 namespace leonova_a_radix_merge_sort {
 
 namespace {
-
-// Вспомогательные функции для уменьшения cognitive complexity
 
 std::string GetSizeCategory(size_t size) {
   if (size == 1) {
@@ -33,23 +29,22 @@ std::string GetSizeCategory(size_t size) {
   return "_large";
 }
 
-void AnalyzeArrayProperties(const std::vector<int64_t>& input, 
-                           bool& has_negative, bool& all_same, 
-                           bool& is_sorted, bool& is_reverse) {
+void AnalyzeArrayProperties(const std::vector<int64_t> &input, bool &has_negative, bool &all_same, bool &is_sorted,
+                            bool &is_reverse) {
   has_negative = false;
   all_same = true;
   is_sorted = true;
   is_reverse = true;
-  
+
   if (input.empty()) {
     return;
   }
-  
+
   for (size_t i = 0; i < input.size(); ++i) {
     if (input[i] < 0) {
       has_negative = true;
     }
-    
+
     if (i > 0) {
       if (input[i] != input[i - 1]) {
         all_same = false;
@@ -64,10 +59,9 @@ void AnalyzeArrayProperties(const std::vector<int64_t>& input,
   }
 }
 
-std::string GetPropertyString(bool has_negative, bool all_same, 
-                              bool is_sorted, bool is_reverse, size_t size) {
+std::string GetPropertyString(bool has_negative, bool all_same, bool is_sorted, bool is_reverse, size_t size) {
   std::string result;
-  
+
   if (all_same && size > 1) {
     result += "_allsame";
   }
@@ -80,7 +74,7 @@ std::string GetPropertyString(bool has_negative, bool all_same,
   if (has_negative) {
     result += "_withneg";
   }
-  
+
   return result;
 }
 
@@ -104,22 +98,18 @@ class LeonovaARadixMergeSortRunFuncTests : public ppc::util::BaseRunFuncTests<In
     static int test_counter = 0;
     std::string name = "size_" + std::to_string(input.size());
     name += "_test" + std::to_string(++test_counter);
-    
-    // Добавляем категорию размера
+
     name += GetSizeCategory(input.size());
-    
-    // Анализируем свойства массива - инициализируем каждую переменную отдельно
+
     bool has_negative = false;
     bool all_same = true;
     bool is_sorted = true;
     bool is_reverse = true;
-    
+
     AnalyzeArrayProperties(input, has_negative, all_same, is_sorted, is_reverse);
-    
-    // Добавляем свойства
+
     name += GetPropertyString(has_negative, all_same, is_sorted, is_reverse, input.size());
-    
-    // Добавляем информацию о пороге
+
     name += GetThresholdString(input.size());
 
     return name;
@@ -155,7 +145,6 @@ TEST_P(LeonovaARadixMergeSortRunFuncTests, RadixMergeSort) {
   ExecuteTest(GetParam());
 }
 
-// Тестовые данные для целых чисел
 const std::array<TestType, 24> kTestParam = {
     // 1 элемент
     std::make_tuple(std::vector<int64_t>{42}, 
