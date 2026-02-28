@@ -55,15 +55,15 @@ bool AshihminDMultMatrCrsSEQ::RunImpl() {
   for (int row_index = 0; row_index < matrix_a.rows; ++row_index) {
     std::unordered_map<int, double> accumulator;
 
-    std::size_t row_start = static_cast<std::size_t>(matrix_a.row_ptr[row_index]);
-    std::size_t row_end = static_cast<std::size_t>(matrix_a.row_ptr[row_index + 1]);
+    auto row_start = static_cast<std::size_t>(matrix_a.row_ptr[row_index]);
+    auto row_end = static_cast<std::size_t>(matrix_a.row_ptr[row_index + 1]);
 
     for (std::size_t index_a = row_start; index_a < row_end; ++index_a) {
       int col_a = matrix_a.col_index[index_a];
       double value_a = matrix_a.values[index_a];
 
-      std::size_t col_start = static_cast<std::size_t>(matrix_b.row_ptr[col_a]);
-      std::size_t col_end = static_cast<std::size_t>(matrix_b.row_ptr[col_a + 1]);
+      auto col_start = static_cast<std::size_t>(matrix_b.row_ptr[col_a]);
+      auto col_end = static_cast<std::size_t>(matrix_b.row_ptr[col_a + 1]);
 
       for (std::size_t index_b = col_start; index_b < col_end; ++index_b) {
         int col_b = matrix_b.col_index[index_b];
