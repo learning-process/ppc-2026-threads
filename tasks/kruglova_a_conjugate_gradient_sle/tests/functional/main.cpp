@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <cstddef>
+#include <cstddef>  // Для std::size_t
 #include <string>
 #include <tuple>
 #include <vector>
@@ -22,7 +22,7 @@ class KruglovaAFuncTestAConjGradSle : public ppc::util::BaseRunFuncTests<InType,
 
  protected:
   void SetUp() override {
-    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    TestType params = std::get<2>(GetParam());
     int size = std::get<0>(params);
     std::string type = std::get<1>(params);
 
