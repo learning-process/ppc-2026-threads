@@ -25,64 +25,28 @@ class GaivoronskiyMMarkingFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
     switch (test_id) {
       case 0: {
-        // clang-format off
-        input_data_ = {3, 3,
-          0, 0, 1,
-          0, 1, 1,
-          0, 1, 1};
-        expected_ = {3, 3,
-          1, 1, 0,
-          1, 0, 0,
-          1, 0, 0};
-        // clang-format on
+        input_data_ = {3, 3, 0, 0, 1, 0, 1, 1, 0, 1, 1};
+        expected_ = {3, 3, 1, 1, 0, 1, 0, 0, 1, 0, 0};
         break;
       }
       case 1: {
-        // clang-format off
-        input_data_ = {3, 3,
-          0, 1, 0,
-          1, 1, 1,
-          0, 1, 0};
-        expected_ = {3, 3,
-          1, 0, 2,
-          0, 0, 0,
-          3, 0, 4};
-        // clang-format on
+        input_data_ = {3, 3, 0, 1, 0, 1, 1, 1, 0, 1, 0};
+        expected_ = {3, 3, 1, 0, 2, 0, 0, 0, 3, 0, 4};
         break;
       }
       case 2: {
-        // clang-format off
-        input_data_ = {2, 3,
-          1, 1, 1,
-          1, 1, 1};
-        expected_ = {2, 3,
-          0, 0, 0,
-          0, 0, 0};
-        // clang-format on
+        input_data_ = {2, 3, 1, 1, 1, 1, 1, 1};
+        expected_ = {2, 3, 0, 0, 0, 0, 0, 0};
         break;
       }
       case 3: {
-        // clang-format off
-        input_data_ = {2, 2,
-          0, 0,
-          0, 0};
-        expected_ = {2, 2,
-          1, 1,
-          1, 1};
-        // clang-format on
+        input_data_ = {2, 2, 0, 0, 0, 0};
+        expected_ = {2, 2, 1, 1, 1, 1};
         break;
       }
       case 4: {
-        // clang-format off
-        input_data_ = {3, 4,
-          0, 0, 0, 0,
-          1, 1, 1, 1,
-          0, 0, 0, 0};
-        expected_ = {3, 4,
-          1, 1, 1, 1,
-          0, 0, 0, 0,
-          2, 2, 2, 2};
-        // clang-format on
+        input_data_ = {3, 4, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0};
+        expected_ = {3, 4, 1, 1, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2};
         break;
       }
       default:
