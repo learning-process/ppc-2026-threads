@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm> // abc
+#include <algorithm>  // abc
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -62,12 +62,12 @@ TEST_P(RysevMFuncTests, CompareWithSeq) {
 
 const std::array<TestType, 1> kTestParam = {std::make_tuple(0, "pic")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<RysevMGaussFilterALL, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel),
-                   ppc::util::AddFuncTask<RysevMGaussFilterOMP, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel),
-                   ppc::util::AddFuncTask<RysevMGaussFilterSEQ, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel),
-                   ppc::util::AddFuncTask<RysevMGaussFilterSTL, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel),
-                   ppc::util::AddFuncTask<RysevMGaussFilterTBB, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<RysevMGaussFilterALL, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel),
+    ppc::util::AddFuncTask<RysevMGaussFilterOMP, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel),
+    ppc::util::AddFuncTask<RysevMGaussFilterSEQ, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel),
+    ppc::util::AddFuncTask<RysevMGaussFilterSTL, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel),
+    ppc::util::AddFuncTask<RysevMGaussFilterTBB, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

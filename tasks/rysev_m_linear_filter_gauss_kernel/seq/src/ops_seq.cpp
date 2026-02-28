@@ -1,11 +1,11 @@
 #include "rysev_m_linear_filter_gauss_kernel/seq/include/ops_seq.hpp"
 
+#include <stb/stb_image.h>
+
 #include <algorithm>
 #include <random>
 #include <string>
 #include <vector>
-
-#include <stb/stb_image.h>
 
 #include "util/include/util.hpp"
 
@@ -23,8 +23,8 @@ bool RysevMGaussFilterSEQ::ValidationImpl() {
 
 bool RysevMGaussFilterSEQ::PreProcessingImpl() {
   if (GetInput() == 0) {
-    std::string abs_path = ppc::util::GetAbsoluteTaskPath(
-        std::string(PPC_ID_rysev_m_linear_filter_gauss_kernel), "pic.ppm");
+    std::string abs_path =
+        ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_rysev_m_linear_filter_gauss_kernel), "pic.ppm");
     int w, h, ch;
     unsigned char *data = stbi_load(abs_path.c_str(), &w, &h, &ch, STBI_rgb);
     if (data == nullptr) {
@@ -55,9 +55,7 @@ bool RysevMGaussFilterSEQ::PreProcessingImpl() {
 
 bool RysevMGaussFilterSEQ::RunImpl() {
   const float kernel[3][3] = {
-      {1.0f / 16, 2.0f / 16, 1.0f / 16},
-      {2.0f / 16, 4.0f / 16, 2.0f / 16},
-      {1.0f / 16, 2.0f / 16, 1.0f / 16}};
+      {1.0f / 16, 2.0f / 16, 1.0f / 16}, {2.0f / 16, 4.0f / 16, 2.0f / 16}, {1.0f / 16, 2.0f / 16, 1.0f / 16}};
 
   int rows = height_;
   int cols = width_;
@@ -80,8 +78,7 @@ bool RysevMGaussFilterSEQ::RunImpl() {
         }
 
         int out_idx = (i * cols + j) * ch + c;
-        output_image_[out_idx] = static_cast<uint8_t>(
-            std::clamp(sum, 0.0f, 255.0f));
+        output_image_[out_idx] = static_cast<uint8_t>(std::clamp(sum, 0.0f, 255.0f));
       }
     }
   }

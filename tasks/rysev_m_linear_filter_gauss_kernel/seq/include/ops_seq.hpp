@@ -11,11 +11,21 @@ class RysevMGaussFilterSEQ : public BaseTask {
   }
   explicit RysevMGaussFilterSEQ(const InType &in);
 
-  const std::vector<uint8_t>& GetInputImage() const { return input_image_; }
-  const std::vector<uint8_t>& GetOutputImage() const { return output_image_; }
-  int GetWidth() const { return width_; }
-  int GetHeight() const { return height_; }
-  int GetChannels() const { return channels_; }
+  const std::vector<uint8_t> &GetInputImage() const {
+    return input_image_;
+  }
+  const std::vector<uint8_t> &GetOutputImage() const {
+    return output_image_;
+  }
+  int GetWidth() const {
+    return width_;
+  }
+  int GetHeight() const {
+    return height_;
+  }
+  int GetChannels() const {
+    return channels_;
+  }
 
  private:
   bool ValidationImpl() override;
