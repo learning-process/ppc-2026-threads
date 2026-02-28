@@ -46,30 +46,21 @@ class ChetverikovaERunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InTy
     input_data_.resize(n);
     expected_data_.resize(n);
 
-    // 2. читаем входной массив
     for (int i = 0; i < n; ++i) {
         if (!(file >> input_data_[i])) {
             throw std::runtime_error("Failed to read input data at index " + std::to_string(i));
         }
     }
 
-    // 3. читаем ожидаемый массив
     for (int i = 0; i < n; ++i) {
         if (!(file >> expected_data_[i])) {
             throw std::runtime_error("Failed to read expected data at index " + std::to_string(i));
         }
     }
-
     file.close();
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    
-    std::cout << "Mismatch detected!\n";
-    for (size_t i = 0; i < 7; ++i)
-        std::cout << "exp[" << i << "]=" << expected_data_[i]
-                  << ", got[" << i << "]=" << output_data[i] << "\n";
-    
     return expected_data_ == output_data;
   }
 
@@ -85,7 +76,7 @@ TEST_P(ChetverikovaERunFuncTestsThreads, ShellSortMergeTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 1> kTestParam = {std::string("test1")};
+const std::array<TestType, 3> kTestParam = {std::string("test1"), std::string("test2"), std::string("test3")};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<ChetverikovaEShellSortSimpleMergeSEQ, InType>(kTestParam, PPC_SETTINGS_chetverikova_e_shell_sort_simple_merge));

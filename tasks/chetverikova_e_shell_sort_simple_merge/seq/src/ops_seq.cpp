@@ -11,7 +11,7 @@ namespace chetverikova_e_shell_sort_simple_merge {
 ChetverikovaEShellSortSimpleMergeSEQ::ChetverikovaEShellSortSimpleMergeSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  //GetOutput() = {};
+  GetOutput().clear();
 }
 
 bool ChetverikovaEShellSortSimpleMergeSEQ::ValidationImpl() {
@@ -19,7 +19,7 @@ bool ChetverikovaEShellSortSimpleMergeSEQ::ValidationImpl() {
 }
 
 bool ChetverikovaEShellSortSimpleMergeSEQ::PreProcessingImpl() {
-  GetOutput().assign(GetInput().size(), 0);
+  //GetOutput().assign(GetInput().size(), 0);
   return true;
 }
 
@@ -64,6 +64,7 @@ std::vector<int> ChetverikovaEShellSortSimpleMergeSEQ::MergeSort(const std::vect
 bool ChetverikovaEShellSortSimpleMergeSEQ::RunImpl() {
   const auto &input = GetInput();
   auto &output = GetOutput();
+
   if (input.empty()) {
     GetOutput().clear();
     return true;

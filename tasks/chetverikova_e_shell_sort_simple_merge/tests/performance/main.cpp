@@ -12,10 +12,10 @@ class ChetverikovaERunPerfTestThreads : public ppc::util::BaseRunPerfTests<InTyp
   OutType expected_data_;
 
   void SetUp() override {
-    constexpr std::size_t kSize = 40;
+    constexpr std::size_t kSize = 400000;
     std::random_device random_device;
     std::mt19937 generator(random_device());
-    std::uniform_int_distribution<int> distribution(0, 100000);
+    std::uniform_int_distribution<int> distribution(-100000, 100000);
 
     input_data_.resize(kSize);
     for (auto &value : input_data_) {
@@ -27,24 +27,7 @@ class ChetverikovaERunPerfTestThreads : public ppc::util::BaseRunPerfTests<InTyp
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.size() != input_data_.size()) {
-      return false;
-    }
-    std::cout << "Expected size: " << expected_data_.size() << std::endl;
-    std::cout << "Output size: " << output_data.size() << std::endl;
-    
-    for (size_t i = 0; i < output_data.size(); i++) {
-      if (output_data[i] != expected_data_[i]) {
-        std::cout << "Mismatch detected!\n";
-        std::cout << "Mismatch at index " << i
-                    << ": exp=" << expected_data_[i]
-                    << ", got=" << output_data[i]
-                    << std::endl;
-        return false;
-      }
-    }
-    return true;
-    //return expected_data_ == output_data;
+    return expected_data_ == output_data;
   }
 
   InType GetTestInputData() final {
