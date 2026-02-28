@@ -20,8 +20,8 @@ class ChyokotovADenseMatMulFoxAlgorithmSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  int CalculateBlockSize(int n);
-  int CountBlock(int n, int size);
+  static int CalculateBlockSize(int n);
+  static int CountBlock(int n, int size);
   void Matmul(std::vector<double> &a, std::vector<double> &b, int n, int istart, int iend, int jstart, int jend,
               int kstart, int kend);
 };

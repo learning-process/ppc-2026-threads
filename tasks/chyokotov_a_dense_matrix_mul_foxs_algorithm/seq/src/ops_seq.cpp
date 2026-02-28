@@ -24,11 +24,11 @@ bool ChyokotovADenseMatMulFoxAlgorithmSEQ::PreProcessingImpl() {
   return true;
 }
 
-static int ChyokotovADenseMatMulFoxAlgorithmSEQ::CalculateBlockSize(int n) {
+int ChyokotovADenseMatMulFoxAlgorithmSEQ::CalculateBlockSize(int n) {
   return static_cast<int>(std::sqrt(static_cast<double>(n)));
 }
 
-static int ChyokotovADenseMatMulFoxAlgorithmSEQ::CountBlock(int n, int size) {
+int ChyokotovADenseMatMulFoxAlgorithmSEQ::CountBlock(int n, int size) {
   return (n + size - 1) / size;
 }
 
