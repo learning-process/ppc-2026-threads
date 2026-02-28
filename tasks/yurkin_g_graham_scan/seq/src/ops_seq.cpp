@@ -2,10 +2,10 @@
 
 #include <algorithm>
 #include <cmath>
-#include <set>
+#include <cstddef>
+#include <numeric>
 #include <vector>
 
-#include "util/include/util.hpp"
 #include "yurkin_g_graham_scan/common/include/common.hpp"
 
 namespace yurkin_g_graham_scan {
@@ -16,9 +16,12 @@ YurkinGGrahamScanSEQ::YurkinGGrahamScanSEQ(const InType &in) {
   GetOutput().clear();
 }
 
-static long double cross(const Point &O, const Point &A, const Point &B) {
-  return (long double)(A.x - O.x) * (long double)(B.y - O.y) - (long double)(A.y - O.y) * (long double)(B.x - O.x);
+namespace {  // anonymous namespace for internal helpers
+long double cross(const Point &o, const Point &a, const Point &b) {
+  return static_cast<long double>(a.x - o.x) * static_cast<long double>(b.y - o.y) -
+         static_cast<long double>(a.y - o.y) * static_cast<long double>(b.x - o.x);
 }
+}  // namespace
 
 bool YurkinGGrahamScanSEQ::ValidationImpl() {
   const auto &pts = GetInput();
@@ -44,7 +47,7 @@ bool YurkinGGrahamScanSEQ::PreProcessingImpl() {
 
 bool YurkinGGrahamScanSEQ::RunImpl() {
   const InType &pts_in = GetInput();
-  const size_t n = pts_in.size();
+  const std::size_t n = pts_in.size();
   if (n == 0) {
     GetOutput().clear();
     return true;
@@ -83,10 +86,10 @@ bool YurkinGGrahamScanSEQ::RunImpl() {
 
   OutType hull;
   hull.reserve(lower.size() + upper.size());
-  for (size_t i = 0; i < lower.size(); ++i) {
-    hull.push_back(lower[i]);
+  for (const auto &pt : lower) {
+    hull.push_back(pt);
   }
-  for (size_t i = 1; i + 1 < upper.size(); ++i) {
+  for (std::size_t i = 1; i + 1 < upper.size(); ++i) {
     hull.push_back(upper[i]);
   }
 

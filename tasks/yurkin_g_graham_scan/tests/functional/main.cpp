@@ -1,11 +1,13 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <array>
+#include <cstddef>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 #include "yurkin_g_graham_scan/common/include/common.hpp"
 #include "yurkin_g_graham_scan/seq/include/ops_seq.hpp"
 
@@ -24,12 +26,10 @@ class YurkinGGrahamScanFuncTets : public ppc::util::BaseRunFuncTests<InType, Out
     pts.push_back({0.0, 1.0});
     pts.push_back({1.0, 0.0});
     pts.push_back({1.0, 1.0});
-    pts.push_back({0.5, 0.5});
-
-    pts.push_back({0.0, 0.0});
+    pts.push_back({0.5, 0.5});  // interior
+    pts.push_back({0.0, 0.0});  // duplicate
     pts.push_back({0.5, 0.0});
     pts.push_back({0.75, 0.0});
-
     input_data_ = pts;
   }
 
@@ -65,10 +65,10 @@ TEST_P(YurkinGGrahamScanFuncTets, SquareWithInterior) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 1> kTestParam = {std::make_tuple(1, "square")};
+const std::array<TestType, 1> k_test_param = {std::make_tuple(1, "square")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<YurkinGGrahamScanSEQ, InType>(kTestParam, PPC_SETTINGS_yurkin_g_graham_scan));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<YurkinGGrahamScanSEQ, InType>(k_test_param, PPC_SETTINGS_yurkin_g_graham_scan));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
