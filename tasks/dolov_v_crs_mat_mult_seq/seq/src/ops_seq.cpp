@@ -1,60 +1,114 @@
 #include "dolov_v_crs_mat_mult_seq/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <cmath>
 #include <vector>
 
 #include "dolov_v_crs_mat_mult_seq/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace dolov_v_crs_mat_mult_seq {
 
 DolovVCrsMatMultSeq::DolovVCrsMatMultSeq(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
 }
 
 bool DolovVCrsMatMultSeq::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  const auto &input_data = GetInput();
+  
+  if (input_data.size() != 2) return false;
+
+  const auto &matrix_a = input_data[0];
+  const auto &matrix_b = input_data[1];
+
+  return matrix_a.num_cols == matrix_b.num_rows && 
+         matrix_a.num_rows > 0 && 
+         matrix_b.num_cols > 0;
 }
 
 bool DolovVCrsMatMultSeq::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  const auto &input_data = GetInput();
+  auto &result = GetOutput();
+  
+  result.num_rows = input_data[0].num_rows;
+  result.num_cols = input_data[1].num_cols;
+  
+  result.row_pointers.assign(result.num_rows + 1, 0);
+  result.values.clear();
+  result.col_indices.clear();
+  
+  return true;
+}
+
+SparseMatrix DolovVCrsMatMultSeq::TransposeMatrix(const SparseMatrix &matrix) const {
+  SparseMatrix transposed;
+  transposed.num_rows = matrix.num_cols;
+  transposed.num_cols = matrix.num_rows;
+  transposed.row_pointers.assign(transposed.num_rows + 1, 0);
+
+  for (size_t i = 0; i < matrix.col_indices.size(); ++i) {
+    transposed.row_pointers[matrix.col_indices[i] + 1]++;
+  }
+
+  for (int i = 0; i < transposed.num_rows; ++i) {
+    transposed.row_pointers[i + 1] += transposed.row_pointers[i];
+  }
+
+  transposed.values.resize(matrix.values.size());
+  transposed.col_indices.resize(matrix.col_indices.size());
+
+  std::vector<int> current_pos = transposed.row_pointers;
+  for (int i = 0; i < matrix.num_rows; ++i) {
+    for (int j = matrix.row_pointers[i]; j < matrix.row_pointers[i + 1]; ++j) {
+      int col = matrix.col_indices[j];
+      int dest_idx = current_pos[col]++;
+      transposed.values[dest_idx] = matrix.values[j];
+      transposed.col_indices[dest_idx] = i;
+    }
+  }
+  return transposed;
 }
 
 bool DolovVCrsMatMultSeq::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
+  const auto &input_data = GetInput();
+  const auto &matrix_a = input_data[0];
+  const auto &matrix_b = input_data[1];
+  auto &result = GetOutput();
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
+  SparseMatrix matrix_b_t = TransposeMatrix(matrix_b);
+
+  
+  for (int i = 0; i < matrix_a.num_rows; ++i) {
+    for (int j = 0; j < matrix_b_t.num_rows; ++j) {
+      double sum = 0.0;
+      int ptr_a = matrix_a.row_pointers[i];
+      int ptr_b = matrix_b_t.row_pointers[j];
+      
+      while (ptr_a < matrix_a.row_pointers[i + 1] && ptr_b < matrix_b_t.row_pointers[j + 1]) {
+        if (matrix_a.col_indices[ptr_a] == matrix_b_t.col_indices[ptr_b]) {
+          sum += matrix_a.values[ptr_a] * matrix_b_t.values[ptr_b];
+          ptr_a++;
+          ptr_b++;
+        } else if (matrix_a.col_indices[ptr_a] < matrix_b_t.col_indices[ptr_b]) {
+          ptr_a++;
+        } else {
+          ptr_b++;
+        }
+      }
+
+      if (std::abs(sum) > 1e-15) {
+        result.values.push_back(sum);
+        result.col_indices.push_back(j);
       }
     }
+    result.row_pointers[i + 1] = static_cast<int>(result.values.size());
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  return true;
 }
 
 bool DolovVCrsMatMultSeq::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace dolov_v_crs_mat_mult_seq

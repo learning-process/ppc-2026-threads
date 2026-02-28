@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "dolov_v_crs_mat_mult_seq/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -17,6 +19,8 @@ class DolovVCrsMatMultSeq : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  SparseMatrix TransposeMatrix(const SparseMatrix &matrix) const;
 };
 
 }  // namespace dolov_v_crs_mat_mult_seq
