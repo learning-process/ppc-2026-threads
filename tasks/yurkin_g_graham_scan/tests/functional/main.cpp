@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <array>
-#include <ranges>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -40,10 +39,10 @@ class YurkinGGrahamScanFuncTets : public ppc::util::BaseRunFuncTests<InType, Out
     }
 
     auto contains = [](const std::vector<Point> &vec, const Point &p) {
-      return std::ranges::any_of(vec, [&](const Point &q) { return q.x == p.x && q.y == p.y; });
+      return std::any_of(vec.begin(), vec.end(), [&](const Point &q) { return q.x == p.x && q.y == p.y; });
     };
 
-    return std::ranges::all_of(expected, [&](const Point &p) { return contains(output_data, p); });
+    return std::all_of(expected.begin(), expected.end(), [&](const Point &p) { return contains(output_data, p); });
   }
 
   InType GetTestInputData() final {
