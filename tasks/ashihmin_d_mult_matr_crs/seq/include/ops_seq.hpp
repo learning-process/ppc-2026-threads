@@ -10,7 +10,7 @@ class AshihminDMultMatrCrsSEQ : public BaseTask {
     return ppc::task::TypeOfTask::kSEQ;
   }
 
-  explicit AshihminDMultMatrCrsSEQ(const InType &in);
+  explicit AshihminDMultMatrCrsSEQ(const InType &input_matrices);
 
  private:
   bool ValidationImpl() override;

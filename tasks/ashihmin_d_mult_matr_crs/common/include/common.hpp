@@ -21,7 +21,6 @@ using InType = std::pair<CRSMatrix, CRSMatrix>;
 using OutType = CRSMatrix;
 
 using DenseMatrix = std::vector<std::vector<double>>;
-
 using TestType = std::tuple<std::string, DenseMatrix, DenseMatrix, DenseMatrix>;
 
 using BaseTask = ppc::task::Task<InType, OutType>;

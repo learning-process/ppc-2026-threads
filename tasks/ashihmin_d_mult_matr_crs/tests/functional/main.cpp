@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cmath>
 #include <string>
 #include <tuple>
@@ -14,23 +15,22 @@ namespace ashihmin_d_mult_matr_crs {
 
 namespace {
 
-CRSMatrix DenseToCRS(const std::vector<std::vector<double>> &dense_matrix) {
-  CRSMatrix result_matrix;
-  result_matrix.rows = dense_matrix.size();
-  result_matrix.cols = dense_matrix.empty() ? 0 : dense_matrix[0].size();
-  result_matrix.row_ptr.resize(result_matrix.rows + 1, 0);
+CRSMatrix DenseToCRS(const DenseMatrix &dense_matrix) {
+  CRSMatrix matrix_result;
+  matrix_result.rows = static_cast<int>(dense_matrix.size());
+  matrix_result.cols = dense_matrix.empty() ? 0 : static_cast<int>(dense_matrix[0].size());
+  matrix_result.row_ptr.resize(matrix_result.rows + 1, 0);
 
-  for (int row_index = 0; row_index < result_matrix.rows; ++row_index) {
-    for (int column_index = 0; column_index < result_matrix.cols; ++column_index) {
-      if (std::abs(dense_matrix[row_index][column_index]) > 1e-12) {
-        result_matrix.values.push_back(dense_matrix[row_index][column_index]);
-        result_matrix.col_index.push_back(static_cast<int>(column_index));
+  for (int row_index = 0; row_index < matrix_result.rows; ++row_index) {
+    for (int col_index = 0; col_index < matrix_result.cols; ++col_index) {
+      if (std::abs(dense_matrix[row_index][col_index]) > 1e-12) {
+        matrix_result.values.push_back(dense_matrix[row_index][col_index]);
+        matrix_result.col_index.push_back(col_index);
       }
     }
-    result_matrix.row_ptr[row_index + 1] = result_matrix.values.size();
+    matrix_result.row_ptr[row_index + 1] = static_cast<int>(matrix_result.values.size());
   }
-
-  return result_matrix;
+  return matrix_result;
 }
 
 bool CompareCRS(const CRSMatrix &matrix_a, const CRSMatrix &matrix_b) {
@@ -47,12 +47,11 @@ bool CompareCRS(const CRSMatrix &matrix_a, const CRSMatrix &matrix_b) {
     return false;
   }
 
-  for (std::size_t value_index = 0; value_index < matrix_a.values.size(); ++value_index) {
-    if (std::abs(matrix_a.values[value_index] - matrix_b.values[value_index]) > 1e-10) {
+  for (std::size_t index = 0; index < matrix_a.values.size(); ++index) {
+    if (std::abs(matrix_a.values[index] - matrix_b.values[index]) > 1e-10) {
       return false;
     }
   }
-
   return true;
 }
 
@@ -73,11 +72,11 @@ class AshihminDMultMatrCrsFuncTests : public ppc::util::BaseRunFuncTests<InType,
     const auto &dense_matrix_c = std::get<3>(test_params);
 
     input_data_ = std::make_tuple(DenseToCRS(dense_matrix_a), DenseToCRS(dense_matrix_b));
-    expected_ = DenseToCRS(dense_matrix_c);
+    expected_output_ = DenseToCRS(dense_matrix_c);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return CompareCRS(output_data, expected_);
+    return CompareCRS(output_data, expected_output_);
   }
 
   InType GetTestInputData() final {
@@ -86,7 +85,7 @@ class AshihminDMultMatrCrsFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
  private:
   InType input_data_;
-  CRSMatrix expected_;
+  CRSMatrix expected_output_;
 };
 
 namespace {
@@ -113,7 +112,6 @@ const auto kTestTasksList = std::tuple_cat(
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = AshihminDMultMatrCrsFuncTests::PrintFuncTestName<AshihminDMultMatrCrsFuncTests>;
-
 INSTANTIATE_TEST_SUITE_P(AshihminSparseCRSTests, AshihminDMultMatrCrsFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace

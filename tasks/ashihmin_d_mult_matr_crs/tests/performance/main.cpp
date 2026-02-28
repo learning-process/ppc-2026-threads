@@ -16,8 +16,8 @@ namespace {
 
 CRSMatrix GenerateBandMatrix(std::size_t matrix_size, std::size_t bandwidth, double fill_value) {
   CRSMatrix matrix_result;
-  matrix_result.rows = matrix_size;
-  matrix_result.cols = matrix_size;
+  matrix_result.rows = static_cast<int>(matrix_size);
+  matrix_result.cols = static_cast<int>(matrix_size);
   matrix_result.row_ptr.resize(matrix_size + 1, 0);
 
   for (std::size_t row_index = 0; row_index < matrix_size; ++row_index) {
@@ -44,7 +44,7 @@ class AshihminDMultMatrCrsPerfTests : public ppc::util::BaseRunPerfTests<InType,
 
   void SetPerfAttributes(ppc::performance::PerfAttr &perf_attributes) override {
     ppc::util::BaseRunPerfTests<InType, OutType>::SetPerfAttributes(perf_attributes);
-    perf_attributes.num_running = 1;  // одно тяжелое прогон, чтобы метрика была читаемой
+    perf_attributes.num_running = 1;
   }
 
   void SetUp() override {
@@ -52,8 +52,8 @@ class AshihminDMultMatrCrsPerfTests : public ppc::util::BaseRunPerfTests<InType,
     CRSMatrix matrix_b = GenerateBandMatrix(kMatrixSize, kMatrixBandwidth, 3.0);
     input_data_ = std::make_tuple(matrix_a, matrix_b);
 
-    expected_output_.rows = kMatrixSize;
-    expected_output_.cols = kMatrixSize;
+    expected_output_.rows = static_cast<int>(kMatrixSize);
+    expected_output_.cols = static_cast<int>(kMatrixSize);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -86,5 +86,4 @@ const auto kPerfTestName = AshihminDMultMatrCrsPerfTests::CustomPerfTestName;
 INSTANTIATE_TEST_SUITE_P(AshihminSparseCRSPerfTests, AshihminDMultMatrCrsPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
-
 }  // namespace ashihmin_d_mult_matr_crs
