@@ -24,11 +24,6 @@ bool ComparePoints(const PixelPoint &a, const PixelPoint &b) {
   return a.col < b.col;
 }
 
-int64_t Orientation(const PixelPoint &p, const PixelPoint &q, const PixelPoint &r) {
-  return (static_cast<int64_t>(q.col - p.col) * (r.row - p.row)) -
-         (static_cast<int64_t>(q.row - p.row) * (r.col - p.col));
-}
-
 }  // namespace
 
 ConvexHullSequential::ConvexHullSequential(const InputType &input) {
@@ -123,6 +118,11 @@ void ConvexHullSequential::ExtractConnectedComponents() {
   }
 }
 
+int64_t ConvexHullSequential::Orientation(const PixelPoint &p, const PixelPoint &q, const PixelPoint &r) const {
+  return (static_cast<int64_t>(q.col - p.col) * (r.row - p.row)) -
+         (static_cast<int64_t>(q.row - p.row) * (r.col - p.col));
+}
+
 std::vector<PixelPoint> ConvexHullSequential::ComputeConvexHull(const std::vector<PixelPoint> &points) const {
   if (points.size() <= 2) {
     return points;
@@ -137,8 +137,9 @@ std::vector<PixelPoint> ConvexHullSequential::ComputeConvexHull(const std::vecto
     return (p.row != lowest_point.row) || (p.col != lowest_point.col);
   });
 
-  std::sort(sorted_points.begin(), sorted_points.end(), [&lowest_point](const PixelPoint &a, const PixelPoint &b) {
-    int64_t orient = Orientation(lowest_point, a, b);
+  std::sort(sorted_points.begin(), sorted_points.end(),
+            [this, &lowest_point](const PixelPoint &a, const PixelPoint &b) {
+    int64_t orient = this->Orientation(lowest_point, a, b);
     if (orient == 0) {
       int64_t dist_a = ((a.row - lowest_point.row) * (a.row - lowest_point.row)) +
                        ((a.col - lowest_point.col) * (a.col - lowest_point.col));
