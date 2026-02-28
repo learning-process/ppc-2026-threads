@@ -31,7 +31,7 @@ class NesterovARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
 
  protected:
   void SetUp() override {
-    int width = -1; 
+    int width = -1;
     int height = -1;
     int channels = -1;
     std::vector<uint8_t> img;
