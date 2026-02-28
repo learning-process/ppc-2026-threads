@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>  // NOLINT(misc-include-cleaner) - используется в шаблоне
+#include <vector>
 
 #include "task/include/task.hpp"
 #include "urin_o_graham_passage/common/include/common.hpp"
