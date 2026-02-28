@@ -10,10 +10,9 @@
 
 namespace urin_o_graham_passage {
 
-// Вспомогательная функция для проверки выпуклости
 bool IsConvexHull(const std::vector<Point> &hull) {
   if (hull.size() < 3) {
-    return false;
+    return true;
   }
 
   for (size_t i = 0; i < hull.size(); i++) {
@@ -50,21 +49,21 @@ TEST_F(UrinOGrahamPassagePerfTest, SeqPerformance) {
   InType input_points = GenerateRandomPoints(num_points);
 
   UrinOGrahamPassageSEQ task(input_points);
-  ppc::task::Task<InType, OutType> *base_task = &task;
 
   auto start = std::chrono::high_resolution_clock::now();
 
-  EXPECT_TRUE(base_task->Validation());
-  EXPECT_TRUE(base_task->PreProcessing());
-  EXPECT_TRUE(base_task->Run());
-  EXPECT_TRUE(base_task->PostProcessing());
+  EXPECT_TRUE(task.Validation());
+  EXPECT_TRUE(task.PreProcessing());
+  EXPECT_TRUE(task.Run());
+  EXPECT_TRUE(task.PostProcessing());
 
   auto end = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
   const auto &hull = task.GetOutput();
+  // ИСПРАВЛЕНО: сравниваем size_t с size_t
+  EXPECT_GE(hull.size(), size_t(3));
   EXPECT_TRUE(IsConvexHull(hull));
-  EXPECT_GE(hull.size(), 3);
 
   std::cout << "SEQ version with " << num_points << " points took " << duration.count() << " ms" << std::endl;
   std::cout << "Convex hull size: " << hull.size() << std::endl;
@@ -79,20 +78,26 @@ TEST_F(UrinOGrahamPassagePerfTest, DifferentSizes) {
     InType test_points = GenerateRandomPoints(size);
 
     UrinOGrahamPassageSEQ task(test_points);
-    ppc::task::Task<InType, OutType> *base_task = &task;
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    base_task->Validation();
-    base_task->PreProcessing();
-    base_task->Run();
-    base_task->PostProcessing();
+    task.Validation();
+    task.PreProcessing();
+    task.Run();
+    task.PostProcessing();
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
-    std::cout << "Size " << size << ": " << duration.count() << " ms, "
-              << "hull size: " << task.GetOutput().size() << std::endl;
+    const auto &hull = task.GetOutput();
+    // ИСПРАВЛЕНО: все сравнения с size_t
+    if (hull.size() >= size_t(3)) {
+      std::cout << "Size " << size << ": " << duration.count() << " ms, "
+                << "hull size: " << hull.size() << std::endl;
+    } else {
+      std::cout << "Size " << size << ": " << duration.count() << " ms, "
+                << "hull size: " << hull.size() << " (invalid)" << std::endl;
+    }
   }
 }
 
