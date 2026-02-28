@@ -2,6 +2,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
+#include <ranges>
+#include <vector>
+
+#include "romanov_m_matrix_ccs/common/include/common.hpp"
 
 namespace romanov_m_matrix_ccs {
 
@@ -34,41 +39,41 @@ bool RomanovMMatrixCCSSeq::PreProcessingImpl() {
 }
 
 bool RomanovMMatrixCCSSeq::RunImpl() {
-  const auto &A = GetInput().first;
-  const auto &B = GetInput().second;
-  auto &C = GetOutput();
+  const auto &a = GetInput().first;
+  const auto &b = GetInput().second;
+  auto &c = GetOutput();
 
-  C.rows_num = A.rows_num;
-  C.cols_num = B.cols_num;
-  C.col_ptrs.assign(C.cols_num + 1, 0);
+  c.rows_num = a.rows_num;
+  c.cols_num = b.cols_num;
+  c.col_ptrs.assign(c.cols_num + 1, 0);
 
-  std::vector<double> accumulator(A.rows_num, 0.0);
+  std::vector<double> accumulator(a.rows_num, 0.0);
   std::vector<size_t> active_rows;
-  std::vector<bool> row_mask(A.rows_num, false);
+  std::vector<bool> row_mask(a.rows_num, false);
 
-  for (size_t j = 0; j < B.cols_num; ++j) {
-    C.col_ptrs[j] = C.vals.size();
+  for (size_t j = 0; j < b.cols_num; ++j) {
+    c.col_ptrs[j] = c.vals.size();
 
-    for (size_t kb = B.col_ptrs[j]; kb < B.col_ptrs[j + 1]; ++kb) {
-      size_t k = B.row_inds[kb];
-      double v_b = B.vals[kb];
+    for (size_t kb = b.col_ptrs[j]; kb < b.col_ptrs[j + 1]; ++kb) {
+      size_t k = b.row_inds[kb];
+      double v_b = b.vals[kb];
 
-      for (size_t ka = A.col_ptrs[k]; ka < A.col_ptrs[k + 1]; ++ka) {
-        size_t i = A.row_inds[ka];
+      for (size_t ka = a.col_ptrs[k]; ka < a.col_ptrs[k + 1]; ++ka) {
+        size_t i = a.row_inds[ka];
         if (!row_mask[i]) {
           row_mask[i] = true;
           active_rows.push_back(i);
         }
-        accumulator[i] += A.vals[ka] * v_b;
+        accumulator[i] += a.vals[ka] * v_b;
       }
     }
 
-    std::sort(active_rows.begin(), active_rows.end());
+    std::ranges::sort(active_rows);
 
     for (size_t row_idx : active_rows) {
       if (std::abs(accumulator[row_idx]) > 1e-12) {
-        C.vals.push_back(accumulator[row_idx]);
-        C.row_inds.push_back(row_idx);
+        c.vals.push_back(accumulator[row_idx]);
+        c.row_inds.push_back(row_idx);
       }
       accumulator[row_idx] = 0.0;
       row_mask[row_idx] = false;
@@ -76,8 +81,8 @@ bool RomanovMMatrixCCSSeq::RunImpl() {
     active_rows.clear();
   }
 
-  C.nnz = C.vals.size();
-  C.col_ptrs[C.cols_num] = C.nnz;
+  c.nnz = c.vals.size();
+  c.col_ptrs[c.cols_num] = c.nnz;
   return true;
 }
 

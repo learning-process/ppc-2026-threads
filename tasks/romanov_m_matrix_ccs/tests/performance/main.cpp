@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <random>
+#include <utility>
 #include <vector>
 
 #include "romanov_m_matrix_ccs/common/include/common.hpp"

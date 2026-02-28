@@ -2,8 +2,10 @@
 
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "romanov_m_matrix_ccs/common/include/common.hpp"
@@ -24,7 +26,8 @@ class RomanovMRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_case = std::get<0>(params);
 
-    MatrixCCS a, b;
+    MatrixCCS a;
+    MatrixCCS b;
     if (test_case == 1) {
       a.rows_num = 2;
       a.cols_num = 2;
