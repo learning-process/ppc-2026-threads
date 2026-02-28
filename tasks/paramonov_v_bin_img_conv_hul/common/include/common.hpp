@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>  // для size_t
 #include <cstdint>
 #include <vector>
 

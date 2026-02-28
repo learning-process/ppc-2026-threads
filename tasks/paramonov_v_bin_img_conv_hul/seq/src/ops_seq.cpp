@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <iterator>  // для std::back_inserter
 #include <stack>
@@ -54,8 +55,8 @@ bool ConvexHullSequential::PostProcessingImpl() {
 }
 
 void ConvexHullSequential::BinarizeImage(uint8_t threshold) {
-  std::transform(working_image_.pixels.begin(), working_image_.pixels.end(), working_image_.pixels.begin(),
-                 [threshold](uint8_t pixel) { return pixel > threshold ? uint8_t{255} : uint8_t{0}; });
+  std::ranges::transform(working_image_.pixels, working_image_.pixels.begin(),
+                         [threshold](uint8_t pixel) { return pixel > threshold ? uint8_t{255} : uint8_t{0}; });
 }
 
 void ConvexHullSequential::FloodFill(int start_row, int start_col, std::vector<bool> &visited,
@@ -125,15 +126,15 @@ std::vector<PixelPoint> ConvexHullSequential::ComputeConvexHull(const std::vecto
   }
 
   // Находим точку с наименьшими координатами
-  auto lowest_point = *std::min_element(points.begin(), points.end(), ComparePoints);
+  auto lowest_point = *std::ranges::min_element(points, ComparePoints);
 
   // Копируем и сортируем по полярному углу
   std::vector<PixelPoint> sorted_points;
-  std::copy_if(points.begin(), points.end(), std::back_inserter(sorted_points), [&lowest_point](const PixelPoint &p) {
-    return !(p.row == lowest_point.row && p.col == lowest_point.col);
+  std::ranges::copy_if(points, std::back_inserter(sorted_points), [&lowest_point](const PixelPoint &p) {
+    return (p.row != lowest_point.row) || (p.col != lowest_point.col);
   });
 
-  std::sort(sorted_points.begin(), sorted_points.end(), [&lowest_point](const PixelPoint &a, const PixelPoint &b) {
+  std::ranges::sort(sorted_points, [&lowest_point](const PixelPoint &a, const PixelPoint &b) {
     int64_t orient = Orientation(lowest_point, a, b);
     if (orient == 0) {
       int64_t dist_a = ((a.row - lowest_point.row) * (a.row - lowest_point.row)) +
