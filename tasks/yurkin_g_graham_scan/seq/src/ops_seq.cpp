@@ -1,11 +1,12 @@
-#include "yurkin_g_graham_scan/common/include/common.hpp"
 #include "yurkin_g_graham_scan/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <cstddef>
 #include <cmath>
+#include <cstddef>
 #include <ranges>
 #include <vector>
+
+#include "yurkin_g_graham_scan/common/include/common.hpp"
 
 namespace yurkin_g_graham_scan {
 
@@ -17,8 +18,8 @@ YurkinGGrahamScanSEQ::YurkinGGrahamScanSEQ(const InType &in) {
 
 namespace {  // anonymous namespace for internal helpers
 long double Cross(const Point &o, const Point &a, const Point &b) {
-  return (static_cast<long double>(a.x - o.x) * static_cast<long double>(b.y - o.y))
-         - (static_cast<long double>(a.y - o.y) * static_cast<long double>(b.x - o.x));
+  return (static_cast<long double>(a.x - o.x) * static_cast<long double>(b.y - o.y)) -
+         (static_cast<long double>(a.y - o.y) * static_cast<long double>(b.x - o.x));
 }
 }  // namespace
 
@@ -77,8 +78,7 @@ bool YurkinGGrahamScanSEQ::RunImpl() {
   OutType lower;
   lower.reserve(pts.size());
   for (const auto &p : pts) {
-    while (lower.size() >= 2 &&
-           Cross(lower[lower.size() - 2], lower[lower.size() - 1], p) <= 0) {
+    while (lower.size() >= 2 && Cross(lower[lower.size() - 2], lower[lower.size() - 1], p) <= 0) {
       lower.pop_back();
     }
     lower.push_back(p);
@@ -87,8 +87,7 @@ bool YurkinGGrahamScanSEQ::RunImpl() {
   OutType upper;
   upper.reserve(pts.size());
   for (const auto &p : std::ranges::reverse_view(pts)) {
-    while (upper.size() >= 2 &&
-           Cross(upper[upper.size() - 2], upper[upper.size() - 1], p) <= 0) {
+    while (upper.size() >= 2 && Cross(upper[upper.size() - 2], upper[upper.size() - 1], p) <= 0) {
       upper.pop_back();
     }
     upper.push_back(p);
