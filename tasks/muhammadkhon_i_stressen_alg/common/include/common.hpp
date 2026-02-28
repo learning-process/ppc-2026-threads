@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -8,15 +9,17 @@
 
 namespace muhammadkhon_i_stressen_alg {
 
-struct MatrixInput {
+struct MatrixData {
+  size_t a_rows{0};
+  size_t a_cols_b_rows{0};
+  size_t b_cols{0};
   std::vector<double> a;
   std::vector<double> b;
-  int n{};
 };
 
-using InType = MatrixInput;
+using InType = MatrixData;
 using OutType = std::vector<double>;
-using TestType = std::tuple<int, std::string>;
+using TestType = std::tuple<size_t, size_t, size_t, int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace muhammadkhon_i_stressen_alg

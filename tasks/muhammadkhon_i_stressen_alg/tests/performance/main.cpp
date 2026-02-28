@@ -11,41 +11,41 @@
 namespace muhammadkhon_i_stressen_alg {
 
 class MuhammadkhonIStressenAlgPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kN_ = 512;
-  InType input_data_{};
-  OutType expected_output_;
-
   void SetUp() override {
-    const int size = kN_ * kN_;
-    std::vector<double> a(static_cast<size_t>(size));
-    std::vector<double> b(static_cast<size_t>(size));
+    const size_t rc = 512;
+    const size_t size = rc * rc;
 
-    for (int i = 0; i < size; ++i) {
-      a[static_cast<size_t>(i)] = static_cast<double>((i % 7) + 1);
-      b[static_cast<size_t>(i)] = static_cast<double>(((i * 3 + 5) % 11) + 1);
+    input_data_.a_rows = rc;
+    input_data_.a_cols_b_rows = rc;
+    input_data_.b_cols = rc;
+
+    input_data_.a.assign(size, 0.0);
+    input_data_.b.assign(size, 0.0);
+
+    for (size_t i = 0; i < size; i++) {
+      input_data_.a[i] = static_cast<double>(i % 100);
+      input_data_.b[i] = static_cast<double>((i + 1) % 100);
     }
 
-    input_data_ = MatrixInput{.a = a, .b = b, .n = kN_};
+    expected_output_.assign(size, 0.0);
 
-    expected_output_.assign(static_cast<size_t>(size), 0.0);
-    for (int row = 0; row < kN_; ++row) {
-      for (int k = 0; k < kN_; ++k) {
-        for (int col = 0; col < kN_; ++col) {
-          expected_output_[static_cast<size_t>((static_cast<ptrdiff_t>(row) * kN_) + col)] +=
-              a[static_cast<size_t>((static_cast<ptrdiff_t>(row) * kN_) + k)] *
-              b[static_cast<size_t>((static_cast<ptrdiff_t>(k) * kN_) + col)];
+    for (size_t i = 0; i < rc; ++i) {
+      for (size_t k = 0; k < rc; ++k) {
+        double temp = input_data_.a[(i * rc) + k];
+        for (size_t j = 0; j < rc; ++j) {
+          expected_output_[(i * rc) + j] += temp * input_data_.b[(k * rc) + j];
         }
       }
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.size() != expected_output_.size()) {
+    if (expected_output_.size() != output_data.size()) {
       return false;
     }
-    constexpr double kEps = 1e-6;
-    for (size_t i = 0; i < output_data.size(); ++i) {
-      if (std::fabs(output_data[i] - expected_output_[i]) > kEps) {
+    constexpr double kEpsilon = 1e-9;
+    for (size_t i = 0; i < expected_output_.size(); ++i) {
+      if (std::abs(expected_output_[i] - output_data[i]) > kEpsilon) {
         return false;
       }
     }
@@ -55,6 +55,10 @@ class MuhammadkhonIStressenAlgPerfTests : public ppc::util::BaseRunPerfTests<InT
   InType GetTestInputData() final {
     return input_data_;
   }
+
+ private:
+  InType input_data_;
+  std::vector<double> expected_output_;
 };
 
 TEST_P(MuhammadkhonIStressenAlgPerfTests, RunPerfModes) {

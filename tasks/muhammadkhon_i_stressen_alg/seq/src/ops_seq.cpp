@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <stdexcept>
+#include <stack>
 #include <utility>
 #include <vector>
 
@@ -17,231 +17,184 @@ MuhammadkhonIStressenAlgSEQ::MuhammadkhonIStressenAlgSEQ(const InType &in) {
 }
 
 bool MuhammadkhonIStressenAlgSEQ::ValidationImpl() {
-  const int n = GetInput().n;
-  if (n <= 0) {
-    return false;
-  }
-  const auto expected = static_cast<size_t>(n) * static_cast<size_t>(n);
-
-  if (expected == 0 || expected > GetInput().a.max_size()) {
-    return false;
-  }
-
-  return std::cmp_equal(GetInput().a.size(), expected) && std::cmp_equal(GetInput().b.size(), expected);
+  const auto &in = GetInput();
+  return in.a_rows > 0 && in.a_cols_b_rows > 0 && in.b_cols > 0 &&
+         in.a.size() == static_cast<size_t>(in.a_rows * in.a_cols_b_rows) &&
+         in.b.size() == static_cast<size_t>(in.a_cols_b_rows * in.b_cols);
 }
 
 bool MuhammadkhonIStressenAlgSEQ::PreProcessingImpl() {
-  n_ = GetInput().n;
-  padded_n_ = NextPowerOfTwo(n_);
-  a_ = PadMatrix(GetInput().a, n_, padded_n_);
-  b_ = PadMatrix(GetInput().b, n_, padded_n_);
-  const auto padded_size = static_cast<size_t>(padded_n_) * static_cast<size_t>(padded_n_);
-  result_.assign(padded_size, 0.0);
+  GetOutput() = {};
+  const auto &in = GetInput();
+  a_rows_ = in.a_rows;
+  a_cols_b_rows_ = in.a_cols_b_rows;
+  b_cols_ = in.b_cols;
+
+  size_t max_dim = std::max({a_rows_, a_cols_b_rows_, b_cols_});
+  padded_n_ = 1;
+  while (padded_n_ < max_dim) {
+    padded_n_ *= 2;
+  }
+
+  padded_a_.assign(padded_n_ * padded_n_, 0.0);
+  padded_b_.assign(padded_n_ * padded_n_, 0.0);
+
+  for (size_t i = 0; i < a_rows_; ++i) {
+    for (size_t j = 0; j < a_cols_b_rows_; ++j) {
+      padded_a_[(i * padded_n_) + j] = in.a[(i * a_cols_b_rows_) + j];
+    }
+  }
+
+  for (size_t i = 0; i < a_cols_b_rows_; ++i) {
+    for (size_t j = 0; j < b_cols_; ++j) {
+      padded_b_[(i * padded_n_) + j] = in.b[(i * b_cols_) + j];
+    }
+  }
   return true;
 }
 
 bool MuhammadkhonIStressenAlgSEQ::RunImpl() {
-  result_ = Strassen(a_, b_, padded_n_);
+  result_c_ = StrassenMultiply(padded_a_, padded_b_, padded_n_);
+
+  auto &out = GetOutput();
+  out.assign(a_rows_ * b_cols_, 0.0);
+
+  for (size_t i = 0; i < a_rows_; ++i) {
+    for (size_t j = 0; j < b_cols_; ++j) {
+      out[(i * b_cols_) + j] = result_c_[(i * padded_n_) + j];
+    }
+  }
   return true;
 }
 
 bool MuhammadkhonIStressenAlgSEQ::PostProcessingImpl() {
-  GetOutput() = UnpadMatrix(result_, padded_n_, n_);
   return true;
 }
 
-std::vector<double> MuhammadkhonIStressenAlgSEQ::PadMatrix(const std::vector<double> &m, int old_n, int new_n) {
-  if (old_n > new_n) {
-    throw std::runtime_error("new_n must be >= old_n for padding");
+std::vector<double> MuhammadkhonIStressenAlgSEQ::Add(const std::vector<double> &mat_a,
+                                                     const std::vector<double> &mat_b) {
+  std::vector<double> res(mat_a.size());
+  for (size_t i = 0; i < mat_a.size(); ++i) {
+    res[i] = mat_a[i] + mat_b[i];
   }
-
-  const auto new_size = static_cast<size_t>(new_n) * static_cast<size_t>(new_n);
-  std::vector<double> result(new_size, 0.0);
-
-  for (int i = 0; i < old_n; ++i) {
-    const auto src_start = m.begin() + static_cast<ptrdiff_t>(i) * static_cast<ptrdiff_t>(old_n);
-    const auto src_end = src_start + old_n;
-    auto dst_start = result.begin() + static_cast<ptrdiff_t>(i) * static_cast<ptrdiff_t>(new_n);
-    std::copy(src_start, src_end, dst_start);
-  }
-
-  return result;
+  return res;
 }
 
-std::vector<double> MuhammadkhonIStressenAlgSEQ::UnpadMatrix(const std::vector<double> &m, int old_n, int new_n) {
-  if (new_n > old_n) {
-    throw std::runtime_error("new_n must be <= old_n for unpadding");
+std::vector<double> MuhammadkhonIStressenAlgSEQ::Subtract(const std::vector<double> &mat_a,
+                                                          const std::vector<double> &mat_b) {
+  std::vector<double> res(mat_a.size());
+  for (size_t i = 0; i < mat_a.size(); ++i) {
+    res[i] = mat_a[i] - mat_b[i];
   }
-
-  const auto new_size = static_cast<size_t>(new_n) * static_cast<size_t>(new_n);
-  std::vector<double> result(new_size);
-
-  for (int i = 0; i < new_n; ++i) {
-    const auto src_start = m.begin() + static_cast<ptrdiff_t>(i) * static_cast<ptrdiff_t>(old_n);
-    const auto src_end = src_start + new_n;
-    auto dst_start = result.begin() + static_cast<ptrdiff_t>(i) * static_cast<ptrdiff_t>(new_n);
-    std::copy(src_start, src_end, dst_start);
-  }
-
-  return result;
+  return res;
 }
 
-std::vector<double> MuhammadkhonIStressenAlgSEQ::Add(const std::vector<double> &a, const std::vector<double> &b,
-                                                     int n) {
-  const auto size = static_cast<size_t>(n) * static_cast<size_t>(n);
-  if (a.size() != size || b.size() != size) {
-    throw std::runtime_error("Invalid matrix sizes in Add");
-  }
-
-  std::vector<double> result(size);
-  for (size_t i = 0; i < size; ++i) {
-    result[i] = a[i] + b[i];
-  }
-  return result;
-}
-
-std::vector<double> MuhammadkhonIStressenAlgSEQ::Sub(const std::vector<double> &a, const std::vector<double> &b,
-                                                     int n) {
-  const auto size = static_cast<size_t>(n) * static_cast<size_t>(n);
-  if (a.size() != size || b.size() != size) {
-    throw std::runtime_error("Invalid matrix sizes in Sub");
-  }
-
-  std::vector<double> result(size);
-  for (size_t i = 0; i < size; ++i) {
-    result[i] = a[i] - b[i];
-  }
-  return result;
-}
-
-void MuhammadkhonIStressenAlgSEQ::Split(const std::vector<double> &parent, int n, std::vector<double> &a11,
-                                        std::vector<double> &a12, std::vector<double> &a21, std::vector<double> &a22) {
-  if (n % 2 != 0) {
-    throw std::runtime_error("Matrix size must be even for Split");
-  }
-
-  const int half = n / 2;
-  const auto half_size = static_cast<size_t>(half) * static_cast<size_t>(half);
-  const auto parent_size = static_cast<size_t>(n) * static_cast<size_t>(n);
-
-  if (parent.size() != parent_size) {
-    throw std::runtime_error("Invalid parent matrix size in Split");
-  }
-
-  a11.resize(half_size);
-  a12.resize(half_size);
-  a21.resize(half_size);
-  a22.resize(half_size);
-
-  for (int i = 0; i < half; ++i) {
-    for (int j = 0; j < half; ++j) {
-      const auto idx = static_cast<size_t>((static_cast<ptrdiff_t>(i) * half) + j);
-      const auto parent_idx_11 = static_cast<size_t>((static_cast<ptrdiff_t>(i) * n) + j);
-      const auto parent_idx_12 = static_cast<size_t>((static_cast<ptrdiff_t>(i) * n) + j + half);
-      const auto parent_idx_21 = static_cast<size_t>((static_cast<ptrdiff_t>(i + half) * n) + j);
-      const auto parent_idx_22 = static_cast<size_t>((static_cast<ptrdiff_t>(i + half) * n) + j + half);
-
-      a11[idx] = parent[parent_idx_11];
-      a12[idx] = parent[parent_idx_12];
-      a21[idx] = parent[parent_idx_21];
-      a22[idx] = parent[parent_idx_22];
-    }
-  }
-}
-
-std::vector<double> MuhammadkhonIStressenAlgSEQ::Merge(const std::vector<double> &c11, const std::vector<double> &c12,
-                                                       const std::vector<double> &c21, const std::vector<double> &c22,
-                                                       int n) {
-  const auto expected_size = static_cast<size_t>(n) * static_cast<size_t>(n);
-  if (c11.size() != expected_size || c12.size() != expected_size || c21.size() != expected_size ||
-      c22.size() != expected_size) {
-    throw std::runtime_error("Invalid matrix sizes in Merge");
-  }
-
-  const int full = n * 2;
-  const auto full_size = static_cast<size_t>(full) * static_cast<size_t>(full);
-  std::vector<double> result(full_size);
-
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < n; ++j) {
-      const auto src = static_cast<size_t>((static_cast<ptrdiff_t>(i) * n) + j);
-      const auto dst_11 = static_cast<size_t>((static_cast<ptrdiff_t>(i) * full) + j);
-      const auto dst_12 = static_cast<size_t>((static_cast<ptrdiff_t>(i) * full) + j + n);
-      const auto dst_21 = static_cast<size_t>((static_cast<ptrdiff_t>(i + n) * full) + j);
-      const auto dst_22 = static_cast<size_t>((static_cast<ptrdiff_t>(i + n) * full) + j + n);
-
-      result[dst_11] = c11[src];
-      result[dst_12] = c12[src];
-      result[dst_21] = c21[src];
-      result[dst_22] = c22[src];
-    }
-  }
-  return result;
-}
-
-std::vector<double> MuhammadkhonIStressenAlgSEQ::NaiveMult(const std::vector<double> &a, const std::vector<double> &b,
-                                                           int n) {
-  const auto size = static_cast<size_t>(n) * static_cast<size_t>(n);
-  const auto expected_size = static_cast<size_t>(n) * static_cast<size_t>(n);
-
-  if (a.size() != expected_size || b.size() != expected_size) {
-    throw std::runtime_error("Invalid matrix sizes in NaiveMult");
-  }
-
-  std::vector<double> c(size, 0.0);
-
-  for (int i = 0; i < n; ++i) {
-    for (int k = 0; k < n; ++k) {
-      const double aik = a[static_cast<size_t>((static_cast<ptrdiff_t>(i) * n) + k)];
-      if (aik != 0.0) {
-        for (int j = 0; j < n; ++j) {
-          c[static_cast<size_t>((static_cast<ptrdiff_t>(i) * n) + j)] +=
-              aik * b[static_cast<size_t>((static_cast<ptrdiff_t>(k) * n) + j)];
-        }
+std::vector<double> MuhammadkhonIStressenAlgSEQ::BaseMultiply(const std::vector<double> &mat_a,
+                                                              const std::vector<double> &mat_b, size_t n) {
+  std::vector<double> res(n * n, 0.0);
+  for (size_t i = 0; i < n; ++i) {
+    for (size_t k = 0; k < n; ++k) {
+      for (size_t j = 0; j < n; ++j) {
+        res[(i * n) + j] += mat_a[(i * n) + k] * mat_b[(k * n) + j];
       }
     }
   }
-  return c;
+  return res;
 }
 
-// NOLINTNEXTLINE(misc-no-recursion)
-std::vector<double> MuhammadkhonIStressenAlgSEQ::Strassen(const std::vector<double> &a, const std::vector<double> &b,
-                                                          int n) {
-  if (n <= kBaseCaseSize) {
-    return NaiveMult(a, b, n);
+void MuhammadkhonIStressenAlgSEQ::PushStrassenSubtasks(std::stack<StrassenFrame> &frames,
+                                                       const std::vector<double> &mat_a,
+                                                       const std::vector<double> &mat_b, size_t n) {
+  size_t h = n / 2;
+  size_t sz = h * h;
+  std::vector<double> a11(sz);
+  std::vector<double> a12(sz);
+  std::vector<double> a21(sz);
+  std::vector<double> a22(sz);
+  std::vector<double> b11(sz);
+  std::vector<double> b12(sz);
+  std::vector<double> b21(sz);
+  std::vector<double> b22(sz);
+
+  for (size_t i = 0; i < h; ++i) {
+    for (size_t j = 0; j < h; ++j) {
+      size_t idx_src = (i * n) + j;
+      size_t idx_dst = (i * h) + j;
+      a11[idx_dst] = mat_a[idx_src];
+      a12[idx_dst] = mat_a[idx_src + h];
+      a21[idx_dst] = mat_a[idx_src + (h * n)];
+      a22[idx_dst] = mat_a[idx_src + (h * n) + h];
+
+      b11[idx_dst] = mat_b[idx_src];
+      b12[idx_dst] = mat_b[idx_src + h];
+      b21[idx_dst] = mat_b[idx_src + (h * n)];
+      b22[idx_dst] = mat_b[idx_src + (h * n) + h];
+    }
   }
 
-  if (n % 2 != 0) {
-    throw std::runtime_error("Matrix size must be even for Strassen algorithm");
-  }
+  frames.push({{}, {}, n, 1});
 
-  int half = n / 2;
-
-  std::vector<double> a11;
-  std::vector<double> a12;
-  std::vector<double> a21;
-  std::vector<double> a22;
-  std::vector<double> b11;
-  std::vector<double> b12;
-  std::vector<double> b21;
-  std::vector<double> b22;
-  Split(a, n, a11, a12, a21, a22);
-  Split(b, n, b11, b12, b21, b22);
-
-  auto p1 = Strassen(Add(a11, a22, half), Add(b11, b22, half), half);
-  auto p2 = Strassen(Add(a21, a22, half), b11, half);
-  auto p3 = Strassen(a11, Sub(b12, b22, half), half);
-  auto p4 = Strassen(a22, Sub(b21, b11, half), half);
-  auto p5 = Strassen(Add(a11, a12, half), b22, half);  // a11 уже перемещено в p3
-  auto p6 = Strassen(Sub(a21, a11, half), Add(b11, b12, half), half);
-  auto p7 = Strassen(Sub(a12, a22, half), Add(b21, b22, half), half);
-
-  auto c11 = Add(Sub(Add(p1, p4, half), p5, half), p7, half);
-  auto c12 = Add(p3, p5, half);
-  auto c21 = Add(p2, p4, half);
-  auto c22 = Add(Sub(Add(p1, p3, half), p2, half), p6, half);
-
-  return Merge(c11, c12, c21, c22, half);
+  frames.push({Subtract(a12, a22), Add(b21, b22), h, 0});
+  frames.push({Subtract(a21, a11), Add(b11, b12), h, 0});
+  frames.push({Add(a11, a12), b22, h, 0});
+  frames.push({a22, Subtract(b21, b11), h, 0});
+  frames.push({a11, Subtract(b12, b22), h, 0});
+  frames.push({Add(a21, a22), b11, h, 0});
+  frames.push({Add(a11, a22), Add(b11, b22), h, 0});
 }
 
+std::vector<double> MuhammadkhonIStressenAlgSEQ::CombineStrassenResults(std::stack<std::vector<double>> &results,
+                                                                        size_t n) {
+  auto p7 = std::move(results.top());
+  results.pop();
+  auto p6 = std::move(results.top());
+  results.pop();
+  auto p5 = std::move(results.top());
+  results.pop();
+  auto p4 = std::move(results.top());
+  results.pop();
+  auto p3 = std::move(results.top());
+  results.pop();
+  auto p2 = std::move(results.top());
+  results.pop();
+  auto p1 = std::move(results.top());
+  results.pop();
+
+  size_t h = n / 2;
+  std::vector<double> res(n * n);
+  for (size_t i = 0; i < h; ++i) {
+    for (size_t j = 0; j < h; ++j) {
+      size_t idx = (i * h) + j;
+      res[(i * n) + j] = p1[idx] + p4[idx] - p5[idx] + p7[idx];
+      res[(i * n) + j + h] = p3[idx] + p5[idx];
+      res[((i + h) * n) + j] = p2[idx] + p4[idx];
+      res[((i + h) * n) + j + h] = p1[idx] - p2[idx] + p3[idx] + p6[idx];
+    }
+  }
+  return res;
+}
+
+std::vector<double> MuhammadkhonIStressenAlgSEQ::StrassenMultiply(const std::vector<double> &mat_a,
+                                                                  const std::vector<double> &mat_b, size_t n) {
+  std::stack<StrassenFrame> frames;
+  std::stack<std::vector<double>> results;
+
+  frames.push({mat_a, mat_b, n, 0});
+
+  while (!frames.empty()) {
+    StrassenFrame current = std::move(frames.top());
+    frames.pop();
+
+    if (current.stage == 0) {
+      if (current.n <= 32) {
+        results.push(BaseMultiply(current.mat_a, current.mat_b, current.n));
+      } else {
+        PushStrassenSubtasks(frames, current.mat_a, current.mat_b, current.n);
+      }
+    } else {
+      results.push(CombineStrassenResults(results, current.n));
+    }
+  }
+  return results.top();
+}
 }  // namespace muhammadkhon_i_stressen_alg

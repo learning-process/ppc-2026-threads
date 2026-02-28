@@ -17,31 +17,38 @@ namespace muhammadkhon_i_stressen_alg {
 class MuhammadkhonIStressenAlgFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return std::get<4>(test_param) + "_" + std::to_string(std::get<0>(test_param)) + "x" +
+           std::to_string(std::get<1>(test_param)) + "_" + std::to_string(std::get<1>(test_param)) + "x" +
+           std::to_string(std::get<2>(test_param)) + "_Elems_Up_To_" + std::to_string(std::get<3>(test_param));
   }
 
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    const int n = std::get<0>(params);
-    const int size = n * n;
+    size_t rows_a = std::get<0>(params);
+    size_t cols_a_rows_b = std::get<1>(params);
+    size_t cols_b = std::get<2>(params);
+    int up_to = std::get<3>(params);
 
-    std::vector<double> a(static_cast<size_t>(size));
-    std::vector<double> b(static_cast<size_t>(size));
-    for (int i = 0; i < size; ++i) {
-      a[static_cast<size_t>(i)] = static_cast<double>((i % 7) + 1);
-      b[static_cast<size_t>(i)] = static_cast<double>(((i * 3 + 5) % 11) + 1);
+    input_data_.a_rows = rows_a;
+    input_data_.a_cols_b_rows = cols_a_rows_b;
+    input_data_.b_cols = cols_b;
+    input_data_.a.assign(rows_a * cols_a_rows_b, 0.0);
+    input_data_.b.assign(cols_a_rows_b * cols_b, 0.0);
+
+    for (size_t i = 0; i < rows_a * cols_a_rows_b; ++i) {
+      input_data_.a[i] = static_cast<double>(i % up_to);
+    }
+    for (size_t i = 0; i < cols_a_rows_b * cols_b; ++i) {
+      input_data_.b[i] = static_cast<double>(i % up_to) * 0.5;
     }
 
-    input_data_ = MatrixInput{.a = a, .b = b, .n = n};
-
-    expected_output_.assign(static_cast<size_t>(size), 0.0);
-    for (int row = 0; row < n; ++row) {
-      for (int k = 0; k < n; ++k) {
-        for (int col = 0; col < n; ++col) {
-          expected_output_[static_cast<size_t>((static_cast<ptrdiff_t>(row) * n) + col)] +=
-              a[static_cast<size_t>((static_cast<ptrdiff_t>(row) * n) + k)] *
-              b[static_cast<size_t>((static_cast<ptrdiff_t>(k) * n) + col)];
+    expected_output_.assign(rows_a * cols_b, 0.0);
+    for (size_t i = 0; i < rows_a; ++i) {
+      for (size_t k = 0; k < cols_a_rows_b; ++k) {
+        double temp = input_data_.a[(i * cols_a_rows_b) + k];
+        for (size_t j = 0; j < cols_b; ++j) {
+          expected_output_[(i * cols_b) + j] += temp * input_data_.b[(k * cols_b) + j];
         }
       }
     }
@@ -51,9 +58,9 @@ class MuhammadkhonIStressenAlgFuncTests : public ppc::util::BaseRunFuncTests<InT
     if (output_data.size() != expected_output_.size()) {
       return false;
     }
-    constexpr double kEps = 1e-9;
+    constexpr double kEpsilon = 1e-9;
     for (size_t i = 0; i < output_data.size(); ++i) {
-      if (std::fabs(output_data[i] - expected_output_[i]) > kEps) {
+      if (std::fabs(output_data[i] - expected_output_[i]) > kEpsilon) {
         return false;
       }
     }
@@ -65,20 +72,20 @@ class MuhammadkhonIStressenAlgFuncTests : public ppc::util::BaseRunFuncTests<InT
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
   OutType expected_output_;
 };
 
 namespace {
 
-TEST_P(MuhammadkhonIStressenAlgFuncTests, StrassenMatmul) {
+TEST_P(MuhammadkhonIStressenAlgFuncTests, MatrixMultiply) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {
-    std::make_tuple(2, "2"), std::make_tuple(3, "3"),   std::make_tuple(5, "5"),
-    std::make_tuple(7, "7"), std::make_tuple(16, "16"),
-};
+const std::array<TestType, 6> kTestParam = {
+    std::make_tuple(3, 3, 3, 50, "SmallPadded"),     std::make_tuple(4, 4, 4, 50, "SmallPowerOfTwo_4x4"),
+    std::make_tuple(15, 5, 15, 150, "MediumPadded"), std::make_tuple(16, 16, 16, 150, "MediumPowerOfTwo_16x16"),
+    std::make_tuple(63, 63, 63, 300, "LargePadded"), std::make_tuple(64, 64, 64, 300, "LargePowerOfTwo_64x64")};
 
 const auto kTestTasksList =
     ppc::util::AddFuncTask<MuhammadkhonIStressenAlgSEQ, InType>(kTestParam, PPC_SETTINGS_muhammadkhon_i_stressen_alg);
@@ -87,7 +94,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = MuhammadkhonIStressenAlgFuncTests::PrintFuncTestName<MuhammadkhonIStressenAlgFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(SeqMatrixTests, MuhammadkhonIStressenAlgFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(StrassenMatrixMultiplyTests, MuhammadkhonIStressenAlgFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
