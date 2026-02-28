@@ -8,7 +8,6 @@
 
 // Явно включаем заголовки, которые предоставляют используемые типы и функции
 #include "ivanova_p_marking_components_on_binary_image/common/include/common.hpp"  // Для InType, test_image, LoadImageFromTxt, CreateTestImage
-#include "task/include/task.hpp"                                                   // Для BaseTask (если нужно)
 
 namespace ivanova_p_marking_components_on_binary_image {
 
