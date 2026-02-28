@@ -23,7 +23,8 @@ bool TochilinEHoarSortSimMerSEQ::PreProcessingImpl() {
   return true;
 }
 
-std::pair<int, int> TochilinEHoarSortSimMerSEQ::Partition(std::vector<int> &arr, int l, int r) {
+std::pair<int, int> TochilinEHoarSortSimMerSEQ::Partition(std::vector<int> &arr,
+                                                          int l, int r) {
   int i = l;
   int j = r;
   int pivot = arr[(l + r) / 2];
@@ -44,7 +45,8 @@ std::pair<int, int> TochilinEHoarSortSimMerSEQ::Partition(std::vector<int> &arr,
   return {i, j};
 }
 
-void TochilinEHoarSortSimMerSEQ::QuickSort(std::vector<int> &arr, int low, int high) {
+void TochilinEHoarSortSimMerSEQ::QuickSort(std::vector<int> &arr, int low,
+                                           int high) {
   if (low >= high) {
     return;
   }
@@ -67,7 +69,9 @@ void TochilinEHoarSortSimMerSEQ::QuickSort(std::vector<int> &arr, int low, int h
   }
 }
 
-std::vector<int> TochilinEHoarSortSimMerSEQ::MergeSortedVectors(const std::vector<int> &a, const std::vector<int> &b) {
+std::vector<int>
+TochilinEHoarSortSimMerSEQ::MergeSortedVectors(const std::vector<int> &a,
+                                               const std::vector<int> &b) {
   std::vector<int> result;
   result.reserve(a.size() + b.size());
   std::ranges::merge(a, b, std::back_inserter(result));
@@ -80,7 +84,8 @@ bool TochilinEHoarSortSimMerSEQ::RunImpl() {
     return false;
   }
 
-  const auto mid = static_cast<std::vector<int>::difference_type>(data.size() / 2);
+  const auto mid =
+      static_cast<std::vector<int>::difference_type>(data.size() / 2);
 
   std::vector<int> left(data.begin(), data.begin() + mid);
   std::vector<int> right(data.begin() + mid, data.end());
@@ -97,4 +102,4 @@ bool TochilinEHoarSortSimMerSEQ::PostProcessingImpl() {
   return std::is_sorted(GetOutput().begin(), GetOutput().end());
 }
 
-}  // namespace tochilin_e_hoar_sort_sim_mer_seq
+} // namespace tochilin_e_hoar_sort_sim_mer_seq

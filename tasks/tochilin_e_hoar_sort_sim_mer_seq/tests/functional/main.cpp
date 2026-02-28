@@ -14,15 +14,18 @@
 
 namespace tochilin_e_hoar_sort_sim_mer_seq {
 
-class TochilinEHoarSortSimMerRunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
- public:
+class TochilinEHoarSortSimMerRunFuncTestsSEQ
+    : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return std::to_string(std::get<0>(test_param)) + "_" +
+           std::get<1>(test_param);
   }
 
- protected:
+protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    TestType params = std::get<static_cast<std::size_t>(
+        ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     const int n = std::get<0>(params);
     const std::string &desc = std::get<1>(params);
@@ -58,11 +61,9 @@ class TochilinEHoarSortSimMerRunFuncTestsSEQ : public ppc::util::BaseRunFuncTest
     return reference == output_data;
   }
 
-  InType GetTestInputData() final {
-    return input_data_;
-  }
+  InType GetTestInputData() final { return input_data_; }
 
- private:
+private:
   InType input_data_;
 };
 
@@ -73,20 +74,29 @@ TEST_P(TochilinEHoarSortSimMerRunFuncTestsSEQ, TestSorting) {
 }
 
 const std::array<TestType, 8> kTestParam = {
-    std::make_tuple(1, "OneElement"),      std::make_tuple(2, "TwoElements"),  std::make_tuple(8, "EightElements"),
-    std::make_tuple(13, "RandomSize"),     std::make_tuple(100, "MediumSize"), std::make_tuple(128, "AlreadySorted"),
-    std::make_tuple(127, "ReverseSorted"), std::make_tuple(512, "LargeSize")};
+    std::make_tuple(1, "OneElement"),
+    std::make_tuple(2, "TwoElements"),
+    std::make_tuple(8, "EightElements"),
+    std::make_tuple(13, "RandomSize"),
+    std::make_tuple(100, "MediumSize"),
+    std::make_tuple(128, "AlreadySorted"),
+    std::make_tuple(127, "ReverseSorted"),
+    std::make_tuple(512, "LargeSize")};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<TochilinEHoarSortSimMerSEQ, InType>(kTestParam, PPC_SETTINGS_tochilin_e_hoar_sort_sim_mer_seq));
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<TochilinEHoarSortSimMerSEQ, InType>(
+        kTestParam, PPC_SETTINGS_tochilin_e_hoar_sort_sim_mer_seq));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName =
-    TochilinEHoarSortSimMerRunFuncTestsSEQ::PrintFuncTestName<TochilinEHoarSortSimMerRunFuncTestsSEQ>;
+    TochilinEHoarSortSimMerRunFuncTestsSEQ::PrintFuncTestName<
+        TochilinEHoarSortSimMerRunFuncTestsSEQ>;
 
-INSTANTIATE_TEST_SUITE_P(HoarSortSimMerTests, TochilinEHoarSortSimMerRunFuncTestsSEQ, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(HoarSortSimMerTests,
+                         TochilinEHoarSortSimMerRunFuncTestsSEQ, kGtestValues,
+                         kPerfTestName);
 
-}  // namespace
+} // namespace
 
-}  // namespace tochilin_e_hoar_sort_sim_mer_seq
+} // namespace tochilin_e_hoar_sort_sim_mer_seq

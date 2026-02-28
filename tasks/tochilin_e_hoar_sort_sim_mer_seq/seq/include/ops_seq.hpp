@@ -9,13 +9,13 @@
 namespace tochilin_e_hoar_sort_sim_mer_seq {
 
 class TochilinEHoarSortSimMerSEQ : public BaseTask {
- public:
+public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
   explicit TochilinEHoarSortSimMerSEQ(const InType &in);
 
- private:
+private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
@@ -23,7 +23,8 @@ class TochilinEHoarSortSimMerSEQ : public BaseTask {
 
   static void QuickSort(std::vector<int> &arr, int low, int high);
   static std::pair<int, int> Partition(std::vector<int> &arr, int l, int r);
-  static std::vector<int> MergeSortedVectors(const std::vector<int> &a, const std::vector<int> &b);
+  static std::vector<int> MergeSortedVectors(const std::vector<int> &a,
+                                             const std::vector<int> &b);
 };
 
-}  // namespace tochilin_e_hoar_sort_sim_mer_seq
+} // namespace tochilin_e_hoar_sort_sim_mer_seq
