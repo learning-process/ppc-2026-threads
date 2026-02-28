@@ -182,7 +182,7 @@ std::vector<double> strassen_iter(std::vector<double> a, std::vector<double> b, 
   while (!st.empty()) {
     frame &f = st.back();
 
-    if (f.n <= k_cutoff) {
+    if (f.n <= kCutoff) {
       NaiveMul(f.a, f.b, f.c, f.n);
 
       frame finished = std::move(f);
