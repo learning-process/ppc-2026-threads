@@ -123,7 +123,7 @@ int64_t ConvexHullSequential::Orientation(const PixelPoint &p, const PixelPoint 
          (static_cast<int64_t>(q.row - p.row) * (r.col - p.col));
 }
 
-std::vector<PixelPoint> ConvexHullSequential::ComputeConvexHull(const std::vector<PixelPoint> &points) const {
+std::vector<PixelPoint> ConvexHullSequential::ComputeConvexHull(const std::vector<PixelPoint> &points) {
   if (points.size() <= 2) {
     return points;
   }

@@ -25,13 +25,15 @@ class ConvexHullSequential : public HullTaskBase {
 
   void BinarizeImage(uint8_t threshold = 128);
   void ExtractConnectedComponents();
-  [[nodiscard]] std::vector<PixelPoint> ComputeConvexHull(const std::vector<PixelPoint> &points) const;
-  void FloodFill(int start_row, int start_col, std::vector<bool> &visited, std::vector<PixelPoint> &component) const;
 
+  // Статические методы, не использующие поля класса
+  [[nodiscard]] static std::vector<PixelPoint> ComputeConvexHull(const std::vector<PixelPoint> &points);
   [[nodiscard]] static int64_t Orientation(const PixelPoint &p, const PixelPoint &q, const PixelPoint &r);
   static size_t PixelIndex(int row, int col, int cols) {
     return (static_cast<size_t>(row) * static_cast<size_t>(cols)) + static_cast<size_t>(col);
   }
+
+  void FloodFill(int start_row, int start_col, std::vector<bool> &visited, std::vector<PixelPoint> &component) const;
 
   InputType working_image_;
 };
