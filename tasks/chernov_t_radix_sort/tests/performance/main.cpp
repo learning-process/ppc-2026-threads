@@ -20,7 +20,7 @@ class ChernovTRadixSortPerfTests : public ppc::util::BaseRunPerfTests<InType, Ou
     unsigned int cur_val = 69;
 
     for (auto &val : input_data_) {
-      cur_val = (1664525 * cur_val) + 1013904223;
+      cur_val = (1664525 * cur_val) + 32433233;
       val = static_cast<int>(cur_val);
     }
   }
