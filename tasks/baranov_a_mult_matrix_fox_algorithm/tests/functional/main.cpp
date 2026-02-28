@@ -97,9 +97,9 @@ class BaranovAFuncTest : public ppc::util::BaseRunFuncTests<baranov_a_mult_matri
       for (size_t j = 0; j < n; ++j) {
         double sum = 0.0;
         for (size_t k = 0; k < n; ++k) {
-          sum += a[i * n + k] * b[k * n + j];
+          sum += a[(i * n) + k] * b[(k * n) + j];
         }
-        c[i * n + j] = sum;
+        c[(i * n) + j] = sum;
       }
     }
   }
@@ -115,7 +115,7 @@ class BaranovAFuncTest : public ppc::util::BaseRunFuncTests<baranov_a_mult_matri
   static void GenerateIdentityMatrix(std::vector<double> &a, std::vector<double> &b, size_t n) {
     for (size_t i = 0; i < n; ++i) {
       for (size_t j = 0; j < n; ++j) {
-        a[i * n + j] = (i == j) ? 1.0 : 0.0;
+        a[(i * n) + j] = (i == j) ? 1.0 : 0.0;
       }
     }
     for (size_t i = 0; i < n * n; ++i) {
@@ -150,21 +150,21 @@ class BaranovAFuncTest : public ppc::util::BaseRunFuncTests<baranov_a_mult_matri
   static void GenerateSparseMatrices(std::vector<double> &a, std::vector<double> &b, size_t n) {
     for (size_t i = 0; i < n; ++i) {
       for (size_t j = 0; j < n; ++j) {
-        a[i * n + j] = 0.0;
-        b[i * n + j] = 0.0;
+        a[(i * n) + j] = 0.0;
+        b[(i * n) + j] = 0.0;
       }
     }
 
     for (size_t i = 0; i < n; ++i) {
-      a[i * n + i] = static_cast<double>(i + 1);
-      b[i * n + i] = static_cast<double>(n - i);
+      a[(i * n) + i] = static_cast<double>(i + 1);
+      b[(i * n) + i] = static_cast<double>(n - i);
     }
 
     if (n > 2) {
-      a[0 * n + 2] = 5.0;
-      a[1 * n + 3] = 7.0;
-      b[2 * n + 1] = 3.0;
-      b[3 * n + 0] = 4.0;
+      a[(0 * n) + 2] = 5.0;
+      a[(1 * n) + 3] = 7.0;
+      b[(2 * n) + 1] = 3.0;
+      b[(3 * n) + 0] = 4.0;
     }
   }
 

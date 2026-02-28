@@ -3,12 +3,14 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <vector>
+
+#include "baranov_a_mult_matrix_fox_algorithm/common/include/common.hpp"
 
 namespace baranov_a_mult_matrix_fox_algorithm_seq {
 
-using baranov_a_mult_matrix_fox_algorithm::InType;
-
-BaranovAMultMatrixFoxAlgorithmSEQ::BaranovAMultMatrixFoxAlgorithmSEQ(const InType &in) {
+BaranovAMultMatrixFoxAlgorithmSEQ::BaranovAMultMatrixFoxAlgorithmSEQ(
+    const baranov_a_mult_matrix_fox_algorithm::InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<double>();
@@ -42,11 +44,28 @@ void BaranovAMultMatrixFoxAlgorithmSEQ::StandardMultiplication(size_t n) {
   }
 }
 
+void ProcessBlock(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b, std::vector<double> &output,
+                  size_t n, size_t i_start, size_t i_end, size_t j_start, size_t j_end, size_t k_start, size_t k_end) {
+  for (size_t i = i_start; i < i_end; ++i) {
+    for (size_t j = j_start; j < j_end; ++j) {
+      double sum = 0.0;
+      for (size_t k = k_start; k < k_end; ++k) {
+        sum += matrix_a[(i * n) + k] * matrix_b[(k * n) + j];
+      }
+      output[(i * n) + j] += sum;
+    }
+  }
+}
+
 void BaranovAMultMatrixFoxAlgorithmSEQ::FoxBlockMultiplication(size_t n, size_t block_size) {
   const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
   auto &output = GetOutput();
+
   size_t num_blocks = (n + block_size - 1) / block_size;
-  std::fill(output.begin(), output.end(), 0.0);
+
+  for (size_t idx = 0; idx < n * n; ++idx) {
+    output[idx] = 0.0;
+  }
 
   for (size_t bi = 0; bi < num_blocks; ++bi) {
     for (size_t bj = 0; bj < num_blocks; ++bj) {
@@ -60,15 +79,7 @@ void BaranovAMultMatrixFoxAlgorithmSEQ::FoxBlockMultiplication(size_t n, size_t 
         size_t k_start = broadcast_block * block_size;
         size_t k_end = std::min(k_start + block_size, n);
 
-        for (size_t i = i_start; i < i_end; ++i) {
-          for (size_t j = j_start; j < j_end; ++j) {
-            double sum = 0.0;
-            for (size_t k = k_start; k < k_end; ++k) {
-              sum += matrix_a[(i * n) + k] * matrix_b[(k * n) + j];
-            }
-            output[(i * n) + j] += sum;
-          }
-        }
+        ProcessBlock(matrix_a, matrix_b, output, n, i_start, i_end, j_start, j_end, k_start, k_end);
       }
     }
   }
