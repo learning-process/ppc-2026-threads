@@ -160,6 +160,55 @@ inline bool IsPixelInTestCase8(int xx, int yy, int width, int height) {
 
 }  // namespace test_image_helpers
 
+// Вспомогательные функции для каждого тестового случая
+namespace test_case_generators {
+
+inline uint8_t GetPixelForTestCase1(int xx, int yy, int width, int height) {
+  return test_image_helpers::IsPixelInTestCase1(xx, yy, width, height) ? 1 : 0;
+}
+
+inline uint8_t GetPixelForTestCase2(int xx, int yy, int width, int height) {
+  return test_image_helpers::IsPixelInTestCase2(xx, yy, width, height) ? 1 : 0;
+}
+
+inline uint8_t GetPixelForTestCase3(int xx, int yy, int width, int height) {
+  return test_image_helpers::IsPixelInTestCase3(xx, yy, width, height) ? 1 : 0;
+}
+
+inline uint8_t GetPixelForTestCase4(int xx, int yy, int width, int height) {
+  return test_image_helpers::IsPixelInTestCase4(xx, yy, width, height) ? 1 : 0;
+}
+
+inline uint8_t GetPixelForTestCase5(int /*xx*/, int /*yy*/, int /*width*/, int /*height*/) {
+  return 0;
+}
+
+inline uint8_t GetPixelForTestCase6(int xx, int yy, int width, int height) {
+  return (xx == width / 2 && yy == height / 2) ? 1 : 0;
+}
+
+inline uint8_t GetPixelForTestCase7(int xx, int yy, int width, int height) {
+  return test_image_helpers::IsPixelInTestCase7(xx, yy, width, height) ? 1 : 0;
+}
+
+inline uint8_t GetPixelForTestCase8(int xx, int yy, int width, int height) {
+  return test_image_helpers::IsPixelInTestCase8(xx, yy, width, height) ? 1 : 0;
+}
+
+inline uint8_t GetPixelForTestCase9(int xx, int yy, int width, int height) {
+  (void)xx;
+  (void)width;
+  return (yy == height / 2) ? 1 : 0;
+}
+
+inline uint8_t GetPixelForTestCase10(int xx, int yy, int width, int height) {
+  (void)yy;
+  (void)height;
+  return (xx == width / 2) ? 1 : 0;
+}
+
+}  // namespace test_case_generators
+
 // Вспомогательная функция для создания тестовых изображений
 inline Image CreateTestImage(int width, int height, int test_case) {
   Image img;
@@ -167,48 +216,49 @@ inline Image CreateTestImage(int width, int height, int test_case) {
   img.height = height;
   img.data.resize(static_cast<size_t>(width) * static_cast<size_t>(height));
 
+  // Выбираем функцию-генератор в зависимости от test_case
+  uint8_t (*generator)(int, int, int, int) = nullptr;
+
+  switch (test_case) {
+    case 1:
+      generator = test_case_generators::GetPixelForTestCase1;
+      break;
+    case 2:
+      generator = test_case_generators::GetPixelForTestCase2;
+      break;
+    case 3:
+      generator = test_case_generators::GetPixelForTestCase3;
+      break;
+    case 4:
+      generator = test_case_generators::GetPixelForTestCase4;
+      break;
+    case 5:
+      generator = test_case_generators::GetPixelForTestCase5;
+      break;
+    case 6:
+      generator = test_case_generators::GetPixelForTestCase6;
+      break;
+    case 7:
+      generator = test_case_generators::GetPixelForTestCase7;
+      break;
+    case 8:
+      generator = test_case_generators::GetPixelForTestCase8;
+      break;
+    case 9:
+      generator = test_case_generators::GetPixelForTestCase9;
+      break;
+    case 10:
+      generator = test_case_generators::GetPixelForTestCase10;
+      break;
+    default:
+      generator = test_case_generators::GetPixelForTestCase5;  // фон по умолчанию
+      break;
+  }
+
   for (int yy = 0; yy < height; ++yy) {
     for (int xx = 0; xx < width; ++xx) {
       int idx = (yy * width) + xx;
-      uint8_t pixel = 0;  // фон по умолчанию
-
-      switch (test_case) {
-        case 1:
-          pixel = test_image_helpers::IsPixelInTestCase1(xx, yy, width, height) ? 1 : 0;
-          break;
-        case 2:
-          pixel = test_image_helpers::IsPixelInTestCase2(xx, yy, width, height) ? 1 : 0;
-          break;
-        case 3:
-          pixel = test_image_helpers::IsPixelInTestCase3(xx, yy, width, height) ? 1 : 0;
-          break;
-        case 4:
-          pixel = test_image_helpers::IsPixelInTestCase4(xx, yy, width, height) ? 1 : 0;
-          break;
-        case 5:
-          pixel = 0;
-          break;
-        case 6:
-          pixel = (xx == width / 2 && yy == height / 2) ? 1 : 0;
-          break;
-        case 7:
-          pixel = test_image_helpers::IsPixelInTestCase7(xx, yy, width, height) ? 1 : 0;
-          break;
-        case 8:
-          pixel = test_image_helpers::IsPixelInTestCase8(xx, yy, width, height) ? 1 : 0;
-          break;
-        case 9:
-          pixel = (yy == height / 2) ? 1 : 0;
-          break;
-        case 10:
-          pixel = (xx == width / 2) ? 1 : 0;
-          break;
-        default:
-          pixel = 0;
-          break;
-      }
-
-      img.data[idx] = pixel;
+      img.data[idx] = generator(xx, yy, width, height);
     }
   }
 

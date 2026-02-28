@@ -59,6 +59,7 @@ class IvanovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
     is_file_test_ = (current_test_case_ >= 11 && current_test_case_ <= 14);
   }
 
+  // main.cpp (часть с CheckTestOutputData)
   bool CheckTestOutputData(OutType &output_data) final {
     if (output_data.size() < 3) {
       return false;
@@ -75,39 +76,29 @@ class IvanovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
 
     // Проверяем количество компонент
     int expected_components = GetExpectedComponents(current_test_case_);
-
     if (num_components != expected_components) {
       return false;
     }
 
     // Проверяем корректность меток
-    std::vector<bool> found_labels(num_components + 1, false);
+    std::vector<bool> found_labels(static_cast<size_t>(num_components) + 1, false);
 
     for (size_t i = 3; i < output_data.size(); ++i) {
       int label = output_data[i];
-      int idx = static_cast<int>(i - 3);
+      size_t idx = i - 3;
+
+      if (idx >= test_image.data.size()) {
+        return false;
+      }
+
       uint8_t original_pixel = test_image.data[idx];
 
-      if (original_pixel == 0) {
-        if (label != 0) {
-          return false;
-        }
-      } else {
-        if (label < 1 || label > num_components) {
-          return false;
-        }
-        found_labels[label] = true;
-      }
-    }
-
-    // Проверяем, что все метки использованы
-    for (int i = 1; i <= num_components; ++i) {
-      if (!found_labels[i]) {
+      if (!ValidatePixel(label, original_pixel, num_components, found_labels)) {
         return false;
       }
     }
 
-    return true;
+    return AreAllLabelsUsed(found_labels, num_components);
   }
 
   InType GetTestInputData() final {
@@ -145,6 +136,28 @@ class IvanovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
  private:
   int current_test_case_ = 0;
   bool is_file_test_ = false;
+
+  bool ValidatePixel(int label, uint8_t original_pixel, int num_components, std::vector<bool> &found_labels) const {
+    if (original_pixel == 0) {
+      return label == 0;
+    }
+
+    if (label < 1 || label > num_components) {
+      return false;
+    }
+
+    found_labels[static_cast<size_t>(label)] = true;
+    return true;
+  }
+
+  bool AreAllLabelsUsed(const std::vector<bool> &found_labels, int num_components) const {
+    for (int i = 1; i <= num_components; ++i) {
+      if (!found_labels[static_cast<size_t>(i)]) {
+        return false;
+      }
+    }
+    return true;
+  }
 };
 
 namespace {
