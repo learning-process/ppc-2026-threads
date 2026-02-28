@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -9,7 +10,7 @@
 namespace nikitin_a_monte_carlo {
 
 // Перечисление для выбора тестовой функции
-enum class FunctionType {
+enum class FunctionType : std::uint8_t {
   kConstant,
   kLinear,
   kProduct,

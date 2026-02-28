@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstddef>
+#include <tuple>
 #include <vector>
 
 // #include "nikitin_a_monte_carlo/all/include/ops_all.hpp"
@@ -17,6 +18,8 @@ namespace nikitin_a_monte_carlo {
 // Тест 1: 3D интегрирование константной функции (самый легкий)
 class NikitinAMonteCarloConstant3DPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
+  NikitinAMonteCarloConstant3DPerfTests() : expected_value_(0.0) {}
+
   void SetUp() override {
     // 3D интегрирование константы f(x,y,z)=1 на кубе [0,10]^3
     // Точное значение интеграла: объем = 10*10*10 = 1000
@@ -49,6 +52,8 @@ class NikitinAMonteCarloConstant3DPerfTests : public ppc::util::BaseRunPerfTests
 // Тест 2: 4D интегрирование линейной функции (средний по сложности)
 class NikitinAMonteCarloLinear4DPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
+  NikitinAMonteCarloLinear4DPerfTests() : expected_value_(0.0) {}
+
   void SetUp() override {
     // 4D интегрирование f=x1 на гиперпараллелепипеде [0,5]^4
     // Точное значение: объем * среднее значение = (5^4) * (2.5) = 625 * 2.5 = 1562.5
@@ -80,6 +85,8 @@ class NikitinAMonteCarloLinear4DPerfTests : public ppc::util::BaseRunPerfTests<I
 // Тест 3: 5D интегрирование сложной функции (квадратичная) - самый тяжелый
 class NikitinAMonteCarloQuadratic5DPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
+  NikitinAMonteCarloQuadratic5DPerfTests() : expected_value_(0.0) {}
+
   void SetUp() override {
     // 5D интегрирование f = x1^2 + x2^2 на гиперпараллелепипеде [0,2]^5
     // Точное значение: объем * среднее значение
@@ -141,6 +148,8 @@ const auto kLinear4DPerfTestName = NikitinAMonteCarloLinear4DPerfTests::CustomPe
 
 INSTANTIATE_TEST_SUITE_P(RunPerfLinear4D, NikitinAMonteCarloLinear4DPerfTests, 
                          kLinear4DGtestValues, kLinear4DPerfTestName);
+
+
 
 }  // namespace
 

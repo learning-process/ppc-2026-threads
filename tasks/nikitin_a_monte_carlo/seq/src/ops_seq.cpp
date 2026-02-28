@@ -1,5 +1,6 @@
 #include "nikitin_a_monte_carlo/seq/include/ops_seq.hpp"
 
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <vector>
@@ -19,7 +20,7 @@ double EvaluateFunction(const std::vector<double> &point, FunctionType type) {
     case FunctionType::kProduct:
       return point[0] * point[1];
     case FunctionType::kQuadratic:
-      return point[0] * point[0] + point[1] * point[1];
+      return (point[0] * point[0]) + (point[1] * point[1]);
     case FunctionType::kExponential:
       return std::exp(point[0]);
     default:
@@ -30,8 +31,8 @@ double EvaluateFunction(const std::vector<double> &point, FunctionType type) {
 // Генерация квазислучайной последовательности Кронекера
 double KroneckerSequence(int index, int dimension) {
   // Используем простые числа для разных измерений
-  const double primes[] = {2.0, 3.0, 5.0, 7.0, 11.0, 13.0, 17.0, 19.0, 23.0, 29.0};
-  double alpha = std::sqrt(primes[dimension % 10]);
+  const std::array<double, 10> primes = {2.0, 3.0, 5.0, 7.0, 11.0, 13.0, 17.0, 19.0, 23.0, 29.0};
+  double alpha = std::sqrt(primes[static_cast<std::size_t>(dimension % 10)]);
   // Берем дробную часть
   alpha = alpha - std::floor(alpha);
   return std::fmod(index * alpha, 1.0);
@@ -65,11 +66,7 @@ bool NikitinAMonteCarloSEQ::ValidationImpl() {
   }
 
   // Количество точек должно быть положительным
-  if (num_points <= 0) {
-    return false;
-  }
-
-  return true;
+  return num_points > 0;
 }
 
 bool NikitinAMonteCarloSEQ::PreProcessingImpl() {
@@ -100,7 +97,7 @@ bool NikitinAMonteCarloSEQ::RunImpl() {
       // Получаем значение в единичном гиперкубе [0,1)
       double u = KroneckerSequence(i, static_cast<int>(j));
       // Масштабируем в реальную область интегрирования
-      point[j] = lower_bounds[j] + u * (upper_bounds[j] - lower_bounds[j]);
+      point[j] = lower_bounds[j] + (u * (upper_bounds[j] - lower_bounds[j]));
     }
 
     // Вычисляем значение функции в точке

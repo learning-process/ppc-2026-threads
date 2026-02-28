@@ -1,12 +1,8 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <limits>
-#include <random>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -15,7 +11,6 @@
 #include "nikitin_a_monte_carlo/common/include/common.hpp"
 #include "nikitin_a_monte_carlo/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace nikitin_a_monte_carlo {
 
@@ -143,9 +138,8 @@ class NikitinAMonteCarloFuncTests : public ppc::util::BaseRunFuncTests<InType, O
     if (std::abs(expected_output_) > 1e-10) {
       double relative_error = std::abs(output_data - expected_output_) / std::abs(expected_output_);
       return relative_error <= tolerance_;
-    } else {
-      return std::abs(output_data - expected_output_) <= tolerance_;
     }
+    return std::abs(output_data - expected_output_) <= tolerance_;
   }
 
   InType GetTestInputData() final {
