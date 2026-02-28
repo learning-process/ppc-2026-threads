@@ -109,35 +109,43 @@ class LobanovDMultiplyMatrixPerfTest : public ::testing::TestWithParam<std::tupl
  protected:
   void SetUp() override {
     const auto &params = GetParam();
-    dimension_ = std::get<0>(params);
-    density_ = std::get<1>(params);
-    test_name_ = std::get<2>(params);
+    dimension = std::get<0>(params);
+    density = std::get<1>(params);
+    test_name = std::get<2>(params);
   }
 
-  void RunPerformanceTest() {
-    const auto matrix_a = CreateRandomCompressedRowMatrix(dimension_, dimension_, density_, 100);
-    const auto matrix_b = CreateRandomCompressedRowMatrix(dimension_, dimension_, density_, 200);
+  // Функция для подготовки данных
+  std::pair<CompressedRowMatrix, CompressedRowMatrix> PrepareMatrices() const {
+    return {CreateRandomCompressedRowMatrix(dimension, dimension, density, 100),
+            CreateRandomCompressedRowMatrix(dimension, dimension, density, 200)};
+  }
 
-    LobanovMultyMatrixSEQ task(std::make_pair(matrix_a, matrix_b));
+  // Функция для выполнения задачи
+  bool ExecuteTask(LobanovMultyMatrixSEQ &task) const {
+    return task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing();
+  }
 
-    ASSERT_TRUE(task.Validation());
-    ASSERT_TRUE(task.PreProcessing());
-
+  // Функция для измерения времени выполнения
+  template <typename Func>
+  auto MeasureTime(Func &&func) const {
     const auto start = std::chrono::high_resolution_clock::now();
-    ASSERT_TRUE(task.Run());
+    func();
     const auto end = std::chrono::high_resolution_clock::now();
-    const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    return std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  }
 
-    ASSERT_TRUE(task.PostProcessing());
+  // Функция для проверки результатов
+  void ValidateResult(const CompressedRowMatrix &result) const {
+    EXPECT_EQ(result.row_count, dimension);
+    EXPECT_EQ(result.column_count, dimension);
+  }
 
-    const auto result = task.GetOutput();
-
-    EXPECT_EQ(result.row_count, dimension_);
-    EXPECT_EQ(result.column_count, dimension_);
-
-    std::cout << "Test: " << test_name_ << '\n';
-    std::cout << "Matrix size: " << dimension_ << "x" << dimension_ << '\n';
-    std::cout << "Density: " << density_ << '\n';
+  // Функция для вывода результатов
+  void PrintResults(const std::string &test_name, int dimension, double density, const CompressedRowMatrix &matrix_a,
+                    const CompressedRowMatrix &matrix_b, const CompressedRowMatrix &result, auto duration) const {
+    std::cout << "Test: " << test_name << '\n';
+    std::cout << "Matrix size: " << dimension << "x" << dimension << '\n';
+    std::cout << "Density: " << density << '\n';
     std::cout << "NNZ in A: " << matrix_a.non_zero_count << '\n';
     std::cout << "NNZ in B: " << matrix_b.non_zero_count << '\n';
     std::cout << "NNZ in result: " << result.non_zero_count << '\n';
@@ -145,9 +153,26 @@ class LobanovDMultiplyMatrixPerfTest : public ::testing::TestWithParam<std::tupl
     std::cout << "------------------------\n";
   }
 
-  int dimension_ = 0;
-  double density_ = 0.0;
-  std::string test_name_;
+  // Основная функция теперь очень простая
+  void RunPerformanceTest() {
+    // Подготовка
+    const auto [matrix_a, matrix_b] = PrepareMatrices();
+    LobanovMultyMatrixSEQ task(std::make_pair(matrix_a, matrix_b));
+
+    // Выполнение с измерением времени
+    const auto duration = MeasureTime([&]() { ASSERT_TRUE(ExecuteTask(task)); });
+
+    // Получение и проверка результата
+    const auto result = task.GetOutput();
+    ValidateResult(result);
+
+    // Вывод результатов
+    PrintResults(test_name, dimension, density, matrix_a, matrix_b, result, duration);
+  }
+
+  int dimension = 0;
+  double density = 0.0;
+  std::string test_name;
 };
 
 TEST_P(LobanovDMultiplyMatrixPerfTest, PerformanceTest) {

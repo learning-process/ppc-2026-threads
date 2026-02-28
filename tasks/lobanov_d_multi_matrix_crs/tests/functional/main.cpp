@@ -16,29 +16,29 @@ namespace {
 
 CompressedRowMatrix CreateRandomCompressedRowMatrix(int row_count, int column_count, double density_factor,
                                                     int seed = 42) {
-  CompressedRowMatrix result_matrix;
-  result_matrix.row_count = row_count;
-  result_matrix.column_count = column_count;
-  result_matrix.non_zero_count = 0;
+  CompressedRowMatrix resultmatrix;
+  resultmatrix.row_count = row_count;
+  resultmatrix.column_count = column_count;
+  resultmatrix.non_zero_count = 0;
 
-  result_matrix.value_data.clear();
-  result_matrix.column_index_data.clear();
-  result_matrix.row_pointer_data.clear();
+  resultmatrix.value_data.clear();
+  resultmatrix.column_index_data.clear();
+  resultmatrix.row_pointer_data.clear();
 
   if (row_count <= 0 || column_count <= 0) {
-    result_matrix.row_pointer_data.assign(static_cast<std::size_t>(row_count) + 1U, 0);
-    return result_matrix;
+    resultmatrix.row_pointer_data.assign(static_cast<std::size_t>(row_count) + 1U, 0);
+    return resultmatrix;
   }
 
   density_factor = std::clamp(density_factor, 0.0, 1.0);
 
-  std::mt19937 rng(static_cast<std::mt19937::result_type>(seed));
+  std::mt19937 rng(static_cast<std::mt19937::resulttype>(seed));
 
   std::hash<std::string> hasher;
   const std::string param_hash =
       std::to_string(row_count) + "_" + std::to_string(column_count) + "_" + std::to_string(density_factor);
-  const auto hash_value = static_cast<std::mt19937::result_type>(hasher(param_hash));
-  rng.seed(static_cast<std::mt19937::result_type>(seed) + hash_value);
+  const auto hash_value = static_cast<std::mt19937::resulttype>(hasher(param_hash));
+  rng.seed(static_cast<std::mt19937::resulttype>(seed) + hash_value);
 
   std::uniform_real_distribution<double> val_dist(0.1, 10.0);
   std::uniform_real_distribution<double> prob_dist(0.0, 1.0);
@@ -58,17 +58,17 @@ CompressedRowMatrix CreateRandomCompressedRowMatrix(int row_count, int column_co
     }
   }
 
-  result_matrix.non_zero_count = nnz_counter;
+  resultmatrix.non_zero_count = nnz_counter;
 
   if (nnz_counter > 0) {
-    result_matrix.value_data.reserve(static_cast<std::size_t>(nnz_counter));
-    result_matrix.column_index_data.reserve(static_cast<std::size_t>(nnz_counter));
+    resultmatrix.value_data.reserve(static_cast<std::size_t>(nnz_counter));
+    resultmatrix.column_index_data.reserve(static_cast<std::size_t>(nnz_counter));
   }
 
-  result_matrix.row_pointer_data.assign(static_cast<std::size_t>(row_count) + 1U, 0);
+  resultmatrix.row_pointer_data.assign(static_cast<std::size_t>(row_count) + 1U, 0);
 
   int offset = 0;
-  result_matrix.row_pointer_data[0] = 0;
+  resultmatrix.row_pointer_data[0] = 0;
 
   for (int i = 0; i < row_count; ++i) {
     auto &row_cols = col_indices_per_row[static_cast<std::size_t>(i)];
@@ -85,47 +85,65 @@ CompressedRowMatrix CreateRandomCompressedRowMatrix(int row_count, int column_co
     std::ranges::sort(sorted_pairs);
 
     for (const auto &pair : sorted_pairs) {
-      result_matrix.column_index_data.push_back(pair.first);
-      result_matrix.value_data.push_back(pair.second);
+      resultmatrix.column_index_data.push_back(pair.first);
+      resultmatrix.value_data.push_back(pair.second);
     }
 
     offset += static_cast<int>(row_cols.size());
-    result_matrix.row_pointer_data[static_cast<std::size_t>(i) + 1U] = offset;
+    resultmatrix.row_pointer_data[static_cast<std::size_t>(i) + 1U] = offset;
   }
 
-  result_matrix.non_zero_count = static_cast<int>(result_matrix.value_data.size());
+  resultmatrix.non_zero_count = static_cast<int>(resultmatrix.value_data.size());
 
-  if (!result_matrix.row_pointer_data.empty()) {
-    result_matrix.row_pointer_data.back() = result_matrix.non_zero_count;
+  if (!resultmatrix.row_pointer_data.empty()) {
+    resultmatrix.row_pointer_data.back() = resultmatrix.non_zero_count;
   }
 
-  return result_matrix;
+  return resultmatrix;
 }
 
 class LobanovDMultiplyMatrixFuncTest : public ::testing::Test {
  protected:
   void SetUp() override {}
 
+  // Разбиваем RunTest на несколько функций
+  bool ValidateTask(LobanovMultyMatrixSEQ &task) {
+    return task.Validation();
+  }
+
+  bool PreProcessTask(LobanovMultyMatrixSEQ &task) {
+    return task.PreProcessing();
+  }
+
+  bool ExecuteTask(LobanovMultyMatrixSEQ &task) {
+    return task.Run();
+  }
+
+  bool PostProcessTask(LobanovMultyMatrixSEQ &task) {
+    return task.PostProcessing();
+  }
+
   void RunTest(const CompressedRowMatrix &matrix_a, const CompressedRowMatrix &matrix_b) {
     LobanovMultyMatrixSEQ task(std::make_pair(matrix_a, matrix_b));
 
-    ASSERT_TRUE(task.Validation());
-    ASSERT_TRUE(task.PreProcessing());
-    ASSERT_TRUE(task.Run());
-    ASSERT_TRUE(task.PostProcessing());
+    // Каждый ASSERT теперь вызывает отдельную функцию
+    ASSERT_TRUE(ValidateTask(task));
+    ASSERT_TRUE(PreProcessTask(task));
+    ASSERT_TRUE(ExecuteTask(task));
+    ASSERT_TRUE(PostProcessTask(task));
 
-    result_ = task.GetOutput();
+    result = task.GetOutput();
   }
 
-  bool CheckResult(const CompressedRowMatrix &expected) const {
-    if (result_.row_count != expected.row_count || result_.column_count != expected.column_count) {
+  [[nodiscard]] bool CheckResult(const CompressedRowMatrix &expected) const {
+    if (result.row_count != expected.row_count || result.column_count != expected.column_count) {
       return false;
     }
 
-    return result_.row_pointer_data.size() == expected.row_pointer_data.size();
+    return result.row_pointer_data.size() == expected.row_pointer_data.size();
   }
 
-  CompressedRowMatrix result_;
+  CompressedRowMatrix result;
 };
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, SmallMatrices) {
@@ -134,9 +152,9 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, SmallMatrices) {
 
   RunTest(matrix_a, matrix_b);
 
-  EXPECT_EQ(result_.row_count, 10);
-  EXPECT_EQ(result_.column_count, 10);
-  EXPECT_GE(result_.non_zero_count, 0);
+  EXPECT_EQ(result.row_count, 10);
+  EXPECT_EQ(result.column_count, 10);
+  EXPECT_GE(result.non_zero_count, 0);
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, RectangularMatrices) {
@@ -145,9 +163,9 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, RectangularMatrices) {
 
   RunTest(matrix_a, matrix_b);
 
-  EXPECT_EQ(result_.row_count, 10);
-  EXPECT_EQ(result_.column_count, 8);
-  EXPECT_GE(result_.non_zero_count, 0);
+  EXPECT_EQ(result.row_count, 10);
+  EXPECT_EQ(result.column_count, 8);
+  EXPECT_GE(result.non_zero_count, 0);
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, SparseMatrices) {
@@ -156,9 +174,9 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, SparseMatrices) {
 
   RunTest(matrix_a, matrix_b);
 
-  EXPECT_EQ(result_.row_count, 50);
-  EXPECT_EQ(result_.column_count, 50);
-  EXPECT_GE(result_.non_zero_count, 0);
+  EXPECT_EQ(result.row_count, 50);
+  EXPECT_EQ(result.column_count, 50);
+  EXPECT_GE(result.non_zero_count, 0);
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, DenseMatrices) {
@@ -167,9 +185,9 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, DenseMatrices) {
 
   RunTest(matrix_a, matrix_b);
 
-  EXPECT_EQ(result_.row_count, 20);
-  EXPECT_EQ(result_.column_count, 20);
-  EXPECT_GE(result_.non_zero_count, 0);
+  EXPECT_EQ(result.row_count, 20);
+  EXPECT_EQ(result.column_count, 20);
+  EXPECT_GE(result.non_zero_count, 0);
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, LargeRowsSmallCols) {
@@ -178,9 +196,9 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, LargeRowsSmallCols) {
 
   RunTest(matrix_a, matrix_b);
 
-  EXPECT_EQ(result_.row_count, 100);
-  EXPECT_EQ(result_.column_count, 5);
-  EXPECT_GE(result_.non_zero_count, 0);
+  EXPECT_EQ(result.row_count, 100);
+  EXPECT_EQ(result.column_count, 5);
+  EXPECT_GE(result.non_zero_count, 0);
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, SmallRowsLargeCols) {
@@ -189,9 +207,9 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, SmallRowsLargeCols) {
 
   RunTest(matrix_a, matrix_b);
 
-  EXPECT_EQ(result_.row_count, 3);
-  EXPECT_EQ(result_.column_count, 5);
-  EXPECT_GE(result_.non_zero_count, 0);
+  EXPECT_EQ(result.row_count, 3);
+  EXPECT_EQ(result.column_count, 5);
+  EXPECT_GE(result.non_zero_count, 0);
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, IdentityMultiplication) {
@@ -207,8 +225,8 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, IdentityMultiplication) {
 
   RunTest(identity, matrix_b);
 
-  EXPECT_EQ(result_.row_count, 5);
-  EXPECT_EQ(result_.column_count, 5);
+  EXPECT_EQ(result.row_count, 5);
+  EXPECT_EQ(result.column_count, 5);
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, ZeroMatrix) {
@@ -222,9 +240,9 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, ZeroMatrix) {
 
   RunTest(zero_matrix, matrix_b);
 
-  EXPECT_EQ(result_.row_count, 5);
-  EXPECT_EQ(result_.column_count, 5);
-  EXPECT_EQ(result_.non_zero_count, 0);
+  EXPECT_EQ(result.row_count, 5);
+  EXPECT_EQ(result.column_count, 5);
+  EXPECT_EQ(result.non_zero_count, 0);
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, ValidationFailure) {
