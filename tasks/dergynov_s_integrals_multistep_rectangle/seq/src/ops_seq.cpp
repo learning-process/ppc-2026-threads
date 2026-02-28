@@ -14,18 +14,28 @@ DergynovSIntegralsMultistepRectangleSEQ::DergynovSIntegralsMultistepRectangleSEQ
 
 bool DergynovSIntegralsMultistepRectangleSEQ::ValidationImpl() {
   const auto &[func, borders, n] = GetInput();
-  
-  if (!func) return false;
-  
-  if (n <= 0) return false;
-  
-  if (borders.empty()) return false;
-  
-  for (const auto &[left, right] : borders) {
-    if (!std::isfinite(left) || !std::isfinite(right)) return false;
-    if (left >= right) return false;
+
+  if (!func) {
+    return false;
   }
-  
+
+  if (n <= 0) {
+    return false;
+  }
+
+  if (borders.empty()) {
+    return false;
+  }
+
+  for (const auto &[left, right] : borders) {
+    if (!std::isfinite(left) || !std::isfinite(right)) {
+      return false;
+    }
+    if (left >= right) {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -38,7 +48,9 @@ namespace {
 bool NextIndex(std::vector<int> &idx, int dim, int n) {
   for (int pos = 0; pos < dim; ++pos) {
     ++idx[pos];
-    if (idx[pos] < n) return true;
+    if (idx[pos] < n) {
+      return true;
+    }
     idx[pos] = 0;
   }
   return false;
@@ -51,7 +63,7 @@ bool DergynovSIntegralsMultistepRectangleSEQ::RunImpl() {
 
   std::vector<double> h(dim);
   double cell_volume = 1.0;
-  
+
   for (int i = 0; i < dim; ++i) {
     const double left = borders[i].first;
     const double right = borders[i].second;
@@ -67,16 +79,18 @@ bool DergynovSIntegralsMultistepRectangleSEQ::RunImpl() {
     for (int i = 0; i < dim; ++i) {
       point[i] = borders[i].first + (idx[i] + 0.5) * h[i];
     }
-    
+
     double f_val = func(point);
-    if (!std::isfinite(f_val)) return false;
-    
+    if (!std::isfinite(f_val)) {
+      return false;
+    }
+
     sum += f_val;
-    
+
   } while (NextIndex(idx, dim, n));
 
   GetOutput() = sum * cell_volume;
-  
+
   return std::isfinite(GetOutput());
 }
 

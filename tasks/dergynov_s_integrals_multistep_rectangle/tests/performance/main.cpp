@@ -17,13 +17,8 @@ class DergynovSIntegralsRectanglePerfTest : public ppc::util::BaseRunPerfTests<I
 
  protected:
   void SetUp() override {
-    auto func = [](const std::vector<double>& x) { 
-      return std::sin(x[0]) * std::sin(x[1]); 
-    };
-    std::vector<std::pair<double, double>> borders = {
-        {0.0, std::numbers::pi},
-        {0.0, std::numbers::pi}
-    };
+    auto func = [](const std::vector<double> &x) { return std::sin(x[0]) * std::sin(x[1]); };
+    std::vector<std::pair<double, double>> borders = {{0.0, std::numbers::pi}, {0.0, std::numbers::pi}};
     input_data_ = InType{func, borders, kN};
     expected_ = 4.0;
   }
