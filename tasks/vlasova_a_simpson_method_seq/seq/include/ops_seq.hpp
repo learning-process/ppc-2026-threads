@@ -1,6 +1,5 @@
 #pragma once
 #include <cstddef>
-#include <functional>
 #include <vector>
 
 #include "task/include/task.hpp"
@@ -22,12 +21,14 @@ class VlasovaASimpsonMethodSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  // Рекурсивное вычисление интеграла
-  double SimpsonRecursive(size_t dim, std::vector<double> &point);
+  void NextIndex(std::vector<int> &Index);
+  double GetWeight(const std::vector<int> &Index) const;
+  std::vector<double> GetPoint(const std::vector<int> &Index) const;
 
   InType task_data_;
   double result_;
-  std::vector<double> h_;  // шаги интегрирования
+  std::vector<double> h_;        // шаги интегрирования
+  std::vector<int> dimensions_;  // количество точек по каждому измерению (n[i] + 1
 };
 
 }  // namespace vlasova_a_simpson_method_seq

@@ -43,46 +43,78 @@ bool VlasovaASimpsonMethodSEQ::PreProcessingImpl() {
 
   size_t dim = task_data_.a.size();
   h_.resize(dim);
+  dimensions_.resize(dim);
+
   for (size_t i = 0; i < dim; ++i) {
     h_[i] = (task_data_.b[i] - task_data_.a[i]) / task_data_.n[i];
+    dimensions_[i] = task_data_.n[i] + 1;
   }
 
   return true;
 }
 
-double VlasovaASimpsonMethodSEQ::SimpsonRecursive(size_t dim, std::vector<double> &point) {
-  size_t total_dims = task_data_.a.size();
-
-  if (dim == total_dims) {
-    return task_data_.func(point);
-  }
-
-  double result = 0.0;
-  int steps = task_data_.n[dim];
-
-  for (int i = 0; i <= steps; ++i) {
-    point[dim] = task_data_.a[dim] + (i * h_[dim]);
-
-    double weight = 1.0;
-    if (i == 0 || i == steps) {
-      weight = 1.0;
-    } else if (i % 2 == 0) {
-      weight = 2.0;
-    } else {
-      weight = 4.0;
+void VlasovaASimpsonMethodSEQ::NextIndex(std::vector<int> &Index) {
+  size_t dim = Index.size();
+  for (size_t i = 0; i < dim; ++i) {
+    Index[i]++;
+    if (Index[i] < dimensions_[i]) {
+      return;
     }
+    Index[i] = 0;
+  }
+}
 
-    result = result + (weight * SimpsonRecursive(dim + 1, point));
+double VlasovaASimpsonMethodSEQ::GetWeight(const std::vector<int> &Index) const {
+  double weight = 1.0;
+  size_t dim = Index.size();
+
+  for (size_t i = 0; i < dim; ++i) {
+    int idx = Index[i];
+    int steps = task_data_.n[i];
+
+    if (idx == 0 || idx == steps) {
+      weight *= 1.0;
+    } else if (idx % 2 == 0) {
+      weight *= 2.0;
+    } else {
+      weight *= 4.0;
+    }
   }
 
-  return result;
+  return weight;
+}
+
+std::vector<double> VlasovaASimpsonMethodSEQ::GetPoint(const std::vector<int> &Index) const {
+  size_t dim = Index.size();
+  std::vector<double> point(dim);
+
+  for (size_t i = 0; i < dim; ++i) {
+    point[i] = task_data_.a[i] + (Index[i] * h_[i]);
+  }
+
+  return point;
 }
 
 bool VlasovaASimpsonMethodSEQ::RunImpl() {
   size_t dim = task_data_.a.size();
-  std::vector<double> point(dim, 0.0);
+  std::vector<int> cur_Index(dim, 0);
 
-  double sum = SimpsonRecursive(0, point);
+  double sum = 0.0;
+  bool has_more = true;
+
+  while (has_more) {
+    double weight = GetWeight(cur_Index);
+    std::vector<double> cur_point = GetPoint(cur_Index);
+    sum += weight * task_data_.func(cur_point);
+    NextIndex(cur_Index);
+    has_more = false;
+    for (size_t i = 0; i < dim; ++i) {
+      if (cur_Index[i] != 0) {
+        has_more = true;
+        break;
+      }
+    }
+  }
 
   // Множитель: (h1 * h2 * ... * hd) / 3^d
   double factor = 1.0;

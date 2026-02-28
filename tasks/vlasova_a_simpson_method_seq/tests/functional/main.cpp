@@ -38,7 +38,7 @@ class VlasovaASimpsonMethodFuncTests : public ppc::util::BaseRunFuncTests<InType
     } else if (func_name.find("linear") != std::string::npos) {
       func = [](const std::vector<double> &x) { return x[0]; };
     } else if (func_name.find("quadratic") != std::string::npos) {
-      func = [](const std::vector<double> &x) { return x[0] * x[0] + (x.size() > 1 ? x[1] * x[1] : 0.0); };
+      func = [](const std::vector<double> &x) { return (x[0] * x[0]) + (x.size() > 1 ? x[1] * x[1] : 0.0); };
     } else if (func_name.find("product") != std::string::npos) {
       func = [](const std::vector<double> &x) {
         double prod = 1.0;
@@ -99,7 +99,7 @@ const auto kTestName = VlasovaASimpsonMethodFuncTests::PrintFuncTestName<Vlasova
 
 INSTANTIATE_TEST_SUITE_P(SimpsonMethodTests, VlasovaASimpsonMethodFuncTests, kGtestValues, kTestName);
 
-TEST_P(VlasovaASimpsonMethodFuncTests, ComputeIntegral) {
+TEST_P(VlasovaASimpsonMethodFuncTests, GetIntegral) {
   ExecuteTest(GetParam());
 }
 
