@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <tuple>
@@ -23,7 +24,7 @@ struct Image {
 
 struct InputData {
   Image image;
-  float sigma = 1.0f;
+  float sigma = 1.0F;
 };
 
 using InType = InputData;

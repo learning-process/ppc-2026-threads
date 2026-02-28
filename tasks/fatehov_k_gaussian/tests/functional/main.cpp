@@ -1,13 +1,16 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
+#include <array>
+#include <cstddef>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "fatehov_k_gaussian/common/include/common.hpp"
 #include "fatehov_k_gaussian/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace fatehov_k_gaussian {
 
@@ -22,7 +25,6 @@ class FatehovKGaussianFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int size = std::get<0>(params);
 
-    // В шаблоне был stbi_load, но для надежности тестов создаем изображение программно
     input_data_.image = Image(size, size, 3);
     for (size_t i = 0; i < input_data_.image.data.size(); i++) {
       input_data_.image.data[i] = static_cast<uint8_t>(i % 256);

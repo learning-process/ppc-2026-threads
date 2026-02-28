@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+
 #include "fatehov_k_gaussian/common/include/common.hpp"
 #include "fatehov_k_gaussian/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
@@ -12,8 +14,8 @@ class FatehovKGaussianPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
 
   void SetUp() override {
     input_data_.image = Image(kCount_, kCount_, 3);
-    std::fill(input_data_.image.data.begin(), input_data_.image.data.end(), 128);
-    input_data_.sigma = 1.0f;
+    std::ranges::fill(input_data_.image.data, 128);
+    input_data_.sigma = 1.0F;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
