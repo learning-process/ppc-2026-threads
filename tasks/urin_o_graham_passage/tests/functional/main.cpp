@@ -1,6 +1,10 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
+#include <array>
+#include <cstddef>
+#include <memory>
+#include <string>
+#include <tuple>
 #include <vector>
 
 #include "urin_o_graham_passage/common/include/common.hpp"
@@ -8,107 +12,232 @@
 
 namespace urin_o_graham_passage {
 
-class UrinOGrahamPassageTest : public ::testing::TestWithParam<TestType> {
- protected:
-  void SetUp() override {
-    auto params = GetParam();
-    int num_points = std::get<0>(params);
-    GenerateTestPoints(num_points);
+// Вспомогательная функция для проверки выпуклости оболочки
+bool IsConvexHull(const std::vector<Point> &hull) {
+  if (hull.size() < 3) {
+    return true;  // Для 1-2 точек считаем корректным
   }
 
-  void GenerateTestPoints(int num_points) {
-    input_points_.clear();
+  for (size_t i = 0; i < hull.size(); i++) {
+    size_t prev = (i == 0) ? hull.size() - 1 : i - 1;
+    size_t next = (i + 1) % hull.size();
 
-    if (num_points == 3) {
-      input_points_ = {Point(0.0, 0.0), Point(5.0, 0.0), Point(2.5, 5.0)};
-      expected_hull_size_ = 3;
-    } else if (num_points == 5) {
-      input_points_ = {Point(0.0, 0.0), Point(4.0, 0.0), Point(5.0, 3.0), Point(2.0, 5.0), Point(-1.0, 2.0)};
-      expected_hull_size_ = 5;
-    } else if (num_points == 7) {
-      input_points_ = {Point(0.0, 0.0), Point(3.0, 1.0), Point(2.0, 4.0), Point(5.0, 2.0),
-                       Point(1.0, 5.0), Point(4.0, 3.0), Point(0.0, 5.0)};
-      expected_hull_size_ = 5;
-    }
-  }
-
-  bool IsConvexHull(const std::vector<Point> &hull) {
-    if (hull.size() < 3) {
+    if (UrinOGrahamPassageSEQ::Orientation(hull[prev], hull[i], hull[next]) < 0) {
       return false;
     }
-
-    for (size_t i = 0; i < hull.size(); i++) {
-      size_t prev = (i == 0) ? hull.size() - 1 : i - 1;
-      size_t next = (i + 1) % hull.size();
-
-      if (UrinOGrahamPassageSEQ::Orientation(hull[prev], hull[i], hull[next]) < 0) {
-        return false;
-      }
-    }
-    return true;
   }
+  return true;
+}
 
-  InType input_points_;
-  size_t expected_hull_size_;
-};
+// Вспомогательная функция для запуска пайплайна задачи
+void RunSeqPipeline(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+  // Сначала вызываем Validation
+  ASSERT_TRUE(task->Validation()) << "Validation failed";
 
-// Тест через публичный интерфейс - создаем обертку
-TEST_P(UrinOGrahamPassageTest, BuildsConvexHull) {
-  UrinOGrahamPassageSEQ task(input_points_);
+  // Затем PreProcessing
+  ASSERT_TRUE(task->PreProcessing()) << "PreProcessing failed";
 
-  // Создаем временный объект и проверяем результат через публичные методы
-  // Вместо прямого вызова protected методов, используем валидацию через конструктор
-  // и проверяем результат через GetOutput()
+  // Затем Run
+  ASSERT_TRUE(task->Run()) << "Run failed";
 
-  // Проверяем, что задача выполняется корректно через публичные методы
-  // Для этого нам нужен публичный метод Execute() или подобный
-  // Но в текущей структуре его нет
+  // Затем PostProcessing
+  ASSERT_TRUE(task->PostProcessing()) << "PostProcessing failed";
+}
 
-  // Альтернатива: используем динамический полиморфизм через базовый класс
-  ppc::task::Task<InType, OutType> *base_task = &task;
+// Тест с пустым входом
+TEST(UrinOGrahamPassageSeq, EmptyInput) {
+  InType empty_points;
+  auto task = std::make_shared<UrinOGrahamPassageSEQ>(empty_points);
 
-  // Вызываем методы через базовый класс
-  EXPECT_TRUE(base_task->Validation());
-  EXPECT_TRUE(base_task->PreProcessing());
-  EXPECT_TRUE(base_task->Run());
-  EXPECT_TRUE(base_task->PostProcessing());
+  EXPECT_FALSE(task->Validation());  // Валидация должна вернуть false
 
-  const auto &hull = task.GetOutput();
-  EXPECT_GE(hull.size(), 3);
-  EXPECT_EQ(hull.size(), expected_hull_size_);
+  // Не вызываем остальные методы, так как Validation вернул false
+  EXPECT_TRUE(task->GetOutput().empty());
+}
+
+// Тест с одной точкой
+TEST(UrinOGrahamPassageSeq, SinglePoint) {
+  InType pts = {Point(5.0, 3.0)};
+  auto task = std::make_shared<UrinOGrahamPassageSEQ>(pts);
+
+  EXPECT_FALSE(task->Validation());  // Валидация должна вернуть false
+
+  // Не вызываем остальные методы, так как Validation вернул false
+  EXPECT_TRUE(task->GetOutput().empty());
+}
+
+// Тест с двумя точками
+TEST(UrinOGrahamPassageSeq, TwoDistinctPoints) {
+  InType pts = {Point(0.0, 0.0), Point(3.0, 4.0)};
+  auto task = std::make_shared<UrinOGrahamPassageSEQ>(pts);
+
+  EXPECT_FALSE(task->Validation());  // Валидация должна вернуть false
+
+  // Не вызываем остальные методы, так как Validation вернул false
+  EXPECT_TRUE(task->GetOutput().empty());
+}
+
+// Тест с коллинеарными точками на прямой
+TEST(UrinOGrahamPassageSeq, CollinearPoints) {
+  InType pts = {Point(0.0, 0.0), Point(1.0, 0.0), Point(2.0, 0.0), Point(3.0, 0.0), Point(4.0, 0.0)};
+  auto task = std::make_shared<UrinOGrahamPassageSEQ>(pts);
+
+  // Валидация должна пройти
+  EXPECT_TRUE(task->Validation());
+
+  // PreProcessing должен пройти
+  EXPECT_TRUE(task->PreProcessing());
+
+  // Run должен пройти
+  EXPECT_TRUE(task->Run());
+
+  // PostProcessing должен пройти
+  EXPECT_TRUE(task->PostProcessing());
+
+  const auto &hull = task->GetOutput();
+  EXPECT_EQ(hull.size(), 2);  // Должны получить две крайние точки
   EXPECT_TRUE(IsConvexHull(hull));
 }
 
-// Тест для проверки валидации
-TEST_F(UrinOGrahamPassageTest, ValidationTest) {
-  // Создаем задачу с некорректными данными
-  InType invalid_points = {Point(0.0, 0.0)};
-  UrinOGrahamPassageSEQ task(invalid_points);
+// Тест с треугольником
+TEST(UrinOGrahamPassageSeq, TrianglePoints) {
+  InType pts = {Point(0.0, 0.0), Point(4.0, 0.0), Point(2.0, 3.0)};
+  auto task = std::make_shared<UrinOGrahamPassageSEQ>(pts);
 
-  ppc::task::Task<InType, OutType> *base_task = &task;
-  EXPECT_FALSE(base_task->Validation());
+  EXPECT_TRUE(task->Validation());
+  EXPECT_TRUE(task->PreProcessing());
+  EXPECT_TRUE(task->Run());
+  EXPECT_TRUE(task->PostProcessing());
+
+  const auto &hull = task->GetOutput();
+  EXPECT_EQ(hull.size(), 3);
+  EXPECT_TRUE(IsConvexHull(hull));
 }
 
-// Тест с коллинеарными точками
-TEST_F(UrinOGrahamPassageTest, HandlesCollinearPoints) {
-  InType points = {Point(0.0, 0.0), Point(1.0, 0.0), Point(2.0, 0.0),
-                   Point(3.0, 0.0), Point(0.0, 1.0), Point(3.0, 1.0)};
+// Тест с квадратом
+TEST(UrinOGrahamPassageSeq, SquarePoints) {
+  InType pts = {Point(0.0, 0.0), Point(4.0, 0.0), Point(4.0, 4.0), Point(0.0, 4.0)};
+  auto task = std::make_shared<UrinOGrahamPassageSEQ>(pts);
 
-  UrinOGrahamPassageSEQ task(points);
-  ppc::task::Task<InType, OutType> *base_task = &task;
+  EXPECT_TRUE(task->Validation());
+  EXPECT_TRUE(task->PreProcessing());
+  EXPECT_TRUE(task->Run());
+  EXPECT_TRUE(task->PostProcessing());
 
-  EXPECT_TRUE(base_task->Validation());
-  EXPECT_TRUE(base_task->PreProcessing());
-  EXPECT_TRUE(base_task->Run());
-  EXPECT_TRUE(base_task->PostProcessing());
-
-  const auto &hull = task.GetOutput();
+  const auto &hull = task->GetOutput();
   EXPECT_EQ(hull.size(), 4);
   EXPECT_TRUE(IsConvexHull(hull));
 }
 
-INSTANTIATE_TEST_SUITE_P(GrahamPassageTests, UrinOGrahamPassageTest,
-                         ::testing::Values(std::make_tuple(3, "Triangle"), std::make_tuple(5, "Pentagon"),
-                                           std::make_tuple(7, "MixedPoints")));
+// Тест с квадратом и внутренней точкой
+TEST(UrinOGrahamPassageSeq, SquareWithInteriorPoint) {
+  InType pts = {Point(0.0, 0.0), Point(4.0, 0.0), Point(4.0, 4.0), Point(0.0, 4.0), Point(2.0, 2.0)};
+  auto task = std::make_shared<UrinOGrahamPassageSEQ>(pts);
+
+  EXPECT_TRUE(task->Validation());
+  EXPECT_TRUE(task->PreProcessing());
+  EXPECT_TRUE(task->Run());
+  EXPECT_TRUE(task->PostProcessing());
+
+  const auto &hull = task->GetOutput();
+  EXPECT_EQ(hull.size(), 4);
+  EXPECT_TRUE(IsConvexHull(hull));
+}
+
+// Тест с прямоугольником и коллинеарными точками на сторонах
+TEST(UrinOGrahamPassageSeq, RectangleWithCollinearPoints) {
+  InType pts = {Point(0.0, 0.0), Point(1.0, 0.0), Point(2.0, 0.0), Point(3.0, 0.0),
+                Point(3.0, 1.0), Point(2.0, 1.0), Point(1.0, 1.0), Point(0.0, 1.0)};
+  auto task = std::make_shared<UrinOGrahamPassageSEQ>(pts);
+
+  EXPECT_TRUE(task->Validation());
+  EXPECT_TRUE(task->PreProcessing());
+  EXPECT_TRUE(task->Run());
+  EXPECT_TRUE(task->PostProcessing());
+
+  const auto &hull = task->GetOutput();
+  EXPECT_EQ(hull.size(), 4);  // Должны получить 4 вершины прямоугольника
+  EXPECT_TRUE(IsConvexHull(hull));
+}
+
+// Тест с повторяющимися точками
+TEST(UrinOGrahamPassageSeq, AllIdenticalPoints) {
+  InType pts = {Point(3.0, 3.0), Point(3.0, 3.0), Point(3.0, 3.0), Point(3.0, 3.0), Point(3.0, 3.0)};
+  auto task = std::make_shared<UrinOGrahamPassageSEQ>(pts);
+
+  EXPECT_FALSE(task->Validation());  // Валидация должна вернуть false
+
+  // Не вызываем остальные методы
+  EXPECT_TRUE(task->GetOutput().empty());
+}
+
+// Тест с точками на границе
+TEST(UrinOGrahamPassageSeq, PointOnBoundary) {
+  InType pts = {Point(0.0, 0.0), Point(4.0, 0.0), Point(2.0, 0.0), Point(4.0, 4.0), Point(0.0, 4.0)};
+  auto task = std::make_shared<UrinOGrahamPassageSEQ>(pts);
+
+  EXPECT_TRUE(task->Validation());
+  EXPECT_TRUE(task->PreProcessing());
+  EXPECT_TRUE(task->Run());
+  EXPECT_TRUE(task->PostProcessing());
+
+  const auto &hull = task->GetOutput();
+  EXPECT_EQ(hull.size(), 4);  // Точка (2,0) лежит на стороне
+  EXPECT_TRUE(IsConvexHull(hull));
+}
+
+// Тест с вертикальной линией
+TEST(UrinOGrahamPassageSeq, VerticalCollinear) {
+  InType pts = {Point(0.0, 0.0), Point(0.0, 1.0), Point(0.0, 2.0), Point(0.0, 5.0)};
+  auto task = std::make_shared<UrinOGrahamPassageSEQ>(pts);
+
+  EXPECT_TRUE(task->Validation());
+  EXPECT_TRUE(task->PreProcessing());
+  EXPECT_TRUE(task->Run());
+  EXPECT_TRUE(task->PostProcessing());
+
+  const auto &hull = task->GetOutput();
+  EXPECT_EQ(hull.size(), 2);  // Две крайние точки
+  EXPECT_TRUE(IsConvexHull(hull));
+}
+
+// Тест с большим количеством случайных точек
+TEST(UrinOGrahamPassageSeq, LargeRandomSet) {
+  InType pts;
+  const int num_points = 100;
+
+  // Генерируем точки на окружности
+  for (int i = 0; i < num_points; ++i) {
+    double angle = 2.0 * 3.14159 * i / num_points;
+    pts.emplace_back(cos(angle) * 10.0, sin(angle) * 10.0);
+  }
+
+  auto task = std::make_shared<UrinOGrahamPassageSEQ>(pts);
+
+  EXPECT_TRUE(task->Validation());
+  EXPECT_TRUE(task->PreProcessing());
+  EXPECT_TRUE(task->Run());
+  EXPECT_TRUE(task->PostProcessing());
+
+  const auto &hull = task->GetOutput();
+  EXPECT_GE(hull.size(), 3);
+  EXPECT_TRUE(IsConvexHull(hull));
+}
+
+// Тест с шестиугольником и центром
+TEST(UrinOGrahamPassageSeq, HexagonWithCenter) {
+  InType pts = {Point(2.0, 0.0),    Point(1.0, 1.73),  Point(-1.0, 1.73), Point(-2.0, 0.0),
+                Point(-1.0, -1.73), Point(1.0, -1.73), Point(0.0, 0.0)};
+  auto task = std::make_shared<UrinOGrahamPassageSEQ>(pts);
+
+  EXPECT_TRUE(task->Validation());
+  EXPECT_TRUE(task->PreProcessing());
+  EXPECT_TRUE(task->Run());
+  EXPECT_TRUE(task->PostProcessing());
+
+  const auto &hull = task->GetOutput();
+  EXPECT_EQ(hull.size(), 6);  // Шестиугольник без центра
+  EXPECT_TRUE(IsConvexHull(hull));
+}
 
 }  // namespace urin_o_graham_passage

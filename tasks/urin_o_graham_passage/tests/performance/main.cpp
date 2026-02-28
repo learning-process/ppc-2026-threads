@@ -10,12 +10,25 @@
 
 namespace urin_o_graham_passage {
 
-class UrinOGrahamPassagePerfTest : public ::testing::Test {
- protected:
-  void SetUp() override {
-    // Генерируем точки в SetUp, чтобы можно было использовать в разных тестах/
+// Вспомогательная функция для проверки выпуклости
+bool IsConvexHull(const std::vector<Point> &hull) {
+  if (hull.size() < 3) {
+    return false;
   }
 
+  for (size_t i = 0; i < hull.size(); i++) {
+    size_t prev = (i == 0) ? hull.size() - 1 : i - 1;
+    size_t next = (i + 1) % hull.size();
+
+    if (UrinOGrahamPassageSEQ::Orientation(hull[prev], hull[i], hull[next]) < 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+class UrinOGrahamPassagePerfTest : public ::testing::Test {
+ protected:
   InType GenerateRandomPoints(size_t num_points) {
     InType points;
     points.reserve(num_points);
@@ -29,22 +42,6 @@ class UrinOGrahamPassagePerfTest : public ::testing::Test {
     }
 
     return points;
-  }
-
-  bool IsConvexHull(const OutType &hull) {
-    if (hull.size() < 3) {
-      return false;
-    }
-
-    for (size_t i = 0; i < hull.size(); i++) {
-      size_t prev = (i == 0) ? hull.size() - 1 : i - 1;
-      size_t next = (i + 1) % hull.size();
-
-      if (UrinOGrahamPassageSEQ::Orientation(hull[prev], hull[i], hull[next]) < 0) {
-        return false;
-      }
-    }
-    return true;
   }
 };
 

@@ -8,14 +8,34 @@ namespace urin_o_graham_passage {
 
 UrinOGrahamPassageSEQ::UrinOGrahamPassageSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  // Используем не-const версию GetInput() в конструкторе
   GetInput() = in;
   GetOutput() = OutType();
 }
 
 bool UrinOGrahamPassageSEQ::ValidationImpl() {
-  const auto &points = GetInput();  // В ValidationImpl мы можем использовать не-const версию
-  return points.size() >= 3;
+  const auto &points = GetInput();
+
+  // Проверяем, что точек достаточно
+  if (points.size() < 3) {
+    return false;
+  }
+
+  // Проверяем, что не все точки одинаковые
+  const Point &first = points[0];
+  bool all_same = true;
+  for (size_t i = 1; i < points.size(); i++) {
+    if (!(points[i] == first)) {
+      all_same = false;
+      break;
+    }
+  }
+
+  // Если все точки одинаковые - валидация не проходит
+  if (all_same) {
+    return false;
+  }
+
+  return true;
 }
 
 bool UrinOGrahamPassageSEQ::PreProcessingImpl() {
@@ -23,12 +43,12 @@ bool UrinOGrahamPassageSEQ::PreProcessingImpl() {
   return true;
 }
 
-// Вспомогательные статические функции
 Point UrinOGrahamPassageSEQ::FindLowestPoint(const InType &points) {
   Point lowest = points[0];
 
   for (size_t i = 1; i < points.size(); i++) {
-    if (points[i].y < lowest.y || (std::abs(points[i].y - lowest.y) < 1e-10 && points[i].x < lowest.x)) {
+    if (points[i].y < lowest.y - 1e-10 ||
+        (std::abs(points[i].y - lowest.y) < 1e-10 && points[i].x < lowest.x - 1e-10)) {
       lowest = points[i];
     }
   }
@@ -48,7 +68,8 @@ double UrinOGrahamPassageSEQ::PolarAngle(const Point &base, const Point &p) {
 }
 
 int UrinOGrahamPassageSEQ::Orientation(const Point &p, const Point &q, const Point &r) {
-  double val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+  // Правильная формула для определения поворота
+  double val = (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
 
   if (std::abs(val) < 1e-10) {
     return 0;
@@ -63,7 +84,7 @@ double UrinOGrahamPassageSEQ::DistanceSquared(const Point &p1, const Point &p2) 
 }
 
 bool UrinOGrahamPassageSEQ::RunImpl() {
-  const InType &points = GetInput();  // Получаем ссылку на входные данные
+  const InType &points = GetInput();
 
   if (points.size() < 3) {
     return false;
@@ -72,16 +93,16 @@ bool UrinOGrahamPassageSEQ::RunImpl() {
   // Шаг 1: Находим самую нижнюю левую точку
   Point p0 = FindLowestPoint(points);
 
-  // Шаг 2: Копируем все точки, кроме p0, для сортировки
-  std::vector<Point> sorted_points;
+  // Шаг 2: Копируем все точки, кроме p0
+  std::vector<Point> other_points;
   for (const auto &point : points) {
     if (!(point == p0)) {
-      sorted_points.push_back(point);
+      other_points.push_back(point);
     }
   }
 
-  // Сортируем по полярному углу
-  std::sort(sorted_points.begin(), sorted_points.end(), [this, &p0](const Point &a, const Point &b) {
+  // Шаг 3: Сортируем по полярному углу относительно p0
+  std::sort(other_points.begin(), other_points.end(), [this, &p0](const Point &a, const Point &b) {
     double angle_a = PolarAngle(p0, a);
     double angle_b = PolarAngle(p0, b);
 
@@ -91,37 +112,43 @@ bool UrinOGrahamPassageSEQ::RunImpl() {
     return angle_a < angle_b;
   });
 
-  // Удаляем коллинеарные точки
-  std::vector<Point> unique_angles;
-  for (size_t i = 0; i < sorted_points.size(); i++) {
-    if (i > 0 && std::abs(PolarAngle(p0, sorted_points[i]) - PolarAngle(p0, sorted_points[i - 1])) < 1e-10) {
-      continue;
+  // Шаг 4: Проверяем, не все ли точки коллинеарны
+  bool all_collinear = true;
+  for (size_t i = 1; i < other_points.size(); i++) {
+    if (Orientation(p0, other_points[0], other_points[i]) != 0) {
+      all_collinear = false;
+      break;
     }
-    unique_angles.push_back(sorted_points[i]);
   }
 
-  if (unique_angles.size() < 2) {
-    return false;
+  if (all_collinear) {
+    // Все точки на одной прямой - возвращаем две крайние
+    GetOutput() = {p0, other_points.back()};
+    return true;
   }
 
-  unique_angles.insert(unique_angles.begin(), p0);
-
-  // Шаг 3: Строим выпуклую оболочку
+  // Шаг 5: Классический алгоритм Грэхема
   std::vector<Point> hull;
-  hull.push_back(unique_angles[0]);
-  hull.push_back(unique_angles[1]);
+  hull.push_back(p0);
+  hull.push_back(other_points[0]);
 
-  for (size_t i = 2; i < unique_angles.size(); i++) {
-    while (hull.size() >= 2 && Orientation(hull[hull.size() - 2], hull.back(), unique_angles[i]) != 1) {
-      hull.pop_back();
+  for (size_t i = 1; i < other_points.size(); i++) {
+    while (hull.size() >= 2) {
+      Point &p = hull[hull.size() - 2];
+      Point &q = hull[hull.size() - 1];
+      int orient = Orientation(p, q, other_points[i]);
+
+      if (orient <= 0) {  // Правый поворот или коллинеарны - удаляем
+        hull.pop_back();
+      } else {
+        break;
+      }
     }
-    hull.push_back(unique_angles[i]);
+    hull.push_back(other_points[i]);
   }
 
-  // Сохраняем результат через не-const версию GetOutput()
   GetOutput() = hull;
-
-  return hull.size() >= 3;
+  return true;
 }
 
 bool UrinOGrahamPassageSEQ::PostProcessingImpl() {
