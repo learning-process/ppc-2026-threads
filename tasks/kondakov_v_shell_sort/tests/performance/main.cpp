@@ -11,11 +11,12 @@
 namespace kondakov_v_shell_sort {
 
 class KondakovVRunPerfTestsShellSort : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr size_t kCount = 100000;
+  static constexpr size_t kCount = 5000000;
   InType input_data_;
 
   void SetUp() override {
-    std::mt19937 gen(12345);
+    std::random_device rd;
+    std::mt19937 gen(rd());
     std::uniform_int_distribution<int> dist(-1000000, 1000000);
 
     input_data_.resize(kCount);

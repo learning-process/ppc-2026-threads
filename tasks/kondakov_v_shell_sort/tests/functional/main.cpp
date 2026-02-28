@@ -72,7 +72,7 @@ TEST_P(KondakovVRunFuncTestsShellSort, ShellSortSimpleMerge) {
 const std::array<TestType, 12> kTestParam = []() {
   std::array<TestType, 12> arr;
   for (size_t i = 0; i < arr.size(); ++i) {
-    arr[i] = std::make_tuple(i, kStaticTestCases.at(i).name);
+    arr.at(i) = std::make_tuple(i, kStaticTestCases.at(i).name);
   }
   return arr;
 }();
