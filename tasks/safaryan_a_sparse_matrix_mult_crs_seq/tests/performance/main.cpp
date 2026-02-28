@@ -3,7 +3,6 @@
 #include <cmath>
 #include <cstddef>
 #include <random>
-#include <utility>
 #include <vector>
 
 #include "safaryan_a_sparse_matrix_mult_crs_seq/seq/include/ops_seq.hpp"
@@ -12,7 +11,7 @@ namespace safaryan_a_sparse_matrix_mult_crs_seq {
 
 // ---------- helpers: Dense <-> CRS ----------
 
-static CRSMatrix DenseToCrs(const std::vector<std::vector<double>>& dense, double eps = 0.0) {
+static CRSMatrix DenseToCrs(const std::vector<std::vector<double>> &dense, double eps = 0.0) {
   CRSMatrix m;
   m.rows = dense.size();
   m.cols = dense.empty() ? 0 : dense[0].size();
@@ -34,7 +33,7 @@ static CRSMatrix DenseToCrs(const std::vector<std::vector<double>>& dense, doubl
   return m;
 }
 
-static std::vector<std::vector<double>> CrsToDense(const CRSMatrix& m) {
+static std::vector<std::vector<double>> CrsToDense(const CRSMatrix &m) {
   std::vector<std::vector<double>> dense(m.rows, std::vector<double>(m.cols, 0.0));
 
   for (size_t i = 0; i < m.rows; ++i) {
@@ -46,8 +45,8 @@ static std::vector<std::vector<double>> CrsToDense(const CRSMatrix& m) {
   return dense;
 }
 
-static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<double>>& a,
-                                                 const std::vector<std::vector<double>>& b) {
+static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<double>> &a,
+                                                 const std::vector<std::vector<double>> &b) {
   const size_t n = a.size();
   const size_t k = a.empty() ? 0 : a[0].size();
   const size_t m = b.empty() ? 0 : b[0].size();
@@ -69,8 +68,7 @@ static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<d
   return c;
 }
 
-static void ExpectDenseEqual(const std::vector<std::vector<double>>& x,
-                             const std::vector<std::vector<double>>& y,
+static void ExpectDenseEqual(const std::vector<std::vector<double>> &x, const std::vector<std::vector<double>> &y,
                              double eps = 1e-9) {
   ASSERT_EQ(x.size(), y.size());
   if (x.empty()) {
@@ -124,17 +122,15 @@ TEST(SafaryanASparseMatrixMultCRSSeqPerf, SmallFixedCase) {
 
   SafaryanASparseMatrixMultCRSSeq task({a_crs, b_crs});
 
-  const bool valid_ok = task.Validation();
-  ASSERT_TRUE(valid_ok);
-
-  const bool pre_ok = task.PreProcessing();
-  ASSERT_TRUE(pre_ok);
-
-  const bool run_ok = task.Run();
-  ASSERT_TRUE(run_ok);
-
-  const bool post_ok = task.PostProcessing();
-  ASSERT_TRUE(post_ok);
+  // clang-tidy can count gtest ASSERT_* macros as extra nesting. Suppress locally.
+  // NOLINTNEXTLINE(readability-function-cognitive-complexity)
+  ASSERT_TRUE(task.Validation());
+  // NOLINTNEXTLINE(readability-function-cognitive-complexity)
+  ASSERT_TRUE(task.PreProcessing());
+  // NOLINTNEXTLINE(readability-function-cognitive-complexity)
+  ASSERT_TRUE(task.Run());
+  // NOLINTNEXTLINE(readability-function-cognitive-complexity)
+  ASSERT_TRUE(task.PostProcessing());
 
   const auto got = CrsToDense(task.GetOutput());
   const auto ref = DenseMul(a_dense, b_dense);
@@ -155,17 +151,14 @@ TEST(SafaryanASparseMatrixMultCRSSeqPerf, RandomMediumCase) {
 
   SafaryanASparseMatrixMultCRSSeq task({a_crs, b_crs});
 
-  const bool valid_ok = task.Validation();
-  ASSERT_TRUE(valid_ok);
-
-  const bool pre_ok = task.PreProcessing();
-  ASSERT_TRUE(pre_ok);
-
-  const bool run_ok = task.Run();
-  ASSERT_TRUE(run_ok);
-
-  const bool post_ok = task.PostProcessing();
-  ASSERT_TRUE(post_ok);
+  // NOLINTNEXTLINE(readability-function-cognitive-complexity)
+  ASSERT_TRUE(task.Validation());
+  // NOLINTNEXTLINE(readability-function-cognitive-complexity)
+  ASSERT_TRUE(task.PreProcessing());
+  // NOLINTNEXTLINE(readability-function-cognitive-complexity)
+  ASSERT_TRUE(task.Run());
+  // NOLINTNEXTLINE(readability-function-cognitive-complexity)
+  ASSERT_TRUE(task.PostProcessing());
 
   const auto got = CrsToDense(task.GetOutput());
   const auto ref = DenseMul(a_dense, b_dense);
