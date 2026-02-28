@@ -1,6 +1,7 @@
 #include "kutuzov_i_convex_hull_jarvis/seq/include/ops_seq.hpp"
 
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 #include "kutuzov_i_convex_hull_jarvis/common/include/common.hpp"
@@ -19,6 +20,24 @@ double KutuzovITestConvexHullSEQ::DistanceSquared(double a_x, double a_y, double
 
 double KutuzovITestConvexHullSEQ::CrossProduct(double o_x, double o_y, double a_x, double a_y, double b_x, double b_y) {
   return ((a_x - o_x) * (b_y - o_y)) - ((a_y - o_y) * (b_x - o_x));
+}
+
+size_t KutuzovITestConvexHullSEQ::FindLeftmostPoint(const InType &input) {
+  size_t leftmost = 0;
+  double leftmost_x = std::get<0>(input[leftmost]);
+  double leftmost_y = std::get<1>(input[leftmost]);
+
+  for (size_t i = 0; i < input.size(); ++i) {
+    double x = std::get<0>(input[i]);
+    double y = std::get<1>(input[i]);
+
+    if ((x < leftmost_x) || ((x == leftmost_x) && (y < leftmost_y))) {
+      leftmost = i;
+      leftmost_x = std::get<0>(input[leftmost]);
+      leftmost_y = std::get<1>(input[leftmost]);
+    }
+  }
+  return leftmost;
 }
 
 bool KutuzovITestConvexHullSEQ::IsBetterPoint(double cross, double epsilon, double current_x, double current_y,
@@ -49,20 +68,7 @@ bool KutuzovITestConvexHullSEQ::RunImpl() {
   }
 
   // Finding left-most point
-  size_t leftmost = 0;
-  double leftmost_x = std::get<0>(GetInput()[leftmost]);
-  double leftmost_y = std::get<1>(GetInput()[leftmost]);
-
-  for (size_t i = 0; i < GetInput().size(); ++i) {
-    double x = std::get<0>(GetInput()[i]);
-    double y = std::get<1>(GetInput()[i]);
-
-    if ((x < leftmost_x) || ((x == leftmost_x) && (y < leftmost_y))) {
-      leftmost = i;
-      leftmost_x = std::get<0>(GetInput()[leftmost]);
-      leftmost_y = std::get<1>(GetInput()[leftmost]);
-    }
-  }
+  size_t leftmost = FindLeftmostPoint(GetInput());
 
   // Main loop
   size_t current = leftmost;
