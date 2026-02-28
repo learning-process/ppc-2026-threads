@@ -14,4 +14,3 @@ using TestType = std::tuple<std::string, std::vector<int>>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace chernov_t_radix_sort
-S
