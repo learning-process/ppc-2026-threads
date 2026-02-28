@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cmath>
+#include <cstdint>
 #include <functional>
 #include <string>
 #include <tuple>
@@ -10,87 +10,87 @@
 
 namespace tsibareva_e_integral_calculate_trapezoid_method {
 
-enum class IntegralTestType {
-  SUCCESS_SIMPLE_2D,
-  SUCCESS_CONSTANT_2D,
-  SUCCESS_SIMPLE_3D,
-  SUCCESS_CONSTANT_3D,
-  INVALID_LOWER_BOUND_EQUAL,
-  INVALID_STEPS_NEGATIVE,
-  INVALID_EMPTY_BOUNDS,
+enum class IntegralTestType : std::uint8_t {
+  kSuccessSimple2D,
+  kSuccessConstant2D,
+  kSuccessSimple3D,
+  kSuccessConstant3D,
+  kInvalidLowerBoundEqual,
+  kInvalidStepsNegative,
+  kInvalidEmptyBounds,
 };
 
-struct IntegralInput {
-  std::vector<double> lower_bounds;
-  std::vector<double> upper_bounds;
-  std::vector<int> num_steps;
-  std::function<double(const std::vector<double> &)> function;
-  int dimension;
+struct Integral {
+  std::vector<double> lo;
+  std::vector<double> hi;
+  std::vector<int> steps;
+  std::function<double(const std::vector<double> &)> f;
+  int dim{0};
 };
 
-using InType = IntegralInput;
+using InType = Integral;
 using OutType = double;
 using TestType = std::tuple<IntegralTestType, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-inline IntegralInput GenerateIntegralInput(IntegralTestType type) {
-  IntegralInput input;
+inline Integral GenerateIntegralInput(IntegralTestType type) {
+  Integral input;
 
   switch (type) {
-    case IntegralTestType::SUCCESS_SIMPLE_2D: {
-      input.dimension = 2;
-      input.lower_bounds = {0.0, 0.0};
-      input.upper_bounds = {1.0, 1.0};
-      input.num_steps = {100, 100};
-      input.function = [](const std::vector<double> &x) { return x[0] * x[0] + x[1] * x[1]; };
+    case IntegralTestType::kSuccessSimple2D: {
+      input.dim = 2;
+      input.lo = {0.0, 0.0};
+      input.hi = {1.0, 1.0};
+      input.steps = {100, 100};
+      input.f = [](const std::vector<double> &x) { return (x[0] * x[0]) + (x[1] * x[1]); };  // x^2 + y^2
       break;
     }
-    case IntegralTestType::SUCCESS_CONSTANT_2D: {
-      input.dimension = 2;
-      input.lower_bounds = {0.0, 0.0};
-      input.upper_bounds = {2.0, 3.0};
-      input.num_steps = {50, 50};
-      input.function = [](const std::vector<double> &) { return 5.0; };
+    case IntegralTestType::kSuccessConstant2D: {
+      input.dim = 2;
+      input.lo = {0.0, 0.0};
+      input.hi = {2.0, 3.0};
+      input.steps = {50, 50};
+      input.f = [](const std::vector<double> &) { return 5.0; };  // const
       break;
     }
-    case IntegralTestType::SUCCESS_SIMPLE_3D: {
-      input.dimension = 3;
-      input.lower_bounds = {0.0, 0.0, 0.0};
-      input.upper_bounds = {1.0, 1.0, 1.0};
-      input.num_steps = {50, 50, 50};
-      input.function = [](const std::vector<double> &x) { return x[0] + x[1] + x[2]; };
+    case IntegralTestType::kSuccessSimple3D: {
+      input.dim = 3;
+      input.lo = {0.0, 0.0, 0.0};
+      input.hi = {1.0, 1.0, 1.0};
+      input.steps = {50, 50, 50};
+      input.f = [](const std::vector<double> &x) { return x[0] + x[1] + x[2]; };  // x + y + z
       break;
     }
-    case IntegralTestType::SUCCESS_CONSTANT_3D: {
-      input.dimension = 3;
-      input.lower_bounds = {0.0, 0.0, 0.0};
-      input.upper_bounds = {2.0, 2.0, 2.0};
-      input.num_steps = {40, 40, 40};
-      input.function = [](const std::vector<double> &) { return 3.0; };
+    case IntegralTestType::kSuccessConstant3D: {
+      input.dim = 3;
+      input.lo = {0.0, 0.0, 0.0};
+      input.hi = {2.0, 2.0, 2.0};
+      input.steps = {40, 40, 40};
+      input.f = [](const std::vector<double> &) { return 3.0; };
       break;
     }
-    case IntegralTestType::INVALID_LOWER_BOUND_EQUAL: {
-      input.dimension = 2;
-      input.lower_bounds = {1.0, 0.0};
-      input.upper_bounds = {1.0, 1.0};
-      input.num_steps = {10, 10};
-      input.function = [](const std::vector<double> &x) { return x[0]; };
+    case IntegralTestType::kInvalidLowerBoundEqual: {
+      input.dim = 2;
+      input.lo = {1.0, 0.0};
+      input.hi = {1.0, 1.0};
+      input.steps = {10, 10};
+      input.f = [](const std::vector<double> &x) { return x[0]; };
       break;
     }
-    case IntegralTestType::INVALID_STEPS_NEGATIVE: {
-      input.dimension = 2;
-      input.lower_bounds = {0.0, 0.0};
-      input.upper_bounds = {1.0, 1.0};
-      input.num_steps = {-5, 10};
-      input.function = [](const std::vector<double> &x) { return x[0]; };
+    case IntegralTestType::kInvalidStepsNegative: {
+      input.dim = 2;
+      input.lo = {0.0, 0.0};
+      input.hi = {1.0, 1.0};
+      input.steps = {-5, 10};
+      input.f = [](const std::vector<double> &x) { return x[0]; };
       break;
     }
-    case IntegralTestType::INVALID_EMPTY_BOUNDS: {
-      input.dimension = 0;
-      input.lower_bounds = {};
-      input.upper_bounds = {};
-      input.num_steps = {};
-      input.function = [](const std::vector<double> &) { return 0.0; };
+    case IntegralTestType::kInvalidEmptyBounds: {
+      input.dim = 0;
+      input.lo = {};
+      input.hi = {};
+      input.steps = {};
+      input.f = [](const std::vector<double> &) { return 0.0; };
       break;
     }
   }
@@ -100,17 +100,17 @@ inline IntegralInput GenerateIntegralInput(IntegralTestType type) {
 
 inline double GenerateExpectedOutput(IntegralTestType type) {
   switch (type) {
-    case IntegralTestType::SUCCESS_SIMPLE_2D:
+    case IntegralTestType::kSuccessSimple2D:
       return 2.0 / 3.0;
-    case IntegralTestType::SUCCESS_CONSTANT_2D:
+    case IntegralTestType::kSuccessConstant2D:
       return 30.0;
-    case IntegralTestType::SUCCESS_SIMPLE_3D:
+    case IntegralTestType::kSuccessSimple3D:
       return 1.5;
-    case IntegralTestType::SUCCESS_CONSTANT_3D:
+    case IntegralTestType::kSuccessConstant3D:
       return 24.0;
-    case IntegralTestType::INVALID_LOWER_BOUND_EQUAL:
-    case IntegralTestType::INVALID_STEPS_NEGATIVE:
-    case IntegralTestType::INVALID_EMPTY_BOUNDS:
+    case IntegralTestType::kInvalidLowerBoundEqual:
+    case IntegralTestType::kInvalidStepsNegative:
+    case IntegralTestType::kInvalidEmptyBounds:
       return 0.0;
   }
   return 0.0;
