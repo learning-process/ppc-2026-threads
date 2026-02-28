@@ -5,6 +5,8 @@
 #include <cstddef>  // Добавлено для size_t
 #include <vector>
 
+#include "urin_o_graham_passage/common/include/common.hpp"
+
 namespace urin_o_graham_passage {
 
 UrinOGrahamPassageSEQ::UrinOGrahamPassageSEQ(const InType &in) {
@@ -83,6 +85,21 @@ bool UrinOGrahamPassageSEQ::RunImpl() {
 
   const Point p0 = FindLowestPoint(points);
 
+  std::vector<Point> other_points = PrepareOtherPoints(points, p0);
+  if (other_points.empty()) {
+    return false;
+  }
+
+  if (AreAllCollinear(p0, other_points)) {
+    GetOutput() = {p0, other_points.back()};
+    return true;
+  }
+
+  GetOutput() = BuildConvexHull(p0, other_points);
+  return true;
+}
+
+std::vector<Point> UrinOGrahamPassageSEQ::PrepareOtherPoints(const InType &points, const Point &p0) {
   std::vector<Point> other_points;
   other_points.reserve(points.size() - 1);
 
@@ -93,57 +110,47 @@ bool UrinOGrahamPassageSEQ::RunImpl() {
   }
 
   std::sort(other_points.begin(), other_points.end(), [&p0](const Point &a, const Point &b) {
-    const double dx1 = a.x - p0.x;
-    const double dy1 = a.y - p0.y;
-    const double dx2 = b.x - p0.x;
-    const double dy2 = b.y - p0.y;
-
-    const double angle_a = std::atan2(dy1, dx1);
-    const double angle_b = std::atan2(dy2, dx2);
+    double angle_a = PolarAngle(p0, a);
+    double angle_b = PolarAngle(p0, b);
 
     if (std::abs(angle_a - angle_b) < 1e-10) {
-      const double dist_a = (dx1 * dx1) + (dy1 * dy1);
-      const double dist_b = (dx2 * dx2) + (dy2 * dy2);
-      return dist_a < dist_b;
+      return DistanceSquared(p0, a) < DistanceSquared(p0, b);
     }
     return angle_a < angle_b;
   });
 
-  bool all_collinear = true;
-  for (size_t i = 1; i < other_points.size(); ++i) {
-    if (Orientation(p0, other_points[0], other_points[i]) != 0) {
-      all_collinear = false;
-      break;
+  return other_points;
+}
+
+bool UrinOGrahamPassageSEQ::AreAllCollinear(const Point &p0, const std::vector<Point> &points) {
+  for (size_t i = 1; i < points.size(); ++i) {
+    if (Orientation(p0, points[0], points[i]) != 0) {
+      return false;
     }
   }
+  return true;
+}
 
-  if (all_collinear) {
-    GetOutput() = {p0, other_points.back()};
-    return true;
-  }
-
+std::vector<Point> UrinOGrahamPassageSEQ::BuildConvexHull(const Point &p0, const std::vector<Point> &points) {
   std::vector<Point> hull;
-  hull.reserve(other_points.size() + 1);
+  hull.reserve(points.size() + 1);
   hull.push_back(p0);
-  hull.push_back(other_points[0]);
+  hull.push_back(points[0]);
 
-  for (size_t i = 1; i < other_points.size(); ++i) {
+  for (size_t i = 1; i < points.size(); ++i) {
     while (hull.size() >= 2) {
       const Point &p = hull[hull.size() - 2];
       const Point &q = hull.back();
-      const int orient = Orientation(p, q, other_points[i]);
-
-      if (orient <= 0) {
+      if (Orientation(p, q, points[i]) <= 0) {
         hull.pop_back();
       } else {
         break;
       }
     }
-    hull.push_back(other_points[i]);
+    hull.push_back(points[i]);
   }
 
-  GetOutput() = hull;
-  return true;
+  return hull;
 }
 
 bool UrinOGrahamPassageSEQ::PostProcessingImpl() {

@@ -104,9 +104,9 @@ TEST(UrinOGrahamPassageSeq, LargeRandomSet) {
   const int num_points = 100;
   pts.reserve(static_cast<size_t>(num_points));
 
-  const double pi = 3.14159265358979323846;  // Явно определяем pi
+  // const double pi = 3.14159265358979323846;  // Явно определяем pi
   for (int i = 0; i < num_points; ++i) {
-    double angle = 2.0 * pi * static_cast<double>(i) / static_cast<double>(num_points);
+    double angle = 2.0 * 3.14159 * static_cast<double>(i) / static_cast<double>(num_points);
     pts.emplace_back(std::cos(angle) * 10.0, std::sin(angle) * 10.0);
   }
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "task/include/task.hpp"
 #include "urin_o_graham_passage/common/include/common.hpp"
 
@@ -13,7 +15,6 @@ class UrinOGrahamPassageSEQ : public BaseTask {
 
   explicit UrinOGrahamPassageSEQ(const InType &in);
 
-  // Статические вспомогательные функции
   [[nodiscard]] static Point FindLowestPoint(const InType &points);
   [[nodiscard]] static double PolarAngle(const Point &base, const Point &p);
   [[nodiscard]] static int Orientation(const Point &p, const Point &q, const Point &r);
@@ -24,6 +25,11 @@ class UrinOGrahamPassageSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+ private:
+  [[nodiscard]] std::vector<Point> PrepareOtherPoints(const InType &points, const Point &p0);
+  [[nodiscard]] bool AreAllCollinear(const Point &p0, const std::vector<Point> &points);
+  [[nodiscard]] std::vector<Point> BuildConvexHull(const Point &p0, const std::vector<Point> &points);
 };
 
 }  // namespace urin_o_graham_passage
