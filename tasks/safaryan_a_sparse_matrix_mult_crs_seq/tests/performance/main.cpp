@@ -1,11 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <random>
-#include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -15,7 +12,7 @@ namespace safaryan_a_sparse_matrix_mult_crs_seq {
 
 // ---------- helpers: Dense <-> CRS ----------
 
-static CRSMatrix DenseToCrs(const std::vector<std::vector<double>> &dense, double eps = 0.0) {
+static CRSMatrix DenseToCrs(const std::vector<std::vector<double>>& dense, double eps = 0.0) {
   CRSMatrix m;
   m.rows = dense.size();
   m.cols = dense.empty() ? 0 : dense[0].size();
@@ -31,28 +28,32 @@ static CRSMatrix DenseToCrs(const std::vector<std::vector<double>> &dense, doubl
       }
     }
   }
+
   m.nnz = m.values.size();
   m.row_ptr[m.rows] = m.nnz;
   return m;
 }
 
-static std::vector<std::vector<double>> CrsToDense(const CRSMatrix &m) {
+static std::vector<std::vector<double>> CrsToDense(const CRSMatrix& m) {
   std::vector<std::vector<double>> dense(m.rows, std::vector<double>(m.cols, 0.0));
+
   for (size_t i = 0; i < m.rows; ++i) {
     for (size_t idx = m.row_ptr[i]; idx < m.row_ptr[i + 1]; ++idx) {
       dense[i][m.col_indices[idx]] += m.values[idx];
     }
   }
+
   return dense;
 }
 
-static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<double>> &a,
-                                                 const std::vector<std::vector<double>> &b) {
+static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<double>>& a,
+                                                 const std::vector<std::vector<double>>& b) {
   const size_t n = a.size();
   const size_t k = a.empty() ? 0 : a[0].size();
   const size_t m = b.empty() ? 0 : b[0].size();
 
   std::vector<std::vector<double>> c(n, std::vector<double>(m, 0.0));
+
   for (size_t i = 0; i < n; ++i) {
     for (size_t t = 0; t < k; ++t) {
       const double av = a[i][t];
@@ -64,10 +65,12 @@ static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<d
       }
     }
   }
+
   return c;
 }
 
-static void ExpectDenseEqual(const std::vector<std::vector<double>> &x, const std::vector<std::vector<double>> &y,
+static void ExpectDenseEqual(const std::vector<std::vector<double>>& x,
+                             const std::vector<std::vector<double>>& y,
                              double eps = 1e-9) {
   ASSERT_EQ(x.size(), y.size());
   if (x.empty()) {
@@ -90,6 +93,7 @@ static std::vector<std::vector<double>> GenDense(size_t rows, size_t cols, doubl
   std::uniform_real_distribution<double> val(-5.0, 5.0);
 
   std::vector<std::vector<double>> d(rows, std::vector<double>(cols, 0.0));
+
   for (size_t i = 0; i < rows; ++i) {
     for (size_t j = 0; j < cols; ++j) {
       if (prob(rng) < density) {
@@ -97,52 +101,71 @@ static std::vector<std::vector<double>> GenDense(size_t rows, size_t cols, doubl
       }
     }
   }
+
   return d;
 }
 
-TEST(SafaryanASparseMatrixMultCRSSeq_Perf, SmallFixedCase) {
+// ---------- tests ----------
+
+TEST(SafaryanASparseMatrixMultCRSSeqPerf, SmallFixedCase) {
   // A(2x3), B(3x2)
-  std::vector<std::vector<double>> a = {
+  const std::vector<std::vector<double>> a_dense = {
       {1.0, 0.0, 2.0},
       {0.0, -1.0, 3.0},
   };
-  std::vector<std::vector<double>> b = {
+  const std::vector<std::vector<double>> b_dense = {
       {2.0, 1.0},
       {0.0, 4.0},
       {1.0, -2.0},
   };
 
-  CRSMatrix A = DenseToCrs(a);
-  CRSMatrix B = DenseToCrs(b);
+  const CRSMatrix a_crs = DenseToCrs(a_dense);
+  const CRSMatrix b_crs = DenseToCrs(b_dense);
 
-  SafaryanASparseMatrixMultCRSSeq task({A, B});
-  ASSERT_TRUE(task.Validation());
-  ASSERT_TRUE(task.PreProcessing());
-  ASSERT_TRUE(task.Run());
-  ASSERT_TRUE(task.PostProcessing());
+  SafaryanASparseMatrixMultCRSSeq task({a_crs, b_crs});
+
+  const bool valid_ok = task.Validation();
+  ASSERT_TRUE(valid_ok);
+
+  const bool pre_ok = task.PreProcessing();
+  ASSERT_TRUE(pre_ok);
+
+  const bool run_ok = task.Run();
+  ASSERT_TRUE(run_ok);
+
+  const bool post_ok = task.PostProcessing();
+  ASSERT_TRUE(post_ok);
 
   const auto got = CrsToDense(task.GetOutput());
-  const auto ref = DenseMul(a, b);
+  const auto ref = DenseMul(a_dense, b_dense);
 
   ExpectDenseEqual(got, ref);
 }
 
-TEST(SafaryanASparseMatrixMultCRSSeq_Perf, RandomMediumCase) {
+TEST(SafaryanASparseMatrixMultCRSSeqPerf, RandomMediumCase) {
   const size_t n = 60;
   const size_t k = 80;
   const size_t m = 50;
 
-  auto a_dense = GenDense(n, k, 0.08, 123);
-  auto b_dense = GenDense(k, m, 0.08, 456);
+  const auto a_dense = GenDense(n, k, 0.08, 123);
+  const auto b_dense = GenDense(k, m, 0.08, 456);
 
-  CRSMatrix A = DenseToCrs(a_dense);
-  CRSMatrix B = DenseToCrs(b_dense);
+  const CRSMatrix a_crs = DenseToCrs(a_dense);
+  const CRSMatrix b_crs = DenseToCrs(b_dense);
 
-  SafaryanASparseMatrixMultCRSSeq task({A, B});
-  ASSERT_TRUE(task.Validation());
-  ASSERT_TRUE(task.PreProcessing());
-  ASSERT_TRUE(task.Run());
-  ASSERT_TRUE(task.PostProcessing());
+  SafaryanASparseMatrixMultCRSSeq task({a_crs, b_crs});
+
+  const bool valid_ok = task.Validation();
+  ASSERT_TRUE(valid_ok);
+
+  const bool pre_ok = task.PreProcessing();
+  ASSERT_TRUE(pre_ok);
+
+  const bool run_ok = task.Run();
+  ASSERT_TRUE(run_ok);
+
+  const bool post_ok = task.PostProcessing();
+  ASSERT_TRUE(post_ok);
 
   const auto got = CrsToDense(task.GetOutput());
   const auto ref = DenseMul(a_dense, b_dense);
