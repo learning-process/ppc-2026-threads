@@ -118,7 +118,7 @@ void OvchinnikovMShellSortBatcherMergeSEQ::ShellSort(std::vector<int> &data) {
 }
 
 std::vector<int> OvchinnikovMShellSortBatcherMergeSEQ::BatcherOddEvenMerge(const std::vector<int> &left,
-                                                                             const std::vector<int> &right) {
+                                                                           const std::vector<int> &right) {
   if (left.empty()) {
     return right;
   }
@@ -176,7 +176,9 @@ bool OvchinnikovMShellSortBatcherMergeSEQ::RunImpl() {
 }
 
 bool OvchinnikovMShellSortBatcherMergeSEQ::PostProcessingImpl() {
-  if (!std::ranges::is_sorted(data_.begin(), data_.end())) return false;
+  if (!std::ranges::is_sorted(data_.begin(), data_.end())) {
+    return false;
+  }
   GetOutput() = data_;
   return true;
 }
