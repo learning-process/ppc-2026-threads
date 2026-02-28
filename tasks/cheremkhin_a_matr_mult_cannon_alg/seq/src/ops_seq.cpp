@@ -27,8 +27,8 @@ std::size_t CeilDiv(std::size_t a, std::size_t b) {
   return (a + b - 1) / b;
 }
 
-void MulAddBlock(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c,
-                 std::size_t n, std::size_t bs, std::size_t bi, std::size_t bk, std::size_t bj) {
+void MulAddBlock(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, std::size_t n,
+                 std::size_t bs, std::size_t bi, std::size_t bk, std::size_t bj) {
   const std::size_t i0 = bi * bs;
   const std::size_t k0 = bk * bs;
   const std::size_t j0 = bj * bs;
@@ -92,7 +92,7 @@ bool CheremkhinAMatrMultCannonAlgSEQ::RunImpl() {
   for (std::size_t bi = 0; bi < q; ++bi) {
     for (std::size_t bj = 0; bj < q; ++bj) {
       for (std::size_t step = 0; step < q; ++step) {
-        const std::size_t bk = (bj + bi + step) % q;  
+        const std::size_t bk = (bj + bi + step) % q;
         MulAddBlock(a, b, c, np, bs, bi, bk, bj);
       }
     }
