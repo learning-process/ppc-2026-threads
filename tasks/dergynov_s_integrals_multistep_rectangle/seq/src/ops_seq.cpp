@@ -55,7 +55,7 @@ bool NextIndex(std::vector<int> &idx, int dim, int n) {
   }
   return false;
 }
-}  // namespace 
+}  // namespace
 
 bool DergynovSIntegralsMultistepRectangleSEQ::RunImpl() {
   const auto &[func, borders, n] = GetInput();
