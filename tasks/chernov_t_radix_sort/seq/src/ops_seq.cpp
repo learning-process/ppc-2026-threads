@@ -1,7 +1,6 @@
 #include "chernov_t_radix_sort/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -46,6 +45,7 @@ void ChernovTRadixSortSEQ::RadixSortLSD(std::vector<int> &data) {
 
     for (uint32_t val : temp) {
       int digit = static_cast<int>((val >> (byte_index * kBitsPerDigit)) & 0xFFU);
+      ++count[static_cast<size_t>(digit)];
     }
 
     for (int i = 1; i < kRadix; ++i) {
