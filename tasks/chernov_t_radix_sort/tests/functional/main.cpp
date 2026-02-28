@@ -57,8 +57,7 @@ const std::array<TestType, 8> kTestParam = {
     std::make_tuple("PosAndNegMixed", std::vector<int>{-10, 50, -1, 0, 100, -200, 5}),
     std::make_tuple("AllZeroes", std::vector<int>{0, 0, 0, 0, 0}),
     std::make_tuple("PowersOfTwo", std::vector<int>{1024, 256, 512, 128, 64, 32, 16, 8, 4, 2, 1}),
-    std::make_tuple("BigNums", std::vector<int>{3243423, -1221313, 2929299, -482348, 2342453, -9876543})
-};
+    std::make_tuple("BigNums", std::vector<int>{3243423, -1221313, 2929299, -482348, 2342453, -9876543})};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<ChernovTRadixSortSEQ, InType>(kTestParam, PPC_SETTINGS_chernov_t_radix_sort));
