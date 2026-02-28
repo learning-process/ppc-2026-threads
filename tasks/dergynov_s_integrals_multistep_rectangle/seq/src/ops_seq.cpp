@@ -1,10 +1,29 @@
 #include "dergynov_s_integrals_multistep_rectangle/seq/include/ops_seq.hpp"
 
 #include <cmath>
-#include <cstddef>
 #include <vector>
 
+#include "dergynov_s_integrals_multistep_rectangle/common/include/common.hpp"
+
 namespace dergynov_s_integrals_multistep_rectangle {
+namespace {
+bool ValidateBorders(const std::vector<std::pair<double, double>> &borders) {
+  return std::ranges::all_of(
+      borders, [](const auto &p) { return std::isfinite(p.first) && std::isfinite(p.second) && p.first < p.second; });
+}
+
+bool NextIndex(std::vector<int> &idx, int dim, int n) {
+  for (int pos = 0; pos < dim; ++pos) {
+    ++idx[pos];
+    if (idx[pos] < n) {
+      return true;
+    }
+    idx[pos] = 0;
+  }
+  return false;
+}
+
+}  // namespace
 
 DergynovSIntegralsMultistepRectangleSEQ::DergynovSIntegralsMultistepRectangleSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -18,44 +37,20 @@ bool DergynovSIntegralsMultistepRectangleSEQ::ValidationImpl() {
   if (!func) {
     return false;
   }
-
   if (n <= 0) {
     return false;
   }
-
   if (borders.empty()) {
     return false;
   }
 
-  for (const auto &[left, right] : borders) {
-    if (!std::isfinite(left) || !std::isfinite(right)) {
-      return false;
-    }
-    if (left >= right) {
-      return false;
-    }
-  }
-
-  return true;
+  return ValidateBorders(borders);
 }
 
 bool DergynovSIntegralsMultistepRectangleSEQ::PreProcessingImpl() {
   GetOutput() = 0.0;
   return true;
 }
-
-namespace {
-bool NextIndex(std::vector<int> &idx, int dim, int n) {
-  for (int pos = 0; pos < dim; ++pos) {
-    ++idx[pos];
-    if (idx[pos] < n) {
-      return true;
-    }
-    idx[pos] = 0;
-  }
-  return false;
-}
-}  // namespace
 
 bool DergynovSIntegralsMultistepRectangleSEQ::RunImpl() {
   const auto &[func, borders, n] = GetInput();
@@ -75,22 +70,23 @@ bool DergynovSIntegralsMultistepRectangleSEQ::RunImpl() {
   std::vector<double> point(dim);
   double sum = 0.0;
 
-  do {
+  while (true) {
     for (int i = 0; i < dim; ++i) {
-      point[i] = borders[i].first + (idx[i] + 0.5) * h[i];
+      point[i] = borders[i].first + ((idx[i] + 0.5) * h[i]);
     }
 
     double f_val = func(point);
     if (!std::isfinite(f_val)) {
       return false;
     }
-
     sum += f_val;
 
-  } while (NextIndex(idx, dim, n));
+    if (!NextIndex(idx, dim, n)) {
+      break;
+    }
+  }
 
   GetOutput() = sum * cell_volume;
-
   return std::isfinite(GetOutput());
 }
 
