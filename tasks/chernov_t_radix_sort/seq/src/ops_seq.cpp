@@ -29,7 +29,7 @@ constexpr int kBitsPerDigit = 8;
 constexpr int kRadix = 1 << kBitsPerDigit;
 constexpr uint32_t kSignMask = 0x80000000U;
 
-static void ChernovTRadixSortSEQ::RadixSortLSD(std::vector<int> &data) {
+void ChernovTRadixSortSEQ::RadixSortLSD(std::vector<int> &data) {
   if (data.empty()) {
     return;
   }
@@ -43,10 +43,11 @@ static void ChernovTRadixSortSEQ::RadixSortLSD(std::vector<int> &data) {
 
   for (int byte_index = 0; byte_index < 4; ++byte_index) {
     std::array<int, kRadix> count{};
+    count.fill(0);
 
-    for (uint32_t value : temp) {
-      int digit = static_cast<int>((value >> (byte_index * kBitsPerDigit)) & 0xFFu);
-      ++count.at(digit);
+    for (uint32_t val : temp) {
+      int digit = static_cast<int>((val >> (byte_index * kBitsPerDigit)) & 0xFFu);
+      ++count[digit];
     }
 
     for (int i = 1; i < kRadix; ++i) {
@@ -54,8 +55,9 @@ static void ChernovTRadixSortSEQ::RadixSortLSD(std::vector<int> &data) {
     }
 
     for (int i = static_cast<int>(temp.size()) - 1; i >= 0; --i) {
-      int digit = static_cast<int>((value >> (byte_index * kBitsPerDigit)) & 0xFFu);
-      buffer[--count.at(digit)] = temp[i];
+      uint32_t val = temp[i];
+      int digit = static_cast<int>((val >> (byte_index * kBitsPerDigit)) & 0xFFu);
+      buffer[--count[digit]] = val;
     }
 
     temp.swap(buffer);
@@ -66,8 +68,8 @@ static void ChernovTRadixSortSEQ::RadixSortLSD(std::vector<int> &data) {
   }
 }
 
-static void ChernovTRadixSortSEQ::SimpleMerge(const std::vector<int> &left, const std::vector<int> &right,
-                                              std::vector<int> &result) {
+void ChernovTRadixSortSEQ::SimpleMerge(const std::vector<int> &left, const std::vector<int> &right,
+                                       std::vector<int> &result) {
   result.resize(left.size() + right.size());
 
   size_t idx_left = 0;
@@ -110,7 +112,7 @@ bool ChernovTRadixSortSEQ::RunImpl() {
 }
 
 bool ChernovTRadixSortSEQ::PostProcessingImpl() {
-  return std::ranges::is_sorted(GetOutput());
+  return std::is_sorted(GetOutput().begin(), GetOutput().end());
 }
 
 }  // namespace chernov_t_radix_sort
