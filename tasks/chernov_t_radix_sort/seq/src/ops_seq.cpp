@@ -42,22 +42,21 @@ void ChernovTRadixSortSEQ::RadixSortLSD(std::vector<int> &data) {
   std::vector<uint32_t> buffer(temp.size());
 
   for (int byte_index = 0; byte_index < 4; ++byte_index) {
-    std::array<int, kRadix> count{};
-    count.fill(0);
+    std::vector<int> count(kRadix, 0);
 
     for (uint32_t val : temp) {
-      int digit = static_cast<int>((val >> (byte_index * kBitsPerDigit)) & 0xFFu);
-      ++count[digit];
+      int digit = static_cast<int>((val >> (byte_index * kBitsPerDigit)) & 0xFFU);
     }
 
     for (int i = 1; i < kRadix; ++i) {
-      count[i] += count[i - 1];
+      count[static_cast<size_t>(i)] += count[static_cast<size_t>(i - 1)];
     }
 
     for (int i = static_cast<int>(temp.size()) - 1; i >= 0; --i) {
       uint32_t val = temp[i];
-      int digit = static_cast<int>((val >> (byte_index * kBitsPerDigit)) & 0xFFu);
-      buffer[--count[digit]] = val;
+      int digit = static_cast<int>((val >> (byte_index * kBitsPerDigit)) & 0xFFU);
+      int pos = --count[static_cast<size_t>(digit)];
+      buffer[static_cast<size_t>(pos)] = val;
     }
 
     temp.swap(buffer);
