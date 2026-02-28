@@ -16,7 +16,6 @@ int HoarePartition(std::vector<int> &arr, int left, int right) {
     do {
       ++i;
     } while (arr[i] < pivot);
-
     do {
       --j;
     } while (arr[j] > pivot);
@@ -24,20 +23,8 @@ int HoarePartition(std::vector<int> &arr, int left, int right) {
     if (i >= j) {
       return j;
     }
-
     std::swap(arr[i], arr[j]);
   }
-}
-
-void HoareQuickSort(std::vector<int> &arr, int left, int right) {
-  if (left >= right) {
-    return;
-  }
-
-  int pivot_index = HoarePartition(arr, left, right);
-
-  HoareQuickSort(arr, left, pivot_index);
-  HoareQuickSort(arr, pivot_index + 1, right);
 }
 
 void CompareExchange(int &a, int &b) {
@@ -62,16 +49,15 @@ void OddEvenMerge(std::vector<int> &arr, int left, int right, int step) {
   }
 }
 
-void BatcherMergeSort(std::vector<int> &arr, int left, int right) {
-  int size = right - left + 1;
-  if (size <= 1) {
+void QuickBatcherHybrid(std::vector<int> &arr, int left, int right) {
+  if (left >= right) {
     return;
   }
 
-  int mid = left + size / 2 - 1;
+  int pivot_index = HoarePartition(arr, left, right);
 
-  BatcherMergeSort(arr, left, mid);
-  BatcherMergeSort(arr, mid + 1, right);
+  QuickBatcherHybrid(arr, left, pivot_index);
+  QuickBatcherHybrid(arr, pivot_index + 1, right);
 
   OddEvenMerge(arr, left, right, 1);
 }
@@ -94,12 +80,9 @@ bool TrofimovNHoarSortBatcherSEQ::PreProcessingImpl() {
 
 bool TrofimovNHoarSortBatcherSEQ::RunImpl() {
   auto &data = GetOutput();
-
   if (data.size() > 1) {
-    HoareQuickSort(data, 0, static_cast<int>(data.size()) - 1);
-    BatcherMergeSort(data, 0, static_cast<int>(data.size()) - 1);
+    QuickBatcherHybrid(data, 0, static_cast<int>(data.size()) - 1);
   }
-
   return true;
 }
 
