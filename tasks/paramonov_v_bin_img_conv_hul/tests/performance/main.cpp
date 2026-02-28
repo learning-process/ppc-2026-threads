@@ -4,11 +4,11 @@
 #include <random>
 #include <vector>
 
-#include "paramonov_v_bin_img_conv_hull/common/include/common.hpp"
-#include "paramonov_v_bin_img_conv_hull/seq/include/ops_seq.hpp"
+#include "paramonov_v_bin_img_conv_hul/common/include/common.hpp"
+#include "paramonov_v_bin_img_conv_hul/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace paramonov_v_bin_img_conv_hull {
+namespace paramonov_v_bin_img_conv_hul {
 
 class ConvexHullPerformanceTest : public ppc::util::BaseRunPerfTests<InputType, OutputType> {
   static constexpr int kImageSize = 600;
@@ -21,6 +21,7 @@ class ConvexHullPerformanceTest : public ppc::util::BaseRunPerfTests<InputType, 
     std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
     std::uniform_int_distribution<int> dist(0, kImageSize - 1);
 
+    // Создаем 5 случайных прямоугольников
     for (int comp = 0; comp < 5; ++comp) {
       int x1 = dist(rng) % (kImageSize - 30);
       int y1 = dist(rng) % (kImageSize - 30);
@@ -37,6 +38,7 @@ class ConvexHullPerformanceTest : public ppc::util::BaseRunPerfTests<InputType, 
       }
     }
 
+    // Добавляем несколько диагональных линий
     for (int i = 0; i < kImageSize; i += 17) {
       int r = i;
       int c = i;
@@ -51,7 +53,6 @@ class ConvexHullPerformanceTest : public ppc::util::BaseRunPerfTests<InputType, 
     if (output.empty()) {
       return false;
     }
-
     return std::all_of(output.begin(), output.end(), [](const auto &hull) { return !hull.empty(); });
   }
 
@@ -69,7 +70,7 @@ TEST_P(ConvexHullPerformanceTest, RunPerformanceTest) {
 namespace {
 
 const auto kPerformanceTasks =
-    ppc::util::MakeAllPerfTasks<InputType, ConvexHullSequential>(PPC_SETTINGS_paramonov_v_bin_img_conv_hull);
+    ppc::util::MakeAllPerfTasks<InputType, ConvexHullSequential>(PPC_SETTINGS_paramonov_v_bin_img_conv_hul);
 
 const auto kTestValues = ppc::util::TupleToGTestValues(kPerformanceTasks);
 
@@ -78,4 +79,4 @@ INSTANTIATE_TEST_SUITE_P(ParamonovPerfTests, ConvexHullPerformanceTest, kTestVal
 
 }  // namespace
 
-}  // namespace paramonov_v_bin_img_conv_hull
+}  // namespace paramonov_v_bin_img_conv_hul

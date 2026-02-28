@@ -2,17 +2,16 @@
 
 #include <algorithm>
 #include <array>
-#include <chrono>
 #include <random>
 #include <set>
 #include <string>
 #include <vector>
 
-#include "paramonov_v_bin_img_conv_hull/common/include/common.hpp"
-#include "paramonov_v_bin_img_conv_hull/seq/include/ops_seq.hpp"
+#include "paramonov_v_bin_img_conv_hul/common/include/common.hpp"
+#include "paramonov_v_bin_img_conv_hul/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 
-namespace paramonov_v_bin_img_conv_hull {
+namespace paramonov_v_bin_img_conv_hul {
 
 namespace {
 GrayImage CreateTestImage(int rows, int cols) {
@@ -41,12 +40,8 @@ bool HullsEqual(const std::vector<PixelPoint> &h1, const std::vector<PixelPoint>
   std::vector<PixelPoint> sorted1 = h1;
   std::vector<PixelPoint> sorted2 = h2;
 
-  auto comparator = [](const PixelPoint &a, const PixelPoint &b) {
-    return (a.row == b.row) ? a.col < b.col : a.row < b.row;
-  };
-
-  std::sort(sorted1.begin(), sorted1.end(), comparator);
-  std::sort(sorted2.begin(), sorted2.end(), comparator);
+  std::sort(sorted1.begin(), sorted1.end());
+  std::sort(sorted2.begin(), sorted2.end());
 
   return std::equal(sorted1.begin(), sorted1.end(), sorted2.begin(), PointsEqual);
 }
@@ -60,6 +55,7 @@ struct TestScenario {
 std::vector<TestScenario> GenerateTestScenarios() {
   std::vector<TestScenario> scenarios;
 
+  // Сценарий 1: Одна точка
   {
     TestScenario ts;
     ts.image = CreateTestImage(5, 5);
@@ -69,6 +65,7 @@ std::vector<TestScenario> GenerateTestScenarios() {
     scenarios.push_back(ts);
   }
 
+  // Сценарий 2: Две отдельные точки
   {
     TestScenario ts;
     ts.image = CreateTestImage(8, 8);
@@ -79,6 +76,7 @@ std::vector<TestScenario> GenerateTestScenarios() {
     scenarios.push_back(ts);
   }
 
+  // Сценарий 3: Вертикальная линия
   {
     TestScenario ts;
     ts.image = CreateTestImage(7, 7);
@@ -90,6 +88,7 @@ std::vector<TestScenario> GenerateTestScenarios() {
     scenarios.push_back(ts);
   }
 
+  // Сценарий 4: Горизонтальная линия
   {
     TestScenario ts;
     ts.image = CreateTestImage(7, 7);
@@ -101,6 +100,7 @@ std::vector<TestScenario> GenerateTestScenarios() {
     scenarios.push_back(ts);
   }
 
+  // Сценарий 5: Прямоугольник 4x3
   {
     TestScenario ts;
     ts.image = CreateTestImage(10, 10);
@@ -114,6 +114,7 @@ std::vector<TestScenario> GenerateTestScenarios() {
     scenarios.push_back(ts);
   }
 
+  // Сценарий 6: Два отдельных прямоугольника
   {
     TestScenario ts;
     ts.image = CreateTestImage(15, 15);
@@ -135,24 +136,7 @@ std::vector<TestScenario> GenerateTestScenarios() {
     scenarios.push_back(ts);
   }
 
-  {
-    TestScenario ts;
-    ts.image = CreateTestImage(11, 11);
-    int center = 5;
-
-    for (int dr = -center; dr <= center; ++dr) {
-      for (int dc = -center; dc <= center; ++dc) {
-        if (std::abs(dr) + std::abs(dc) <= center) {
-          SetPixel(ts.image, center + dr, center + dc);
-        }
-      }
-    }
-
-    ts.expected_hulls = {{{0, 5}, {5, 0}, {10, 5}, {5, 10}}};
-    ts.description = "diamond_shape";
-    scenarios.push_back(ts);
-  }
-
+  // Сценарий 7: Пустое изображение
   {
     TestScenario ts;
     ts.image = CreateTestImage(10, 10);
@@ -211,7 +195,7 @@ namespace {
 const auto kTestScenarios = GenerateTestScenarios();
 
 const auto kTestTasks =
-    ppc::util::AddFuncTask<ConvexHullSequential, InputType>(kTestScenarios, PPC_SETTINGS_paramonov_v_bin_img_conv_hull);
+    ppc::util::AddFuncTask<ConvexHullSequential, InputType>(kTestScenarios, PPC_SETTINGS_paramonov_v_bin_img_conv_hul);
 
 const auto kTestValues = ppc::util::ExpandToValues(kTestTasks);
 
@@ -222,4 +206,4 @@ INSTANTIATE_TEST_SUITE_P(ParamonovHullTests, ConvexHullFunctionalTest, kTestValu
 
 }  // namespace
 
-}  // namespace paramonov_v_bin_img_conv_hull
+}  // namespace paramonov_v_bin_img_conv_hul

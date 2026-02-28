@@ -1,16 +1,13 @@
-#include "paramonov_v_bin_img_conv_hull/seq/include/ops_seq.hpp"
+#include "paramonov_v_bin_img_conv_hul/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <deque>
-#include <functional>
+#include <array>
 #include <iterator>
-#include <limits>
 #include <numeric>
-#include <queue>
-#include <set>
 #include <stack>
+#include <vector>
 
-namespace paramonov_v_bin_img_conv_hull {
+namespace paramonov_v_bin_img_conv_hul {
 
 namespace {
 constexpr std::array<std::pair<int, int>, 4> kNeighbors = {{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}};
@@ -113,24 +110,15 @@ int64_t ConvexHullSequential::Orientation(const PixelPoint &p, const PixelPoint 
          (static_cast<int64_t>(q.row - p.row) * (r.col - p.col));
 }
 
-bool ConvexHullSequential::IsPointOnSegment(const PixelPoint &p, const PixelPoint &q, const PixelPoint &r) {
-  if (Orientation(p, q, r) != 0) {
-    return false;
-  }
-
-  return (q.col <= std::max(p.col, r.col) && q.col >= std::min(p.col, r.col) && q.row <= std::max(p.row, r.row) &&
-          q.row >= std::min(p.row, r.row));
-}
-
 std::vector<PixelPoint> ConvexHullSequential::ComputeConvexHull(const std::vector<PixelPoint> &points) {
   if (points.size() <= 2) {
     return points;
   }
 
-  auto lowest_point = *std::min_element(points.begin(), points.end(), [](const PixelPoint &a, const PixelPoint &b) {
-    return (a.row == b.row) ? a.col < b.col : a.row < b.row;
-  });
+  // Находим точку с наименьшими координатами
+  auto lowest_point = *std::min_element(points.begin(), points.end());
 
+  // Копируем и сортируем по полярному углу
   std::vector<PixelPoint> sorted_points;
   std::copy_if(points.begin(), points.end(), std::back_inserter(sorted_points),
                [&lowest_point](const PixelPoint &p) { return !(p == lowest_point); });
@@ -147,26 +135,11 @@ std::vector<PixelPoint> ConvexHullSequential::ComputeConvexHull(const std::vecto
     return orient > 0;
   });
 
-  std::vector<PixelPoint> unique_points;
-  unique_points.push_back(lowest_point);
+  // Строим выпуклую оболочку
+  std::vector<PixelPoint> hull;
+  hull.push_back(lowest_point);
 
   for (const auto &p : sorted_points) {
-    while (unique_points.size() >= 2) {
-      const auto &p1 = unique_points[unique_points.size() - 2];
-      const auto &p2 = unique_points.back();
-
-      if (Orientation(p1, p2, p) <= 0) {
-        unique_points.pop_back();
-      } else {
-        break;
-      }
-    }
-    unique_points.push_back(p);
-  }
-
-  std::vector<PixelPoint> hull;
-
-  for (const auto &p : unique_points) {
     while (hull.size() >= 2) {
       const auto &a = hull[hull.size() - 2];
       const auto &b = hull.back();
@@ -180,11 +153,7 @@ std::vector<PixelPoint> ConvexHullSequential::ComputeConvexHull(const std::vecto
     hull.push_back(p);
   }
 
-  if (hull.size() > 1 && hull.front() == hull.back()) {
-    hull.pop_back();
-  }
-
   return hull;
 }
 
-}  // namespace paramonov_v_bin_img_conv_hull
+}  // namespace paramonov_v_bin_img_conv_hul

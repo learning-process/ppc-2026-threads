@@ -6,7 +6,7 @@
 
 #include "task/include/task.hpp"
 
-namespace paramonov_v_bin_img_conv_hull {
+namespace paramonov_v_bin_img_conv_hul {
 
 struct PixelPoint {
   int row{0};
@@ -17,6 +17,10 @@ struct PixelPoint {
 
   bool operator==(const PixelPoint &other) const {
     return row == other.row && col == other.col;
+  }
+
+  bool operator<(const PixelPoint &other) const {
+    return (row == other.row) ? col < other.col : row < other.row;
   }
 };
 
@@ -30,4 +34,4 @@ using InputType = GrayImage;
 using OutputType = std::vector<std::vector<PixelPoint>>;
 using HullTaskBase = ppc::task::Task<InputType, OutputType>;
 
-}  // namespace paramonov_v_bin_img_conv_hull
+}  // namespace paramonov_v_bin_img_conv_hul
