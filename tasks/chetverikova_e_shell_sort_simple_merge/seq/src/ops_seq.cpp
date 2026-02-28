@@ -27,11 +27,11 @@ void ChetverikovaEShellSortSimpleMergeSEQ::ShellSort(std::vector<int> &data) {
     return;
   }
 
-  int n = data.size();
-  for (int gap = n / 2; gap > 0; gap /= 2) {
-    for (int i = gap; i < n; i++) {
+  size_t n = data.size();
+  for (size_t gap = n / 2; gap > 0; gap /= 2) {
+    for (size_t i = gap; i < n; i++) {
       int temp = data[i];
-      int j;
+      size_t j;
 
       for (j = i; j >= gap && data[j - gap] > temp; j -= gap) {
         data[j] = data[j - gap];
@@ -46,7 +46,7 @@ std::vector<int> ChetverikovaEShellSortSimpleMergeSEQ::MergeSort(const std::vect
                                                                  const std::vector<int> &right) {
   std::vector<int> result;
   result.reserve(left.size() + right.size());
-  int i = 0, j = 0;
+  size_t i = 0, j = 0;
   while (i < left.size() && j < right.size()) {
     if (left[i] <= right[j]) {
       result.push_back(left[i++]);
