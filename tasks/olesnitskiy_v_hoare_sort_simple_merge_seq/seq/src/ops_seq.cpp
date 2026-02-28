@@ -154,4 +154,4 @@ bool OlesnitskiyVHoareSortSimpleMergeSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace olesnitskiy_v_hoare_sort_simple_merge_seq
+}  //  namespace olesnitskiy_v_hoare_sort_simple_merge_seq
