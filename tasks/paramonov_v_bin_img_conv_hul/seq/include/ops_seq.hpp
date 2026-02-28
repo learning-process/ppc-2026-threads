@@ -28,8 +28,7 @@ class ConvexHullSequential : public HullTaskBase {
   [[nodiscard]] std::vector<PixelPoint> ComputeConvexHull(const std::vector<PixelPoint> &points) const;
   void FloodFill(int start_row, int start_col, std::vector<bool> &visited, std::vector<PixelPoint> &component) const;
 
-  // Убираем static, чтобы функция была видна в этом файле
-  int64_t Orientation(const PixelPoint &p, const PixelPoint &q, const PixelPoint &r) const;
+  [[nodiscard]] static int64_t Orientation(const PixelPoint &p, const PixelPoint &q, const PixelPoint &r);
   static size_t PixelIndex(int row, int col, int cols) {
     return (static_cast<size_t>(row) * static_cast<size_t>(cols)) + static_cast<size_t>(col);
   }
