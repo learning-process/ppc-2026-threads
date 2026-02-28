@@ -1,5 +1,8 @@
 #pragma once
 
+#include <utility>
+#include <vector>
+
 #include "pankov_a_path_dejikstra/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -17,6 +20,9 @@ class PankovAPathDejikstraSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  using AdjList = std::vector<std::vector<std::pair<Vertex, Weight>>>;
+  AdjList adjacency_;
 };
 
 }  // namespace pankov_a_path_dejikstra

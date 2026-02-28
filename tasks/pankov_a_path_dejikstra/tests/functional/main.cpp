@@ -1,23 +1,13 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
-#include "pankov_a_path_dejikstra/all/include/ops_all.hpp"
 #include "pankov_a_path_dejikstra/common/include/common.hpp"
-#include "pankov_a_path_dejikstra/omp/include/ops_omp.hpp"
 #include "pankov_a_path_dejikstra/seq/include/ops_seq.hpp"
-#include "pankov_a_path_dejikstra/stl/include/ops_stl.hpp"
-#include "pankov_a_path_dejikstra/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -31,31 +21,29 @@ class PankovAPathDejikstraRunFuncTestsThreads : public ppc::util::BaseRunFuncTes
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_pankov_a_path_dejikstra), "pic.ppm");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
+    const TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    const int case_id = std::get<0>(params);
 
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    if (case_id == 0) {
+      input_data_ = InType{5, 0, {{0, 1, 4}, {0, 2, 1}, {2, 1, 2}, {1, 3, 1}, {2, 3, 5}, {3, 4, 3}}};
+      expected_output_ = OutType{0, 3, 1, 4, 7};
+      return;
+    }
+    if (case_id == 1) {
+      input_data_ = InType{6, 0, {{0, 1, 7}, {0, 2, 9}, {1, 3, 10}, {2, 3, 1}, {3, 4, 2}}};
+      expected_output_ = OutType{0, 7, 9, 10, 12, kInfinity};
+      return;
+    }
+    if (case_id == 2) {
+      input_data_ = InType{5, 2, {{2, 0, 5}, {2, 1, 2}, {1, 3, 4}, {0, 3, 1}, {3, 4, 3}}};
+      expected_output_ = OutType{5, 2, 0, 6, 9};
+      return;
+    }
+    throw std::runtime_error("Unknown functional case id");
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    return output_data == expected_output_;
   }
 
   InType GetTestInputData() final {
@@ -63,27 +51,26 @@ class PankovAPathDejikstraRunFuncTestsThreads : public ppc::util::BaseRunFuncTes
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_{};
+  OutType expected_output_;
 };
 
 namespace {
 
-TEST_P(PankovAPathDejikstraRunFuncTestsThreads, MatmulFromPic) {
+TEST_P(PankovAPathDejikstraRunFuncTestsThreads, DijkstraShortestPathFromSource) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 3> kTestParam = {std::make_tuple(0, "basic_graph"), std::make_tuple(1, "unreachable_vertex"),
+                                            std::make_tuple(2, "non_zero_source")};
 
 const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<PankovAPathDejikstraALL, InType>(kTestParam, PPC_SETTINGS_pankov_a_path_dejikstra),
-                   ppc::util::AddFuncTask<PankovAPathDejikstraOMP, InType>(kTestParam, PPC_SETTINGS_pankov_a_path_dejikstra),
-                   ppc::util::AddFuncTask<PankovAPathDejikstraSEQ, InType>(kTestParam, PPC_SETTINGS_pankov_a_path_dejikstra),
-                   ppc::util::AddFuncTask<PankovAPathDejikstraSTL, InType>(kTestParam, PPC_SETTINGS_pankov_a_path_dejikstra),
-                   ppc::util::AddFuncTask<PankovAPathDejikstraTBB, InType>(kTestParam, PPC_SETTINGS_pankov_a_path_dejikstra));
+    ppc::util::AddFuncTask<PankovAPathDejikstraSEQ, InType>(kTestParam, PPC_SETTINGS_pankov_a_path_dejikstra);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = PankovAPathDejikstraRunFuncTestsThreads::PrintFuncTestName<PankovAPathDejikstraRunFuncTestsThreads>;
+const auto kPerfTestName =
+    PankovAPathDejikstraRunFuncTestsThreads::PrintFuncTestName<PankovAPathDejikstraRunFuncTestsThreads>;
 
 INSTANTIATE_TEST_SUITE_P(PicMatrixTests, PankovAPathDejikstraRunFuncTestsThreads, kGtestValues, kPerfTestName);
 

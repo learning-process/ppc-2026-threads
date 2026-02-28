@@ -1,60 +1,87 @@
 #include "pankov_a_path_dejikstra/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <functional>
+#include <queue>
+#include <utility>
 #include <vector>
 
 #include "pankov_a_path_dejikstra/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace pankov_a_path_dejikstra {
+namespace {
 
-PankovAPathDejikstraSEQ::PankovAPathDejikstraSEQ(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput() = 0;
-}
+using AdjList = std::vector<std::vector<std::pair<Vertex, Weight>>>;
 
-bool PankovAPathDejikstraSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
-}
+OutType DijkstraSeq(Vertex source, const AdjList &adjacency) {
+  OutType distance(adjacency.size(), kInfinity);
+  using QueueNode = std::pair<Weight, Vertex>;
+  std::priority_queue<QueueNode, std::vector<QueueNode>, std::greater<>> min_queue;
 
-bool PankovAPathDejikstraSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
-}
+  distance[source] = 0;
+  min_queue.emplace(0, source);
 
-bool PankovAPathDejikstraSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
+  while (!min_queue.empty()) {
+    const auto [current_dist, u] = min_queue.top();
+    min_queue.pop();
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
+    if (current_dist != distance[u]) {
+      continue;
+    }
+
+    for (const auto &[v, weight] : adjacency[u]) {
+      if (current_dist <= kInfinity - weight && current_dist + weight < distance[v]) {
+        distance[v] = current_dist + weight;
+        min_queue.emplace(distance[v], v);
       }
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
+  return distance;
+}
 
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
+}  // namespace
+
+PankovAPathDejikstraSEQ::PankovAPathDejikstraSEQ(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput().clear();
+}
+
+bool PankovAPathDejikstraSEQ::ValidationImpl() {
+  const InType &input = GetInput();
+  if (input.n == 0 || input.source >= input.n) {
+    return false;
   }
 
-  if (counter != 0) {
-    GetOutput() /= counter;
+  const auto edge_valid = [&input](const Edge &e) {
+    const auto [from, to, weight] = e;
+    return from < input.n && to < input.n && weight >= 0;
+  };
+  return std::ranges::all_of(input.edges, edge_valid);
+}
+
+bool PankovAPathDejikstraSEQ::PreProcessingImpl() {
+  const InType &input = GetInput();
+  adjacency_.assign(input.n, {});
+  for (const auto &[from, to, weight] : input.edges) {
+    adjacency_[from].emplace_back(to, weight);
   }
-  return GetOutput() > 0;
+  GetOutput().clear();
+  return true;
+}
+
+bool PankovAPathDejikstraSEQ::RunImpl() {
+  const InType &input = GetInput();
+  if (adjacency_.size() != input.n) {
+    return false;
+  }
+  GetOutput() = DijkstraSeq(input.source, adjacency_);
+  return GetOutput().size() == input.n;
 }
 
 bool PankovAPathDejikstraSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return GetOutput().size() == GetInput().n;
 }
 
 }  // namespace pankov_a_path_dejikstra
