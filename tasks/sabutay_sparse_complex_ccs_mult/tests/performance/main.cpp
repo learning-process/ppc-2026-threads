@@ -15,10 +15,12 @@ class SabutayRunPerfSeq : public ppc::util::BaseRunPerfTests<InType, OutType> {
     // simple fixed matrices for performance measurement
     CCS a;
     CCS b;
-    a.m = 100; a.n = 100;
-    a.col_ptr.resize(a.n+1);
-    b.m = 100; b.n = 100;
-    b.col_ptr.resize(b.n+1);
+    a.m = 100;
+    a.n = 100;
+    a.col_ptr.resize(a.n + 1);
+    b.m = 100;
+    b.n = 100;
+    b.col_ptr.resize(b.n + 1);
     // fill diagonal ones
     for (int i = 0; i < 100; ++i) {
       a.col_ptr[i] = i;
@@ -33,7 +35,7 @@ class SabutayRunPerfSeq : public ppc::util::BaseRunPerfTests<InType, OutType> {
     input_data_ = std::tuple<CCS, CCS>(a, b);
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     // result should equal identity multiplication
     return (output_data.m == 100 && output_data.n == 100);
   }
