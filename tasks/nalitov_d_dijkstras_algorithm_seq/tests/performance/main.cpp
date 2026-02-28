@@ -7,15 +7,17 @@
 namespace nalitov_d_dijkstras_algorithm_seq {
 
 class NalitovDDijkstrasAlgorithmSeqPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 200;
+  static constexpr int kGraphSize = 150;
   InType input_data_{};
+  OutType expected_output_{};
 
   void SetUp() override {
-    input_data_ = kCount_;
+    input_data_ = kGraphSize;
+    expected_output_ = input_data_ * (input_data_ - 1) / 2;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    return expected_output_ == output_data;
   }
 
   InType GetTestInputData() final {
