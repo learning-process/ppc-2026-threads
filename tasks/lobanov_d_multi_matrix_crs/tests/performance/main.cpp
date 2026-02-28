@@ -119,17 +119,17 @@ class LobanovDMultiplyMatrixPerfTest : public ::testing::TestWithParam<std::tupl
             CreateRandomCompressedRowMatrix(dimension, dimension, density, 200)};
   }
 
-  static bool ExecuteTask(LobanovMultyMatrixSEQ &task)  {
+  static bool ExecuteTask(LobanovMultyMatrixSEQ &task) {
     return task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing();
   }
 
-  template<typename Func>
-  auto MeasureTime(Func&& func) const {
+  template <typename Func>
+  auto MeasureTime(Func &&func) const {
     const auto start = std::chrono::high_resolution_clock::now();
     std::forward<Func>(func)();  // используем std::forward
     const auto end = std::chrono::high_resolution_clock::now();
     return std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-}
+  }
 
   // Функция для проверки результатов
   void ValidateResult(const CompressedRowMatrix &result) const {
