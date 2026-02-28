@@ -4,10 +4,13 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <iterator>  // для std::back_inserter
+#include <iterator>  // для std::back_inserter>
 #include <stack>
 #include <utility>  // для std::pair
 #include <vector>
+
+// Добавляем include для типов из common.hpp
+#include "paramonov_v_bin_img_conv_hul/common/include/common.hpp"
 
 namespace paramonov_v_bin_img_conv_hul {
 
@@ -120,7 +123,8 @@ int64_t ConvexHullSequential::Orientation(const PixelPoint &p, const PixelPoint 
          (static_cast<int64_t>(q.row - p.row) * (r.col - p.col));
 }
 
-std::vector<PixelPoint> ConvexHullSequential::ComputeConvexHull(const std::vector<PixelPoint> &points) const {
+// Делаем метод статическим, так как он не использует поля класса
+static std::vector<PixelPoint> ComputeConvexHullImpl(const std::vector<PixelPoint> &points) {
   if (points.size() <= 2) {
     return points;
   }
@@ -165,6 +169,10 @@ std::vector<PixelPoint> ConvexHullSequential::ComputeConvexHull(const std::vecto
   }
 
   return hull;
+}
+
+std::vector<PixelPoint> ConvexHullSequential::ComputeConvexHull(const std::vector<PixelPoint> &points) const {
+  return ComputeConvexHullImpl(points);
 }
 
 }  // namespace paramonov_v_bin_img_conv_hul

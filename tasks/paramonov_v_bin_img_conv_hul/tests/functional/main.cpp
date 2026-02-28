@@ -12,6 +12,9 @@
 #include "paramonov_v_bin_img_conv_hul/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 
+// Этот include не нужен напрямую, так как GTestParamIndex используется через func_test_util.hpp
+// NOLINTNEXTLINE(misc-include-cleaner)
+
 namespace paramonov_v_bin_img_conv_hul {
 
 using TestCase = std::tuple<GrayImage, std::vector<std::vector<PixelPoint>>, std::string>;
