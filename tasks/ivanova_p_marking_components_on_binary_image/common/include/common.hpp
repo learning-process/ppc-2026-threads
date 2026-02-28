@@ -47,7 +47,7 @@ inline Image LoadImageFromTxt(const std::string &filename) {
 
   img.data.resize(static_cast<size_t>(img.width) * static_cast<size_t>(img.height));
 
-  for (int i = 0; i < static_cast<int>(img.data.size()); ++i) {
+  for (size_t i = 0; i < img.data.size(); ++i) {
     int pixel_value = 0;
     if (!(file >> pixel_value)) {
       img.width = 0;
@@ -95,7 +95,7 @@ inline Image LoadPPMImage(const std::string &filename) {
     file.read(reinterpret_cast<char *>(gray_data.data()),
               static_cast<std::streamsize>(static_cast<size_t>(img.width) * static_cast<size_t>(img.height)));
 
-    for (int i = 0; i < static_cast<int>(gray_data.size()); ++i) {
+    for (size_t i = 0; i < gray_data.size(); ++i) {
       // Преобразуем в бинарное: если пиксель темный (< 128), то 1, иначе 0
       img.data[i] = (gray_data[i] < 128) ? 1 : 0;
     }
@@ -105,10 +105,10 @@ inline Image LoadPPMImage(const std::string &filename) {
     file.read(reinterpret_cast<char *>(rgb_data.data()),
               static_cast<std::streamsize>(static_cast<size_t>(img.width) * static_cast<size_t>(img.height) * 3U));
 
-    for (int i = 0; i < static_cast<int>(img.data.size()); ++i) {
-      uint8_t r = rgb_data[static_cast<size_t>(i) * 3U];
-      uint8_t g = rgb_data[static_cast<size_t>(i) * 3U + 1U];
-      uint8_t b = rgb_data[static_cast<size_t>(i) * 3U + 2U];
+    for (size_t i = 0; i < img.data.size(); ++i) {
+      uint8_t r = rgb_data[i * 3U];
+      uint8_t g = rgb_data[(i * 3U) + 1U];
+      uint8_t b = rgb_data[(i * 3U) + 2U];
 
       // Преобразуем в бинарное: если пиксель темный, то 1, иначе 0
       uint8_t gray = (r + g + b) / 3;
@@ -121,7 +121,7 @@ inline Image LoadPPMImage(const std::string &filename) {
 }
 
 // Вспомогательные функции для создания тестовых изображений
-namespace {
+namespace test_image_helpers {
 
 inline bool IsPixelInTestCase1(int xx, int yy, int width, int height) {
   return xx > width / 4 && xx < (3 * width) / 4 && yy > height / 4 && yy < (3 * height) / 4;
@@ -158,7 +158,7 @@ inline bool IsPixelInTestCase8(int xx, int yy, int width, int height) {
          local_y < (3 * cell_height) / 4;
 }
 
-}  // namespace
+}  // namespace test_image_helpers
 
 // Вспомогательная функция для создания тестовых изображений
 inline Image CreateTestImage(int width, int height, int test_case) {
@@ -174,16 +174,16 @@ inline Image CreateTestImage(int width, int height, int test_case) {
 
       switch (test_case) {
         case 1:
-          pixel = IsPixelInTestCase1(xx, yy, width, height) ? 1 : 0;
+          pixel = test_image_helpers::IsPixelInTestCase1(xx, yy, width, height) ? 1 : 0;
           break;
         case 2:
-          pixel = IsPixelInTestCase2(xx, yy, width, height) ? 1 : 0;
+          pixel = test_image_helpers::IsPixelInTestCase2(xx, yy, width, height) ? 1 : 0;
           break;
         case 3:
-          pixel = IsPixelInTestCase3(xx, yy, width, height) ? 1 : 0;
+          pixel = test_image_helpers::IsPixelInTestCase3(xx, yy, width, height) ? 1 : 0;
           break;
         case 4:
-          pixel = IsPixelInTestCase4(xx, yy, width, height) ? 1 : 0;
+          pixel = test_image_helpers::IsPixelInTestCase4(xx, yy, width, height) ? 1 : 0;
           break;
         case 5:
           pixel = 0;
@@ -192,10 +192,10 @@ inline Image CreateTestImage(int width, int height, int test_case) {
           pixel = (xx == width / 2 && yy == height / 2) ? 1 : 0;
           break;
         case 7:
-          pixel = IsPixelInTestCase7(xx, yy, width, height) ? 1 : 0;
+          pixel = test_image_helpers::IsPixelInTestCase7(xx, yy, width, height) ? 1 : 0;
           break;
         case 8:
-          pixel = IsPixelInTestCase8(xx, yy, width, height) ? 1 : 0;
+          pixel = test_image_helpers::IsPixelInTestCase8(xx, yy, width, height) ? 1 : 0;
           break;
         case 9:
           pixel = (yy == height / 2) ? 1 : 0;

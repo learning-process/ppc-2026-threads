@@ -24,9 +24,9 @@ class IvanovaPMarkingComponentsOnBinaryImageSEQ : public BaseTask {
   Image input_image_;
   std::vector<int> labels_;
   std::unordered_map<int, int> parent_;
-  int current_label_;
-  int width_;
-  int height_;
+  int current_label_ = 0;
+  int width_ = 0;
+  int height_ = 0;
 
   void FirstPass();
   void SecondPass();

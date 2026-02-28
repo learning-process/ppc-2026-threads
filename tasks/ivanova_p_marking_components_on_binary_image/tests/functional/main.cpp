@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <tuple>
@@ -23,31 +24,23 @@ class IvanovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
   static int GetExpectedComponents(int test_case) {
     switch (test_case) {
       case 1:
+      case 4:
+      case 6:
+      case 9:
+      case 10:
+      case 11:
         return 1;
       case 2:
+      case 12:
+      case 13:
         return 2;
       case 3:
         return 3;
-      case 4:
-        return 1;
       case 5:
         return 0;
-      case 6:
-        return 1;
       case 7:
         return 4;
       case 8:
-        return 9;
-      case 9:
-        return 1;
-      case 10:
-        return 1;
-      case 11:
-        return 1;
-      case 12:
-        return 2;
-      case 13:
-        return 2;
       case 14:
         return 9;
       default:

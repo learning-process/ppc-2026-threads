@@ -58,7 +58,7 @@ bool IvanovaPMarkingComponentsOnBinaryImageSEQ::ValidationImpl() {
   if (test_image.data.empty()) {
     return false;
   }
-  if (test_image.data.size() != static_cast<size_t>(test_image.width * test_image.height)) {
+  if (test_image.data.size() != static_cast<size_t>(test_image.width) * static_cast<size_t>(test_image.height)) {
     return false;
   }
   return true;
@@ -102,7 +102,7 @@ bool IvanovaPMarkingComponentsOnBinaryImageSEQ::PreProcessingImpl() {
   width_ = input_image_.width;
   height_ = input_image_.height;
 
-  labels_.assign(static_cast<size_t>(width_ * height_), 0);
+  labels_.assign(static_cast<size_t>(width_) * static_cast<size_t>(height_), 0);
   parent_.clear();
   current_label_ = 0;
 
@@ -162,21 +162,17 @@ void IvanovaPMarkingComponentsOnBinaryImageSEQ::FirstPass() {
         current_label_++;
         labels_[idx] = current_label_;
         parent_[current_label_] = current_label_;
-      } else if (left_label != 0 && top_label == 0) {
-        // Только левый сосед
-        labels_[idx] = left_label;
-      } else if (left_label == 0 && top_label != 0) {
-        // Только верхний сосед
-        labels_[idx] = top_label;
-      } else if (left_label == top_label) {
-        // Оба соседа имеют одинаковую метку
-        labels_[idx] = left_label;
-      } else {
-        // Разные метки - нужно объединить
-        int min_label = std::min(left_label, top_label);
-        int max_label = std::max(left_label, top_label);
-        labels_[idx] = min_label;
-        UnionLabels(min_label, max_label);
+      } else if (left_label != 0 || top_label != 0) {
+        // Хотя бы один сосед имеет метку
+        int label = (left_label != 0) ? left_label : top_label;
+        labels_[idx] = label;
+
+        // Если оба соседа имеют разные метки - нужно объединить
+        if (left_label != 0 && top_label != 0 && left_label != top_label) {
+          int min_label = std::min(left_label, top_label);
+          int max_label = std::max(left_label, top_label);
+          UnionLabels(min_label, max_label);
+        }
       }
     }
   }
