@@ -8,6 +8,7 @@
 
 #include "otcheskov_s_contrast_lin_stretch/common/include/common.hpp"
 #include "otcheskov_s_contrast_lin_stretch/seq/include/ops_seq.hpp"
+#include "otcheskov_s_contrast_lin_stretch/omp/include/ops_omp.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace otcheskov_s_contrast_lin_stretch {
@@ -57,7 +58,7 @@ TEST_P(OtcheskovSContrastLinStretchPerfTests, RunPerfTests) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, OtcheskovSContrastLinStretchSEQ>(PPC_SETTINGS_otcheskov_s_contrast_lin_stretch);
+    ppc::util::MakeAllPerfTasks<InType, OtcheskovSContrastLinStretchSEQ, OtcheskovSContrastLinStretchOMP>(PPC_SETTINGS_otcheskov_s_contrast_lin_stretch);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
