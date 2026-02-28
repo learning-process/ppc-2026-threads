@@ -1,20 +1,18 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <array>
 #include <cstddef>
 #include <functional>
 #include <random>
 #include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
 
 #include "lobanov_d_multi_matrix_crs/common/include/common.hpp"
 #include "lobanov_d_multi_matrix_crs/seq/include/ops_seq.hpp"
-#include "util/include/func_test_util.hpp"
 
 namespace lobanov_d_multi_matrix_crs {
+namespace {
 
 CompressedRowMatrix CreateRandomCompressedRowMatrix(int row_count, int column_count, double density_factor,
                                                     int seed = 42) {
@@ -37,9 +35,9 @@ CompressedRowMatrix CreateRandomCompressedRowMatrix(int row_count, int column_co
   std::mt19937 rng(static_cast<std::mt19937::result_type>(seed));
 
   std::hash<std::string> hasher;
-  std::string param_hash =
+  const std::string param_hash =
       std::to_string(row_count) + "_" + std::to_string(column_count) + "_" + std::to_string(density_factor);
-  auto hash_value = static_cast<std::mt19937::result_type>(hasher(param_hash));
+  const auto hash_value = static_cast<std::mt19937::result_type>(hasher(param_hash));
   rng.seed(static_cast<std::mt19937::result_type>(seed) + hash_value);
 
   std::uniform_real_distribution<double> val_dist(0.1, 10.0);
@@ -76,11 +74,15 @@ CompressedRowMatrix CreateRandomCompressedRowMatrix(int row_count, int column_co
     auto &row_cols = col_indices_per_row[static_cast<std::size_t>(i)];
     auto &row_vals = values_per_row[static_cast<std::size_t>(i)];
 
+    // Reserve space for sorted pairs
     std::vector<std::pair<int, double>> sorted_pairs;
+    sorted_pairs.reserve(row_cols.size());
+
     for (std::size_t k = 0; k < row_cols.size(); ++k) {
       sorted_pairs.emplace_back(row_cols[k], row_vals[k]);
     }
-    std::sort(sorted_pairs.begin(), sorted_pairs.end());
+
+    std::ranges::sort(sorted_pairs);
 
     for (const auto &pair : sorted_pairs) {
       result_matrix.column_index_data.push_back(pair.first);
@@ -108,35 +110,27 @@ class LobanovDMultiplyMatrixFuncTest : public ::testing::Test {
     LobanovMultyMatrixSEQ task(std::make_pair(matrix_a, matrix_b));
 
     ASSERT_TRUE(task.Validation());
-
     ASSERT_TRUE(task.PreProcessing());
-
     ASSERT_TRUE(task.Run());
-
     ASSERT_TRUE(task.PostProcessing());
 
     result_ = task.GetOutput();
   }
 
-  bool CheckResult(const CompressedRowMatrix &expected) {
+  bool CheckResult(const CompressedRowMatrix &expected) const {
     if (result_.row_count != expected.row_count || result_.column_count != expected.column_count) {
       return false;
     }
 
-    if (result_.row_pointer_data.size() != expected.row_pointer_data.size()) {
-      return false;
-    }
-
-    return true;
+    return result_.row_pointer_data.size() == expected.row_pointer_data.size();
   }
 
   CompressedRowMatrix result_;
 };
 
-// Тесты для разных размеров матриц
 TEST_F(LobanovDMultiplyMatrixFuncTest, SmallMatrices) {
-  auto matrix_a = CreateRandomCompressedRowMatrix(10, 10, 0.3, 1);
-  auto matrix_b = CreateRandomCompressedRowMatrix(10, 10, 0.3, 2);
+  const auto matrix_a = CreateRandomCompressedRowMatrix(10, 10, 0.3, 1);
+  const auto matrix_b = CreateRandomCompressedRowMatrix(10, 10, 0.3, 2);
 
   RunTest(matrix_a, matrix_b);
 
@@ -146,8 +140,8 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, SmallMatrices) {
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, RectangularMatrices) {
-  auto matrix_a = CreateRandomCompressedRowMatrix(10, 5, 0.3, 1);
-  auto matrix_b = CreateRandomCompressedRowMatrix(5, 8, 0.3, 2);
+  const auto matrix_a = CreateRandomCompressedRowMatrix(10, 5, 0.3, 1);
+  const auto matrix_b = CreateRandomCompressedRowMatrix(5, 8, 0.3, 2);
 
   RunTest(matrix_a, matrix_b);
 
@@ -157,8 +151,8 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, RectangularMatrices) {
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, SparseMatrices) {
-  auto matrix_a = CreateRandomCompressedRowMatrix(50, 50, 0.05, 1);
-  auto matrix_b = CreateRandomCompressedRowMatrix(50, 50, 0.05, 2);
+  const auto matrix_a = CreateRandomCompressedRowMatrix(50, 50, 0.05, 1);
+  const auto matrix_b = CreateRandomCompressedRowMatrix(50, 50, 0.05, 2);
 
   RunTest(matrix_a, matrix_b);
 
@@ -168,8 +162,8 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, SparseMatrices) {
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, DenseMatrices) {
-  auto matrix_a = CreateRandomCompressedRowMatrix(20, 20, 0.8, 1);
-  auto matrix_b = CreateRandomCompressedRowMatrix(20, 20, 0.8, 2);
+  const auto matrix_a = CreateRandomCompressedRowMatrix(20, 20, 0.8, 1);
+  const auto matrix_b = CreateRandomCompressedRowMatrix(20, 20, 0.8, 2);
 
   RunTest(matrix_a, matrix_b);
 
@@ -179,8 +173,8 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, DenseMatrices) {
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, LargeRowsSmallCols) {
-  auto matrix_a = CreateRandomCompressedRowMatrix(100, 3, 0.3, 1);
-  auto matrix_b = CreateRandomCompressedRowMatrix(3, 5, 0.3, 2);
+  const auto matrix_a = CreateRandomCompressedRowMatrix(100, 3, 0.3, 1);
+  const auto matrix_b = CreateRandomCompressedRowMatrix(3, 5, 0.3, 2);
 
   RunTest(matrix_a, matrix_b);
 
@@ -190,8 +184,8 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, LargeRowsSmallCols) {
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, SmallRowsLargeCols) {
-  auto matrix_a = CreateRandomCompressedRowMatrix(3, 100, 0.3, 1);
-  auto matrix_b = CreateRandomCompressedRowMatrix(100, 5, 0.3, 2);
+  const auto matrix_a = CreateRandomCompressedRowMatrix(3, 100, 0.3, 1);
+  const auto matrix_b = CreateRandomCompressedRowMatrix(100, 5, 0.3, 2);
 
   RunTest(matrix_a, matrix_b);
 
@@ -209,7 +203,7 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, IdentityMultiplication) {
   identity.column_index_data = {0, 1, 2, 3, 4};
   identity.value_data = {1.0, 1.0, 1.0, 1.0, 1.0};
 
-  auto matrix_b = CreateRandomCompressedRowMatrix(5, 5, 0.3, 1);
+  const auto matrix_b = CreateRandomCompressedRowMatrix(5, 5, 0.3, 1);
 
   RunTest(identity, matrix_b);
 
@@ -224,7 +218,7 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, ZeroMatrix) {
   zero_matrix.non_zero_count = 0;
   zero_matrix.row_pointer_data = {0, 0, 0, 0, 0, 0};
 
-  auto matrix_b = CreateRandomCompressedRowMatrix(5, 5, 0.3, 1);
+  const auto matrix_b = CreateRandomCompressedRowMatrix(5, 5, 0.3, 1);
 
   RunTest(zero_matrix, matrix_b);
 
@@ -234,12 +228,13 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, ZeroMatrix) {
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, ValidationFailure) {
-  auto matrix_a = CreateRandomCompressedRowMatrix(5, 3, 0.3, 1);
-  auto matrix_b = CreateRandomCompressedRowMatrix(4, 5, 0.3, 2);  // Несовместимые размеры
+  const auto matrix_a = CreateRandomCompressedRowMatrix(5, 3, 0.3, 1);
+  const auto matrix_b = CreateRandomCompressedRowMatrix(4, 5, 0.3, 2);
 
   LobanovMultyMatrixSEQ task(std::make_pair(matrix_a, matrix_b));
 
   EXPECT_FALSE(task.Validation());
 }
 
+}  // namespace
 }  // namespace lobanov_d_multi_matrix_crs

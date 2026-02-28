@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cstddef>
 #include <functional>
+#include <iostream>
 #include <random>
 #include <string>
 #include <tuple>
@@ -14,6 +15,7 @@
 #include "lobanov_d_multi_matrix_crs/seq/include/ops_seq.hpp"
 
 namespace lobanov_d_multi_matrix_crs {
+namespace {
 
 CompressedRowMatrix CreateRandomCompressedRowMatrix(int row_count, int column_count, double density_factor,
                                                     int seed = 42) {
@@ -36,9 +38,9 @@ CompressedRowMatrix CreateRandomCompressedRowMatrix(int row_count, int column_co
   std::mt19937 rng(static_cast<std::mt19937::result_type>(seed));
 
   std::hash<std::string> hasher;
-  std::string param_hash =
+  const std::string param_hash =
       std::to_string(row_count) + "_" + std::to_string(column_count) + "_" + std::to_string(density_factor);
-  auto hash_value = static_cast<std::mt19937::result_type>(hasher(param_hash));
+  const auto hash_value = static_cast<std::mt19937::result_type>(hasher(param_hash));
   rng.seed(static_cast<std::mt19937::result_type>(seed) + hash_value);
 
   std::uniform_real_distribution<double> val_dist(0.1, 10.0);
@@ -75,11 +77,15 @@ CompressedRowMatrix CreateRandomCompressedRowMatrix(int row_count, int column_co
     auto &row_cols = col_indices_per_row[static_cast<std::size_t>(i)];
     auto &row_vals = values_per_row[static_cast<std::size_t>(i)];
 
+    // Reserve space for sorted pairs
     std::vector<std::pair<int, double>> sorted_pairs;
+    sorted_pairs.reserve(row_cols.size());
+
     for (std::size_t k = 0; k < row_cols.size(); ++k) {
       sorted_pairs.emplace_back(row_cols[k], row_vals[k]);
     }
-    std::sort(sorted_pairs.begin(), sorted_pairs.end());
+
+    std::ranges::sort(sorted_pairs);
 
     for (const auto &pair : sorted_pairs) {
       result_matrix.column_index_data.push_back(pair.first);
@@ -102,48 +108,45 @@ CompressedRowMatrix CreateRandomCompressedRowMatrix(int row_count, int column_co
 class LobanovDMultiplyMatrixPerfTest : public ::testing::TestWithParam<std::tuple<int, double, std::string>> {
  protected:
   void SetUp() override {
-    auto params = GetParam();
+    const auto &params = GetParam();
     dimension_ = std::get<0>(params);
     density_ = std::get<1>(params);
     test_name_ = std::get<2>(params);
   }
 
   void RunPerformanceTest() {
-    auto matrix_a = CreateRandomCompressedRowMatrix(dimension_, dimension_, density_, 100);
-    auto matrix_b = CreateRandomCompressedRowMatrix(dimension_, dimension_, density_, 200);
+    const auto matrix_a = CreateRandomCompressedRowMatrix(dimension_, dimension_, density_, 100);
+    const auto matrix_b = CreateRandomCompressedRowMatrix(dimension_, dimension_, density_, 200);
 
     LobanovMultyMatrixSEQ task(std::make_pair(matrix_a, matrix_b));
 
     ASSERT_TRUE(task.Validation());
-
     ASSERT_TRUE(task.PreProcessing());
 
-    auto start = std::chrono::high_resolution_clock::now();
-
+    const auto start = std::chrono::high_resolution_clock::now();
     ASSERT_TRUE(task.Run());
-
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    const auto end = std::chrono::high_resolution_clock::now();
+    const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
     ASSERT_TRUE(task.PostProcessing());
 
-    auto result = task.GetOutput();
+    const auto result = task.GetOutput();
 
     EXPECT_EQ(result.row_count, dimension_);
     EXPECT_EQ(result.column_count, dimension_);
 
-    std::cout << "Test: " << test_name_ << std::endl;
-    std::cout << "Matrix size: " << dimension_ << "x" << dimension_ << std::endl;
-    std::cout << "Density: " << density_ << std::endl;
-    std::cout << "NNZ in A: " << matrix_a.non_zero_count << std::endl;
-    std::cout << "NNZ in B: " << matrix_b.non_zero_count << std::endl;
-    std::cout << "NNZ in result: " << result.non_zero_count << std::endl;
-    std::cout << "Execution time: " << duration.count() << " ms" << std::endl;
-    std::cout << "------------------------" << std::endl;
+    std::cout << "Test: " << test_name_ << '\n';
+    std::cout << "Matrix size: " << dimension_ << "x" << dimension_ << '\n';
+    std::cout << "Density: " << density_ << '\n';
+    std::cout << "NNZ in A: " << matrix_a.non_zero_count << '\n';
+    std::cout << "NNZ in B: " << matrix_b.non_zero_count << '\n';
+    std::cout << "NNZ in result: " << result.non_zero_count << '\n';
+    std::cout << "Execution time: " << duration.count() << " ms\n";
+    std::cout << "------------------------\n";
   }
 
-  int dimension_;
-  double density_;
+  int dimension_ = 0;
+  double density_ = 0.0;
   std::string test_name_;
 };
 
@@ -156,4 +159,6 @@ INSTANTIATE_TEST_SUITE_P(MatrixMultiplicationPerfTests, LobanovDMultiplyMatrixPe
                                            std::make_tuple(500, 0.1, "Medium_500x500_sparse_10%"),
                                            std::make_tuple(1000, 0.05, "Large_1000x1000_sparse_5%"),
                                            std::make_tuple(2000, 0.02, "ExtraLarge_2000x2000_sparse_2%")));
+
+}  // namespace
 }  // namespace lobanov_d_multi_matrix_crs
