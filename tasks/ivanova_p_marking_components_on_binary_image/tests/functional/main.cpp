@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include <string>
 #include <tuple>
 #include <vector>
 
@@ -161,8 +162,8 @@ class IvanovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
   }
 
  private:
-  int current_test_case_;
-  bool is_file_test_;
+  int current_test_case_ = 0;
+  bool is_file_test_ = false;
 };
 
 namespace {

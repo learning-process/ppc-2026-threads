@@ -1,7 +1,7 @@
 #include "ivanova_p_marking_components_on_binary_image/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <numeric>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -101,7 +101,7 @@ bool IvanovaPMarkingComponentsOnBinaryImageSEQ::PreProcessingImpl() {
   width_ = input_image_.width;
   height_ = input_image_.height;
 
-  labels_.assign(width_ * height_, 0);
+  labels_.assign(static_cast<size_t>(width_ * height_), 0);
   parent_.clear();
   current_label_ = 0;
 
@@ -109,7 +109,7 @@ bool IvanovaPMarkingComponentsOnBinaryImageSEQ::PreProcessingImpl() {
 }
 
 int IvanovaPMarkingComponentsOnBinaryImageSEQ::FindRoot(int label) {
-  if (parent_.find(label) == parent_.end()) {
+  if (!parent_.contains(label)) {
     parent_[label] = label;
     return label;
   }
@@ -135,16 +135,16 @@ void IvanovaPMarkingComponentsOnBinaryImageSEQ::UnionLabels(int label1, int labe
 }
 
 void IvanovaPMarkingComponentsOnBinaryImageSEQ::FirstPass() {
-  for (int y = 0; y < height_; ++y) {
-    for (int x = 0; x < width_; ++x) {
-      int idx = y * width_ + x;
+  for (int yy = 0; yy < height_; ++yy) {
+    for (int xx = 0; xx < width_; ++xx) {
+      int idx = yy * width_ + xx;
 
       if (input_image_.data[idx] == 0) {
         continue;
       }
 
-      int left_label = (x > 0) ? labels_[idx - 1] : 0;
-      int top_label = (y > 0) ? labels_[idx - width_] : 0;
+      int left_label = (xx > 0) ? labels_[idx - 1] : 0;
+      int top_label = (yy > 0) ? labels_[idx - width_] : 0;
 
       if (left_label == 0 && top_label == 0) {
         current_label_++;
@@ -170,15 +170,15 @@ void IvanovaPMarkingComponentsOnBinaryImageSEQ::SecondPass() {
   std::unordered_map<int, int> new_labels;
   int next_label = 1;
 
-  for (int i = 0; i < static_cast<int>(labels_.size()); ++i) {
-    if (labels_[i] != 0) {
-      int root = FindRoot(labels_[i]);
+  for (int ii = 0; ii < static_cast<int>(labels_.size()); ++ii) {
+    if (labels_[ii] != 0) {
+      int root = FindRoot(labels_[ii]);
 
-      if (new_labels.find(root) == new_labels.end()) {
+      if (!new_labels.contains(root)) {
         new_labels[root] = next_label++;
       }
 
-      labels_[i] = new_labels[root];
+      labels_[ii] = new_labels[root];
     }
   }
 
@@ -207,8 +207,8 @@ bool IvanovaPMarkingComponentsOnBinaryImageSEQ::PostProcessingImpl() {
   output.push_back(height_);
   output.push_back(current_label_);
 
-  for (int i = 0; i < static_cast<int>(labels_.size()); ++i) {
-    output.push_back(labels_[i]);
+  for (int jj = 0; jj < static_cast<int>(labels_.size()); ++jj) {
+    output.push_back(labels_[jj]);
   }
 
   return true;
