@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <cmath>    // Добавляем для std::cos, std::sin
+#include <cstddef>  // Добавляем для size_t
 #include <iostream>
 #include <random>
 #include <vector>
@@ -9,13 +11,14 @@
 #include "urin_o_graham_passage/seq/include/ops_seq.hpp"
 
 namespace urin_o_graham_passage {
+namespace {  // Анонимный namespace вместо static
 
-static bool IsConvexHull(const std::vector<Point> &hull) {
+bool IsConvexHull(const std::vector<Point> &hull) {
   if (hull.size() < 3) {
     return true;
   }
 
-  for (size_t i = 0; i < hull.size(); i++) {
+  for (size_t i = 0; i < hull.size(); ++i) {
     size_t prev = (i == 0) ? hull.size() - 1 : i - 1;
     size_t next = (i + 1) % hull.size();
 
@@ -28,7 +31,7 @@ static bool IsConvexHull(const std::vector<Point> &hull) {
 
 class UrinOGrahamPassagePerfTest : public ::testing::Test {
  protected:
-  InType GenerateRandomPoints(size_t num_points) {
+  static InType GenerateRandomPoints(size_t num_points) {  // Добавили static
     InType points;
     points.reserve(num_points);
 
@@ -61,18 +64,18 @@ TEST_F(UrinOGrahamPassagePerfTest, SeqPerformance) {
   auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
   const auto &hull = task.GetOutput();
-  // ИСПРАВЛЕНО: сравниваем size_t с size_t
-  EXPECT_GE(hull.size(), size_t(3));
+
+  EXPECT_GE(hull.size(), static_cast<size_t>(3));
   EXPECT_TRUE(IsConvexHull(hull));
 
-  std::cout << "SEQ version with " << num_points << " points took " << duration.count() << " ms" << std::endl;
-  std::cout << "Convex hull size: " << hull.size() << std::endl;
+  std::cout << "SEQ version with " << num_points << " points took " << duration.count() << " ms\n";
+  std::cout << "Convex hull size: " << hull.size() << '\n';
 }
 
 TEST_F(UrinOGrahamPassagePerfTest, DifferentSizes) {
   std::vector<size_t> sizes = {100, 500, 1000, 5000, 10000};
 
-  std::cout << "\nPerformance test with different sizes:" << std::endl;
+  std::cout << "\nPerformance test with different sizes:\n";
 
   for (size_t size : sizes) {
     InType test_points = GenerateRandomPoints(size);
@@ -90,15 +93,16 @@ TEST_F(UrinOGrahamPassagePerfTest, DifferentSizes) {
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
     const auto &hull = task.GetOutput();
-    // ИСПРАВЛЕНО: все сравнения с size_t
-    if (hull.size() >= size_t(3)) {
+
+    if (hull.size() >= static_cast<size_t>(3)) {
       std::cout << "Size " << size << ": " << duration.count() << " ms, "
-                << "hull size: " << hull.size() << std::endl;
+                << "hull size: " << hull.size() << '\n';
     } else {
       std::cout << "Size " << size << ": " << duration.count() << " ms, "
-                << "hull size: " << hull.size() << " (invalid)" << std::endl;
+                << "hull size: " << hull.size() << " (invalid)\n";
     }
   }
 }
 
+}  // namespace
 }  // namespace urin_o_graham_passage
