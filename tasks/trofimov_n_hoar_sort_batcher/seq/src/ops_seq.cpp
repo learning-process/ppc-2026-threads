@@ -3,22 +3,27 @@
 #include <algorithm>
 #include <vector>
 
+#include "trofimov_n_hoar_sort_batcher/common/include/common.hpp"
+
 namespace trofimov_n_hoar_sort_batcher {
 
 namespace {
 
 int HoarePartition(std::vector<int> &arr, int left, int right) {
-  int pivot = arr[left + (right - left) / 2];
+  int pivot = arr[left + ((right - left) / 2)];
   int i = left - 1;
   int j = right + 1;
 
   while (true) {
-    do {
+    ++i;
+    while (arr[i] < pivot) {
       ++i;
-    } while (arr[i] < pivot);
-    do {
+    }
+
+    --j;
+    while (arr[j] > pivot) {
       --j;
-    } while (arr[j] > pivot);
+    }
 
     if (i >= j) {
       return j;
@@ -27,24 +32,16 @@ int HoarePartition(std::vector<int> &arr, int left, int right) {
   }
 }
 
-void CompareExchange(int &a, int &b) {
-  if (a > b) {
-    std::swap(a, b);
-  }
-}
-
-void OddEvenMerge(std::vector<int> &arr, int left, int right, int step) {
-  int dist = step * 2;
-  if (dist < right - left + 1) {
-    OddEvenMerge(arr, left, right, dist);
-    OddEvenMerge(arr, left + step, right, dist);
-
-    for (int i = left + step; i + step <= right; i += dist) {
-      CompareExchange(arr[i], arr[i + step]);
-    }
-  } else {
-    if (left + step <= right) {
-      CompareExchange(arr[left], arr[left + step]);
+void OddEvenMergeIter(std::vector<int> &arr, int left, int right) {
+  int n = right - left + 1;
+  for (int step = 1; step < n; step *= 2) {
+    for (int i = left; i + step < left + n; i += step * 2) {
+      int j = i + step;
+      if (j <= right) {
+        if (arr[i] > arr[j]) {
+          std::swap(arr[i], arr[j]);
+        }
+      }
     }
   }
 }
@@ -59,7 +56,7 @@ void QuickBatcherHybrid(std::vector<int> &arr, int left, int right) {
   QuickBatcherHybrid(arr, left, pivot_index);
   QuickBatcherHybrid(arr, pivot_index + 1, right);
 
-  OddEvenMerge(arr, left, right, 1);
+  OddEvenMergeIter(arr, left, right);
 }
 
 }  // namespace

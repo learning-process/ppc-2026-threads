@@ -1,7 +1,4 @@
-#include <gtest/gtest.h>
-
-#include <algorithm>
-#include <array>
+#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -11,6 +8,10 @@
 #include "util/include/func_test_util.hpp"
 
 namespace trofimov_n_hoar_sort_batcher {
+
+using InType = std::vector<int>;
+using OutType = std::vector<int>;
+using TestType = std::tuple<InType, std::string>;
 
 class TrofimovNHoarSortBatcherFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -35,12 +36,11 @@ class TrofimovNHoarSortBatcherFuncTests : public ppc::util::BaseRunFuncTests<InT
   InType input_data_;
 };
 
-namespace {
-
-TEST_P(TrofimovNHoarSortBatcherFuncTests, RunFunctionalTests) {
+TEST_P(TrofimovNHoarSortBatcherFuncTests, RunFuncTests) {
   ExecuteTest(GetParam());
 }
 
+namespace {
 const std::array<TestType, 12> kTestParam = {
     std::make_tuple(std::vector<int>{}, "empty"),
     std::make_tuple(std::vector<int>{1}, "single_element"),
@@ -59,7 +59,6 @@ const auto kTestTasksList =
     ppc::util::AddFuncTask<TrofimovNHoarSortBatcherSEQ, InType>(kTestParam, PPC_SETTINGS_trofimov_n_hoar_sort_batcher);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-
 const auto kTestName = TrofimovNHoarSortBatcherFuncTests::PrintFuncTestName<TrofimovNHoarSortBatcherFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(TrofimovNHoarSortBatcherTests, TrofimovNHoarSortBatcherFuncTests, kGtestValues, kTestName);

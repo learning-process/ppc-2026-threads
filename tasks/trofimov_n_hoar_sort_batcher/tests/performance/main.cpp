@@ -1,6 +1,4 @@
-#include <gtest/gtest.h>
-
-#include <algorithm>
+#include <cstddef>
 #include <random>
 #include <vector>
 
@@ -10,22 +8,26 @@
 
 namespace trofimov_n_hoar_sort_batcher {
 
+using InType = std::vector<int>;
+using OutType = std::vector<int>;
+
 class TrofimovNHoarSortBatcherPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    const size_t size = 300000;
+    const size_t count = 300000;
+    input_data_.resize(count);
 
-    std::mt19937 gen(12345);
+    std::random_device rd;
+    std::mt19937 gen(rd());
     std::uniform_int_distribution<int> dist(-1000000, 1000000);
 
-    input_data_.resize(size);
-    for (auto &v : input_data_) {
-      v = dist(gen);
+    for (size_t i = 0; i < count; ++i) {
+      input_data_[i] = dist(gen);
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::ranges::is_sorted(output_data);
+    return !output_data.empty() && std::ranges::is_sorted(output_data);
   }
 
   InType GetTestInputData() final {
@@ -36,22 +38,18 @@ class TrofimovNHoarSortBatcherPerfTests : public ppc::util::BaseRunPerfTests<InT
   InType input_data_;
 };
 
-TEST_P(TrofimovNHoarSortBatcherPerfTests, RunPerformanceTests) {
+TEST_P(TrofimovNHoarSortBatcherPerfTests, RunPerfTests) {
   ExecuteTest(GetParam());
 }
 
 namespace {
-
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, TrofimovNHoarSortBatcherSEQ>(PPC_SETTINGS_trofimov_n_hoar_sort_batcher);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-
 const auto kPerfTestName = TrofimovNHoarSortBatcherPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(TrofimovNHoarSortBatcherPerfTests, TrofimovNHoarSortBatcherPerfTests, kGtestValues,
-                         kPerfTestName);
-
+INSTANTIATE_TEST_SUITE_P(RunModeTests, TrofimovNHoarSortBatcherPerfTests, kGtestValues, kPerfTestName);
 }  // namespace
 
 }  // namespace trofimov_n_hoar_sort_batcher
