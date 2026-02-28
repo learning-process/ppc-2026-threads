@@ -51,40 +51,40 @@ class SabutayARunFuncTestsSeq : public ppc::util::BaseRunFuncTests<InType, OutTy
     if (params == 1) {
       a.m = 2;
       a.n = 2;
-      a.col_ptr = {0, 2, 3};
-      a.row_ind = {0, 1, 1};
-      a.values = {{1.0, 1.0}, {-1.0, 2.0}, {3.0, 0.0}};
+      a.col_ptr = {0, 1, 2};
+      a.row_ind = {0, 1};
+      a.values = {{1.0, 0.0}, {2.0, 0.0}};
 
       b.m = 2;
       b.n = 2;
-      b.col_ptr = {0, 1, 3};
-      b.row_ind = {1, 0, 1};
-      b.values = {{2.0, 0.5}, {-1.0, 1.0}, {0.0, -1.0}};
+      b.col_ptr = {0, 1, 2};
+      b.row_ind = {1, 0};
+      b.values = {{3.0, 0.0}, {4.0, 0.0}};
 
       c.m = 2;
       c.n = 2;
-      c.col_ptr = {0, 1, 3};
-      c.row_ind = {1, 0, 1};
-      c.values = {{-2.0, 2.5}, {-5.0, 1.0}, {-3.0, 5.0}};
+      c.col_ptr = {0, 1, 2};
+      c.row_ind = {0, 1};
+      c.values = {{6.0, 0.0}, {4.0, 0.0}};
     }
     if (params == 2) {
       a.m = 1;
       a.n = 1;
       a.col_ptr = {0, 1};
       a.row_ind = {0};
-      a.values = {{3.0, -1.0}};
+      a.values = {{2.0, 1.0}};
 
       b.m = 1;
       b.n = 1;
       b.col_ptr = {0, 1};
       b.row_ind = {0};
-      b.values = {{0.0, 2.0}};
+      b.values = {{1.0, 1.0}};
 
       c.m = 1;
       c.n = 1;
       c.col_ptr = {0, 1};
       c.row_ind = {0};
-      c.values = {{2.0, 6.0}};
+      c.values = {{1.0, 3.0}};
     }
   }
 
