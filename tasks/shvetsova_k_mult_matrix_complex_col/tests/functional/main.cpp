@@ -1,15 +1,11 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "shvetsova_k_mult_matrix_complex_col/common/include/common.hpp"
@@ -25,7 +21,6 @@ class ShvetsovaKRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType,
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
   }
 
- protected:
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
@@ -116,7 +111,7 @@ class ShvetsovaKRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType,
 
 namespace {
 
-TEST_P(ShvetsovaKRunFuncTestsThreads, MatmulFromPic) {
+TEST_P(ShvetsovaKRunFuncTestsThreads, MultMatrixComplex) {
   ExecuteTest(GetParam());
 }
 

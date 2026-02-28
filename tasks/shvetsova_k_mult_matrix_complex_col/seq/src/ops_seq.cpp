@@ -1,10 +1,9 @@
 #include "shvetsova_k_mult_matrix_complex_col/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <complex>
 #include <vector>
 
 #include "shvetsova_k_mult_matrix_complex_col/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace shvetsova_k_mult_matrix_complex_col {
 
@@ -26,29 +25,29 @@ bool ShvetsovaKMultMatrixComplexSEQ::PreProcessingImpl() {
 }
 
 bool ShvetsovaKMultMatrixComplexSEQ::RunImpl() {
-  const MatrixCCS &matrix_A = std::get<0>(GetInput());
-  const MatrixCCS &matrix_B = std::get<1>(GetInput());
-  auto &matrix_C = GetOutput();
-  for (int i = 0; i < matrix_B.cols; i++) {
-    std::vector<std::complex<double>> column_C(matrix_A.rows);
-    for (int j = matrix_B.col_ptr[i]; j < matrix_B.col_ptr[i + 1]; j++) {
-      int tmp_ind = matrix_B.row_ind[j];
-      std::complex tmp_val = matrix_B.values[j];
-      for (int t = matrix_A.col_ptr[tmp_ind]; t < matrix_A.col_ptr[tmp_ind + 1]; t++) {
-        int row = matrix_A.row_ind[t];
-        std::complex val_A = matrix_A.values[t];
-        column_C[row] += tmp_val * val_A;
+  const MatrixCCS &matrix_a = std::get<0>(GetInput());
+  const MatrixCCS &matrix_b = std::get<1>(GetInput());
+  auto &matrix_c = GetOutput();
+  for (int i = 0; i < matrix_b.cols; i++) {
+    std::vector<std::complex<double>> column_c(matrix_a.rows);
+    for (int j = matrix_b.col_ptr[i]; j < matrix_b.col_ptr[i + 1]; j++) {
+      int tmp_ind = matrix_b.row_ind[j];
+      std::complex tmp_val = matrix_b.values[j];
+      for (int ind = matrix_a.col_ptr[tmp_ind]; ind < matrix_a.col_ptr[tmp_ind + 1]; ind++) {
+        int row = matrix_a.row_ind[ind];
+        std::complex val_a = matrix_a.values[ind];
+        column_c[row] += tmp_val * val_a;
       }
     }
     int counter = 0;
-    for (int k = 0; k < static_cast<int>(column_C.size()); k++) {
-      if (column_C[k] != 0.0) {
-        matrix_C.row_ind.push_back(k);
-        matrix_C.values.push_back(column_C[k]);
+    for (size_t k = 0; k < column_c.size(); k++) {
+      if (column_c[k] != 0.0) {
+        matrix_c.row_ind.push_back(k);
+        matrix_c.values.push_back(column_c[k]);
         counter++;
       }
     }
-    matrix_C.col_ptr.push_back(matrix_C.col_ptr[static_cast<int>(matrix_C.col_ptr.size()) - 1] + counter);
+    matrix_c.col_ptr.push_back(matrix_c.col_ptr[static_cast<int>(matrix_c.col_ptr.size()) - 1] + counter);
   }
   return true;
 }

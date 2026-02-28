@@ -10,8 +10,8 @@
 namespace shvetsova_k_mult_matrix_complex_col {
 
 struct MatrixCCS {
-  int rows;
-  int cols;
+  int rows = 0;
+  int cols = 0;
   std::vector<int> col_ptr;
   std::vector<int> row_ind;
   std::vector<std::complex<double>> values;

@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <tuple>
+
 #include "shvetsova_k_mult_matrix_complex_col/common/include/common.hpp"
 #include "shvetsova_k_mult_matrix_complex_col/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
@@ -13,43 +15,43 @@ class ShvetsovaKRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, 
     const int size = 100;
     const int nnz_per_col = 5;
 
-    MatrixCCS A;
-    MatrixCCS B;
+    MatrixCCS matrix_a;
+    MatrixCCS matrix_b;
 
-    A.rows = size;
-    A.cols = size;
-    A.col_ptr.resize(size + 1, 0);
+    matrix_a.rows = size;
+    matrix_a.cols = size;
+    matrix_a.col_ptr.resize(size + 1, 0);
 
-    B.rows = size;
-    B.cols = size;
-    B.col_ptr.resize(size + 1, 0);
+    matrix_b.rows = size;
+    matrix_b.cols = size;
+    matrix_b.col_ptr.resize(size + 1, 0);
 
-    // Матрица A
+    // Матрица matrix_a
     for (int j = 0; j < size; ++j) {
       for (int k = 0; k < nnz_per_col; ++k) {
         int row = (j * nnz_per_col + k) % size;
-        A.row_ind.push_back(row);
-        A.values.emplace_back(1.0, 0.0);
+        matrix_a.row_ind.push_back(row);
+        matrix_a.values.emplace_back(1.0, 0.0);
       }
-      A.col_ptr[j + 1] = static_cast<int>(A.values.size());
+      matrix_a.col_ptr[j + 1] = static_cast<int>(matrix_a.values.size());
     }
 
-    // Матрица B
+    // Матрица matrix_b
     for (int j = 0; j < size; ++j) {
       for (int k = 0; k < nnz_per_col; ++k) {
         int row = (j * nnz_per_col + k) % size;
-        B.row_ind.push_back(row);
-        B.values.emplace_back(1.0, 0.0);
+        matrix_b.row_ind.push_back(row);
+        matrix_b.values.emplace_back(1.0, 0.0);
       }
-      B.col_ptr[j + 1] = static_cast<int>(B.values.size());
+      matrix_b.col_ptr[j + 1] = static_cast<int>(matrix_b.values.size());
     }
 
-    input_data_ = std::make_tuple(A, B);
+    input_data_ = std::make_tuple(matrix_a, matrix_b);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const auto &matrix_C = output_data;
-    return (matrix_C.cols > 0 && matrix_C.rows > 0) && static_cast<int>(matrix_C.col_ptr.size()) == matrix_C.cols + 1;
+    return (output_data.cols > 0 && output_data.rows > 0) &&
+           static_cast<int>(output_data.col_ptr.size()) == output_data.cols + 1;
   }
 
   InType GetTestInputData() final {
