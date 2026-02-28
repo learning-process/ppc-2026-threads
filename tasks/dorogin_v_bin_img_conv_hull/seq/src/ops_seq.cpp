@@ -4,6 +4,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <ranges>
 #include <stack>
 #include <utility>
 #include <vector>
@@ -16,8 +17,8 @@ namespace {
 
 constexpr uint8_t kThreshold = 128;
 
-inline bool IsInside(int x, int y, int w, int h) {
-  return x >= 0 && y >= 0 && x < w && y < h;
+inline bool IsInside(int col, int row, int width, int height) {
+  return col >= 0 && row >= 0 && col < width && row < height;
 }
 
 int64_t Cross(const Point &a, const Point &b, const Point &c) {
@@ -40,7 +41,7 @@ bool DoroginVBinImgConvHullSeq::ValidationImpl() {
   if (in.width <= 0 || in.height <= 0) {
     return false;
   }
-  return in.pixels.size() == static_cast<size_t>(in.width) * in.height;
+  return in.pixels.size() == static_cast<size_t>(in.width) * static_cast<size_t>(in.height);
 }
 
 bool DoroginVBinImgConvHullSeq::PreProcessingImpl() {
@@ -74,13 +75,12 @@ bool DoroginVBinImgConvHullSeq::PostProcessingImpl() {
   return true;
 }
 
-size_t DoroginVBinImgConvHullSeq::Index(int x, int y, int width) {
-  return (static_cast<size_t>(y) * width) + x;
+size_t DoroginVBinImgConvHullSeq::Index(int col, int row, int width) {
+  return (static_cast<size_t>(row) * static_cast<size_t>(width)) + static_cast<size_t>(col);
 }
 
 void DoroginVBinImgConvHullSeq::ThresholdImage() {
-  std::transform(w_.pixels.begin(), w_.pixels.end(), w_.pixels.begin(),
-                 [](uint8_t p) { return p > kThreshold ? 255 : 0; });
+  std::ranges::transform(w_.pixels, w_.pixels.begin(), [](uint8_t p) { return p > kThreshold ? 255 : 0; });
 }
 
 void DoroginVBinImgConvHullSeq::ExploreComponent(int start_col, int start_row, int width, int height,
@@ -99,9 +99,9 @@ void DoroginVBinImgConvHullSeq::ExploreComponent(int start_col, int start_row, i
 
     component.push_back(p);
 
-    for (int i = 0; i < 4; ++i) {
-      int nx = p.x + dx[i];
-      int ny = p.y + dy[i];
+    for (size_t dir = 0; dir < dx.size(); ++dir) {
+      const int nx = p.x + dx.at(dir);
+      const int ny = p.y + dy.at(dir);
 
       if (!IsInside(nx, ny, width, height)) {
         continue;
@@ -122,22 +122,22 @@ void DoroginVBinImgConvHullSeq::ExploreComponent(int start_col, int start_row, i
 }
 
 void DoroginVBinImgConvHullSeq::FindComponents() {
-  int w = w_.width;
-  int h = w_.height;
+  const int width = w_.width;
+  const int height = w_.height;
 
-  std::vector<bool> visited(static_cast<size_t>(w) * h, false);
+  std::vector<bool> visited(static_cast<size_t>(width) * height, false);
   w_.components.clear();
 
-  for (int y = 0; y < h; ++y) {
-    for (int x = 0; x < w; ++x) {
-      size_t idx = Index(x, y, w);
+  for (int row = 0; row < height; ++row) {
+    for (int col = 0; col < width; ++col) {
+      size_t idx = Index(col, row, width);
 
       if (w_.pixels[idx] == 0 || visited[idx]) {
         continue;
       }
 
       std::vector<Point> comp;
-      ExploreComponent(x, y, w, h, visited, comp);
+      ExploreComponent(col, row, width, height, visited, comp);
 
       w_.components.push_back(std::move(comp));
     }
@@ -147,8 +147,9 @@ void DoroginVBinImgConvHullSeq::FindComponents() {
 std::vector<Point> DoroginVBinImgConvHullSeq::BuildHull(const std::vector<Point> &points) {
   std::vector<Point> pts = points;
 
-  std::sort(pts.begin(), pts.end());
-  pts.erase(std::unique(pts.begin(), pts.end()), pts.end());
+  std::ranges::sort(pts, std::less<>{});
+  auto unique_end = std::ranges::unique(pts).begin();
+  pts.erase(unique_end, pts.end());
 
   if (pts.size() < 3) {
     return pts;
