@@ -20,8 +20,8 @@ CRSMatrix DenseToCRS(const std::vector<std::vector<double>> &dense_matrix) {
   result_matrix.cols = dense_matrix.empty() ? 0 : dense_matrix[0].size();
   result_matrix.row_ptr.resize(result_matrix.rows + 1, 0);
 
-  for (std::size_t row_index = 0; row_index < result_matrix.rows; ++row_index) {
-    for (std::size_t column_index = 0; column_index < result_matrix.cols; ++column_index) {
+  for (int row_index = 0; row_index < result_matrix.rows; ++row_index) {
+    for (int column_index = 0; column_index < result_matrix.cols; ++column_index) {
       if (std::abs(dense_matrix[row_index][column_index]) > 1e-12) {
         result_matrix.values.push_back(dense_matrix[row_index][column_index]);
         result_matrix.col_index.push_back(static_cast<int>(column_index));
