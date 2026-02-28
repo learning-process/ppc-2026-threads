@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -26,9 +27,9 @@ bool ChernovTRadixSortSEQ::PreProcessingImpl() {
 
 constexpr int kBitsPerDigit = 8;
 constexpr int kRadix = 1 << kBitsPerDigit;
-constexpr uint32_t kSignMask = 0x80000000u;
+constexpr uint32_t kSignMask = 0x80000000U;
 
-void ChernovTRadixSortSEQ::RadixSortLSD(std::vector<int> &data) {
+static void ChernovTRadixSortSEQ::RadixSortLSD(std::vector<int> &data) {
   if (data.empty()) {
     return;
   }
@@ -44,8 +45,8 @@ void ChernovTRadixSortSEQ::RadixSortLSD(std::vector<int> &data) {
     std::array<int, kRadix> count{};
 
     for (uint32_t value : temp) {
-      int digit = (value >> (byte_index * kBitsPerDigit)) & 0xFF;
-      ++count[digit];
+      int digit = static_cast<int>((value >> (byte_index * kBitsPerDigit)) & 0xFFu);
+      ++count.at(digit);
     }
 
     for (int i = 1; i < kRadix; ++i) {
@@ -53,8 +54,8 @@ void ChernovTRadixSortSEQ::RadixSortLSD(std::vector<int> &data) {
     }
 
     for (int i = static_cast<int>(temp.size()) - 1; i >= 0; --i) {
-      int digit = (temp[i] >> (byte_index * kBitsPerDigit)) & 0xFF;
-      buffer[--count[digit]] = temp[i];
+      int digit = static_cast<int>((value >> (byte_index * kBitsPerDigit)) & 0xFFu);
+      buffer[--count.at(digit)] = temp[i];
     }
 
     temp.swap(buffer);
@@ -65,8 +66,8 @@ void ChernovTRadixSortSEQ::RadixSortLSD(std::vector<int> &data) {
   }
 }
 
-void ChernovTRadixSortSEQ::SimpleMerge(const std::vector<int> &left, const std::vector<int> &right,
-                                       std::vector<int> &result) {
+static void ChernovTRadixSortSEQ::SimpleMerge(const std::vector<int> &left, const std::vector<int> &right,
+                                              std::vector<int> &result) {
   result.resize(left.size() + right.size());
 
   size_t idx_left = 0;

@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <climits>
-#include <vector>
 
 #include "chernov_t_radix_sort/common/include/common.hpp"
 #include "chernov_t_radix_sort/seq/include/ops_seq.hpp"
