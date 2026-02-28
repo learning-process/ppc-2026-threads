@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>  // abc
+#include <algorithm> 
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -12,12 +12,8 @@
 #include <utility>
 #include <vector>
 
-#include "rysev_m_linear_filter_gauss_kernel/all/include/ops_all.hpp"
 #include "rysev_m_linear_filter_gauss_kernel/common/include/common.hpp"
-#include "rysev_m_linear_filter_gauss_kernel/omp/include/ops_omp.hpp"
 #include "rysev_m_linear_filter_gauss_kernel/seq/include/ops_seq.hpp"
-#include "rysev_m_linear_filter_gauss_kernel/stl/include/ops_stl.hpp"
-#include "rysev_m_linear_filter_gauss_kernel/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
