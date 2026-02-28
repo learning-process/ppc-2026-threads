@@ -3,11 +3,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <vector>
 
 namespace baranov_a_mult_matrix_fox_algorithm_seq {
 
-using namespace baranov_a_mult_matrix_fox_algorithm;
+using baranov_a_mult_matrix_fox_algorithm::InType;
 
 BaranovAMultMatrixFoxAlgorithmSEQ::BaranovAMultMatrixFoxAlgorithmSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -36,9 +35,9 @@ void BaranovAMultMatrixFoxAlgorithmSEQ::StandardMultiplication(size_t n) {
     for (size_t j = 0; j < n; ++j) {
       double sum = 0.0;
       for (size_t k = 0; k < n; ++k) {
-        sum += matrix_a[i * n + k] * matrix_b[k * n + j];
+        sum += matrix_a[(i * n) + k] * matrix_b[(k * n) + j];
       }
-      output[i * n + j] = sum;
+      output[(i * n) + j] = sum;
     }
   }
 }
@@ -46,11 +45,7 @@ void BaranovAMultMatrixFoxAlgorithmSEQ::StandardMultiplication(size_t n) {
 void BaranovAMultMatrixFoxAlgorithmSEQ::FoxBlockMultiplication(size_t n, size_t block_size) {
   const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
   auto &output = GetOutput();
-
-  size_t num_blocks = n / block_size;
-  if (n % block_size != 0) {
-    num_blocks++;
-  }
+  size_t num_blocks = (n + block_size - 1) / block_size;
   std::fill(output.begin(), output.end(), 0.0);
 
   for (size_t bi = 0; bi < num_blocks; ++bi) {
@@ -69,9 +64,9 @@ void BaranovAMultMatrixFoxAlgorithmSEQ::FoxBlockMultiplication(size_t n, size_t 
           for (size_t j = j_start; j < j_end; ++j) {
             double sum = 0.0;
             for (size_t k = k_start; k < k_end; ++k) {
-              sum += matrix_a[i * n + k] * matrix_b[k * n + j];
+              sum += matrix_a[(i * n) + k] * matrix_b[(k * n) + j];
             }
-            output[i * n + j] += sum;
+            output[(i * n) + j] += sum;
           }
         }
       }

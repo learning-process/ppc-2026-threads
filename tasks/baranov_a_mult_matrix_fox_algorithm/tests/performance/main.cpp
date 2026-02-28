@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <tuple>
@@ -67,9 +68,9 @@ class BaranovAPerfTest : public ppc::util::BaseRunPerfTests<baranov_a_mult_matri
       for (size_t i = 0; i < n; ++i) {
         double sum = 0.0;
         for (size_t k = 0; k < n; ++k) {
-          sum += a[i * n + k] * b[k * n + j];
+          sum += a[(i * n) + k] * b[(k * n) + j];
         }
-        c[i * n + j] = sum;
+        c[(i * n) + j] = sum;
       }
     }
   }

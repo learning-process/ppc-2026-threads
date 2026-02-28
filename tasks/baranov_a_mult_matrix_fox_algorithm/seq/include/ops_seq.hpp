@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include "baranov_a_mult_matrix_fox_algorithm/common/include/common.hpp"
 #include "task/include/task.hpp"
 

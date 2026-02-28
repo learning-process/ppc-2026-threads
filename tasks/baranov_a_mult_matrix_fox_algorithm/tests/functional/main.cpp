@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <random>
@@ -135,11 +137,11 @@ class BaranovAFuncTest : public ppc::util::BaseRunFuncTests<baranov_a_mult_matri
     for (size_t i = 0; i < n; ++i) {
       for (size_t j = 0; j < n; ++j) {
         if ((i + j) % 2 == 0) {
-          a[i * n + j] = 1e6 * (i + 1);
-          b[i * n + j] = 1e-6 * (j + 1);
+          a[(i * n) + j] = 1e6 * static_cast<double>(i + 1);
+          b[(i * n) + j] = 1e-6 * static_cast<double>(j + 1);
         } else {
-          a[i * n + j] = 1e-6 * (i + 1);
-          b[i * n + j] = 1e6 * (j + 1);
+          a[(i * n) + j] = 1e-6 * static_cast<double>(i + 1);
+          b[(i * n) + j] = 1e6 * static_cast<double>(j + 1);
         }
       }
     }
