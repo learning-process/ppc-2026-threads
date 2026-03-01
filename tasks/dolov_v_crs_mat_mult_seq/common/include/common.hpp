@@ -16,7 +16,7 @@ struct SparseMatrix {
   std::vector<int> row_pointers;
 };
 
-using InType = std::vector<SparseMatrix>; 
+using InType = std::vector<SparseMatrix>;
 using OutType = SparseMatrix;
 using TestType = std::pair<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;

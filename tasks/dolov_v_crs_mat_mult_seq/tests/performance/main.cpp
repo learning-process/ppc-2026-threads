@@ -46,17 +46,22 @@ class DolovVCrsMatMultSeqRunPerfTestThreads : public ppc::util::BaseRunPerfTests
     return output_data.num_rows == 1000 && !output_data.values.empty();
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
  private:
   InType input_data_;
 };
 
-TEST_P(DolovVCrsMatMultSeqRunPerfTestThreads, BandMatrixPerformance) { ExecuteTest(GetParam()); }
+TEST_P(DolovVCrsMatMultSeqRunPerfTestThreads, BandMatrixPerformance) {
+  ExecuteTest(GetParam());
+}
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultSeq>(PPC_SETTINGS_dolov_v_crs_mat_mult_seq);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultSeq>(PPC_SETTINGS_dolov_v_crs_mat_mult_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = DolovVCrsMatMultSeqRunPerfTestThreads::CustomPerfTestName;

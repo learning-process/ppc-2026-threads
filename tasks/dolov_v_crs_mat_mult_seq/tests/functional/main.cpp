@@ -40,7 +40,7 @@ SparseMatrix GenerateRandomCRS(int rows, int cols, double density, uint32_t seed
   return matrix;
 }
 
-std::vector<double> DenseMultiply(const SparseMatrix& matrix_a, const SparseMatrix& matrix_b) {
+std::vector<double> DenseMultiply(const SparseMatrix &matrix_a, const SparseMatrix &matrix_b) {
   std::vector<double> res(static_cast<size_t>(matrix_a.num_rows) * matrix_b.num_cols, 0.0);
   for (int i = 0; i < matrix_a.num_rows; ++i) {
     for (int j = matrix_a.row_pointers[i]; j < matrix_a.row_pointers[i + 1]; ++j) {
@@ -58,7 +58,9 @@ std::vector<double> DenseMultiply(const SparseMatrix& matrix_a, const SparseMatr
 
 class DolovVCrsMatMultSeqRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType& test_param) { return "Test_" + std::get<1>(test_param); }
+  static std::string PrintTestParam(const TestType &test_param) {
+    return "Test_" + std::get<1>(test_param);
+  }
 
  protected:
   void SetUp() override {
@@ -101,7 +103,7 @@ class DolovVCrsMatMultSeqRunFuncTestsThreads : public ppc::util::BaseRunFuncTest
     input_data_ = {matrix_a, matrix_b};
   }
 
-  bool CheckTestOutputData(OutType& out) final {
+  bool CheckTestOutputData(OutType &out) final {
     if (out.num_rows != rows_res_ || out.num_cols != cols_res_) {
       return false;
     }
@@ -121,7 +123,9 @@ class DolovVCrsMatMultSeqRunFuncTestsThreads : public ppc::util::BaseRunFuncTest
     return true;
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
  private:
   InType input_data_;
@@ -132,21 +136,23 @@ class DolovVCrsMatMultSeqRunFuncTestsThreads : public ppc::util::BaseRunFuncTest
 
 namespace {
 
-TEST_P(DolovVCrsMatMultSeqRunFuncTestsThreads, RandomSparseMatrices) { ExecuteTest(GetParam()); }
-const std::array<TestType, 7> kTestParam = {
-    std::make_tuple(1, "SmallSparse"), std::make_tuple(2, "Rectangular"), std::make_tuple(3, "ZeroMatrix"),
-    std::make_tuple(4, "DotProduct"),  std::make_tuple(5, "LargeSparse"), std::make_tuple(6, "DenseRow"),
-    std::make_tuple(7, "SingleElement")};
+TEST_P(DolovVCrsMatMultSeqRunFuncTestsThreads, RandomSparseMatrices) {
+  ExecuteTest(GetParam());
+}
+const std::array<TestType, 7> kTestParam = {std::make_tuple(1, "SmallSparse"),  std::make_tuple(2, "Rectangular"),
+                                            std::make_tuple(3, "ZeroMatrix"),   std::make_tuple(4, "DotProduct"),
+                                            std::make_tuple(5, "LargeSparse"),  std::make_tuple(6, "DenseRow"),
+                                            std::make_tuple(7, "SingleElement")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<DolovVCrsMatMultSeq, InType>(kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult_seq));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<DolovVCrsMatMultSeq, InType>(kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult_seq));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName =
     DolovVCrsMatMultSeqRunFuncTestsThreads::PrintFuncTestName<DolovVCrsMatMultSeqRunFuncTestsThreads>;
 
 INSTANTIATE_TEST_SUITE_P(CRS_Functional_Advanced_Tests, DolovVCrsMatMultSeqRunFuncTestsThreads, kGtestValues,
-                        kPerfTestName);
+                         kPerfTestName);
 
 }  // namespace
 }  // namespace dolov_v_crs_mat_mult_seq

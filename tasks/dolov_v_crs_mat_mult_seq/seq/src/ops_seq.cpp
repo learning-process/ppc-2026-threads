@@ -105,6 +105,8 @@ bool DolovVCrsMatMultSeq::RunImpl() {
   return true;
 }
 
-bool DolovVCrsMatMultSeq::PostProcessingImpl() { return true; }
+bool DolovVCrsMatMultSeq::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace dolov_v_crs_mat_mult_seq
