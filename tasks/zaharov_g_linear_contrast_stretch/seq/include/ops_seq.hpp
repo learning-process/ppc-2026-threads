@@ -1,7 +1,7 @@
 #pragma once
 
-#include "zaharov_g_linear_contrast_stretch/common/include/common.hpp"
 #include "task/include/task.hpp"
+#include "zaharov_g_linear_contrast_stretch/common/include/common.hpp"
 
 namespace zaharov_g_linear_contrast_stretch {
 
