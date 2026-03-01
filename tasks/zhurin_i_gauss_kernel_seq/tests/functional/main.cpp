@@ -2,10 +2,13 @@
 
 #include <array>
 #include <cstddef>
+#include <functional>
+#include <memory>
 #include <string>
 #include <tuple>
 #include <vector>
 
+#include "task/include/task.hpp"
 #include "util/include/func_test_util.hpp"
 #include "zhurin_i_gauss_kernel_seq/common/include/common.hpp"
 #include "zhurin_i_gauss_kernel_seq/seq/include/ops_seq.hpp"

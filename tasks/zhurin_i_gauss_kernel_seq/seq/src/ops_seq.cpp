@@ -4,6 +4,8 @@
 #include <utility>
 #include <vector>
 
+#include "zhurin_i_gauss_kernel_seq/common/include/common.hpp"
+
 namespace zhurin_i_gauss_kernel_seq {
 
 ZhurinIGaussKernelSEQ::ZhurinIGaussKernelSEQ(const InType &in) {
