@@ -1,4 +1,4 @@
-# Parallel Programming Course
+# Parallel Programming  Course
 
 [![Build application](https://github.com/learning-process/ppc-2026-threads/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/learning-process/ppc-2026-threads/actions/workflows/main.yml)
 [![Pages](https://github.com/learning-process/parallel_programming_course/actions/workflows/pages.yml/badge.svg?branch=master)](https://github.com/learning-process/parallel_programming_course/actions/workflows/pages.yml)
