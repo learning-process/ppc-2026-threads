@@ -16,7 +16,7 @@ void DecomposeToBlocks(const std::vector<double> &flat, std::vector<double> &blo
       int block_off = (bi * q + bj) * bs * bs;
       for (int i = 0; i < bs; i++) {
         for (int j = 0; j < bs; j++) {
-          blocks[block_off + (i * bs) + j] = flat[((bi * bs) + i) * n + (bj * bs + j)];
+          blocks[block_off + (i * bs) + j] = flat[(((bi * bs) + i) * n) + (bj * bs + j)];
         }
       }
     }
@@ -29,7 +29,7 @@ void AssembleFromBlocks(const std::vector<double> &blocks, std::vector<double> &
       int block_off = (bi * q + bj) * bs * bs;
       for (int i = 0; i < bs; i++) {
         for (int j = 0; j < bs; j++) {
-          flat[((bi * bs) + i) * n + (bj * bs + j)] = blocks[block_off + (i * bs) + j];
+          flat[(((bi * bs) + i) * n) + (bj * bs + j)] = blocks[block_off + (i * bs) + j];
         }
       }
     }
