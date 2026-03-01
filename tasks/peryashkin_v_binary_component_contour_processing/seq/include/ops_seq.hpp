@@ -22,4 +22,4 @@ class PeryashkinVBinaryComponentContourProcessingSEQ : public BaseTask {
   OutType local_out_;
 };
 
-}  // namespace peryashkin_v_binary_component_contour_processing
+}  // namespace  peryashkin_v_binary_component_contour_processing
