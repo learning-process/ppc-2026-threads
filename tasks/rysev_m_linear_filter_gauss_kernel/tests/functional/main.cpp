@@ -27,14 +27,17 @@ class RysevMFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, Test
 
  protected:
   void SetUp() override {
-    RysevMGaussFilterSEQ etalon(0);
+    TestType params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    int test_id = std::get<0>(params);
+
+    RysevMGaussFilterSEQ etalon(test_id);
     ASSERT_TRUE(etalon.Validation());
     ASSERT_TRUE(etalon.PreProcessing());
     ASSERT_TRUE(etalon.Run());
     ASSERT_TRUE(etalon.PostProcessing());
     reference_output_ = etalon.GetOutput();
 
-    input_data_ = 0;
+    input_data_ = test_id;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -52,20 +55,21 @@ class RysevMFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, Test
 
 namespace {
 
-TEST_P(RysevMFuncTests, CompareWithSeq) {
-  ExecuteTest(GetParam());
-}
-
-const std::array<TestType, 1> kTestParam = {std::make_tuple(0, "pic")};
+const std::array<TestType, 5> kTestParam = {std::make_tuple(0, "pic"), std::make_tuple(16, "size16"),
+                                            std::make_tuple(32, "size32"), std::make_tuple(64, "size64"),
+                                            std::make_tuple(128, "size128")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<RysevMGaussFilterSEQ, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-
 const auto kFuncTestName = RysevMFuncTests::PrintFuncTestName<RysevMFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(ImageTests, RysevMFuncTests, kGtestValues, kFuncTestName);
+
+TEST_P(RysevMFuncTests, CompareWithSeq) {
+  ExecuteTest(GetParam());
+}
 
 }  // namespace
 

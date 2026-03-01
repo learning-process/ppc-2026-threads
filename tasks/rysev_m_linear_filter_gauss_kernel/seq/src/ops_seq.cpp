@@ -41,8 +41,7 @@ bool RysevMGaussFilterSEQ::PreProcessingImpl() {
     channels_ = 3;
     input_image_.resize(width_ * height_ * channels_);
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::mt19937 gen(static_cast<unsigned int>(GetInput()));
     std::uniform_int_distribution<int> dist(0, 255);
     for (auto &pixel : input_image_) {
       pixel = static_cast<uint8_t>(dist(gen));
