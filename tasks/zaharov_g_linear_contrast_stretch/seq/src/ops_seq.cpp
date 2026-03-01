@@ -1,6 +1,8 @@
 #include "zaharov_g_linear_contrast_stretch/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "zaharov_g_linear_contrast_stretch/common/include/common.hpp"
@@ -11,50 +13,40 @@ namespace zaharov_g_linear_contrast_stretch {
 ZaharovGLinContrStrSEQ::ZaharovGLinContrStrSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
 }
 
 bool ZaharovGLinContrStrSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return !GetInput().empty();
 }
 
 bool ZaharovGLinContrStrSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  GetOutput().resize(GetInput().size());
+  return true;
 }
 
 bool ZaharovGLinContrStrSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
+  const InType &input = GetInput();
+  OutType &output = GetOutput();
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  auto [min_it, max_it] = std::minmax_element(input.begin(), input.end());
+  uint8_t min_el = *min_it, max_el = *max_it;
+
+  if (max_el > min_el) {
+    int denom = max_el - min_el;
+
+    for (size_t i = 0; i < input.size(); ++i) {
+      int value = (static_cast<int>(input[i]) - min_el) * 255 / denom;
+      output[i] = static_cast<uint8_t>(std::clamp(value, 0, 255));
     }
+  } else {
+    output.assign(input.begin(), input.end());
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  return true;
 }
 
 bool ZaharovGLinContrStrSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return !GetOutput().empty();
 }
 
 }  // namespace zaharov_g_linear_contrast_stretch
