@@ -53,7 +53,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
         num_points = 1000000;
         f = [](const std::vector<double> &) { return 1.0; };
         expected = (20.0) * (10.0);  // (10-(-10)) * (5-(-5)) = 20 * 10 = 200
-        abs_tolerance = 0.1;
+        abs_tolerance_ = 0.1;
         break;
       }
 
@@ -77,7 +77,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
         double width_y = 2.0;                          // 4-2
         double int_x = (3.0 * 3.0 - 1.0 * 1.0) / 2.0;  // ∫xdx от 1 до 3 = (9-1)/2 = 4
         double int_y = (4.0 * 4.0 - 2.0 * 2.0) / 2.0;  // ∫ydy от 2 до 4 = (16-4)/2 = 6
-        expected = int_x * width_y + width_x * int_y;  // 4*2 + 2*6 = 8 + 12 = 20
+        expected = (int_x * width_y) + (width_x * int_y);  // 4*2 + 2*6 = 8 + 12 = 20
         break;
       }
 
@@ -94,7 +94,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
         lower_bounds = {0.0, 0.0};
         upper_bounds = {1.0, 1.0};
         num_points = 1000000;
-        f = [](const std::vector<double> &x) { return x[0] * x[0] + x[1] * x[1]; };
+        f = [](const std::vector<double> &x) { return (x[0] * x[0]) + (x[1] * x[1]); };
         // ∫x^2dx от 0 до 1 = 1/3, то же для y
         // ∫∫(x^2+y^2)dxdy = (1/3)*1 + 1*(1/3) = 2/3 ≈ 0.6667
         expected = 2.0 / 3.0;
@@ -106,11 +106,9 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
         upper_bounds = {std::acos(-1.0), std::acos(-1.0) / 2.0};
         num_points = 500000;
         f = [](const std::vector<double> &x) { return std::sin(x[0]) * std::cos(x[1]); };
-        expected = (std::cos(0.0) - std::cos(std::acos(-1.0))) * (std::sin(std::acos(-1.0) / 2.0) - std::sin(0.0));
-        // (1 - (-1)) * (1 - 0) = 2 * 1 = 2
         expected = 2.0;
-        abs_tolerance = 0.1;
-        rel_tolerance = 0.1;
+        abs_tolerance_ = 0.1;
+        rel_tolerance_ = 0.1;
         break;
       }
 
@@ -147,7 +145,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
         lower_bounds = {0.0, 0.0, 0.0};
         upper_bounds = {1.0, 1.0, 1.0};
         num_points = 1000000;
-        f = [](const std::vector<double> &x) { return x[0] * x[0] + x[1] * x[1] + x[2] * x[2]; };
+        f = [](const std::vector<double> &x) { return (x[0] * x[0]) + (x[1] * x[1]) + (x[2] * x[2]); };
         expected = 1.0;  // 3 * (1/3) = 1
         break;
       }
@@ -178,7 +176,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
         num_points = 1000;
         f = [](const std::vector<double> &) { return 1.0; };
         expected = 1.0;
-        abs_tolerance = 0.5;  // Большой допуск
+        abs_tolerance_ = 0.5;  // Большой допуск
         break;
       }
 
@@ -188,7 +186,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
         num_points = 1000000;
         f = [](const std::vector<double> &) { return 1.0; };
         expected = 0.0;  // объем = 0 * 1 = 0
-        abs_tolerance = 0.1;
+        abs_tolerance_ = 0.1;
         break;
       }
 
@@ -202,7 +200,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
         double width_y = 2.0;                                      // 1 - (-1) = 2
         double int_x = ((-1.0) * (-1.0) - (-2.0) * (-2.0)) / 2.0;  // (1 - 4)/2 = -1.5
         double int_y = ((1.0 * 1.0) - (-1.0) * (-1.0)) / 2.0;      // (1 - 1)/2 = 0
-        expected = int_x * width_y + width_x * int_y;              // -1.5*2 + 1*0 = -3
+        expected = (int_x * width_y) + (width_x * int_y);              // -1.5*2 + 1*0 = -3
         break;
       }
 
@@ -212,7 +210,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
         num_points = 1000000;
         f = [](const std::vector<double> &) { return 1.0; };
         expected = 40000.0;  // 200 * 200 = 40000
-        abs_tolerance = 1.0;
+        abs_tolerance_ = 1.0;
         break;
       }
 
@@ -220,37 +218,37 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
         throw std::runtime_error("Unknown test id: " + std::to_string(test_id));
     }
 
-    input_data = InputData(lower_bounds, upper_bounds, num_points, std::move(f));
-    right_output = expected;
+    input_data_ = InputData(lower_bounds, upper_bounds, num_points, std::move(f));
+    right_output_ = expected;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     // Для малого числа точек используем больший допуск
-    if (input_data.count_points < 10000ULL) {
-      return std::abs(output_data - right_output) <= 0.5;
+    if (input_data_.count_points < 10000ULL) {
+      return std::abs(output_data - right_output_) <= 0.5;
     }
 
-    double volume = input_data.Volume();
+    double volume = input_data_.Volume();
     if (std::abs(volume) < 1e-10) {
       return std::abs(output_data) <= 0.1;
     }
 
-    if (std::abs(right_output) < 1e-4) {
-      return std::abs(output_data) <= abs_tolerance;
+    if (std::abs(right_output_) < 1e-4) {
+      return std::abs(output_data) <= abs_tolerance_;
     }
 
-    return std::abs(output_data - right_output) / std::abs(right_output) <= rel_tolerance;
+    return std::abs(output_data - right_output_) / std::abs(right_output_) <= rel_tolerance_;
   }
 
   InType GetTestInputData() final {
-    return input_data;
+    return input_data_;
   }
 
  private:
-  InType input_data;
-  OutType right_output = 0.0;
-  double abs_tolerance = 0.05;
-  double rel_tolerance = 0.05;
+  InType input_data_;
+  OutType right_output_ = 0.0;
+  double abs_tolerance_ = 0.05;
+  double rel_tolerance_ = 0.05;
 };
 
 namespace {

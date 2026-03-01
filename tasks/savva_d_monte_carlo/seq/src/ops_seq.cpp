@@ -1,11 +1,9 @@
 #include "savva_d_monte_carlo/seq/include/ops_seq.hpp"
 
-#include <numeric>
 #include <random>
 #include <vector>
 
 #include "savva_d_monte_carlo/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace savva_d_monte_carlo {
 
@@ -52,44 +50,47 @@ bool SavvaDMonteCarloSEQ::RunImpl() {
   auto &result = GetOutput();
   static thread_local std::minstd_rand generator(std::random_device{}());
 
-  const size_t dimension_ = input.Dimension();
-  const double volume_ = input.Volume();
+  const size_t dim = input.Dimension();
+  const double vol = input.Volume();
   const uint64_t n = input.count_points;
   const auto &func = input.f;
 
-  std::vector<std::uniform_real_distribution<double>> distributions_;
-  distributions_.resize(dimension_);
+  std::vector<std::uniform_real_distribution<double>> distributions;
+  distributions.resize(dim);
 
-  for (size_t i = 0; i < dimension_; ++i) {
-    distributions_[i] = std::uniform_real_distribution<double>(input.lower_bounds[i], input.upper_bounds[i]);
+  for (size_t i = 0; i < dim; ++i) {
+    distributions[i] = std::uniform_real_distribution<double>(input.lower_bounds[i], input.upper_bounds[i]);
   }
 
   double sum = 0.0;
   uint64_t i = 0;
 
-  std::vector<double> p1(dimension_), p2(dimension_), p3(dimension_), p4(dimension_);
+  std::vector<double> p1(dim);
+  std::vector<double> p2(dim);
+  std::vector<double> p3(dim);
+  std::vector<double> p4(dim);
 
   for (; i + 3 < n; i += 4) {
-    for (size_t d = 0; d < dimension_; ++d) {
-      p1[d] = distributions_[d](generator);
-      p2[d] = distributions_[d](generator);
-      p3[d] = distributions_[d](generator);
-      p4[d] = distributions_[d](generator);
+    for (size_t d = 0; d < dim; ++d) {
+      p1[d] = distributions[d](generator);
+      p2[d] = distributions[d](generator);
+      p3[d] = distributions[d](generator);
+      p4[d] = distributions[d](generator);
     }
     sum += func(p1) + func(p2) + func(p3) + func(p4);
   }
 
   // Обрабатываем оставшиеся точки
   for (; i < n; ++i) {
-    for (size_t d = 0; d < dimension_; ++d) {
-      p1[d] = distributions_[d](generator);
+    for (size_t d = 0; d < dim; ++d) {
+      p1[d] = distributions[d](generator);
     }
     sum += func(p1);
   }
 
   // Вычисляем среднее и умножаем на объем (численно устойчивый способ)
   double mean = sum / static_cast<double>(n);
-  result = mean * volume_;
+  result = mean * vol;
 
   return true;
 }

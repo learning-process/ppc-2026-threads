@@ -2,6 +2,11 @@
 
 #include <string>
 #include <tuple>
+#include <cstdint>      // для uint64_t
+#include <functional>   // для std::function
+#include <stdexcept>     // для std::invalid_argument
+#include <utility>       // для std::move
+#include <vector>        // для std::vector
 
 #include "task/include/task.hpp"
 
@@ -29,12 +34,12 @@ struct InputData {
   }
 
   // Возвращает размерность задачи
-  size_t Dimension() const {
+  [[nodiscard]] size_t Dimension() const {
     return lower_bounds.size();
   }
 
   // Вычисляет объем области интегрирования
-  double Volume() const {
+  [[nodiscard]] double Volume() const {
     if (lower_bounds.empty()) {
       return 0.0;
     }
