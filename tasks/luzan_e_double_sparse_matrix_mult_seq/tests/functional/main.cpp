@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <string>
 #include <tuple>
+#include <fstream>
+#include <array>
 
 #include "luzan_e_double_sparse_matrix_mult_seq/common/include/common.hpp"
 #include "luzan_e_double_sparse_matrix_mult_seq/seq/include/ops_seq.hpp"
@@ -30,11 +32,11 @@ class LuzanEDoubleSparseMatrixMultSeqestsThreads : public ppc::util::BaseRunFunc
       throw std::runtime_error("Cannot open task file");
     }
 
-    SparseMatrix A = GetFromFile(test_file);
-    SparseMatrix B = GetFromFile(test_file);
+    SparseMatrix a = GetFromFile(test_file);
+    SparseMatrix b = GetFromFile(test_file);
     test_file.close();
 
-    input_data_ = std::make_tuple(A, B);
+    input_data_ = std::make_tuple(a, b);
 
     file_name = "ans_" + std::get<0>(params);
     abs_path = ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_luzan_e_double_sparse_matrix_mult_seq), file_name);

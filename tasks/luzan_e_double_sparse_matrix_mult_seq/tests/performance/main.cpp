@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <vector>
+#include <tuple>
 #include "luzan_e_double_sparse_matrix_mult_seq/common/include/common.hpp"
 #include "luzan_e_double_sparse_matrix_mult_seq/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
