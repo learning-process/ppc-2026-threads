@@ -26,16 +26,30 @@ bool ChaschinVLinearFiltrationSEQ::PreProcessingImpl() {
 }
 
 inline float HorizontalFilterAt(const std::vector<float> &img, int n, int x, int y) {
-  float left = (x > 0) ? img[(y * n) + (x - 1)] : img[(y * n) + x];
-  float center = img[y * n + x];
-  float right = (x < n - 1) ? img[(y * n) + (x + 1)] : img[(y * n) + x];
-  return (left + (2.F * center) + right) / 4.F;
+  const int idx = y * n + x;
+
+  if (x == 0) {
+    return (2.F * img[idx] + img[idx + 1]) / 3.F;
+  }
+
+  if (x == n - 1) {
+    return (img[idx - 1] + 2.F * img[idx]) / 3.F;
+  }
+
+  return (img[idx - 1] + 2.F * img[idx] + img[idx + 1]) / 4.F;
 }
 inline float VerticalFilterAt(const std::vector<float> &temp, int n, int m, int x, int y) {
-  float top = (y > 0) ? temp[((y - 1) * n) + x] : temp[(y * n) + x];
-  float center = temp[y * n + x];
-  float bottom = (y < m - 1) ? temp[((y + 1) * n) + x] : temp[(y * n) + x];
-  return (top + (2.F * center) + bottom) / 4.F;
+  const int idx = y * n + x;
+
+  if (y == 0) {
+    return (2.F * temp[idx] + temp[idx + n]) / 3.F;
+  }
+
+  if (y == m - 1) {
+    return (temp[idx - n] + 2.F * temp[idx]) / 3.F;
+  }
+
+  return (temp[idx - n] + 2.F * temp[idx] + temp[idx + n]) / 4.F;
 }
 
 bool ChaschinVLinearFiltrationSEQ::RunImpl() {
