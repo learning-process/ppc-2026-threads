@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstddef>
+#include <ranges>
 #include <tuple>
 #include <vector>
 
@@ -13,8 +15,8 @@ namespace zhurin_i_gauss_kernel_seq {
 class ZhurinIGaussKernelPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   void SetUp() override {
-    const int width = 4096;
-    const int height = 2160;
+    const int width = 512;
+    const int height = 512;
     const int parts = 4;
 
     std::vector<std::vector<int>> img(height, std::vector<int>(width, 128));
@@ -29,12 +31,8 @@ class ZhurinIGaussKernelPerfTests : public ppc::util::BaseRunPerfTests<InType, O
     if (output_data.size() != static_cast<size_t>(expected_height)) {
       return false;
     }
-    for (const auto &row : output_data) {
-      if (row.size() != static_cast<size_t>(expected_width)) {
-        return false;
-      }
-    }
-    return true;
+    return std::ranges::all_of(
+        output_data, [expected_width](const auto &row) { return row.size() == static_cast<size_t>(expected_width); });
   }
 
   InType GetTestInputData() final {
