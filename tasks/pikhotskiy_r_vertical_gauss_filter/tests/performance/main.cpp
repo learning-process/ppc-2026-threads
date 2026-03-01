@@ -46,8 +46,8 @@ TEST_P(PikhotskiyRVerticalGaussFilterPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, PikhotskiyRVerticalGaussFilterSEQ>(PPC_SETTINGS_pikhotskiy_r_vertical_gauss_filter);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, PikhotskiyRVerticalGaussFilterSEQ>(
+    PPC_SETTINGS_pikhotskiy_r_vertical_gauss_filter);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

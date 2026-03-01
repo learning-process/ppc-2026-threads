@@ -20,3 +20,4 @@ class PikhotskiyRVerticalGaussFilterSEQ : public BaseTask {
 };
 
 }  // namespace pikhotskiy_r_vertical_gauss_filter
+// Пустая строка в конце

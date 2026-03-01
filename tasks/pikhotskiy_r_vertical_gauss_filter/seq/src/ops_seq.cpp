@@ -3,7 +3,6 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <utility>
 #include <vector>
 
 #include "pikhotskiy_r_vertical_gauss_filter/common/include/common.hpp"
@@ -11,9 +10,8 @@
 namespace pikhotskiy_r_vertical_gauss_filter {
 
 namespace {
-const int kDivider = 16;  // просто другое имя
+const int kDivider = 16;
 const std::array<std::array<int, 3>, 3> kKernel = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
-const int kChannels = 1;  // другое имя
 
 uint8_t GetPixelMirror(const std::vector<uint8_t> &data, int x, int y, int w, int h) {
   if (x < 0) {
@@ -26,7 +24,7 @@ uint8_t GetPixelMirror(const std::vector<uint8_t> &data, int x, int y, int w, in
   } else if (y >= h) {
     y = (2 * h) - y - 1;
   }
-  return data[(y * w) + x];
+  return data[static_cast<size_t>(y) * w + x];
 }
 }  // namespace
 
@@ -60,7 +58,6 @@ bool PikhotskiyRVerticalGaussFilterSEQ::RunImpl() {
   const std::vector<uint8_t> &src = in.data;
   std::vector<uint8_t> dst(static_cast<size_t>(width) * static_cast<size_t>(height));
 
-  // Упрощенный алгоритм без разбиения на бэнды
   for (int y = 0; y < height; ++y) {
     for (int x = 0; x < width; ++x) {
       int sum = 0;
@@ -77,7 +74,7 @@ bool PikhotskiyRVerticalGaussFilterSEQ::RunImpl() {
       sum += kKernel[2][1] * GetPixelMirror(src, x, y + 1, width, height);
       sum += kKernel[2][2] * GetPixelMirror(src, x + 1, y + 1, width, height);
 
-      dst[(y * width) + x] = static_cast<uint8_t>(sum / kDivider);
+      dst[static_cast<size_t>(y) * width + x] = static_cast<uint8_t>(sum / kDivider);
     }
   }
 
@@ -92,3 +89,4 @@ bool PikhotskiyRVerticalGaussFilterSEQ::PostProcessingImpl() {
 }
 
 }  // namespace pikhotskiy_r_vertical_gauss_filter
+// Пустая строка в конце

@@ -69,10 +69,9 @@ const Matrix kResult2x2 = CreateMatrix(2, 2, {2, 3, 3, 4});  // Немного �
 const Matrix kTest3x3 = CreateMatrix(3, 3, std::vector<uint8_t>(9, 16));
 const Matrix kResult3x3 = CreateMatrix(3, 3, std::vector<uint8_t>(9, 16));
 
-const std::array<TestType, 3> kTestCases = {
-    std::make_tuple(kTest1x1, kResult1x1),
-    std::make_tuple(kTest2x2, kResult2x2),
-    std::make_tuple(kTest3x3, kResult3x3)};
+const std::array<TestType, 3> kTestCases = {std::make_tuple(kTest1x1, kResult1x1),
+                                            std::make_tuple(kTest2x2, kResult2x2),
+                                            std::make_tuple(kTest3x3, kResult3x3)};
 
 using ParamType = std::tuple<std::function<std::shared_ptr<BaseTask>(InType)>, std::string, TestType>;
 

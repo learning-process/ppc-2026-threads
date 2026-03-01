@@ -20,3 +20,4 @@ using TestType = std::tuple<InType, OutType>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace pikhotskiy_r_vertical_gauss_filter
+// Обязательно пустая строка в конце
