@@ -1,7 +1,6 @@
 #include "zhurin_i_gauss_kernel_seq/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <cstddef>
 #include <utility>
 #include <vector>
 
@@ -48,11 +47,11 @@ bool ZhurinIGaussKernelSEQ::PreProcessingImpl() {
     std::copy(image_[i].begin(), image_[i].end(), padded[i + 1].begin() + 1);
   }
 
-  int basewidth_ = width_ / num_parts_;
+  int base_width = width_ / num_parts_;
   int remainder = width_ % num_parts_;
-  int xStart = 0;
+  int x_start = 0;
 
-  auto convolveAt = [&](int row, int col) -> int {
+  auto convolve_at = [&](int row, int col) -> int {
     int sum = 0;
     for (int ki = 0; ki < 3; ++ki) {
       for (int kj = 0; kj < 3; ++kj) {
@@ -63,16 +62,15 @@ bool ZhurinIGaussKernelSEQ::PreProcessingImpl() {
   };
 
   for (int part = 0; part < num_parts_; ++part) {
-    int partwidth_ = basewidth_ + (part < remainder ? 1 : 0);
-    int xEnd = xStart + partwidth_;
+    int part_width = base_width + (part < remainder ? 1 : 0);
+    int x_end = x_start + part_width;
 
     for (int i = 1; i <= height_; ++i) {
-      for (int j = xStart + 1; j <= xEnd; ++j) {
-        result_[i - 1][j - 1] = convolveAt(i, j);
+      for (int j = x_start + 1; j <= x_end; ++j) {
+        result_[i - 1][j - 1] = convolve_at(i, j);
       }
     }
-
-    xStart = xEnd;
+    x_start = x_end;
   }
 
   GetOutput() = std::move(result_);
