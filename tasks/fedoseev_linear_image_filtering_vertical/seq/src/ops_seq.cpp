@@ -51,7 +51,7 @@ bool LinearImageFilteringVerticalSeq::RunImpl() {
   auto get_pixel = [&](int col, int row) -> int {
     col = std::clamp(col, 0, w - 1);
     row = std::clamp(row, 0, h - 1);
-    return src[static_cast<size_t>(row) * static_cast<size_t>(w) + static_cast<size_t>(col)];
+    return src[(static_cast<size_t>(row) * static_cast<size_t>(w)) + static_cast<size_t>(col)];
   };
 
   for (int row = 0; row < h; ++row) {
@@ -59,10 +59,10 @@ bool LinearImageFilteringVerticalSeq::RunImpl() {
       int sum = 0;
       for (int ky = -1; ky <= 1; ++ky) {
         for (int kx = -1; kx <= 1; ++kx) {
-          sum += get_pixel(col + kx, row + ky) * kernel[ky + 1][kx + 1];
+          sum += get_pixel(col + kx, row + ky) * kernel.at(ky + 1).at(kx + 1);
         }
       }
-      dst[static_cast<size_t>(row) * static_cast<size_t>(w) + static_cast<size_t>(col)] = sum / kernel_sum;
+      dst[(static_cast<size_t>(row) * static_cast<size_t>(w)) + static_cast<size_t>(col)] = sum / kernel_sum;
     }
   }
 

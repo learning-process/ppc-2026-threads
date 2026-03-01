@@ -14,6 +14,7 @@
 #include "fedoseev_linear_image_filtering_vertical/common/include/common.hpp"
 #include "fedoseev_linear_image_filtering_vertical/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace fedoseev_linear_image_filtering_vertical {
 namespace {
@@ -47,17 +48,17 @@ Image ReferenceFilter(const Image &input) {
   return {w, h, dst};
 }
 
-void FillConst(Image &img, int) {
+void FillConst(Image &img, [[maybe_unused]] int size) {
   std::ranges::fill(img.data, 128);
 }
 
-void FillGrad(Image &img, int) {
+void FillGrad(Image &img, [[maybe_unused]] int size) {
   for (size_t i = 0; i < img.data.size(); ++i) {
     img.data[i] = static_cast<int>(i) % 256;
   }
 }
 
-void FillRand(Image &img, int) {
+void FillRand(Image &img, [[maybe_unused]] int size) {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_int_distribution<int> dist(0, 255);
@@ -82,11 +83,11 @@ Image GenerateImage(int size, const std::string &type) {
   img.height = size;
   img.data.resize(static_cast<size_t>(size) * static_cast<size_t>(size));
 
-  static const std::unordered_map<std::string, std::function<void(Image &, int)>> fillers = {
+  static const std::unordered_map<std::string, std::function<void(Image &, int)>> kFillers = {
       {"const", FillConst}, {"grad", FillGrad}, {"rand", FillRand}, {"check", FillCheckerboard}};
 
-  auto it = fillers.find(type);
-  if (it != fillers.end()) {
+  auto it = kFillers.find(type);
+  if (it != kFillers.end()) {
     it->second(img, size);
   } else {
     throw std::invalid_argument("Unknown type");
