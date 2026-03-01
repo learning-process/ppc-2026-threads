@@ -15,27 +15,25 @@
 
 namespace zhurin_i_gauss_kernel_seq {
 
-struct FuncTestCase {
-  int id;
-  InType input;
-  OutType expected;
-};
+// Параметр теста: (id, входные данные, ожидаемый результат)
+using TestCase = std::tuple<int, InType, OutType>;
 
-class ZhurinIGaussKernelFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, FuncTestCase> {
+class ZhurinIGaussKernelFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestCase> {
  public:
   static std::string PrintTestName(
       const testing::TestParamInfo<std::tuple<std::function<std::shared_ptr<ppc::task::Task<InType, OutType>>(InType)>,
-                                              std::string, FuncTestCase>> &info) {
+                                              std::string, TestCase>> &info) {
     const auto &task_name = std::get<1>(info.param);
     const auto &test_param = std::get<2>(info.param);
-    return task_name + "_Test" + std::to_string(test_param.id);
+    int id = std::get<0>(test_param);
+    return task_name + "_Test" + std::to_string(id);
   }
 
  protected:
   void SetUp() override {
     const auto &params = std::get<2>(GetParam());
-    input_data_ = params.input;
-    expected_output_ = params.expected;
+    input_data_ = std::get<1>(params);
+    expected_output_ = std::get<2>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -70,19 +68,20 @@ InType MakeInput(int w, int h, int p, const std::vector<std::vector<int>> &img) 
   return std::make_tuple(w, h, p, img);
 }
 
-const std::array<FuncTestCase, 6> kAllTests = {
-    {FuncTestCase{1, MakeInput(1, 1, 1, {{16}}), {{4}}},
-     FuncTestCase{2,
-                  MakeInput(3, 3, 1, std::vector<std::vector<int>>(3, std::vector<int>(3, 1))),
-                  {{0, 0, 0}, {0, 1, 0}, {0, 0, 0}}},
-     FuncTestCase{3, MakeInput(3, 3, 1, {{0, 0, 0}, {0, 16, 0}, {0, 0, 0}}), {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}},
-     FuncTestCase{4, MakeInput(3, 3, 2, {{16, 0, 0}, {0, 0, 0}, {0, 0, 0}}), {{4, 2, 0}, {2, 1, 0}, {0, 0, 0}}},
-     FuncTestCase{5, MakeInput(2, 2, 1, {{1, 2}, {3, 4}}), {{1, 1}, {1, 1}}},
-     FuncTestCase{6, MakeInput(4, 4, 4, std::vector<std::vector<int>>(4, std::vector<int>(4, 0))),
-                  OutType(4, std::vector<int>(4, 0))}}};
+// Массив тестов: (id, вход, ожидаемый результат)
+const std::array<TestCase, 6> kTestCases = {
+    {{1, MakeInput(1, 1, 1, {{16}}), {{4}}},
+     {2,
+      MakeInput(3, 3, 1, std::vector<std::vector<int>>(3, std::vector<int>(3, 1))),
+      {{0, 0, 0}, {0, 1, 0}, {0, 0, 0}}},
+     {3, MakeInput(3, 3, 1, {{0, 0, 0}, {0, 16, 0}, {0, 0, 0}}), {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}},
+     {4, MakeInput(3, 3, 2, {{16, 0, 0}, {0, 0, 0}, {0, 0, 0}}), {{4, 2, 0}, {2, 1, 0}, {0, 0, 0}}},
+     {5, MakeInput(2, 2, 1, {{1, 2}, {3, 4}}), {{1, 1}, {1, 1}}},
+     {6, MakeInput(4, 4, 4, std::vector<std::vector<int>>(4, std::vector<int>(4, 0))),
+      OutType(4, std::vector<int>(4, 0))}}};
 
 const auto kAllTasksList =
-    ppc::util::AddFuncTask<ZhurinIGaussKernelSEQ, InType>(kAllTests, PPC_SETTINGS_zhurin_i_gauss_kernel_seq);
+    ppc::util::AddFuncTask<ZhurinIGaussKernelSEQ, InType>(kTestCases, PPC_SETTINGS_zhurin_i_gauss_kernel_seq);
 
 inline const auto kGtestValues = ppc::util::ExpandToValues(kAllTasksList);
 
@@ -92,6 +91,8 @@ TEST_P(ZhurinIGaussKernelFuncTests, AllTests) {
 
 INSTANTIATE_TEST_SUITE_P(ZhurinIGaussKernel, ZhurinIGaussKernelFuncTests, kGtestValues,
                          ZhurinIGaussKernelFuncTests::PrintTestName);
+
+// ========== НЕГАТИВНЫЕ ТЕСТЫ ==========
 
 TEST(ZhurinIGaussKernelNegativeTest, InvalidWidth) {
   int width = 0;
