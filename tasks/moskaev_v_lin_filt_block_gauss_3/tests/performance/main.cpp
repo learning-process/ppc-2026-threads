@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <chrono>
-#include <random>
+#include <cstddef>
+#include <cstdint>
 #include <tuple>
 #include <vector>
 
@@ -18,13 +18,16 @@ class MoskaevVLinFiltBlockGauss3SEQPerfTests : public ppc::util::BaseRunPerfTest
     int channels = 3;
     int block_size = 64;
 
-    std::vector<uint8_t> image_data(width * height * channels);
+    std::vector<uint8_t> image_data(static_cast<size_t>(width) * static_cast<size_t>(height) *
+                                    static_cast<size_t>(channels));
 
-    for (int y = 0; y < height; ++y) {
-      for (int x = 0; x < width; ++x) {
-        for (int c = 0; c < channels; ++c) {
-          int idx = (y * width + x) * channels + c;
-          image_data[idx] = static_cast<uint8_t>((x + y + c * 85) % 256);
+    for (int row = 0; row < height; ++row) {
+      for (int col = 0; col < width; ++col) {
+        for (int channel = 0; channel < channels; ++channel) {
+          const size_t idx = (static_cast<size_t>(row) * static_cast<size_t>(width) + static_cast<size_t>(col)) *
+                                 static_cast<size_t>(channels) +
+                             static_cast<size_t>(channel);
+          image_data[idx] = static_cast<uint8_t>((row + col + channel * 85) % 256);
         }
       }
     }

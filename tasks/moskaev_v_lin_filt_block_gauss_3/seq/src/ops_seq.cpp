@@ -2,13 +2,15 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
-#include <iostream>
 #include <vector>
+
+#include "moskaev_v_lin_filt_block_gauss_3/common/include/common.hpp"
 
 namespace moskaev_v_lin_filt_block_gauss_3 {
 
-MoskaevVLinFiltBlockGauss3SEQ::MoskaevVLinFiltBlockGauss3SEQ(const InType &in) {
+MoskaevVLinFiltBlockGauss3SEQ::MoskaevVLinFiltBlockGauss3SEQ(const InType &in) : block_size_(0) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = OutType();
@@ -29,22 +31,22 @@ void MoskaevVLinFiltBlockGauss3SEQ::ApplyGaussianFilterToBlock(const std::vector
   int inner_width = block_width - 2;
   int inner_height = block_height - 2;
 
-  for (int y = 0; y < inner_height; ++y) {
-    for (int x = 0; x < inner_width; ++x) {
-      for (int c = 0; c < channels; ++c) {
-        float sum = 0.0f;
+  for (int row = 0; row < inner_height; ++row) {
+    for (int col = 0; col < inner_width; ++col) {
+      for (int channel = 0; channel < channels; ++channel) {
+        float sum = 0.0F;
 
         for (int ky = -1; ky <= 1; ++ky) {
           for (int kx = -1; kx <= 1; ++kx) {
-            int ny = y + 1 + ky;
-            int nx = x + 1 + kx;
+            int ny = row + 1 + ky;
+            int nx = col + 1 + kx;
 
-            int idx = (ny * block_width + nx) * channels + c;
-            sum += input_block[idx] * kGaussianKernel[(ky + 1) * 3 + (kx + 1)];
+            int idx = ((ny * block_width) + nx) * channels + channel;
+            sum += static_cast<float>(input_block[idx]) * kGaussianKernel[((ky + 1) * 3) + (kx + 1)];
           }
         }
 
-        int out_idx = (y * inner_width + x) * channels + c;
+        int out_idx = ((row * inner_width) + col) * channels + channel;
         output_block[out_idx] = static_cast<uint8_t>(std::round(sum));
       }
     }
@@ -65,7 +67,7 @@ bool MoskaevVLinFiltBlockGauss3SEQ::RunImpl() {
 
   block_size_ = 64;
 
-  GetOutput().resize(width * height * channels);
+  GetOutput().resize(static_cast<size_t>(width) * static_cast<size_t>(height) * static_cast<size_t>(channels));
 
   for (int block_y = 0; block_y < height; block_y += block_size_) {
     for (int block_x = 0; block_x < width; block_x += block_size_) {
@@ -75,19 +77,25 @@ bool MoskaevVLinFiltBlockGauss3SEQ::RunImpl() {
       int block_with_padding_width = current_block_width + 2;
       int block_with_padding_height = current_block_height + 2;
 
-      std::vector<uint8_t> input_block(block_with_padding_width * block_with_padding_height * channels, 0);
-      std::vector<uint8_t> output_block(current_block_width * current_block_height * channels, 0);
+      std::vector<uint8_t> input_block(static_cast<size_t>(block_with_padding_width) *
+                                           static_cast<size_t>(block_with_padding_height) *
+                                           static_cast<size_t>(channels),
+                                       0);
 
-      for (int y = -1; y <= current_block_height; ++y) {
-        for (int x = -1; x <= current_block_width; ++x) {
-          int src_y = std::clamp(block_y + y, 0, height - 1);
-          int src_x = std::clamp(block_x + x, 0, width - 1);
-          int dst_y = y + 1;
-          int dst_x = x + 1;
+      std::vector<uint8_t> output_block(static_cast<size_t>(current_block_width) *
+                                            static_cast<size_t>(current_block_height) * static_cast<size_t>(channels),
+                                        0);
 
-          for (int c = 0; c < channels; ++c) {
-            int src_idx = (src_y * width + src_x) * channels + c;
-            int dst_idx = (dst_y * block_with_padding_width + dst_x) * channels + c;
+      for (int row = -1; row <= current_block_height; ++row) {
+        for (int col = -1; col <= current_block_width; ++col) {
+          int src_y = std::clamp(block_y + row, 0, height - 1);
+          int src_x = std::clamp(block_x + col, 0, width - 1);
+          int dst_y = row + 1;
+          int dst_x = col + 1;
+
+          for (int channel = 0; channel < channels; ++channel) {
+            int src_idx = ((src_y * width) + src_x) * channels + channel;
+            int dst_idx = ((dst_y * block_with_padding_width) + dst_x) * channels + channel;
             input_block[dst_idx] = image_data[src_idx];
           }
         }
@@ -96,11 +104,11 @@ bool MoskaevVLinFiltBlockGauss3SEQ::RunImpl() {
       ApplyGaussianFilterToBlock(input_block, output_block, block_with_padding_width, block_with_padding_height,
                                  channels);
 
-      for (int y = 0; y < current_block_height; ++y) {
-        for (int x = 0; x < current_block_width; ++x) {
-          for (int c = 0; c < channels; ++c) {
-            int src_idx = (y * current_block_width + x) * channels + c;
-            int dst_idx = ((block_y + y) * width + (block_x + x)) * channels + c;
+      for (int row = 0; row < current_block_height; ++row) {
+        for (int col = 0; col < current_block_width; ++col) {
+          for (int channel = 0; channel < channels; ++channel) {
+            int src_idx = ((row * current_block_width) + col) * channels + channel;
+            int dst_idx = (((block_y + row) * width) + (block_x + col)) * channels + channel;
             GetOutput()[dst_idx] = output_block[src_idx];
           }
         }

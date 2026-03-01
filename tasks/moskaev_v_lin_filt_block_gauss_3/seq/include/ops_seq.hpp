@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+#include <vector>
+
 #include "moskaev_v_lin_filt_block_gauss_3/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -18,11 +21,11 @@ class MoskaevVLinFiltBlockGauss3SEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void ApplyGaussianFilterToBlock(const std::vector<uint8_t> &input_block, std::vector<uint8_t> &output_block,
-                                  int block_width, int block_height, int channels);
+  static void ApplyGaussianFilterToBlock(const std::vector<uint8_t> &input_block, std::vector<uint8_t> &output_block,
+                                         int block_width, int block_height, int channels);
 
   ImageInfo image_info_;
-  int block_size_;
+  int block_size_{0};
 };
 
 }  // namespace moskaev_v_lin_filt_block_gauss_3

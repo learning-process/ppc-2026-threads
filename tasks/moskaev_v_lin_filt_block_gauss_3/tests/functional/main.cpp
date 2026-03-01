@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
+#include <string>
 #include <tuple>
 #include <vector>
 
@@ -9,8 +12,6 @@
 #include "util/include/func_test_util.hpp"
 
 namespace moskaev_v_lin_filt_block_gauss_3 {
-
-using TestType = std::tuple<int, int, int, int, std::vector<uint8_t>, std::vector<uint8_t>, std::string>;
 
 class MoskaevVLinFiltBlockGauss3SEQFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:

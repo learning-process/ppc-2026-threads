@@ -13,13 +13,13 @@ using OutType = std::vector<uint8_t>;
 using TestType = std::tuple<int, int, int, int, std::vector<uint8_t>, std::vector<uint8_t>, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-const std::vector<float> kGaussianKernel = {1.0f / 16, 2.0f / 16, 1.0f / 16, 2.0f / 16, 4.0f / 16,
-                                            2.0f / 16, 1.0f / 16, 2.0f / 16, 1.0f / 16};
+const std::vector<float> kGaussianKernel = {1.0F / 16, 2.0F / 16, 1.0F / 16, 2.0F / 16, 4.0F / 16,
+                                            2.0F / 16, 1.0F / 16, 2.0F / 16, 1.0F / 16};
 
 struct ImageInfo {
-  int width;
-  int height;
-  int channels;
+  int width{0};
+  int height{0};
+  int channels{0};
   std::vector<uint8_t> data;
 };
 
