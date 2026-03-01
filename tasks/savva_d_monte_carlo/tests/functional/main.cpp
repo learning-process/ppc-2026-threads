@@ -118,7 +118,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
       case 7: {  // const_3d_unit - f(x,y,z) = 1
         lower_bounds = {0.0, 0.0, 0.0};
         upper_bounds = {1.0, 1.0, 1.0};
-        num_points = 2000000;
+        num_points = 1000000;
         f = [](const std::vector<double> &) { return 1.0; };
         expected = 1.0;  // объем = 1*1*1 = 1
         break;
@@ -127,7 +127,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
       case 8: {  // sum_3d_unit - f(x,y,z) = x + y + z
         lower_bounds = {0.0, 0.0, 0.0};
         upper_bounds = {1.0, 1.0, 1.0};
-        num_points = 2000000;
+        num_points = 1000000;
         f = [](const std::vector<double> &x) { return x[0] + x[1] + x[2]; };
         // Симметрично, интеграл = 3 * (1/2) = 1.5
         expected = 1.5;
@@ -137,7 +137,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
       case 9: {  // product_3d_unit - f(x,y,z) = x * y * z
         lower_bounds = {0.0, 0.0, 0.0};
         upper_bounds = {1.0, 1.0, 1.0};
-        num_points = 2000000;
+        num_points = 1000000;
         f = [](const std::vector<double> &x) { return x[0] * x[1] * x[2]; };
         expected = 0.125;  // (1/2)^3 = 0.125
         break;
@@ -146,7 +146,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
       case 10: {  // sum_sq_3d_unit - f(x,y,z) = x^2 + y^2 + z^2
         lower_bounds = {0.0, 0.0, 0.0};
         upper_bounds = {1.0, 1.0, 1.0};
-        num_points = 2000000;
+        num_points = 1000000;
         f = [](const std::vector<double> &x) { return x[0] * x[0] + x[1] * x[1] + x[2] * x[2]; };
         expected = 1.0;  // 3 * (1/3) = 1
         break;
