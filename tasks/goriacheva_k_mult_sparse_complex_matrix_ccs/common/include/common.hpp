@@ -15,9 +15,9 @@ struct SparseMatrixCCS {
   int rows{};
   int cols{};
 
-  std::vector<Complex> values{};
-  std::vector<int> row_ind{};
-  std::vector<int> col_ptr{};
+  std::vector<Complex> values;
+  std::vector<int> row_ind;
+  std::vector<int> col_ptr;
 };
 
 using InType = std::tuple<SparseMatrixCCS, SparseMatrixCCS>;
