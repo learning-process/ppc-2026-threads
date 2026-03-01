@@ -25,7 +25,7 @@ bool ChaschinVLinearFiltrationSEQ::PreProcessingImpl() {
   return true;
 }
 
-inline float HorizontalFilterAt(const std::vector<float> &img, int n, int m, int x, int y) {
+inline float HorizontalFilterAt(const std::vector<float> &img, int n, int x, int y) {
   float left = (x > 0) ? img[(y * n) + (x - 1)] : img[(y * n) + x];
   float center = img[y * n + x];
   float right = (x < n - 1) ? img[(y * n) + (x + 1)] : img[(y * n) + x];
@@ -53,7 +53,7 @@ bool ChaschinVLinearFiltrationSEQ::RunImpl() {
   // ---------- горизонтальная фильтрация ----------
   for (int yi = 0; yi < m; ++yi) {
     for (int xf = 0; xf < n; ++xf) {
-      temp[yi * n + xf] = HorizontalFilterAt(image, n, m, xf, yi);
+      temp[yi * n + xf] = HorizontalFilterAt(image, n, xf, yi);
     }
   }
 
