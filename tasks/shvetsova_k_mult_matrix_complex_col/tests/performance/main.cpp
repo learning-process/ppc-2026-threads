@@ -9,7 +9,7 @@
 namespace shvetsova_k_mult_matrix_complex_col {
 
 class ShvetsovaKRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
     const int size = 100;

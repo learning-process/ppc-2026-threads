@@ -1,6 +1,7 @@
 #include "shvetsova_k_mult_matrix_complex_col/seq/include/ops_seq.hpp"
 
 #include <complex>
+#include <cstddef>
 #include <vector>
 
 #include "shvetsova_k_mult_matrix_complex_col/common/include/common.hpp"
@@ -49,7 +50,7 @@ bool ShvetsovaKMultMatrixComplexSEQ::RunImpl() {
     int counter = 0;
     for (size_t k = 0; k < column_c.size(); k++) {
       if (column_c[k] != 0.0) {
-        matrix_c.row_ind.push_back(k);
+        matrix_c.row_ind.push_back(static_cast<int>(k));
         matrix_c.values.push_back(column_c[k]);
         counter++;
       }
