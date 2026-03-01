@@ -1,15 +1,11 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
@@ -26,51 +22,50 @@ class ChaschinVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
   }
 
  protected:
+  std::vector<float> GenerateDeterministicImage(int width, int height) {
+    std::vector<float> image(static_cast<std::vector<float>::size_type>(width * height));
+    for (int i = 0; i < height; ++i) {
+      for (int j = 0; j < width; ++j) {
+        image[(i * width) + j] = static_cast<float>((i + 1) * (j + 3) % 256);
+      }
+    }
+    return image;
+  }
+
+  std::vector<float> ApplyGaussianKernel(const std::vector<float> &image, int width, int height) {
+    const std::array<std::array<float, 3>, 3> k = {{{{1.f / 16.f, 2.f / 16.f, 1.f / 16.f}},
+                                                    {{2.f / 16.f, 4.f / 16.f, 2.f / 16.f}},
+                                                    {{1.f / 16.f, 2.f / 16.f, 1.f / 16.f}}}};
+
+    std::vector<float> output(static_cast<std::vector<float>::size_type>(width * height), 0.0F);
+
+    for (int ii = 0; ii < height; ++ii) {
+      for (int jj = 0; jj < width; ++jj) {
+        float acc = 0.0F;
+        for (int di = -1; di <= 1; ++di) {
+          for (int dj = -1; dj <= 1; ++dj) {
+            int ni = ii + di;
+            int nj = jj + dj;
+            if (ni >= 0 && ni < height && nj >= 0 && nj < width) {
+              acc += image[(ni * width) + nj] * k[di + 1][dj + 1];
+            }
+          }
+        }
+        output[(ii * width) + jj] = acc;
+      }
+    }
+    return output;
+  }
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    const int size = std::get<0>(params);
+    int size = std::get<0>(params);
 
     const int width = size;
     const int height = size;
 
-    // ---------- deterministic image ----------
-    std::vector<float> image(width * height);
-    for (int i = 0; i < height; ++i) {
-      for (int j = 0; j < width; ++j) {
-        image[i * width + j] = static_cast<float>((i + 1) * (j + 3) % 256);
-      }
-    }
+    input_data_ = std::make_tuple(GenerateDeterministicImage(width, height), width, height);
 
-    input_data_ = std::make_tuple(image, width, height);
-
-    // ---------- Gaussian kernel 3x3 ----------
-    const float k[3][3] = {
-        {1.f / 16.f, 2.f / 16.f, 1.f / 16.f},
-        {2.f / 16.f, 4.f / 16.f, 2.f / 16.f},
-        {1.f / 16.f, 2.f / 16.f, 1.f / 16.f},
-    };
-
-    expected_output_.resize(width * height, 0.0f);
-
-    // ---------- reference convolution ----------
-    for (int i = 0; i < height; ++i) {
-      for (int j = 0; j < width; ++j) {
-        float acc = 0.0f;
-
-        for (int di = -1; di <= 1; ++di) {
-          for (int dj = -1; dj <= 1; ++dj) {
-            const int ni = i + di;
-            const int nj = j + dj;
-
-            if (ni >= 0 && ni < height && nj >= 0 && nj < width) {
-              acc += image[ni * width + nj] * k[di + 1][dj + 1];
-            }
-          }
-        }
-
-        expected_output_[i * width + j] = acc;
-      }
-    }
+    expected_output_ = ApplyGaussianKernel(std::get<0>(input_data_), width, height);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -78,9 +73,9 @@ class ChaschinVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
       return false;
     }
 
-    constexpr float eps = 1e-5f;
+    constexpr float kEps = 1e-5F;
     for (size_t i = 0; i < output_data.size(); ++i) {
-      if (std::fabs(output_data[i] - expected_output_[i]) > eps) {
+      if (std::fabs(output_data[i] - expected_output_[i]) > kEps) {
         return false;
       }
     }
