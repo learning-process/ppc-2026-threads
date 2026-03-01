@@ -61,7 +61,7 @@ class BalchunayteZRunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, O
 
   void SetUpVerticalEdge(Image &input_image) {
     const int image_size = input_image.width;
-    const size_t image_width = static_cast<size_t>(image_size);
+    const auto image_width = static_cast<size_t>(image_size);
 
     for (int row_index = 0; row_index < image_size; ++row_index) {
       for (int col_index = 0; col_index < image_size; ++col_index) {
@@ -81,7 +81,7 @@ class BalchunayteZRunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, O
 
   void SetUpHorizontalEdge(Image &input_image) {
     const int image_size = input_image.width;
-    const size_t image_width = static_cast<size_t>(image_size);
+    const auto image_width = static_cast<size_t>(image_size);
 
     for (int row_index = 0; row_index < image_size; ++row_index) {
       for (int col_index = 0; col_index < image_size; ++col_index) {

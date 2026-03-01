@@ -13,7 +13,7 @@ class BalchunayteZRunPerfTestSEQ : public ppc::util::BaseRunPerfTests<InType, Ou
  protected:
   void SetUp() override {
     const int image_size = 512;
-    const size_t image_width = static_cast<size_t>(image_size);
+    const auto image_width = static_cast<size_t>(image_size);
 
     Image input_image;
     input_image.width = image_size;
