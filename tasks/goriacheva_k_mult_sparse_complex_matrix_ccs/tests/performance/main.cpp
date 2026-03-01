@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
-#include <algorithm>
-#include <vector>
-#include <compare>
 
+#include <algorithm>
+#include <compare>
 #include <random>
+#include <vector>
 
 #include "goriacheva_k_mult_sparse_complex_matrix_ccs/common/include/common.hpp"
 #include "goriacheva_k_mult_sparse_complex_matrix_ccs/seq/include/ops_seq.hpp"

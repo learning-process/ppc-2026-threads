@@ -1,9 +1,8 @@
+#include "goriacheva_k_mult_sparse_complex_matrix_ccs/seq/include/ops_seq.hpp"
+
 #include <algorithm>
 #include <utility>
 #include <vector>
-#include <utility>
-
-#include "goriacheva_k_mult_sparse_complex_matrix_ccs/seq/include/ops_seq.hpp"
 
 #include "goriacheva_k_mult_sparse_complex_matrix_ccs/common/include/common.hpp"
 

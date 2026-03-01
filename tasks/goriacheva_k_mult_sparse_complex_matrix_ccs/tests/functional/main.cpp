@@ -1,14 +1,14 @@
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cmath>
+#include <cstddef>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <vector>
-#include <stdexcept>
-#include <cstddef>
-#include <array>
 
 #include "goriacheva_k_mult_sparse_complex_matrix_ccs/common/include/common.hpp"
 #include "goriacheva_k_mult_sparse_complex_matrix_ccs/seq/include/ops_seq.hpp"
