@@ -121,8 +121,18 @@ class SparseMatrix {
   }
 
   bool operator==(const SparseMatrix &b) const {
-    return (value_ == b.value_) && (row_ == b.row_) && (col_index_ == b.col_index_) && (cols_ == b.cols_) &&
-           (rows_ == b.rows_);
+    bool tmp = false;
+    if (value_.size() == b.value_.size()) {
+      tmp = true;
+      for (size_t i = 0; i < value_.size(); i++) {
+        if (fabs(value_[i] - b.value_[i]) > kEPS) {
+          tmp = false;
+          break;
+        }
+      }
+    }
+
+    return tmp && (row_ == b.row_) && (col_index_ == b.col_index_) && (cols_ == b.cols_) && (rows_ == b.rows_);
   }
 
   double GetXy(unsigned x = 1, unsigned y = 2) {
