@@ -5,6 +5,7 @@
 #include <cmath>
 #include <complex>
 #include <cstddef>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
@@ -112,8 +113,8 @@ class SabutayARunFuncTestsSeq : public ppc::util::BaseRunFuncTests<InType, OutTy
         output.emplace_back(output_data.row_ind[k], output_data.values[k]);
       }
       auto cmp = [](const auto &x, const auto &y) { return x.first < y.first; };
-      std::sort(test.begin(), test.end(), cmp);
-      std::sort(output.begin(), output.end(), cmp);
+      std::ranges::sort(test, cmp);
+      std::ranges::sort(output, cmp);
       for (size_t i = 0; i < test.size(); ++i) {
         if (test[i].first != output[i].first || std::abs(test[i].second - output[i].second) > eps) {
           result = false;
