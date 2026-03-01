@@ -6,14 +6,28 @@
 namespace luzan_e_double_sparse_matrix_mult_seq {
 
 class LuzanEDoubleSparseMatrixMultSeqPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  // const int kCount_ = 200;
+  const int kCount_ = 10;
+  // const unsigned cols_ = 5000;
+  // const unsigned rows_ = 5000;
   InType input_data_;
   OutType output_data_;
 
-  void SetUp() override {}
+  void SetUp() override {
+    std::vector<double> value;
+    std::vector<unsigned> row;
+    std::vector<unsigned> col_index;
+
+    SparseMatrix lhs;
+    lhs.GenLineMatrix(kCount_, kCount_);
+
+    SparseMatrix rhs;
+    rhs.GenColsMatrix(kCount_, kCount_);
+    input_data_ = std::make_tuple(lhs, rhs);
+    output_data_.GenPerfAns(kCount_, kCount_, kCount_);
+  }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (output_data == output_data);
+    return (output_data == output_data_);
   }
 
   InType GetTestInputData() final {
