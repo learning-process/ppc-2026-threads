@@ -1,9 +1,10 @@
 #include "shelenkova_m_shell_sort_simple_merge/seq/include/ops_seq.hpp"
-#include "shelenkova_m_shell_sort_simple_merge/common/include/common.hpp"
 
 #include <algorithm>
 #include <cstddef>
 #include <vector>
+
+#include "shelenkova_m_shell_sort_simple_merge/common/include/common.hpp"
 
 namespace shelenkova_m_shell_sort_simple_merge {
 
