@@ -8,14 +8,14 @@
 
 namespace eremin_v_integrals_monte_carlo {
 
-EreminVIntegralsMonteCarloSEQ::EreminVIntegralsMonteCarloSEQ(const InType& in) {
+EreminVIntegralsMonteCarloSEQ::EreminVIntegralsMonteCarloSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
 }
 
 bool EreminVIntegralsMonteCarloSEQ::ValidationImpl() {
-  const auto& input = GetInput();
+  const auto &input = GetInput();
 
   if (input.samples <= 0) {
     return false;
@@ -27,7 +27,7 @@ bool EreminVIntegralsMonteCarloSEQ::ValidationImpl() {
     return false;
   }
 
-  for (const auto& [a, b] : input.bounds) {
+  for (const auto &[a, b] : input.bounds) {
     if (a >= b) {
       return false;
     }
@@ -44,15 +44,15 @@ bool EreminVIntegralsMonteCarloSEQ::PreProcessingImpl() {
 }
 
 bool EreminVIntegralsMonteCarloSEQ::RunImpl() {
-  const auto& input = GetInput();
-  const auto& bounds = input.bounds;
+  const auto &input = GetInput();
+  const auto &bounds = input.bounds;
   int samples = input.samples;
-  const auto& func = input.func;
+  const auto &func = input.func;
 
   const std::size_t dimension = bounds.size();
 
   double volume = 1.0;
-  for (const auto& [a, b] : bounds) {
+  for (const auto &[a, b] : bounds) {
     volume *= (b - a);
   }
 
@@ -61,7 +61,7 @@ bool EreminVIntegralsMonteCarloSEQ::RunImpl() {
   std::vector<std::uniform_real_distribution<double>> distributions;
   distributions.reserve(dimension);
 
-  for (const auto& [a, b] : bounds) {
+  for (const auto &[a, b] : bounds) {
     distributions.emplace_back(a, b);
   }
 
