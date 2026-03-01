@@ -47,7 +47,7 @@ void YushkovaPHoareSortingSimpleMergingSEQ::HoareQuickSort(std::vector<int> &val
 }
 
 std::vector<int> YushkovaPHoareSortingSimpleMergingSEQ::SimpleMerge(const std::vector<int> &left,
-                                                                     const std::vector<int> &right) {
+                                                                    const std::vector<int> &right) {
   std::vector<int> merged;
   merged.reserve(left.size() + right.size());
 
