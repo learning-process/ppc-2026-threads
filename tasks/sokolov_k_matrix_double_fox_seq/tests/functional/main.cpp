@@ -10,6 +10,7 @@
 #include "sokolov_k_matrix_double_fox_seq/common/include/common.hpp"
 #include "sokolov_k_matrix_double_fox_seq/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace sokolov_k_matrix_double_fox_seq {
 
@@ -22,7 +23,7 @@ std::vector<double> MakeFilled(int n, double val) {
 std::vector<double> MakeIdentity(int n) {
   std::vector<double> m(static_cast<std::size_t>(n * n), 0.0);
   for (int i = 0; i < n; i++) {
-    m[i * n + i] = 1.0;
+    m[(i * n) + i] = 1.0;
   }
   return m;
 }

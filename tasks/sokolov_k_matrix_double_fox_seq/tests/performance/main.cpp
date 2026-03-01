@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstddef>
+#include <tuple>
 #include <vector>
 
 #include "sokolov_k_matrix_double_fox_seq/common/include/common.hpp"
@@ -23,8 +24,8 @@ class SokolovKMatrixDoubleFoxPerfTestsSeq : public ppc::util::BaseRunPerfTests<I
 
   bool CheckTestOutputData(OutType &output_data) final {
     const double expected = 1.5 * 2.0 * kN_;
-    for (std::size_t i = 0; i < output_data.size(); i++) {
-      if (std::abs(output_data[i] - expected) > 1e-6) {
+    for (double val : output_data) {
+      if (std::abs(val - expected) > 1e-6) {
         return false;
       }
     }
