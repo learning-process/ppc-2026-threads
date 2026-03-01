@@ -17,7 +17,8 @@ LuzanEDoubleSparseMatrixMultSeq::LuzanEDoubleSparseMatrixMultSeq(const InType &i
 bool LuzanEDoubleSparseMatrixMultSeq::ValidationImpl() {
   const auto &A = std::get<0>(GetInput());
   const auto &B = std::get<1>(GetInput());
-  return A.GetCols() == B.GetRows();
+  return A.GetCols() == B.GetRows() && 
+        A.GetCols() != 0 && A.GetRows() != 0 && B.GetCols() != 0;
 }
 
 bool LuzanEDoubleSparseMatrixMultSeq::PreProcessingImpl() {

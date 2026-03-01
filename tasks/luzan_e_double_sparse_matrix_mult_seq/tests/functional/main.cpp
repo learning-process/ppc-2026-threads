@@ -29,11 +29,10 @@ class LuzanEDoubleSparseMatrixMultSeqestsThreads : public ppc::util::BaseRunFunc
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     std::string file_name = std::get<0>(params);
     // std::cout << file_name << std::endl;
-    std::string abs_path =
-        ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_luzan_e_double_sparse_matrix_mult_seq), file_name);
+    std::string abs_path = ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_luzan_e_double_sparse_matrix_mult_seq), file_name);
     std::ifstream test_file(abs_path);
     if (!test_file) {
-      throw std::runtime_error("Cannot open file");
+      throw std::runtime_error("Cannot open task file");
     }
 
     Sparse_matrix A = getFromFile(test_file);
@@ -41,11 +40,20 @@ class LuzanEDoubleSparseMatrixMultSeqestsThreads : public ppc::util::BaseRunFunc
     test_file.close();
 
     input_data_ = std::make_tuple(A, B);
-    output_data_ = A;
+
+    file_name = "ans_" + std::get<0>(params);
+    abs_path = ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_luzan_e_double_sparse_matrix_mult_seq), file_name);
+    std::ifstream ans_file(abs_path);
+    if (!ans_file) {
+      throw std::runtime_error("Cannot open asn file");
+    }
+    output_data_.getsparsedMatrixFromFile(ans_file);
+    ans_file.close();
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (output_data == output_data);
+    std::cout << "\n\noutSize: " << output_data.getVal().size() << "TRUE: " << output_data_.getVal().size() << "\n\n";
+    return (output_data == output_data_);
   }
 
   InType GetTestInputData() final {

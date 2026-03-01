@@ -49,7 +49,52 @@ class Sparse_matrix {
     return rows;
   }
 
+  std::vector<double> getVal() {
+    return value;
+  }
+
   bool operator==(const Sparse_matrix &B) const {
+    std::cout << "\n\n";
+    if (value != B.value) {
+      std::cout << "values\n";
+      for (auto i : value) {
+        std::cout << i << ' ';
+      }
+      std::cout << std::endl;
+      for (auto i : B.value) {
+        std::cout << i << ' ';
+      }
+      std::cout << "\n\n";
+    }
+
+    if (row != B.row) {
+      std::cout << "rows\n";
+      for (auto i : row) {
+        std::cout << i << ' ';
+      }
+      std::cout << std::endl;
+      for (auto i : B.row) {
+        std::cout << i << ' ';
+      }
+      std::cout << "\n\n";
+    }
+
+    if (col_index != B.col_index) {
+      std::cout << "col_indexs\n";
+      for (auto i : col_index) {
+        std::cout << i << ' ';
+      }
+      std::cout << std::endl;
+      for (auto i : B.col_index) {
+        std::cout << i << ' ';
+      }
+      std::cout << "\n\n";
+    }
+
+    std::cout << "acols: " << cols << " bcols: " << B.cols << std::endl;
+    std::cout << "arow: " << rows << " brow: " << B.rows << std::endl;
+
+    std::cout << "\n\n";
     return (value == B.value) && (row == B.row) && (col_index == B.col_index) && (cols == B.cols) && (rows == B.rows);
   }
 
@@ -114,6 +159,31 @@ class Sparse_matrix {
       C.col_index.push_back(C.value.size());
     }
     return C;
+  }
+
+  void getsparsedMatrixFromFile(std::ifstream& file) {
+    if (!file) {
+      throw std::runtime_error("Cannot open file with sparsed matrix");
+    }
+    unsigned n;
+    file >> n >> rows >> cols;
+    
+    double tmp_val = 0;
+    for (unsigned i = 0; i < n; i++) {
+      file >> tmp_val;
+      value.push_back(tmp_val);
+    }
+     
+    unsigned tmp = 0;
+    for (unsigned i = 0; i < n; i++) {
+      file >> tmp;
+      row.push_back(tmp);
+    }
+
+    for (unsigned i = 0; i < cols + 1; i++) {
+      file >> tmp;
+      col_index.push_back(tmp);
+    }
   }
 };
 
