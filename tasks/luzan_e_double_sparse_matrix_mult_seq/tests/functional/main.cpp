@@ -29,7 +29,8 @@ class LuzanEDoubleSparseMatrixMultSeqestsThreads : public ppc::util::BaseRunFunc
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     std::string file_name = std::get<0>(params);
     // std::cout << file_name << std::endl;
-    std::string abs_path = ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_luzan_e_double_sparse_matrix_mult_seq), file_name);
+    std::string abs_path =
+        ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_luzan_e_double_sparse_matrix_mult_seq), file_name);
     std::ifstream test_file(abs_path);
     if (!test_file) {
       throw std::runtime_error("Cannot open task file");

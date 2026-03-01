@@ -161,19 +161,19 @@ class Sparse_matrix {
     return C;
   }
 
-  void getsparsedMatrixFromFile(std::ifstream& file) {
+  void getsparsedMatrixFromFile(std::ifstream &file) {
     if (!file) {
       throw std::runtime_error("Cannot open file with sparsed matrix");
     }
     unsigned n;
     file >> n >> rows >> cols;
-    
+
     double tmp_val = 0;
     for (unsigned i = 0; i < n; i++) {
       file >> tmp_val;
       value.push_back(tmp_val);
     }
-     
+
     unsigned tmp = 0;
     for (unsigned i = 0; i < n; i++) {
       file >> tmp;
