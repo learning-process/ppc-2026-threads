@@ -43,14 +43,6 @@ class SparseMatrix {
     Sparse(matrix);
   }
 
-  SparseMatrix(const std::vector<double> &value, const std::vector<unsigned> &row,
-               const std::vector<unsigned> &col_index, unsigned rows, unsigned cols)
-      : cols_(cols), rows_(rows) {
-    col_index_ = col_index;
-    row_ = row;
-    value_ = value;
-  }
-
   void GenLineMatrix(unsigned rows, unsigned cols) {
     col_index_.clear();
     row_.clear();
@@ -222,7 +214,8 @@ class SparseMatrix {
 };
 
 inline SparseMatrix GetFromFile(std::ifstream &file) {
-  size_t r = 0, c = 0;
+  size_t r = 0;
+  size_t c = 0;
   file >> r >> c;
 
   std::vector<double> dense(r * c);

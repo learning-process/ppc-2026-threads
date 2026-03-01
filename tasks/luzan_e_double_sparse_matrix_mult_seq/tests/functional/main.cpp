@@ -1,17 +1,12 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
-#include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
+#include "luzan_e_double_sparse_matrix_mult_seq/seq/common.hpp"
 #include "luzan_e_double_sparse_matrix_mult_seq/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"

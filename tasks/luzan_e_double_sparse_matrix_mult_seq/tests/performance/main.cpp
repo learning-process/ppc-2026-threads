@@ -2,6 +2,7 @@
 
 #include "luzan_e_double_sparse_matrix_mult_seq/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "luzan_e_double_sparse_matrix_mult_seq/seq/common.hpp"
 
 namespace luzan_e_double_sparse_matrix_mult_seq {
 
