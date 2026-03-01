@@ -53,4 +53,4 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, GalkinDRunPerfTests, kGtestValues, kPerfT
 
 }  // namespace
 
-}  // namespace galkin_d_multidim_integrals_rectangles
+}  // namespace  galkin_d_multidim_integrals_rectangles
