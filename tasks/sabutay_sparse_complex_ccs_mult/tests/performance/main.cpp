@@ -1,9 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <complex>
-#include <cstddef>
 #include <random>
-#include <tuple>
 #include <vector>
 
 #include "sabutay_sparse_complex_ccs_mult/common/include/common.hpp"
@@ -28,11 +25,10 @@ CCS CreateRandomSparseMatrix(int rows, int cols, double density = 0.1) {
   std::uniform_real_distribution<double> value_dist(-10.0, 10.0);
   std::uniform_int_distribution<int> row_dist(0, rows - 1);
 
-  int total_elements = static_cast<int>(rows * cols * density);
+  int total_elements = rows * cols * density;
 
   for (int col = 0; col < cols; ++col) {
-    int elements_in_col =
-        static_cast<int>(total_elements * (col + 1.0) / cols) - static_cast<int>(total_elements * col / cols);
+    int elements_in_col = (total_elements * (col + 1.0) / cols) - (total_elements * col / cols);
 
     for (int i = 0; i < elements_in_col; ++i) {
       int row = row_dist(gen);
@@ -43,7 +39,7 @@ CCS CreateRandomSparseMatrix(int rows, int cols, double density = 0.1) {
       matrix.values.emplace_back(real_part, imag_part);
     }
 
-    matrix.col_ptr[col + 1] = static_cast<int>(matrix.row_ind.size());
+    matrix.col_ptr[col + 1] = matrix.row_ind.size();
   }
 
   return matrix;
