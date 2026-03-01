@@ -1,6 +1,6 @@
 #pragma once
 
-#include "sabutay_sparse_complex_ccs_mult/common/include/common.hpp"
+#include "../../common/include/common.hpp"
 #include "task/include/task.hpp"
 
 namespace sabutay_sparse_complex_ccs_mult {

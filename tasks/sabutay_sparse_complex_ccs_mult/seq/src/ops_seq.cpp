@@ -1,11 +1,4 @@
-#include "sabutay_sparse_complex_ccs_mult/seq/include/ops_seq.hpp"
-
-#include <cmath>
-#include <complex>
-#include <tuple>
-#include <vector>
-
-#include "sabutay_sparse_complex_ccs_mult/common/include/common.hpp"
+#include "../include/ops_seq.hpp"  // InType, CCS, std::complex, std::vector, std::abs via common.hpp
 
 namespace sabutay_sparse_complex_ccs_mult {
 
@@ -15,7 +8,8 @@ SabutaySparseComplexCcsMultSEQ::SabutaySparseComplexCcsMultSEQ(const InType &in)
   GetOutput() = CCS();
 }
 
-void SabutaySparseComplexCcsMultSEQ::SpMM(const CCS &a, const CCS &b, CCS &c) {
+void SabutaySparseComplexCcsMultSEQ::SpMM(const CCS &a, const CCS &b,
+                                          CCS &c) {  // NOLINT(readability-convert-member-functions-to-static)
   c.m = a.m;
   c.n = b.n;
   c.col_ptr.assign(b.n + 1, 0);
@@ -57,17 +51,17 @@ void SabutaySparseComplexCcsMultSEQ::SpMM(const CCS &a, const CCS &b, CCS &c) {
   }
 }
 
-bool SabutaySparseComplexCcsMultSEQ::ValidationImpl() {
+bool SabutaySparseComplexCcsMultSEQ::ValidationImpl() {  // NOLINT(readability-convert-member-functions-to-static)
   const CCS &a = std::get<0>(GetInput());
   const CCS &b = std::get<1>(GetInput());
   return a.n == b.m;
 }
 
-bool SabutaySparseComplexCcsMultSEQ::PreProcessingImpl() {
+bool SabutaySparseComplexCcsMultSEQ::PreProcessingImpl() {  // NOLINT(readability-convert-member-functions-to-static)
   return true;
 }
 
-bool SabutaySparseComplexCcsMultSEQ::RunImpl() {
+bool SabutaySparseComplexCcsMultSEQ::RunImpl() {  // NOLINT(readability-convert-member-functions-to-static)
   const CCS &a = std::get<0>(GetInput());
   const CCS &b = std::get<1>(GetInput());
   CCS &c = GetOutput();
@@ -77,7 +71,7 @@ bool SabutaySparseComplexCcsMultSEQ::RunImpl() {
   return true;
 }
 
-bool SabutaySparseComplexCcsMultSEQ::PostProcessingImpl() {
+bool SabutaySparseComplexCcsMultSEQ::PostProcessingImpl() {  // NOLINT(readability-convert-member-functions-to-static)
   return true;
 }
 

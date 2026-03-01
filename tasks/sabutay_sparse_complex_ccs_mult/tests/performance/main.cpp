@@ -1,8 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <random>
-#include <tuple>
-#include <vector>
 
 #include "sabutay_sparse_complex_ccs_mult/common/include/common.hpp"
 #include "sabutay_sparse_complex_ccs_mult/seq/include/ops_seq.hpp"
@@ -49,7 +47,8 @@ CCS CreateRandomSparseMatrix(int rows, int cols, double density = 0.1) {
 
 }  // namespace
 
-class SabutayARunPerfTestsSeq : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class SabutayARunPerfTestsSeq
+    : public ppc::util::BaseRunPerfTests<InType, OutType> {  // NOLINT(cppcoreguidelines-pro-type-member-init)
  protected:
   void SetUp() override {
     // Create test matrices with appropriate sizes for performance testing
@@ -58,7 +57,7 @@ class SabutayARunPerfTestsSeq : public ppc::util::BaseRunPerfTests<InType, OutTy
     input_data_ = std::make_tuple(matrix_a_, matrix_b_);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {  // NOLINT(readability-convert-member-functions-to-static)
     // For performance tests, we just need to verify the output has the correct dimensions
     const CCS &a = std::get<0>(input_data_);
     const CCS &b = std::get<1>(input_data_);
@@ -77,20 +76,22 @@ class SabutayARunPerfTestsSeq : public ppc::util::BaseRunPerfTests<InType, OutTy
   InType input_data_;
 };
 
-TEST_P(SabutayARunPerfTestsSeq, RunPerfModes) {
+TEST_P(SabutayARunPerfTestsSeq,
+       RunPerfModes) {  // NOLINT(misc-use-internal-linkage, readability-identifier-naming, readability-named-parameter)
   ExecuteTest(GetParam());
 }
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, SabutaySparseComplexCcsMultSEQ>(PPC_SETTINGS_sabutay_sparse_complex_ccs_mult);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SabutaySparseComplexCcsMultSEQ>(
+    PPC_SETTINGS_sabutay_sparse_complex_ccs_mult);  // NOLINT(readability-identifier-naming)
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = SabutayARunPerfTestsSeq::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, SabutayARunPerfTestsSeq, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, SabutayARunPerfTestsSeq, kGtestValues,
+                         kPerfTestName);  // NOLINT(readability-identifier-naming)
 
 }  // namespace
 
