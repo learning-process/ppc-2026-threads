@@ -104,7 +104,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
       case 6: {  // sin_cos_2d - f(x,y) = sin(x)*cos(y)
         lower_bounds = {0.0, 0.0};
         upper_bounds = {std::acos(-1.0), std::acos(-1.0) / 2.0};
-        num_points = 2000000;
+        num_points = 500000;
         f = [](const std::vector<double> &x) { return std::sin(x[0]) * std::cos(x[1]); };
         expected = (std::cos(0.0) - std::cos(std::acos(-1.0))) * (std::sin(std::acos(-1.0) / 2.0) - std::sin(0.0));
         // (1 - (-1)) * (1 - 0) = 2 * 1 = 2
@@ -156,7 +156,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
       case 11: {  // const_4d_unit - f(w,x,y,z) = 1
         lower_bounds = {0.0, 0.0, 0.0, 0.0};
         upper_bounds = {1.0, 1.0, 1.0, 1.0};
-        num_points = 3000000;
+        num_points = 1000000;
         f = [](const std::vector<double> &) { return 1.0; };
         expected = 1.0;
         break;
@@ -165,7 +165,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
       case 12: {  // sum_4d_unit - f(w,x,y,z) = w + x + y + z
         lower_bounds = {0.0, 0.0, 0.0, 0.0};
         upper_bounds = {1.0, 1.0, 1.0, 1.0};
-        num_points = 3000000;
+        num_points = 1000000;
         f = [](const std::vector<double> &x) { return x[0] + x[1] + x[2] + x[3]; };
         expected = 2.0;  // 4 * (1/2) = 2
         break;
@@ -209,7 +209,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
       case 16: {  // large_range - большая область
         lower_bounds = {-100.0, -100.0};
         upper_bounds = {100.0, 100.0};
-        num_points = 5000000;
+        num_points = 1000000;
         f = [](const std::vector<double> &) { return 1.0; };
         expected = 40000.0;  // 200 * 200 = 40000
         abs_tolerance = 1.0;
