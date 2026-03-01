@@ -87,7 +87,7 @@ TEST_P(ChaschinVRunPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, NesterovATestTaskMPI, ChaschinVLinearFiltrationSEQ>(
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ChaschinVLinearFiltrationSEQ>(
     PPC_SETTINGS_example_processes);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
