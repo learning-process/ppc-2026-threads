@@ -6,7 +6,7 @@
 namespace luzan_e_double_sparse_matrix_mult_seq {
 
 class LuzanEDoubleSparseMatrixMultSeqPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 200;
+  // const int kCount_ = 200;
   InType input_data_;
   OutType output_data_;
 
