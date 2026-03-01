@@ -11,8 +11,7 @@
 namespace kutergin_a_multidim_trapezoid {
 
 using InType =
-    std::tuple<std::function<double(const std::vector<double>&)>,
-               std::vector<std::pair<double, double>>, int>;
+    std::tuple<std::function<double(const std::vector<double> &)>, std::vector<std::pair<double, double>>, int>;
 
 using OutType = double;
 

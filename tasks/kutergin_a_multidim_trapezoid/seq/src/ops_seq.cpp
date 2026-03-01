@@ -10,17 +10,12 @@
 namespace kutergin_a_multidim_trapezoid {
 namespace {
 
-bool ValidateBorders(const std::vector<std::pair<double, double>>& borders) {
+bool ValidateBorders(const std::vector<std::pair<double, double>> &borders) {
   return std::ranges::all_of(
-      borders, [](const auto& p) {
-        return std::isfinite(p.first) &&
-               std::isfinite(p.second) &&
-               p.first < p.second;
-      });
+      borders, [](const auto &p) { return std::isfinite(p.first) && std::isfinite(p.second) && (p.first < p.second); });
 }
 
-// Перебор индексов (n+1 узлов)
-bool NextIndex(std::vector<int>& idx, int dim, int max_index) {
+bool NextIndex(std::vector<int> &idx, int dim, int max_index) {
   for (int pos = 0; pos < dim; ++pos) {
     ++idx[pos];
     if (idx[pos] <= max_index) {
@@ -33,19 +28,24 @@ bool NextIndex(std::vector<int>& idx, int dim, int max_index) {
 
 }  // namespace
 
-KuterginAMultidimTrapezoidSEQ::
-KuterginAMultidimTrapezoidSEQ(const InType& in) {
+KuterginAMultidimTrapezoidSEQ::KuterginAMultidimTrapezoidSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
 }
 
 bool KuterginAMultidimTrapezoidSEQ::ValidationImpl() {
-  const auto& [func, borders, n] = GetInput();
+  const auto &[func, borders, n] = GetInput();
 
-  if (!func) return false;
-  if (n <= 0) return false;
-  if (borders.empty()) return false;
+  if (!func) {
+    return false;
+  }
+  if (n <= 0) {
+    return false;
+  }
+  if (borders.empty()) {
+    return false;
+  }
 
   return ValidateBorders(borders);
 }
@@ -56,7 +56,7 @@ bool KuterginAMultidimTrapezoidSEQ::PreProcessingImpl() {
 }
 
 bool KuterginAMultidimTrapezoidSEQ::RunImpl() {
-  const auto& [func, borders, n] = GetInput();
+  const auto &[func, borders, n] = GetInput();
   const int dim = static_cast<int>(borders.size());
 
   std::vector<double> h(dim);
@@ -80,9 +80,9 @@ bool KuterginAMultidimTrapezoidSEQ::RunImpl() {
     double weight = 1.0;
 
     for (int i = 0; i < dim; ++i) {
-      point[i] = borders[i].first + idx[i] * h[i];
+      point[i] = (borders[i].first + (idx[i] * h[i]));
 
-      if (idx[i] == 0 || idx[i] == n) {
+      if ((idx[i] == 0) || (idx[i] == n)) {
         weight *= 0.5;
       }
     }

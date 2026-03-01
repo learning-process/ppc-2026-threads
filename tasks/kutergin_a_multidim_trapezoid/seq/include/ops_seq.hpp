@@ -11,7 +11,7 @@ class KuterginAMultidimTrapezoidSEQ : public BaseTask {
     return ppc::task::TypeOfTask::kSEQ;
   }
 
-  explicit KuterginAMultidimTrapezoidSEQ(const InType& in);
+  explicit KuterginAMultidimTrapezoidSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
