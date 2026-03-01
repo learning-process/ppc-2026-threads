@@ -133,7 +133,6 @@ class DolovVCrsMatMultSeqRunFuncTestsThreads : public ppc::util::BaseRunFuncTest
 namespace {
 
 TEST_P(DolovVCrsMatMultSeqRunFuncTestsThreads, RandomSparseMatrices) { ExecuteTest(GetParam()); }
-
 const std::array<TestType, 7> kTestParam = {
     std::make_tuple(1, "SmallSparse"), std::make_tuple(2, "Rectangular"), std::make_tuple(3, "ZeroMatrix"),
     std::make_tuple(4, "DotProduct"),  std::make_tuple(5, "LargeSparse"), std::make_tuple(6, "DenseRow"),
