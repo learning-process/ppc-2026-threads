@@ -11,6 +11,7 @@
 #include "ilin_a_algorithm_graham/common/include/common.hpp"
 #include "ilin_a_algorithm_graham/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace ilin_a_algorithm_graham {
 
