@@ -128,12 +128,11 @@ class SparseMatrix {
         if (fabs(value_[long_i] - b.value_[long_i]) > kEPS) {
           tmp = false;
           break;
-        } 
+        }
       }
     }
 
-    return tmp && (row_ == b.row_) && (col_index_ == b.col_index_) && (cols_ == b.cols_) &&
-           (rows_ == b.rows_);
+    return tmp && (row_ == b.row_) && (col_index_ == b.col_index_) && (cols_ == b.cols_) && (rows_ == b.rows_);
   }
 
   double GetXy(unsigned x = 1, unsigned y = 2) {
