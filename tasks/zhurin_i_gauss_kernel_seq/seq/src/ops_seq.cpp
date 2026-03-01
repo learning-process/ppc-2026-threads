@@ -86,7 +86,7 @@ bool ZhurinIGaussKernelSEQ::RunImpl() {
 }
 
 bool ZhurinIGaussKernelSEQ::PostProcessingImpl() {
-  GetOutput() = result_; 
+  GetOutput() = result_;
   output_written_ = true;
   return true;
 }

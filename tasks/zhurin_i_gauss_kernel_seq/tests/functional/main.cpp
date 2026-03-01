@@ -90,7 +90,6 @@ TEST_P(ZhurinIGaussKernelFuncTests, AllTests) {
 INSTANTIATE_TEST_SUITE_P(ZhurinIGaussKernel, ZhurinIGaussKernelFuncTests, kGtestValues,
                          ZhurinIGaussKernelFuncTests::PrintTestName);
 
-
 TEST(ZhurinIGaussKernelNegativeTest, InvalidWidth) {
   int width = 0;
   int height = 3;
