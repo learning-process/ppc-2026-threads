@@ -6,7 +6,6 @@
 
 namespace zhurin_i_gauss_kernel_seq {
 
-// Класс тестов производительности
 class ZhurinIGaussKernelPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   void SetUp() override {
@@ -19,7 +18,6 @@ class ZhurinIGaussKernelPerfTests : public ppc::util::BaseRunPerfTests<InType, O
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Проверяем, что результат не пустой и имеет ожидаемый размер
     const auto &in = GetTestInputData();
     int expected_height = std::get<1>(in);
     int expected_width = std::get<0>(in);
@@ -43,14 +41,12 @@ class ZhurinIGaussKernelPerfTests : public ppc::util::BaseRunPerfTests<InType, O
   InType input_data_;
 };
 
-// Регистрация тестов производительности для всех режимов (run, pipeline, task)
 TEST_P(ZhurinIGaussKernelPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
-// Создаём список задач с использованием настроек сборки
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ZhurinIGaussKernelSEQ>(PPC_SETTINGS_zhurin_i_gauss_kernel_seq);
 
