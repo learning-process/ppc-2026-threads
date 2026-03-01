@@ -3,10 +3,12 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <functional>
 #include <random>
 #include <stdexcept>
 #include <string>
 #include <tuple>
+#include <unordered_map>
 #include <vector>
 
 #include "fedoseev_linear_image_filtering_vertical/common/include/common.hpp"
@@ -28,7 +30,7 @@ Image ReferenceFilter(const Image &input) {
   auto get = [&](int col, int row) -> int {
     col = std::clamp(col, 0, w - 1);
     row = std::clamp(row, 0, h - 1);
-    return src[static_cast<size_t>(row) * static_cast<size_t>(w) + static_cast<size_t>(col)];
+    return src[(static_cast<size_t>(row) * static_cast<size_t>(w)) + static_cast<size_t>(col)];
   };
 
   for (int row = 0; row < h; ++row) {
@@ -36,13 +38,42 @@ Image ReferenceFilter(const Image &input) {
       int sum = 0;
       for (int ky = -1; ky <= 1; ++ky) {
         for (int kx = -1; kx <= 1; ++kx) {
-          sum += get(col + kx, row + ky) * kernel[ky + 1][kx + 1];
+          sum += get(col + kx, row + ky) * kernel.at(ky + 1).at(kx + 1);
         }
       }
-      dst[static_cast<size_t>(row) * static_cast<size_t>(w) + static_cast<size_t>(col)] = sum / kernel_sum;
+      dst[(static_cast<size_t>(row) * static_cast<size_t>(w)) + static_cast<size_t>(col)] = sum / kernel_sum;
     }
   }
   return {w, h, dst};
+}
+
+void FillConst(Image &img, int) {
+  std::ranges::fill(img.data, 128);
+}
+
+void FillGrad(Image &img, int) {
+  for (size_t i = 0; i < img.data.size(); ++i) {
+    img.data[i] = static_cast<int>(i) % 256;
+  }
+}
+
+void FillRand(Image &img, int) {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<int> dist(0, 255);
+  for (auto &v : img.data) {
+    v = dist(gen);
+  }
+}
+
+void FillCheckerboard(Image &img, int size) {
+  const int cell = 16;
+  for (int row = 0; row < size; ++row) {
+    for (int col = 0; col < size; ++col) {
+      size_t idx = (static_cast<size_t>(row) * static_cast<size_t>(size)) + static_cast<size_t>(col);
+      img.data[idx] = (((col / cell) + (row / cell)) % 2 != 0) ? 255 : 0;
+    }
+  }
 }
 
 Image GenerateImage(int size, const std::string &type) {
@@ -51,27 +82,12 @@ Image GenerateImage(int size, const std::string &type) {
   img.height = size;
   img.data.resize(static_cast<size_t>(size) * static_cast<size_t>(size));
 
-  if (type == "const") {
-    std::fill(img.data.begin(), img.data.end(), 128);
-  } else if (type == "grad") {
-    for (size_t i = 0; i < img.data.size(); ++i) {
-      img.data[i] = static_cast<int>(i) % 256;
-    }
-  } else if (type == "rand") {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist(0, 255);
-    for (auto &v : img.data) {
-      v = dist(gen);
-    }
-  } else if (type == "check") {
-    int cell = 16;
-    for (int row = 0; row < size; ++row) {
-      for (int col = 0; col < size; ++col) {
-        img.data[static_cast<size_t>(row) * static_cast<size_t>(size) + static_cast<size_t>(col)] =
-            (((col / cell) + (row / cell)) % 2) ? 255 : 0;
-      }
-    }
+  static const std::unordered_map<std::string, std::function<void(Image &, int)>> fillers = {
+      {"const", FillConst}, {"grad", FillGrad}, {"rand", FillRand}, {"check", FillCheckerboard}};
+
+  auto it = fillers.find(type);
+  if (it != fillers.end()) {
+    it->second(img, size);
   } else {
     throw std::invalid_argument("Unknown type");
   }

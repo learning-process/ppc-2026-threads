@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <cstddef>
 #include <random>
 #include <vector>
@@ -18,7 +19,8 @@ class FedoseevPerfTest : public ppc::util::BaseRunPerfTests<Image, Image> {
     input_.height = size;
     input_.data.resize(static_cast<size_t>(size) * static_cast<size_t>(size));
 
-    std::mt19937 gen(42);
+    auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::mt19937 gen(seed);
     std::uniform_int_distribution<int> dist(0, 255);
     for (auto &v : input_.data) {
       v = dist(gen);
