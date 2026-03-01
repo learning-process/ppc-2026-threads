@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <random>
 
+#include "performance/include/performance.hpp"
 #include "shelenkova_m_shell_sort_simple_merge/common/include/common.hpp"
 #include "shelenkova_m_shell_sort_simple_merge/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"

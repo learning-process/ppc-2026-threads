@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shelenkova_m_shell_sort_simple_merge/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace shelenkova_m_shell_sort_simple_merge {
 
