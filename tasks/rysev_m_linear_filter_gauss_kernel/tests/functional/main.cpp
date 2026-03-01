@@ -1,16 +1,8 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
-#include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "rysev_m_linear_filter_gauss_kernel/common/include/common.hpp"
 #include "rysev_m_linear_filter_gauss_kernel/seq/include/ops_seq.hpp"

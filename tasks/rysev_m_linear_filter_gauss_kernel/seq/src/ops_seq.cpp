@@ -3,6 +3,9 @@
 #include <stb/stb_image.h>
 
 #include <algorithm>
+#include <array>
+#include <cstddef>
+#include <cstdint>
 #include <random>
 #include <string>
 #include <vector>
@@ -25,7 +28,9 @@ bool RysevMGaussFilterSEQ::PreProcessingImpl() {
   if (GetInput() == 0) {
     std::string abs_path =
         ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_rysev_m_linear_filter_gauss_kernel), "pic.ppm");
-    int w, h, ch;
+    int w = 0;
+    int h = 0;
+    int ch = 0;
     unsigned char *data = stbi_load(abs_path.c_str(), &w, &h, &ch, STBI_rgb);
     if (data == nullptr) {
       return false;
@@ -33,13 +38,15 @@ bool RysevMGaussFilterSEQ::PreProcessingImpl() {
     width_ = w;
     height_ = h;
     channels_ = STBI_rgb;
-    input_image_.assign(data, data + width_ * height_ * channels_);
+    std::ptrdiff_t total_pixels = static_cast<std::ptrdiff_t>(width_) * height_ * channels_;
+    input_image_.assign(data, data + total_pixels);
     stbi_image_free(data);
   } else {
     int size = GetInput();
     width_ = height_ = size;
     channels_ = 3;
-    input_image_.resize(width_ * height_ * channels_);
+    std::size_t total_pixels = static_cast<std::size_t>(width_) * height_ * channels_;
+    input_image_.resize(total_pixels);
 
     std::mt19937 gen(static_cast<unsigned int>(GetInput()));
     std::uniform_int_distribution<int> dist(0, 255);
@@ -53,31 +60,33 @@ bool RysevMGaussFilterSEQ::PreProcessingImpl() {
 }
 
 bool RysevMGaussFilterSEQ::RunImpl() {
-  const float kernel[3][3] = {
-      {1.0f / 16, 2.0f / 16, 1.0f / 16}, {2.0f / 16, 4.0f / 16, 2.0f / 16}, {1.0f / 16, 2.0f / 16, 1.0f / 16}};
+  const std::array<std::array<float, 3>, 3> kernel = {
+      {{{1.0F / 16, 2.0F / 16, 1.0F / 16}}, {{2.0F / 16, 4.0F / 16, 2.0F / 16}}, {{1.0F / 16, 2.0F / 16, 1.0F / 16}}}};
 
   int rows = height_;
   int cols = width_;
   int ch = channels_;
 
-  for (int c = 0; c < ch; ++c) {
-    for (int i = 0; i < rows; ++i) {
-      for (int j = 0; j < cols; ++j) {
-        float sum = 0.0f;
+  for (int channel = 0; channel < ch; ++channel) {
+    for (int row = 0; row < rows; ++row) {
+      for (int col = 0; col < cols; ++col) {
+        float sum = 0.0F;
 
-        for (int di = -1; di <= 1; ++di) {
-          for (int dj = -1; dj <= 1; ++dj) {
-            int ni = i + di;
-            int nj = j + dj;
-            if (ni >= 0 && ni < rows && nj >= 0 && nj < cols) {
-              int idx = (ni * cols + nj) * ch + c;
-              sum += static_cast<float>(input_image_[idx]) * kernel[di + 1][dj + 1];
+        for (int kr = -1; kr <= 1; ++kr) {
+          for (int kc = -1; kc <= 1; ++kc) {
+            int nr = row + kr;
+            int nc = col + kc;
+            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+              std::size_t idx = static_cast<std::size_t>(nr) * cols + nc;
+              idx = idx * ch + channel;
+              sum += static_cast<float>(input_image_[idx]) * kernel[kr + 1][kc + 1];
             }
           }
         }
 
-        int out_idx = (i * cols + j) * ch + c;
-        output_image_[out_idx] = static_cast<uint8_t>(std::clamp(sum, 0.0f, 255.0f));
+        std::size_t out_idx = static_cast<std::size_t>(row) * cols + col;
+        out_idx = out_idx * ch + channel;
+        output_image_[out_idx] = static_cast<uint8_t>(std::clamp(sum, 0.0F, 255.0F));
       }
     }
   }
@@ -86,7 +95,7 @@ bool RysevMGaussFilterSEQ::RunImpl() {
 }
 
 bool RysevMGaussFilterSEQ::PostProcessingImpl() {
-  long long total = 0;
+  int64_t total = 0;
   for (uint8_t pixel : output_image_) {
     total += pixel;
   }

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+#include <vector>
+
 #include "rysev_m_linear_filter_gauss_kernel/common/include/common.hpp"
 
 namespace rysev_m_linear_filter_gauss_kernel {
@@ -11,19 +14,19 @@ class RysevMGaussFilterSEQ : public BaseTask {
   }
   explicit RysevMGaussFilterSEQ(const InType &in);
 
-  const std::vector<uint8_t> &GetInputImage() const {
+  [[nodiscard]] const std::vector<uint8_t> &GetInputImage() const {
     return input_image_;
   }
-  const std::vector<uint8_t> &GetOutputImage() const {
+  [[nodiscard]] const std::vector<uint8_t> &GetOutputImage() const {
     return output_image_;
   }
-  int GetWidth() const {
+  [[nodiscard]] int GetWidth() const {
     return width_;
   }
-  int GetHeight() const {
+  [[nodiscard]] int GetHeight() const {
     return height_;
   }
-  int GetChannels() const {
+  [[nodiscard]] int GetChannels() const {
     return channels_;
   }
 
