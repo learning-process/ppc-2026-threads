@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <array>
-#include <ranges>
 #include <string>
 #include <tuple>
 #include <vector>
