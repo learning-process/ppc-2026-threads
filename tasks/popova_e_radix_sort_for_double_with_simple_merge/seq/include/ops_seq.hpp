@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "popova_e_radix_sort_for_double_with_simple_merge/common/include/common.hpp"
 #include "task/include/task.hpp"
 

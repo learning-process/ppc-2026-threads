@@ -1,11 +1,9 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
-#include <numeric>
-#include <random>
+#include <array>
+#include <cstddef>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "popova_e_radix_sort_for_double_with_simple_merge/common/include/common.hpp"
 #include "popova_e_radix_sort_for_double_with_simple_merge/seq/include/ops_seq.hpp"
@@ -23,10 +21,7 @@ class PopovaERunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutTyp
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-
-    int size = std::get<0>(params);
-
-    input_data_ = size;
+    input_data_ = std::get<0>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
