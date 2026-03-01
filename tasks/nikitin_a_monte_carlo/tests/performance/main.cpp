@@ -19,10 +19,10 @@ class NikitinAMonteCarloConstant3DPerfTests : public ppc::util::BaseRunPerfTests
     // Точное значение интеграла: объем = 10*10*10 = 1000
     const std::size_t dim = 3;
     const int num_points = 1000000;  // 1 миллион точек
-    
+
     std::vector<double> lower(dim, 0.0);
     std::vector<double> upper(dim, 10.0);
-    
+
     input_data_ = std::make_tuple(lower, upper, num_points, FunctionType::kConstant);
     expected_value_ = 1000.0;
   }
@@ -51,10 +51,10 @@ class NikitinAMonteCarloLinear4DPerfTests : public ppc::util::BaseRunPerfTests<I
     // Точное значение: объем * среднее значение = (5^4) * (2.5) = 625 * 2.5 = 1562.5
     const std::size_t dim = 4;
     const int num_points = 2000000;  // 2 миллиона точек
-    
+
     std::vector<double> lower(dim, 0.0);
     std::vector<double> upper(dim, 5.0);
-    
+
     input_data_ = std::make_tuple(lower, upper, num_points, FunctionType::kLinear);
     expected_value_ = 1562.5;
   }
@@ -88,8 +88,8 @@ const auto kConstant3DGtestValues = ppc::util::TupleToGTestValues(kConstant3DPer
 
 const auto kConstant3DPerfTestName = NikitinAMonteCarloConstant3DPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunPerfConstant3D, NikitinAMonteCarloConstant3DPerfTests, 
-                         kConstant3DGtestValues, kConstant3DPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunPerfConstant3D, NikitinAMonteCarloConstant3DPerfTests, kConstant3DGtestValues,
+                         kConstant3DPerfTestName);
 
 // Тесты для 4D линейной функции
 TEST_P(NikitinAMonteCarloLinear4DPerfTests, RunPerfModesLinear4D) {
@@ -103,8 +103,8 @@ const auto kLinear4DGtestValues = ppc::util::TupleToGTestValues(kLinear4DPerfTas
 
 const auto kLinear4DPerfTestName = NikitinAMonteCarloLinear4DPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunPerfLinear4D, NikitinAMonteCarloLinear4DPerfTests, 
-                         kLinear4DGtestValues, kLinear4DPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunPerfLinear4D, NikitinAMonteCarloLinear4DPerfTests, kLinear4DGtestValues,
+                         kLinear4DPerfTestName);
 
 }  // namespace
 
