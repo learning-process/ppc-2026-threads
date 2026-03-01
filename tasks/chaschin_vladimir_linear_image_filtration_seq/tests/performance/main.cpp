@@ -27,31 +27,32 @@ class ChaschinVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
   std::vector<float> static ApplyGaussianKernel(const std::vector<float> &image, int width, int height) {
     std::vector<float> temp(
         static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0F);
-    std::vector<float> output
+    std::vector<float> output;
         static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0F);
 
-    // Горизонтальный проход
-    for (int yi = 0; yi < height; ++yi) {
-      temp[(yi * width) + 0] = (image[(yi * width) + 0] * 2 + image[(yi * width) + 1]) / 3.F;
-      for (int xy = 1; xy < width - 1; ++xy) {
-        temp[(yi * width) + xy] =
-            (image[(yi * width) + xy - 1] + 2.F * image[(yi * width) + xy] + image[(yi * width) + xy + 1]) / 4.F;
-      }
-      temp[(yi * width) + width - 1] = (image[(yi * width) + width - 2] + 2.F * image[(yi * width) + width - 1]) / 3.F;
-    }
+        // Горизонтальный проход
+        for (int yi = 0; yi < height; ++yi) {
+          temp[(yi * width) + 0] = (image[(yi * width) + 0] * 2 + image[(yi * width) + 1]) / 3.F;
+          for (int xy = 1; xy < width - 1; ++xy) {
+            temp[(yi * width) + xy] =
+                (image[(yi * width) + xy - 1] + 2.F * image[(yi * width) + xy] + image[(yi * width) + xy + 1]) / 4.F;
+          }
+          temp[(yi * width) + width - 1] =
+              (image[(yi * width) + width - 2] + 2.F * image[(yi * width) + width - 1]) / 3.F;
+        }
 
-    // Вертикальный проход
-    for (int xy = 0; xy < width; ++xy) {
-      output[xy] = ((temp[xy] * 2) + temp[width + xy]) / 3.F;
-      for (int yi = 1; yi < height - 1; ++yi) {
-        output[(yi * width) + xy] =
-            (temp[((yi - 1) * width) + xy] + 2.F * temp[(yi * width) + xy] + temp[((yi + 1) * width) + xy]) / 4.F;
-      }
-      output[((height - 1) * width) + xy] =
-          (temp[((height - 2) * width) + xy] + 2.F * temp[((height - 1) * width) + xy]) / 3.F;
-    }
+        // Вертикальный проход
+        for (int xy = 0; xy < width; ++xy) {
+          output[xy] = ((temp[xy] * 2) + temp[width + xy]) / 3.F;
+          for (int yi = 1; yi < height - 1; ++yi) {
+            output[(yi * width) + xy] =
+                (temp[((yi - 1) * width) + xy] + 2.F * temp[(yi * width) + xy] + temp[((yi + 1) * width) + xy]) / 4.F;
+          }
+          output[((height - 1) * width) + xy] =
+              (temp[((height - 2) * width) + xy] + 2.F * temp[((height - 1) * width) + xy]) / 3.F;
+        }
 
-    return output;
+        return output;
   }
 
   void SetUp() override {
