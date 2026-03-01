@@ -44,8 +44,6 @@ bool AgafonovIMatrixCCSSeq::RunImpl() {
 
   for (size_t j = 0; j < b.cols_num; ++j) {
     c.col_ptrs[j] = static_cast<int>(c.vals.size());
-
-    // Используем auto + static_cast, как просит линтер
     const auto b_col_start = static_cast<size_t>(b.col_ptrs[j]);
     const auto b_col_end = static_cast<size_t>(b.col_ptrs[j + 1]);
 
