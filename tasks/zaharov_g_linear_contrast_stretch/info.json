@@ -1,8 +1,8 @@
 {
   "student": {
-    "last_name": "Захаров",
-    "group_number": "3823Б1ПР4",
     "first_name": "Глеб",
+    "group_number": "3823Б1ПР4",
+    "last_name": "Захаров",
     "middle_name": "Михайлович",
     "task_number": "1"
   }
