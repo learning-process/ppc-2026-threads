@@ -1,0 +1,101 @@
+#include "savva_d_monte_carlo/seq/include/ops_seq.hpp"
+
+#include <numeric>
+#include <random>
+#include <vector>
+
+#include "savva_d_monte_carlo/common/include/common.hpp"
+#include "util/include/util.hpp"
+
+namespace savva_d_monte_carlo {
+
+SavvaDMonteCarloSEQ::SavvaDMonteCarloSEQ(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = 0.0;
+}
+
+bool SavvaDMonteCarloSEQ::ValidationImpl() {
+  const auto &input = GetInput();
+
+  // Проверка количества точек
+  if (input.count_points == 0) {
+    return false;
+  }
+
+  // Проверка наличия функции
+  if (!input.f) {
+    return false;
+  }
+
+  // Проверка размерности
+  if (input.Dimension() == 0) {
+    return false;
+  }
+
+  // Проверка корректности границ
+  for (size_t i = 0; i < input.Dimension(); ++i) {
+    if (input.lower_bounds[i] > input.upper_bounds[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool SavvaDMonteCarloSEQ::PreProcessingImpl() {
+  return true;
+}
+
+bool SavvaDMonteCarloSEQ::RunImpl() {
+  const auto &input = GetInput();
+  auto &result = GetOutput();
+  static thread_local std::minstd_rand generator(std::random_device{}());
+
+  const size_t dimension_ = input.Dimension();
+  const double volume_ = input.Volume();
+  const uint64_t n = input.count_points;
+  const auto &func = input.f;
+
+  std::vector<std::uniform_real_distribution<double>> distributions_;
+  distributions_.resize(dimension_);
+
+  for (size_t i = 0; i < dimension_; ++i) {
+    distributions_[i] = std::uniform_real_distribution<double>(input.lower_bounds[i], input.upper_bounds[i]);
+  }
+
+  double sum = 0.0;
+  uint64_t i = 0;
+
+  std::vector<double> p1(dimension_), p2(dimension_), p3(dimension_), p4(dimension_);
+
+  for (; i + 3 < n; i += 4) {
+    for (size_t d = 0; d < dimension_; ++d) {
+      p1[d] = distributions_[d](generator);
+      p2[d] = distributions_[d](generator);
+      p3[d] = distributions_[d](generator);
+      p4[d] = distributions_[d](generator);
+    }
+    sum += func(p1) + func(p2) + func(p3) + func(p4);
+  }
+
+  // Обрабатываем оставшиеся точки
+  for (; i < n; ++i) {
+    for (size_t d = 0; d < dimension_; ++d) {
+      p1[d] = distributions_[d](generator);
+    }
+    sum += func(p1);
+  }
+
+  // Вычисляем среднее и умножаем на объем (численно устойчивый способ)
+  double mean = sum / static_cast<double>(n);
+  result = mean * volume_;
+
+  return true;
+}
+
+bool SavvaDMonteCarloSEQ::PostProcessingImpl() {
+  return true;
+}
+
+}  // namespace savva_d_monte_carlo
