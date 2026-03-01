@@ -1,7 +1,10 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
+#include <cstddef>
 #include <random>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -11,41 +14,42 @@
 #include "util/include/func_test_util.hpp"
 
 namespace fedoseev_linear_image_filtering_vertical {
+namespace {
 
-static Image ReferenceFilter(const Image &input) {
+Image ReferenceFilter(const Image &input) {
   int w = input.width;
   int h = input.height;
   const std::vector<int> &src = input.data;
-  std::vector<int> dst(w * h, 0);
+  std::vector<int> dst(static_cast<size_t>(w) * static_cast<size_t>(h), 0);
 
-  const int kernel[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
+  const std::array<std::array<int, 3>, 3> kernel = {{{{1, 2, 1}}, {{2, 4, 2}}, {{1, 2, 1}}}};
   const int kernel_sum = 16;
 
-  auto get = [&](int x, int y) -> int {
-    x = std::clamp(x, 0, w - 1);
-    y = std::clamp(y, 0, h - 1);
-    return src[y * w + x];
+  auto get = [&](int col, int row) -> int {
+    col = std::clamp(col, 0, w - 1);
+    row = std::clamp(row, 0, h - 1);
+    return src[static_cast<size_t>(row) * static_cast<size_t>(w) + static_cast<size_t>(col)];
   };
 
-  for (int y = 0; y < h; ++y) {
-    for (int x = 0; x < w; ++x) {
+  for (int row = 0; row < h; ++row) {
+    for (int col = 0; col < w; ++col) {
       int sum = 0;
       for (int ky = -1; ky <= 1; ++ky) {
         for (int kx = -1; kx <= 1; ++kx) {
-          sum += get(x + kx, y + ky) * kernel[ky + 1][kx + 1];
+          sum += get(col + kx, row + ky) * kernel[ky + 1][kx + 1];
         }
       }
-      dst[y * w + x] = sum / kernel_sum;
+      dst[static_cast<size_t>(row) * static_cast<size_t>(w) + static_cast<size_t>(col)] = sum / kernel_sum;
     }
   }
   return {w, h, dst};
 }
 
-static Image GenerateImage(int size, const std::string &type) {
+Image GenerateImage(int size, const std::string &type) {
   Image img;
   img.width = size;
   img.height = size;
-  img.data.resize(size * size);
+  img.data.resize(static_cast<size_t>(size) * static_cast<size_t>(size));
 
   if (type == "const") {
     std::fill(img.data.begin(), img.data.end(), 128);
@@ -54,16 +58,18 @@ static Image GenerateImage(int size, const std::string &type) {
       img.data[i] = static_cast<int>(i) % 256;
     }
   } else if (type == "rand") {
-    std::mt19937 gen(42);
+    std::random_device rd;
+    std::mt19937 gen(rd());
     std::uniform_int_distribution<int> dist(0, 255);
     for (auto &v : img.data) {
       v = dist(gen);
     }
   } else if (type == "check") {
     int cell = 16;
-    for (int y = 0; y < size; ++y) {
-      for (int x = 0; x < size; ++x) {
-        img.data[y * size + x] = ((x / cell + y / cell) % 2) ? 255 : 0;
+    for (int row = 0; row < size; ++row) {
+      for (int col = 0; col < size; ++col) {
+        img.data[static_cast<size_t>(row) * static_cast<size_t>(size) + static_cast<size_t>(col)] =
+            (((col / cell) + (row / cell)) % 2) ? 255 : 0;
       }
     }
   } else {
@@ -71,6 +77,8 @@ static Image GenerateImage(int size, const std::string &type) {
   }
   return img;
 }
+
+}  // namespace
 
 class FedoseevFuncTest : public ppc::util::BaseRunFuncTests<Image, Image, TestType> {
  public:
@@ -106,20 +114,21 @@ class FedoseevFuncTest : public ppc::util::BaseRunFuncTests<Image, Image, TestTy
 
 namespace {
 
-constexpr std::array<int, 5> kSizes = {3, 5, 7, 10, 16};
-constexpr std::array<const char *, 4> kTypes = {"const", "grad", "rand", "check"};
+std::vector<TestType> GenerateParams() {
+  std::vector<TestType> params;
+  std::vector<int> sizes = {3, 5, 7, 10, 16};
+  std::vector<std::string> types = {"const", "grad", "rand", "check"};
 
-constexpr size_t kNumParams = kSizes.size() * kTypes.size();
-
-template <size_t... Is>
-constexpr std::array<TestType, kNumParams> GenerateParamsImpl(std::index_sequence<Is...>) {
-  return {std::make_tuple(kSizes[Is / kTypes.size()], kTypes[Is % kTypes.size()])...};
+  for (int s : sizes) {
+    for (const auto &t : types) {
+      params.emplace_back(s, t);
+    }
+  }
+  return params;
 }
 
-constexpr auto kTestParams = GenerateParamsImpl(std::make_index_sequence<kNumParams>{});
-
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LinearImageFilteringVerticalSeq, Image>(
-    kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical));
+    GenerateParams(), PPC_SETTINGS_fedoseev_linear_image_filtering_vertical));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = FedoseevFuncTest::PrintFuncTestName<FedoseevFuncTest>;

@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <random>
 #include <vector>
 
@@ -15,7 +16,7 @@ class FedoseevPerfTest : public ppc::util::BaseRunPerfTests<Image, Image> {
     const int size = 1024;
     input_.width = size;
     input_.height = size;
-    input_.data.resize(size * size);
+    input_.data.resize(static_cast<size_t>(size) * static_cast<size_t>(size));
 
     std::mt19937 gen(42);
     std::uniform_int_distribution<int> dist(0, 255);
