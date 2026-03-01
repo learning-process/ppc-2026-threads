@@ -20,6 +20,6 @@ class ChaschinVLinearFiltrationSEQ : public BaseTask {
 };
 
 inline float HorizontalFilterAt(const std::vector<float> &img, int n, int m, int x, int y);
-inline float VerticalFilterAt(const std::vector<float> &temp, int n, int m, int x, int y)
+inline float VerticalFilterAt(const std::vector<float> &temp, int n, int m, int x, int y);
 
 }  // namespace chaschin_v_linear_image_filtration_seq
