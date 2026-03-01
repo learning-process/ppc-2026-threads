@@ -1,6 +1,7 @@
 #include "goriacheva_k_mult_sparse_complex_matrix_ccs/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -68,7 +69,7 @@ bool GoriachevaKMultSparseComplexMatrixCcsSEQ::RunImpl() {
       }
     }
 
-    std::sort(used_rows.begin(), used_rows.end());
+    std::ranges::sort(used_rows);
 
     for (int r : used_rows) {
       if (accumulator[r] != Complex(0.0, 0.0)) {
