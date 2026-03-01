@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <random>
+#include <utility>
 #include <vector>
 
 #include "ilin_a_algorithm_graham/common/include/common.hpp"
@@ -17,6 +18,7 @@ class IlinAGrahamPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
     std::uniform_real_distribution<> dis(-100.0, 100.0);
 
     std::vector<Point> points;
+    points.reserve(1000);
     for (int i = 0; i < 1000; ++i) {
       points.push_back({dis(gen), dis(gen)});
     }

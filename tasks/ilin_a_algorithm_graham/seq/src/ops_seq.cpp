@@ -1,20 +1,20 @@
 #include "ilin_a_algorithm_graham/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <cmath>
+#include <cstddef>
 #include <vector>
 
 namespace ilin_a_algorithm_graham {
 
 namespace {
 double Orient(const Point &p, const Point &q, const Point &r) {
-  return (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+  return ((q.x - p.x) * (r.y - p.y)) - ((q.y - p.y) * (r.x - p.x));
 }
 
 double DistanceSq(const Point &p, const Point &q) {
   double dx = p.x - q.x;
   double dy = p.y - q.y;
-  return dx * dx + dy * dy;
+  return (dx * dx) + (dy * dy);
 }
 
 Point FindLowestLeftmost(const std::vector<Point> &points) {
@@ -74,9 +74,10 @@ bool IlinAGrahamSEQ::RunImpl() {
     }
   }
 
-  std::sort(sorted.begin(), sorted.end(), PointComparator(p0));
+  std::ranges::sort(sorted, PointComparator(p0));
 
   std::vector<Point> stack;
+  stack.reserve(sorted.size() + 1);
   stack.push_back(p0);
   stack.push_back(sorted[0]);
 
@@ -93,7 +94,7 @@ bool IlinAGrahamSEQ::RunImpl() {
     stack.push_back(sorted[i]);
   }
 
-  hull_ = stack;
+  hull_ = std::move(stack);
   return true;
 }
 

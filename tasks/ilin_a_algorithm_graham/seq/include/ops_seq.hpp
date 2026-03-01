@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "ilin_a_algorithm_graham/common/include/common.hpp"
 #include "task/include/task.hpp"
 
