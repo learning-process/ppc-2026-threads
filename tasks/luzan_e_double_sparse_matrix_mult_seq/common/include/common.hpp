@@ -238,7 +238,7 @@ inline SparseMatrix GetFromFile(std::ifstream &file) {
 
 using InType = std::tuple<SparseMatrix, SparseMatrix>;
 using OutType = SparseMatrix;
-using TestType = std::tuple<std::string>;
+using TestType = std::tuple<std::string, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace luzan_e_double_sparse_matrix_mult_seq

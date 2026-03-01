@@ -21,7 +21,7 @@ namespace luzan_e_double_sparse_matrix_mult_seq {
 class LuzanEDoubleSparseMatrixMultSeqestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return "12" + std::to_string(std::get<0>(test_param)[0]);
+    return "test" + std::get<1>(test_param);
   }
 
  protected:
@@ -70,7 +70,8 @@ TEST_P(LuzanEDoubleSparseMatrixMultSeqestsThreads, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 1> kTestParam = {std::make_tuple("test_1.txt")};
+const std::array<TestType, 4> kTestParam = {std::make_tuple("test_1.txt", "01"), std::make_tuple("test_2.txt", "02"),
+                                            std::make_tuple("test_3.txt", "03"), std::make_tuple("test_4.txt", "04")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LuzanEDoubleSparseMatrixMultSeq, InType>(
     kTestParam, PPC_SETTINGS_luzan_e_double_sparse_matrix_mult_seq));
