@@ -10,8 +10,9 @@ namespace chaschin_v_linear_image_filtration_seq {
 
 ChaschinVLinearFiltrationSEQ::ChaschinVLinearFiltrationSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput() = 0;
+  auto in_copy = in;
+  GetInput() = std::move(in_copy);
+  this->GetOutput().clear();
 }
 
 bool ChaschinVLinearFiltrationSEQ::ValidationImpl() {
