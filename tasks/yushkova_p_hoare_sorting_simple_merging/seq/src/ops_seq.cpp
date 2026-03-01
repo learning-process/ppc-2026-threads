@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <stack>
+#include <utility>
 #include <vector>
 
 #include "yushkova_p_hoare_sorting_simple_merging/common/include/common.hpp"
@@ -20,13 +22,15 @@ int YushkovaPHoareSortingSimpleMergingSEQ::HoarePartition(std::vector<int> &valu
   int j = right + 1;
 
   while (true) {
-    do {
+    ++i;
+    while (values[i] < pivot) {
       ++i;
-    } while (values[i] < pivot);
+    }
 
-    do {
+    --j;
+    while (values[j] > pivot) {
       --j;
-    } while (values[j] > pivot);
+    }
 
     if (i >= j) {
       return j;
@@ -37,13 +41,27 @@ int YushkovaPHoareSortingSimpleMergingSEQ::HoarePartition(std::vector<int> &valu
 }
 
 void YushkovaPHoareSortingSimpleMergingSEQ::HoareQuickSort(std::vector<int> &values, int left, int right) {
-  if (left >= right) {
-    return;
-  }
+  std::stack<std::pair<int, int>> ranges;
+  ranges.emplace(left, right);
 
-  int partition_index = HoarePartition(values, left, right);
-  HoareQuickSort(values, left, partition_index);
-  HoareQuickSort(values, partition_index + 1, right);
+  while (!ranges.empty()) {
+    auto [current_left, current_right] = ranges.top();
+    ranges.pop();
+
+    if (current_left >= current_right) {
+      continue;
+    }
+
+    int partition_index = HoarePartition(values, current_left, current_right);
+
+    if ((partition_index - current_left) > (current_right - (partition_index + 1))) {
+      ranges.emplace(current_left, partition_index);
+      ranges.emplace(partition_index + 1, current_right);
+    } else {
+      ranges.emplace(partition_index + 1, current_right);
+      ranges.emplace(current_left, partition_index);
+    }
+  }
 }
 
 std::vector<int> YushkovaPHoareSortingSimpleMergingSEQ::SimpleMerge(const std::vector<int> &left,

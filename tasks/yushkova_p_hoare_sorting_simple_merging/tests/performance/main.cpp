@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <random>
-#include <vector>
 
 #include "util/include/perf_test_util.hpp"
 #include "yushkova_p_hoare_sorting_simple_merging/common/include/common.hpp"
@@ -18,7 +17,8 @@ class YushkovaPRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, 
     constexpr size_t kCount = 100000;
     input_data_.resize(kCount);
 
-    std::mt19937 gen(2026);
+    std::random_device rd;
+    std::mt19937 gen(rd());
     std::uniform_int_distribution<int> dist(-1000000, 1000000);
 
     for (size_t i = 0; i < kCount; ++i) {

@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 #include "yushkova_p_hoare_sorting_simple_merging/common/include/common.hpp"
 #include "yushkova_p_hoare_sorting_simple_merging/seq/include/ops_seq.hpp"
 
@@ -43,7 +44,7 @@ class YushkovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
 };
 
 namespace {
