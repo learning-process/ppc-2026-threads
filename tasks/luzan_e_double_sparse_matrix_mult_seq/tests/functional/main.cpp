@@ -29,10 +29,12 @@ class LuzanEDoubleSparseMatrixMultSeqestsThreads : public ppc::util::BaseRunFunc
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     std::string file_name = std::get<0>(params);
     // std::cout << file_name << std::endl;
-    std::string abs_path = ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_luzan_e_double_sparse_matrix_mult_seq), file_name);
+    std::string abs_path =
+        ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_luzan_e_double_sparse_matrix_mult_seq), file_name);
     std::ifstream test_file(abs_path);
-    if (!test_file)
-	    throw std::runtime_error("Cannot open file");
+    if (!test_file) {
+      throw std::runtime_error("Cannot open file");
+    }
 
     Sparse_matrix A = getFromFile(test_file);
     Sparse_matrix B = getFromFile(test_file);
@@ -63,8 +65,8 @@ TEST_P(LuzanEDoubleSparseMatrixMultSeqestsThreads, MatmulFromPic) {
 
 const std::array<TestType, 1> kTestParam = {std::make_tuple("test_1.txt")};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<LuzanEDoubleSparseMatrixMultSeq, InType>(kTestParam, PPC_SETTINGS_luzan_e_double_sparse_matrix_mult_seq));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LuzanEDoubleSparseMatrixMultSeq, InType>(
+    kTestParam, PPC_SETTINGS_luzan_e_double_sparse_matrix_mult_seq));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

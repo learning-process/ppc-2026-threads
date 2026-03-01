@@ -10,8 +10,7 @@ class LuzanEDoubleSparseMatrixMultSeqPerfTestThreads : public ppc::util::BaseRun
   InType input_data_;
   OutType output_data_;
 
-  void SetUp() override {
-  }
+  void SetUp() override {}
 
   bool CheckTestOutputData(OutType &output_data) final {
     return (output_data == output_data);
@@ -28,8 +27,8 @@ TEST_P(LuzanEDoubleSparseMatrixMultSeqPerfTestThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, LuzanEDoubleSparseMatrixMultSeq>(PPC_SETTINGS_luzan_e_double_sparse_matrix_mult_seq);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LuzanEDoubleSparseMatrixMultSeq>(
+    PPC_SETTINGS_luzan_e_double_sparse_matrix_mult_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

@@ -1,10 +1,10 @@
 #pragma once
 
 #include <cmath>
-#include <vector>
+#include <fstream>
 #include <string>
 #include <tuple>
-#include <fstream>
+#include <vector>
 
 #include "task/include/task.hpp"
 
@@ -21,7 +21,6 @@ class Sparse_matrix {
   unsigned rows;
 
  public:
-
   Sparse_matrix(unsigned rows_, unsigned cols_) : cols(cols_), rows(rows_) {
     col_index.clear();
     row.clear();
@@ -50,10 +49,10 @@ class Sparse_matrix {
     return rows;
   }
 
-  bool operator==(const Sparse_matrix& B) const {
-  return (value == B.value) && (row == B.row) && (col_index == B.col_index) && (cols == B.cols) && (rows == B.rows); 
- }
-  
+  bool operator==(const Sparse_matrix &B) const {
+    return (value == B.value) && (row == B.row) && (col_index == B.col_index) && (cols == B.cols) && (rows == B.rows);
+  }
+
   double getXY(unsigned x = 1, unsigned y = 2) {
     for (unsigned s = col_index[y]; s < col_index[y + 1]; s++) {
       if (row[s] == x) {
@@ -118,19 +117,19 @@ class Sparse_matrix {
   }
 };
 
-inline Sparse_matrix getFromFile(std::ifstream& file) {
-	unsigned r, c;
-	file >> r >> c;
+inline Sparse_matrix getFromFile(std::ifstream &file) {
+  unsigned r, c;
+  file >> r >> c;
 
-	std::vector<double> dense(r * c);
+  std::vector<double> dense(r * c);
 
-	for (unsigned i = 0; i < r; i++) {
-		for (unsigned j = 0; j < c; j++) {
-			file >> dense[i * c + j];
-		}
-	}
-	Sparse_matrix A(dense, r, c);
-	return A;
+  for (unsigned i = 0; i < r; i++) {
+    for (unsigned j = 0; j < c; j++) {
+      file >> dense[i * c + j];
+    }
+  }
+  Sparse_matrix A(dense, r, c);
+  return A;
 };
 
 using InType = std::tuple<Sparse_matrix, Sparse_matrix>;
