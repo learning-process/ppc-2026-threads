@@ -2,7 +2,10 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <utility>
 #include <vector>
+
+#include "ilin_a_algorithm_graham/common/include/common.hpp"
 
 namespace ilin_a_algorithm_graham {
 
@@ -68,6 +71,7 @@ bool IlinAGrahamSEQ::RunImpl() {
   Point p0 = FindLowestLeftmost(points_);
 
   std::vector<Point> sorted;
+  sorted.reserve(points_.size());
   for (const Point &p : points_) {
     if (p.x != p0.x || p.y != p0.y) {
       sorted.push_back(p);
