@@ -1,15 +1,9 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
-#include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
-#include <string>
-#include <tuple>
-#include <utility>
+#include <cmath>
+#include <functional>
 #include <vector>
 
 #include "eremin_v_integrals_monte_carlo/common/include/common.hpp"
@@ -22,36 +16,25 @@ namespace eremin_v_integrals_monte_carlo {
 class EreminVRunFuncTestsThreadsIntegralsMonteCarlo : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    const auto &input = std::get<0>(test_param);
+    std::string result = "dims_" + std::to_string(input.bounds.size()) + "_samples_" + std::to_string(input.samples);
+    std::ranges::replace(result, '.', '_');
+    std::ranges::replace(result, '-', 'm');
+    return result;
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_eremin_v_integrals_monte_carlo), "pic.ppm");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+
+    input_data_ = std::get<0>(params);
+
+    expected_result_ = std::get<1>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    double tolerance = 1e-2;
+    return std::abs(output_data - expected_result_) <= tolerance;
   }
 
   InType GetTestInputData() final {
@@ -59,7 +42,8 @@ class EreminVRunFuncTestsThreadsIntegralsMonteCarlo : public ppc::util::BaseRunF
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType expected_result_{};
 };
 
 namespace {
@@ -68,17 +52,32 @@ TEST_P(EreminVRunFuncTestsThreadsIntegralsMonteCarlo, IntegralsMonteCarloFunc) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 3> kTestParam = {
+    std::make_tuple(MonteCarloInput{{{0.0, 1.0}},  // 1D
+                                    1'000'000,
+                                    [](const std::vector<double> &x) { return x[0] * x[0]; }},
+                    1.0 / 3.0),
 
-const auto kTestTasksList =
-    std::tuple_cat(
-                   ppc::util::AddFuncTask<EreminVIntegralsMonteCarloSEQ, InType>(kTestParam, PPC_SETTINGS_eremin_v_integrals_monte_carlo))
+    std::make_tuple(MonteCarloInput{{{0.0, 1.0}, {0.0, 1.0}},  // 2D
+                                    1'000'000,
+                                    [](const std::vector<double> &x) { return x[0] * x[1]; }},
+                    0.25),
+
+    std::make_tuple(MonteCarloInput{{{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}},  // 3D
+                                    1'000'000,
+                                    [](const std::vector<double> &x) { return x[0] + x[1] + x[2]; }},
+                    1.5)};
+
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<EreminVIntegralsMonteCarloSEQ, InType>(
+    kTestParam, PPC_SETTINGS_eremin_v_integrals_monte_carlo));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = EreminVRunFuncTestsThreadsIntegralsMonteCarlo::PrintFuncTestName<EreminVRunFuncTestsThreadsIntegralsMonteCarlo>;
+const auto kPerfTestName =
+    EreminVRunFuncTestsThreadsIntegralsMonteCarlo::PrintFuncTestName<EreminVRunFuncTestsThreadsIntegralsMonteCarlo>;
 
-INSTANTIATE_TEST_SUITE_P(IntegralsMonteCarloTestsFunc, EreminVRunFuncTestsThreadsIntegralsMonteCarlo, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(IntegralsMonteCarloTestsFunc, EreminVRunFuncTestsThreadsIntegralsMonteCarlo, kGtestValues,
+                         kPerfTestName);
 
 }  // namespace
 

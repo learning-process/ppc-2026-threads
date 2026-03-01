@@ -1,60 +1,87 @@
 #include "eremin_v_integrals_monte_carlo/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <cmath>
+#include <random>
 #include <vector>
 
 #include "eremin_v_integrals_monte_carlo/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace eremin_v_integrals_monte_carlo {
 
-EreminVIntegralsMonteCarloSEQ::EreminVIntegralsMonteCarloSEQ(const InType &in) {
+EreminVIntegralsMonteCarloSEQ::EreminVIntegralsMonteCarloSEQ(const InType& in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = 0.0;
 }
 
 bool EreminVIntegralsMonteCarloSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
-}
+  const auto& input = GetInput();
 
-bool EreminVIntegralsMonteCarloSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
-}
-
-bool EreminVIntegralsMonteCarloSEQ::RunImpl() {
-  if (GetInput() == 0) {
+  if (input.samples <= 0) {
+    return false;
+  }
+  if (input.bounds.empty()) {
+    return false;
+  }
+  if (!input.func) {
     return false;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  for (const auto& [a, b] : input.bounds) {
+    if (a >= b) {
+      return false;
+    }
+    if (std::abs(a) > 1e9 || std::abs(b) > 1e9) {
+      return false;
     }
   }
+  return true;
+}
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
+bool EreminVIntegralsMonteCarloSEQ::PreProcessingImpl() {
+  GetOutput() = 0.0;
+  return true;
+}
 
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
+bool EreminVIntegralsMonteCarloSEQ::RunImpl() {
+  const auto& input = GetInput();
+  const auto& bounds = input.bounds;
+  int samples = input.samples;
+  const auto& func = input.func;
+
+  const std::size_t dimension = bounds.size();
+
+  double volume = 1.0;
+  for (const auto& [a, b] : bounds) {
+    volume *= (b - a);
   }
 
-  if (counter != 0) {
-    GetOutput() /= counter;
+  std::mt19937 gen(42);
+
+  std::vector<std::uniform_real_distribution<double>> distributions;
+  distributions.reserve(dimension);
+
+  for (const auto& [a, b] : bounds) {
+    distributions.emplace_back(a, b);
   }
-  return GetOutput() > 0;
+
+  double sum = 0.0;
+  std::vector<double> point(dimension);
+
+  for (int i = 0; i < samples; ++i) {
+    for (std::size_t d = 0; d < dimension; ++d) {
+      point[d] = distributions[d](gen);
+    }
+
+    sum += func(point);
+  }
+
+  GetOutput() = volume * (sum / static_cast<double>(samples));
+  return true;
 }
 
 bool EreminVIntegralsMonteCarloSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace eremin_v_integrals_monte_carlo
