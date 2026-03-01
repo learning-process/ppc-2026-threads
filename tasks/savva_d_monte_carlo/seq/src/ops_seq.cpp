@@ -1,5 +1,6 @@
 #include "savva_d_monte_carlo/seq/include/ops_seq.hpp"
 
+#include <cstdint>
 #include <random>
 #include <vector>
 
@@ -71,19 +72,19 @@ bool SavvaDMonteCarloSEQ::RunImpl() {
   std::vector<double> p4(dim);
 
   for (; i + 3 < n; i += 4) {
-    for (size_t d = 0; d < dim; ++d) {
-      p1[d] = distributions[d](generator);
-      p2[d] = distributions[d](generator);
-      p3[d] = distributions[d](generator);
-      p4[d] = distributions[d](generator);
+    for (size_t j = 0; j < dim; ++j) {
+      p1[j] = distributions[j](generator);
+      p2[j] = distributions[j](generator);
+      p3[j] = distributions[j](generator);
+      p4[j] = distributions[j](generator);
     }
     sum += func(p1) + func(p2) + func(p3) + func(p4);
   }
 
   // Обрабатываем оставшиеся точки
   for (; i < n; ++i) {
-    for (size_t d = 0; d < dim; ++d) {
-      p1[d] = distributions[d](generator);
+    for (size_t j = 0; j < dim; ++j) {
+      p1[j] = distributions[j](generator);
     }
     sum += func(p1);
   }

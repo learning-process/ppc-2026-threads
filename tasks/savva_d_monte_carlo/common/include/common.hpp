@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>     // для uint64_t
 #include <functional>  // для std::function
 #include <stdexcept>   // для std::invalid_argument

@@ -1,11 +1,10 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <numeric>
+#include <functional>
 #include <stdexcept>
 #include <string>
 #include <tuple>
