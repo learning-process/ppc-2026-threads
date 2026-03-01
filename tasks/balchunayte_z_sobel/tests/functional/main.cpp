@@ -55,46 +55,52 @@ class BalchunayteZRunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, O
  private:
   static void SetUpConstantImage(Image &input_image) {
     for (auto &pixel_value : input_image.data) {
-      pixel_value = Pixel{50, 50, 50};
+      pixel_value = Pixel{.r = 50, .g = 50, .b = 50};
     }
   }
 
   void SetUpVerticalEdge(Image &input_image) {
     const int image_size = input_image.width;
+    const size_t image_width = static_cast<size_t>(image_size);
 
     for (int row_index = 0; row_index < image_size; ++row_index) {
       for (int col_index = 0; col_index < image_size; ++col_index) {
         const uint8_t intensity_value = (col_index < 2) ? 0 : 255;
-        input_image.data[static_cast<size_t>((row_index * image_size) + col_index)] =
-            Pixel{intensity_value, intensity_value, intensity_value};
+
+        const size_t pixel_index = (static_cast<size_t>(row_index) * image_width) + static_cast<size_t>(col_index);
+
+        input_image.data[pixel_index] = Pixel{.r = intensity_value, .g = intensity_value, .b = intensity_value};
       }
     }
 
-    expected_output_[static_cast<size_t>((1 * image_size) + 1)] = 1020;
-    expected_output_[static_cast<size_t>((2 * image_size) + 1)] = 1020;
-    expected_output_[static_cast<size_t>((1 * image_size) + 2)] = 1020;
-    expected_output_[static_cast<size_t>((2 * image_size) + 2)] = 1020;
+    expected_output_[(static_cast<size_t>(1) * image_width) + static_cast<size_t>(1)] = 1020;
+    expected_output_[(static_cast<size_t>(2) * image_width) + static_cast<size_t>(1)] = 1020;
+    expected_output_[(static_cast<size_t>(1) * image_width) + static_cast<size_t>(2)] = 1020;
+    expected_output_[(static_cast<size_t>(2) * image_width) + static_cast<size_t>(2)] = 1020;
   }
 
   void SetUpHorizontalEdge(Image &input_image) {
     const int image_size = input_image.width;
+    const size_t image_width = static_cast<size_t>(image_size);
 
     for (int row_index = 0; row_index < image_size; ++row_index) {
       for (int col_index = 0; col_index < image_size; ++col_index) {
         const uint8_t intensity_value = (row_index < 2) ? 0 : 255;
-        input_image.data[static_cast<size_t>((row_index * image_size) + col_index)] =
-            Pixel{intensity_value, intensity_value, intensity_value};
+
+        const size_t pixel_index = (static_cast<size_t>(row_index) * image_width) + static_cast<size_t>(col_index);
+
+        input_image.data[pixel_index] = Pixel{.r = intensity_value, .g = intensity_value, .b = intensity_value};
       }
     }
 
-    expected_output_[static_cast<size_t>((1 * image_size) + 1)] = 1020;
-    expected_output_[static_cast<size_t>((1 * image_size) + 2)] = 1020;
-    expected_output_[static_cast<size_t>((2 * image_size) + 1)] = 1020;
-    expected_output_[static_cast<size_t>((2 * image_size) + 2)] = 1020;
+    expected_output_[(static_cast<size_t>(1) * image_width) + static_cast<size_t>(1)] = 1020;
+    expected_output_[(static_cast<size_t>(1) * image_width) + static_cast<size_t>(2)] = 1020;
+    expected_output_[(static_cast<size_t>(2) * image_width) + static_cast<size_t>(1)] = 1020;
+    expected_output_[(static_cast<size_t>(2) * image_width) + static_cast<size_t>(2)] = 1020;
   }
 
   InType input_data_{};
-  OutType expected_output_{};
+  OutType expected_output_;
 };
 
 namespace {

@@ -13,6 +13,7 @@ class BalchunayteZRunPerfTestSEQ : public ppc::util::BaseRunPerfTests<InType, Ou
  protected:
   void SetUp() override {
     const int image_size = 512;
+    const size_t image_width = static_cast<size_t>(image_size);
 
     Image input_image;
     input_image.width = image_size;
@@ -22,8 +23,10 @@ class BalchunayteZRunPerfTestSEQ : public ppc::util::BaseRunPerfTests<InType, Ou
     for (int row_index = 0; row_index < image_size; ++row_index) {
       for (int col_index = 0; col_index < image_size; ++col_index) {
         const auto intensity_value = static_cast<uint8_t>((255 * col_index) / (image_size - 1));
-        input_image.data[static_cast<size_t>((row_index * image_size) + col_index)] =
-            Pixel{intensity_value, intensity_value, intensity_value};
+
+        const size_t pixel_index = (static_cast<size_t>(row_index) * image_width) + static_cast<size_t>(col_index);
+
+        input_image.data[pixel_index] = Pixel{.r = intensity_value, .g = intensity_value, .b = intensity_value};
       }
     }
 
