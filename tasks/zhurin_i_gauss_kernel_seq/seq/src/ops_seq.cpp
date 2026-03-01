@@ -24,7 +24,7 @@ bool ZhurinIGaussKernelSEQ::ValidationImpl() {
   if (w <= 0 || h <= 0 || parts <= 0 || parts > w) {
     return false;
   }
-  if (std::cmp_not_equal(img.size(), h)) {  // вместо static_cast<int>(img.size()) != h
+  if (std::cmp_not_equal(img.size(), h)) {
     return false;
   }
   for (int i = 0; i < h; ++i) {
