@@ -108,10 +108,6 @@ const std::array<TestType, 5> kTestParam = {
 };
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<NesterovATestTaskMPI, InType>(kTestParam, PPC_SETTINGS_example_processes),
-    ppc::util::AddFuncTask<ChaschinVLinearFiltrationSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes));
-
-const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ChaschinVLinearFiltrationSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
