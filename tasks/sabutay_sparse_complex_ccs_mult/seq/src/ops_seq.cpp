@@ -1,4 +1,9 @@
-#include "../include/ops_seq.hpp"  // InType, CCS, std::complex, std::vector, std::abs via common.hpp
+#include <cmath>
+#include <complex>
+#include <vector>
+
+#include "../../common/include/common.hpp"
+#include "../include/ops_seq.hpp"
 
 namespace sabutay_sparse_complex_ccs_mult {
 

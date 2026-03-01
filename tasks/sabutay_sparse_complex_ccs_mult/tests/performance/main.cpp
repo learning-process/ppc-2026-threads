@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <random>
+#include <tuple>
 
 #include "sabutay_sparse_complex_ccs_mult/common/include/common.hpp"
 #include "sabutay_sparse_complex_ccs_mult/seq/include/ops_seq.hpp"
