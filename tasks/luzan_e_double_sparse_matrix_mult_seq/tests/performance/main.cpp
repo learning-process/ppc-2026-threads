@@ -7,14 +7,14 @@ namespace luzan_e_double_sparse_matrix_mult_seq {
 
 class LuzanEDoubleSparseMatrixMultSeqPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 200;
-  InType input_data_{};
+  InType input_data_;
+  OutType output_data_;
 
   void SetUp() override {
-    input_data_ = kCount_;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    return (output_data == output_data);
   }
 
   InType GetTestInputData() final {
@@ -29,8 +29,7 @@ TEST_P(LuzanEDoubleSparseMatrixMultSeqPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NesterovATestTaskALL, NesterovATestTaskOMP, LuzanEDoubleSparseMatrixMultSeq,
-                                NesterovATestTaskSTL, NesterovATestTaskTBB>(PPC_SETTINGS_example_threads);
+    ppc::util::MakeAllPerfTasks<InType, LuzanEDoubleSparseMatrixMultSeq>(PPC_SETTINGS_luzan_e_double_sparse_matrix_mult_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

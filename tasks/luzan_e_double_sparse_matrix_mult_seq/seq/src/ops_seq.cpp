@@ -11,13 +11,13 @@ namespace luzan_e_double_sparse_matrix_mult_seq {
 LuzanEDoubleSparseMatrixMultSeq::LuzanEDoubleSparseMatrixMultSeq(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  // GetOutput() = 0;
 }
 
 bool LuzanEDoubleSparseMatrixMultSeq::ValidationImpl() {
   const auto &A = std::get<0>(GetInput());
   const auto &B = std::get<1>(GetInput());
-  return A.cols == B.rows;
+  return A.GetCols() == B.GetRows();
 }
 
 bool LuzanEDoubleSparseMatrixMultSeq::PreProcessingImpl() {

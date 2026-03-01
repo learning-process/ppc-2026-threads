@@ -1,18 +1,14 @@
 #pragma once
 
 #include <cmath>
-#include <std::vector>
+#include <vector>
 #include <string>
 #include <tuple>
+#include <fstream>
 
 #include "task/include/task.hpp"
 
 namespace luzan_e_double_sparse_matrix_mult_seq {
-
-using InType = std::tuple<Sparse_matrix, Sparse_matrix>;
-using OutType = Sparse_matrix;
-using TestType = std::tuple<int, std::string>;
-using BaseTask = ppc::task::Task<InType, OutType>;
 
 const double EPS = 1e-8;
 
@@ -25,6 +21,7 @@ class Sparse_matrix {
   unsigned rows;
 
  public:
+
   Sparse_matrix(unsigned rows_, unsigned cols_) : cols(cols_), rows(rows_) {
     col_index.clear();
     row.clear();
@@ -45,8 +42,20 @@ class Sparse_matrix {
     sparse(matrix);
   }
 
-  double getXY(int x = 1, int y = 2) {
-    for (int s = col_index[y]; s < col_index[y + 1]; s++) {
+  unsigned GetCols() const {
+    return cols;
+  }
+
+  unsigned GetRows() const {
+    return rows;
+  }
+
+  bool operator==(const Sparse_matrix& B) const {
+  return (value == B.value) && (row == B.row) && (col_index == B.col_index) && (cols == B.cols) && (rows == B.rows); 
+ }
+  
+  double getXY(unsigned x = 1, unsigned y = 2) {
+    for (unsigned s = col_index[y]; s < col_index[y + 1]; s++) {
       if (row[s] == x) {
         return value[s];
       }
@@ -108,5 +117,25 @@ class Sparse_matrix {
     return C;
   }
 };
+
+inline Sparse_matrix getFromFile(std::ifstream& file) {
+	unsigned r, c;
+	file >> r >> c;
+
+	std::vector<double> dense(r * c);
+
+	for (unsigned i = 0; i < r; i++) {
+		for (unsigned j = 0; j < c; j++) {
+			file >> dense[i * c + j];
+		}
+	}
+	Sparse_matrix A(dense, r, c);
+	return A;
+};
+
+using InType = std::tuple<Sparse_matrix, Sparse_matrix>;
+using OutType = Sparse_matrix;
+using TestType = std::tuple<std::string>;
+using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace luzan_e_double_sparse_matrix_mult_seq
