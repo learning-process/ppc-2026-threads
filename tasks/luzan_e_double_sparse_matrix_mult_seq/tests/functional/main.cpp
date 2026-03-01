@@ -32,7 +32,7 @@ class LuzanEDoubleSparseMatrixMultSeqestsThreads : public ppc::util::BaseRunFunc
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-  
+
     input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
   }
 
@@ -65,7 +65,8 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = LuzanEDoubleSparseMatrixMultSeqestsThreads::PrintFuncTestName<LuzanEDoubleSparseMatrixMultSeqestsThreads>;
+const auto kPerfTestName =
+    LuzanEDoubleSparseMatrixMultSeqestsThreads::PrintFuncTestName<LuzanEDoubleSparseMatrixMultSeqestsThreads>;
 
 INSTANTIATE_TEST_SUITE_P(PicMatrixTests, LuzanEDoubleSparseMatrixMultSeqestsThreads, kGtestValues, kPerfTestName);
 
