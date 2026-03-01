@@ -4,9 +4,6 @@
 #include <cstddef>
 #include <string>
 
-
-
-
 #include "sabutay_sparse_complex_ccs_mult/common/include/common.hpp"
 #include "sabutay_sparse_complex_ccs_mult/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
@@ -117,8 +114,10 @@ class SabutayARunFuncTestsSeq : public ppc::util::BaseRunFuncTests<InType, OutTy
       std::vector<std::pair<int, std::complex<double>>> test;
       std::vector<std::pair<int, std::complex<double>>> output;
       for (int k = 0; k < test_result_.col_ptr[j + 1] - test_result_.col_ptr[j]; ++k) {
-        test.emplace_back(test_result_.row_ind[test_result_.col_ptr[j] + k], test_result_.values[test_result_.col_ptr[j] + k]);
-        output.emplace_back(output_data.row_ind[test_result_.col_ptr[j] + k], output_data.values[test_result_.col_ptr[j] + k]);
+        test.emplace_back(test_result_.row_ind[test_result_.col_ptr[j] + k],
+                          test_result_.values[test_result_.col_ptr[j] + k]);
+        output.emplace_back(output_data.row_ind[test_result_.col_ptr[j] + k],
+                            output_data.values[test_result_.col_ptr[j] + k]);
       }
       auto cmp = [](const auto &x, const auto &y) { return x.first < y.first; };
       std::sort(test.begin(), test.end(), cmp);
