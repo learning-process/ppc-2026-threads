@@ -137,7 +137,7 @@ constexpr size_t kNumParams = kSizes.size() * kTypes.size();
 
 std::array<TestType, kNumParams> GenerateParams() {
   std::array<TestType, kNumParams> params;
-  auto it = params.begin();
+  auto *it = params.begin();
   for (int s : kSizes) {
     for (const char *t : kTypes) {
       *it++ = std::make_tuple(s, std::string(t));
