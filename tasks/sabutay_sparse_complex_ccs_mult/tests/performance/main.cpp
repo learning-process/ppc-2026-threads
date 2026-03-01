@@ -29,7 +29,8 @@ CCS CreateRandomSparseMatrix(int rows, int cols, double density = 0.1) {
   int total_elements = static_cast<int>(rows * cols * density);
 
   for (int col = 0; col < cols; ++col) {
-    int elements_in_col = (total_elements * (col + 1.0) / static_cast<double>(cols)) - (total_elements * col / static_cast<double>(cols));
+    int elements_in_col =
+        (total_elements * (col + 1.0) / static_cast<double>(cols)) - (total_elements * col / static_cast<double>(cols));
 
     for (int i = 0; i < elements_in_col; ++i) {
       int row = row_dist(gen);
