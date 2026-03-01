@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <cstddef>
+#include <tuple>
 #include <vector>
 
 #include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
@@ -24,9 +26,9 @@ class ChaschinVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
 
   std::vector<float> static ApplyGaussianKernel(const std::vector<float> &image, int width, int height) {
     std::vector<float> temp(
-        static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0f);
-    std::vector<float> output(
-        static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0f);
+        static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0F);
+    std::vector<float> output
+        static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0F);
 
     // Горизонтальный проход
     for (int yi = 0; yi < height; ++yi) {

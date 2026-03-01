@@ -67,13 +67,13 @@ bool ChaschinVLinearFiltrationSEQ::RunImpl() {
   // ---------- горизонтальная фильтрация ----------
   for (int yi = 0; yi < m; ++yi) {
     for (int xf = 0; xf < n; ++xf) {
-      temp[yi * n + xf] = HorizontalFilterAt(image, n, xf, yi);
+      temp[(yi * n) + xf] = HorizontalFilterAt(image, n, xf, yi);
     }
   }
 
   for (int yi = 0; yi < m; ++yi) {
     for (int xy = 0; xy < n; ++xy) {
-      out[yi * n + xy] = VerticalFilterAt(temp, n, m, xy, yi);
+      out[(yi * n) + xy] = VerticalFilterAt(temp, n, m, xy, yi);
     }
   }
 

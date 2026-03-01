@@ -33,11 +33,11 @@ class ChaschinVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
     return image;
   }
 
-  std::vector<float> ApplyGaussianKernel(const std::vector<float> &image, int width, int height) {
+  std::vector<float> static ApplyGaussianKernel(const std::vector<float> &image, int width, int height) {
     std::vector<float> temp(
-        static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0f);
+        static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0F);
     std::vector<float> output(
-        static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0f);
+        static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0F);
 
     // Горизонтальный проход
     for (int yi = 0; yi < height; ++yi) {

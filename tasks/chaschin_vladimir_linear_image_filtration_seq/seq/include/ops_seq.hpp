@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
 #include "task/include/task.hpp"
 
