@@ -8,8 +8,7 @@ SabutaySparseComplexCcsMultSEQ::SabutaySparseComplexCcsMultSEQ(const InType &in)
   GetOutput() = CCS();
 }
 
-void SabutaySparseComplexCcsMultSEQ::SpMM(const CCS &a, const CCS &b,
-                                          CCS &c) {
+void SabutaySparseComplexCcsMultSEQ::SpMM(const CCS &a, const CCS &b, CCS &c) {
   c.m = a.m;
   c.n = b.n;
   c.col_ptr.assign(b.n + 1, 0);

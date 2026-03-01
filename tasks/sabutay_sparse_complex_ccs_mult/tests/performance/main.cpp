@@ -47,8 +47,7 @@ CCS CreateRandomSparseMatrix(int rows, int cols, double density = 0.1) {
 
 }  // namespace
 
-class SabutayARunPerfTestsSeq
-    : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class SabutayARunPerfTestsSeq : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
     // Create test matrices with appropriate sizes for performance testing
@@ -76,22 +75,20 @@ class SabutayARunPerfTestsSeq
   InType input_data_;
 };
 
-TEST_P(SabutayARunPerfTestsSeq,
-       RunPerfModes) {
+TEST_P(SabutayARunPerfTestsSeq, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SabutaySparseComplexCcsMultSEQ>(
-    PPC_SETTINGS_sabutay_sparse_complex_ccs_mult);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, SabutaySparseComplexCcsMultSEQ>(PPC_SETTINGS_sabutay_sparse_complex_ccs_mult);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = SabutayARunPerfTestsSeq::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, SabutayARunPerfTestsSeq, kGtestValues,
-                         kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, SabutayARunPerfTestsSeq, kGtestValues, kPerfTestName);
 
 }  // namespace
 

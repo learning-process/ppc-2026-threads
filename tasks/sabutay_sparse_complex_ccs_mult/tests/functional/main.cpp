@@ -150,16 +150,14 @@ TEST_P(SabutayARunFuncTestsSeq, FuncCCSTest) {
 
 const std::array<TestType, 3> kTestParam = {0, 1, 2};
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<SabutaySparseComplexCcsMultSEQ, InType>(
-        kTestParam, PPC_SETTINGS_sabutay_sparse_complex_ccs_mult);
+const auto kTestTasksList = ppc::util::AddFuncTask<SabutaySparseComplexCcsMultSEQ, InType>(
+    kTestParam, PPC_SETTINGS_sabutay_sparse_complex_ccs_mult);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = SabutayARunFuncTestsSeq::PrintFuncTestName<SabutayARunFuncTestsSeq>;
 
-INSTANTIATE_TEST_SUITE_P(RunFuncCCSTest, SabutayARunFuncTestsSeq, kGtestValues,
-                         kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunFuncCCSTest, SabutayARunFuncTestsSeq, kGtestValues, kPerfTestName);
 
 }  // namespace
 
