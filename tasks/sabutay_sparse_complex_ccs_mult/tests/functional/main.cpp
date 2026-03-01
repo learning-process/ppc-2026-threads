@@ -94,7 +94,7 @@ class SabutayARunFuncTestsSeq : public ppc::util::BaseRunFuncTests<InType, OutTy
     }
   }
 
-  bool CheckTestOutputData(OutType &output_data) {
+  bool CheckTestOutputData(OutType &output_data) override {
     bool result = true;
     constexpr double kEps = 1e-14;
     if (test_result_.m != output_data.m || test_result_.n != output_data.n ||
@@ -132,7 +132,7 @@ class SabutayARunFuncTestsSeq : public ppc::util::BaseRunFuncTests<InType, OutTy
     return result;
   }
 
-  InType GetTestInputData() {
+  InType GetTestInputData() override {
     return input_data_;
   }
 
