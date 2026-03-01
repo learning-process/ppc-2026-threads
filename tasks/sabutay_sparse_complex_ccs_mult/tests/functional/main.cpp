@@ -11,7 +11,7 @@
 
 namespace sabutay_sparse_complex_ccs_mult {
 
-// Constants for test values
+// Constants for test values 
 constexpr double kZero = 0.0;
 constexpr double kValue1 = 1.0;
 constexpr double kValue2 = 2.0;
