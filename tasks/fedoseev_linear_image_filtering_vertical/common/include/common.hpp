@@ -8,9 +8,9 @@
 namespace fedoseev_linear_image_filtering_vertical {
 
 struct Image {
-    int width;
-    int height;
-    std::vector<int> data;
+  int width;
+  int height;
+  std::vector<int> data;
 };
 
 using InType = Image;
