@@ -1,9 +1,9 @@
 #include "eremin_v_integrals_monte_carlo/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <random>
-#include <ranges>
 #include <vector>
 
 #include "eremin_v_integrals_monte_carlo/common/include/common.hpp"
