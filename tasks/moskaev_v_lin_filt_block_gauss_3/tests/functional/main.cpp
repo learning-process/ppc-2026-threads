@@ -10,6 +10,7 @@
 #include "moskaev_v_lin_filt_block_gauss_3/common/include/common.hpp"
 #include "moskaev_v_lin_filt_block_gauss_3/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace moskaev_v_lin_filt_block_gauss_3 {
 
