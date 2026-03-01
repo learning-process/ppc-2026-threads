@@ -1,9 +1,9 @@
-#include "example_threads/seq/include/ops_seq.hpp"
+#include "luzan_e_double_sparse_matrix_mult_seq/seq/include/ops_seq.hpp"
 
 #include <numeric>
 #include <vector>
 
-#include "example_threads/common/include/common.hpp"
+#include "luzan_e_double_sparse_matrix_mult_seq/common/include/common.hpp"
 #include "util/include/util.hpp"
 
 namespace luzan_e_double_sparse_matrix_mult_seq {

@@ -9,7 +9,6 @@
 
 namespace luzan_e_double_sparse_matrix_mult_seq {
 
-// matrix1, rows, cols, ...
 using InType = std::tuple<Sparse_matrix, Sparse_matrix>;
 using OutType = Sparse_matrix;
 using TestType = std::tuple<int, std::string>;

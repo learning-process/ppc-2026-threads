@@ -1,6 +1,6 @@
 #pragma once
 
-#include "example_threads/common/include/common.hpp"
+#include "luzan_e_double_sparse_matrix_mult_seq/common/include/common.hpp"
 #include "task/include/task.hpp"
 
 namespace luzan_e_double_sparse_matrix_mult_seq {

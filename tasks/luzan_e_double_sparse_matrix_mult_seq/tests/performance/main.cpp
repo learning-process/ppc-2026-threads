@@ -1,11 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "example_threads/all/include/ops_all.hpp"
-#include "example_threads/common/include/common.hpp"
-#include "example_threads/omp/include/ops_omp.hpp"
-#include "example_threads/seq/include/ops_seq.hpp"
-#include "example_threads/stl/include/ops_stl.hpp"
-#include "example_threads/tbb/include/ops_tbb.hpp"
+#include "luzan_e_double_sparse_matrix_mult_seq/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace luzan_e_double_sparse_matrix_mult_seq {
