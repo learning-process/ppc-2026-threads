@@ -1,5 +1,6 @@
 #include "savva_d_monte_carlo/seq/include/ops_seq.hpp"
 
+#include <cstddef>
 #include <cstdint>
 #include <random>
 #include <vector>
