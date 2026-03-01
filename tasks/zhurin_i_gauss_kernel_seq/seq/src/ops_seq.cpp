@@ -42,13 +42,11 @@ bool ZhurinIGaussKernelSEQ::PreProcessingImpl() {
   num_parts_ = std::get<2>(in);
   image_ = std::get<3>(in);
 
-  // Подготавливаем расширенное изображение (один раз)
   padded_.assign(height_ + 2, std::vector<int>(width_ + 2, 0));
   for (int i = 0; i < height_; ++i) {
     std::copy(image_[i].begin(), image_[i].end(), padded_[i + 1].begin() + 1);
   }
 
-  // Выделяем память под результат
   result_.assign(height_, std::vector<int>(width_, 0));
   output_written_ = false;
   return true;
@@ -59,7 +57,6 @@ bool ZhurinIGaussKernelSEQ::RunImpl() {
   int remainder = width_ % num_parts_;
   int x_start = 0;
 
-  // Развёрнутая свёртка (нет циклов по ki,kj)
   auto convolve_at = [&](int row, int col) -> int {
     int sum = 0;
     sum += padded_[row - 1][col - 1] * kKernel[0][0];
@@ -89,7 +86,7 @@ bool ZhurinIGaussKernelSEQ::RunImpl() {
 }
 
 bool ZhurinIGaussKernelSEQ::PostProcessingImpl() {
-  GetOutput() = result_;  // копирование, а не перемещение
+  GetOutput() = result_; 
   output_written_ = true;
   return true;
 }

@@ -15,7 +15,6 @@
 
 namespace zhurin_i_gauss_kernel_seq {
 
-// Параметр теста: (id, входные данные, ожидаемый результат)
 using TestCase = std::tuple<int, InType, OutType>;
 
 class ZhurinIGaussKernelFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestCase> {
@@ -68,7 +67,6 @@ InType MakeInput(int w, int h, int p, const std::vector<std::vector<int>> &img) 
   return std::make_tuple(w, h, p, img);
 }
 
-// Массив тестов: (id, вход, ожидаемый результат)
 const std::array<TestCase, 6> kTestCases = {
     {{1, MakeInput(1, 1, 1, {{16}}), {{4}}},
      {2,
@@ -92,7 +90,6 @@ TEST_P(ZhurinIGaussKernelFuncTests, AllTests) {
 INSTANTIATE_TEST_SUITE_P(ZhurinIGaussKernel, ZhurinIGaussKernelFuncTests, kGtestValues,
                          ZhurinIGaussKernelFuncTests::PrintTestName);
 
-// ========== НЕГАТИВНЫЕ ТЕСТЫ ==========
 
 TEST(ZhurinIGaussKernelNegativeTest, InvalidWidth) {
   int width = 0;
