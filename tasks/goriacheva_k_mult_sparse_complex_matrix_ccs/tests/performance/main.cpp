@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <random>
+#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -36,21 +37,21 @@ class GoriachevaKMultSparseComplexMatrixCcsPerfTest : public ppc::util::BaseRunP
       std::vector<int> rows_a;
       std::vector<int> rows_b;
 
-      while (static_cast<int>(rows_a.size()) < std::min(kNonZeroPerCol_, n)) {
+      while (std::cmp_less(rows_a.size(), std::min(kNonZeroPerCol_, n))) {
         int r = static_cast<int>(rng() % static_cast<std::mt19937::result_type>(n));
-        if (std::find(rows_a.begin(), rows_a.end(), r) == rows_a.end()) {
+        if (std::ranges::find(rows_a.begin(), rows_a.end(), r) == rows_a.end()) {
           rows_a.push_back(r);
         }
       }
-      while (static_cast<int>(rows_b.size()) < std::min(kNonZeroPerCol_, n)) {
+      while (std::cmp_less(rows_b.size(), std::min(kNonZeroPerCol_, n))) {
         int r = static_cast<int>(rng() % static_cast<std::mt19937::result_type>(n));
-        if (std::find(rows_b.begin(), rows_b.end(), r) == rows_b.end()) {
+        if (std::ranges::find(rows_b.begin(), rows_b.end(), r) == rows_b.end()) {
           rows_b.push_back(r);
         }
       }
 
-      std::sort(rows_a.begin(), rows_a.end());
-      std::sort(rows_b.begin(), rows_b.end());
+      std::ranges::sort(rows_a.begin(), rows_a.end());
+      std::ranges::sort(rows_b.begin(), rows_b.end());
 
       for (int r : rows_a) {
         a.row_ind.push_back(r);
