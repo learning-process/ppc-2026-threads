@@ -1,5 +1,4 @@
 #pragma once
-#include <tuple>
 
 #include "goriacheva_k_mult_sparse_complex_matrix_ccs/common/include/common.hpp"
 #include "task/include/task.hpp"

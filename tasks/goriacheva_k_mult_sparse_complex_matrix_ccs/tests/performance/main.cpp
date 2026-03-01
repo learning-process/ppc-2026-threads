@@ -1,4 +1,7 @@
 #include <gtest/gtest.h>
+#include <algorithm>
+#include <vector>
+#include <compare>
 
 #include <random>
 
@@ -14,51 +17,51 @@ class GoriachevaKMultSparseComplexMatrixCcsPerfTest : public ppc::util::BaseRunP
   InType input_data_{};
 
   void SetUp() override {
-    SparseMatrixCCS A, B;
+    SparseMatrixCCS a, b;
     int n = kCount_;
 
-    A.rows = A.cols = n;
-    B.rows = B.cols = n;
+    a.rows = a.cols = n;
+    b.rows = b.cols = n;
 
-    A.col_ptr.resize(n + 1, 0);
-    B.col_ptr.resize(n + 1, 0);
+    a.col_ptr.resize(n + 1, 0);
+    b.col_ptr.resize(n + 1, 0);
 
-    std::mt19937 rng(42);
+    std::mt19937 rng(std::random_device{}());
     std::uniform_real_distribution<double> dist(-10.0, 10.0);
 
     for (int j = 0; j < n; j++) {
-      std::vector<int> rows_A, rows_B;
+      std::vector<int> rows_a, rows_b;
 
-      while ((int)rows_A.size() < std::min(kNonZeroPerCol_, n)) {
-        int r = rng() % n;
-        if (std::find(rows_A.begin(), rows_A.end(), r) == rows_A.end()) {
-          rows_A.push_back(r);
+      while (static_cast<int>(rows_a.size()) < std::min(kNonZeroPerCol_, n)) {
+        int r = static_cast<int>(rng() % static_cast<std::mt19937::result_type>(n));
+        if (std::find(rows_a.begin(), rows_a.end(), r) == rows_a.end()) {
+          rows_a.push_back(r);
         }
       }
-      while ((int)rows_B.size() < std::min(kNonZeroPerCol_, n)) {
+      while ((int)rows_b.size() < std::min(kNonZeroPerCol_, n)) {
         int r = rng() % n;
-        if (std::find(rows_B.begin(), rows_B.end(), r) == rows_B.end()) {
-          rows_B.push_back(r);
+        if (std::find(rows_b.begin(), rows_b.end(), r) == rows_b.end()) {
+          rows_b.push_back(r);
         }
       }
 
-      std::sort(rows_A.begin(), rows_A.end());
-      std::sort(rows_B.begin(), rows_B.end());
+      std::sort(rows_a.begin(), rows_a.end());
+      std::sort(rows_b.begin(), rows_b.end());
 
-      for (int r : rows_A) {
-        A.row_ind.push_back(r);
-        A.values.emplace_back(dist(rng), dist(rng));
+      for (int r : rows_a) {
+        a.row_ind.push_back(r);
+        a.values.emplace_back(dist(rng), dist(rng));
       }
-      A.col_ptr[j + 1] = A.col_ptr[j] + rows_A.size();
+      a.col_ptr[j + 1] = a.col_ptr[j] + rows_a.size();
 
-      for (int r : rows_B) {
-        B.row_ind.push_back(r);
-        B.values.emplace_back(dist(rng), dist(rng));
+      for (int r : rows_b) {
+        b.row_ind.push_back(r);
+        b.values.emplace_back(dist(rng), dist(rng));
       }
-      B.col_ptr[j + 1] = B.col_ptr[j] + rows_B.size();
+      b.col_ptr[j + 1] = b.col_ptr[j] + rows_b.size();
     }
 
-    input_data_ = {A, B};
+    input_data_ = {a, b};
   }
 
   bool CheckTestOutputData(OutType & /*output_data*/) final {

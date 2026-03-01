@@ -1,7 +1,11 @@
+#include <algorithm>
+#include <utility>
+#include <vector>
+#include <utility>
+
 #include "goriacheva_k_mult_sparse_complex_matrix_ccs/seq/include/ops_seq.hpp"
 
 #include "goriacheva_k_mult_sparse_complex_matrix_ccs/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace goriacheva_k_mult_sparse_complex_matrix_ccs {
 
@@ -11,13 +15,13 @@ GoriachevaKMultSparseComplexMatrixCcsSEQ::GoriachevaKMultSparseComplexMatrixCcsS
 }
 
 bool GoriachevaKMultSparseComplexMatrixCcsSEQ::ValidationImpl() {
-  auto &[A, B] = GetInput();
+  auto &[a, b] = GetInput();
 
-  if (A.cols != B.rows) {
+  if (a.cols != b.rows) {
     return false;
   }
 
-  if (A.col_ptr.empty() || B.col_ptr.empty()) {
+  if (a.col_ptr.empty() || b.col_ptr.empty()) {
     return false;
   }
 
@@ -30,30 +34,30 @@ bool GoriachevaKMultSparseComplexMatrixCcsSEQ::PreProcessingImpl() {
 }
 
 bool GoriachevaKMultSparseComplexMatrixCcsSEQ::RunImpl() {
-  auto &[A, B] = GetInput();
-  auto &C = GetOutput();
+  auto &[a, b] = GetInput();
+  auto &c = GetOutput();
 
-  C.rows = A.rows;
-  C.cols = B.cols;
-  C.col_ptr.resize(C.cols + 1);
+  c.rows = a.rows;
+  c.cols = b.cols;
+  c.col_ptr.resize(c.cols + 1);
 
   std::vector<Complex> values;
   std::vector<int> rows;
 
-  std::vector<Complex> accumulator(A.rows);
-  std::vector<int> marker(A.rows, -1);
+  std::vector<Complex> accumulator(a.rows);
+  std::vector<int> marker(a.rows, -1);
   std::vector<int> used_rows;
 
-  for (int j = 0; j < B.cols; j++) {
-    C.col_ptr[j] = values.size();
+  for (int j = 0; j < b.cols; j++) {
+    c.col_ptr[j] = static_cast<int>(values.size());
     used_rows.clear();
 
-    for (int bi = B.col_ptr[j]; bi < B.col_ptr[j + 1]; bi++) {
-      int k = B.row_ind[bi];
-      Complex b_val = B.values[bi];
+    for (int bi = b.col_ptr[j]; bi < b.col_ptr[j + 1]; bi++) {
+      int k = b.row_ind[bi];
+      Complex b_val = b.values[bi];
 
-      for (int ai = A.col_ptr[k]; ai < A.col_ptr[k + 1]; ai++) {
-        int i = A.row_ind[ai];
+      for (int ai = a.col_ptr[k]; ai < a.col_ptr[k + 1]; ai++) {
+        int i = a.row_ind[ai];
 
         if (marker[i] != j) {
           marker[i] = j;
@@ -61,7 +65,7 @@ bool GoriachevaKMultSparseComplexMatrixCcsSEQ::RunImpl() {
           used_rows.push_back(i);
         }
 
-        accumulator[i] += A.values[ai] * b_val;
+        accumulator[i] += a.values[ai] * b_val;
       }
     }
 
@@ -75,9 +79,9 @@ bool GoriachevaKMultSparseComplexMatrixCcsSEQ::RunImpl() {
     }
   }
 
-  C.col_ptr[C.cols] = values.size();
-  C.values = std::move(values);
-  C.row_ind = std::move(rows);
+  c.col_ptr[c.cols] = static_cast<int>(values.size());
+  c.values = std::move(values);
+  c.row_ind = std::move(rows);
 
   return true;
 }

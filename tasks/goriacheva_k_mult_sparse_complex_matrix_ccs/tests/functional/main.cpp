@@ -6,6 +6,9 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <stdexcept>
+#include <cstddef>
+#include <array>
 
 #include "goriacheva_k_mult_sparse_complex_matrix_ccs/common/include/common.hpp"
 #include "goriacheva_k_mult_sparse_complex_matrix_ccs/seq/include/ops_seq.hpp"
@@ -14,7 +17,7 @@
 
 namespace goriacheva_k_mult_sparse_complex_matrix_ccs {
 
-using json = nlohmann::json;
+using Json = nlohmann::json;
 
 class GoriachevaKMultSparseComplexMatrixCcsFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -31,14 +34,14 @@ class GoriachevaKMultSparseComplexMatrixCcsFuncTests : public ppc::util::BaseRun
       throw std::runtime_error("Cannot open tests file: " + path);
     }
 
-    json tests_json;
+    Json tests_json;
     file >> tests_json;
 
     auto test_param = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     int test_index = std::get<0>(test_param);
 
-    const json &test = tests_json.at(test_index);
+    const Json &test = tests_json.at(test_index);
 
     input_data_ = {ParseMatrix(test["input"]["A"]), ParseMatrix(test["input"]["B"])};
 
@@ -54,7 +57,7 @@ class GoriachevaKMultSparseComplexMatrixCcsFuncTests : public ppc::util::BaseRun
   }
 
  private:
-  SparseMatrixCCS ParseMatrix(const json &j) {
+  static SparseMatrixCCS ParseMatrix(const Json &j) {
     SparseMatrixCCS m;
     m.rows = j.at("rows");
     m.cols = j.at("cols");
@@ -68,7 +71,7 @@ class GoriachevaKMultSparseComplexMatrixCcsFuncTests : public ppc::util::BaseRun
     return m;
   }
 
-  bool CompareMatrices(const SparseMatrixCCS &a, const SparseMatrixCCS &b) {
+  static bool CompareMatrices(const SparseMatrixCCS &a, const SparseMatrixCCS &b) {
     if (a.rows != b.rows || a.cols != b.cols) {
       return false;
     }
@@ -92,7 +95,7 @@ class GoriachevaKMultSparseComplexMatrixCcsFuncTests : public ppc::util::BaseRun
     return true;
   }
 
-  InType input_data_{};
+  InType input_data_;
   SparseMatrixCCS expected_{};
 };
 
