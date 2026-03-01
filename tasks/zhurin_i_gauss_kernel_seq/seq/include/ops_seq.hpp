@@ -27,7 +27,7 @@ class ZhurinIGaussKernelSEQ : public BaseTask {
   int width_ = 0;
   int height_ = 0;
   int num_parts_ = 1;
-
+  std::vector<std::vector<int>> padded_;
   std::vector<std::vector<int>> image_;
   std::vector<std::vector<int>> result_;
   bool output_written_ = false;

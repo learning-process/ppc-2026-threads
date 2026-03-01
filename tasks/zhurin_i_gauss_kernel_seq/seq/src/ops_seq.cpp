@@ -42,16 +42,37 @@ bool ZhurinIGaussKernelSEQ::PreProcessingImpl() {
   num_parts_ = std::get<2>(in);
   image_ = std::get<3>(in);
 
-  result_.assign(height_, std::vector<int>(width_, 0));
-
-  std::vector<std::vector<int>> padded(height_ + 2, std::vector<int>(width_ + 2, 0));
+  // Подготавливаем расширенное изображение (один раз)
+  padded_.assign(height_ + 2, std::vector<int>(width_ + 2, 0));
   for (int i = 0; i < height_; ++i) {
-    std::copy(image_[i].begin(), image_[i].end(), padded[i + 1].begin() + 1);
+    std::copy(image_[i].begin(), image_[i].end(), padded_[i + 1].begin() + 1);
   }
 
+  // Выделяем память под результат
+  result_.assign(height_, std::vector<int>(width_, 0));
+  output_written_ = false;
+  return true;
+}
+
+bool ZhurinIGaussKernelSEQ::RunImpl() {
   int base_width = width_ / num_parts_;
   int remainder = width_ % num_parts_;
   int x_start = 0;
+
+  // Развёрнутая свёртка (нет циклов по ki,kj)
+  auto convolve_at = [&](int row, int col) -> int {
+    int sum = 0;
+    sum += padded_[row - 1][col - 1] * kKernel[0][0];
+    sum += padded_[row - 1][col] * kKernel[0][1];
+    sum += padded_[row - 1][col + 1] * kKernel[0][2];
+    sum += padded_[row][col - 1] * kKernel[1][0];
+    sum += padded_[row][col] * kKernel[1][1];
+    sum += padded_[row][col + 1] * kKernel[1][2];
+    sum += padded_[row + 1][col - 1] * kKernel[2][0];
+    sum += padded_[row + 1][col] * kKernel[2][1];
+    sum += padded_[row + 1][col + 1] * kKernel[2][2];
+    return sum >> kShift;
+  };
 
   for (int part = 0; part < num_parts_; ++part) {
     int part_width = base_width + (part < remainder ? 1 : 0);
@@ -59,29 +80,18 @@ bool ZhurinIGaussKernelSEQ::PreProcessingImpl() {
 
     for (int i = 1; i <= height_; ++i) {
       for (int j = x_start + 1; j <= x_end; ++j) {
-        int sum = 0;
-        for (int ki = 0; ki < 3; ++ki) {
-          for (int kj = 0; kj < 3; ++kj) {
-            sum += padded[i - 1 + ki][j - 1 + kj] * kKernel[ki][kj];
-          }
-        }
-        result_[i - 1][j - 1] = sum >> kShift;
+        result_[i - 1][j - 1] = convolve_at(i, j);
       }
     }
     x_start = x_end;
   }
-
-  GetOutput() = std::move(result_);
-  output_written_ = true;
-  return true;
-}
-
-bool ZhurinIGaussKernelSEQ::RunImpl() {
   return true;
 }
 
 bool ZhurinIGaussKernelSEQ::PostProcessingImpl() {
-  return output_written_;
+  GetOutput() = result_;  // копирование, а не перемещение
+  output_written_ = true;
+  return true;
 }
 
 }  // namespace zhurin_i_gauss_kernel_seq
