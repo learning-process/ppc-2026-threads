@@ -67,7 +67,7 @@ bool EreminVIntegralsMonteCarloSEQ::RunImpl() {
   std::vector<double> point(dimension);
 
   for (int i = 0; i < samples; ++i) {
-    for (std::size_t dim = 0; d < dimension; ++dim) {
+    for (std::size_t dim = 0; dim < dimension; ++dim) {
       point[dim] = distributions[dim](gen);
     }
 
