@@ -71,15 +71,15 @@ InType MakeInput(int w, int h, int p, const std::vector<std::vector<int>> &img) 
 }
 
 const std::array<FuncTestCase, 6> kAllTests = {
-    {{1, MakeInput(1, 1, 1, {{16}}), {{4}}},
-     {2,
-      MakeInput(3, 3, 1, std::vector<std::vector<int>>(3, std::vector<int>(3, 1))),
-      {{0, 0, 0}, {0, 1, 0}, {0, 0, 0}}},
-     {3, MakeInput(3, 3, 1, {{0, 0, 0}, {0, 16, 0}, {0, 0, 0}}), {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}},
-     {4, MakeInput(3, 3, 2, {{16, 0, 0}, {0, 0, 0}, {0, 0, 0}}), {{4, 2, 0}, {2, 1, 0}, {0, 0, 0}}},
-     {5, MakeInput(2, 2, 1, {{1, 2}, {3, 4}}), {{1, 1}, {1, 1}}},
-     {6, MakeInput(4, 4, 4, std::vector<std::vector<int>>(4, std::vector<int>(4, 0))),
-      OutType(4, std::vector<int>(4, 0))}}};
+    {FuncTestCase{1, MakeInput(1, 1, 1, {{16}}), {{4}}},
+     FuncTestCase{2,
+                  MakeInput(3, 3, 1, std::vector<std::vector<int>>(3, std::vector<int>(3, 1))),
+                  {{0, 0, 0}, {0, 1, 0}, {0, 0, 0}}},
+     FuncTestCase{3, MakeInput(3, 3, 1, {{0, 0, 0}, {0, 16, 0}, {0, 0, 0}}), {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}},
+     FuncTestCase{4, MakeInput(3, 3, 2, {{16, 0, 0}, {0, 0, 0}, {0, 0, 0}}), {{4, 2, 0}, {2, 1, 0}, {0, 0, 0}}},
+     FuncTestCase{5, MakeInput(2, 2, 1, {{1, 2}, {3, 4}}), {{1, 1}, {1, 1}}},
+     FuncTestCase{6, MakeInput(4, 4, 4, std::vector<std::vector<int>>(4, std::vector<int>(4, 0))),
+                  OutType(4, std::vector<int>(4, 0))}}};
 
 const auto kAllTasksList =
     ppc::util::AddFuncTask<ZhurinIGaussKernelSEQ, InType>(kAllTests, PPC_SETTINGS_zhurin_i_gauss_kernel_seq);
