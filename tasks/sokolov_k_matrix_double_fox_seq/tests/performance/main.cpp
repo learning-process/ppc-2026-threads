@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <tuple>
@@ -24,12 +25,7 @@ class SokolovKMatrixDoubleFoxPerfTestsSeq : public ppc::util::BaseRunPerfTests<I
 
   bool CheckTestOutputData(OutType &output_data) final {
     const double expected = 1.5 * 2.0 * kN_;
-    for (double val : output_data) {
-      if (std::abs(val - expected) > 1e-6) {
-        return false;
-      }
-    }
-    return true;
+    return std::ranges::all_of(output_data, [expected](double val) { return std::abs(val - expected) <= 1e-6; });
   }
 
   InType GetTestInputData() final {
