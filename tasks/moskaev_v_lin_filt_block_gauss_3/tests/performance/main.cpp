@@ -24,8 +24,8 @@ class MoskaevVLinFiltBlockGauss3SEQPerfTests : public ppc::util::BaseRunPerfTest
     for (int row = 0; row < height; ++row) {
       for (int col = 0; col < width; ++col) {
         for (int channel = 0; channel < channels; ++channel) {
-          const size_t idx = (static_cast<size_t>(row) * static_cast<size_t>(width) + static_cast<size_t>(col)) *
-                                 static_cast<size_t>(channels) +
+          const size_t idx = ((static_cast<size_t>(row) * static_cast<size_t>(width) + static_cast<size_t>(col)) *
+                              static_cast<size_t>(channels)) +
                              static_cast<size_t>(channel);
           image_data[idx] = static_cast<uint8_t>((row + col + channel * 85) % 256);
         }
