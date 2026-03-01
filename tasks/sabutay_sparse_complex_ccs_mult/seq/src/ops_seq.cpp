@@ -1,9 +1,10 @@
+#include "../include/ops_seq.hpp"
+
 #include <cmath>
 #include <complex>
 #include <vector>
 
 #include "../../common/include/common.hpp"
-#include "../include/ops_seq.hpp"
 
 namespace sabutay_sparse_complex_ccs_mult {
 

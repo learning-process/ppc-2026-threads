@@ -2,12 +2,12 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
+#include <complex>
 #include <cstddef>
 #include <string>
-#include <vector>
 #include <utility>
-#include <complex>
-#include <cmath>
+#include <vector>
 
 #include "sabutay_sparse_complex_ccs_mult/common/include/common.hpp"
 #include "sabutay_sparse_complex_ccs_mult/seq/include/ops_seq.hpp"
