@@ -1,11 +1,13 @@
 #pragma once
 
-#include "zhurin_i_gauss_kernel_seq/common/include/common.hpp"
+#include <vector>
+
 #include "task/include/task.hpp"
+#include "zhurin_i_gauss_kernel_seq/common/include/common.hpp"
 
 namespace zhurin_i_gauss_kernel_seq {
 
-class ZhurinIGaussKernelSEQ : public ppc::task::Task<InType, OutType> {
+class ZhurinIGaussKernelSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
@@ -19,14 +21,16 @@ class ZhurinIGaussKernelSEQ : public ppc::task::Task<InType, OutType> {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
+  static constexpr int kernel_[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
+  static constexpr int shift_ = 4;
+
   int width = 0;
   int height = 0;
-  int numParts = 0;                
+  int numParts = 1;
+
   std::vector<std::vector<int>> image;
   std::vector<std::vector<int>> result;
-
-  static constexpr int kernel[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
-  static constexpr int slip = 4;  
+  bool output_written = false;
 };
 
 }  // namespace zhurin_i_gauss_kernel_seq

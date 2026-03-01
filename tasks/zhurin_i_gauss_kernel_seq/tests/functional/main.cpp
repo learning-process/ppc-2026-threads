@@ -1,61 +1,55 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
-#include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
-#include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
-#include "zhurin_i_gauss_kernel_seq/all/include/ops_all.hpp"
-#include "zhurin_i_gauss_kernel_seq/common/include/common.hpp"
-#include "zhurin_i_gauss_kernel_seq/omp/include/ops_omp.hpp"
-#include "zhurin_i_gauss_kernel_seq/seq/include/ops_seq.hpp"
-#include "zhurin_i_gauss_kernel_seq/stl/include/ops_stl.hpp"
-#include "zhurin_i_gauss_kernel_seq/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
+#include "zhurin_i_gauss_kernel_seq/common/include/common.hpp"
+#include "zhurin_i_gauss_kernel_seq/seq/include/ops_seq.hpp"
 
-namespace zhurin_i_test_task_threads {
+namespace zhurin_i_gauss_kernel_seq {
 
-class ZhurinIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+// Структура, описывающая один тестовый случай
+struct FuncTestCase {
+  int id;
+  InType input;
+  OutType expected;
+};
+
+class ZhurinIGaussKernelFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, FuncTestCase> {
  public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+  static std::string PrintTestName(
+      const testing::TestParamInfo<std::tuple<std::function<std::shared_ptr<ppc::task::Task<InType, OutType>>(InType)>,
+                                              std::string, FuncTestCase>> &info) {
+    const auto &task_name = std::get<1>(info.param);
+    const auto &test_param = std::get<2>(info.param);
+    return task_name + "_Test" + std::to_string(test_param.id);
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_zhurin_i_gauss_kernel_seq), "pic.ppm");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
-
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    const auto &params = std::get<2>(GetParam());
+    input_data_ = params.input;
+    expected_output_ = params.expected;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    if (output_data.size() != expected_output_.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < output_data.size(); ++i) {
+      if (output_data[i].size() != expected_output_[i].size()) {
+        return false;
+      }
+      for (size_t j = 0; j < output_data[i].size(); ++j) {
+        if (output_data[i][j] != expected_output_[i][j]) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   InType GetTestInputData() final {
@@ -63,30 +57,91 @@ class ZhurinIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Ou
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType expected_output_;
 };
 
 namespace {
 
-TEST_P(ZhurinIRunFuncTestsThreads, MatmulFromPic) {
+// Вспомогательная функция для создания входных данных
+InType make_input(int w, int h, int p, std::vector<std::vector<int>> img) {
+  return std::make_tuple(w, h, p, img);
+}
+
+// Массив тестовых случаев (id, входные данные, ожидаемый результат)
+const std::array<FuncTestCase, 6> kAllTests = {
+    {{1, make_input(1, 1, 1, {{16}}), {{4}}},
+     {2,
+      make_input(3, 3, 1, std::vector<std::vector<int>>(3, std::vector<int>(3, 1))),
+      {{0, 0, 0}, {0, 1, 0}, {0, 0, 0}}},
+     {3, make_input(3, 3, 1, {{0, 0, 0}, {0, 16, 0}, {0, 0, 0}}), {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}},
+     {4, make_input(3, 3, 2, {{16, 0, 0}, {0, 0, 0}, {0, 0, 0}}), {{4, 2, 0}, {2, 1, 0}, {0, 0, 0}}},
+     {5, make_input(2, 2, 1, {{1, 2}, {3, 4}}), {{1, 1}, {1, 1}}},
+     {6, make_input(4, 4, 4, std::vector<std::vector<int>>(4, std::vector<int>(4, 0))),
+      OutType(4, std::vector<int>(4, 0))}}};
+
+const auto kAllTasksList =
+    ppc::util::AddFuncTask<ZhurinIGaussKernelSEQ, InType>(kAllTests, PPC_SETTINGS_zhurin_i_gauss_kernel_seq);
+
+inline const auto kGtestValues = ppc::util::ExpandToValues(kAllTasksList);
+
+TEST_P(ZhurinIGaussKernelFuncTests, AllTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+INSTANTIATE_TEST_SUITE_P(ZhurinIGaussKernel, ZhurinIGaussKernelFuncTests, kGtestValues,
+                         ZhurinIGaussKernelFuncTests::PrintTestName);
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<ZhurinITestTaskALL, InType>(kTestParam, PPC_SETTINGS_zhurin_i_gauss_kernel_seq),
-                   ppc::util::AddFuncTask<ZhurinITestTaskOMP, InType>(kTestParam, PPC_SETTINGS_zhurin_i_gauss_kernel_seq),
-                   ppc::util::AddFuncTask<ZhurinITestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_zhurin_i_gauss_kernel_seq),
-                   ppc::util::AddFuncTask<ZhurinITestTaskSTL, InType>(kTestParam, PPC_SETTINGS_zhurin_i_gauss_kernel_seq),
-                   ppc::util::AddFuncTask<ZhurinITestTaskTBB, InType>(kTestParam, PPC_SETTINGS_zhurin_i_gauss_kernel_seq));
+// ========== НЕГАТИВНЫЕ ТЕСТЫ ==========
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+TEST(ZhurinIGaussKernelNegativeTest, InvalidWidth) {
+  int width = 0, height = 3, parts = 1;
+  std::vector<std::vector<int>> img(height, std::vector<int>(3, 0));
+  InType in = std::make_tuple(width, height, parts, img);
+  auto task = std::make_shared<ZhurinIGaussKernelSEQ>(in);
+  EXPECT_FALSE(task->Validation());
+}
 
-const auto kPerfTestName = ZhurinIRunFuncTestsThreads::PrintFuncTestName<ZhurinIRunFuncTestsThreads>;
+TEST(ZhurinIGaussKernelNegativeTest, InvalidHeight) {
+  int width = 3, height = -1, parts = 1;
+  std::vector<std::vector<int>> img(1, std::vector<int>(3, 0));
+  InType in = std::make_tuple(width, height, parts, img);
+  auto task = std::make_shared<ZhurinIGaussKernelSEQ>(in);
+  EXPECT_FALSE(task->Validation());
+}
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, ZhurinIRunFuncTestsThreads, kGtestValues, kPerfTestName);
+TEST(ZhurinIGaussKernelNegativeTest, InvalidPartsZero) {
+  int width = 3, height = 3, parts = 0;
+  std::vector<std::vector<int>> img(height, std::vector<int>(width, 0));
+  InType in = std::make_tuple(width, height, parts, img);
+  auto task = std::make_shared<ZhurinIGaussKernelSEQ>(in);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(ZhurinIGaussKernelNegativeTest, InvalidPartsTooLarge) {
+  int width = 3, height = 3, parts = 5;
+  std::vector<std::vector<int>> img(height, std::vector<int>(width, 0));
+  InType in = std::make_tuple(width, height, parts, img);
+  auto task = std::make_shared<ZhurinIGaussKernelSEQ>(in);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(ZhurinIGaussKernelNegativeTest, ImageRowsMismatch) {
+  int width = 3, height = 3, parts = 1;
+  std::vector<std::vector<int>> img(2, std::vector<int>(width, 0));
+  InType in = std::make_tuple(width, height, parts, img);
+  auto task = std::make_shared<ZhurinIGaussKernelSEQ>(in);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(ZhurinIGaussKernelNegativeTest, ImageColsMismatch) {
+  int width = 3, height = 3, parts = 1;
+  std::vector<std::vector<int>> img(height, std::vector<int>(2, 0));
+  InType in = std::make_tuple(width, height, parts, img);
+  auto task = std::make_shared<ZhurinIGaussKernelSEQ>(in);
+  EXPECT_FALSE(task->Validation());
+}
 
 }  // namespace
 
-}  // namespace zhurin_i_test_task_threads
+}  // namespace zhurin_i_gauss_kernel_seq
