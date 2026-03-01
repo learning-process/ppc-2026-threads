@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -12,7 +13,8 @@ using FunctionType = std::function<double(const std::vector<double> &)>;
 
 struct MonteCarloInput {
   std::vector<std::pair<double, double>> bounds;
-  int samples;
+  int samples = 0;
+  ;
   FunctionType func;
 };
 

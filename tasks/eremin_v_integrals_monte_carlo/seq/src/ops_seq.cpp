@@ -1,7 +1,9 @@
 #include "eremin_v_integrals_monte_carlo/seq/include/ops_seq.hpp"
 
 #include <cmath>
+#include <cstddef>
 #include <random>
+#include <ranges>
 #include <vector>
 
 #include "eremin_v_integrals_monte_carlo/common/include/common.hpp"
@@ -27,14 +29,10 @@ bool EreminVIntegralsMonteCarloSEQ::ValidationImpl() {
     return false;
   }
 
-  for (const auto &[a, b] : input.bounds) {
-    if (a >= b) {
-      return false;
-    }
-    if (std::abs(a) > 1e9 || std::abs(b) > 1e9) {
-      return false;
-    }
-  }
+  return std::ranges::all_of(input.bounds, [](const auto &p) {
+    const auto &[a, b] = p;
+    return (a < b) && (std::abs(a) <= 1e9) && (std::abs(b) <= 1e9);
+  });
   return true;
 }
 
@@ -56,7 +54,7 @@ bool EreminVIntegralsMonteCarloSEQ::RunImpl() {
     volume *= (b - a);
   }
 
-  std::mt19937 gen(42);
+  std::mt19937 gen(std::random_device{}());
 
   std::vector<std::uniform_real_distribution<double>> distributions;
   distributions.reserve(dimension);
@@ -69,8 +67,8 @@ bool EreminVIntegralsMonteCarloSEQ::RunImpl() {
   std::vector<double> point(dimension);
 
   for (int i = 0; i < samples; ++i) {
-    for (std::size_t d = 0; d < dimension; ++d) {
-      point[d] = distributions[d](gen);
+    for (std::size_t dim = 0; d < dimension; ++dim) {
+      point[dim] = distributions[dim](gen);
     }
 
     sum += func(point);

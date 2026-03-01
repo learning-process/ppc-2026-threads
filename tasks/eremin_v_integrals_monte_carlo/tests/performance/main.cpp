@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
+#include <vector>
+
 #include "eremin_v_integrals_monte_carlo/common/include/common.hpp"
 #include "eremin_v_integrals_monte_carlo/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"

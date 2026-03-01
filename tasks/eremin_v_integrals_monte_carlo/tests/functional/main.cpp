@@ -1,9 +1,12 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
-#include <functional>
+#include <cstddef>
+#include <string>
+#include <tuple>
 #include <vector>
 
 #include "eremin_v_integrals_monte_carlo/common/include/common.hpp"
@@ -53,19 +56,19 @@ TEST_P(EreminVRunFuncTestsThreadsIntegralsMonteCarlo, IntegralsMonteCarloFunc) {
 }
 
 const std::array<TestType, 3> kTestParam = {
-    std::make_tuple(MonteCarloInput{{{0.0, 1.0}},  // 1D
-                                    1'000'000,
-                                    [](const std::vector<double> &x) { return x[0] * x[0]; }},
+    std::make_tuple(MonteCarloInput{.bounds = {{0.0, 1.0}},  // 1D
+                                    .samples = 1'000'000,
+                                    .func = [](const std::vector<double> &x) { return x[0] * x[0]; }},
                     1.0 / 3.0),
 
-    std::make_tuple(MonteCarloInput{{{0.0, 1.0}, {0.0, 1.0}},  // 2D
-                                    1'000'000,
-                                    [](const std::vector<double> &x) { return x[0] * x[1]; }},
+    std::make_tuple(MonteCarloInput{.bounds = {{0.0, 1.0}, {0.0, 1.0}},  // 2D
+                                    .samples = 1'000'000,
+                                    .func = [](const std::vector<double> &x) { return x[0] * x[1]; }},
                     0.25),
 
-    std::make_tuple(MonteCarloInput{{{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}},  // 3D
-                                    1'000'000,
-                                    [](const std::vector<double> &x) { return x[0] + x[1] + x[2]; }},
+    std::make_tuple(MonteCarloInput{.bounds = {{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}},  // 3D
+                                    .samples = 1'000'000,
+                                    .func = [](const std::vector<double> &x) { return x[0] + x[1] + x[2]; }},
                     1.5)};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<EreminVIntegralsMonteCarloSEQ, InType>(
