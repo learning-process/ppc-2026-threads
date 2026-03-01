@@ -53,23 +53,19 @@ bool ZhurinIGaussKernelSEQ::PreProcessingImpl() {
   int remainder = width_ % num_parts_;
   int x_start = 0;
 
-  auto convolve_at = [&](int row, int col) -> int {
-    int sum = 0;
-    for (int ki = 0; ki < 3; ++ki) {
-      for (int kj = 0; kj < 3; ++kj) {
-        sum += padded[row - 1 + ki][col - 1 + kj] * kKernel[ki][kj];
-      }
-    }
-    return sum >> kShift;
-  };
-
   for (int part = 0; part < num_parts_; ++part) {
     int part_width = base_width + (part < remainder ? 1 : 0);
     int x_end = x_start + part_width;
 
     for (int i = 1; i <= height_; ++i) {
       for (int j = x_start + 1; j <= x_end; ++j) {
-        result_[i - 1][j - 1] = convolve_at(i, j);
+        int sum = 0;
+        for (int ki = 0; ki < 3; ++ki) {
+          for (int kj = 0; kj < 3; ++kj) {
+            sum += padded[i - 1 + ki][j - 1 + kj] * kKernel[ki][kj];
+          }
+        }
+        result_[i - 1][j - 1] = sum >> kShift;
       }
     }
     x_start = x_end;

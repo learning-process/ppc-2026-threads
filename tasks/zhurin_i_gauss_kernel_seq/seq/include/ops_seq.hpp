@@ -1,7 +1,6 @@
 #pragma once
 
-#include <array>
-#include <vector>
+#include <vector>  // <array> удалён
 
 #include "task/include/task.hpp"
 #include "zhurin_i_gauss_kernel_seq/common/include/common.hpp"
@@ -22,7 +21,7 @@ class ZhurinIGaussKernelSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static constexpr std::array<std::array<int, 3>, 3> kKernel = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
+  static constexpr int kKernel[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
   static constexpr int kShift = 4;
 
   int width_ = 0;
