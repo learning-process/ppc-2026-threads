@@ -1,12 +1,12 @@
 #pragma once
 
+#include <cstdint>     // для uint64_t
+#include <functional>  // для std::function
+#include <stdexcept>   // для std::invalid_argument
 #include <string>
 #include <tuple>
-#include <cstdint>      // для uint64_t
-#include <functional>   // для std::function
-#include <stdexcept>     // для std::invalid_argument
-#include <utility>       // для std::move
-#include <vector>        // для std::vector
+#include <utility>  // для std::move
+#include <vector>   // для std::vector
 
 #include "task/include/task.hpp"
 

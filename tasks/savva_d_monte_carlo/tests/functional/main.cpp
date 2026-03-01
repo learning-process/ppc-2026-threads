@@ -73,10 +73,10 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
         num_points = 1000000;
         f = [](const std::vector<double> &x) { return x[0] + x[1]; };
         // ∫∫(x+y)dxdy = ∫xdx * ∫dy + ∫dx * ∫ydy
-        double width_x = 2.0;                          // 3-1
-        double width_y = 2.0;                          // 4-2
-        double int_x = (3.0 * 3.0 - 1.0 * 1.0) / 2.0;  // ∫xdx от 1 до 3 = (9-1)/2 = 4
-        double int_y = (4.0 * 4.0 - 2.0 * 2.0) / 2.0;  // ∫ydy от 2 до 4 = (16-4)/2 = 6
+        double width_x = 2.0;                              // 3-1
+        double width_y = 2.0;                              // 4-2
+        double int_x = (3.0 * 3.0 - 1.0 * 1.0) / 2.0;      // ∫xdx от 1 до 3 = (9-1)/2 = 4
+        double int_y = (4.0 * 4.0 - 2.0 * 2.0) / 2.0;      // ∫ydy от 2 до 4 = (16-4)/2 = 6
         expected = (int_x * width_y) + (width_x * int_y);  // 4*2 + 2*6 = 8 + 12 = 20
         break;
       }
@@ -200,7 +200,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
         double width_y = 2.0;                                      // 1 - (-1) = 2
         double int_x = ((-1.0) * (-1.0) - (-2.0) * (-2.0)) / 2.0;  // (1 - 4)/2 = -1.5
         double int_y = ((1.0 * 1.0) - (-1.0) * (-1.0)) / 2.0;      // (1 - 1)/2 = 0
-        expected = (int_x * width_y) + (width_x * int_y);              // -1.5*2 + 1*0 = -3
+        expected = (int_x * width_y) + (width_x * int_y);          // -1.5*2 + 1*0 = -3
         break;
       }
 
