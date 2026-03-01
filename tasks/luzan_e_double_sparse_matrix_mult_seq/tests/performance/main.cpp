@@ -10,7 +10,7 @@
 
 namespace luzan_e_double_sparse_matrix_mult_seq {
 
-class ExampleRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class LuzanEDoubleSparseMatrixMultSeqPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 200;
   InType input_data_{};
 
@@ -27,7 +27,7 @@ class ExampleRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Out
   }
 };
 
-TEST_P(ExampleRunPerfTestThreads, RunPerfModes) {
+TEST_P(LuzanEDoubleSparseMatrixMultSeqPerfTestThreads, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -39,9 +39,9 @@ const auto kAllPerfTasks =
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = ExampleRunPerfTestThreads::CustomPerfTestName;
+const auto kPerfTestName = LuzanEDoubleSparseMatrixMultSeqPerfTestThreads::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ExampleRunPerfTestThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, LuzanEDoubleSparseMatrixMultSeqPerfTestThreads, kGtestValues, kPerfTestName);
 
 }  // namespace
 
