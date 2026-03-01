@@ -9,7 +9,7 @@ SabutaySparseComplexCcsMultSEQ::SabutaySparseComplexCcsMultSEQ(const InType &in)
 }
 
 void SabutaySparseComplexCcsMultSEQ::SpMM(const CCS &a, const CCS &b,
-                                          CCS &c) {  // NOLINT(readability-convert-member-functions-to-static)
+                                          CCS &c) {
   c.m = a.m;
   c.n = b.n;
   c.col_ptr.assign(b.n + 1, 0);
@@ -51,17 +51,17 @@ void SabutaySparseComplexCcsMultSEQ::SpMM(const CCS &a, const CCS &b,
   }
 }
 
-bool SabutaySparseComplexCcsMultSEQ::ValidationImpl() {  // NOLINT(readability-convert-member-functions-to-static)
+bool SabutaySparseComplexCcsMultSEQ::ValidationImpl() {
   const CCS &a = std::get<0>(GetInput());
   const CCS &b = std::get<1>(GetInput());
   return a.n == b.m;
 }
 
-bool SabutaySparseComplexCcsMultSEQ::PreProcessingImpl() {  // NOLINT(readability-convert-member-functions-to-static)
+bool SabutaySparseComplexCcsMultSEQ::PreProcessingImpl() {
   return true;
 }
 
-bool SabutaySparseComplexCcsMultSEQ::RunImpl() {  // NOLINT(readability-convert-member-functions-to-static)
+bool SabutaySparseComplexCcsMultSEQ::RunImpl() {
   const CCS &a = std::get<0>(GetInput());
   const CCS &b = std::get<1>(GetInput());
   CCS &c = GetOutput();
@@ -71,7 +71,7 @@ bool SabutaySparseComplexCcsMultSEQ::RunImpl() {  // NOLINT(readability-convert-
   return true;
 }
 
-bool SabutaySparseComplexCcsMultSEQ::PostProcessingImpl() {  // NOLINT(readability-convert-member-functions-to-static)
+bool SabutaySparseComplexCcsMultSEQ::PostProcessingImpl() {
   return true;
 }
 

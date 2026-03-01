@@ -30,7 +30,7 @@ class SabutayARunFuncTestsSeq : public ppc::util::BaseRunFuncTests<InType, OutTy
   }
 
  protected:
-  void SetUp() override {  // NOLINT(readability-convert-member-functions-to-static)
+  void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     CCS &a = std::get<0>(input_data_);
     CCS &b = std::get<1>(input_data_);
@@ -95,7 +95,7 @@ class SabutayARunFuncTestsSeq : public ppc::util::BaseRunFuncTests<InType, OutTy
     }
   }
 
-  bool CheckTestOutputData(OutType &output_data) override {  // NOLINT(readability-convert-member-functions-to-static)
+  bool CheckTestOutputData(OutType &output_data) override {
     bool result = true;
     constexpr double kEps = 1e-14;
     if (test_result_.m != output_data.m || test_result_.n != output_data.n ||
@@ -138,20 +138,20 @@ class SabutayARunFuncTestsSeq : public ppc::util::BaseRunFuncTests<InType, OutTy
   }
 
  private:
-  InType input_data_{};  // NOLINT(readability-identifier-naming)
+  InType input_data_{};
   OutType test_result_{};
 };
 
 namespace {
 
-TEST_P(SabutayARunFuncTestsSeq, FuncCCSTest) {  // NOLINT(readability-identifier-naming, readability-named-parameter)
+TEST_P(SabutayARunFuncTestsSeq, FuncCCSTest) {
   ExecuteTest(GetParam());
 }
 
 const std::array<TestType, 3> kTestParam = {0, 1, 2};
 
 const auto kTestTasksList =
-    ppc::util::AddFuncTask<SabutaySparseComplexCcsMultSEQ, InType>(  // NOLINT(readability-identifier-naming)
+    ppc::util::AddFuncTask<SabutaySparseComplexCcsMultSEQ, InType>(
         kTestParam, PPC_SETTINGS_sabutay_sparse_complex_ccs_mult);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
@@ -159,7 +159,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = SabutayARunFuncTestsSeq::PrintFuncTestName<SabutayARunFuncTestsSeq>;
 
 INSTANTIATE_TEST_SUITE_P(RunFuncCCSTest, SabutayARunFuncTestsSeq, kGtestValues,
-                         kPerfTestName);  // NOLINT(readability-identifier-naming)
+                         kPerfTestName);
 
 }  // namespace
 
