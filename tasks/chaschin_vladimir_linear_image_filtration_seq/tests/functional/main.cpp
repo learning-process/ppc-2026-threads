@@ -22,8 +22,9 @@ class ChaschinVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
   }
 
  protected:
-  std::vector<float> GenerateDeterministicImage(int width, int height) {
-    std::vector<float> image(static_cast<std::vector<float>::size_type>(width * height));
+  std::vector<float> static GenerateDeterministicImage(int width, int height) {
+    std::vector<float> image(static_cast<std::vector<float>::size_type>(width) *
+                             static_cast<std::vector<float>::size_type>(height));
     for (int i = 0; i < height; ++i) {
       for (int j = 0; j < width; ++j) {
         image[(i * width) + j] = static_cast<float>((i + 1) * (j + 3) % 256);
@@ -33,31 +34,35 @@ class ChaschinVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
   }
 
   std::vector<float> ApplyGaussianKernel(const std::vector<float> &image, int width, int height) {
-    std::vector<float> temp(width * height, 0.0F);
-    std::vector<float> output(width * height, 0.0F);
+    std::vector<float> temp(
+        static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0f);
+    std::vector<float> output(
+        static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0f);
 
     // Горизонтальный проход
-    for (int y = 0; y < height; ++y) {
-      for (int x = 0; x < width; ++x) {
-        float left = (x > 0) ? image[y * width + (x - 1)] : image[y * width + x];
-        float center = image[y * width + x];
-        float right = (x < width - 1) ? image[y * width + (x + 1)] : image[y * width + x];
-        temp[y * width + x] = (left + 2.F * center + right) / 4.F;
+    for (int yi = 0; yi < height; ++yi) {
+      temp[(yi * width) + 0] = (image[(yi * width) + 0] * 2 + image[(yi * width) + 1]) / 3.F;
+      for (int xy = 1; xy < width - 1; ++xy) {
+        temp[(yi * width) + xy] =
+            (image[(yi * width) + xy - 1] + 2.F * image[(yi * width) + xy] + image[(yi * width) + xy + 1]) / 4.F;
       }
+      temp[(yi * width) + width - 1] = (image[(yi * width) + width - 2] + 2.F * image[(yi * width) + width - 1]) / 3.F;
     }
 
     // Вертикальный проход
-    for (int x = 0; x < width; ++x) {
-      for (int y = 0; y < height; ++y) {
-        float top = (y > 0) ? temp[(y - 1) * width + x] : temp[y * width + x];
-        float center = temp[y * width + x];
-        float bottom = (y < height - 1) ? temp[(y + 1) * width + x] : temp[y * width + x];
-        output[y * width + x] = (top + 2.F * center + bottom) / 4.F;
+    for (int xy = 0; xy < width; ++xy) {
+      output[xy] = ((temp[xy] * 2) + temp[width + xy]) / 3.F;
+      for (int yi = 1; yi < height - 1; ++yi) {
+        output[(yi * width) + xy] =
+            (temp[((yi - 1) * width) + xy] + 2.F * temp[(yi * width) + xy] + temp[((yi + 1) * width) + xy]) / 4.F;
       }
+      output[((height - 1) * width) + xy] =
+          (temp[((height - 2) * width) + xy] + 2.F * temp[((height - 1) * width) + xy]) / 3.F;
     }
 
     return output;
   }
+
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int size = std::get<0>(params);
