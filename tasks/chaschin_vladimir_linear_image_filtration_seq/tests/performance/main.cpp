@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <vector>
+
 #include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
 #include "chaschin_vladimir_linear_image_filtration_seq/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
@@ -9,53 +11,50 @@ namespace chaschin_v_linear_image_filtration_seq {
 class ChaschinVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr int kCount = 512;
 
+  std::vector<float> GenerateDeterministicImage(int width, int height) {
+    std::vector<float> image(static_cast<std::vector<float>::size_type>(width * height));
+    for (int i = 0; i < height; ++i) {
+      for (int j = 0; j < width; ++j) {
+        image[(i * width) + j] = static_cast<float>((i + 1) * (j + 3) % 256);
+      }
+    }
+    return image;
+  }
+
+  std::vector<float> ApplyGaussianKernel(const std::vector<float> &image, int width, int height) {
+    std::vector<float> temp(width * height, 0.0F);
+    std::vector<float> output(width * height, 0.0F);
+
+    // Горизонтальный проход
+    for (int y = 0; y < height; ++y) {
+      for (int x = 0; x < width; ++x) {
+        float left = (x > 0) ? image[y * width + (x - 1)] : image[y * width + x];
+        float center = image[y * width + x];
+        float right = (x < width - 1) ? image[y * width + (x + 1)] : image[y * width + x];
+        temp[y * width + x] = (left + 2.F * center + right) / 4.F;
+      }
+    }
+
+    // Вертикальный проход
+    for (int x = 0; x < width; ++x) {
+      for (int y = 0; y < height; ++y) {
+        float top = (y > 0) ? temp[(y - 1) * width + x] : temp[y * width + x];
+        float center = temp[y * width + x];
+        float bottom = (y < height - 1) ? temp[(y + 1) * width + x] : temp[y * width + x];
+        output[y * width + x] = (top + 2.F * center + bottom) / 4.F;
+      }
+    }
+
+    return output;
+  }
+
   void SetUp() override {
     const int width = kCount;
     const int height = kCount;
 
-    // ---------- deterministic image ----------
-    std::vector<float> image(width * height);
-    for (int i = 0; i < height; ++i) {
-      for (int j = 0; j < width; ++j) {
-        image[i * width + j] = static_cast<float>((i * 131 + j * 17) % 256);
-      }
-    }
+    input_data_ = std::make_tuple(GenerateDeterministicImage(width, height), width, height);
 
-    input_data_ = std::make_tuple(image, width, height);
-
-    // ---------- Gaussian kernel ----------
-    const float k[3][3] = {
-        {1.f / 16.f, 2.f / 16.f, 1.f / 16.f},
-        {2.f / 16.f, 4.f / 16.f, 2.f / 16.f},
-        {1.f / 16.f, 2.f / 16.f, 1.f / 16.f},
-    };
-
-    expected_output_.resize(width * height, 0.0f);
-
-    // ---------- reference convolution ----------
-    for (int i = 0; i < height; ++i) {
-      for (int j = 0; j < width; ++j) {
-        float acc = 0.0f;
-
-        for (int di = -1; di <= 1; ++di) {
-          const int ni = i + di;
-          if (ni < 0 || ni >= height) {
-            continue;
-          }
-
-          for (int dj = -1; dj <= 1; ++dj) {
-            const int nj = j + dj;
-            if (nj < 0 || nj >= width) {
-              continue;
-            }
-
-            acc += image[ni * width + nj] * k[di + 1][dj + 1];
-          }
-        }
-
-        expected_output_[i * width + j] = acc;
-      }
-    }
+    expected_output_ = ApplyGaussianKernel(std::get<0>(input_data_), width, height);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

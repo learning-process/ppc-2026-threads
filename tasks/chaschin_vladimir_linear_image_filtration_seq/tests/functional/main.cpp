@@ -33,27 +33,29 @@ class ChaschinVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
   }
 
   std::vector<float> ApplyGaussianKernel(const std::vector<float> &image, int width, int height) {
-    const std::array<std::array<float, 3>, 3> k = {{{{1.f / 16.f, 2.f / 16.f, 1.f / 16.f}},
-                                                    {{2.f / 16.f, 4.f / 16.f, 2.f / 16.f}},
-                                                    {{1.f / 16.f, 2.f / 16.f, 1.f / 16.f}}}};
+    std::vector<float> temp(width * height, 0.0F);
+    std::vector<float> output(width * height, 0.0F);
 
-    std::vector<float> output(static_cast<std::vector<float>::size_type>(width * height), 0.0F);
-
-    for (int ii = 0; ii < height; ++ii) {
-      for (int jj = 0; jj < width; ++jj) {
-        float acc = 0.0F;
-        for (int di = -1; di <= 1; ++di) {
-          for (int dj = -1; dj <= 1; ++dj) {
-            int ni = ii + di;
-            int nj = jj + dj;
-            if (ni >= 0 && ni < height && nj >= 0 && nj < width) {
-              acc += image[(ni * width) + nj] * k[di + 1][dj + 1];
-            }
-          }
-        }
-        output[(ii * width) + jj] = acc;
+    // Горизонтальный проход
+    for (int y = 0; y < height; ++y) {
+      for (int x = 0; x < width; ++x) {
+        float left = (x > 0) ? image[y * width + (x - 1)] : image[y * width + x];
+        float center = image[y * width + x];
+        float right = (x < width - 1) ? image[y * width + (x + 1)] : image[y * width + x];
+        temp[y * width + x] = (left + 2.F * center + right) / 4.F;
       }
     }
+
+    // Вертикальный проход
+    for (int x = 0; x < width; ++x) {
+      for (int y = 0; y < height; ++y) {
+        float top = (y > 0) ? temp[(y - 1) * width + x] : temp[y * width + x];
+        float center = temp[y * width + x];
+        float bottom = (y < height - 1) ? temp[(y + 1) * width + x] : temp[y * width + x];
+        output[y * width + x] = (top + 2.F * center + bottom) / 4.F;
+      }
+    }
+
     return output;
   }
   void SetUp() override {
