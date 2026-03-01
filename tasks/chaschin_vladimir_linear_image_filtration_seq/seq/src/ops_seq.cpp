@@ -26,30 +26,30 @@ bool ChaschinVLinearFiltrationSEQ::PreProcessingImpl() {
 }
 
 inline float HorizontalFilterAt(const std::vector<float> &img, int n, int x, int y) {
-  const int idx = y * n + x;
+  const int idx = (y * n) + x;
 
   if (x == 0) {
-    return (2.F * img[idx] + img[idx + 1]) / 3.F;
+    return ((2.F * img[idx]) + img[idx + 1]) / 3.F;
   }
 
   if (x == n - 1) {
-    return (img[idx - 1] + 2.F * img[idx]) / 3.F;
+    return (img[idx - 1] + (2.F * img[idx])) / 3.F;
   }
 
-  return (img[idx - 1] + 2.F * img[idx] + img[idx + 1]) / 4.F;
+  return (img[idx - 1] + (2.F * img[idx]) + img[idx + 1]) / 4.F;
 }
 inline float VerticalFilterAt(const std::vector<float> &temp, int n, int m, int x, int y) {
-  const int idx = y * n + x;
+  const int idx = (y * n) + x;
 
   if (y == 0) {
-    return (2.F * temp[idx] + temp[idx + n]) / 3.F;
+    return ((2.F * temp[idx]) + temp[idx + n]) / 3.F;
   }
 
   if (y == m - 1) {
-    return (temp[idx - n] + 2.F * temp[idx]) / 3.F;
+    return (temp[idx - n] + (2.F * temp[idx])) / 3.F;
   }
 
-  return (temp[idx - n] + 2.F * temp[idx] + temp[idx + n]) / 4.F;
+  return (temp[idx - n] + (2.F * temp[idx]) + temp[idx + n]) / 4.F;
 }
 
 bool ChaschinVLinearFiltrationSEQ::RunImpl() {

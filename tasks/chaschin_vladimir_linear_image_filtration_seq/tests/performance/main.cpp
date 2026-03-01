@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <vector>
 
 #include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
@@ -11,7 +12,7 @@ namespace chaschin_v_linear_image_filtration_seq {
 class ChaschinVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr int kCount = 512;
 
-  std::vector<float> GenerateDeterministicImage(int width, int height) {
+  std::vector<float> static GenerateDeterministicImage(int width, int height) {
     std::vector<float> image(static_cast<std::vector<float>::size_type>(width * height));
     for (int i = 0; i < height; ++i) {
       for (int j = 0; j < width; ++j) {
@@ -21,28 +22,31 @@ class ChaschinVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
     return image;
   }
 
-  std::vector<float> ApplyGaussianKernel(const std::vector<float> &image, int width, int height) {
-    std::vector<float> temp(width * height, 0.0F);
-    std::vector<float> output(width * height, 0.0F);
+  std::vector<float> static ApplyGaussianKernel(const std::vector<float> &image, int width, int height) {
+    std::vector<float> temp(
+        static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0f);
+    std::vector<float> output(
+        static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0f);
 
     // Горизонтальный проход
-    for (int y = 0; y < height; ++y) {
-      for (int x = 0; x < width; ++x) {
-        float left = (x > 0) ? image[y * width + (x - 1)] : image[y * width + x];
-        float center = image[y * width + x];
-        float right = (x < width - 1) ? image[y * width + (x + 1)] : image[y * width + x];
-        temp[y * width + x] = (left + 2.F * center + right) / 4.F;
+    for (int yi = 0; yi < height; ++yi) {
+      temp[(yi * width) + 0] = (image[(yi * width) + 0] * 2 + image[(yi * width) + 1]) / 3.F;
+      for (int xy = 1; xy < width - 1; ++xy) {
+        temp[(yi * width) + xy] =
+            (image[(yi * width) + xy - 1] + 2.F * image[(yi * width) + xy] + image[(yi * width) + xy + 1]) / 4.F;
       }
+      temp[(yi * width) + width - 1] = (image[(yi * width) + width - 2] + 2.F * image[(yi * width) + width - 1]) / 3.F;
     }
 
     // Вертикальный проход
-    for (int x = 0; x < width; ++x) {
-      for (int y = 0; y < height; ++y) {
-        float top = (y > 0) ? temp[(y - 1) * width + x] : temp[y * width + x];
-        float center = temp[y * width + x];
-        float bottom = (y < height - 1) ? temp[(y + 1) * width + x] : temp[y * width + x];
-        output[y * width + x] = (top + 2.F * center + bottom) / 4.F;
+    for (int xy = 0; xy < width; ++xy) {
+      output[xy] = ((temp[xy] * 2) + temp[width + xy]) / 3.F;
+      for (int yi = 1; yi < height - 1; ++yi) {
+        output[(yi * width) + xy] =
+            (temp[((yi - 1) * width) + xy] + 2.F * temp[(yi * width) + xy] + temp[((yi + 1) * width) + xy]) / 4.F;
       }
+      output[((height - 1) * width) + xy] =
+          (temp[((height - 2) * width) + xy] + 2.F * temp[((height - 1) * width) + xy]) / 3.F;
     }
 
     return output;
@@ -62,9 +66,9 @@ class ChaschinVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
       return false;
     }
 
-    constexpr float eps = 1e-4f;
-    for (size_t i = 0; i < output_data.size(); ++i) {
-      if (std::fabs(output_data[i] - expected_output_[i]) > eps) {
+    constexpr float kEps = 1e-4F;
+    for (size_t yi = 0; yi < output_data.size(); ++yi) {
+      if (std::fabs(output_data[yi] - expected_output_[yi]) > kEps) {
         return false;
       }
     }
