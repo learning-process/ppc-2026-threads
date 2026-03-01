@@ -26,8 +26,8 @@ class YurkinGGrahamScanFuncTets : public ppc::util::BaseRunFuncTests<InType, Out
     pts.push_back({0.0, 1.0});
     pts.push_back({1.0, 0.0});
     pts.push_back({1.0, 1.0});
-    pts.push_back({0.5, 0.5});  // interior
-    pts.push_back({0.0, 0.0});  // duplicate
+    pts.push_back({0.5, 0.5});
+    pts.push_back({0.0, 0.0});
     pts.push_back({0.5, 0.0});
     pts.push_back({0.75, 0.0});
     input_data_ = pts;
