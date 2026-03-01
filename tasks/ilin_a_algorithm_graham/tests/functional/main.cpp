@@ -28,11 +28,12 @@ class IlinAGrahamFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.size() != expected_.size()) return false;
-    
+    if (output_data.size() != expected_.size()) {
+      return false;
+    }
+
     for (size_t i = 0; i < output_data.size(); ++i) {
-      if (std::abs(output_data[i].x - expected_[i].x) > 1e-6 ||
-          std::abs(output_data[i].y - expected_[i].y) > 1e-6) {
+      if (std::abs(output_data[i].x - expected_[i].x) > 1e-6 || std::abs(output_data[i].y - expected_[i].y) > 1e-6) {
         return false;
       }
     }
@@ -55,18 +56,13 @@ InputData MakeInput(std::vector<Point> points) {
 }
 
 const std::array<TestType, 3> kTestCases = {
-    std::make_tuple(1,
-                    MakeInput({{0, 0}, {1, 0}, {0, 1}, {1, 1}}),
-                    OutType{{0, 0}, {1, 0}, {1, 1}, {0, 1}}),
-    
-    std::make_tuple(2,
-                    MakeInput({{0, 0}, {2, 0}, {1, 1}, {0, 2}, {2, 2}, {1, 3}}),
+    std::make_tuple(1, MakeInput({{0, 0}, {1, 0}, {0, 1}, {1, 1}}), OutType{{0, 0}, {1, 0}, {1, 1}, {0, 1}}),
+
+    std::make_tuple(2, MakeInput({{0, 0}, {2, 0}, {1, 1}, {0, 2}, {2, 2}, {1, 3}}),
                     OutType{{0, 0}, {2, 0}, {2, 2}, {1, 3}, {0, 2}}),
-    
-    std::make_tuple(3,
-                    MakeInput({{0, 0}, {3, 0}, {1, 1}, {2, 1}, {0, 3}, {3, 3}, {1, 2}, {2, 2}}),
-                    OutType{{0, 0}, {3, 0}, {3, 3}, {0, 3}})
-};
+
+    std::make_tuple(3, MakeInput({{0, 0}, {3, 0}, {1, 1}, {2, 1}, {0, 3}, {3, 3}, {1, 2}, {2, 2}}),
+                    OutType{{0, 0}, {3, 0}, {3, 3}, {0, 3}})};
 
 const auto kTestTasksList =
     ppc::util::AddFuncTask<IlinAGrahamSEQ, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham);

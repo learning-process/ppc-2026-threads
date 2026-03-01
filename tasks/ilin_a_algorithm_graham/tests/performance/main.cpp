@@ -15,12 +15,12 @@ class IlinAGrahamPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(-100.0, 100.0);
-    
+
     std::vector<Point> points;
     for (int i = 0; i < 1000; ++i) {
       points.push_back({dis(gen), dis(gen)});
     }
-    
+
     input_data_ = InputData{.points = std::move(points)};
   }
 
@@ -42,8 +42,7 @@ TEST_P(IlinAGrahamPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, IlinAGrahamSEQ>(PPC_SETTINGS_ilin_a_algorithm_graham);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, IlinAGrahamSEQ>(PPC_SETTINGS_ilin_a_algorithm_graham);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
