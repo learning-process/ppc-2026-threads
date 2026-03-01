@@ -114,21 +114,25 @@ class FedoseevFuncTest : public ppc::util::BaseRunFuncTests<Image, Image, TestTy
 
 namespace {
 
-std::vector<TestType> GenerateParams() {
-  std::vector<TestType> params;
-  std::vector<int> sizes = {3, 5, 7, 10, 16};
-  std::vector<std::string> types = {"const", "grad", "rand", "check"};
+constexpr std::array<int, 5> kSizes = {3, 5, 7, 10, 16};
+constexpr std::array<const char *, 4> kTypes = {"const", "grad", "rand", "check"};
+constexpr size_t kNumParams = kSizes.size() * kTypes.size();
 
-  for (int s : sizes) {
-    for (const auto &t : types) {
-      params.emplace_back(s, t);
+std::array<TestType, kNumParams> GenerateParams() {
+  std::array<TestType, kNumParams> params;
+  size_t idx = 0;
+  for (int s : kSizes) {
+    for (const char *t : kTypes) {
+      params[idx++] = std::make_tuple(s, std::string(t));
     }
   }
   return params;
 }
 
+const auto kTestParams = GenerateParams();
+
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LinearImageFilteringVerticalSeq, Image>(
-    GenerateParams(), PPC_SETTINGS_fedoseev_linear_image_filtering_vertical));
+    kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = FedoseevFuncTest::PrintFuncTestName<FedoseevFuncTest>;
