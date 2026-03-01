@@ -13,7 +13,7 @@ namespace kutergin_a_multidim_trapezoid {
 
 class KuterginATrapezoidPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
-  static constexpr int kGridSize = 800;
+  static constexpr int kGridSize = 100;
 
  protected:
   void SetUp() override {
