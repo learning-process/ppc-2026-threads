@@ -21,16 +21,16 @@ class ZhurinIGaussKernelSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static constexpr int kernel_[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
-  static constexpr int shift_ = 4;
+  static constexpr std::array<std::array<int, 3>, 3> kKernel = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
+  static constexpr int kShift = 4;
 
-  int width = 0;
-  int height = 0;
-  int numParts = 1;
+  int width_ = 0;
+  int height_ = 0;
+  int num_parts_ = 1;
 
-  std::vector<std::vector<int>> image;
-  std::vector<std::vector<int>> result;
-  bool output_written = false;
+  std::vector<std::vector<int>> image_;
+  std::vector<std::vector<int>> result_;
+  bool output_written_ = false;
 };
 
 }  // namespace zhurin_i_gauss_kernel_seq

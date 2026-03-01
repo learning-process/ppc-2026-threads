@@ -1,7 +1,11 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cstddef>
+#include <memory>
+#include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "util/include/func_test_util.hpp"

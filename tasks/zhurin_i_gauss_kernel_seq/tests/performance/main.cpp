@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <tuple>
+#include <vector>
+
 #include "util/include/perf_test_util.hpp"
 #include "zhurin_i_gauss_kernel_seq/common/include/common.hpp"
 #include "zhurin_i_gauss_kernel_seq/seq/include/ops_seq.hpp"
