@@ -1,0 +1,28 @@
+#pragma once
+
+#include <utility>
+#include <vector>
+
+#include "pankov_a_path_dejikstra/common/include/common.hpp"
+#include "task/include/task.hpp"
+
+namespace pankov_a_path_dejikstra {
+
+class PankovAPathDejikstraSEQ : public BaseTask {
+ public:
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kSEQ;
+  }
+  explicit PankovAPathDejikstraSEQ(const InType &in);
+
+ private:
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
+
+  using AdjList = std::vector<std::vector<std::pair<Vertex, Weight>>>;
+  AdjList adjacency_;
+};
+
+}  // namespace pankov_a_path_dejikstra
