@@ -22,14 +22,13 @@ namespace chaschin_v_linear_image_filtration_seq {
 
 class ChaschinVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType& test_param) {
+  static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
   }
 
  protected:
   void SetUp() override {
-    TestType params =
-        std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     const int size = std::get<0>(params);
 
     const int width = size;
@@ -75,7 +74,7 @@ class ChaschinVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
     }
   }
 
-   bool CheckTestOutputData(OutType& output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     if (output_data.size() != expected_output_.size()) {
       return false;
     }
@@ -95,7 +94,7 @@ class ChaschinVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
 
  private:
   InType input_data_;
-    OutType expected_output_;
+  OutType expected_output_;
 };
 
 namespace {
@@ -105,11 +104,8 @@ TEST_P(ChaschinVRunFuncTests, MatmulFromPic) {
 }
 
 const std::array<TestType, 5> kTestParam = {
-    std::make_tuple(4, "4"),
-    std::make_tuple(8, "8"),
-    std::make_tuple(16, "16"),
-    std::make_tuple(32, "32"),
-    std::make_tuple(64, "64"),
+    std::make_tuple(4, "4"),   std::make_tuple(8, "8"),   std::make_tuple(16, "16"),
+    std::make_tuple(32, "32"), std::make_tuple(64, "64"),
 };
 
 const auto kTestTasksList = std::tuple_cat(
@@ -117,19 +113,13 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ChaschinVLinearFiltrationSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes));
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<ChaschinVLinearFiltrationSEQ, InType>(
-        kTestParam, PPC_SETTINGS_example_processes));
+    ppc::util::AddFuncTask<ChaschinVLinearFiltrationSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName =
-    ChaschinVRunFuncTests::PrintFuncTestName<ChaschinVRunFuncTests>;
+const auto kPerfTestName = ChaschinVRunFuncTests::PrintFuncTestName<ChaschinVRunFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(
-    LinearGaussianTests,
-    ChaschinVRunFuncTests,
-    kGtestValues,
-    kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(LinearGaussianTests, ChaschinVRunFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 

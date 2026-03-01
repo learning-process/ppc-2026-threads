@@ -18,8 +18,7 @@ class ChaschinVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
     std::vector<float> image(width * height);
     for (int i = 0; i < height; ++i) {
       for (int j = 0; j < width; ++j) {
-        image[i * width + j] =
-            static_cast<float>((i * 131 + j * 17) % 256);
+        image[i * width + j] = static_cast<float>((i * 131 + j * 17) % 256);
       }
     }
 
@@ -41,11 +40,15 @@ class ChaschinVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
 
         for (int di = -1; di <= 1; ++di) {
           const int ni = i + di;
-          if (ni < 0 || ni >= height) continue;
+          if (ni < 0 || ni >= height) {
+            continue;
+          }
 
           for (int dj = -1; dj <= 1; ++dj) {
             const int nj = j + dj;
-            if (nj < 0 || nj >= width) continue;
+            if (nj < 0 || nj >= width) {
+              continue;
+            }
 
             acc += image[ni * width + nj] * k[di + 1][dj + 1];
           }
@@ -56,7 +59,7 @@ class ChaschinVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
     }
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     if (output_data.size() != expected_output_.size()) {
       return false;
     }
@@ -85,24 +88,14 @@ TEST_P(ChaschinVRunPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<
-        InType,
-        NesterovATestTaskMPI,
-        ChaschinVLinearFiltrationSEQ>(
-            PPC_SETTINGS_example_processes);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, NesterovATestTaskMPI, ChaschinVLinearFiltrationSEQ>(
+    PPC_SETTINGS_example_processes);
 
-const auto kGtestValues =
-    ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName =
-    ChaschinVRunPerfTests::CustomPerfTestName;
+const auto kPerfTestName = ChaschinVRunPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(
-    RunModeTests,
-    ChaschinVRunPerfTests,
-    kGtestValues,
-    kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, ChaschinVRunPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
