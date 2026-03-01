@@ -12,7 +12,7 @@ struct Input {
   std::vector<double> a;
   std::vector<double> b;
   std::vector<int> n;
-  int function_choice{};
+  int64_t function_choice{};
 };
 
 using InType = Input;

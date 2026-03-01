@@ -64,7 +64,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kFuncTestName =
     SamoylenkoIIntegralTrapezoidFuncTests::PrintFuncTestName<SamoylenkoIIntegralTrapezoidFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(BasicTests, SamoylenkoIIntegralTrapezoidFuncTests, kGtestValues, kFuncTestName);
+INSTANTIATE_TEST_SUITE_P(TrapezoidTests, SamoylenkoIIntegralTrapezoidFuncTests, kGtestValues, kFuncTestName);
 
 }  // namespace
 

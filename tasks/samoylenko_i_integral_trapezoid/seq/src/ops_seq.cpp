@@ -11,7 +11,7 @@
 namespace samoylenko_i_integral_trapezoid {
 
 namespace {
-std::function<double(const std::vector<double> &)> GetIntegrationFunction(int choice) {
+std::function<double(const std::vector<double> &)> GetIntegrationFunction(int64_t choice) {
   switch (choice) {
     case 0:  // x + y + ...
       return [](const std::vector<double> &values) {
