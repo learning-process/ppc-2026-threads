@@ -27,7 +27,7 @@ class ChaschinVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
   std::vector<float> static ApplyGaussianKernel(const std::vector<float> &image, int width, int height) {
     std::vector<float> temp(
         static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0F);
-    std::vector<float> output;
+    std::vector<float> output(
         static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0F);
 
         // Горизонтальный проход
