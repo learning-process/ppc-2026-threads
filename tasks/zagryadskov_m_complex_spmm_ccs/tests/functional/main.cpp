@@ -13,6 +13,7 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 #include "zagryadskov_m_complex_spmm_ccs/common/include/common.hpp"
+#include "zagryadskov_m_complex_spmm_ccs/omp/include/ops_omp.hpp"
 #include "zagryadskov_m_complex_spmm_ccs/seq/include/ops_seq.hpp"
 
 namespace zagryadskov_m_complex_spmm_ccs {
@@ -150,7 +151,9 @@ TEST_P(ZagryadskovMRunFuncTestsThreads, FuncCCSTest) {
 const std::array<TestType, 3> kTestParam = {0, 1, 2};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ZagryadskovMComplexSpMMCCSSEQ, InType>(
-    kTestParam, PPC_SETTINGS_zagryadskov_m_complex_spmm_ccs));
+                                               kTestParam, PPC_SETTINGS_zagryadskov_m_complex_spmm_ccs),
+                                           ppc::util::AddFuncTask<ZagryadskovMComplexSpMMCCSOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_zagryadskov_m_complex_spmm_ccs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
