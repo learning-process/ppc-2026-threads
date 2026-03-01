@@ -50,7 +50,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
       case 1: {  // const_2d_large - f(x,y) = 1 на большой области
         lower_bounds = {-10.0, -5.0};
         upper_bounds = {10.0, 5.0};
-        num_points = 2000000;
+        num_points = 1000000;
         f = [](const std::vector<double> &) { return 1.0; };
         expected = (20.0) * (10.0);  // (10-(-10)) * (5-(-5)) = 20 * 10 = 200
         abs_tolerance = 0.1;
