@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <random>
-#include <ranges>
 #include <utility>
 #include <vector>
 
