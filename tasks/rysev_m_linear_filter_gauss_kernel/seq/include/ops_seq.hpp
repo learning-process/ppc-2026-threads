@@ -37,7 +37,7 @@ class RysevMGaussFilterSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void ApplyKernelToChannel(int channel, int rows, int cols, const std::array<std::array<float, 3>, 3> &kernel);
+  void ApplyKernelToChannel(int channel, int rows, int cols);
 
   std::vector<uint8_t> input_image_;
   std::vector<uint8_t> output_image_;

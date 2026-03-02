@@ -15,10 +15,8 @@ namespace rysev_m_linear_filter_gauss_kernel {
 namespace {
 OutType ComputeReferenceOutput(int test_id) {
   RysevMGaussFilterSEQ etalon(test_id);
-  EXPECT_TRUE(etalon.Validation());
-  EXPECT_TRUE(etalon.PreProcessing());
-  EXPECT_TRUE(etalon.Run());
-  EXPECT_TRUE(etalon.PostProcessing());
+  bool success = etalon.Validation() && etalon.PreProcessing() && etalon.Run() && etalon.PostProcessing();
+  EXPECT_TRUE(success);
   return etalon.GetOutput();
 }
 }  // namespace

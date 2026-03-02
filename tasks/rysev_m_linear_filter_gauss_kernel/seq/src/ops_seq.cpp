@@ -15,6 +15,24 @@
 
 namespace rysev_m_linear_filter_gauss_kernel {
 
+namespace {
+struct KernelElement {
+  int dr;
+  int dc;
+  float weight;
+};
+
+const std::array<KernelElement, 9> kKernelElements = {{{-1, -1, 1.0F / 16},
+                                                       {-1, 0, 2.0F / 16},
+                                                       {-1, 1, 1.0F / 16},
+                                                       {0, -1, 2.0F / 16},
+                                                       {0, 0, 4.0F / 16},
+                                                       {0, 1, 2.0F / 16},
+                                                       {1, -1, 1.0F / 16},
+                                                       {1, 0, 2.0F / 16},
+                                                       {1, 1, 1.0F / 16}}};
+}  // namespace
+
 RysevMGaussFilterSEQ::RysevMGaussFilterSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -60,21 +78,18 @@ bool RysevMGaussFilterSEQ::PreProcessingImpl() {
   return true;
 }
 
-void RysevMGaussFilterSEQ::ApplyKernelToChannel(int channel, int rows, int cols,
-                                                const std::array<std::array<float, 3>, 3> &kernel) {
+void RysevMGaussFilterSEQ::ApplyKernelToChannel(int channel, int rows, int cols) {
   for (int row = 0; row < rows; ++row) {
     for (int col = 0; col < cols; ++col) {
       float sum = 0.0F;
 
-      for (int kr = -1; kr <= 1; ++kr) {
-        for (int kc = -1; kc <= 1; ++kc) {
-          int nr = row + kr;
-          int nc = col + kc;
-          if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
-            std::size_t idx = (static_cast<std::size_t>(nr) * cols) + nc;
-            idx = (idx * channels_) + channel;
-            sum += static_cast<float>(input_image_[idx]) * kernel.at(kr + 1).at(kc + 1);
-          }
+      for (const auto &ke : kKernelElements) {
+        int nr = row + ke.dr;
+        int nc = col + ke.dc;
+        if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+          std::size_t idx = (static_cast<std::size_t>(nr) * cols) + nc;
+          idx = (idx * channels_) + channel;
+          sum += static_cast<float>(input_image_[idx]) * ke.weight;
         }
       }
 
@@ -86,15 +101,12 @@ void RysevMGaussFilterSEQ::ApplyKernelToChannel(int channel, int rows, int cols,
 }
 
 bool RysevMGaussFilterSEQ::RunImpl() {
-  const std::array<std::array<float, 3>, 3> kernel = {
-      {{{1.0F / 16, 2.0F / 16, 1.0F / 16}}, {{2.0F / 16, 4.0F / 16, 2.0F / 16}}, {{1.0F / 16, 2.0F / 16, 1.0F / 16}}}};
-
   int rows = height_;
   int cols = width_;
   int ch = channels_;
 
   for (int channel = 0; channel < ch; ++channel) {
-    ApplyKernelToChannel(channel, rows, cols, kernel);
+    ApplyKernelToChannel(channel, rows, cols);
   }
 
   return true;
