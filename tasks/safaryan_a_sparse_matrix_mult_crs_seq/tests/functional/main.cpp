@@ -47,6 +47,7 @@ static std::vector<std::vector<double>> CrsToDense(const CRSMatrix &m) {
   return dense;
 }
 
+
 static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<double>> &a,
                                                  const std::vector<std::vector<double>> &b) {
   const size_t n = a.size();
