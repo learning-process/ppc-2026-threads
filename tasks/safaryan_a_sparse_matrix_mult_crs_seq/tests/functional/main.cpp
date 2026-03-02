@@ -105,6 +105,7 @@ std::vector<std::vector<double>> GenDense(size_t rows, size_t cols, double densi
   return d;
 }
 
+
 // -------------- functional tests --------------
 
 TEST(SafaryanASparseMatrixMultCRSSeqFunctional, SmallFixedCase) {
@@ -132,6 +133,7 @@ TEST(SafaryanASparseMatrixMultCRSSeqFunctional, SmallFixedCase) {
 
   ExpectDenseEqual(got, ref);
 }
+
 
 TEST(SafaryanASparseMatrixMultCRSSeqFunctional, RandomCaseMatchesDense) {
   const size_t n = 25;
