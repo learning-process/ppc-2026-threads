@@ -121,10 +121,7 @@ TEST(SafaryanASparseMatrixMultCRSSeqFunctional, SmallFixedCase) {
   const CRSMatrix b_crs = DenseToCrs(b_dense);
 
   SafaryanASparseMatrixMultCRSSeq task({a_crs, b_crs});
-  ASSERT_TRUE(task.Validation());
-  ASSERT_TRUE(task.PreProcessing());
-  ASSERT_TRUE(task.Run());
-  ASSERT_TRUE(task.PostProcessing());
+  ASSERT_TRUE(task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing());
 
   const auto got = CrsToDense(task.GetOutput());
   const auto ref = DenseMul(a_dense, b_dense);
@@ -144,10 +141,7 @@ TEST(SafaryanASparseMatrixMultCRSSeqFunctional, RandomCaseMatchesDense) {
   const CRSMatrix b_crs = DenseToCrs(b_dense);
 
   SafaryanASparseMatrixMultCRSSeq task({a_crs, b_crs});
-  ASSERT_TRUE(task.Validation());
-  ASSERT_TRUE(task.PreProcessing());
-  ASSERT_TRUE(task.Run());
-  ASSERT_TRUE(task.PostProcessing());
+  ASSERT_TRUE(task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing());
 
   const auto got = CrsToDense(task.GetOutput());
   const auto ref = DenseMul(a_dense, b_dense);
