@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 
-#include "dergachev_a_graham_scan_seq/common/include/common.hpp"
-#include "dergachev_a_graham_scan_seq/seq/include/ops_seq.hpp"
+#include "dergachev_a_graham_scan/common/include/common.hpp"
+#include "dergachev_a_graham_scan/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace dergachev_a_graham_scan_seq {
+namespace dergachev_a_graham_scan {
 
 class DergachevAGrahamScanPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 500000;
@@ -30,7 +30,7 @@ TEST_P(DergachevAGrahamScanPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, DergachevAGrahamScanSEQ>(PPC_SETTINGS_dergachev_a_graham_scan_seq);
+    ppc::util::MakeAllPerfTasks<InType, DergachevAGrahamScanSEQ>(PPC_SETTINGS_dergachev_a_graham_scan);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -40,4 +40,4 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, DergachevAGrahamScanPerfTests, kGtestValu
 
 }  // namespace
 
-}  // namespace dergachev_a_graham_scan_seq
+}  // namespace dergachev_a_graham_scan
