@@ -100,7 +100,7 @@ static std::vector<std::vector<double>> GenDense(size_t rows, size_t cols, doubl
   return d;
 }
 
-// ------------------ functional tests ------------------
+// -------------- functional tests --------------
 
 TEST(SafaryanASparseMatrixMultCRSSeq_Functional, SmallFixedCase) {
   // A(2x3), B(3x2)
