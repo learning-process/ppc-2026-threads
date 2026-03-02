@@ -5,11 +5,11 @@
 #include <random>
 #include <vector>
 
-#include "shemetov_d_odd_even_mergesort_seq/common/include/common.hpp"
-#include "shemetov_d_odd_even_mergesort_seq/seq/include/ops_seq.hpp"
+#include "shemetov_d_radix_odd_even_mergesort/common/include/common.hpp"
+#include "shemetov_d_radix_odd_even_mergesort/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace shemetov_d_odd_even_mergesort {
+namespace shemetov_d_radix_odd_even_mergesort {
 
 class ShemetovDRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
@@ -44,15 +44,15 @@ TEST_P(ShemetovDRunPerfTestsThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ShemetovDOddEvenMergeSortSEQ>(PPC_SETTINGS_shemetov_d_odd_even_mergesort_seq);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ShemetovDRadixOddEvenMergeSortSEQ>(
+    PPC_SETTINGS_shemetov_d_radix_odd_even_mergesort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = ShemetovDRunPerfTestsThreads::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(OddEvenMergeSortPerfTest, ShemetovDRunPerfTestsThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RadixOddEvenMergeSortPerfTest, ShemetovDRunPerfTestsThreads, kGtestValues, kPerfTestName);
 
 }  // namespace
 
-}  // namespace shemetov_d_odd_even_mergesort
+}  // namespace shemetov_d_radix_odd_even_mergesort

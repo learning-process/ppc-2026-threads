@@ -1,20 +1,20 @@
-#include "shemetov_d_odd_even_mergesort_seq/seq/include/ops_seq.hpp"
+#include "shemetov_d_radix_odd_even_mergesort/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <climits>
 #include <cstddef>
 #include <vector>
 
-#include "shemetov_d_odd_even_mergesort_seq/common/include/common.hpp"
+#include "shemetov_d_radix_odd_even_mergesort/common/include/common.hpp"
 
-namespace shemetov_d_odd_even_mergesort {
+namespace shemetov_d_radix_odd_even_mergesort {
 
-ShemetovDOddEvenMergeSortSEQ::ShemetovDOddEvenMergeSortSEQ(const InType &in) {
+ShemetovDRadixOddEvenMergeSortSEQ::ShemetovDRadixOddEvenMergeSortSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
-void ShemetovDOddEvenMergeSortSEQ::RadixSort(std::vector<int> &array, size_t left, size_t right) {
+void ShemetovDRadixOddEvenMergeSortSEQ::RadixSort(std::vector<int> &array, size_t left, size_t right) {
   if (left >= right) {
     return;
   }
@@ -54,7 +54,7 @@ void ShemetovDOddEvenMergeSortSEQ::RadixSort(std::vector<int> &array, size_t lef
   }
 }
 
-void ShemetovDOddEvenMergeSortSEQ::OddEvenMerge(std::vector<int> &array, size_t start_offset, size_t segment) {
+void ShemetovDRadixOddEvenMergeSortSEQ::OddEvenMerge(std::vector<int> &array, size_t start_offset, size_t segment) {
   if (segment <= 1) {
     return;
   }
@@ -79,12 +79,12 @@ void ShemetovDOddEvenMergeSortSEQ::OddEvenMerge(std::vector<int> &array, size_t 
   }
 }
 
-bool ShemetovDOddEvenMergeSortSEQ::ValidationImpl() {
+bool ShemetovDRadixOddEvenMergeSortSEQ::ValidationImpl() {
   const auto &[size, array] = GetInput();
   return size > 0 && static_cast<size_t>(size) == array.size();
 }
 
-bool ShemetovDOddEvenMergeSortSEQ::PreProcessingImpl() {
+bool ShemetovDRadixOddEvenMergeSortSEQ::PreProcessingImpl() {
   const auto &[size, array] = GetInput();
 
   if (size == 0) {
@@ -112,7 +112,7 @@ bool ShemetovDOddEvenMergeSortSEQ::PreProcessingImpl() {
   return true;
 }
 
-bool ShemetovDOddEvenMergeSortSEQ::RunImpl() {
+bool ShemetovDRadixOddEvenMergeSortSEQ::RunImpl() {
   if (power_ <= 1) {
     return true;
   }
@@ -126,7 +126,7 @@ bool ShemetovDOddEvenMergeSortSEQ::RunImpl() {
   return true;
 }
 
-bool ShemetovDOddEvenMergeSortSEQ::PostProcessingImpl() {
+bool ShemetovDRadixOddEvenMergeSortSEQ::PostProcessingImpl() {
   if (size_ == 0) {
     return true;
   }
@@ -145,4 +145,4 @@ bool ShemetovDOddEvenMergeSortSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace shemetov_d_odd_even_mergesort
+}  // namespace shemetov_d_radix_odd_even_mergesort
