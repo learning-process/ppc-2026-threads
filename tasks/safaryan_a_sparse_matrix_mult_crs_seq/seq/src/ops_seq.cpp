@@ -86,6 +86,7 @@ bool SafaryanASparseMatrixMultCRSSeq::PreProcessingImpl() {
   return true;
 }
 
+
 bool SafaryanASparseMatrixMultCRSSeq::RunImpl() {
   const auto &a = std::get<0>(GetInput());
   const auto &b = std::get<1>(GetInput());
