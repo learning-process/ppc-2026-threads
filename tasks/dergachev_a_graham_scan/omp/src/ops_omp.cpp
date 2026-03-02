@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "dergachev_a_graham_scan/common/include/common.hpp"
+#include "dergachev_a_graham_scan/seq/include/ops_seq.hpp"
 
 namespace dergachev_a_graham_scan {
 
