@@ -22,15 +22,28 @@ struct KernelElement {
   float weight;
 };
 
-const std::array<KernelElement, 9> kKernelElements = {{{-1, -1, 1.0F / 16},
-                                                       {-1, 0, 2.0F / 16},
-                                                       {-1, 1, 1.0F / 16},
-                                                       {0, -1, 2.0F / 16},
-                                                       {0, 0, 4.0F / 16},
-                                                       {0, 1, 2.0F / 16},
-                                                       {1, -1, 1.0F / 16},
-                                                       {1, 0, 2.0F / 16},
-                                                       {1, 1, 1.0F / 16}}};
+const std::array<KernelElement, 9> kKernelElements = {
+    {KernelElement{.dr = -1, .dc = -1, .weight = 1.0F / 16}, KernelElement{.dr = -1, .dc = 0, .weight = 2.0F / 16},
+     KernelElement{.dr = -1, .dc = 1, .weight = 1.0F / 16}, KernelElement{.dr = 0, .dc = -1, .weight = 2.0F / 16},
+     KernelElement{.dr = 0, .dc = 0, .weight = 4.0F / 16}, KernelElement{.dr = 0, .dc = 1, .weight = 2.0F / 16},
+     KernelElement{.dr = 1, .dc = -1, .weight = 1.0F / 16}, KernelElement{.dr = 1, .dc = 0, .weight = 2.0F / 16},
+     KernelElement{.dr = 1, .dc = 1, .weight = 1.0F / 16}}};
+
+float ComputePixelValue(int row, int col, int channel, int rows, int cols, int channels,
+                        const std::vector<uint8_t> &input) {
+  float sum = 0.0F;
+  for (const auto &ke : kKernelElements) {
+    int nr = row + ke.dr;
+    int nc = col + ke.dc;
+    if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+      std::size_t idx = (static_cast<std::size_t>(nr) * cols) + nc;
+      idx = (idx * channels) + channel;
+      sum += static_cast<float>(input[idx]) * ke.weight;
+    }
+  }
+  return sum;
+}
+
 }  // namespace
 
 RysevMGaussFilterSEQ::RysevMGaussFilterSEQ(const InType &in) {
@@ -81,18 +94,7 @@ bool RysevMGaussFilterSEQ::PreProcessingImpl() {
 void RysevMGaussFilterSEQ::ApplyKernelToChannel(int channel, int rows, int cols) {
   for (int row = 0; row < rows; ++row) {
     for (int col = 0; col < cols; ++col) {
-      float sum = 0.0F;
-
-      for (const auto &ke : kKernelElements) {
-        int nr = row + ke.dr;
-        int nc = col + ke.dc;
-        if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
-          std::size_t idx = (static_cast<std::size_t>(nr) * cols) + nc;
-          idx = (idx * channels_) + channel;
-          sum += static_cast<float>(input_image_[idx]) * ke.weight;
-        }
-      }
-
+      float sum = ComputePixelValue(row, col, channel, rows, cols, channels_, input_image_);
       std::size_t out_idx = (static_cast<std::size_t>(row) * cols) + col;
       out_idx = (out_idx * channels_) + channel;
       output_image_[out_idx] = static_cast<uint8_t>(std::clamp(sum, 0.0F, 255.0F));
