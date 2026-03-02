@@ -12,7 +12,7 @@
 
 namespace gasenin_l_djstra_omp {
 
-class GaseninLRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class GaseninLDjstraOmpFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -40,7 +40,7 @@ class GaseninLRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
 
 namespace {
 
-TEST_P(GaseninLRunFuncTestsThreads, DijkstraFromParams) {
+TEST_P(GaseninLDjstraOmpFuncTests, DijkstraFromParams) {
   ExecuteTest(GetParam());
 }
 
@@ -50,9 +50,9 @@ const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<GaseninLDjstraOMP, InType>(kTestParam, PPC_SETTINGS_gasenin_l_djstra_omp));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-const auto kPerfTestName = GaseninLRunFuncTestsThreads::PrintFuncTestName<GaseninLRunFuncTestsThreads>;
+const auto kPerfTestName = GaseninLDjstraOmpFuncTests::PrintFuncTestName<GaseninLDjstraOmpFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(DijkstraOmpTests, GaseninLRunFuncTestsThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(DijkstraOmpTests, GaseninLDjstraOmpFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
