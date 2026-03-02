@@ -36,6 +36,7 @@ static CRSMatrix DenseToCrs(const std::vector<std::vector<double>> &dense, doubl
   return m;
 }
 
+
 static std::vector<std::vector<double>> CrsToDense(const CRSMatrix &m) {
   std::vector<std::vector<double>> dense(m.rows, std::vector<double>(m.cols, 0.0));
   for (size_t i = 0; i < m.rows; ++i) {
