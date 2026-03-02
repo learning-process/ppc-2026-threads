@@ -3,8 +3,6 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
-#include <numeric>
-#include <ranges>
 
 #include "performance/include/performance.hpp"
 #include "smetanin_d_hoare_even_odd_batchelor/common/include/common.hpp"
@@ -19,7 +17,9 @@ class SmetaninDRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
 
   void SetUp() override {
     input_data_.resize(static_cast<std::size_t>(kSize_));
-    std::ranges::iota(std::views::reverse(input_data_), 1);
+    for (std::size_t i = 0; i < input_data_.size(); ++i) {
+      input_data_[i] = kSize_ - static_cast<int>(i);
+    }
   }
 
   void SetPerfAttributes(ppc::performance::PerfAttr &perf_attrs) override {
