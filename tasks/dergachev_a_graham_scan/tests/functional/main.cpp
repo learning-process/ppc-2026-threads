@@ -12,7 +12,7 @@
 
 namespace dergachev_a_graham_scan {
 
-class DergachevAGrahamScanFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class DergachevAGrahamScanFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -38,7 +38,7 @@ class DergachevAGrahamScanFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
 namespace {
 
-TEST_P(DergachevAGrahamScanFuncTests, GrahamScan) {
+TEST_P(DergachevAGrahamScanFuncTestsThreads, GrahamScan) {
   ExecuteTest(GetParam());
 }
 
@@ -53,9 +53,10 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = DergachevAGrahamScanFuncTests::PrintFuncTestName<DergachevAGrahamScanFuncTests>;
+const auto kPerfTestName =
+    DergachevAGrahamScanFuncTestsThreads::PrintFuncTestName<DergachevAGrahamScanFuncTestsThreads>;
 
-INSTANTIATE_TEST_SUITE_P(GrahamScanTests, DergachevAGrahamScanFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(GrahamScanTests, DergachevAGrahamScanFuncTestsThreads, kGtestValues, kPerfTestName);
 
 }  // namespace
 
