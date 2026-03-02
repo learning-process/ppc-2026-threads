@@ -7,12 +7,12 @@
 #include <tuple>
 #include <vector>
 
-#include "dergachev_a_graham_scan_seq/common/include/common.hpp"
-#include "dergachev_a_graham_scan_seq/seq/include/ops_seq.hpp"
+#include "dergachev_a_graham_scan/common/include/common.hpp"
+#include "dergachev_a_graham_scan/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace dergachev_a_graham_scan_seq {
+namespace dergachev_a_graham_scan {
 
 class DergachevAGrahamScanFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -48,7 +48,7 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "circle_3"), std:
                                             std::make_tuple(7, "circle_7")};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<DergachevAGrahamScanSEQ, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan_seq));
+    ppc::util::AddFuncTask<DergachevAGrahamScanSEQ, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -172,4 +172,4 @@ TEST(DergachevAGrahamScanSeq, HexagonWithCenter) {
 
 }  // namespace
 
-}  // namespace dergachev_a_graham_scan_seq
+}  // namespace dergachev_a_graham_scan
