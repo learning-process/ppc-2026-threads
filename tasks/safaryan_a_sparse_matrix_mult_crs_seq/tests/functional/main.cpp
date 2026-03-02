@@ -68,7 +68,6 @@ static std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<d
   return c;
 }
 
-
 static void ExpectDenseEqual(const std::vector<std::vector<double>> &x, const std::vector<std::vector<double>> &y,
                              double eps = 1e-9) {
   ASSERT_EQ(x.size(), y.size());
