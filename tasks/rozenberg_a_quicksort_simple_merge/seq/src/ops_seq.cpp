@@ -52,6 +52,25 @@ std::pair<int, int> RozenbergAQuicksortSimpleMergeSEQ::Partition(InType &data, i
   return {i, j};
 }
 
+void RozenbergAQuicksortSimpleMergeSEQ::PushSubarrays(std::stack<std::pair<int, int>> &stack, int left, int right,
+                                                      int i, int j) {
+  if (j - left > right - i) {
+    if (left < j) {
+      stack.emplace(left, j);
+    }
+    if (i < right) {
+      stack.emplace(i, right);
+    }
+  } else {
+    if (i < right) {
+      stack.emplace(i, right);
+    }
+    if (left < j) {
+      stack.emplace(left, j);
+    }
+  }
+}
+
 void RozenbergAQuicksortSimpleMergeSEQ::Quicksort(InType &data) {
   if (data.size() < 2) {
     return;
@@ -59,32 +78,15 @@ void RozenbergAQuicksortSimpleMergeSEQ::Quicksort(InType &data) {
 
   std::stack<std::pair<int, int>> stack;
 
-  stack.push({0, data.size() - 1});
+  stack.emplace(0, data.size() - 1);
 
   while (!stack.empty()) {
     const auto [left, right] = stack.top();
     stack.pop();
 
-    if (left >= right) {
-      continue;
-    }
-
-    const auto [i, j] = Partition(data, left, right);
-
-    if (j - left > right - i) {
-      if (left < j) {
-        stack.push({left, j});
-      }
-      if (i < right) {
-        stack.push({i, right});
-      }
-    } else {
-      if (i < right) {
-        stack.push({i, right});
-      }
-      if (left < j) {
-        stack.push({left, j});
-      }
+    if (left < right) {
+      const auto [i, j] = Partition(data, left, right);
+      PushSubarrays(stack, left, right, i, j);
     }
   }
 }
