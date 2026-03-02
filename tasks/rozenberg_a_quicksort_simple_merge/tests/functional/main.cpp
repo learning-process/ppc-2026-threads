@@ -1,15 +1,9 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
+#include <fstream>
 #include <string>
-#include <tuple>
-#include <utility>
-#include <vector>
 
 #include "rozenberg_a_quicksort_simple_merge/common/include/common.hpp"
 #include "rozenberg_a_quicksort_simple_merge/seq/include/ops_seq.hpp"
