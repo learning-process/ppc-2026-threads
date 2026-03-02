@@ -23,7 +23,7 @@ class PerepelkinIConvexHullGrahamScanOMP : public BaseTask {
   bool PostProcessingImpl() override;
 
   static size_t FindPivotParallel(const std::vector<std::pair<double, double>> &pts);
-  void ParallelSort(std::vector<std::pair<double, double>> &data, const std::pair<double, double> &pivot);
+  static void ParallelSort(std::vector<std::pair<double, double>> &data, const std::pair<double, double> &pivot);
   static bool AngleCmp(const std::pair<double, double> &a, const std::pair<double, double> &b,
                        const std::pair<double, double> &pivot);
   static double Orientation(const std::pair<double, double> &p, const std::pair<double, double> &q,

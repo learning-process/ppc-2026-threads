@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <execution>
 #include <utility>
 #include <vector>
 
@@ -40,7 +39,7 @@ bool PerepelkinIConvexHullGrahamScanOMP::RunImpl() {
   size_t pivot_idx = FindPivotParallel(pts);
 
   std::pair<double, double> pivot = pts[pivot_idx];
-  pts.erase(pts.begin() + pivot_idx);
+  pts.erase(pts.begin() + static_cast<std::ptrdiff_t>(pivot_idx));
 
   // Parallel sorting
   ParallelSort(pts, pivot);
@@ -67,7 +66,7 @@ bool PerepelkinIConvexHullGrahamScanOMP::RunImpl() {
 size_t PerepelkinIConvexHullGrahamScanOMP::FindPivotParallel(const std::vector<std::pair<double, double>> &pts) {
   size_t pivot_idx = 0;
 
-#pragma omp parallel
+#pragma omp parallel default(none) shared(pts, pivot_idx)
   {
     size_t local_idx = pivot_idx;
 
@@ -93,20 +92,20 @@ size_t PerepelkinIConvexHullGrahamScanOMP::FindPivotParallel(const std::vector<s
 
 void PerepelkinIConvexHullGrahamScanOMP::ParallelSort(std::vector<std::pair<double, double>> &data,
                                                       const std::pair<double, double> &pivot) {
-  int n = data.size();
+  size_t n = data.size();
   int threads = omp_get_max_threads();
 
   if (n < 10000) {
-    std::sort(data.begin(), data.end(), [&](const auto &a, const auto &b) { return AngleCmp(a, b, pivot); });
+    std::ranges::sort(data, [&](const auto &a, const auto &b) { return AngleCmp(a, b, pivot); });
     return;
   }
 
   std::vector<int> start(threads + 1);
   for (int i = 0; i <= threads; i++) {
-    start[i] = i * n / threads;
+    start[i] = static_cast<int>(i * n / threads);
   }
 
-#pragma omp parallel
+#pragma omp parallel default(none) shared(data, start, pivot)
   {
     int tid = omp_get_thread_num();
     std::sort(data.begin() + start[tid], data.begin() + start[tid + 1],
@@ -115,7 +114,7 @@ void PerepelkinIConvexHullGrahamScanOMP::ParallelSort(std::vector<std::pair<doub
 
   // Merge sorted segments
   for (int size = 1; size < threads; size *= 2) {
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(data, start, threads, size, pivot)
     for (int i = 0; i < threads; i += 2 * size) {
       if (i + size >= threads) {
         continue;
@@ -123,7 +122,7 @@ void PerepelkinIConvexHullGrahamScanOMP::ParallelSort(std::vector<std::pair<doub
 
       int left = start[i];
       int mid = start[i + size];
-      int right = start[std::min(i + 2 * size, threads)];
+      int right = start[std::min(i + (2 * size), threads)];
 
       std::inplace_merge(data.begin() + left, data.begin() + mid, data.begin() + right,
                          [&](const auto &a, const auto &b) { return AngleCmp(a, b, pivot); });
