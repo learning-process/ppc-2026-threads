@@ -72,17 +72,26 @@ std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<double>>
 
 void ExpectDenseEqual(const std::vector<std::vector<double>> &x, const std::vector<std::vector<double>> &y,
                       double eps = 1e-9) {
-  ASSERT_EQ(x.size(), y.size());
+  if (x.size() != y.size()) {
+    GTEST_FAIL() << "Different row count: got=" << x.size() << " expected=" << y.size();
+  }
   if (x.empty()) {
     return;
   }
-  ASSERT_EQ(x[0].size(), y[0].size());
+  if (x[0].size() != y[0].size()) {
+    GTEST_FAIL() << "Different col count: got=" << x[0].size() << " expected=" << y[0].size();
+  }
 
   for (size_t i = 0; i < x.size(); ++i) {
     for (size_t j = 0; j < x[0].size(); ++j) {
-      ASSERT_NEAR(x[i][j], y[i][j], eps) << "Mismatch at (" << i << "," << j << ")";
+      const double diff = std::abs(x[i][j] - y[i][j]);
+      if (diff > eps) {
+        GTEST_FAIL() << "Mismatch at (" << i << "," << j << "): got=" << x[i][j] << " expected=" << y[i][j]
+                     << " diff=" << diff << " eps=" << eps;
+      }
     }
   }
+}
 }
 
 // ------------------ random generator ------------------

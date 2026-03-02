@@ -79,22 +79,21 @@ void ExpectDenseEqual(const std::vector<std::vector<double>> &x, const std::vect
                       double eps = 1e-9) {
   if (x.size() != y.size()) {
     GTEST_FAIL() << "Different row count: got=" << x.size() << " expected=" << y.size();
-    return;
   }
+
   if (x.empty()) {
     return;
   }
   if (x[0].size() != y[0].size()) {
     GTEST_FAIL() << "Different col count: got=" << x[0].size() << " expected=" << y[0].size();
-    return;
   }
 
   for (size_t i = 0; i < x.size(); ++i) {
     for (size_t j = 0; j < x[0].size(); ++j) {
       const double diff = std::abs(x[i][j] - y[i][j]);
       if (diff > eps) {
-        GTEST_FAIL() << "Mismatch at (" << i << "," << j << "): got=" << x[i][j] << " expected=" << y[i][j];
-        return;
+        GTEST_FAIL() << "Mismatch at (" << i << "," << j << "): got=" << x[i][j] << " expected=" << y[i][j]
+                     << " diff=" << diff << " eps=" << eps;
       }
     }
   }
