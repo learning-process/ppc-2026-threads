@@ -6,6 +6,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include "safaryan_a_sparse_matrix_mult_crs_seq/common/include/common.hpp"
 
 #include "safaryan_a_sparse_matrix_mult_crs_seq/seq/include/ops_seq.hpp"
 
