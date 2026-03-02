@@ -61,15 +61,18 @@ bool ShilinNMonteCarloIntegrationOMP::RunImpl() {
 
   double sum = 0.0;
 
-#pragma omp parallel for reduction(+ : sum) default(none) shared(dimensions, alpha)
-  for (int i = 0; i < num_points_; ++i) {
+#pragma omp parallel reduction(+ : sum) default(none) shared(dimensions, alpha)
+  {
     std::vector<double> point(dimensions);
-    for (int di = 0; di < dimensions; ++di) {
-      double val = 0.5 + (static_cast<double>(i + 1) * alpha[di]);
-      double current = val - std::floor(val);
-      point[di] = lower_bounds_[di] + ((upper_bounds_[di] - lower_bounds_[di]) * current);
+#pragma omp for
+    for (int i = 0; i < num_points_; ++i) {
+      for (int di = 0; di < dimensions; ++di) {
+        double val = 0.5 + (static_cast<double>(i + 1) * alpha[di]);
+        double current = val - std::floor(val);
+        point[di] = lower_bounds_[di] + ((upper_bounds_[di] - lower_bounds_[di]) * current);
+      }
+      sum += IntegrandFunction::Evaluate(func_type_, point);
     }
-    sum += IntegrandFunction::Evaluate(func_type_, point);
   }
 
   double volume = 1.0;
