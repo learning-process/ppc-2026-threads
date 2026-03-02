@@ -7,7 +7,7 @@
 
 namespace dergachev_a_graham_scan {
 
-class DergachevAGrahamScanPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class DergachevAGrahamScanPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 500000;
   InType input_data_{};
 
@@ -24,7 +24,7 @@ class DergachevAGrahamScanPerfTests : public ppc::util::BaseRunPerfTests<InType,
   }
 };
 
-TEST_P(DergachevAGrahamScanPerfTests, RunPerfModes) {
+TEST_P(DergachevAGrahamScanPerfTestsThreads, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -35,9 +35,9 @@ const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, DergachevAGrahamS
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = DergachevAGrahamScanPerfTests::CustomPerfTestName;
+const auto kPerfTestName = DergachevAGrahamScanPerfTestsThreads::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, DergachevAGrahamScanPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, DergachevAGrahamScanPerfTestsThreads, kGtestValues, kPerfTestName);
 
 }  // namespace
 
