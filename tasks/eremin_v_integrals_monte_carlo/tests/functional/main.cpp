@@ -19,8 +19,9 @@ namespace eremin_v_integrals_monte_carlo {
 class EreminVRunFuncTestsThreadsIntegralsMonteCarlo : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    const auto &input = std::get<0>(test_param);
-    std::string result = "dims_" + std::to_string(input.bounds.size()) + "_samples_" + std::to_string(input.samples);
+    std::string result =
+        "dims_" + std::to_string(std::get<0>(test_param)) + "_samples_" + std::to_string(std::get<2>(test_param));
+
     std::ranges::replace(result, '.', '_');
     std::ranges::replace(result, '-', 'm');
     return result;
@@ -30,9 +31,13 @@ class EreminVRunFuncTestsThreadsIntegralsMonteCarlo : public ppc::util::BaseRunF
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    input_data_ = std::get<0>(params);
+    auto bounds = std::get<1>(params);
+    int samples = std::get<2>(params);
+    auto func = std::get<3>(params);
 
-    expected_result_ = std::get<1>(params);
+    expected_result_ = std::get<4>(params);
+
+    input_data_ = MonteCarloInput{.bounds = bounds, .samples = samples, .func = func};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -56,20 +61,15 @@ TEST_P(EreminVRunFuncTestsThreadsIntegralsMonteCarlo, IntegralsMonteCarloFunc) {
 }
 
 const std::array<TestType, 3> kTestParam = {
-    std::make_tuple(MonteCarloInput{.bounds = {{0.0, 1.0}},  // 1D
-                                    .samples = 1'000'000,
-                                    .func = [](const std::vector<double> &x) { return x[0] * x[0]; }},
-                    1.0 / 3.0),
 
-    std::make_tuple(MonteCarloInput{.bounds = {{0.0, 1.0}, {0.0, 1.0}},  // 2D
-                                    .samples = 1'000'000,
-                                    .func = [](const std::vector<double> &x) { return x[0] * x[1]; }},
-                    0.25),
+    std::make_tuple(1, std::vector<std::pair<double, double>>{{0.0, 1.0}}, 1'000'000,
+                    [](const std::vector<double> &x) { return x[0] * x[0]; }, 1.0 / 3.0),
 
-    std::make_tuple(MonteCarloInput{.bounds = {{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}},  // 3D
-                                    .samples = 1'000'000,
-                                    .func = [](const std::vector<double> &x) { return x[0] + x[1] + x[2]; }},
-                    1.5)};
+    std::make_tuple(2, std::vector<std::pair<double, double>>{{0.0, 1.0}, {0.0, 1.0}}, 1'000'000,
+                    [](const std::vector<double> &x) { return x[0] * x[1]; }, 0.25),
+
+    std::make_tuple(3, std::vector<std::pair<double, double>>{{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}}, 1'000'000,
+                    [](const std::vector<double> &x) { return x[0] + x[1] + x[2]; }, 1.5)};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<EreminVIntegralsMonteCarloSEQ, InType>(
     kTestParam, PPC_SETTINGS_eremin_v_integrals_monte_carlo));

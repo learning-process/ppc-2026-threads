@@ -33,7 +33,6 @@ bool EreminVIntegralsMonteCarloSEQ::ValidationImpl() {
     const auto &[a, b] = p;
     return (a < b) && (std::abs(a) <= 1e9) && (std::abs(b) <= 1e9);
   });
-  return true;
 }
 
 bool EreminVIntegralsMonteCarloSEQ::PreProcessingImpl() {

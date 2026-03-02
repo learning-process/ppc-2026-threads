@@ -1,6 +1,5 @@
 #pragma once
 
-#include <functional>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -9,17 +8,18 @@
 
 namespace eremin_v_integrals_monte_carlo {
 
-using FunctionType = std::function<double(const std::vector<double> &)>;
+using FunctionType = double (*)(const std::vector<double> &);
 
 struct MonteCarloInput {
   std::vector<std::pair<double, double>> bounds;
   int samples = 0;
-  FunctionType func;
+  FunctionType func = nullptr;
 };
 
 using InType = MonteCarloInput;
 using OutType = double;
-using TestType = std::tuple<MonteCarloInput, double>;
+using TestType =
+    std::tuple<int, std::vector<std::pair<double, double>>, int, double (*)(const std::vector<double> &), double>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace eremin_v_integrals_monte_carlo
