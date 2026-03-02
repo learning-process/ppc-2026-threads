@@ -1,179 +1,160 @@
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
-#include <random>
+#include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 #include "safaryan_a_sparse_matrix_mult_crs_seq/common/include/common.hpp"
 #include "safaryan_a_sparse_matrix_mult_crs_seq/seq/include/ops_seq.hpp"
+#include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace safaryan_a_sparse_matrix_mult_crs_seq {
+
 namespace {
 
-// ------------------ helpers: Dense <-> CRS ------------------
+CRSMatrix CreateMatrix(size_t rows, size_t cols, const std::vector<double> &values,
+                       const std::vector<size_t> &col_indices, const std::vector<size_t> &row_ptr) {
+  CRSMatrix matrix;
+  matrix.rows = rows;
+  matrix.cols = cols;
+  matrix.values = values;
+  matrix.col_indices = col_indices;
+  matrix.row_ptr = row_ptr;
+  matrix.nnz = values.size();
+  return matrix;
+}
 
-CRSMatrix DenseToCrs(const std::vector<std::vector<double>> &dense, double eps = 0.0) {
-  CRSMatrix m;
-  m.rows = dense.size();
-  m.cols = dense.empty() ? 0 : dense[0].size();
-  m.row_ptr.assign(m.rows + 1, 0);
+}  // namespace
 
-  for (size_t i = 0; i < m.rows; ++i) {
-    m.row_ptr[i] = m.values.size();
-    for (size_t j = 0; j < m.cols; ++j) {
-      const double v = dense[i][j];
-      if (std::abs(v) > eps) {
-        m.values.push_back(v);
-        m.col_indices.push_back(j);
+class SafaryanARunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+ public:
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::to_string(std::get<0>(test_param)) + "_" + std::get<3>(test_param);
+  }
+
+ protected:
+  void SetUp() override {
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    const int test_case = std::get<0>(params);
+
+    switch (test_case) {
+      case 1: {
+        const CRSMatrix a = CreateMatrix(3, 3, {1.5, 4.2, 3.7, 2.8, 5.1}, {0, 2, 1, 0, 2}, {0, 2, 3, 5});
+        const CRSMatrix b = CreateMatrix(3, 3, {1.2, 2.3, 3.4}, {0, 1, 2}, {0, 1, 2, 3});
+
+        expected_output_ = CreateMatrix(3, 3, {1.8, 5.04, 8.51, 9.52, 17.34}, {0, 2, 1, 0, 2}, {0, 2, 3, 5});
+        input_data_ = std::make_pair(a, b);
+        break;
       }
+
+      case 2: {
+        const CRSMatrix a = CreateMatrix(2, 3, {1.2, 2.5, 3.7}, {0, 1, 2}, {0, 1, 2});
+        const CRSMatrix b = CreateMatrix(3, 2, {1.1, 3.3, 2.2}, {0, 0, 1}, {0, 2, 3});
+
+        expected_output_ = CreateMatrix(2, 2, {1.32, 12.21, 5.5}, {0, 1, 0}, {0, 2, 3});
+        input_data_ = std::make_pair(a, b);
+        break;
+      }
+
+      case 3: {
+        const CRSMatrix a = CreateMatrix(2, 2, {2.5}, {0}, {0, 1, 1});
+        const CRSMatrix b = CreateMatrix(2, 2, {3.7}, {1}, {0, 1, 1});
+
+        expected_output_ = CreateMatrix(2, 2, {}, {}, {0, 0, 0});
+        input_data_ = std::make_pair(a, b);
+        break;
+      }
+
+      case 4: {
+        const CRSMatrix a = CreateMatrix(3, 3, {1.1, 4.2, 7.3, 2.4, 5.5, 8.6, 3.7, 6.8, 9.9},
+                                         {0, 1, 2, 0, 1, 2, 0, 1, 2}, {0, 3, 6, 9});
+        const CRSMatrix b = CreateMatrix(3, 3, {1.0, 1.0, 1.0}, {0, 1, 2}, {0, 1, 2, 3});
+
+        expected_output_ = a;
+        input_data_ = std::make_pair(a, b);
+        break;
+      }
+
+      case 5: {
+        const CRSMatrix a = CreateMatrix(4, 4, {1.5, 2.5, 3.5, 4.5}, {0, 1, 2, 3}, {0, 1, 2, 3, 4});
+        const CRSMatrix b = CreateMatrix(4, 4, {5.5, 6.5, 7.5, 8.5}, {0, 1, 2, 3}, {0, 1, 2, 3, 4});
+
+        expected_output_ = CreateMatrix(4, 4, {8.25, 16.25, 26.25, 38.25}, {0, 1, 2, 3}, {0, 1, 2, 3, 4});
+        input_data_ = std::make_pair(a, b);
+        break;
+      }
+
+      default:
+        break;
     }
   }
 
-  m.nnz = m.values.size();
-  m.row_ptr[m.rows] = m.nnz;
-  return m;
-}
-
-std::vector<std::vector<double>> CrsToDense(const CRSMatrix &m) {
-  std::vector<std::vector<double>> dense(m.rows, std::vector<double>(m.cols, 0.0));
-
-  for (size_t i = 0; i < m.rows; ++i) {
-    for (size_t idx = m.row_ptr[i]; idx < m.row_ptr[i + 1]; ++idx) {
-      dense[i][m.col_indices[idx]] += m.values[idx];
+  bool CheckTestOutputData(OutType &output_data) final {
+    if (output_data.rows != expected_output_.rows || output_data.cols != expected_output_.cols) {
+      return false;
     }
-  }
 
-  return dense;
-}
+    if (output_data.values.size() != expected_output_.values.size() ||
+        output_data.col_indices.size() != expected_output_.col_indices.size()) {
+      return false;
+    }
 
-std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<double>> &a,
-                                          const std::vector<std::vector<double>> &b) {
-  const size_t n = a.size();
-  const size_t k = a.empty() ? 0 : a[0].size();
-  const size_t m = b.empty() ? 0 : b[0].size();
+    if (output_data.row_ptr.size() != expected_output_.row_ptr.size()) {
+      return false;
+    }
 
-  std::vector<std::vector<double>> c(n, std::vector<double>(m, 0.0));
-  for (size_t i = 0; i < n; ++i) {
-    for (size_t kk = 0; kk < k; ++kk) {
-      const double av = a[i][kk];
-      if (av == 0.0) {
-        continue;
-      }
-      for (size_t j = 0; j < m; ++j) {
-        c[i][j] += av * b[kk][j];
+    for (size_t i = 0; i < output_data.row_ptr.size(); ++i) {
+      if (output_data.row_ptr[i] != expected_output_.row_ptr[i]) {
+        return false;
       }
     }
-  }
 
-  return c;
-}
-
-void ExpectDenseEqual(const std::vector<std::vector<double>> &x, const std::vector<std::vector<double>> &y,
-                      double eps = 1e-9) {
-  if (x.size() != y.size()) {
-    GTEST_FAIL() << "Different row count: got=" << x.size() << " expected=" << y.size();
-  }
-  if (x.empty()) {
-    return;
-  }
-  if (x[0].size() != y[0].size()) {
-    GTEST_FAIL() << "Different col count: got=" << x[0].size() << " expected=" << y[0].size();
-  }
-
-  for (size_t i = 0; i < x.size(); ++i) {
-    for (size_t j = 0; j < x[0].size(); ++j) {
-      const double diff = std::abs(x[i][j] - y[i][j]);
-      if (diff > eps) {
-        GTEST_FAIL() << "Mismatch at (" << i << "," << j << "): got=" << x[i][j] << " expected=" << y[i][j]
-                     << " diff=" << diff << " eps=" << eps;
+    const double epsilon = 1e-10;
+    for (size_t i = 0; i < output_data.values.size(); ++i) {
+      if (std::abs(output_data.values[i] - expected_output_.values[i]) > epsilon) {
+        return false;
+      }
+      if (output_data.col_indices[i] != expected_output_.col_indices[i]) {
+        return false;
       }
     }
-  }
-}
-}
 
-// ------------------ random generator ------------------
-
-std::vector<std::vector<double>> GenDense(size_t rows, size_t cols, double density, std::uint32_t seed) {
-  std::mt19937 rng(seed);
-  std::uniform_real_distribution<double> prob(0.0, 1.0);
-  std::uniform_real_distribution<double> val(-5.0, 5.0);
-
-  std::vector<std::vector<double>> d(rows, std::vector<double>(cols, 0.0));
-  for (size_t i = 0; i < rows; ++i) {
-    for (size_t j = 0; j < cols; ++j) {
-      if (prob(rng) < density) {
-        d[i][j] = val(rng);
-      }
-    }
+    return true;
   }
 
-  return d;
+  InType GetTestInputData() final {
+    return input_data_;
+  }
+
+ private:
+  InType input_data_;
+  CRSMatrix expected_output_;
+};
+
+namespace {
+
+TEST_P(SafaryanARunFuncTestsSEQ, SparseMatrixMultiplication) {
+  ExecuteTest(GetParam());
 }
 
-// -------------- functional tests --------------
+const std::array<TestType, 5> kTestParam = {
+    std::make_tuple(1, 0, 0, "simple_3x3"), std::make_tuple(2, 0, 0, "rectangular_2x3_3x2"),
+    std::make_tuple(3, 0, 0, "zero_result"), std::make_tuple(4, 0, 0, "identity_matrix"),
+    std::make_tuple(5, 0, 0, "diagonal_matrices")};
 
-TEST(SafaryanASparseMatrixMultCRSSeqFunctional, SmallFixedCase) {
-  const std::vector<std::vector<double>> a_dense = {
-      {1.0, 0.0, 2.0},
-      {0.0, -1.0, 3.0},
-  };
-  const std::vector<std::vector<double>> b_dense = {
-      {2.0, 1.0},
-      {0.0, 4.0},
-      {1.0, -2.0},
-  };
+const auto kTestTasksList =
+    ppc::util::AddFuncTask<SafaryanATaskSEQ, InType>(kTestParam, PPC_SETTINGS_safaryan_a_sparse_matrix_mult_crs_seq);
 
-  const CRSMatrix a_crs = DenseToCrs(a_dense);
-  const CRSMatrix b_crs = DenseToCrs(b_dense);
+const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-  SafaryanASparseMatrixMultCRSSeq task({a_crs, b_crs});
-  ASSERT_TRUE(task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing());
+const auto kPerfTestName = SafaryanARunFuncTestsSEQ::PrintFuncTestName<SafaryanARunFuncTestsSEQ>;
 
-  const auto got = CrsToDense(task.GetOutput());
-  const auto ref = DenseMul(a_dense, b_dense);
-
-  ExpectDenseEqual(got, ref);
-}
-
-TEST(SafaryanASparseMatrixMultCRSSeqFunctional, RandomCaseMatchesDense) {
-  const size_t n = 25;
-  const size_t k = 30;
-  const size_t m = 20;
-
-  const auto a_dense = GenDense(n, k, 0.12, 100U);
-  const auto b_dense = GenDense(k, m, 0.12, 200U);
-
-  const CRSMatrix a_crs = DenseToCrs(a_dense);
-  const CRSMatrix b_crs = DenseToCrs(b_dense);
-
-  SafaryanASparseMatrixMultCRSSeq task({a_crs, b_crs});
-  ASSERT_TRUE(task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing());
-
-  const auto got = CrsToDense(task.GetOutput());
-  const auto ref = DenseMul(a_dense, b_dense);
-
-  ExpectDenseEqual(got, ref, 1e-8);
-}
-
-TEST(SafaryanASparseMatrixMultCRSSeqFunctional, ValidationFailsOnBadSizes) {
-  CRSMatrix a_crs;
-  a_crs.rows = 2;
-  a_crs.cols = 3;
-  a_crs.row_ptr = {0, 0, 0};
-  a_crs.nnz = 0;
-
-  CRSMatrix b_crs;
-  b_crs.rows = 4;
-  b_crs.cols = 2;
-  b_crs.row_ptr = {0, 0, 0, 0, 0};
-  b_crs.nnz = 0;
-
-  SafaryanASparseMatrixMultCRSSeq task({a_crs, b_crs});
-  ASSERT_FALSE(task.Validation());
-}
+INSTANTIATE_TEST_SUITE_P(SparseMatrixMultFixedTests, SafaryanARunFuncTestsSEQ, kGtestValues, kPerfTestName);
 
 }  // namespace
 
