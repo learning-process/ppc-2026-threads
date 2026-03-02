@@ -14,7 +14,7 @@ namespace {
 
 // ------------------ helpers: Dense <-> CRS ------------------
 
-CRSMatrix DenseToCrs(const std::vector<std::vector<double>>& dense, double eps = 0.0) {
+CRSMatrix DenseToCrs(const std::vector<std::vector<double>> &dense, double eps = 0.0) {
   CRSMatrix m;
   m.rows = dense.size();
   m.cols = dense.empty() ? 0 : dense[0].size();
@@ -36,7 +36,7 @@ CRSMatrix DenseToCrs(const std::vector<std::vector<double>>& dense, double eps =
   return m;
 }
 
-std::vector<std::vector<double>> CrsToDense(const CRSMatrix& m) {
+std::vector<std::vector<double>> CrsToDense(const CRSMatrix &m) {
   std::vector<std::vector<double>> dense(m.rows, std::vector<double>(m.cols, 0.0));
 
   for (size_t i = 0; i < m.rows; ++i) {
@@ -48,8 +48,8 @@ std::vector<std::vector<double>> CrsToDense(const CRSMatrix& m) {
   return dense;
 }
 
-std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<double>>& a,
-                                          const std::vector<std::vector<double>>& b) {
+std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<double>> &a,
+                                          const std::vector<std::vector<double>> &b) {
   const size_t n = a.size();
   const size_t k = a.empty() ? 0 : a[0].size();
   const size_t m = b.empty() ? 0 : b[0].size();
@@ -70,8 +70,7 @@ std::vector<std::vector<double>> DenseMul(const std::vector<std::vector<double>>
   return c;
 }
 
-void ExpectDenseEqual(const std::vector<std::vector<double>>& x,
-                      const std::vector<std::vector<double>>& y,
+void ExpectDenseEqual(const std::vector<std::vector<double>> &x, const std::vector<std::vector<double>> &y,
                       double eps = 1e-9) {
   ASSERT_EQ(x.size(), y.size());
   if (x.empty()) {
@@ -105,7 +104,6 @@ std::vector<std::vector<double>> GenDense(size_t rows, size_t cols, double densi
   return d;
 }
 
-
 // -------------- functional tests --------------
 
 TEST(SafaryanASparseMatrixMultCRSSeqFunctional, SmallFixedCase) {
@@ -133,7 +131,6 @@ TEST(SafaryanASparseMatrixMultCRSSeqFunctional, SmallFixedCase) {
 
   ExpectDenseEqual(got, ref);
 }
-
 
 TEST(SafaryanASparseMatrixMultCRSSeqFunctional, RandomCaseMatchesDense) {
   const size_t n = 25;
