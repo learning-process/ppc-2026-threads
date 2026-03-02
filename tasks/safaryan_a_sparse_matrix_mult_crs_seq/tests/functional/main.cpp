@@ -132,6 +132,7 @@ TEST(SafaryanASparseMatrixMultCRSSeqFunctional, SmallFixedCase) {
   ExpectDenseEqual(got, ref);
 }
 
+
 TEST(SafaryanASparseMatrixMultCRSSeqFunctional, RandomCaseMatchesDense) {
   const size_t n = 25;
   const size_t k = 30;
