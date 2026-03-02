@@ -54,7 +54,7 @@ class SparseMatrix {
     col_index_.push_back(0);
     for (unsigned j = 0; j < cols_; j++) {
       for (unsigned i = 0; i < rows_; i++) {
-        if (i % 2 == 0) {
+        if (i % 5 == 0) {
           value_.push_back(1.0);
           row_.push_back(i);
         }
@@ -73,7 +73,7 @@ class SparseMatrix {
     col_index_.push_back(0);
 
     for (unsigned j = 0; j < cols_; j++) {
-      if (j % 2 == 0) {
+      if (j % 5 == 0) {
         for (unsigned i = 0; i < rows_; i++) {
           value_.push_back(1.0);
           row_.push_back(i);
@@ -93,10 +93,10 @@ class SparseMatrix {
 
     col_index_.push_back(0);
     for (unsigned j = 0; j < m; j++) {
-      if (j % 2 == 0)  // только чётные столбцы ненулевые
+      if (j % 5 == 0)  // только чётные столбцы ненулевые
       {
         for (unsigned i = 0; i < n; i++) {
-          if (i % 2 == 0)  // только чётные строки
+          if (i % 5 == 0)  // только чётные строки
           {
             value_.push_back(static_cast<double>(k));
             row_.push_back(i);
