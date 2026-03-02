@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "rysev_m_linear_filter_gauss_kernel/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace rysev_m_linear_filter_gauss_kernel {
 
@@ -35,6 +36,8 @@ class RysevMGaussFilterSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  void ApplyKernelToChannel(int channel, int rows, int cols, const std::array<std::array<float, 3>, 3> &kernel);
 
   std::vector<uint8_t> input_image_;
   std::vector<uint8_t> output_image_;

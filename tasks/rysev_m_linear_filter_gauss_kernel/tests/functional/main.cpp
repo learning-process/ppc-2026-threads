@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cstddef>
 #include <string>
 #include <tuple>
 
@@ -10,6 +11,17 @@
 #include "util/include/util.hpp"
 
 namespace rysev_m_linear_filter_gauss_kernel {
+
+namespace {
+OutType ComputeReferenceOutput(int test_id) {
+  RysevMGaussFilterSEQ etalon(test_id);
+  EXPECT_TRUE(etalon.Validation());
+  EXPECT_TRUE(etalon.PreProcessing());
+  EXPECT_TRUE(etalon.Run());
+  EXPECT_TRUE(etalon.PostProcessing());
+  return etalon.GetOutput();
+}
+}  // namespace
 
 class RysevMFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -22,13 +34,7 @@ class RysevMFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, Test
     TestType params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_id = std::get<0>(params);
 
-    RysevMGaussFilterSEQ etalon(test_id);
-    ASSERT_TRUE(etalon.Validation());
-    ASSERT_TRUE(etalon.PreProcessing());
-    ASSERT_TRUE(etalon.Run());
-    ASSERT_TRUE(etalon.PostProcessing());
-    reference_output_ = etalon.GetOutput();
-
+    reference_output_ = ComputeReferenceOutput(test_id);
     input_data_ = test_id;
   }
 

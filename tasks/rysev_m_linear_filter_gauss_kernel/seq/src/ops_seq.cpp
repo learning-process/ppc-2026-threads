@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include "rysev_m_linear_filter_gauss_kernel/common/include/common.hpp"
 #include "util/include/util.hpp"
 
 namespace rysev_m_linear_filter_gauss_kernel {
@@ -59,6 +60,31 @@ bool RysevMGaussFilterSEQ::PreProcessingImpl() {
   return true;
 }
 
+void RysevMGaussFilterSEQ::ApplyKernelToChannel(int channel, int rows, int cols,
+                                                const std::array<std::array<float, 3>, 3> &kernel) {
+  for (int row = 0; row < rows; ++row) {
+    for (int col = 0; col < cols; ++col) {
+      float sum = 0.0F;
+
+      for (int kr = -1; kr <= 1; ++kr) {
+        for (int kc = -1; kc <= 1; ++kc) {
+          int nr = row + kr;
+          int nc = col + kc;
+          if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+            std::size_t idx = (static_cast<std::size_t>(nr) * cols) + nc;
+            idx = (idx * channels_) + channel;
+            sum += static_cast<float>(input_image_[idx]) * kernel.at(kr + 1).at(kc + 1);
+          }
+        }
+      }
+
+      std::size_t out_idx = (static_cast<std::size_t>(row) * cols) + col;
+      out_idx = (out_idx * channels_) + channel;
+      output_image_[out_idx] = static_cast<uint8_t>(std::clamp(sum, 0.0F, 255.0F));
+    }
+  }
+}
+
 bool RysevMGaussFilterSEQ::RunImpl() {
   const std::array<std::array<float, 3>, 3> kernel = {
       {{{1.0F / 16, 2.0F / 16, 1.0F / 16}}, {{2.0F / 16, 4.0F / 16, 2.0F / 16}}, {{1.0F / 16, 2.0F / 16, 1.0F / 16}}}};
@@ -68,27 +94,7 @@ bool RysevMGaussFilterSEQ::RunImpl() {
   int ch = channels_;
 
   for (int channel = 0; channel < ch; ++channel) {
-    for (int row = 0; row < rows; ++row) {
-      for (int col = 0; col < cols; ++col) {
-        float sum = 0.0F;
-
-        for (int kr = -1; kr <= 1; ++kr) {
-          for (int kc = -1; kc <= 1; ++kc) {
-            int nr = row + kr;
-            int nc = col + kc;
-            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
-              std::size_t idx = static_cast<std::size_t>(nr) * cols + nc;
-              idx = idx * ch + channel;
-              sum += static_cast<float>(input_image_[idx]) * kernel[kr + 1][kc + 1];
-            }
-          }
-        }
-
-        std::size_t out_idx = static_cast<std::size_t>(row) * cols + col;
-        out_idx = out_idx * ch + channel;
-        output_image_[out_idx] = static_cast<uint8_t>(std::clamp(sum, 0.0F, 255.0F));
-      }
-    }
+    ApplyKernelToChannel(channel, rows, cols, kernel);
   }
 
   return true;
