@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "dergachev_a_graham_scan/common/include/common.hpp"
+#include "dergachev_a_graham_scan/omp/include/ops_omp.hpp"
 #include "dergachev_a_graham_scan/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -29,8 +30,8 @@ TEST_P(DergachevAGrahamScanPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, DergachevAGrahamScanSEQ>(PPC_SETTINGS_dergachev_a_graham_scan);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, DergachevAGrahamScanSEQ, DergachevAGrahamScanOMP>(
+    PPC_SETTINGS_dergachev_a_graham_scan);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
