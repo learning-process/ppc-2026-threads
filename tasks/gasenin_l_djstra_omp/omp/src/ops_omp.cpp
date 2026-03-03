@@ -42,7 +42,7 @@ InType FindGlobalVertexOMP(const InType n, const InType inf, std::vector<InType>
 
 #pragma omp for nowait
     for (int index = 0; index < n; ++index) {
-      if (!visited[index] && dist[index] < thread_min) {
+      if (visited[index] == 0 && dist[index] < thread_min) {
         thread_min = dist[index];
         thread_vertex = index;
       }
@@ -57,10 +57,10 @@ InType FindGlobalVertexOMP(const InType n, const InType inf, std::vector<InType>
     {
       InType global_min = inf;
 
-      for (int t = 0; t < num_threads; ++t) {
-        if (local_min[t] < global_min) {
-          global_min = local_min[t];
-          global_vertex = local_vertex[t];
+      for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+        if (local_min[thread_idx] < global_min) {
+          global_min = local_min[thread_idx];
+          global_vertex = local_vertex[thread_idx];
         }
       }
 
@@ -79,7 +79,7 @@ void RelaxEdgesOMP(const InType n, const InType inf, const InType global_vertex,
                    std::vector<char> &visited) {
 #pragma omp parallel for default(none) shared(n, inf, global_vertex, dist, visited)
   for (int vertex = 0; vertex < n; ++vertex) {
-    if (!visited[vertex] && vertex != global_vertex) {
+    if (visited[vertex] == 0 && vertex != global_vertex) {
       const InType weight = std::abs(global_vertex - vertex);
 
       if (dist[global_vertex] != inf) {
