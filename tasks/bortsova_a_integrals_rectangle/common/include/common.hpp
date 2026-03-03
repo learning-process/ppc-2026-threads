@@ -7,7 +7,7 @@
 
 #include "task/include/task.hpp"
 
-namespace bortsova_a_integrals_rectangle_seq {
+namespace bortsova_a_integrals_rectangle {
 
 using Function = std::function<double(const std::vector<double> &)>;
 
@@ -23,4 +23,4 @@ using OutType = double;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace bortsova_a_integrals_rectangle_seq
+}  // namespace bortsova_a_integrals_rectangle

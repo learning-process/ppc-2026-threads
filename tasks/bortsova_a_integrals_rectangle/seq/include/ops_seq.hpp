@@ -3,10 +3,10 @@
 #include <cstdint>
 #include <vector>
 
-#include "bortsova_a_integrals_rectangle_seq/common/include/common.hpp"
+#include "bortsova_a_integrals_rectangle/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace bortsova_a_integrals_rectangle_seq {
+namespace bortsova_a_integrals_rectangle {
 
 class BortsovaAIntegralsRectangleSEQ : public BaseTask {
  public:
@@ -29,4 +29,4 @@ class BortsovaAIntegralsRectangleSEQ : public BaseTask {
   std::vector<std::vector<double>> midpoints_;
 };
 
-}  // namespace bortsova_a_integrals_rectangle_seq
+}  // namespace bortsova_a_integrals_rectangle

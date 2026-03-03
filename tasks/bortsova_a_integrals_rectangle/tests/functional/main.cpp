@@ -7,12 +7,12 @@
 #include <tuple>
 #include <vector>
 
-#include "bortsova_a_integrals_rectangle_seq/common/include/common.hpp"
-#include "bortsova_a_integrals_rectangle_seq/seq/include/ops_seq.hpp"
+#include "bortsova_a_integrals_rectangle/common/include/common.hpp"
+#include "bortsova_a_integrals_rectangle/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace bortsova_a_integrals_rectangle_seq {
+namespace bortsova_a_integrals_rectangle {
 
 class BortsovaAIntegralsRectangleFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -128,7 +128,7 @@ const std::array<TestType, 10> kTestParam = {
 };
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<BortsovaAIntegralsRectangleSEQ, InType>(
-    kTestParam, PPC_SETTINGS_bortsova_a_integrals_rectangle_seq));
+    kTestParam, PPC_SETTINGS_bortsova_a_integrals_rectangle));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -138,4 +138,4 @@ INSTANTIATE_TEST_SUITE_P(IntegralTests, BortsovaAIntegralsRectangleFuncTests, kG
 
 }  // namespace
 
-}  // namespace bortsova_a_integrals_rectangle_seq
+}  // namespace bortsova_a_integrals_rectangle

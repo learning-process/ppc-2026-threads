@@ -1,11 +1,11 @@
-#include "bortsova_a_integrals_rectangle_seq/seq/include/ops_seq.hpp"
+#include "bortsova_a_integrals_rectangle/seq/include/ops_seq.hpp"
 
 #include <cstdint>
 #include <vector>
 
-#include "bortsova_a_integrals_rectangle_seq/common/include/common.hpp"
+#include "bortsova_a_integrals_rectangle/common/include/common.hpp"
 
-namespace bortsova_a_integrals_rectangle_seq {
+namespace bortsova_a_integrals_rectangle {
 
 BortsovaAIntegralsRectangleSEQ::BortsovaAIntegralsRectangleSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -71,4 +71,4 @@ bool BortsovaAIntegralsRectangleSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace bortsova_a_integrals_rectangle_seq
+}  // namespace bortsova_a_integrals_rectangle
