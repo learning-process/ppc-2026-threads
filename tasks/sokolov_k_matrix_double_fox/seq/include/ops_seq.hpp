@@ -2,10 +2,10 @@
 
 #include <vector>
 
-#include "sokolov_k_matrix_double_fox_seq/common/include/common.hpp"
+#include "sokolov_k_matrix_double_fox/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace sokolov_k_matrix_double_fox_seq {
+namespace sokolov_k_matrix_double_fox {
 
 class SokolovKMatrixDoubleFoxSEQ : public BaseTask {
  public:
@@ -28,4 +28,4 @@ class SokolovKMatrixDoubleFoxSEQ : public BaseTask {
   std::vector<double> blocks_c_;
 };
 
-}  // namespace sokolov_k_matrix_double_fox_seq
+}  // namespace sokolov_k_matrix_double_fox

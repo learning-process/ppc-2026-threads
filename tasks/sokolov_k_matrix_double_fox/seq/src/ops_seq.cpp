@@ -1,22 +1,23 @@
-#include "sokolov_k_matrix_double_fox_seq/seq/include/ops_seq.hpp"
+#include "sokolov_k_matrix_double_fox/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <vector>
 
-#include "sokolov_k_matrix_double_fox_seq/common/include/common.hpp"
+#include "sokolov_k_matrix_double_fox/common/include/common.hpp"
 
-namespace sokolov_k_matrix_double_fox_seq {
+namespace sokolov_k_matrix_double_fox {
 
 namespace {
 
 void DecomposeToBlocks(const std::vector<double> &flat, std::vector<double> &blocks, int n, int bs, int q) {
   for (int bi = 0; bi < q; bi++) {
     for (int bj = 0; bj < q; bj++) {
-      int block_off = (bi * q + bj) * bs * bs;
+      int block_off = ((bi * q) + bj) * (bs * bs);
       for (int i = 0; i < bs; i++) {
         for (int j = 0; j < bs; j++) {
-          blocks[block_off + (i * bs) + j] = flat[(((bi * bs) + i) * n) + (bj * bs + j)];
+          blocks[block_off + (i * bs) + j] = flat[(((bi * bs) + i) * n) + ((bj * bs) + j)];
         }
       }
     }
@@ -26,10 +27,10 @@ void DecomposeToBlocks(const std::vector<double> &flat, std::vector<double> &blo
 void AssembleFromBlocks(const std::vector<double> &blocks, std::vector<double> &flat, int n, int bs, int q) {
   for (int bi = 0; bi < q; bi++) {
     for (int bj = 0; bj < q; bj++) {
-      int block_off = (bi * q + bj) * bs * bs;
+      int block_off = ((bi * q) + bj) * (bs * bs);
       for (int i = 0; i < bs; i++) {
         for (int j = 0; j < bs; j++) {
-          flat[(((bi * bs) + i) * n) + (bj * bs + j)] = blocks[block_off + (i * bs) + j];
+          flat[(((bi * bs) + i) * n) + ((bj * bs) + j)] = blocks[block_off + (i * bs) + j];
         }
       }
     }
@@ -54,7 +55,7 @@ void FoxStep(const std::vector<double> &a, const std::vector<double> &b, std::ve
   for (int i = 0; i < q; i++) {
     int k = (i + step) % q;
     for (int j = 0; j < q; j++) {
-      MultiplyBlocks(a, (i * q + k) * bsq, b, (k * q + j) * bsq, c, (i * q + j) * bsq, bs);
+      MultiplyBlocks(a, ((i * q) + k) * bsq, b, ((k * q) + j) * bsq, c, ((i * q) + j) * bsq, bs);
     }
   }
 }
@@ -65,60 +66,59 @@ void FoxMultiply(const std::vector<double> &a, const std::vector<double> &b, std
   }
 }
 
+int ChooseBlockSize(int n) {
+  for (int d = static_cast<int>(std::sqrt(static_cast<double>(n))); d >= 1; d--) {
+    if (n % d == 0) {
+      return d;
+    }
+  }
+  return 1;
+}
+
 }  // namespace
 
 SokolovKMatrixDoubleFoxSEQ::SokolovKMatrixDoubleFoxSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
+  GetOutput() = 0;
 }
 
 bool SokolovKMatrixDoubleFoxSEQ::ValidationImpl() {
-  const auto &in = GetInput();
-  int n = std::get<0>(in);
-  int b = std::get<1>(in);
-  const auto &a = std::get<2>(in);
-  const auto &mat_b = std::get<3>(in);
-  if (n <= 0 || b <= 0 || (n % b != 0)) {
-    return false;
-  }
-  auto expected = static_cast<std::size_t>(n) * n;
-  if (a.size() != expected || mat_b.size() != expected) {
-    return false;
-  }
-  for (std::size_t i = 0; i < a.size(); i++) {
-    if (!std::isfinite(a[i]) || !std::isfinite(mat_b[i])) {
-      return false;
-    }
-  }
-  return true;
+  return (GetInput() > 0) && (GetOutput() == 0);
 }
 
 bool SokolovKMatrixDoubleFoxSEQ::PreProcessingImpl() {
-  const auto &in = GetInput();
-  n_ = std::get<0>(in);
-  block_size_ = std::get<1>(in);
+  GetOutput() = 0;
+  n_ = GetInput();
+  block_size_ = ChooseBlockSize(n_);
   q_ = n_ / block_size_;
   auto sz = static_cast<std::size_t>(n_) * n_;
+  std::vector<double> a(sz, 1.5);
+  std::vector<double> b(sz, 2.0);
   blocks_a_.resize(sz);
   blocks_b_.resize(sz);
   blocks_c_.assign(sz, 0.0);
-  DecomposeToBlocks(std::get<2>(in), blocks_a_, n_, block_size_, q_);
-  DecomposeToBlocks(std::get<3>(in), blocks_b_, n_, block_size_, q_);
+  DecomposeToBlocks(a, blocks_a_, n_, block_size_, q_);
+  DecomposeToBlocks(b, blocks_b_, n_, block_size_, q_);
   return true;
 }
 
 bool SokolovKMatrixDoubleFoxSEQ::RunImpl() {
+  std::fill(blocks_c_.begin(), blocks_c_.end(), 0.0);
   FoxMultiply(blocks_a_, blocks_b_, blocks_c_, block_size_, q_);
   return true;
 }
 
 bool SokolovKMatrixDoubleFoxSEQ::PostProcessingImpl() {
-  GetOutput().resize(static_cast<std::size_t>(n_) * n_);
-  AssembleFromBlocks(blocks_c_, GetOutput(), n_, block_size_, q_);
+  std::vector<double> result(static_cast<std::size_t>(n_) * n_);
+  AssembleFromBlocks(blocks_c_, result, n_, block_size_, q_);
+  double expected = 3.0 * n_;
+  bool ok = std::ranges::all_of(result, [expected](double v) { return std::abs(v - expected) <= 1e-9; });
+  GetOutput() = ok ? GetInput() : -1;
   std::vector<double>().swap(blocks_a_);
   std::vector<double>().swap(blocks_b_);
   std::vector<double>().swap(blocks_c_);
   return true;
 }
 
-}  // namespace sokolov_k_matrix_double_fox_seq
+}  // namespace sokolov_k_matrix_double_fox
