@@ -12,7 +12,7 @@
 
 namespace klimenko_v_lsh_contrast_incr {
 
-class KlimenkoVRunFuncTestsLSH : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class KlimenkoVFuncTestsLSH : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(test_param);
@@ -62,7 +62,7 @@ class KlimenkoVRunFuncTestsLSH : public ppc::util::BaseRunFuncTests<InType, OutT
 
 namespace {
 
-TEST_P(KlimenkoVRunFuncTestsLSH, ContrastStretching) {
+TEST_P(KlimenkoVFuncTestsLSH, ContrastStretching) {
   ExecuteTest(GetParam());
 }
 
@@ -73,9 +73,9 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kTestName = KlimenkoVRunFuncTestsLSH::PrintFuncTestName<KlimenkoVRunFuncTestsLSH>;
+const auto kTestName = KlimenkoVFuncTestsLSH::PrintFuncTestName<KlimenkoVFuncTestsLSH>;
 
-INSTANTIATE_TEST_SUITE_P(ContrastIncrTests, KlimenkoVRunFuncTestsLSH, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(ContrastIncrTests, KlimenkoVFuncTestsLSH, kGtestValues, kTestName);
 
 }  // namespace
 
