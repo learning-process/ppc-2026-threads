@@ -1,9 +1,9 @@
 #pragma once
 
-#include "klimenko_v_lsh_contrast_incr_seq/common/include/common.hpp"
+#include "klimenko_v_lsh_contrast_incr/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace klimenko_v_lsh_contrast_incr_seq {
+namespace klimenko_v_lsh_contrast_incr {
 
 class KlimenkoVLSHContrastIncrSEQ : public BaseTask {
  public:
@@ -19,4 +19,4 @@ class KlimenkoVLSHContrastIncrSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace klimenko_v_lsh_contrast_incr_seq
+}  // namespace klimenko_v_lsh_contrast_incr

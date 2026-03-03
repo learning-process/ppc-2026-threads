@@ -1,12 +1,12 @@
-#include "klimenko_v_lsh_contrast_incr_seq/seq/include/ops_seq.hpp"
+#include "klimenko_v_lsh_contrast_incr/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <cstddef>
 #include <vector>
 
-#include "klimenko_v_lsh_contrast_incr_seq/common/include/common.hpp"
+#include "klimenko_v_lsh_contrast_incr/common/include/common.hpp"
 
-namespace klimenko_v_lsh_contrast_incr_seq {
+namespace klimenko_v_lsh_contrast_incr {
 
 KlimenkoVLSHContrastIncrSEQ::KlimenkoVLSHContrastIncrSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -50,4 +50,4 @@ bool KlimenkoVLSHContrastIncrSEQ::PostProcessingImpl() {
   return GetOutput().size() == GetInput().size();
 }
 
-}  // namespace klimenko_v_lsh_contrast_incr_seq
+}  // namespace klimenko_v_lsh_contrast_incr

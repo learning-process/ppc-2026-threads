@@ -5,12 +5,12 @@
 #include <cstddef>
 #include <string>
 
-#include "klimenko_v_lsh_contrast_incr_seq/common/include/common.hpp"
-#include "klimenko_v_lsh_contrast_incr_seq/seq/include/ops_seq.hpp"
+#include "klimenko_v_lsh_contrast_incr/common/include/common.hpp"
+#include "klimenko_v_lsh_contrast_incr/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace klimenko_v_lsh_contrast_incr_seq {
+namespace klimenko_v_lsh_contrast_incr {
 
 class KlimenkoVRunFuncTestsLSH : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -69,7 +69,7 @@ TEST_P(KlimenkoVRunFuncTestsLSH, ContrastStretching) {
 const std::array<TestType, 3> kTestParam = {16, 256, 1024};
 
 const auto kTestTasksList = ppc::util::AddFuncTask<KlimenkoVLSHContrastIncrSEQ, InType>(
-    kTestParam, PPC_SETTINGS_klimenko_v_lsh_contrast_incr_seq);
+    kTestParam, PPC_SETTINGS_klimenko_v_lsh_contrast_incr);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -79,4 +79,4 @@ INSTANTIATE_TEST_SUITE_P(ContrastIncrTests, KlimenkoVRunFuncTestsLSH, kGtestValu
 
 }  // namespace
 
-}  // namespace klimenko_v_lsh_contrast_incr_seq
+}  // namespace klimenko_v_lsh_contrast_incr
