@@ -1,6 +1,5 @@
 #include "safaryan_a_sparse_matrix_mult_crs_seq/seq/include/ops_seq.hpp"
 
-#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <vector>
@@ -9,46 +8,40 @@
 
 namespace safaryan_a_sparse_matrix_mult_crs_seq {
 
-SafaryanASparseMatrixMultCRSSeq::SafaryanASparseMatrixMultCRSSeq(const InType &in) {
+SafaryanARunFuncTestsSEQ::SafaryanARunFuncTestsSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
+  GetOutput() = SparseMatrixCCS();
 }
 
-bool SafaryanASparseMatrixMultCRSSeq::IsMatrixValid(const CRSMatrix &m) {
-  if (m.rows == 0 || m.cols == 0) {
+bool SafaryanARunFuncTestsSEQ::IsMatrixValid(const SparseMatrixCCS &matrix) {
+  if (matrix.rows < 0 || matrix.cols < 0) {
+    return false;
+  }
+  if (matrix.col_ptrs.size() != static_cast<size_t>(matrix.cols) + 1) {
+    return false;
+  }
+  if (matrix.values.size() != matrix.row_indices.size()) {
     return false;
   }
 
-  if (m.row_ptr.size() != m.rows + 1) {
+  if (matrix.col_ptrs.empty() || matrix.col_ptrs[0] != 0) {
     return false;
   }
 
-  if (m.row_ptr.empty() || m.row_ptr[0] != 0) {
+  const int total_elements = static_cast<int>(matrix.values.size());
+  if (matrix.col_ptrs[matrix.cols] != total_elements) {
     return false;
   }
 
-  if (m.values.size() != m.col_indices.size()) {
-    return false;
-  }
-  if (m.nnz != m.values.size()) {
-    return false;
-  }
-
-  if (m.row_ptr[m.rows] != m.nnz) {
-    return false;
-  }
-
-  for (size_t i = 0; i < m.rows; ++i) {
-    if (m.row_ptr[i] > m.row_ptr[i + 1]) {
-      return false;
-    }
-    if (m.row_ptr[i + 1] > m.nnz) {
+  for (size_t i = 0; i < matrix.col_ptrs.size() - 1; ++i) {
+    if (matrix.col_ptrs[i] > matrix.col_ptrs[i + 1] || matrix.col_ptrs[i] < 0) {
       return false;
     }
   }
 
-  for (size_t idx = 0; idx < m.col_indices.size(); ++idx) {
-    if (m.col_indices[idx] >= m.cols) {
+  for (size_t i = 0; i < matrix.row_indices.size(); ++i) {
+    if (matrix.row_indices[i] < 0 || matrix.row_indices[i] >= matrix.rows) {
       return false;
     }
   }
@@ -56,9 +49,8 @@ bool SafaryanASparseMatrixMultCRSSeq::IsMatrixValid(const CRSMatrix &m) {
   return true;
 }
 
-bool SafaryanASparseMatrixMultCRSSeq::ValidationImpl() {
-  const auto &a = std::get<0>(GetInput());
-  const auto &b = std::get<1>(GetInput());
+bool SafaryanARunFuncTestsSEQ::ValidationImpl() {
+  const auto &[a, b] = GetInput();
 
   if (!IsMatrixValid(a) || !IsMatrixValid(b)) {
     return false;
@@ -70,79 +62,67 @@ bool SafaryanASparseMatrixMultCRSSeq::ValidationImpl() {
   return true;
 }
 
-bool SafaryanASparseMatrixMultCRSSeq::PreProcessingImpl() {
-  const auto &a = std::get<0>(GetInput());
-  const auto &b = std::get<1>(GetInput());
-
-  OutType &c = GetOutput();
-  c.values.clear();
-  c.col_indices.clear();
-  c.row_ptr.assign(a.rows + 1, 0);
-
-  c.rows = a.rows;
-  c.cols = b.cols;
-  c.nnz = 0;
-
+bool SafaryanARunFuncTestsSEQ::PreProcessingImpl() {
+  const auto &[a, b] = GetInput();
+  GetOutput() = SparseMatrixCCS(a.rows, b.cols);
   return true;
 }
 
-bool SafaryanASparseMatrixMultCRSSeq::RunImpl() {
-  const auto &a = std::get<0>(GetInput());
-  const auto &b = std::get<1>(GetInput());
-  OutType &c = GetOutput();
+namespace {
+void ProcessColumn(const SparseMatrixCCS &a, const SparseMatrixCCS &b, int j, std::vector<double> &temp) {
+  for (int k = 0; k < a.cols; ++k) {
+    double b_val = 0.0;
+    for (int b_idx = b.col_ptrs[j]; b_idx < b.col_ptrs[j + 1]; ++b_idx) {
+      if (b.row_indices[b_idx] == k) {
+        b_val = b.values[b_idx];
+        break;
+      }
+    }
 
-  c.values.clear();
-  c.col_indices.clear();
-  std::fill(c.row_ptr.begin(), c.row_ptr.end(), 0);
+    if (b_val == 0.0) {
+      continue;
+    }
 
-  std::vector<double> accum(b.cols, 0.0);
-  std::vector<bool> used(b.cols, false);
-  std::vector<size_t> used_cols;
-  used_cols.reserve(64);
-
-  constexpr double kEps = 1e-12;
-
-  for (size_t i = 0; i < a.rows; ++i) {
-    c.row_ptr[i] = c.values.size();
-
-    for (size_t a_idx = a.row_ptr[i]; a_idx < a.row_ptr[i + 1]; ++a_idx) {
-      const size_t k = a.col_indices[a_idx];
+    for (int a_idx = a.col_ptrs[k]; a_idx < a.col_ptrs[k + 1]; ++a_idx) {
+      const int i = a.row_indices[a_idx];
       const double a_val = a.values[a_idx];
-
-      for (size_t b_idx = b.row_ptr[k]; b_idx < b.row_ptr[k + 1]; ++b_idx) {
-        const size_t j = b.col_indices[b_idx];
-        const double b_val = b.values[b_idx];
-
-        accum[j] += a_val * b_val;
-
-        if (!used[j]) {
-          used[j] = true;
-          used_cols.push_back(j);
-        }
-      }
+      temp[i] += a_val * b_val;
     }
+  }
+}
 
-    std::sort(used_cols.begin(), used_cols.end());
-
-    for (size_t j : used_cols) {
-      const double v = accum[j];
-      if (std::abs(v) > kEps) {
-        c.col_indices.push_back(j);
-        c.values.push_back(v);
-      }
-      accum[j] = 0.0;
-      used[j] = false;
+void SaveColumnResults(int rows, std::vector<double> &temp, SparseMatrixCCS &result) {
+  for (int i = 0; i < rows; ++i) {
+    if (std::abs(temp[i]) > 1e-10) {
+      result.values.push_back(temp[i]);
+      result.row_indices.push_back(i);
+      temp[i] = 0.0;
     }
-    used_cols.clear();
+  }
+}
+}  // namespace
+
+SparseMatrixCCS SafaryanARunFuncTestsSEQ::MultiplyMatrices(const SparseMatrixCCS &a, const SparseMatrixCCS &b) {
+  SparseMatrixCCS result(a.rows, b.cols);
+  std::vector<double> temp(a.rows, 0.0);
+
+  for (int j = 0; j < b.cols; ++j) {
+    result.col_ptrs[j] = static_cast<int>(result.values.size());
+    ProcessColumn(a, b, j, temp);
+    SaveColumnResults(a.rows, temp, result);
   }
 
-  c.nnz = c.values.size();
-  c.row_ptr[c.rows] = c.nnz;
+  result.col_ptrs[b.cols] = static_cast<int>(result.values.size());
+  return result;
+}
 
+bool SafaryanARunFuncTestsSEQ::RunImpl() {
+  const auto &[a, b] = GetInput();
+  GetOutput() = MultiplyMatrices(a, b);
   return true;
 }
 
-bool SafaryanASparseMatrixMultCRSSeq::PostProcessingImpl() {
+bool SafaryanARunFuncTestsSEQ::PostProcessingImpl() {
   return true;
 }
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstddef>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -10,18 +9,21 @@
 
 namespace safaryan_a_sparse_matrix_mult_crs_seq {
 
-struct CRSMatrix {
+struct SparseMatrixCCS {
   std::vector<double> values;
-  std::vector<size_t> col_indices;
-  std::vector<size_t> row_ptr;
-  size_t rows = 0;
-  size_t cols = 0;
-  size_t nnz = 0;
+  std::vector<int> row_indices;
+  std::vector<int> col_ptrs;
+  int rows;
+  int cols;
+
+  SparseMatrixCCS() : rows(0), cols(0) {}
+
+  SparseMatrixCCS(int n_rows, int n_cols) : col_ptrs(n_cols + 1, 0), rows(n_rows), cols(n_cols) {}
 };
 
-using InType = std::pair<CRSMatrix, CRSMatrix>;
-using OutType = CRSMatrix;
-using TestType = std::tuple<int, std::string>;
+using InType = std::pair<SparseMatrixCCS, SparseMatrixCCS>;
+using OutType = SparseMatrixCCS;
+using TestType = std::tuple<int, int, int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace safaryan_a_sparse_matrix_mult_crs_seq
