@@ -9,7 +9,7 @@
 
 namespace shkenev_i_constr_hull_for_binary_image {
 
-class ShkenevIConstrHullPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class ShkenevIConstrHullBinaryPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr size_t kSize = 512;
 
  protected:
@@ -38,7 +38,7 @@ class ShkenevIConstrHullPerfTests : public ppc::util::BaseRunPerfTests<InType, O
   InType input_;
 };
 
-TEST_P(ShkenevIConstrHullPerfTests, RunPerf) {
+TEST_P(ShkenevIConstrHullBinaryPerfTests, RunPerf) {
   ExecuteTest(GetParam());
 }
 
@@ -49,7 +49,8 @@ const auto kPerfTasks =
 
 const auto kValues = ppc::util::TupleToGTestValues(kPerfTasks);
 
-INSTANTIATE_TEST_SUITE_P(Perf, ShkenevIConstrHullPerfTests, kValues, ShkenevIConstrHullPerfTests::CustomPerfTestName);
+INSTANTIATE_TEST_SUITE_P(Perf, ShkenevIConstrHullBinaryPerfTests, kValues,
+                         ShkenevIConstrHullBinaryPerfTests::CustomPerfTestName);
 
 }  // namespace
 
