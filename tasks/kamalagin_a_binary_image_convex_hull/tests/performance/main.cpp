@@ -1,14 +1,13 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <cstdint>
+#include <cstddef>
 #include <vector>
 
 #include "kamalagin_a_binary_image_convex_hull/common/include/common.hpp"
 #include "kamalagin_a_binary_image_convex_hull/seq/include/ops_seq.hpp"
 #include "performance/include/performance.hpp"
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace kamalagin_a_binary_image_convex_hull {
 

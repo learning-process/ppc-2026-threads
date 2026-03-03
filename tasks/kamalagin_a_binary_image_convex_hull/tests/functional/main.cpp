@@ -2,9 +2,10 @@
 
 #include <algorithm>
 #include <array>
-#include <cstdint>
+#include <cstddef>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "kamalagin_a_binary_image_convex_hull/common/include/common.hpp"
@@ -129,6 +130,34 @@ HullList ExpectedTwoComponents() {
   return {{Point{0, 0}}, {Point{4, 0}}};
 }
 
+using MakeFn = BinaryImage (*)();
+using ExpectedFn = HullList (*)();
+
+struct TestCaseEntry {
+  const char *name;
+  MakeFn make;
+  ExpectedFn expected;
+};
+
+const std::array<TestCaseEntry, 8> kTestCaseTable = {{
+    {"empty", MakeEmptyImage, ExpectedEmpty},
+    {"single_pixel", MakeSinglePixel, ExpectedSinglePixel},
+    {"two_isolated", MakeTwoIsolatedPixels, ExpectedTwoIsolatedPixels},
+    {"vertical_line", MakeVerticalLine, ExpectedVerticalLine},
+    {"horizontal_line", MakeHorizontalLine, ExpectedHorizontalLine},
+    {"filled_rect", MakeFilledRectangle, ExpectedFilledRectangle},
+    {"two_components", MakeTwoComponents, ExpectedTwoComponents},
+}};
+
+std::pair<BinaryImage, HullList> GetTestDataForName(const std::string &name) {
+  for (const auto &entry : kTestCaseTable) {
+    if (name == entry.name) {
+      return {entry.make(), entry.expected()};
+    }
+  }
+  return {MakeEmptyImage(), ExpectedEmpty()};
+}
+
 }  // namespace
 
 class KamalaginRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
@@ -141,31 +170,7 @@ class KamalaginRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     const std::string &name = std::get<1>(params);
-    if (name == "empty") {
-      input_data_ = MakeEmptyImage();
-      expected_ = ExpectedEmpty();
-    } else if (name == "single_pixel") {
-      input_data_ = MakeSinglePixel();
-      expected_ = ExpectedSinglePixel();
-    } else if (name == "two_isolated") {
-      input_data_ = MakeTwoIsolatedPixels();
-      expected_ = ExpectedTwoIsolatedPixels();
-    } else if (name == "vertical_line") {
-      input_data_ = MakeVerticalLine();
-      expected_ = ExpectedVerticalLine();
-    } else if (name == "horizontal_line") {
-      input_data_ = MakeHorizontalLine();
-      expected_ = ExpectedHorizontalLine();
-    } else if (name == "filled_rect") {
-      input_data_ = MakeFilledRectangle();
-      expected_ = ExpectedFilledRectangle();
-    } else if (name == "two_components") {
-      input_data_ = MakeTwoComponents();
-      expected_ = ExpectedTwoComponents();
-    } else {
-      input_data_ = MakeEmptyImage();
-      expected_ = ExpectedEmpty();
-    }
+    std::tie(input_data_, expected_) = GetTestDataForName(name);
     NormalizeHullList(expected_);
   }
 
@@ -192,8 +197,8 @@ class KamalaginRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
   }
 
  private:
-  InType input_data_{};
-  HullList expected_{};
+  InType input_data_;
+  HullList expected_;
 };
 
 namespace {
