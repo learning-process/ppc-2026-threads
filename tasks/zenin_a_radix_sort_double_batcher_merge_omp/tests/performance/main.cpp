@@ -7,9 +7,9 @@
 // #include "zenin_a_radix_sort_double_batcher_merge_omp/all/include/ops_all.hpp"
 #include "zenin_a_radix_sort_double_batcher_merge_omp/common/include/common.hpp"
 #include "zenin_a_radix_sort_double_batcher_merge_omp/omp/include/ops_omp.hpp"
-//#include "zenin_a_radix_sort_double_batcher_merge_omp/seq/include/ops_seq.hpp"
-// #include "zenin_a_radix_sort_double_batcher_merge_omp/stl/include/ops_stl.hpp"
-// #include "zenin_a_radix_sort_double_batcher_merge_omp/tbb/include/ops_tbb.hpp"
+// #include "zenin_a_radix_sort_double_batcher_merge_omp/seq/include/ops_seq.hpp"
+//  #include "zenin_a_radix_sort_double_batcher_merge_omp/stl/include/ops_stl.hpp"
+//  #include "zenin_a_radix_sort_double_batcher_merge_omp/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace zenin_a_radix_sort_double_batcher_merge_omp {

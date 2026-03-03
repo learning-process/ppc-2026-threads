@@ -1,10 +1,11 @@
 #include "zenin_a_radix_sort_double_batcher_merge_omp/omp/include/ops_omp.hpp"
+
 #include <atomic>
 #include <numeric>
 #include <vector>
 
-#include "zenin_a_radix_sort_double_batcher_merge_omp/common/include/common.hpp"
 #include "util/include/util.hpp"
+#include "zenin_a_radix_sort_double_batcher_merge_omp/common/include/common.hpp"
 
 namespace zenin_a_radix_sort_double_batcher_merge_omp {
 
@@ -23,10 +24,8 @@ bool ZeninARadixSortDoubleBatcherMergeOMP::PreProcessingImpl() {
 }
 
 bool ZeninARadixSortDoubleBatcherMergeOMP::RunImpl() {
-//#pragma omp parallel default(none) shared(counter) num_threads(ppc::util::GetNumThreads())
-  
+  // #pragma omp parallel default(none) shared(counter) num_threads(ppc::util::GetNumThreads())
 
-  
   return true;
 }
 

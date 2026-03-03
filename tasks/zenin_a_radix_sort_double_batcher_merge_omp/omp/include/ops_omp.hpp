@@ -1,7 +1,7 @@
 #pragma once
 
-#include "zenin_a_radix_sort_double_batcher_merge_omp/common/include/common.hpp"
 #include "task/include/task.hpp"
+#include "zenin_a_radix_sort_double_batcher_merge_omp/common/include/common.hpp"
 
 namespace zenin_a_radix_sort_double_batcher_merge_omp {
 
