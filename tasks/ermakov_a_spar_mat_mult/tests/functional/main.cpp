@@ -172,7 +172,7 @@ class ErmakovARunFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, 
 
     if (desc == "SmallFixed") {
       if (n != 3) {
-        GTEST_SKIP() << "SmallFixed defined only for n = 3";
+        GTEST_SKIP() << "SmallFixed defined only for n = 3 ";
       }
       FillFixed(a, b);
     } else {
