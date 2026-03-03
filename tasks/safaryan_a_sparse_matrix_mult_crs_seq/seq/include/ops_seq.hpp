@@ -5,12 +5,12 @@
 
 namespace safaryan_a_sparse_matrix_mult_crs_seq {
 
-class SafaryanARunFuncTestsSEQ : public BaseTask {
+class SafaryanATaskSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit SafaryanARunFuncTestsSEQ(const InType &in);
+  explicit SafaryanATaskSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;

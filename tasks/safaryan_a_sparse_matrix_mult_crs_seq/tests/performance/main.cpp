@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstddef>
 #include <random>
 #include <utility>
 #include <vector>
@@ -14,54 +13,47 @@
 namespace safaryan_a_sparse_matrix_mult_crs_seq {
 
 namespace {
-
-CRSMatrix CreateTestMatrix(size_t size, double density) {
-  CRSMatrix matrix;
-  matrix.rows = size;
-  matrix.cols = size;
-  matrix.row_ptr.assign(size + 1, 0);
-
+SparseMatrixCCS CreateTestMatrix(int size, double density) {
+  SparseMatrixCCS matrix(size, size);
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_real_distribution<double> value_dist(-10.0, 10.0);
   std::uniform_real_distribution<double> density_dist(0.0, 1.0);
 
-  // build per-row list of (col, val)
-  std::vector<std::vector<std::pair<size_t, double>>> rows(size);
+  std::vector<std::vector<std::pair<int, double>>> columns(size);
 
-  for (size_t i = 0; i < size; ++i) {
-    for (size_t j = 0; j < size; ++j) {
+  for (int j = 0; j < size; ++j) {
+    for (int i = 0; i < size; ++i) {
       if (density_dist(gen) < density) {
-        rows[i].emplace_back(j, value_dist(gen));
+        columns[j].emplace_back(i, value_dist(gen));
       }
     }
-    std::sort(rows[i].begin(), rows[i].end(), [](const auto &lhs, const auto &rhs) { return lhs.first < rhs.first; });
+    std::sort(columns[j].begin(), columns[j].end());
   }
 
-  matrix.row_ptr[0] = 0;
-  for (size_t i = 0; i < size; ++i) {
-    for (const auto &[col, val] : rows[i]) {
-      matrix.col_indices.push_back(col);
+  matrix.col_ptrs[0] = 0;
+  for (int j = 0; j < size; ++j) {
+    matrix.col_ptrs[j + 1] = matrix.col_ptrs[j] + static_cast<int>(columns[j].size());
+    for (const auto &[row, val] : columns[j]) {
+      matrix.row_indices.push_back(row);
       matrix.values.push_back(val);
     }
-    matrix.row_ptr[i + 1] = matrix.values.size();
   }
 
-  matrix.nnz = matrix.values.size();
   return matrix;
 }
 
 std::vector<std::vector<double>> DenseMultiply(const std::vector<std::vector<double>> &a,
                                                const std::vector<std::vector<double>> &b) {
-  const size_t m = a.size();
-  const size_t n = b.empty() ? 0 : b[0].size();
-  const size_t k = b.size();
+  const int m = static_cast<int>(a.size());
+  const int n = static_cast<int>(b[0].size());
+  const int k = static_cast<int>(b.size());
 
   std::vector<std::vector<double>> result(m, std::vector<double>(n, 0.0));
 
-  for (size_t i = 0; i < m; ++i) {
-    for (size_t j = 0; j < n; ++j) {
-      for (size_t idx = 0; idx < k; ++idx) {
+  for (int i = 0; i < m; ++i) {
+    for (int j = 0; j < n; ++j) {
+      for (int idx = 0; idx < k; ++idx) {
         result[i][j] += a[i][idx] * b[idx][j];
       }
     }
@@ -70,12 +62,13 @@ std::vector<std::vector<double>> DenseMultiply(const std::vector<std::vector<dou
   return result;
 }
 
-std::vector<std::vector<double>> SparseToDense(const CRSMatrix &matrix) {
+std::vector<std::vector<double>> SparseToDense(const SparseMatrixCCS &matrix) {
   std::vector<std::vector<double>> dense(matrix.rows, std::vector<double>(matrix.cols, 0.0));
 
-  for (size_t i = 0; i < matrix.rows; ++i) {
-    for (size_t idx = matrix.row_ptr[i]; idx < matrix.row_ptr[i + 1]; ++idx) {
-      dense[i][matrix.col_indices[idx]] = matrix.values[idx];
+  for (int j = 0; j < matrix.cols; ++j) {
+    for (int idx = matrix.col_ptrs[j]; idx < matrix.col_ptrs[j + 1]; ++idx) {
+      const int i = matrix.row_indices[idx];
+      dense[i][j] = matrix.values[idx];
     }
   }
 
@@ -85,15 +78,15 @@ std::vector<std::vector<double>> SparseToDense(const CRSMatrix &matrix) {
 }  // namespace
 
 class SafaryanARunPerfTestSEQ : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr size_t kMatrixSize = 400;
+  static constexpr int kMatrixSize = 400;
   static constexpr double kDensity = 0.1;
 
   InType input_data_;
   std::vector<std::vector<double>> expected_dense_result_;
 
   void SetUp() override {
-    const CRSMatrix a = CreateTestMatrix(kMatrixSize, kDensity);
-    const CRSMatrix b = CreateTestMatrix(kMatrixSize, kDensity);
+    const SparseMatrixCCS a = CreateTestMatrix(kMatrixSize, kDensity);
+    const SparseMatrixCCS b = CreateTestMatrix(kMatrixSize, kDensity);
     input_data_ = std::make_pair(a, b);
 
     const std::vector<std::vector<double>> dense_a = SparseToDense(a);
@@ -109,8 +102,8 @@ class SafaryanARunPerfTestSEQ : public ppc::util::BaseRunPerfTests<InType, OutTy
     const std::vector<std::vector<double>> dense_result = SparseToDense(output_data);
 
     const double epsilon = 1e-8;
-    for (size_t i = 0; i < kMatrixSize; ++i) {
-      for (size_t j = 0; j < kMatrixSize; ++j) {
+    for (int i = 0; i < kMatrixSize; ++i) {
+      for (int j = 0; j < kMatrixSize; ++j) {
         if (std::abs(dense_result[i][j] - expected_dense_result_[i][j]) > epsilon) {
           return false;
         }

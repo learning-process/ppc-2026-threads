@@ -16,19 +16,14 @@
 namespace safaryan_a_sparse_matrix_mult_crs_seq {
 
 namespace {
-
-CRSMatrix CreateMatrix(size_t rows, size_t cols, const std::vector<double> &values,
-                       const std::vector<size_t> &col_indices, const std::vector<size_t> &row_ptr) {
-  CRSMatrix matrix;
-  matrix.rows = rows;
-  matrix.cols = cols;
+SparseMatrixCCS CreateMatrix(int rows, int cols, const std::vector<double> &values, const std::vector<int> &row_indices,
+                             const std::vector<int> &col_ptrs) {
+  SparseMatrixCCS matrix(rows, cols);
   matrix.values = values;
-  matrix.col_indices = col_indices;
-  matrix.row_ptr = row_ptr;
-  matrix.nnz = values.size();
+  matrix.row_indices = row_indices;
+  matrix.col_ptrs = col_ptrs;
   return matrix;
 }
-
 }  // namespace
 
 class SafaryanARunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
@@ -44,8 +39,8 @@ class SafaryanARunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutT
 
     switch (test_case) {
       case 1: {
-        const CRSMatrix a = CreateMatrix(3, 3, {1.5, 4.2, 3.7, 2.8, 5.1}, {0, 2, 1, 0, 2}, {0, 2, 3, 5});
-        const CRSMatrix b = CreateMatrix(3, 3, {1.2, 2.3, 3.4}, {0, 1, 2}, {0, 1, 2, 3});
+        const SparseMatrixCCS a = CreateMatrix(3, 3, {1.5, 4.2, 3.7, 2.8, 5.1}, {0, 2, 1, 0, 2}, {0, 2, 3, 5});
+        const SparseMatrixCCS b = CreateMatrix(3, 3, {1.2, 2.3, 3.4}, {0, 1, 2}, {0, 1, 2, 3});
 
         expected_output_ = CreateMatrix(3, 3, {1.8, 5.04, 8.51, 9.52, 17.34}, {0, 2, 1, 0, 2}, {0, 2, 3, 5});
         input_data_ = std::make_pair(a, b);
@@ -53,8 +48,8 @@ class SafaryanARunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutT
       }
 
       case 2: {
-        const CRSMatrix a = CreateMatrix(2, 3, {1.2, 2.5, 3.7}, {0, 1, 2}, {0, 1, 2});
-        const CRSMatrix b = CreateMatrix(3, 2, {1.1, 3.3, 2.2}, {0, 0, 1}, {0, 2, 3});
+        const SparseMatrixCCS a = CreateMatrix(2, 3, {1.2, 2.5, 3.7}, {0, 0, 1}, {0, 1, 2, 3});
+        const SparseMatrixCCS b = CreateMatrix(3, 2, {1.1, 3.3, 2.2}, {0, 2, 1}, {0, 2, 3});
 
         expected_output_ = CreateMatrix(2, 2, {1.32, 12.21, 5.5}, {0, 1, 0}, {0, 2, 3});
         input_data_ = std::make_pair(a, b);
@@ -62,8 +57,8 @@ class SafaryanARunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutT
       }
 
       case 3: {
-        const CRSMatrix a = CreateMatrix(2, 2, {2.5}, {0}, {0, 1, 1});
-        const CRSMatrix b = CreateMatrix(2, 2, {3.7}, {1}, {0, 1, 1});
+        const SparseMatrixCCS a = CreateMatrix(2, 2, {2.5}, {0}, {0, 1, 1});
+        const SparseMatrixCCS b = CreateMatrix(2, 2, {3.7}, {1}, {0, 1, 1});
 
         expected_output_ = CreateMatrix(2, 2, {}, {}, {0, 0, 0});
         input_data_ = std::make_pair(a, b);
@@ -71,9 +66,9 @@ class SafaryanARunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutT
       }
 
       case 4: {
-        const CRSMatrix a = CreateMatrix(3, 3, {1.1, 4.2, 7.3, 2.4, 5.5, 8.6, 3.7, 6.8, 9.9},
-                                         {0, 1, 2, 0, 1, 2, 0, 1, 2}, {0, 3, 6, 9});
-        const CRSMatrix b = CreateMatrix(3, 3, {1.0, 1.0, 1.0}, {0, 1, 2}, {0, 1, 2, 3});
+        const SparseMatrixCCS a = CreateMatrix(3, 3, {1.1, 4.2, 7.3, 2.4, 5.5, 8.6, 3.7, 6.8, 9.9},
+                                               {0, 1, 2, 0, 1, 2, 0, 1, 2}, {0, 3, 6, 9});
+        const SparseMatrixCCS b = CreateMatrix(3, 3, {1.0, 1.0, 1.0}, {0, 1, 2}, {0, 1, 2, 3});
 
         expected_output_ = a;
         input_data_ = std::make_pair(a, b);
@@ -81,8 +76,8 @@ class SafaryanARunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutT
       }
 
       case 5: {
-        const CRSMatrix a = CreateMatrix(4, 4, {1.5, 2.5, 3.5, 4.5}, {0, 1, 2, 3}, {0, 1, 2, 3, 4});
-        const CRSMatrix b = CreateMatrix(4, 4, {5.5, 6.5, 7.5, 8.5}, {0, 1, 2, 3}, {0, 1, 2, 3, 4});
+        const SparseMatrixCCS a = CreateMatrix(4, 4, {1.5, 2.5, 3.5, 4.5}, {0, 1, 2, 3}, {0, 1, 2, 3, 4});
+        const SparseMatrixCCS b = CreateMatrix(4, 4, {5.5, 6.5, 7.5, 8.5}, {0, 1, 2, 3}, {0, 1, 2, 3, 4});
 
         expected_output_ = CreateMatrix(4, 4, {8.25, 16.25, 26.25, 38.25}, {0, 1, 2, 3}, {0, 1, 2, 3, 4});
         input_data_ = std::make_pair(a, b);
@@ -100,16 +95,16 @@ class SafaryanARunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutT
     }
 
     if (output_data.values.size() != expected_output_.values.size() ||
-        output_data.col_indices.size() != expected_output_.col_indices.size()) {
+        output_data.row_indices.size() != expected_output_.row_indices.size()) {
       return false;
     }
 
-    if (output_data.row_ptr.size() != expected_output_.row_ptr.size()) {
+    if (output_data.col_ptrs.size() != expected_output_.col_ptrs.size()) {
       return false;
     }
 
-    for (size_t i = 0; i < output_data.row_ptr.size(); ++i) {
-      if (output_data.row_ptr[i] != expected_output_.row_ptr[i]) {
+    for (size_t i = 0; i < output_data.col_ptrs.size(); ++i) {
+      if (output_data.col_ptrs[i] != expected_output_.col_ptrs[i]) {
         return false;
       }
     }
@@ -119,7 +114,7 @@ class SafaryanARunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutT
       if (std::abs(output_data.values[i] - expected_output_.values[i]) > epsilon) {
         return false;
       }
-      if (output_data.col_indices[i] != expected_output_.col_indices[i]) {
+      if (output_data.row_indices[i] != expected_output_.row_indices[i]) {
         return false;
       }
     }
@@ -133,7 +128,7 @@ class SafaryanARunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutT
 
  private:
   InType input_data_;
-  CRSMatrix expected_output_;
+  SparseMatrixCCS expected_output_;
 };
 
 namespace {

@@ -8,13 +8,13 @@
 
 namespace safaryan_a_sparse_matrix_mult_crs_seq {
 
-SafaryanARunFuncTestsSEQ::SafaryanARunFuncTestsSEQ(const InType &in) {
+SafaryanATaskSEQ::SafaryanATaskSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = SparseMatrixCCS();
 }
 
-bool SafaryanARunFuncTestsSEQ::IsMatrixValid(const SparseMatrixCCS &matrix) {
+bool SafaryanATaskSEQ::IsMatrixValid(const SparseMatrixCCS &matrix) {
   if (matrix.rows < 0 || matrix.cols < 0) {
     return false;
   }
@@ -49,7 +49,7 @@ bool SafaryanARunFuncTestsSEQ::IsMatrixValid(const SparseMatrixCCS &matrix) {
   return true;
 }
 
-bool SafaryanARunFuncTestsSEQ::ValidationImpl() {
+bool SafaryanATaskSEQ::ValidationImpl() {
   const auto &[a, b] = GetInput();
 
   if (!IsMatrixValid(a) || !IsMatrixValid(b)) {
@@ -62,7 +62,7 @@ bool SafaryanARunFuncTestsSEQ::ValidationImpl() {
   return true;
 }
 
-bool SafaryanARunFuncTestsSEQ::PreProcessingImpl() {
+bool SafaryanATaskSEQ::PreProcessingImpl() {
   const auto &[a, b] = GetInput();
   GetOutput() = SparseMatrixCCS(a.rows, b.cols);
   return true;
@@ -102,7 +102,7 @@ void SaveColumnResults(int rows, std::vector<double> &temp, SparseMatrixCCS &res
 }
 }  // namespace
 
-SparseMatrixCCS SafaryanARunFuncTestsSEQ::MultiplyMatrices(const SparseMatrixCCS &a, const SparseMatrixCCS &b) {
+SparseMatrixCCS SafaryanATaskSEQ::MultiplyMatrices(const SparseMatrixCCS &a, const SparseMatrixCCS &b) {
   SparseMatrixCCS result(a.rows, b.cols);
   std::vector<double> temp(a.rows, 0.0);
 
@@ -116,13 +116,13 @@ SparseMatrixCCS SafaryanARunFuncTestsSEQ::MultiplyMatrices(const SparseMatrixCCS
   return result;
 }
 
-bool SafaryanARunFuncTestsSEQ::RunImpl() {
+bool SafaryanATaskSEQ::RunImpl() {
   const auto &[a, b] = GetInput();
   GetOutput() = MultiplyMatrices(a, b);
   return true;
 }
 
-bool SafaryanARunFuncTestsSEQ::PostProcessingImpl() {
+bool SafaryanATaskSEQ::PostProcessingImpl() {
   return true;
 }
 
