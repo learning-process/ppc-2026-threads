@@ -21,8 +21,14 @@ bool MarkingComponentsSEQ::PreProcessingImpl() {
   rows_ = input[0];
   cols_ = input[1];
 
-  labels_.resize(rows_, std::vector<int>(cols_, 0));
+  labels_.clear();
+  labels_.reserve(rows_);
+  for (int i = 0; i < rows_; ++i) {
+    labels_.emplace_back(cols_, 0);
+  }
+
   equivalent_labels_.clear();
+  equivalent_labels_.push_back(0);
 
   return true;
 }
