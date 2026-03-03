@@ -68,7 +68,6 @@ void MarkingComponentsSEQ::BFS(int start_i, int start_j, int label) {
     }
   }
 }
-
 bool MarkingComponentsSEQ::RunImpl() {
   const auto &input = GetInput();
   if (input.size() < 2 || rows_ == 0 || cols_ == 0) {
