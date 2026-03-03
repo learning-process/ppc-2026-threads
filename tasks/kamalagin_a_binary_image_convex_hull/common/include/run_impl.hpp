@@ -98,7 +98,7 @@ inline void RunBinaryImageConvexHull(const BinaryImage &img, HullList &hulls) {
       while (!stack.empty()) {
         auto [cur_r, cur_c] = stack.back();
         stack.pop_back();
-        component_pts.push_back({cur_c, cur_r});
+        component_pts.push_back(Point{.x = cur_c, .y = cur_r});
         for (const auto &[dr, dc] : kFourNeighbors) {
           int nr = cur_r + dr;
           int nc = cur_c + dc;

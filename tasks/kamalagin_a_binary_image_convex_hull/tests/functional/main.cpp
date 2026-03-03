@@ -107,27 +107,27 @@ HullList ExpectedEmpty() {
 }
 
 HullList ExpectedSinglePixel() {
-  return {{Point{0, 0}}};
+  return {{Point{.x = 0, .y = 0}}};
 }
 
 HullList ExpectedTwoIsolatedPixels() {
-  return {{Point{0, 0}}, {Point{2, 2}}};
+  return {{Point{.x = 0, .y = 0}}, {Point{.x = 2, .y = 2}}};
 }
 
 HullList ExpectedVerticalLine() {
-  return {{Point{0, 0}, Point{0, 4}}};
+  return {{Point{.x = 0, .y = 0}, Point{.x = 0, .y = 4}}};
 }
 
 HullList ExpectedHorizontalLine() {
-  return {{Point{0, 0}, Point{4, 0}}};
+  return {{Point{.x = 0, .y = 0}, Point{.x = 4, .y = 0}}};
 }
 
 HullList ExpectedFilledRectangle() {
-  return {{Point{0, 0}, Point{0, 1}, Point{2, 0}, Point{2, 1}}};
+  return {{Point{.x = 0, .y = 0}, Point{.x = 0, .y = 1}, Point{.x = 2, .y = 0}, Point{.x = 2, .y = 1}}};
 }
 
 HullList ExpectedTwoComponents() {
-  return {{Point{0, 0}}, {Point{4, 0}}};
+  return {{Point{.x = 0, .y = 0}}, {Point{.x = 4, .y = 0}}};
 }
 
 using MakeFn = BinaryImage (*)();
@@ -140,13 +140,13 @@ struct TestCaseEntry {
 };
 
 const std::array<TestCaseEntry, 8> kTestCaseTable = {{
-    {"empty", MakeEmptyImage, ExpectedEmpty},
-    {"single_pixel", MakeSinglePixel, ExpectedSinglePixel},
-    {"two_isolated", MakeTwoIsolatedPixels, ExpectedTwoIsolatedPixels},
-    {"vertical_line", MakeVerticalLine, ExpectedVerticalLine},
-    {"horizontal_line", MakeHorizontalLine, ExpectedHorizontalLine},
-    {"filled_rect", MakeFilledRectangle, ExpectedFilledRectangle},
-    {"two_components", MakeTwoComponents, ExpectedTwoComponents},
+    {.name = "empty", .make = MakeEmptyImage, .expected = ExpectedEmpty},
+    {.name = "single_pixel", .make = MakeSinglePixel, .expected = ExpectedSinglePixel},
+    {.name = "two_isolated", .make = MakeTwoIsolatedPixels, .expected = ExpectedTwoIsolatedPixels},
+    {.name = "vertical_line", .make = MakeVerticalLine, .expected = ExpectedVerticalLine},
+    {.name = "horizontal_line", .make = MakeHorizontalLine, .expected = ExpectedHorizontalLine},
+    {.name = "filled_rect", .make = MakeFilledRectangle, .expected = ExpectedFilledRectangle},
+    {.name = "two_components", .make = MakeTwoComponents, .expected = ExpectedTwoComponents},
 }};
 
 std::pair<BinaryImage, HullList> GetTestDataForName(const std::string &name) {
