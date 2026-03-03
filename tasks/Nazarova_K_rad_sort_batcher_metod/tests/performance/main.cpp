@@ -50,8 +50,8 @@ TEST_P(NazarovaKRadSortBatcherMetodRunPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NazarovaKRadSortBatcherMetodSEQ>(PPC_SETTINGS_Nazarova_K_rad_sort_batcher_metod);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, NazarovaKRadSortBatcherMetodSEQ>(
+    PPC_SETTINGS_Nazarova_K_rad_sort_batcher_metod);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
