@@ -6,6 +6,7 @@
 
 #include "kamalagin_a_binary_image_convex_hull/common/include/common.hpp"
 #include "kamalagin_a_binary_image_convex_hull/seq/include/ops_seq.hpp"
+#include "performance/include/performance.hpp"
 #include "util/include/perf_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -19,25 +20,25 @@ BinaryImage MakeSyntheticPerfImage() {
   BinaryImage img;
   img.rows = rows;
   img.cols = cols;
-  img.data.resize(static_cast<size_t>(rows * cols), 0);
-  for (int r = 10; r < 30; ++r) {
-    for (int c = 10; c < 40; ++c) {
-      img.data[static_cast<size_t>(r * cols + c)] = 1;
+  img.data.resize(static_cast<size_t>(rows) * static_cast<size_t>(cols), 0);
+  for (int row = 10; row < 30; ++row) {
+    for (int col = 10; col < 40; ++col) {
+      img.data[(static_cast<size_t>(row) * static_cast<size_t>(cols)) + static_cast<size_t>(col)] = 1;
     }
   }
-  for (int r = 50; r < 70; ++r) {
-    for (int c = 40; c < 70; ++c) {
-      img.data[static_cast<size_t>(r * cols + c)] = 1;
+  for (int row = 50; row < 70; ++row) {
+    for (int col = 40; col < 70; ++col) {
+      img.data[(static_cast<size_t>(row) * static_cast<size_t>(cols)) + static_cast<size_t>(col)] = 1;
     }
   }
-  for (int r = 80; r < 95; ++r) {
-    for (int c = 5; c < 35; ++c) {
-      img.data[static_cast<size_t>(r * cols + c)] = 1;
+  for (int row = 80; row < 95; ++row) {
+    for (int col = 5; col < 35; ++col) {
+      img.data[(static_cast<size_t>(row) * static_cast<size_t>(cols)) + static_cast<size_t>(col)] = 1;
     }
   }
   for (int i = 0; i < rows; ++i) {
-    int c = i % cols;
-    img.data[static_cast<size_t>(i * cols + c)] = 1;
+    int col = i % cols;
+    img.data[(static_cast<size_t>(i) * static_cast<size_t>(cols)) + static_cast<size_t>(col)] = 1;
   }
   return img;
 }

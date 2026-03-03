@@ -22,7 +22,7 @@ bool KamalaginABinaryImageConvexHullSEQ::ValidationImpl() {
   if (img.rows > 1000 || img.cols > 1000) {
     return false;
   }
-  return static_cast<size_t>(img.rows * img.cols) == img.data.size();
+  return (static_cast<size_t>(img.rows) * static_cast<size_t>(img.cols)) == img.data.size();
 }
 
 bool KamalaginABinaryImageConvexHullSEQ::PreProcessingImpl() {

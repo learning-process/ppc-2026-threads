@@ -26,11 +26,12 @@ struct BinaryImage {
   std::vector<uint8_t> data;
 
   [[nodiscard]] bool At(int r, int c) const {
-    return r >= 0 && r < rows && c >= 0 && c < cols && data[static_cast<size_t>(r * cols + c)] != 0;
+    return r >= 0 && r < rows && c >= 0 && c < cols &&
+           data[(static_cast<size_t>(r) * static_cast<size_t>(cols)) + static_cast<size_t>(c)] != 0;
   }
 
   [[nodiscard]] size_t Index(int r, int c) const {
-    return static_cast<size_t>(r * cols + c);
+    return (static_cast<size_t>(r) * static_cast<size_t>(cols)) + static_cast<size_t>(c);
   }
 };
 

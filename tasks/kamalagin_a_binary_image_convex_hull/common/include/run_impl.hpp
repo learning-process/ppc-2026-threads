@@ -81,19 +81,19 @@ inline void RunBinaryImageConvexHull(const BinaryImage &img, HullList &hulls) {
   hulls.clear();
   const int rows = img.rows;
   const int cols = img.cols;
-  const size_t total = static_cast<size_t>(rows * cols);
+  const size_t total = static_cast<size_t>(rows) * static_cast<size_t>(cols);
   std::vector<int> label(total, 0);
   std::vector<Point> component_pts;
   component_pts.reserve(total);
-  for (int r = 0; r < rows; ++r) {
-    for (int c = 0; c < cols; ++c) {
-      size_t idx = img.Index(r, c);
+  for (int row = 0; row < rows; ++row) {
+    for (int col = 0; col < cols; ++col) {
+      size_t idx = img.Index(row, col);
       if (img.data[idx] == 0 || label[idx] != 0) {
         continue;
       }
       component_pts.clear();
       std::vector<std::pair<int, int>> stack;
-      stack.emplace_back(r, c);
+      stack.emplace_back(row, col);
       label[idx] = 1;
       while (!stack.empty()) {
         auto [cur_r, cur_c] = stack.back();
@@ -105,7 +105,7 @@ inline void RunBinaryImageConvexHull(const BinaryImage &img, HullList &hulls) {
           if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) {
             continue;
           }
-          size_t nidx = static_cast<size_t>(nr * cols + nc);
+          size_t nidx = (static_cast<size_t>(nr) * static_cast<size_t>(cols)) + static_cast<size_t>(nc);
           if (img.data[nidx] != 0 && label[nidx] == 0) {
             label[nidx] = 1;
             stack.emplace_back(nr, nc);
