@@ -1,5 +1,7 @@
 #include "kamalagin_a_binary_image_convex_hull/seq/include/ops_seq.hpp"
 
+#include <cstddef>
+
 #include "kamalagin_a_binary_image_convex_hull/common/include/common.hpp"
 #include "kamalagin_a_binary_image_convex_hull/common/include/run_impl.hpp"
 

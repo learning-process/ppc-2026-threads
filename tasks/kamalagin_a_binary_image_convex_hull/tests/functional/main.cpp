@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <ranges>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -22,14 +23,14 @@ bool PointLess(const Point &a, const Point &b) {
 }
 
 void NormalizeHull(Hull &h) {
-  std::sort(h.begin(), h.end(), PointLess);
+  std::ranges::sort(h, PointLess);
 }
 
 void NormalizeHullList(HullList &list) {
   for (auto &h : list) {
     NormalizeHull(h);
   }
-  std::sort(list.begin(), list.end(), [](const Hull &a, const Hull &b) {
+  std::ranges::sort(list, [](const Hull &a, const Hull &b) {
     if (a.size() != b.size()) {
       return a.size() < b.size();
     }
