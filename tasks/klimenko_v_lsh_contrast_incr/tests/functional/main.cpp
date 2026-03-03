@@ -68,8 +68,8 @@ TEST_P(KlimenkoVRunFuncTestsLSH, ContrastStretching) {
 
 const std::array<TestType, 3> kTestParam = {16, 256, 1024};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<KlimenkoVLSHContrastIncrSEQ, InType>(
-    kTestParam, PPC_SETTINGS_klimenko_v_lsh_contrast_incr);
+const auto kTestTasksList =
+    ppc::util::AddFuncTask<KlimenkoVLSHContrastIncrSEQ, InType>(kTestParam, PPC_SETTINGS_klimenko_v_lsh_contrast_incr);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
