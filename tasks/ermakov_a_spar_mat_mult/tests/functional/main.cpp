@@ -12,6 +12,7 @@
 #include "ermakov_a_spar_mat_mult/common/include/common.hpp"
 #include "ermakov_a_spar_mat_mult/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace ermakov_a_spar_mat_mult {
 
@@ -153,7 +154,7 @@ bool EqualCRS(const MatrixCRS &a, const MatrixCRS &b, double eps = 1e-9) {
 
 }  // namespace
 
-class ErmakovARunFuncTestSEQ : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class ErmakovARunFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -202,7 +203,7 @@ class ErmakovARunFuncTestSEQ : public ppc::util::BaseRunFuncTests<InType, OutTyp
 
 namespace {
 
-TEST_P(ErmakovARunFuncTestSEQ, MatmulCRSSeq) {
+TEST_P(ErmakovARunFuncTest, MatmulCRSSeq) {
   ExecuteTest(GetParam());
 }
 
@@ -214,9 +215,9 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = ErmakovARunFuncTestSEQ::PrintFuncTestName<ErmakovARunFuncTestSEQ>;
+const auto kPerfTestName = ErmakovARunFuncTest::PrintFuncTestName<ErmakovARunFuncTest>;
 
-INSTANTIATE_TEST_SUITE_P(SparseCRSMatMulTests, ErmakovARunFuncTestSEQ, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(SparseCRSMatMulTests, ErmakovARunFuncTest, kGtestValues, kPerfTestName);
 
 }  // namespace
 

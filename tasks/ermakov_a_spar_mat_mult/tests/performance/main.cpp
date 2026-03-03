@@ -60,7 +60,7 @@ MatrixCRS DenseToCRS(const DenseMatrix &m, double eps = 1e-12) {
 
 }  // namespace
 
-class ErmakovARunPerfTestSEQ : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class ErmakovARunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   const int k_count = 20000;
   InType input_data{};
@@ -104,7 +104,7 @@ class ErmakovARunPerfTestSEQ : public ppc::util::BaseRunPerfTests<InType, OutTyp
   }
 };
 
-TEST_P(ErmakovARunPerfTestSEQ, RunPerfModes) {
+TEST_P(ErmakovARunPerfTest, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -115,9 +115,9 @@ const auto kAllPerfTasks =
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = ErmakovARunPerfTestSEQ::CustomPerfTestName;
+const auto kPerfTestName = ErmakovARunPerfTest::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ErmakovARunPerfTestSEQ, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, ErmakovARunPerfTest, kGtestValues, kPerfTestName);
 
 }  // namespace
 
