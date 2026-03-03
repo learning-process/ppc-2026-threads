@@ -19,9 +19,6 @@ class DergachevAGrahamScanSEQ : public BaseTask {
   }
   explicit DergachevAGrahamScanSEQ(const InType &in);
 
-  void SetPoints(const std::vector<Point> &pts);
-  [[nodiscard]] std::vector<Point> GetHull() const;
-
  private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
@@ -30,7 +27,6 @@ class DergachevAGrahamScanSEQ : public BaseTask {
 
   std::vector<Point> points_;
   std::vector<Point> hull_;
-  bool custom_points_ = false;
 };
 
 }  // namespace dergachev_a_graham_scan

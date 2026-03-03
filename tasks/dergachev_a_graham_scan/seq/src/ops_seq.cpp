@@ -64,32 +64,24 @@ DergachevAGrahamScanSEQ::DergachevAGrahamScanSEQ(const InType &in) {
   GetOutput() = 0;
 }
 
-void DergachevAGrahamScanSEQ::SetPoints(const std::vector<Point> &pts) {
-  points_.assign(pts.begin(), pts.end());
-  custom_points_ = true;
-}
-
-std::vector<Point> DergachevAGrahamScanSEQ::GetHull() const {
-  return hull_;
-}
-
 bool DergachevAGrahamScanSEQ::ValidationImpl() {
   return GetInput() >= 0;
 }
 
 bool DergachevAGrahamScanSEQ::PreProcessingImpl() {
   hull_.clear();
-  if (!custom_points_) {
-    int n = GetInput();
-    if (n <= 0) {
-      points_.clear();
-      return true;
-    }
-    points_.resize(n);
-    double step = (2.0 * kPi) / n;
-    for (int i = 0; i < n; i++) {
-      points_[i] = {.x = std::cos(step * i), .y = std::sin(step * i)};
-    }
+  int n = GetInput();
+  if (n <= 0) {
+    points_.clear();
+    return true;
+  }
+  points_.resize(n);
+  double step = (2.0 * kPi) / n;
+  for (int i = 0; i < n; i++) {
+    points_[i] = {.x = std::cos(step * i), .y = std::sin(step * i)};
+  }
+  if (n > 3) {
+    points_.push_back({.x = 0.0, .y = 0.0});
   }
   return true;
 }
