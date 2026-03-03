@@ -67,9 +67,9 @@ void FoxMultiply(const std::vector<double> &a, const std::vector<double> &b, std
 }
 
 int ChooseBlockSize(int n) {
-  for (int d = static_cast<int>(std::sqrt(static_cast<double>(n))); d >= 1; d--) {
-    if (n % d == 0) {
-      return d;
+  for (int div = static_cast<int>(std::sqrt(static_cast<double>(n))); div >= 1; div--) {
+    if (n % div == 0) {
+      return div;
     }
   }
   return 1;
@@ -104,7 +104,7 @@ bool SokolovKMatrixDoubleFoxSEQ::PreProcessingImpl() {
 }
 
 bool SokolovKMatrixDoubleFoxSEQ::RunImpl() {
-  std::fill(blocks_c_.begin(), blocks_c_.end(), 0.0);
+  std::ranges::fill(blocks_c_, 0.0);
   FoxMultiply(blocks_a_, blocks_b_, blocks_c_, block_size_, q_);
   return true;
 }
