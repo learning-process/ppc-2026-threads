@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "artyushkina_markirovka/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace artyushkina_markirovka {
 

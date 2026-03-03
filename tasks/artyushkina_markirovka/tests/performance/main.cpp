@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 
 #include "artyushkina_markirovka/common/include/common.hpp"
 #include "artyushkina_markirovka/seq/include/ops_seq.hpp"
@@ -14,14 +15,15 @@ class ArtyushkinaMarkirovkaPerfTests : public ppc::util::BaseRunPerfTests<InType
 
   void SetUp() override {
     const int k_size = 1000;
-    input_data_.resize(static_cast<std::size_t>(k_size * k_size) + 2);
+    input_data_.resize(static_cast<std::size_t>(k_size) * static_cast<std::size_t>(k_size) + 2);
 
     input_data_[0] = static_cast<uint8_t>(k_size);
     input_data_[1] = static_cast<uint8_t>(k_size);
 
     for (int i = 0; i < k_size; ++i) {
       for (int j = 0; j < k_size; ++j) {
-        auto idx = static_cast<std::size_t>((i * k_size) + j + 2);
+        std::size_t idx =
+            static_cast<std::size_t>(i) * static_cast<std::size_t>(k_size) + static_cast<std::size_t>(j) + 2;
         input_data_[idx] = static_cast<uint8_t>(((i + j) % 2 == 0) ? 0 : 1);
       }
     }
@@ -37,8 +39,10 @@ class ArtyushkinaMarkirovkaPerfTests : public ppc::util::BaseRunPerfTests<InType
 
     for (int i = 0; i < rows; ++i) {
       for (int j = 0; j < cols; ++j) {
-        auto output_idx = static_cast<std::size_t>((i * cols) + j + 2);
-        auto input_idx = static_cast<std::size_t>((i * cols) + j + 2);
+        std::size_t output_idx =
+            static_cast<std::size_t>(i) * static_cast<std::size_t>(cols) + static_cast<std::size_t>(j) + 2;
+        std::size_t input_idx =
+            static_cast<std::size_t>(i) * static_cast<std::size_t>(cols) + static_cast<std::size_t>(j) + 2;
 
         if (input_data_[input_idx] == 0 && output_data[output_idx] == 0) {
           return false;
