@@ -86,7 +86,7 @@ bool ErmakovATestTaskSEQ::PreProcessingImpl() {
 }
 
 void ErmakovATestTaskSEQ::ProcessRow(int i, std::vector<std::complex<double>> &row_vals, std::vector<int> &row_mark,
-                                        std::vector<int> &used_cols, int &nnz_so_far) {
+                                     std::vector<int> &used_cols, int &nnz_so_far) {
   const int a_start = a_.row_ptr[i];
   const int a_end = a_.row_ptr[i + 1];
 
