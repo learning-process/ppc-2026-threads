@@ -16,10 +16,10 @@ class ArtyushkinaMarkirovkaPerfTests : public ppc::util::BaseRunPerfTests<InType
   void SetUp() override {
     const int k_size = 1000;
     input_data_.resize(static_cast<size_t>(k_size * k_size) + 2);
-    
+
     input_data_[0] = static_cast<uint8_t>(k_size);
     input_data_[1] = static_cast<uint8_t>(k_size);
-    
+
     for (int i = 0; i < k_size; i++) {
       for (int j = 0; j < k_size; j++) {
         size_t idx = static_cast<size_t>(i * k_size + j + 2);
@@ -31,16 +31,16 @@ class ArtyushkinaMarkirovkaPerfTests : public ppc::util::BaseRunPerfTests<InType
   bool CheckTestOutputData(OutType &output_data) final {
     int rows = static_cast<int>(output_data[0]);
     int cols = static_cast<int>(output_data[1]);
-    
+
     if (rows != static_cast<int>(input_data_[0]) || cols != static_cast<int>(input_data_[1])) {
       return false;
     }
-    
+
     for (int i = 0; i < rows; ++i) {
       for (int j = 0; j < cols; ++j) {
         size_t output_idx = static_cast<size_t>(i * cols + j + 2);
         size_t input_idx = static_cast<size_t>(i * cols + j + 2);
-        
+
         if (input_data_[input_idx] == 0 && output_data[output_idx] == 0) {
           return false;
         }
@@ -63,8 +63,8 @@ TEST_P(ArtyushkinaMarkirovkaPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, MarkingComponentsSEQ>(
-    PPC_SETTINGS_artyushkina_markirovka);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, MarkingComponentsSEQ>(PPC_SETTINGS_artyushkina_markirovka);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

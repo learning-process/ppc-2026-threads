@@ -31,7 +31,7 @@ class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType
       }
       case 1: {
         input_data_ = {3, 3, 0, 0, 0, 0, 255, 0, 0, 0, 255};
-        
+
         expected_ = {3, 3, 1, 1, 1, 1, 0, 1, 1, 1, 0};
         break;
       }
@@ -62,14 +62,14 @@ class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType
         std::cout << static_cast<int>(expected_[i]) << " ";
       }
       std::cout << std::endl;
-      
+
       std::cout << "Actual  : ";
       for (size_t i = 0; i < output_data.size(); ++i) {
         std::cout << output_data[i] << " ";
       }
       std::cout << std::endl;
     }
-    
+
     return output_data == expected_;
   }
 
@@ -89,15 +89,11 @@ TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponents) {
 }
 
 const std::array<TestType, 5> kTestParam = {
-    std::make_tuple(0, "L_shaped_component_8connectivity"),
-    std::make_tuple(1, "diagonal_connected_components"),
-    std::make_tuple(2, "all_background"),
-    std::make_tuple(3, "all_objects"),
-    std::make_tuple(4, "two_horizontal_bars")
-};
+    std::make_tuple(0, "L_shaped_component_8connectivity"), std::make_tuple(1, "diagonal_connected_components"),
+    std::make_tuple(2, "all_background"), std::make_tuple(3, "all_objects"), std::make_tuple(4, "two_horizontal_bars")};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<MarkingComponentsSEQ, InType>(
-    kTestParam, PPC_SETTINGS_artyushkina_markirovka);
+const auto kTestTasksList =
+    ppc::util::AddFuncTask<MarkingComponentsSEQ, InType>(kTestParam, PPC_SETTINGS_artyushkina_markirovka);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
