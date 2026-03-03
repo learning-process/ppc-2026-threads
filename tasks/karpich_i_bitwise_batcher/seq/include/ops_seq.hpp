@@ -2,10 +2,10 @@
 
 #include <vector>
 
-#include "karpich_i_bitwise_batcher_seq/common/include/common.hpp"
+#include "karpich_i_bitwise_batcher/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace karpich_i_bitwise_batcher_seq {
+namespace karpich_i_bitwise_batcher {
 
 class KarpichIBitwiseBatcherSEQ : public BaseTask {
  public:
@@ -23,4 +23,4 @@ class KarpichIBitwiseBatcherSEQ : public BaseTask {
   std::vector<int> data_;
 };
 
-}  // namespace karpich_i_bitwise_batcher_seq
+}  // namespace karpich_i_bitwise_batcher
