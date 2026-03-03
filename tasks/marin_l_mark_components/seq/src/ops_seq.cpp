@@ -1,13 +1,13 @@
-#include "marin_l_mark_components_seq/seq/include/ops_seq.hpp"
+#include "marin_l_mark_components/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
 
-#include "marin_l_mark_components_seq/common/include/common.hpp"
+#include "marin_l_mark_components/common/include/common.hpp"
 
-namespace marin_l_mark_components_seq {
+namespace marin_l_mark_components {
 
 namespace {
 
@@ -214,4 +214,4 @@ bool MarinLMarkComponentsSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace marin_l_mark_components_seq
+}  // namespace marin_l_mark_components

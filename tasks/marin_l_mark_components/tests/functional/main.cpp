@@ -8,12 +8,12 @@
 #include <utility>
 #include <vector>
 
-#include "marin_l_mark_components_seq/common/include/common.hpp"
-#include "marin_l_mark_components_seq/seq/include/ops_seq.hpp"
+#include "marin_l_mark_components/common/include/common.hpp"
+#include "marin_l_mark_components/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace marin_l_mark_components_seq {
+namespace marin_l_mark_components {
 
 namespace {
 
@@ -227,7 +227,7 @@ const std::array<TestType, 6> kTestParams{std::make_tuple(5, 5, "SingleBlob"), s
                                           std::make_tuple(15, 10, "Random"),   std::make_tuple(4, 6, "TwoBlocks")};
 
 const auto kTestTasksList =
-    ppc::util::AddFuncTask<MarinLMarkComponentsSEQ, InType>(kTestParams, PPC_SETTINGS_marin_l_mark_components_seq);
+    ppc::util::AddFuncTask<MarinLMarkComponentsSEQ, InType>(kTestParams, PPC_SETTINGS_marin_l_mark_components);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -236,4 +236,4 @@ const auto kPerfTestName = MarinLRunFuncTestComponents::PrintFuncTestName<MarinL
 INSTANTIATE_TEST_SUITE_P(ComponentLabelingTests, MarinLRunFuncTestComponents, kGtestValues, kPerfTestName);
 
 }  // namespace
-}  // namespace marin_l_mark_components_seq
+}  // namespace marin_l_mark_components

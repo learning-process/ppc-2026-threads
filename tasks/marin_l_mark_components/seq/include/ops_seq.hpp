@@ -1,9 +1,9 @@
 #pragma once
 
-#include "marin_l_mark_components_seq/common/include/common.hpp"
+#include "marin_l_mark_components/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace marin_l_mark_components_seq {
+namespace marin_l_mark_components {
 
 class MarinLMarkComponentsSEQ : public BaseTask {
  public:
@@ -28,4 +28,4 @@ class MarinLMarkComponentsSEQ : public BaseTask {
   Labels labels_;
 };
 
-}  // namespace marin_l_mark_components_seq
+}  // namespace marin_l_mark_components
