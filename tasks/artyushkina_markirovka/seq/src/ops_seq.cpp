@@ -1,12 +1,12 @@
 #include "artyushkina_markirovka/seq/include/ops_seq.hpp"
 
-#include <algorithm>
+#include <cstddef>
 #include <queue>
-#include <vector>
+#include <utility>
 
 namespace artyushkina_markirovka {
 
-MarkingComponentsSEQ::MarkingComponentsSEQ(const InType &in) {
+MarkingComponentsSEQ::MarkingComponentsSEQ(const InType &in) : rows_(0), cols_(0) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = OutType();
@@ -41,11 +41,11 @@ void MarkingComponentsSEQ::UnionLabels(int /*label1*/, int /*label2*/) {}
 
 void MarkingComponentsSEQ::BFS(int start_i, int start_j, int label) {
   std::queue<std::pair<int, int>> q;
-  q.push({start_i, start_j});
+  q.emplace(start_i, start_j);
   labels_[start_i][start_j] = label;
 
-  int di[] = {-1, -1, -1, 0, 0, 1, 1, 1};
-  int dj[] = {-1, 0, 1, -1, 1, -1, 0, 1};
+  const std::array<int, 8> di = {-1, -1, -1, 0, 0, 1, 1, 1};
+  const std::array<int, 8> dj = {-1, 0, 1, -1, 1, -1, 0, 1};
 
   const auto &input = GetInput();
 
@@ -53,21 +53,22 @@ void MarkingComponentsSEQ::BFS(int start_i, int start_j, int label) {
     auto [i, j] = q.front();
     q.pop();
 
-    for (int d = 0; d < 8; d++) {
-      int ni = i + di[d];
-      int nj = j + dj[d];
+    for (int dir = 0; dir < 8; ++dir) {
+      int ni = i + di[dir];
+      int nj = j + dj[dir];
 
       if (ni >= 0 && ni < rows_ && nj >= 0 && nj < cols_) {
-        size_t idx = static_cast<size_t>(ni * cols_ + nj + 2);
+        auto idx = static_cast<std::size_t>((ni * cols_) + nj + 2);
 
         if (input[idx] == 0 && labels_[ni][nj] == 0) {
           labels_[ni][nj] = label;
-          q.push({ni, nj});
+          q.emplace(ni, nj);
         }
       }
     }
   }
 }
+
 bool MarkingComponentsSEQ::RunImpl() {
   const auto &input = GetInput();
   if (input.size() < 2 || rows_ == 0 || cols_ == 0) {
@@ -78,11 +79,11 @@ bool MarkingComponentsSEQ::RunImpl() {
 
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
-      size_t idx = static_cast<size_t>(i * cols_ + j + 2);
+      auto idx = static_cast<std::size_t>((i * cols_) + j + 2);
 
       if (input[idx] == 0 && labels_[i][j] == 0) {
         BFS(i, j, current_label);
-        current_label++;
+        ++current_label;
       }
     }
   }
@@ -93,7 +94,7 @@ bool MarkingComponentsSEQ::RunImpl() {
 bool MarkingComponentsSEQ::PostProcessingImpl() {
   OutType &output = GetOutput();
   output.clear();
-  output.reserve(static_cast<size_t>(rows_ * cols_ + 2));
+  output.reserve(static_cast<std::size_t>((rows_ * cols_) + 2));
 
   output.push_back(rows_);
   output.push_back(cols_);

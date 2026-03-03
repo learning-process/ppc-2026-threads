@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstddef>
+#include <iostream>
 #include <string>
 #include <tuple>
 
@@ -31,7 +32,6 @@ class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType
       }
       case 1: {
         input_data_ = {3, 3, 0, 0, 0, 0, 255, 0, 0, 0, 255};
-
         expected_ = {3, 3, 1, 1, 1, 1, 0, 1, 1, 1, 0};
         break;
       }
@@ -58,16 +58,16 @@ class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType
   bool CheckTestOutputData(OutType &output_data) final {
     if (output_data != expected_) {
       std::cout << "Expected: ";
-      for (size_t i = 0; i < expected_.size(); ++i) {
-        std::cout << static_cast<int>(expected_[i]) << " ";
+      for (auto val : expected_) {
+        std::cout << static_cast<int>(val) << ' ';
       }
-      std::cout << std::endl;
+      std::cout << '\n';
 
       std::cout << "Actual  : ";
-      for (size_t i = 0; i < output_data.size(); ++i) {
-        std::cout << output_data[i] << " ";
+      for (auto val : output_data) {
+        std::cout << val << ' ';
       }
-      std::cout << std::endl;
+      std::cout << '\n';
     }
 
     return output_data == expected_;
