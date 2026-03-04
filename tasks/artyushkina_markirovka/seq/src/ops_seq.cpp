@@ -18,14 +18,23 @@ struct NeighborOffset {
   bool check_j_max;
 };
 
-const std::array<NeighborOffset, 8> NEIGHBORS = {{{-1, -1, true, false, true, false},
-                                                  {-1, 0, true, false, false, false},
-                                                  {-1, 1, true, false, false, true},
-                                                  {0, -1, false, false, true, false},
-                                                  {0, 1, false, false, false, true},
-                                                  {1, -1, false, true, true, false},
-                                                  {1, 0, false, true, false, false},
-                                                  {1, 1, false, true, false, true}}};
+const std::array<NeighborOffset, 8> kNeighbors = {
+    {NeighborOffset{
+         .di = -1, .dj = -1, .check_i_min = true, .check_i_max = false, .check_j_min = true, .check_j_max = false},
+     NeighborOffset{
+         .di = -1, .dj = 0, .check_i_min = true, .check_i_max = false, .check_j_min = false, .check_j_max = false},
+     NeighborOffset{
+         .di = -1, .dj = 1, .check_i_min = true, .check_i_max = false, .check_j_min = false, .check_j_max = true},
+     NeighborOffset{
+         .di = 0, .dj = -1, .check_i_min = false, .check_i_max = false, .check_j_min = true, .check_j_max = false},
+     NeighborOffset{
+         .di = 0, .dj = 1, .check_i_min = false, .check_i_max = false, .check_j_min = false, .check_j_max = true},
+     NeighborOffset{
+         .di = 1, .dj = -1, .check_i_min = false, .check_i_max = true, .check_j_min = true, .check_j_max = false},
+     NeighborOffset{
+         .di = 1, .dj = 0, .check_i_min = false, .check_i_max = true, .check_j_min = false, .check_j_max = false},
+     NeighborOffset{
+         .di = 1, .dj = 1, .check_i_min = false, .check_i_max = true, .check_j_min = false, .check_j_max = true}}};
 
 MarkingComponentsSEQ::MarkingComponentsSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -60,7 +69,7 @@ int MarkingComponentsSEQ::FindRoot(int /*label*/) {
 
 void MarkingComponentsSEQ::UnionLabels(int /*label1*/, int /*label2*/) {}
 
-bool MarkingComponentsSEQ::IsValidNeighbor(int i, int j, const NeighborOffset &offset) {
+bool MarkingComponentsSEQ::IsValidNeighbor(int i, int j, const NeighborOffset &offset) const {
   if (offset.check_i_min && i <= 0) {
     return false;
   }
@@ -76,7 +85,6 @@ bool MarkingComponentsSEQ::IsValidNeighbor(int i, int j, const NeighborOffset &o
   return true;
 }
 
-// Обработка одного соседа
 void MarkingComponentsSEQ::ProcessNeighbor(int i, int j, const NeighborOffset &offset, int label,
                                            std::queue<std::pair<int, int>> &q) {
   if (!IsValidNeighbor(i, j, offset)) {
@@ -104,7 +112,7 @@ void MarkingComponentsSEQ::BFS(int start_i, int start_j, int label) {
     auto [i, j] = q.front();
     q.pop();
 
-    for (const auto &offset : NEIGHBORS) {
+    for (const auto &offset : kNeighbors) {
       ProcessNeighbor(i, j, offset, label, q);
     }
   }
