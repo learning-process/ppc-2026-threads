@@ -77,8 +77,8 @@ const std::array<TestType, 8> kTestParam = {
     std::make_tuple(13, "RandomSize"),     std::make_tuple(100, "MediumSize"), std::make_tuple(128, "AlreadySorted"),
     std::make_tuple(127, "ReverseSorted"), std::make_tuple(512, "LargeSize")};
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<TochilinEHoarSortSimMerSEQ, InType>(
-    kTestParam, PPC_SETTINGS_tochilin_e_hoar_sort_sim_mer));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<TochilinEHoarSortSimMerSEQ, InType>(kTestParam, PPC_SETTINGS_tochilin_e_hoar_sort_sim_mer));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
