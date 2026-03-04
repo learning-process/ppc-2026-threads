@@ -1,8 +1,8 @@
 #include "batushin_i_incr_contrast_with_lhs/omp/include/ops_omp.hpp"
 
 #include <algorithm>
-#include <cstddef>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <utility>
 #include <vector>
