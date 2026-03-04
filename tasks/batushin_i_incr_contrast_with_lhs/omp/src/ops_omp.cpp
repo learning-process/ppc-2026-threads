@@ -68,7 +68,9 @@ bool BatushinIIncrContrastWithLhsOMP::RunImpl() {
   const std::vector<unsigned char> &source = GetInput();
   std::vector<unsigned char> &destination = GetOutput();
 
-  auto [min_value, max_value] = FindMinMaxParallel(source);
+  auto min_max = FindMinMaxParallel(source);
+  unsigned char min_value = min_max.first;
+  unsigned char max_value = min_max.second;
 
   if (min_value == max_value) {
     FillUniformImage(destination, source.size());
