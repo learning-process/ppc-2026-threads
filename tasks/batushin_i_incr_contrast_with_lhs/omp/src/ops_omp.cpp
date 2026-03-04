@@ -46,9 +46,9 @@ std::pair<unsigned char, unsigned char> FindMinMaxParallel(const std::vector<uns
 #pragma omp parallel default(none) shared(data, minimum, maximum)
   {
 #pragma omp for reduction(min : minimum) reduction(max : maximum)
-    for (size_t idx = 0; idx < data.size(); ++idx) {
-      minimum = std::min(minimum, data[idx]);
-      maximum = std::max(maximum, data[idx]);
+    for (unsigned char pixel : data) {
+      minimum = std::min(minimum, pixel);
+      maximum = std::max(maximum, pixel);
     }
   }
 
@@ -79,7 +79,7 @@ bool BatushinIIncrContrastWithLhsOMP::RunImpl() {
   destination.resize(source.size());
 
 #pragma omp parallel for default(none) shared(source, destination, min_value, scale_coefficient)
-  for (int64_t position = 0; position < static_cast<int64_t>(source.size()); ++position) {
+  for (size_t position = 0; position < source.size(); ++position) {
     destination[position] = NormalizePixel(source[position], min_value, scale_coefficient);
   }
 
