@@ -1,6 +1,7 @@
 #include "batushin_i_incr_contrast_with_lhs/omp/include/ops_omp.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <cmath>
 #include <cstdint>
 #include <utility>
@@ -42,16 +43,12 @@ std::pair<unsigned char, unsigned char> FindMinMaxParallel(const std::vector<uns
   unsigned char minimum = data[0];
   unsigned char maximum = data[0];
 
-#pragma omp parallel reduction(min : minimum) reduction(max : maximum)
+#pragma omp parallel default(none) shared(data, minimum, maximum)
   {
-#pragma omp for
-    for (int64_t idx = 0; idx < static_cast<int64_t>(data.size()); ++idx) {
-      if (data[idx] < minimum) {
-        minimum = data[idx];
-      }
-      if (data[idx] > maximum) {
-        maximum = data[idx];
-      }
+#pragma omp for reduction(min : minimum) reduction(max : maximum)
+    for (size_t idx = 0; idx < data.size(); ++idx) {
+      minimum = std::min(minimum, data[idx]);
+      maximum = std::max(maximum, data[idx]);
     }
   }
 
@@ -81,7 +78,7 @@ bool BatushinIIncrContrastWithLhsOMP::RunImpl() {
 
   destination.resize(source.size());
 
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(source, destination, min_value, scale_coefficient)
   for (int64_t position = 0; position < static_cast<int64_t>(source.size()); ++position) {
     destination[position] = NormalizePixel(source[position], min_value, scale_coefficient);
   }
