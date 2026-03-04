@@ -1,11 +1,15 @@
 #pragma once
 
+#include <queue>
+#include <utility>
 #include <vector>
 
 #include "artyushkina_markirovka/common/include/common.hpp"
 #include "task/include/task.hpp"
 
 namespace artyushkina_markirovka {
+
+struct NeighborOffset;
 
 class MarkingComponentsSEQ : public BaseTask {
  public:
@@ -23,6 +27,9 @@ class MarkingComponentsSEQ : public BaseTask {
   static int FindRoot(int label);
   void UnionLabels(int label1, int label2);
   void BFS(int start_i, int start_j, int label);
+
+  bool IsValidNeighbor(int i, int j, const NeighborOffset &offset);
+  void ProcessNeighbor(int i, int j, const NeighborOffset &offset, int label, std::queue<std::pair<int, int>> &q);
 
   int rows_ = 0;
   int cols_ = 0;

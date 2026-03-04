@@ -1,5 +1,6 @@
 #include "artyushkina_markirovka/seq/include/ops_seq.hpp"
 
+#include <array>
 #include <cstddef>
 #include <queue>
 #include <utility>
@@ -7,6 +8,24 @@
 #include "artyushkina_markirovka/common/include/common.hpp"
 
 namespace artyushkina_markirovka {
+
+struct NeighborOffset {
+  int di;
+  int dj;
+  bool check_i_min;
+  bool check_i_max;
+  bool check_j_min;
+  bool check_j_max;
+};
+
+const std::array<NeighborOffset, 8> NEIGHBORS = {{{-1, -1, true, false, true, false},
+                                                  {-1, 0, true, false, false, false},
+                                                  {-1, 1, true, false, false, true},
+                                                  {0, -1, false, false, true, false},
+                                                  {0, 1, false, false, false, true},
+                                                  {1, -1, false, true, true, false},
+                                                  {1, 0, false, true, false, false},
+                                                  {1, 1, false, true, false, true}}};
 
 MarkingComponentsSEQ::MarkingComponentsSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -41,103 +60,52 @@ int MarkingComponentsSEQ::FindRoot(int /*label*/) {
 
 void MarkingComponentsSEQ::UnionLabels(int /*label1*/, int /*label2*/) {}
 
+bool MarkingComponentsSEQ::IsValidNeighbor(int i, int j, const NeighborOffset &offset) {
+  if (offset.check_i_min && i <= 0) {
+    return false;
+  }
+  if (offset.check_i_max && i >= rows_ - 1) {
+    return false;
+  }
+  if (offset.check_j_min && j <= 0) {
+    return false;
+  }
+  if (offset.check_j_max && j >= cols_ - 1) {
+    return false;
+  }
+  return true;
+}
+
+// Обработка одного соседа
+void MarkingComponentsSEQ::ProcessNeighbor(int i, int j, const NeighborOffset &offset, int label,
+                                           std::queue<std::pair<int, int>> &q) {
+  if (!IsValidNeighbor(i, j, offset)) {
+    return;
+  }
+
+  int ni = i + offset.di;
+  int nj = j + offset.dj;
+
+  const auto &input = GetInput();
+  std::size_t idx = (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
+
+  if (input[idx] == 0 && labels_[ni][nj] == 0) {
+    labels_[ni][nj] = label;
+    q.emplace(ni, nj);
+  }
+}
+
 void MarkingComponentsSEQ::BFS(int start_i, int start_j, int label) {
   std::queue<std::pair<int, int>> q;
   q.emplace(start_i, start_j);
   labels_[start_i][start_j] = label;
 
-  const auto &input = GetInput();
-
   while (!q.empty()) {
     auto [i, j] = q.front();
     q.pop();
 
-    if (i > 0 && j > 0) {
-      int ni = i - 1;
-      int nj = j - 1;
-      std::size_t idx =
-          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
-      if (input[idx] == 0 && labels_[ni][nj] == 0) {
-        labels_[ni][nj] = label;
-        q.emplace(ni, nj);
-      }
-    }
-
-    if (i > 0) {
-      int ni = i - 1;
-      int nj = j;
-      std::size_t idx =
-          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
-      if (input[idx] == 0 && labels_[ni][nj] == 0) {
-        labels_[ni][nj] = label;
-        q.emplace(ni, nj);
-      }
-    }
-
-    if (i > 0 && j < cols_ - 1) {
-      int ni = i - 1;
-      int nj = j + 1;
-      std::size_t idx =
-          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
-      if (input[idx] == 0 && labels_[ni][nj] == 0) {
-        labels_[ni][nj] = label;
-        q.emplace(ni, nj);
-      }
-    }
-
-    if (j > 0) {
-      int ni = i;
-      int nj = j - 1;
-      std::size_t idx =
-          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
-      if (input[idx] == 0 && labels_[ni][nj] == 0) {
-        labels_[ni][nj] = label;
-        q.emplace(ni, nj);
-      }
-    }
-
-    if (j < cols_ - 1) {
-      int ni = i;
-      int nj = j + 1;
-      std::size_t idx =
-          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
-      if (input[idx] == 0 && labels_[ni][nj] == 0) {
-        labels_[ni][nj] = label;
-        q.emplace(ni, nj);
-      }
-    }
-
-    if (i < rows_ - 1 && j > 0) {
-      int ni = i + 1;
-      int nj = j - 1;
-      std::size_t idx =
-          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
-      if (input[idx] == 0 && labels_[ni][nj] == 0) {
-        labels_[ni][nj] = label;
-        q.emplace(ni, nj);
-      }
-    }
-
-    if (i < rows_ - 1) {
-      int ni = i + 1;
-      int nj = j;
-      std::size_t idx =
-          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
-      if (input[idx] == 0 && labels_[ni][nj] == 0) {
-        labels_[ni][nj] = label;
-        q.emplace(ni, nj);
-      }
-    }
-
-    if (i < rows_ - 1 && j < cols_ - 1) {
-      int ni = i + 1;
-      int nj = j + 1;
-      std::size_t idx =
-          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
-      if (input[idx] == 0 && labels_[ni][nj] == 0) {
-        labels_[ni][nj] = label;
-        q.emplace(ni, nj);
-      }
+    for (const auto &offset : NEIGHBORS) {
+      ProcessNeighbor(i, j, offset, label, q);
     }
   }
 }
