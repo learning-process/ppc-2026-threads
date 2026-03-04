@@ -1,8 +1,8 @@
 #include "artyushkina_markirovka/seq/include/ops_seq.hpp"
 
-#include <array>
 #include <cstddef>
 #include <queue>
+#include <utility>
 
 #include "artyushkina_markirovka/common/include/common.hpp"
 
@@ -46,28 +46,97 @@ void MarkingComponentsSEQ::BFS(int start_i, int start_j, int label) {
   q.emplace(start_i, start_j);
   labels_[start_i][start_j] = label;
 
-  constexpr int di[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
-  constexpr int dj[8] = {-1, 0, 1, -1, 1, -1, 0, 1};
-
   const auto &input = GetInput();
 
   while (!q.empty()) {
     auto [i, j] = q.front();
     q.pop();
 
-    const int neighbors[8][2] = {{i + di[0], j + dj[0]}, {i + di[1], j + dj[1]}, {i + di[2], j + dj[2]},
-                                 {i + di[3], j + dj[3]}, {i + di[4], j + dj[4]}, {i + di[5], j + dj[5]},
-                                 {i + di[6], j + dj[6]}, {i + di[7], j + dj[7]}};
+    if (i > 0 && j > 0) {
+      int ni = i - 1;
+      int nj = j - 1;
+      std::size_t idx =
+          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
+      if (input[idx] == 0 && labels_[ni][nj] == 0) {
+        labels_[ni][nj] = label;
+        q.emplace(ni, nj);
+      }
+    }
 
-    for (const auto &[ni, nj] : neighbors) {
-      if (ni >= 0 && ni < rows_ && nj >= 0 && nj < cols_) {
-        std::size_t idx =
-            (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
+    if (i > 0) {
+      int ni = i - 1;
+      int nj = j;
+      std::size_t idx =
+          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
+      if (input[idx] == 0 && labels_[ni][nj] == 0) {
+        labels_[ni][nj] = label;
+        q.emplace(ni, nj);
+      }
+    }
 
-        if (input[idx] == 0 && labels_[ni][nj] == 0) {
-          labels_[ni][nj] = label;
-          q.emplace(ni, nj);
-        }
+    if (i > 0 && j < cols_ - 1) {
+      int ni = i - 1;
+      int nj = j + 1;
+      std::size_t idx =
+          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
+      if (input[idx] == 0 && labels_[ni][nj] == 0) {
+        labels_[ni][nj] = label;
+        q.emplace(ni, nj);
+      }
+    }
+
+    if (j > 0) {
+      int ni = i;
+      int nj = j - 1;
+      std::size_t idx =
+          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
+      if (input[idx] == 0 && labels_[ni][nj] == 0) {
+        labels_[ni][nj] = label;
+        q.emplace(ni, nj);
+      }
+    }
+
+    if (j < cols_ - 1) {
+      int ni = i;
+      int nj = j + 1;
+      std::size_t idx =
+          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
+      if (input[idx] == 0 && labels_[ni][nj] == 0) {
+        labels_[ni][nj] = label;
+        q.emplace(ni, nj);
+      }
+    }
+
+    if (i < rows_ - 1 && j > 0) {
+      int ni = i + 1;
+      int nj = j - 1;
+      std::size_t idx =
+          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
+      if (input[idx] == 0 && labels_[ni][nj] == 0) {
+        labels_[ni][nj] = label;
+        q.emplace(ni, nj);
+      }
+    }
+
+    if (i < rows_ - 1) {
+      int ni = i + 1;
+      int nj = j;
+      std::size_t idx =
+          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
+      if (input[idx] == 0 && labels_[ni][nj] == 0) {
+        labels_[ni][nj] = label;
+        q.emplace(ni, nj);
+      }
+    }
+
+    if (i < rows_ - 1 && j < cols_ - 1) {
+      int ni = i + 1;
+      int nj = j + 1;
+      std::size_t idx =
+          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
+      if (input[idx] == 0 && labels_[ni][nj] == 0) {
+        labels_[ni][nj] = label;
+        q.emplace(ni, nj);
       }
     }
   }

@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 
 #include "artyushkina_markirovka/common/include/common.hpp"
 #include "artyushkina_markirovka/seq/include/ops_seq.hpp"
@@ -32,8 +33,7 @@ class ArtyushkinaMarkirovkaPerfTests : public ppc::util::BaseRunPerfTests<InType
     int rows = static_cast<int>(output_data[0]);
     int cols = static_cast<int>(output_data[1]);
 
-    if (static_cast<std::size_t>(rows) != static_cast<std::size_t>(input_data_[0]) ||
-        static_cast<std::size_t>(cols) != static_cast<std::size_t>(input_data_[1])) {
+    if (std::cmp_not_equal(rows, input_data_[0]) || std::cmp_not_equal(cols, input_data_[1])) {
       return false;
     }
 
