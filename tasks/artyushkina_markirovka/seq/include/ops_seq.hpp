@@ -28,7 +28,7 @@ class MarkingComponentsSEQ : public BaseTask {
   void UnionLabels(int label1, int label2);
   void BFS(int start_i, int start_j, int label);
 
-  bool IsValidNeighbor(int i, int j, const NeighborOffset &offset) const;
+  [[nodiscard]] bool IsValidNeighbor(int i, int j, const NeighborOffset &offset) const;
   void ProcessNeighbor(int i, int j, const NeighborOffset &offset, int label, std::queue<std::pair<int, int>> &q);
 
   int rows_ = 0;
