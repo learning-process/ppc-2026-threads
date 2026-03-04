@@ -6,7 +6,7 @@
 
 namespace vdovin_a_gauss_block {
 
-class VdovinAGaussBlockPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class VdovinAGaussBlockRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 1500;
   InType input_data_{};
 
@@ -23,7 +23,7 @@ class VdovinAGaussBlockPerfTests : public ppc::util::BaseRunPerfTests<InType, Ou
   }
 };
 
-TEST_P(VdovinAGaussBlockPerfTests, RunPerfModes) {
+TEST_P(VdovinAGaussBlockRunPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -33,9 +33,9 @@ const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, VdovinAGaussBlock
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = VdovinAGaussBlockPerfTests::CustomPerfTestName;
+const auto kPerfTestName = VdovinAGaussBlockRunPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, VdovinAGaussBlockPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, VdovinAGaussBlockRunPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
