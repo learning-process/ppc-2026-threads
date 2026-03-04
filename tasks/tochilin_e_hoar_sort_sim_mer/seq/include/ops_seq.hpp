@@ -4,9 +4,9 @@
 #include <vector>
 
 #include "task/include/task.hpp"
-#include "tochilin_e_hoar_sort_sim_mer_seq/common/include/common.hpp"
+#include "tochilin_e_hoar_sort_sim_mer/common/include/common.hpp"
 
-namespace tochilin_e_hoar_sort_sim_mer_seq {
+namespace tochilin_e_hoar_sort_sim_mer {
 
 class TochilinEHoarSortSimMerSEQ : public BaseTask {
  public:
@@ -26,4 +26,4 @@ class TochilinEHoarSortSimMerSEQ : public BaseTask {
   static std::vector<int> MergeSortedVectors(const std::vector<int> &a, const std::vector<int> &b);
 };
 
-}  // namespace tochilin_e_hoar_sort_sim_mer_seq
+}  // namespace tochilin_e_hoar_sort_sim_mer

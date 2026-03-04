@@ -4,11 +4,11 @@
 #include <cstddef>
 #include <random>
 
-#include "tochilin_e_hoar_sort_sim_mer_seq/common/include/common.hpp"
-#include "tochilin_e_hoar_sort_sim_mer_seq/seq/include/ops_seq.hpp"
+#include "tochilin_e_hoar_sort_sim_mer/common/include/common.hpp"
+#include "tochilin_e_hoar_sort_sim_mer/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace tochilin_e_hoar_sort_sim_mer_seq {
+namespace tochilin_e_hoar_sort_sim_mer {
 
 class TochilinEHoarSortSimMerRunPerfTestsSEQ : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
@@ -41,7 +41,7 @@ TEST_P(TochilinEHoarSortSimMerRunPerfTestsSEQ, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, TochilinEHoarSortSimMerSEQ>(PPC_SETTINGS_tochilin_e_hoar_sort_sim_mer_seq);
+    ppc::util::MakeAllPerfTasks<InType, TochilinEHoarSortSimMerSEQ>(PPC_SETTINGS_tochilin_e_hoar_sort_sim_mer);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -51,4 +51,4 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, TochilinEHoarSortSimMerRunPerfTestsSEQ, k
 
 }  // namespace
 
-}  // namespace tochilin_e_hoar_sort_sim_mer_seq
+}  // namespace tochilin_e_hoar_sort_sim_mer

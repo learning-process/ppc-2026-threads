@@ -7,12 +7,12 @@
 #include <string>
 #include <tuple>
 
-#include "tochilin_e_hoar_sort_sim_mer_seq/common/include/common.hpp"
-#include "tochilin_e_hoar_sort_sim_mer_seq/seq/include/ops_seq.hpp"
+#include "tochilin_e_hoar_sort_sim_mer/common/include/common.hpp"
+#include "tochilin_e_hoar_sort_sim_mer/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace tochilin_e_hoar_sort_sim_mer_seq {
+namespace tochilin_e_hoar_sort_sim_mer {
 
 class TochilinEHoarSortSimMerRunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -78,7 +78,7 @@ const std::array<TestType, 8> kTestParam = {
     std::make_tuple(127, "ReverseSorted"), std::make_tuple(512, "LargeSize")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<TochilinEHoarSortSimMerSEQ, InType>(
-    kTestParam, PPC_SETTINGS_tochilin_e_hoar_sort_sim_mer_seq));
+    kTestParam, PPC_SETTINGS_tochilin_e_hoar_sort_sim_mer));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -89,4 +89,4 @@ INSTANTIATE_TEST_SUITE_P(HoarSortSimMerTests, TochilinEHoarSortSimMerRunFuncTest
 
 }  // namespace
 
-}  // namespace tochilin_e_hoar_sort_sim_mer_seq
+}  // namespace tochilin_e_hoar_sort_sim_mer

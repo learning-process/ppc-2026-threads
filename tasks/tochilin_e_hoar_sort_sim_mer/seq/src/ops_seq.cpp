@@ -1,13 +1,13 @@
-#include "tochilin_e_hoar_sort_sim_mer_seq/seq/include/ops_seq.hpp"
+#include "tochilin_e_hoar_sort_sim_mer/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <iterator>
 #include <utility>
 #include <vector>
 
-#include "tochilin_e_hoar_sort_sim_mer_seq/common/include/common.hpp"
+#include "tochilin_e_hoar_sort_sim_mer/common/include/common.hpp"
 
-namespace tochilin_e_hoar_sort_sim_mer_seq {
+namespace tochilin_e_hoar_sort_sim_mer {
 
 TochilinEHoarSortSimMerSEQ::TochilinEHoarSortSimMerSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -97,4 +97,4 @@ bool TochilinEHoarSortSimMerSEQ::PostProcessingImpl() {
   return std::is_sorted(GetOutput().begin(), GetOutput().end());
 }
 
-}  // namespace tochilin_e_hoar_sort_sim_mer_seq
+}  // namespace tochilin_e_hoar_sort_sim_mer
