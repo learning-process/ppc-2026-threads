@@ -82,8 +82,7 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName =
-    TochilinEHoarSortSimMerRunFuncTests::PrintFuncTestName<TochilinEHoarSortSimMerRunFuncTests>;
+const auto kPerfTestName = TochilinEHoarSortSimMerRunFuncTests::PrintFuncTestName<TochilinEHoarSortSimMerRunFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(HoarSortSimMerTests, TochilinEHoarSortSimMerRunFuncTests, kGtestValues, kPerfTestName);
 
