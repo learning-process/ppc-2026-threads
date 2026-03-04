@@ -14,7 +14,7 @@
 
 namespace tochilin_e_hoar_sort_sim_mer {
 
-class TochilinEHoarSortSimMerRunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class TochilinEHoarSortSimMerRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -68,7 +68,7 @@ class TochilinEHoarSortSimMerRunFuncTestsSEQ : public ppc::util::BaseRunFuncTest
 
 namespace {
 
-TEST_P(TochilinEHoarSortSimMerRunFuncTestsSEQ, TestSorting) {
+TEST_P(TochilinEHoarSortSimMerRunFuncTests, TestSorting) {
   ExecuteTest(GetParam());
 }
 
@@ -83,9 +83,9 @@ const auto kTestTasksList = std::tuple_cat(
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName =
-    TochilinEHoarSortSimMerRunFuncTestsSEQ::PrintFuncTestName<TochilinEHoarSortSimMerRunFuncTestsSEQ>;
+    TochilinEHoarSortSimMerRunFuncTests::PrintFuncTestName<TochilinEHoarSortSimMerRunFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(HoarSortSimMerTests, TochilinEHoarSortSimMerRunFuncTestsSEQ, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(HoarSortSimMerTests, TochilinEHoarSortSimMerRunFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 

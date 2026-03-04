@@ -10,7 +10,7 @@
 
 namespace tochilin_e_hoar_sort_sim_mer {
 
-class TochilinEHoarSortSimMerRunPerfTestsSEQ : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class TochilinEHoarSortSimMerRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   const int k_count = 2000000;
   InType input_data;
@@ -34,7 +34,7 @@ class TochilinEHoarSortSimMerRunPerfTestsSEQ : public ppc::util::BaseRunPerfTest
   }
 };
 
-TEST_P(TochilinEHoarSortSimMerRunPerfTestsSEQ, RunPerfModes) {
+TEST_P(TochilinEHoarSortSimMerRunPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -45,9 +45,9 @@ const auto kAllPerfTasks =
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = TochilinEHoarSortSimMerRunPerfTestsSEQ::CustomPerfTestName;
+const auto kPerfTestName = TochilinEHoarSortSimMerRunPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, TochilinEHoarSortSimMerRunPerfTestsSEQ, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, TochilinEHoarSortSimMerRunPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
