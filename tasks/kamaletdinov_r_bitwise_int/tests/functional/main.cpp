@@ -53,8 +53,7 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName =
-    KamaletdinovRBitwiseIntFuncTests::PrintFuncTestName<KamaletdinovRBitwiseIntFuncTests>;
+const auto kPerfTestName = KamaletdinovRBitwiseIntFuncTests::PrintFuncTestName<KamaletdinovRBitwiseIntFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(BitwiseIntTests, KamaletdinovRBitwiseIntFuncTests, kGtestValues, kPerfTestName);
 
