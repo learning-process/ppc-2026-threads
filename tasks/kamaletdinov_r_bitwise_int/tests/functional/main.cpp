@@ -12,7 +12,7 @@
 
 namespace kamaletdinov_r_bitwise_int {
 
-class KamaletdinovRBitwiseIntFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class KamaletdinovRBitwiseIntFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -38,7 +38,7 @@ class KamaletdinovRBitwiseIntFuncTestsThreads : public ppc::util::BaseRunFuncTes
 
 namespace {
 
-TEST_P(KamaletdinovRBitwiseIntFuncTestsThreads, BitwiseSort) {
+TEST_P(KamaletdinovRBitwiseIntFuncTests, BitwiseSort) {
   ExecuteTest(GetParam());
 }
 
@@ -54,9 +54,9 @@ const auto kTestTasksList = std::tuple_cat(
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName =
-    KamaletdinovRBitwiseIntFuncTestsThreads::PrintFuncTestName<KamaletdinovRBitwiseIntFuncTestsThreads>;
+    KamaletdinovRBitwiseIntFuncTests::PrintFuncTestName<KamaletdinovRBitwiseIntFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(BitwiseIntTests, KamaletdinovRBitwiseIntFuncTestsThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(BitwiseIntTests, KamaletdinovRBitwiseIntFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
