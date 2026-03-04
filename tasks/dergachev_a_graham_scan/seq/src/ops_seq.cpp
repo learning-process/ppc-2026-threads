@@ -23,15 +23,6 @@ double DistSquared(const Point &a, const Point &b) {
 
 const double kPi = std::acos(-1.0);
 
-bool AllPointsSame(const std::vector<Point> &pts) {
-  for (int i = 1; std::cmp_less(i, pts.size()); i++) {
-    if (pts[i].x != pts[0].x || pts[i].y != pts[0].y) {
-      return false;
-    }
-  }
-  return true;
-}
-
 int FindPivotIndex(const std::vector<Point> &pts) {
   int pivot_idx = 0;
   for (int i = 1; std::cmp_less(i, pts.size()); i++) {
@@ -91,13 +82,11 @@ bool DergachevAGrahamScanSEQ::RunImpl() {
   std::vector<Point> pts(points_.begin(), points_.end());
   int n = static_cast<int>(pts.size());
 
-  if (n <= 1) {
-    hull_ = std::move(pts);
-    return true;
-  }
-
-  if (AllPointsSame(pts)) {
-    hull_.push_back(pts[0]);
+  if (n <= 1 ||
+      std::all_of(pts.begin() + 1, pts.end(), [&](const Point &pt) { return pt.x == pts[0].x && pt.y == pts[0].y; })) {
+    if (!pts.empty()) {
+      hull_.push_back(pts[0]);
+    }
     return true;
   }
 
