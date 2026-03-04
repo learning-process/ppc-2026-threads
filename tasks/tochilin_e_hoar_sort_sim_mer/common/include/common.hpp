@@ -13,4 +13,5 @@ using OutType = std::vector<int>;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
+
 }  // namespace tochilin_e_hoar_sort_sim_mer
