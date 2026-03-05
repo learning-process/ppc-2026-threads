@@ -73,7 +73,7 @@ double ZyuzinNSimpsonSEQ::ComputeSimpsonMultiDim() {
 
     std::vector<double> point(num_dims);
     for (size_t dim = 0; dim < num_dims; ++dim) {
-      point[dim] = input.lower_bounds[dim] + indices[dim] * h[dim];
+      point[dim] = input.lower_bounds[dim] + (indices[dim] * h[dim]);
     }
 
     double weight = 1.0;
