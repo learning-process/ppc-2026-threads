@@ -15,15 +15,12 @@ ZyuzinNSimpsonSEQ::ZyuzinNSimpsonSEQ(const InType &in) {
 
 bool ZyuzinNSimpsonSEQ::ValidationImpl() {
   const auto &input = GetInput();
-
   if (input.lower_bounds.size() != input.upper_bounds.size() || input.lower_bounds.size() != input.n_steps.size()) {
     return false;
   }
-
   if (input.lower_bounds.empty()) {
     return false;
   }
-
   for (size_t i = 0; i < input.lower_bounds.size(); ++i) {
     if (input.lower_bounds[i] > input.upper_bounds[i]) {
       return false;
@@ -32,7 +29,6 @@ bool ZyuzinNSimpsonSEQ::ValidationImpl() {
       return false;
     }
   }
-
   return static_cast<bool>(input.func);
 }
 
