@@ -1,11 +1,11 @@
 #include "timofeev_n_radix_batcher_sort/seq/include/ops_seq.hpp"
 
-#include <climits>
 #include <algorithm>
+#include <climits>
 #include <vector>
 
 #include "timofeev_n_radix_batcher_sort/common/include/common.hpp"
-//#include "util/include/util.hpp"
+// #include "util/include/util.hpp"
 
 namespace timofeev_n_radix_batcher_sort_threads {
 

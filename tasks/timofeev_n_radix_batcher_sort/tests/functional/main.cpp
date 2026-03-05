@@ -4,8 +4,8 @@
 #include <array>
 #include <cstddef>
 #include <string>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 #include "timofeev_n_radix_batcher_sort/common/include/common.hpp"
 #include "timofeev_n_radix_batcher_sort/seq/include/ops_seq.hpp"

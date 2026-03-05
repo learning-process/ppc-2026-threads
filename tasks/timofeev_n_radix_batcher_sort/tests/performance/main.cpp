@@ -12,7 +12,7 @@ class TimofeevRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Ou
   void SetUp() override {
     int size = 10000;
     input_data_.resize(size, 0);
-    for (int i = 0; std::cmp_less(i ,static_cast<int>(input_data_.size())); i++) {
+    for (int i = 0; std::cmp_less(i, static_cast<int>(input_data_.size())); i++) {
       input_data_[i] = i * (i % 2 == 0 ? 1 : -1);
     }
   }

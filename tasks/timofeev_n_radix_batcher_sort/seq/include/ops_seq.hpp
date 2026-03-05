@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include <cstddef>
+#include <vector>
 
 #include "task/include/task.hpp"
 #include "timofeev_n_radix_batcher_sort/common/include/common.hpp"
