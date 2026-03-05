@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <tuple>
 #include <vector>
+#include <omp.h>
 
 #include "kulik_a_mat_mul_double_ccs/common/include/common.hpp"
 
