@@ -133,9 +133,9 @@ class CSRMatrix {
 
  private:
   static void ProcessRow(int i, const CSRMatrix &self, const CSRMatrix &other, std::vector<T> &acc_re,
-                          std::vector<T> &acc_im, std::vector<bool> &local_used,
-                          std::vector<std::vector<Complex<T>>> &row_values,
-                          std::vector<std::vector<int>> &row_col_indices) {
+                         std::vector<T> &acc_im, std::vector<bool> &local_used,
+                         std::vector<std::vector<Complex<T>>> &row_values,
+                         std::vector<std::vector<int>> &row_col_indices) {
     std::vector<int> used_cols;
     used_cols.reserve(other.cols);
 
