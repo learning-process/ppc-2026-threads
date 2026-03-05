@@ -1,7 +1,5 @@
 #include "kurpiakov_a_sp_comp_mat_mul/omp/include/ops_omp.hpp"
 
-#include <atomic>
-#include <numeric>
 #include <utility>
 #include <vector>
 
