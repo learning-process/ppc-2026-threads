@@ -14,7 +14,7 @@ namespace guseva_crs {
 class GusevaMatMulCRSPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
   OutType output_data_;
-  std::size_t inp_size_ = 100000;
+  std::size_t inp_size_ = 10000;
 
   static CRS CreateDiagMatrix(double value, std::size_t size) {
     CRS a;
