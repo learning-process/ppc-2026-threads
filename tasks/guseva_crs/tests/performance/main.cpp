@@ -6,6 +6,7 @@
 
 #include "guseva_crs/common/include/common.hpp"
 #include "guseva_crs/seq/include/ops_seq.hpp"
+#include "guseva_crs/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace guseva_crs {
@@ -13,7 +14,7 @@ namespace guseva_crs {
 class GusevaMatMulCRSPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
   OutType output_data_;
-  std::size_t inp_size_ = 10000;
+  std::size_t inp_size_ = 100000;
 
   static CRS CreateDiagMatrix(double value, std::size_t size) {
     CRS a;
@@ -55,7 +56,8 @@ TEST_P(GusevaMatMulCRSPerfTest, G) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, GusevaCRSMatMulSeq>(PPC_SETTINGS_guseva_crs);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, GusevaCRSMatMulSeq, GusevaCRSMatMulTbb>(PPC_SETTINGS_guseva_crs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
