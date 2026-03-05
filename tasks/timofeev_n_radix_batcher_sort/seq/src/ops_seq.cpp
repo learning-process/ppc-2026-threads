@@ -1,8 +1,7 @@
 #include "timofeev_n_radix_batcher_sort/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <vector>
 #include <climits>
+#include <numeric>
 
 #include "timofeev_n_radix_batcher_sort/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -16,25 +15,25 @@ TimofeevNRadixBatcherSEQ::TimofeevNRadixBatcherSEQ(const InType &in) {
 }
 
 void TimofeevNRadixBatcherSEQ::CompExch(int &a, int &b, int digit) {
-    int bR = b % (digit * 10) / digit;
-    int aR = a % (digit * 10) / digit;
-    if (bR < aR) {
-        std::swap(a, b);
-    }
+  int bR = b % (digit * 10) / digit;
+  int aR = a % (digit * 10) / digit;
+  if (bR < aR) {
+    std::swap(a, b);
+  }
 }
 
 void TimofeevNRadixBatcherSEQ::BubbleSort(std::vector<int> &arr, int digit, int left, int right) {
-    for (int i = left; i <= right; i++) {
-        for (int j = 0; j + 1 < right - left; j++) {
-            CompExch(arr[left + j], arr[left + j + 1], digit);
-        }
+  for (int i = left; i <= right; i++) {
+    for (int j = 0; j + 1 < right - left; j++) {
+      CompExch(arr[left + j], arr[left + j + 1], digit);
     }
+  }
 }
 
 void TimofeevNRadixBatcherSEQ::ComparR(int &a, int &b) {
-    if (a > b) {
-        std::swap(a, b);
-    }
+  if (a > b) {
+    std::swap(a, b);
+  }
 }
 
 void TimofeevNRadixBatcherSEQ::OddEvenMerge(std::vector<int> &arr, size_t lft, size_t n) {
@@ -59,13 +58,13 @@ void TimofeevNRadixBatcherSEQ::OddEvenMerge(std::vector<int> &arr, size_t lft, s
   }
 }
 
-int TimofeevNRadixBatcherSEQ::loggo(int inputa) {
-    int count = 0;
-    while (inputa > 1) {
-        inputa /= 2;
-        count++;
-    }
-    return count;
+int TimofeevNRadixBatcherSEQ::Loggo(int inputa) {
+  int count = 0;
+  while (inputa > 1) {
+    inputa /= 2;
+    count++;
+  }
+  return count;
 }
 
 bool TimofeevNRadixBatcherSEQ::ValidationImpl() {
@@ -100,14 +99,14 @@ bool TimofeevNRadixBatcherSEQ::RunImpl() {
   if (n != m) {
     in.resize(n, maxX);
   }
-  //std::cout << "\n\n" << n << " " << in.size() << " " << "1\n\n";
+  // std::cout << "\n\n" << n << " " << in.size() << " " << "1\n\n";
   for (int i = 0; i < static_cast<int>(in.size()); i += static_cast<int>(in.size() / 2)) {
-      for (int k = 1; k <= maxX; k*= 10) {
-          BubbleSort(in, k, i, i + static_cast<int>(in.size() / 2));
-      }
+    for (int k = 1; k <= maxX; k *= 10) {
+      BubbleSort(in, k, i, i + static_cast<int>(in.size() / 2));
+    }
   }
   OddEvenMerge(in, 0, in.size());
-  //std::cout << "\n\n" << n << " " << in.size() << " " << "2\n\n";
+  // std::cout << "\n\n" << n << " " << in.size() << " " << "2\n\n";
   if (m != n) {
     in.resize(m);
   }

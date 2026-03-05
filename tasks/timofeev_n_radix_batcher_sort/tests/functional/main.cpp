@@ -7,10 +7,7 @@
 #include <cstdint>
 #include <numeric>
 #include <stdexcept>
-#include <string>
-#include <tuple>
 #include <utility>
-#include <vector>
 
 #include "timofeev_n_radix_batcher_sort/common/include/common.hpp"
 #include "timofeev_n_radix_batcher_sort/seq/include/ops_seq.hpp"
@@ -59,12 +56,11 @@ std::vector<int> t2 = {1, -2, 3, -4, 5};
 std::vector<int> t3 = {1, -2, 3, -4, 5, -6, 7, -8, 9, -10, 11, -12, 13, -14, 15, -16};
 std::vector<int> mt;
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(t1, mt, 1, "3"),
-                                            std::make_tuple(t2, mt, 1, "5"),
+const std::array<TestType, 3> kTestParam = {std::make_tuple(t1, mt, 1, "3"), std::make_tuple(t2, mt, 1, "5"),
                                             std::make_tuple(t3, mt, 1, "16")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<TimofeevNRadixBatcherSEQ, InType>(kTestParam, PPC_SETTINGS_timofeev_n_radix_batcher_sort));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<TimofeevNRadixBatcherSEQ, InType>(kTestParam, PPC_SETTINGS_timofeev_n_radix_batcher_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
