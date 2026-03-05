@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <climits>
+#include <utility>
 #include <vector>
 
 #include "timofeev_n_radix_batcher_sort/common/include/common.hpp"
@@ -108,7 +109,7 @@ bool TimofeevNRadixBatcherSEQ::RunImpl() {
   if (m != n) {
     in.resize(m);
   }
-  for (int i = 0; i < static_cast<int>(in.size()); i++) {
+  for (int i = 0; std::cmp_less(i, static_cast<int>(in.size())); i++) {
     GetInput()[i] = in[i];
   }
   GetOutput() = GetInput();
