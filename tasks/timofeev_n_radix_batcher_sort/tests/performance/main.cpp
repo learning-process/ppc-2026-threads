@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <utility>
+
 #include "timofeev_n_radix_batcher_sort/common/include/common.hpp"
 #include "timofeev_n_radix_batcher_sort/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"

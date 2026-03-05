@@ -84,7 +84,7 @@ bool TimofeevNRadixBatcherSEQ::RunImpl() {
     n /= 2;
   }
   if (n > 1) {
-    n = in.size();
+    n = static_cast<int>(in.size());
     int p = 1;
     while (p < n) {
       p *= 2;
@@ -98,12 +98,12 @@ bool TimofeevNRadixBatcherSEQ::RunImpl() {
     in.resize(n, max_x);
   }
   // std::cout << "\n\n" << n << " " << in.size() << " " << "1\n\n";
-  for (int i = 0; i < static_cast<int>(in.size()); i += static_cast<int>(in.size() / 2)) {
+  for (int i = 0; std::cmp_less(i, static_cast<int>(in.size())); i += static_cast<int>(in.size() / 2)) {
     for (int k = 1; k <= max_x; k *= 10) {
       BubbleSort(in, k, i, i + static_cast<int>(in.size() / 2));
     }
   }
-  OddEvenMerge(in, 0, in.size());
+  OddEvenMerge(in, 0, static_cast<int>(in.size()));
   // std::cout << "\n\n" << n << " " << in.size() << " " << "2\n\n";
   if (m != n) {
     in.resize(m);

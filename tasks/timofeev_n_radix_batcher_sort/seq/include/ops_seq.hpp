@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstddef>
 #include <vector>
 
 #include "task/include/task.hpp"
@@ -23,9 +22,9 @@ class TimofeevNRadixBatcherSEQ : public BaseTask {
 
   static int Loggo(int inputa);
   static void CompExch(int &a, int &b, int digit);
-  void BubbleSort(std::vector<int> &arr, int digit, int left, int right);
+  static void BubbleSort(std::vector<int> &arr, int digit, int left, int right);
   static void ComparR(int &a, int &b);
-  void OddEvenMerge(std::vector<int> &arr, int lft, int n);
+  static void OddEvenMerge(std::vector<int> &arr, int lft, int n);
 };
 
 }  // namespace timofeev_n_radix_batcher_sort_threads
