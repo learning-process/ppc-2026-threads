@@ -1,13 +1,11 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
-#include <utility>
+#include <string>
+#include <vector>
+#include <tuple>
 
 #include "timofeev_n_radix_batcher_sort/common/include/common.hpp"
 #include "timofeev_n_radix_batcher_sort/seq/include/ops_seq.hpp"
@@ -29,7 +27,7 @@ class TimofeevNRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    for (int i = 0; i < static_cast<int>(output_data.size() - 1); i++) {
+    for (int i = 0; std::cmp_less(i, static_cast<int>(output_data.size() - 1)); i++) {
       if (output_data[i] > output_data[i + 1]) {
         return false;
       }
@@ -42,7 +40,7 @@ class TimofeevNRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
   }
 
  private:
-  InType input_data_ = std::vector<int>();
+  InType input_data_;
 };
 
 namespace {

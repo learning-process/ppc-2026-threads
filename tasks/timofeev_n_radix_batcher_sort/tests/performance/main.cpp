@@ -7,18 +7,18 @@
 namespace timofeev_n_radix_batcher_sort_threads {
 
 class TimofeevRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
     int size = 10000;
     input_data_.resize(size, 0);
-    for (int i = 0; i < static_cast<int>(input_data_.size()); i++) {
+    for (int i = 0; std::cmp_less(i ,static_cast<int>(input_data_.size())); i++) {
       input_data_[i] = i * (i % 2 == 0 ? 1 : -1);
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    for (int i = 0; i < static_cast<int>(output_data.size() - 1); i++) {
+    for (int i = 0; std::cmp_less(i, static_cast<int>(output_data.size() - 1)); i++) {
       if (output_data[i] > output_data[i + 1]) {
         return false;
       }

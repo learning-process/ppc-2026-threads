@@ -1,10 +1,11 @@
 #include "timofeev_n_radix_batcher_sort/seq/include/ops_seq.hpp"
 
 #include <climits>
-#include <numeric>
+#include <algorithm>
+#include <vector>
 
 #include "timofeev_n_radix_batcher_sort/common/include/common.hpp"
-#include "util/include/util.hpp"
+//#include "util/include/util.hpp"
 
 namespace timofeev_n_radix_batcher_sort_threads {
 
@@ -15,9 +16,9 @@ TimofeevNRadixBatcherSEQ::TimofeevNRadixBatcherSEQ(const InType &in) {
 }
 
 void TimofeevNRadixBatcherSEQ::CompExch(int &a, int &b, int digit) {
-  int bR = b % (digit * 10) / digit;
-  int aR = a % (digit * 10) / digit;
-  if (bR < aR) {
+  int b_r = b % (digit * 10) / digit;
+  int a_r = a % (digit * 10) / digit;
+  if (b_r < a_r) {
     std::swap(a, b);
   }
 }
@@ -36,22 +37,22 @@ void TimofeevNRadixBatcherSEQ::ComparR(int &a, int &b) {
   }
 }
 
-void TimofeevNRadixBatcherSEQ::OddEvenMerge(std::vector<int> &arr, size_t lft, size_t n) {
+void TimofeevNRadixBatcherSEQ::OddEvenMerge(std::vector<int> &arr, int lft, int n) {
   if (n <= 1) {
     return;
   }
 
-  size_t otstup = n / 2;
-  for (size_t i = 0; i < otstup; i += 1) {
+  int otstup = n / 2;
+  for (int i = 0; i < otstup; i += 1) {
     if (arr[lft + i] > arr[lft + otstup + i]) {
       std::swap(arr[lft + i], arr[lft + otstup + i]);
     }
   }
 
   for (otstup = n / 4; otstup > 0; otstup /= 2) {
-    size_t h = otstup * 2;
-    for (size_t start = otstup; start + otstup < n; start += h) {
-      for (size_t i = 0; i < otstup; i += 1) {
+    int h = otstup * 2;
+    for (int start = otstup; start + otstup < n; start += h) {
+      for (int i = 0; i < otstup; i += 1) {
         ComparR(arr[lft + start + i], arr[lft + start + i + otstup]);
       }
     }
@@ -68,10 +69,7 @@ int TimofeevNRadixBatcherSEQ::Loggo(int inputa) {
 }
 
 bool TimofeevNRadixBatcherSEQ::ValidationImpl() {
-  if (GetInput().size() < 2) {
-    return false;
-  }
-  return true;
+  return GetInput().size() >= 2;
 }
 
 bool TimofeevNRadixBatcherSEQ::PreProcessingImpl() {
@@ -80,7 +78,7 @@ bool TimofeevNRadixBatcherSEQ::PreProcessingImpl() {
 
 bool TimofeevNRadixBatcherSEQ::RunImpl() {
   std::vector<int> in = GetInput();
-  int n = in.size();
+  int n = static_cast<int>(in.size());
   int m = n;
   while (n % 2 == 0) {
     n /= 2;
@@ -95,13 +93,13 @@ bool TimofeevNRadixBatcherSEQ::RunImpl() {
   } else {
     n = m;
   }
-  int maxX = *(std::max_element(in.begin(), in.end()));
+  int max_x = *(std::ranges::max_element(in.begin(), in.end()));
   if (n != m) {
-    in.resize(n, maxX);
+    in.resize(n, max_x);
   }
   // std::cout << "\n\n" << n << " " << in.size() << " " << "1\n\n";
   for (int i = 0; i < static_cast<int>(in.size()); i += static_cast<int>(in.size() / 2)) {
-    for (int k = 1; k <= maxX; k *= 10) {
+    for (int k = 1; k <= max_x; k *= 10) {
       BubbleSort(in, k, i, i + static_cast<int>(in.size() / 2));
     }
   }

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <vector>
+#include <cstddef>
+
 #include "task/include/task.hpp"
 #include "timofeev_n_radix_batcher_sort/common/include/common.hpp"
 
@@ -18,11 +21,11 @@ class TimofeevNRadixBatcherSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  int Loggo(int inputa);
-  void CompExch(int &a, int &b, int digit);
+  static int Loggo(int inputa);
+  static void CompExch(int &a, int &b, int digit);
   void BubbleSort(std::vector<int> &arr, int digit, int left, int right);
-  void ComparR(int &a, int &b);
-  void OddEvenMerge(std::vector<int> &arr, size_t lft, size_t n);
+  static void ComparR(int &a, int &b);
+  void OddEvenMerge(std::vector<int> &arr, int lft, int n);
 };
 
 }  // namespace timofeev_n_radix_batcher_sort_threads
