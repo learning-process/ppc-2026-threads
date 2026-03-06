@@ -5,11 +5,11 @@
 
 #include "task/include/task.hpp"
 
-namespace dergachev_a_graham_scan_seq {
+namespace dergachev_a_graham_scan {
 
 using InType = int;
 using OutType = int;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace dergachev_a_graham_scan_seq
+}  // namespace dergachev_a_graham_scan
