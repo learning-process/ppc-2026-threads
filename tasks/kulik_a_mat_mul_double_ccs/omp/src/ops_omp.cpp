@@ -30,43 +30,69 @@ bool KulikAMatMulDoubleCcsOMP::RunImpl() {
   const auto &a = std::get<0>(GetInput());
   const auto &b = std::get<1>(GetInput());
   OutType &c = GetOutput();
-  c.value.clear();
-  c.row.clear();
   c.n = a.n;
   c.m = b.m;
-  c.col_ind.assign(c.m + 1, 0);                //
-  std::vector<double> accum(a.n, 0.0);         //
-  std::vector<bool> nz_elem_rows(a.n, false);  //
-  std::vector<size_t> nnz_rows;
-  for (size_t j = 0; j < b.m; ++j) {
-    c.col_ind[j] = c.value.size();
+  c.col_ind.assign(c.m + 1, 0);
+
+  std::vector<std::vector<double>> local_values(b.m);
+  std::vector<std::vector<size_t>> local_rows(b.m);
+
+  int num_threads = omp_get_max_threads(); 
+  
+  std::vector<std::vector<double>> thread_accum(num_threads, std::vector<double>(a.n, 0.0));
+  std::vector<std::vector<bool>> thread_nz(num_threads, std::vector<bool>(a.n, false));
+  std::vector<std::vector<size_t>> thread_nnz_rows(num_threads);
+
+  #pragma omp parallel for schedule(static)
+  for (int j = 0; j < static_cast<int>(b.m); ++j) {
+    int tid = omp_get_thread_num();
     for (size_t k = b.col_ind[j]; k < b.col_ind[j + 1]; ++k) {
       size_t ind = b.row[k];
       double b_val = b.value[k];
       for (size_t zc = a.col_ind[ind]; zc < a.col_ind[ind + 1]; ++zc) {
         size_t i = a.row[zc];
-        double a_val = a.value[zc];
-        accum[i] += a_val * b_val;
-        if (!nz_elem_rows[i]) {
-          nz_elem_rows[i] = true;
-          nnz_rows.push_back(i);
+        double a_val = a.value[zc];       
+        thread_accum[tid][i] += a_val * b_val;
+        if (!thread_nz[tid][i]) {
+          thread_nz[tid][i] = true;
+          thread_nnz_rows[tid].push_back(i);
         }
       }
     }
-    std::ranges::sort(nnz_rows);
-    ;
-    for (size_t i : nnz_rows) {
-      if (accum[i] != 0.0) {
-        c.row.push_back(i);
-        c.value.push_back(accum[i]);
+    
+    std::ranges::sort(thread_nnz_rows[tid]);
+    
+    for (size_t i : thread_nnz_rows[tid]) {
+      if (thread_accum[tid][i] != 0.0) {
+        local_rows[j].push_back(i);
+        local_values[j].push_back(thread_accum[tid][i]);
       }
-      accum[i] = 0.0;
-      nz_elem_rows[i] = false;
+      thread_accum[tid][i] = 0.0;
+      thread_nz[tid][i] = false;
     }
-    nnz_rows.clear();
+    thread_nnz_rows[tid].clear();
   }
-  c.nz = c.value.size();
-  c.col_ind[b.m] = c.nz;
+
+  size_t total_nz = 0;
+  for (size_t j = 0; j < b.m; ++j) {
+    c.col_ind[j] = total_nz;
+    total_nz += local_values[j].size();
+  }
+  c.col_ind[b.m] = total_nz;
+  c.nz = total_nz;
+
+  c.value.resize(total_nz);
+  c.row.resize(total_nz);
+
+  #pragma omp parallel for schedule(static)
+  for (int j = 0; j < static_cast<int>(b.m); ++j) {
+    size_t offset = c.col_ind[j];
+    size_t col_nz = local_values[j].size();
+    for (size_t k = 0; k < col_nz; ++k) {
+      c.value[offset + k] = local_values[j][k];
+      c.row[offset + k] = local_rows[j][k];
+    }
+  }
 
   return true;
 }
