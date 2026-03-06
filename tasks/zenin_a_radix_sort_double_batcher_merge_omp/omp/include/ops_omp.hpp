@@ -17,6 +17,12 @@ class ZeninARadixSortDoubleBatcherMergeOMP : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  static uint64_t PackDouble(double v) noexcept;
+  static double UnpackDouble(uint64_t k) noexcept;
+  static void LSDRadixSort(std::vector<double> &arr);
+  static void BlocksComparing(std::vector<double> &arr, size_t i, size_t step);
+  static void BatcherOddEvenMerge(std::vector<double> &arr, size_t n);
 };
 
 }  // namespace zenin_a_radix_sort_double_batcher_merge_omp
