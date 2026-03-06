@@ -10,11 +10,11 @@ function(ppc_add_test test_name test_src USE_FLAG)
   endif()
 endfunction()
 
-# Collects implementations from settings.json in one pass:
-# - all keys from PPC_IMPLEMENTATIONS marked "disabled"
-# - keys marked "enabled" that also have an existing implementation directory
-function(ppc_collect_implementations_from_settings SETTINGS_PATH SUBDIR OUT_ENABLED_IMPLEMENTATIONS
-                                                   OUT_DISABLED_IMPLEMENTATIONS)
+# Collects implementations from settings.json in one pass: - all keys from
+# PPC_IMPLEMENTATIONS marked "disabled" - keys marked "enabled" that also have
+# an existing implementation directory
+function(ppc_collect_implementations_from_settings SETTINGS_PATH SUBDIR
+         OUT_ENABLED_IMPLEMENTATIONS OUT_DISABLED_IMPLEMENTATIONS)
   set(ENABLED_IMPLEMENTATIONS "")
   set(DISABLED_IMPLEMENTATIONS "")
 
@@ -38,7 +38,8 @@ function(ppc_collect_implementations_from_settings SETTINGS_PATH SUBDIR OUT_ENAB
       string(TOLOWER "${IMPL_STATUS}" IMPL_STATUS)
       if(IMPL_STATUS STREQUAL "disabled")
         list(APPEND DISABLED_IMPLEMENTATIONS "${IMPL}")
-      elseif(IMPL_STATUS STREQUAL "enabled" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SUBDIR}/${IMPL}")
+      elseif(IMPL_STATUS STREQUAL "enabled"
+             AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SUBDIR}/${IMPL}")
         list(APPEND ENABLED_IMPLEMENTATIONS "${IMPL}")
       endif()
     endforeach()
@@ -85,8 +86,8 @@ function(setup_implementation)
   endif()
   message(STATUS "  -- ${SETUP_NAME}")
 
-  # Collect sources and create library:
-  # STATIC if implementation has .cpp files, otherwise INTERFACE.
+  # Collect sources and create library: STATIC if implementation has .cpp files,
+  # otherwise INTERFACE.
   file(GLOB_RECURSE IMPL_CPP_SOURCES "${IMP_DIR}/src/*.cpp")
   file(GLOB_RECURSE IMPL_SOURCES "${IMP_DIR}/include/*.h"
        "${IMP_DIR}/include/*.hpp" "${IMP_DIR}/src/*.cpp")
@@ -116,20 +117,24 @@ function(ppc_configure_subproject SUBDIR)
 
   # Keep per-task settings/id macros available even when the task is skipped.
   # Some tests reference settings from other tasks.
-  add_compile_definitions(
-    PPC_SETTINGS_${SUBDIR}="${SETTINGS_PATH}"
-    PPC_ID_${SUBDIR}="${SUBDIR}")
+  add_compile_definitions(PPC_SETTINGS_${SUBDIR}="${SETTINGS_PATH}"
+                          PPC_ID_${SUBDIR}="${SUBDIR}")
 
-  ppc_collect_implementations_from_settings("${SETTINGS_PATH}" "${SUBDIR}" ENABLED_IMPLEMENTATIONS
-                                            DISABLED_IMPLEMENTATIONS)
+  ppc_collect_implementations_from_settings(
+    "${SETTINGS_PATH}" "${SUBDIR}" ENABLED_IMPLEMENTATIONS
+    DISABLED_IMPLEMENTATIONS)
   if(DISABLED_IMPLEMENTATIONS)
     list(JOIN DISABLED_IMPLEMENTATIONS ", " DISABLED_IMPLEMENTATIONS_STR)
-    message(STATUS "${SUBDIR} (skipped: disabled in settings.json -> ${DISABLED_IMPLEMENTATIONS_STR})")
+    message(
+      STATUS
+        "${SUBDIR} (skipped: disabled in settings.json -> ${DISABLED_IMPLEMENTATIONS_STR})"
+    )
     return()
   endif()
 
   if(NOT ENABLED_IMPLEMENTATIONS)
-    message(STATUS "${SUBDIR} (skipped: no enabled implementations in settings.json)")
+    message(
+      STATUS "${SUBDIR} (skipped: no enabled implementations in settings.json)")
     return()
   endif()
 
