@@ -1,0 +1,28 @@
+#pragma once
+
+#include <vector>
+
+#include "dergachev_a_graham_scan/common/include/common.hpp"
+#include "dergachev_a_graham_scan/seq/include/ops_seq.hpp"
+#include "task/include/task.hpp"
+
+namespace dergachev_a_graham_scan {
+
+class DergachevAGrahamScanOMP : public BaseTask {
+ public:
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kOMP;
+  }
+  explicit DergachevAGrahamScanOMP(const InType &in);
+
+ private:
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
+
+  std::vector<Point> points_;
+  std::vector<Point> hull_;
+};
+
+}  // namespace dergachev_a_graham_scan
