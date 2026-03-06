@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <tuple>
+
 #include "dergachev_a_graham_scan/common/include/common.hpp"
 #include "dergachev_a_graham_scan/omp/include/ops_omp.hpp"
 #include "dergachev_a_graham_scan/seq/include/ops_seq.hpp"

@@ -1,9 +1,9 @@
 #pragma once
 
+#include <utility>
 #include <vector>
 
 #include "dergachev_a_graham_scan/common/include/common.hpp"
-#include "dergachev_a_graham_scan/seq/include/ops_seq.hpp"
 #include "task/include/task.hpp"
 
 namespace dergachev_a_graham_scan {
@@ -21,8 +21,8 @@ class DergachevAGrahamScanOMP : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  std::vector<Point> points_;
-  std::vector<Point> hull_;
+  std::vector<std::pair<double, double>> points_;
+  std::vector<std::pair<double, double>> hull_;
 };
 
 }  // namespace dergachev_a_graham_scan

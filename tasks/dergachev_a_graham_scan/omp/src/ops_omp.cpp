@@ -13,23 +13,25 @@ namespace dergachev_a_graham_scan {
 
 namespace {
 
-double CrossProduct(const Point &o, const Point &a, const Point &b) {
-  return ((a.x - o.x) * (b.y - o.y)) - ((a.y - o.y) * (b.x - o.x));
+using Pt = std::pair<double, double>;
+
+double CrossProduct(const Pt &o, const Pt &a, const Pt &b) {
+  return ((a.first - o.first) * (b.second - o.second)) - ((a.second - o.second) * (b.first - o.first));
 }
 
-double DistSquared(const Point &a, const Point &b) {
-  double dx = a.x - b.x;
-  double dy = a.y - b.y;
+double DistSquared(const Pt &a, const Pt &b) {
+  double dx = a.first - b.first;
+  double dy = a.second - b.second;
   return (dx * dx) + (dy * dy);
 }
 
 const double kPi = std::acos(-1.0);
 
-bool IsLowerLeft(const Point &a, const Point &b) {
-  return a.y < b.y || (a.y == b.y && a.x < b.x);
+bool IsLowerLeft(const Pt &a, const Pt &b) {
+  return a.second < b.second || (a.second == b.second && a.first < b.first);
 }
 
-int FindPivotIndex(const std::vector<Point> &pts) {
+int FindPivotIndex(const std::vector<Pt> &pts) {
   int size = static_cast<int>(pts.size());
   int pivot_idx = 0;
 #pragma omp parallel default(none) shared(pts, size, pivot_idx)
@@ -51,9 +53,9 @@ int FindPivotIndex(const std::vector<Point> &pts) {
   return pivot_idx;
 }
 
-void SortByAngle(std::vector<Point> &pts) {
-  Point pivot = pts[0];
-  std::sort(pts.begin() + 1, pts.end(), [&pivot](const Point &a, const Point &b) {
+void SortByAngle(std::vector<Pt> &pts) {
+  Pt pivot = pts[0];
+  std::sort(pts.begin() + 1, pts.end(), [&pivot](const Pt &a, const Pt &b) {
     double cross = CrossProduct(pivot, a, b);
     if (cross > 0.0) {
       return true;
@@ -89,21 +91,21 @@ bool DergachevAGrahamScanOMP::PreProcessingImpl() {
   auto *pts_data = points_.data();
 #pragma omp parallel for default(none) shared(pts_data, step, n)
   for (int i = 0; i < n; i++) {
-    pts_data[i] = {.x = std::cos(step * i), .y = std::sin(step * i)};
+    pts_data[i] = {std::cos(step * i), std::sin(step * i)};
   }
   if (n > 3) {
-    points_.push_back({.x = 0.0, .y = 0.0});
+    points_.push_back({0.0, 0.0});
   }
   return true;
 }
 
 bool DergachevAGrahamScanOMP::RunImpl() {
   hull_.clear();
-  std::vector<Point> pts(points_.begin(), points_.end());
+  std::vector<Pt> pts(points_.begin(), points_.end());
   int n = static_cast<int>(pts.size());
 
-  if (n <= 1 ||
-      std::all_of(pts.begin() + 1, pts.end(), [&](const Point &pt) { return pt.x == pts[0].x && pt.y == pts[0].y; })) {
+  if (n <= 1 || std::all_of(pts.begin() + 1, pts.end(),
+                            [&](const Pt &pt) { return pt.first == pts[0].first && pt.second == pts[0].second; })) {
     if (!pts.empty()) {
       hull_.push_back(pts[0]);
     }
