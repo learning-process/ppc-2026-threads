@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <utility>
 #include <vector>
 
@@ -149,7 +150,6 @@ bool ZeninARadixSortDoubleBatcherMergeOMP::RunImpl() {
   int num_chunks_int = static_cast<int>(num_chunks);
   double *raw_data = data.data();
 
-  // Параллельно сортируем каждый чанк
 #pragma omp parallel for num_threads(num_threads) default(none) shared(chunk_size, raw_data, num_chunks_int)
   for (int i = 0; i < num_chunks_int; ++i) {
     size_t start = static_cast<size_t>(i) * chunk_size;
@@ -160,12 +160,11 @@ bool ZeninARadixSortDoubleBatcherMergeOMP::RunImpl() {
     }
   }
 
-  // Параллельно сливаем через Бэтчера
   for (size_t size = chunk_size; size < pow2; size *= 2) {
     int merges_count = static_cast<int>(pow2 / (size * 2));
 #pragma omp parallel for num_threads(num_threads) default(none) shared(size, raw_data, merges_count)
     for (int i = 0; i < merges_count; ++i) {
-      size_t lo = static_cast<size_t>(i) * 2 * size;
+      size_t lo = static_cast<size_t>(i) * (2 * size);
       std::vector<double> block(raw_data + lo, raw_data + lo + 2 * size);
       BatcherOddEvenMerge(block, 2 * size);
       for (size_t j = 0; j < 2 * size; ++j) {
@@ -177,40 +176,6 @@ bool ZeninARadixSortDoubleBatcherMergeOMP::RunImpl() {
   data.resize(original_size);
   GetOutput() = data;
   return true;
-
-  /*int num_threads = std::min(ppc::util::GetNumThreads(), n);
-
-  std::vector<std::vector<double>> parts(num_threads);
-
-#pragma omp parallel default(none) shared(data, parts, n, num_threads) num_threads(num_threads)
-  {
-    int tid = omp_get_thread_num();
-    int chunk = n / num_threads;
-    int lo = tid * chunk;
-    int hi = (tid == num_threads - 1) ? n : lo + chunk;
-
-    parts[tid] = std::vector<double>(data.begin() + lo, data.begin() + hi);
-    LSDRadixSort(parts[tid]);
-  }
-
-  std::vector<double> result;
-  result.reserve(n);
-  for (auto &part : parts) {
-    result.insert(result.end(), part.begin(), part.end());
-  }
-
-  int padded_n = 1;
-
-  while (padded_n < n || padded_n < num_threads) {
-    padded_n <<= 1;
-  }
-  result.resize(padded_n, std::numeric_limits<double>::max());
-
-  BatcherOddEvenMerge(result, static_cast<size_t>(padded_n));
-  result.resize(n);
-
-  GetOutput() = result;
-  return true;*/
 }
 
 bool ZeninARadixSortDoubleBatcherMergeOMP::PostProcessingImpl() {
