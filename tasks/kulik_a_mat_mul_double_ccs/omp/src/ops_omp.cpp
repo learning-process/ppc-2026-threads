@@ -11,38 +11,37 @@
 
 namespace kulik_a_mat_mul_double_ccs {
 
-void KulikAMatMulDoubleCcsOMP::ProcessColumn(int j, int tid,
-                          const CCS& a, const CCS& b,
-                          std::vector<std::vector<double>>& thread_accum,
-                          std::vector<std::vector<bool>>& thread_nz,
-                          std::vector<std::vector<size_t>>& thread_nnz_rows,
-                          std::vector<std::vector<double>>& local_values,
-                          std::vector<std::vector<size_t>>& local_rows) {
-    for (size_t k = b.col_ind[j]; k < b.col_ind[j + 1]; ++k) {
-        size_t ind = b.row[k];
-        double b_val = b.value[k];
-        for (size_t zc = a.col_ind[ind]; zc < a.col_ind[ind + 1]; ++zc) {
-            size_t i = a.row[zc];
-            double a_val = a.value[zc];
-            thread_accum[tid][i] += a_val * b_val;
-            if (!thread_nz[tid][i]) {
-                thread_nz[tid][i] = true;
-                thread_nnz_rows[tid].push_back(i);
-            }
-        }
+void KulikAMatMulDoubleCcsOMP::ProcessColumn(int j, int tid, const CCS &a, const CCS &b,
+                                             std::vector<std::vector<double>> &thread_accum,
+                                             std::vector<std::vector<bool>> &thread_nz,
+                                             std::vector<std::vector<size_t>> &thread_nnz_rows,
+                                             std::vector<std::vector<double>> &local_values,
+                                             std::vector<std::vector<size_t>> &local_rows) {
+  for (size_t k = b.col_ind[j]; k < b.col_ind[j + 1]; ++k) {
+    size_t ind = b.row[k];
+    double b_val = b.value[k];
+    for (size_t zc = a.col_ind[ind]; zc < a.col_ind[ind + 1]; ++zc) {
+      size_t i = a.row[zc];
+      double a_val = a.value[zc];
+      thread_accum[tid][i] += a_val * b_val;
+      if (!thread_nz[tid][i]) {
+        thread_nz[tid][i] = true;
+        thread_nnz_rows[tid].push_back(i);
+      }
     }
+  }
 
-    std::ranges::sort(thread_nnz_rows[tid]);
+  std::ranges::sort(thread_nnz_rows[tid]);
 
-    for (size_t i : thread_nnz_rows[tid]) {
-        if (thread_accum[tid][i] != 0.0) {
-            local_rows[j].push_back(i);
-            local_values[j].push_back(thread_accum[tid][i]);
-        }
-        thread_accum[tid][i] = 0.0;
-        thread_nz[tid][i] = false;
+  for (size_t i : thread_nnz_rows[tid]) {
+    if (thread_accum[tid][i] != 0.0) {
+      local_rows[j].push_back(i);
+      local_values[j].push_back(thread_accum[tid][i]);
     }
-    thread_nnz_rows[tid].clear();
+    thread_accum[tid][i] = 0.0;
+    thread_nz[tid][i] = false;
+  }
+  thread_nnz_rows[tid].clear();
 }
 
 KulikAMatMulDoubleCcsOMP::KulikAMatMulDoubleCcsOMP(const InType &in) {
@@ -80,8 +79,7 @@ bool KulikAMatMulDoubleCcsOMP::RunImpl() {
 #pragma omp parallel for schedule(static)
   for (int j = 0; j < static_cast<int>(b.m); ++j) {
     int tid = omp_get_thread_num();
-    ProcessColumn(j, tid, a, b, thread_accum, thread_nz, thread_nnz_rows,
-                  local_values, local_rows);
+    ProcessColumn(j, tid, a, b, thread_accum, thread_nz, thread_nnz_rows, local_values, local_rows);
   }
 
   size_t total_nz = 0;
