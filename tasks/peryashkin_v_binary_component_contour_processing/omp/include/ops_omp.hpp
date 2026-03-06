@@ -10,7 +10,7 @@ class PeryashkinVBinaryComponentContourProcessingOMP : public BaseTask {
     return ppc::task::TypeOfTask::kOMP;
   }
 
-  explicit PeryashkinVBinaryComponentContourProcessingOMP(const InType& in);
+  explicit PeryashkinVBinaryComponentContourProcessingOMP(const InType &in);
 
  private:
   bool ValidationImpl() override;
