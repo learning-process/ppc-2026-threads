@@ -20,8 +20,8 @@ class KulikAMatMulDoubleCcsOMP : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  static void ProcessColumn(int j, int tid, const CCS &a, const CCS &b, std::vector<std::vector<double>> &thread_accum,
-                            std::vector<std::vector<bool>> &thread_nz,
+  static void ProcessColumn(size_t j, int tid, const CCS &a, const CCS &b,
+                            std::vector<std::vector<double>> &thread_accum, std::vector<std::vector<bool>> &thread_nz,
                             std::vector<std::vector<size_t>> &thread_nnz_rows,
                             std::vector<std::vector<double>> &local_values,
                             std::vector<std::vector<size_t>> &local_rows);
