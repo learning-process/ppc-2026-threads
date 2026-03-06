@@ -94,7 +94,7 @@ bool DergachevAGrahamScanOMP::PreProcessingImpl() {
     pts_data[i] = {std::cos(step * i), std::sin(step * i)};
   }
   if (n > 3) {
-    points_.push_back({0.0, 0.0});
+    points_.emplace_back(0.0, 0.0);
   }
   return true;
 }
