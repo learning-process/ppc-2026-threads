@@ -3,17 +3,17 @@
 #include <cstddef>
 #include <vector>
 
-#include "shemetov_d_odd_even_mergesort_seq/common/include/common.hpp"
+#include "shemetov_d_radix_odd_even_mergesort/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace shemetov_d_odd_even_mergesort {
+namespace shemetov_d_radix_odd_even_mergesort {
 
-class ShemetovDOddEvenMergeSortSEQ : public BaseTask {
+class ShemetovDRadixOddEvenMergeSortSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit ShemetovDOddEvenMergeSortSEQ(const InType &in);
+  explicit ShemetovDRadixOddEvenMergeSortSEQ(const InType &in);
 
  private:
   void RadixSort(std::vector<int> &array, size_t left, size_t right);
@@ -33,4 +33,4 @@ class ShemetovDOddEvenMergeSortSEQ : public BaseTask {
   size_t power_{0};
 };
 
-}  // namespace shemetov_d_odd_even_mergesort
+}  // namespace shemetov_d_radix_odd_even_mergesort
