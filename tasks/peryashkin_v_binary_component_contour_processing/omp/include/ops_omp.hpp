@@ -11,7 +11,7 @@ class PeryashkinVBinaryComponentContourProcessingOMP : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kOMP;
   }
-  explicit PeryashkinVBinaryComponentContourProcessingOMP(const InType& in);
+  explicit PeryashkinVBinaryComponentContourProcessingOMP(const InType &in);
 
  private:
   bool ValidationImpl() override;
