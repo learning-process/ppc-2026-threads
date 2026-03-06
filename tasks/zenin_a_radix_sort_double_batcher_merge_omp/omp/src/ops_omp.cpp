@@ -165,9 +165,9 @@ bool ZeninARadixSortDoubleBatcherMergeOMP::RunImpl() {
 #pragma omp parallel for num_threads(num_threads) default(none) shared(size, raw_data, merges_count)
     for (int i = 0; i < merges_count; ++i) {
       size_t lo = static_cast<size_t>(i) * (2 * size);
-      std::vector<double> block(raw_data + lo, raw_data + lo + 2 * size);
-      BatcherOddEvenMerge(block, 2 * size);
-      for (size_t j = 0; j < 2 * size; ++j) {
+      std::vector<double> block(raw_data + lo, raw_data + lo + (2 * size));
+      BatcherOddEvenMerge(block, (2 * size));
+      for (size_t j = 0; j < (2 * size); ++j) {
         raw_data[lo + j] = block[j];
       }
     }
