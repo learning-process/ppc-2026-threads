@@ -76,8 +76,9 @@ bool KulikAMatMulDoubleCcsOMP::RunImpl() {
   std::vector<std::vector<bool>> thread_nz(num_threads, std::vector<bool>(a.n, false));
   std::vector<std::vector<size_t>> thread_nnz_rows(num_threads);
 
-#pragma omp parallel for schedule(static)
-  for (int j = 0; j < static_cast<int>(b.m); ++j) {
+#pragma omp parallel for default(none) schedule(static) \
+  shared(a, b, thread_accum, thread_nz, thread_nnz_rows, local_values, local_rows)
+  for (size_t j = 0; j < b.m; ++j) {
     int tid = omp_get_thread_num();
     ProcessColumn(j, tid, a, b, thread_accum, thread_nz, thread_nnz_rows, local_values, local_rows);
   }
@@ -93,8 +94,9 @@ bool KulikAMatMulDoubleCcsOMP::RunImpl() {
   c.value.resize(total_nz);
   c.row.resize(total_nz);
 
-#pragma omp parallel for schedule(static)
-  for (int j = 0; j < static_cast<int>(b.m); ++j) {
+#pragma omp parallel for default(none) schedule(static) \
+  shared(b, c, local_values, local_rows) 
+  for (size_t j = 0; j < b.m; ++j) {
     size_t offset = c.col_ind[j];
     size_t col_nz = local_values[j].size();
     for (size_t k = 0; k < col_nz; ++k) {
