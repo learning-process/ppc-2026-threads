@@ -5,7 +5,7 @@
 #include <random>
 
 #include "sosnina_a_radix_simple_merge/common/include/common.hpp"
-#include "sosnina_a_radix_simple_merge/seq/include/ops_seq.hpp"
+#include "sosnina_a_radix_simple_merge/omp/include/ops_omp.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace sosnina_a_radix_simple_merge {
@@ -44,7 +44,7 @@ TEST_P(SosninaARunPerfTestRadixSort, RunPerfRadixSort) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, SosninaATestTaskSEQ>(PPC_SETTINGS_sosnina_a_radix_simple_merge);
+    ppc::util::MakeAllPerfTasks<InType, SosninaATestTaskOMP>(PPC_SETTINGS_sosnina_a_radix_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
