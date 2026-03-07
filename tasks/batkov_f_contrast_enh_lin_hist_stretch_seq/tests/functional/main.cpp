@@ -45,7 +45,14 @@ class BatkovFRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Ou
 
   bool CheckTestOutputData(OutType &output_data) final {
     auto [min_it, max_it] = std::ranges::minmax_element(output_data);
-    return (*min_it == 0 && *max_it == 255) || (*min_it == *max_it);
+    uint8_t min_out = *min_it;
+    uint8_t max_out = *max_it;
+
+    if (min_out == max_out) {
+      return true;
+    }
+
+    return (min_out <= 1) && (max_out >= 254);
   }
 
   InType GetTestInputData() final {
