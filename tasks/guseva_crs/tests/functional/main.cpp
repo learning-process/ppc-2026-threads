@@ -8,6 +8,7 @@
 
 #include "guseva_crs/common/include/common.hpp"
 #include "guseva_crs/common/include/test_reader.hpp"
+#include "guseva_crs/omp/include/ops_omp.hpp"
 #include "guseva_crs/seq/include/ops_seq.hpp"
 #include "guseva_crs/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
