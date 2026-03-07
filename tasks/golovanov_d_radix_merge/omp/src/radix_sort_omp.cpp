@@ -3,6 +3,7 @@
 #include <omp.h>
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <utility>
@@ -45,20 +46,20 @@ void RadixSortOMP::SortRange(std::vector<double> &arr, std::size_t left, std::si
     std::array<std::size_t, kRadix> count{};
 
     for (std::size_t i = 0; i < n; ++i) {
-      std::size_t b = static_cast<std::size_t>((data[i] >> (byte * 8)) & kByteMask);
-      ++count[b];
+      auto b = static_cast<std::size_t>((data[i] >> (byte * 8)) & kByteMask);
+      ++count.at(b);
     }
 
     std::size_t sum = 0;
     for (std::size_t i = 0; i < kRadix; ++i) {
-      std::size_t tmp = count[i];
-      count[i] = sum;
+      std::size_t tmp = count.at(i);
+      count.at(i) = sum;
       sum += tmp;
     }
 
     for (std::size_t i = 0; i < n; ++i) {
-      std::size_t b = static_cast<std::size_t>((data[i] >> (byte * 8)) & kByteMask);
-      buffer[count[b]++] = data[i];
+      auto b = static_cast<std::size_t>((data[i] >> (byte * 8)) & kByteMask);
+      buffer[count.at(b)++] = data[i];
     }
 
     data.swap(buffer);
@@ -120,8 +121,8 @@ void RadixSortOMP::Sort(std::vector<double> &arr) {
   std::size_t rem = arr.size() % static_cast<std::size_t>(num_threads);
 
   std::size_t begin = 0;
-  for (int i = 0; i < num_threads; ++i) {
-    std::size_t block_size = base + (static_cast<std::size_t>(i) < rem ? 1 : 0);
+  for (std::size_t i = 0; i < ranges.size(); ++i) {
+    std::size_t block_size = base + (i < rem ? 1 : 0);
     ranges[i] = {begin, begin + block_size};
     begin += block_size;
   }
@@ -148,7 +149,8 @@ void RadixSortOMP::Sort(std::vector<double> &arr) {
     {
 #pragma omp for schedule(static)
       for (int i = 0; i < static_cast<int>(pair_count); ++i) {
-        next[i] = Merge(parts[2 * i], parts[2 * i + 1]);
+        const auto idx = static_cast<std::size_t>(i);
+        next[idx] = Merge(parts[2 * idx], parts[(2 * idx) + 1]);
       }
     }
 
