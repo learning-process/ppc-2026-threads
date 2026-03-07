@@ -143,12 +143,13 @@ void RadixSortOMP::Sort(std::vector<double> &arr) {
 
   while (parts.size() > 1) {
     std::size_t pair_count = parts.size() / 2;
+    const int pair_count_int = static_cast<int>(pair_count);
     std::vector<std::vector<double>> next((parts.size() + 1) / 2);
 
-#pragma omp parallel default(none) shared(parts, next, pair_count) num_threads(ppc::util::GetNumThreads())
+#pragma omp parallel default(none) shared(parts, next, pair_count_int) num_threads(ppc::util::GetNumThreads())
     {
 #pragma omp for schedule(static)
-      for (int i = 0; i < static_cast<int>(pair_count); ++i) {
+      for (int i = 0; i < pair_count_int; ++i) {
         const auto idx = static_cast<std::size_t>(i);
         next[idx] = Merge(parts[2 * idx], parts[(2 * idx) + 1]);
       }
