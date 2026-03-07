@@ -1,16 +1,16 @@
 #pragma once
 
-#include "borunov_v_complex_ccs/common/include/common.hpp"
+#include "likhanov_m_hoare_batcher_sort/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace borunov_v_complex_ccs_seq {
+namespace likhanov_m_hoare_batcher_sort {
 
-class BorunovVComplexCcsSEQ : public BaseTask {
+class LikhanovMHoareBatcherSortSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit BorunovVComplexCcsSEQ(const InType &in);
+  explicit LikhanovMHoareBatcherSortSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -19,4 +19,4 @@ class BorunovVComplexCcsSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace borunov_v_complex_ccs_seq
+}  // namespace likhanov_m_hoare_batcher_sort
