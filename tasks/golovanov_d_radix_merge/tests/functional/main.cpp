@@ -9,7 +9,7 @@
 
 // #include "golovanov_d_radix_merge/all/include/ops_all.hpp"
 #include "golovanov_d_radix_merge/common/include/common.hpp"
-// #include "golovanov_d_radix_merge/omp/include/ops_omp.hpp"
+#include "golovanov_d_radix_merge/omp/include/ops_omp.hpp"
 #include "golovanov_d_radix_merge/seq/include/ops_seq.hpp"
 // #include "golovanov_d_radix_merge/stl/include/ops_stl.hpp"
 // #include "golovanov_d_radix_merge/tbb/include/ops_tbb.hpp"
@@ -58,7 +58,8 @@ const std::array<TestType, 3> kTestParam = {TestType{
                                             TestType{100.5, 1.1, 50.0, 2.2, 0.0001, 12, 2}};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<GolovanovDRadixMergeSEQ, InType>(kTestParam, PPC_SETTINGS_golovanov_d_radix_merge));
+    ppc::util::AddFuncTask<GolovanovDRadixMergeSEQ, InType>(kTestParam, PPC_SETTINGS_golovanov_d_radix_merge),
+    ppc::util::AddFuncTask<GolovanovDRadixMergeOMP, InType>(kTestParam, PPC_SETTINGS_golovanov_d_radix_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
