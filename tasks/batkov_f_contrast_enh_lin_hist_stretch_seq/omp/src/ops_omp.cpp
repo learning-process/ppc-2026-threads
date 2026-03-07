@@ -9,6 +9,8 @@
 
 #include "batkov_f_contrast_enh_lin_hist_stretch_seq/common/include/common.hpp"
 
+namespace batkov_f_contrast_enh_lin_hist_stretch_seq {
+
 namespace {
 
 std::pair<uint8_t, uint8_t> FindMinMaxParallel(const std::vector<uint8_t> &input) {
@@ -34,8 +36,6 @@ std::pair<uint8_t, uint8_t> FindMinMax(const std::vector<uint8_t> &input, size_t
 }
 
 }  // namespace
-
-namespace batkov_f_contrast_enh_lin_hist_stretch_seq {
 
 BatkovFContrastEnhLinHistStretchOMP::BatkovFContrastEnhLinHistStretchOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
