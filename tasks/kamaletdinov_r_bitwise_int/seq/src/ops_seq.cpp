@@ -1,13 +1,13 @@
-#include "kamaletdinov_r_bitwise_int_seq/seq/include/ops_seq.hpp"
+#include "kamaletdinov_r_bitwise_int/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <vector>
 
-#include "kamaletdinov_r_bitwise_int_seq/common/include/common.hpp"
+#include "kamaletdinov_r_bitwise_int/common/include/common.hpp"
 
-namespace kamaletdinov_r_bitwise_int_seq {
+namespace kamaletdinov_r_bitwise_int {
 
 namespace {
 
@@ -107,4 +107,4 @@ bool KamaletdinovRBitwiseIntSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace kamaletdinov_r_bitwise_int_seq
+}  // namespace kamaletdinov_r_bitwise_int
