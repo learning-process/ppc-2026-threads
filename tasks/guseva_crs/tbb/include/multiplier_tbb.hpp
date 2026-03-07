@@ -32,7 +32,6 @@ class MultiplierTbb : public Multiplier {
       for (int &l : temp) {
         l = -1;
       }
-
       std::size_t ind1 = a.row_ptrs[i];
       std::size_t ind2 = a.row_ptrs[i + 1];
       for (std::size_t j = ind1; j < ind2; j++) {
