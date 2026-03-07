@@ -21,7 +21,7 @@ std::pair<uint8_t, uint8_t> FindMinMaxParallel(const std::vector<uint8_t> &input
     max_el = std::max(p, max_el);
   }
 
-  return { min_el, max_el };
+  return {min_el, max_el};
 }
 
 std::pair<uint8_t, uint8_t> FindMinMax(const std::vector<uint8_t> &input, size_t parallel_threshold) {
