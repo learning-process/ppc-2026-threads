@@ -2,10 +2,10 @@
 
 #include <vector>
 
-#include "kamaletdinov_r_bitwise_int_seq/common/include/common.hpp"
+#include "kamaletdinov_r_bitwise_int/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace kamaletdinov_r_bitwise_int_seq {
+namespace kamaletdinov_r_bitwise_int {
 
 void BitwiseSort(std::vector<int> &arr);
 
@@ -25,4 +25,4 @@ class KamaletdinovRBitwiseIntSEQ : public BaseTask {
   std::vector<int> data_;
 };
 
-}  // namespace kamaletdinov_r_bitwise_int_seq
+}  // namespace kamaletdinov_r_bitwise_int
