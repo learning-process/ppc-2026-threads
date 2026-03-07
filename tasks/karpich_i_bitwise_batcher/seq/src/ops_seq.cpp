@@ -1,13 +1,13 @@
-#include "karpich_i_bitwise_batcher_seq/seq/include/ops_seq.hpp"
+#include "karpich_i_bitwise_batcher/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <random>
 #include <utility>
 #include <vector>
 
-#include "karpich_i_bitwise_batcher_seq/common/include/common.hpp"
+#include "karpich_i_bitwise_batcher/common/include/common.hpp"
 
-namespace karpich_i_bitwise_batcher_seq {
+namespace karpich_i_bitwise_batcher {
 
 namespace {
 
@@ -179,4 +179,4 @@ bool KarpichIBitwiseBatcherSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace karpich_i_bitwise_batcher_seq
+}  // namespace karpich_i_bitwise_batcher
