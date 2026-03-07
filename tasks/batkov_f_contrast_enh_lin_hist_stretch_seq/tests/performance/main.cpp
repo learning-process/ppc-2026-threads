@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <tuple>
 
 #include "batkov_f_contrast_enh_lin_hist_stretch_seq/common/include/common.hpp"
 #include "batkov_f_contrast_enh_lin_hist_stretch_seq/omp/include/ops_omp.hpp"
