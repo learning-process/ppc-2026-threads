@@ -9,12 +9,12 @@
 #include <tuple>
 #include <vector>
 
-#include "ermakov_a_spar_mat_mult_seq/common/include/common.hpp"
-#include "ermakov_a_spar_mat_mult_seq/seq/include/ops_seq.hpp"
+#include "ermakov_a_spar_mat_mult/common/include/common.hpp"
+#include "ermakov_a_spar_mat_mult/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace ermakov_a_spar_mat_mult_seq {
+namespace ermakov_a_spar_mat_mult {
 
 namespace {
 
@@ -211,7 +211,7 @@ const std::array<TestType, 4> kTestParam = {std::make_tuple(3, "SmallFixed"), st
                                             std::make_tuple(20, "MediumSparse"), std::make_tuple(30, "Dense")};
 
 const auto kTestTasksList =
-    ppc::util::AddFuncTask<ErmakovASparMatMultSEQ, InType>(kTestParam, PPC_SETTINGS_ermakov_a_spar_mat_mult_seq);
+    ppc::util::AddFuncTask<ErmakovASparMatMultSEQ, InType>(kTestParam, PPC_SETTINGS_ermakov_a_spar_mat_mult);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -221,4 +221,4 @@ INSTANTIATE_TEST_SUITE_P(SparseCRSMatMulTests, ErmakovARunFuncTestSparMatMult, k
 
 }  // namespace
 
-}  // namespace ermakov_a_spar_mat_mult_seq
+}  // namespace ermakov_a_spar_mat_mult

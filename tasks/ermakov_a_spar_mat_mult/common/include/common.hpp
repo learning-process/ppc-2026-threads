@@ -7,7 +7,7 @@
 
 #include "task/include/task.hpp"
 
-namespace ermakov_a_spar_mat_mult_seq {
+namespace ermakov_a_spar_mat_mult {
 
 struct MatrixCRS {
   int rows = 0;
@@ -29,4 +29,4 @@ using OutType = OutData;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace ermakov_a_spar_mat_mult_seq
+}  // namespace ermakov_a_spar_mat_mult
