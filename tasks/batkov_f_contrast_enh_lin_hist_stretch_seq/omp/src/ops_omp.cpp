@@ -18,9 +18,9 @@ std::pair<uint8_t, uint8_t> FindMinMaxParallel(const std::vector<uint8_t> &input
   uint8_t max_el = std::numeric_limits<uint8_t>::min();
 
 #pragma omp parallel for default(none) shared(input) reduction(min : min_el) reduction(max : max_el)
-  for (uint8_t p : input) {
-    min_el = std::min(p, min_el);
-    max_el = std::max(p, max_el);
+  for (size_t i = 0; i < input.size(); ++i) {
+    min_el = std::min(input[i], min_el);
+    max_el = std::max(input[i], max_el);
   }
 
   return {min_el, max_el};
