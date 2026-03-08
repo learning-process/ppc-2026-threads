@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <tuple>
 #include <vector>
 
 #include "galkin_d_multidim_integrals_rectangles/common/include/common.hpp"
@@ -41,7 +42,10 @@ bool GalkinDMultidimIntegralsRectanglesOMP::PreProcessingImpl() {
 }
 
 bool GalkinDMultidimIntegralsRectanglesOMP::RunImpl() {
-  const auto &[func, borders, n] = GetInput();
+  const InType &input = GetInput();
+  const auto &func = std::get<0>(input);
+  const auto &borders = std::get<1>(input);
+  const int n = std::get<2>(input);
   const std::size_t dim = borders.size();
 
   std::vector<double> h(dim);
