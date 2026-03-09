@@ -5,8 +5,16 @@
 #include <cmath>
 
 namespace ovsyannikov_n_simpson_method_omp {
+
 double OvsyannikovNSimpsonMethodOMP::Function(double x, double y) {
   return x + y;
+}
+
+double OvsyannikovNSimpsonMethodOMP::GetCoeff(int i, int n) {
+  if (i == 0 || i == n) {
+    return 1.0;
+  }
+  return (i % 2 == 1) ? 4.0 : 2.0;
 }
 
 OvsyannikovNSimpsonMethodOMP::OvsyannikovNSimpsonMethodOMP(const InType &in) {
@@ -25,23 +33,29 @@ bool OvsyannikovNSimpsonMethodOMP::PreProcessingImpl() {
 }
 
 bool OvsyannikovNSimpsonMethodOMP::RunImpl() {
-  double hx = (params_.bx - params_.ax) / params_.nx;
-  double hy = (params_.by - params_.ay) / params_.ny;
+  const int nx_l = params_.nx;
+  const int ny_l = params_.ny;
+  const double ax_l = params_.ax;
+  const double ay_l = params_.ay;
+  const double hx_l = (params_.bx - params_.ax) / nx_l;
+  const double hy_l = (params_.by - params_.ay) / ny_l;
+
   double total_sum = 0.0;
 
-#pragma omp parallel for reduction(+ : total_sum)
-  for (int i = 0; i <= params_.nx; ++i) {
-    double x = params_.ax + i * hx;
-    double coeff_x = (i == 0 || i == params_.nx) ? 1.0 : (i % 2 == 1 ? 4.0 : 2.0);
+#pragma omp parallel for default(none) shared(nx_l, ny_l, ax_l, ay_l, hx_l, hy_l) reduction(+ : total_sum)
+  for (int i = 0; i <= nx_l; ++i) {
+    const double x = ax_l + (i * hx_l);
+    const double coeff_x = GetCoeff(i, nx_l);
     double row_sum = 0.0;
-    for (int j = 0; j <= params_.ny; ++j) {
-      double y = params_.ay + j * hy;
-      double coeff_y = (j == 0 || j == params_.ny) ? 1.0 : (j % 2 == 1 ? 4.0 : 2.0);
+    for (int j = 0; j <= ny_l; ++j) {
+      const double y = ay_l + (j * hy_l);
+      const double coeff_y = GetCoeff(j, ny_l);
       row_sum += coeff_y * Function(x, y);
     }
     total_sum += coeff_x * row_sum;
   }
-  res_ = (hx * hy / 9.0) * total_sum;
+
+  res_ = (hx_l * hy_l / 9.0) * total_sum;
   return true;
 }
 
@@ -49,4 +63,5 @@ bool OvsyannikovNSimpsonMethodOMP::PostProcessingImpl() {
   GetOutput() = res_;
   return true;
 }
+
 }  // namespace ovsyannikov_n_simpson_method_omp

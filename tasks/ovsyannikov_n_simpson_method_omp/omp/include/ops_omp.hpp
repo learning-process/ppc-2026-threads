@@ -19,6 +19,7 @@ class OvsyannikovNSimpsonMethodOMP : public BaseTask {
   bool PostProcessingImpl() override;
 
   static double Function(double x, double y);  // Функция для интегрирования
+  static double GetCoeff(int i, int n);
   InType params_{};
   OutType res_{};
 };
