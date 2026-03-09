@@ -5,7 +5,9 @@
 namespace ovsyannikov_n_simpson_method_stl {
 class OvsyannikovNSimpsonMethodSTL : public BaseTask {
  public:
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() { return ppc::task::TypeOfTask::kSTL; }
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kSTL;
+  }
   explicit OvsyannikovNSimpsonMethodSTL(const InType &in);
 
   bool ValidationImpl() override;
