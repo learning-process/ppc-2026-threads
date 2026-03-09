@@ -3,6 +3,7 @@
 #include <climits>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 #include <tuple>
 #include <vector>
@@ -75,11 +76,14 @@ bool GalkinDMultidimIntegralsRectanglesOMP::RunImpl() {
   }
 
   double sum = 0.0;
-  const int num_threads = ppc::util::GetNumThreads();
+  int num_threads = ppc::util::GetNumThreads();
+  if (num_threads <= 0) {
+    num_threads = 1;
+  }
 
 #pragma omp parallel for default(none) shared(borders, h, dim, func, n, total_cells, num_threads) reduction(+ : sum) \
     schedule(static) num_threads(num_threads)
-  for (long long linear_idx = 0; linear_idx < static_cast<long long>(total_cells); ++linear_idx) {
+  for (std::int64_t linear_idx = 0; linear_idx < static_cast<std::int64_t>(total_cells); ++linear_idx) {
     std::vector<double> x(dim);
     std::size_t tmp = static_cast<std::size_t>(linear_idx);
 
