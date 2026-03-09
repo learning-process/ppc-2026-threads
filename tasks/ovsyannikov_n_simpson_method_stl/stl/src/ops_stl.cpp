@@ -49,12 +49,12 @@ bool OvsyannikovNSimpsonMethodSTL::RunImpl() {
   std::iota(indices.begin(), indices.end(), 0);
 
   double total_sum =
-      std::transform_reduce(std::execution::par, indices.begin(), indices.end(), 0.0, std::plus<>(), [&](int i) {
-    const double x = ax_l + (i * hx);
+      std::transform_reduce(std::execution::par, indices.begin(), indices.end(), 0.0, std::plus<>(), [=, this](int i) {
+    const double x = ax_l + (static_cast<double>(i) * hx);
     const double coeff_x = GetCoeff(i, nx_l);
     double row_sum = 0.0;
     for (int j = 0; j <= ny_l; ++j) {
-      const double y = ay_l + (j * hy);
+      const double y = ay_l + (static_cast<double>(j) * hy);
       const double coeff_y = GetCoeff(j, ny_l);
       row_sum += coeff_y * Function(x, y);
     }
