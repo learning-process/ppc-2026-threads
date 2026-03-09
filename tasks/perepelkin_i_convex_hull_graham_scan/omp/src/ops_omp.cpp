@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "perepelkin_i_convex_hull_graham_scan/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace perepelkin_i_convex_hull_graham_scan {
 
@@ -66,7 +67,7 @@ bool PerepelkinIConvexHullGrahamScanOMP::RunImpl() {
 size_t PerepelkinIConvexHullGrahamScanOMP::FindPivotParallel(const std::vector<std::pair<double, double>> &pts) {
   size_t pivot_idx = 0;
 
-#pragma omp parallel default(none) shared(pts, pivot_idx)
+#pragma omp parallel default(none) shared(pts, pivot_idx) num_threads(ppc::util::GetNumThreads())
   {
     size_t local_idx = pivot_idx;
 
@@ -93,7 +94,7 @@ size_t PerepelkinIConvexHullGrahamScanOMP::FindPivotParallel(const std::vector<s
 void PerepelkinIConvexHullGrahamScanOMP::ParallelSort(std::vector<std::pair<double, double>> &data,
                                                       const std::pair<double, double> &pivot) {
   size_t n = data.size();
-  int threads = omp_get_max_threads();
+  int threads = ppc::util::GetNumThreads();
 
   if (n < 10000) {
     std::ranges::sort(data, [&](const auto &a, const auto &b) { return AngleCmp(a, b, pivot); });
@@ -105,7 +106,7 @@ void PerepelkinIConvexHullGrahamScanOMP::ParallelSort(std::vector<std::pair<doub
     start[i] = static_cast<int>(i * n / threads);
   }
 
-#pragma omp parallel default(none) shared(data, start, pivot)
+#pragma omp parallel default(none) shared(data, start, pivot) num_threads(ppc::util::GetNumThreads())
   {
     int tid = omp_get_thread_num();
     std::sort(data.begin() + start[tid], data.begin() + start[tid + 1],
@@ -114,7 +115,7 @@ void PerepelkinIConvexHullGrahamScanOMP::ParallelSort(std::vector<std::pair<doub
 
   // Merge sorted segments
   for (int size = 1; size < threads; size *= 2) {
-#pragma omp parallel for default(none) shared(data, start, threads, size, pivot)
+#pragma omp parallel for default(none) shared(data, start, threads, size, pivot) num_threads(ppc::util::GetNumThreads())
     for (int i = 0; i < threads; i += 2 * size) {
       if (i + size >= threads) {
         continue;
