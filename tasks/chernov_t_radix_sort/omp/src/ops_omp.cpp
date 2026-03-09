@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <iostream>
 #include <vector>
 
 #include "chernov_t_radix_sort/common/include/common.hpp"
@@ -35,98 +36,89 @@ void ChernovTRadixSortOMP::RadixSortLSD(std::vector<int> &data) {
     return;
   }
 
-  std::vector<uint32_t> temp(data.size());
+  const size_t n = data.size();
+  std::vector<uint32_t> temp(n);
 
-#pragma omp parallel for
-  for (size_t i = 0; i < data.size(); ++i) {
+#pragma omp parallel for schedule(static)
+  for (size_t i = 0; i < n; ++i) {
     temp[i] = static_cast<uint32_t>(data[i]) ^ kSignMask;
   }
 
-  std::vector<uint32_t> buffer(temp.size());
+  std::vector<uint32_t> buffer(n);
 
   for (int byte_index = 0; byte_index < 4; ++byte_index) {
-    std::vector<int> count(kRadix, 0);
+    const int shift = byte_index * kBitsPerDigit;
 
-#pragma omp parallel for
-    for (int i = 0; i < static_cast<int>(temp.size()); ++i) {
-      uint32_t val = temp[i];
-      int digit = static_cast<int>((val >> (byte_index * kBitsPerDigit)) & 0xFFU);
-#pragma omp atomic
-      count[static_cast<size_t>(digit)]++;
+    int num_threads = 0;
+#pragma omp parallel
+    {
+#pragma omp single
+      num_threads = omp_get_num_threads();
+    }
+
+    std::vector<std::vector<int>> local_counts(num_threads, std::vector<int>(kRadix, 0));
+
+#pragma omp parallel for schedule(static)
+    for (int t = 0; t < num_threads; ++t) {
+      size_t start = (n * t) / num_threads;
+      size_t end = (n * (t + 1)) / num_threads;
+      for (size_t i = start; i < end; ++i) {
+        int digit = static_cast<int>((temp[i] >> shift) & 0xFFU);
+        ++local_counts[t][digit];
+      }
+    }
+
+    std::vector<int> count(kRadix, 0);
+    for (int t = 0; t < num_threads; ++t) {
+      for (int d = 0; d < kRadix; ++d) {
+        count[static_cast<size_t>(d)] += local_counts[t][d];
+      }
     }
 
     for (int i = 1; i < kRadix; ++i) {
       count[static_cast<size_t>(i)] += count[static_cast<size_t>(i - 1)];
     }
 
-#pragma omp parallel for
-    for (int i = static_cast<int>(temp.size()) - 1; i >= 0; --i) {
-      uint32_t val = temp[i];
-      int digit = static_cast<int>((val >> (byte_index * kBitsPerDigit)) & 0xFFU);
-      int pos;
-#pragma omp atomic capture
-      pos = --count[static_cast<size_t>(digit)];
-      buffer[static_cast<size_t>(pos)] = val;
+    std::vector<std::vector<int>> thread_pos(num_threads, std::vector<int>(kRadix, 0));
+
+    for (int t = 0; t < num_threads; ++t) {
+      for (int d = 0; d < kRadix; ++d) {
+        if (t == 0) {
+          thread_pos[t][d] = (d == 0) ? 0 : count[static_cast<size_t>(d - 1)];
+        } else {
+          thread_pos[t][d] = thread_pos[t - 1][d] + local_counts[t - 1][d];
+        }
+      }
+    }
+
+#pragma omp parallel for schedule(static)
+    for (int t = 0; t < num_threads; ++t) {
+      size_t start = (n * t) / num_threads;
+      size_t end = (n * (t + 1)) / num_threads;
+      for (size_t i = start; i < end; ++i) {
+        uint32_t val = temp[i];
+        int digit = static_cast<int>((val >> shift) & 0xFFU);
+        int pos = thread_pos[t][digit]++;
+        buffer[static_cast<size_t>(pos)] = val;
+      }
     }
 
     temp.swap(buffer);
   }
 
-#pragma omp parallel for
-  for (int i = 0; i < static_cast<int>(data.size()); ++i) {
+#pragma omp parallel for schedule(static)
+  for (size_t i = 0; i < n; ++i) {
     data[i] = static_cast<int>(temp[i] ^ kSignMask);
-  }
-}
-
-void ChernovTRadixSortOMP::SimpleMerge(const std::vector<int> &left, const std::vector<int> &right,
-                                       std::vector<int> &result) {
-  result.resize(left.size() + right.size());
-
-  size_t idx_left = 0;
-  size_t idx_right = 0;
-  size_t idx_result = 0;
-
-  while (idx_left < left.size() && idx_right < right.size()) {
-    if (left[idx_left] <= right[idx_right]) {
-      result[idx_result++] = left[idx_left++];
-    } else {
-      result[idx_result++] = right[idx_right++];
-    }
-  }
-
-  while (idx_left < left.size()) {
-    result[idx_result++] = left[idx_left++];
-  }
-  while (idx_right < right.size()) {
-    result[idx_result++] = right[idx_right++];
   }
 }
 
 bool ChernovTRadixSortOMP::RunImpl() {
   auto &data = GetOutput();
-
   if (data.size() <= 1) {
     return true;
   }
 
-  size_t middle_index = data.size() / 2;
-  std::vector<int> left_part(data.begin(), data.begin() + static_cast<std::ptrdiff_t>(middle_index));
-  std::vector<int> right_part(data.begin() + static_cast<std::ptrdiff_t>(middle_index), data.end());
-
-#pragma omp parallel sections
-  {
-#pragma omp section
-    {
-      RadixSortLSD(left_part);
-    }
-
-#pragma omp section
-    {
-      RadixSortLSD(right_part);
-    }
-  }
-
-  SimpleMerge(left_part, right_part, data);
+  RadixSortLSD(data);
 
   return true;
 }
