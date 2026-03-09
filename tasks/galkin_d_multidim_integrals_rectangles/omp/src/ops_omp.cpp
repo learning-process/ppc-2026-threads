@@ -77,15 +77,15 @@ bool GalkinDMultidimIntegralsRectanglesOMP::RunImpl() {
   }
 
   double sum = 0.0;
-  int num_threads = ppc::util::GetNumThreads();
-  if (num_threads <= 0) {
-    num_threads = 1;
-  }
+  const int requested_threads = ppc::util::GetNumThreads();
+  const int positive_threads = (requested_threads > 0) ? requested_threads : 1;
   const int max_threads_by_work = (total_cells > static_cast<std::size_t>(std::numeric_limits<int>::max()))
                                       ? std::numeric_limits<int>::max()
                                       : static_cast<int>(total_cells);
-  if (std::cmp_greater(num_threads, max_threads_by_work)) {
-    num_threads = max_threads_by_work;
+  const int num_threads =
+      std::cmp_greater(positive_threads, max_threads_by_work) ? max_threads_by_work : positive_threads;
+  if (num_threads <= 0) {
+    return false;
   }
   const auto total_cells_i64 = static_cast<std::int64_t>(total_cells);
 
