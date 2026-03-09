@@ -132,9 +132,8 @@ bool ShemetovDRadixOddEvenMergeSortOMP::RunImpl() {
 
   std::vector<int> &ref_array = array_;
   size_t ref_power = power_;
-  bool is_error = false;
 
-#pragma omp parallel num_threads(limit) default(none) shared(ref_array, ref_power, chunk_size, limit, is_error)
+#pragma omp parallel num_threads(limit) default(none) shared(ref_array, ref_power, chunk_size, limit)
   {
     size_t thread_num = omp_get_thread_num();
     size_t left = thread_num * chunk_size;
