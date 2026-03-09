@@ -80,12 +80,19 @@ bool GalkinDMultidimIntegralsRectanglesOMP::RunImpl() {
   if (num_threads <= 0) {
     num_threads = 1;
   }
+  if (static_cast<std::size_t>(num_threads) > total_cells) {
+    num_threads = static_cast<int>(total_cells);
+    if (num_threads <= 0) {
+      num_threads = 1;
+    }
+  }
+  const std::int64_t total_cells_i64 = static_cast<std::int64_t>(total_cells);
 
-#pragma omp parallel for default(none) shared(borders, h, dim, func, n, total_cells, num_threads) reduction(+ : sum) \
-    schedule(static) num_threads(num_threads)
-  for (std::int64_t linear_idx = 0; linear_idx < static_cast<std::int64_t>(total_cells); ++linear_idx) {
+#pragma omp parallel for default(none) shared(borders, h, dim, func, n, total_cells_i64, num_threads) \
+    reduction(+ : sum) schedule(static) num_threads(num_threads)
+  for (std::int64_t linear_idx = 0; linear_idx < total_cells_i64; ++linear_idx) {
     std::vector<double> x(dim);
-    std::size_t tmp = static_cast<std::size_t>(linear_idx);
+    auto tmp = static_cast<std::size_t>(linear_idx);
 
     for (std::size_t i = 0; i < dim; ++i) {
       const std::size_t idx_i = tmp % static_cast<std::size_t>(n);
