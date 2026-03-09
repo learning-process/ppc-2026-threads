@@ -136,30 +136,22 @@ bool ShemetovDRadixOddEvenMergeSortOMP::RunImpl() {
 
 #pragma omp parallel num_threads(limit) default(none) shared(ref_array, ref_power, chunk_size, limit, is_error)
   {
-    try {
-      size_t thread_idx = omp_get_thread_num();
-      size_t left = thread_idx * chunk_size;
-      size_t right = left + chunk_size - 1;
+    size_t thread_num = omp_get_thread_num();
+    size_t left = thread_num * chunk_size;
+    size_t right = left + chunk_size - 1;
 
-      std::vector<int> buffer;
-      std::vector<int> position;
+    std::vector<int> buffer;
+    std::vector<int> position;
 
-      RadixSort(ref_array, left, right, buffer, position);
+    RadixSort(ref_array, left, right, buffer, position);
 #pragma omp barrier
-      for (size_t segment = chunk_size * 2; segment <= ref_power; segment *= 2) {
+    for (size_t segment = chunk_size * 2; segment <= ref_power; segment *= 2) {
 #pragma omp for
-        for (size_t i = 0; i < ref_power; i += segment) {
-          OddEvenMerge(ref_array, i, segment);
-        }
-#pragma omp barrier
+      for (size_t i = 0; i < ref_power; i += segment) {
+        OddEvenMerge(ref_array, i, segment);
       }
-    } catch (...) {
-      is_error = true;
+#pragma omp barrier
     }
-  }
-
-  if (is_error) {
-    return !is_error;
   }
 
   return true;
