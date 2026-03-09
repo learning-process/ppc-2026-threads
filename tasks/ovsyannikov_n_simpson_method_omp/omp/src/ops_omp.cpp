@@ -4,6 +4,8 @@
 
 #include <cmath>
 
+#include "ovsyannikov_n_simpson_method_omp/common/include/common.hpp"
+
 namespace ovsyannikov_n_simpson_method_omp {
 
 double OvsyannikovNSimpsonMethodOMP::Function(double x, double y) {
