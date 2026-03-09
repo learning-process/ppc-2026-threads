@@ -3,6 +3,7 @@
 #include <tbb/tbb.h>
 
 #include <cmath>
+#include <functional>
 
 #include "ovsyannikov_n_simpson_method_tbb/common/include/common.hpp"
 
@@ -56,7 +57,7 @@ bool OvsyannikovNSimpsonMethodTBB::RunImpl() {
       local_sum += coeff_x * row_sum;
     }
     return local_sum;
-  }, std::plus<double>());
+  }, std::plus<>());
 
   res_ = (hx * hy / 9.0) * total_sum;
   return true;
