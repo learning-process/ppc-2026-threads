@@ -64,7 +64,6 @@ void ShemetovDRadixOddEvenMergeSortOMP::OddEvenMerge(std::vector<int> &array, si
 
   size_t padding = segment / 2;
 
-#pragma omp parallel for default(none) shared(array, start_offset, segment, padding)
   for (size_t i = 0; i < padding; i += 1) {
     if (array[start_offset + i] > array[start_offset + padding + i]) {
       std::swap(array[start_offset + i], array[start_offset + padding + i]);
@@ -74,7 +73,6 @@ void ShemetovDRadixOddEvenMergeSortOMP::OddEvenMerge(std::vector<int> &array, si
   for (padding = segment / 4; padding > 0; padding /= 2) {
     size_t step = padding * 2;
 
-#pragma omp parallel for default(none) shared(array, start_offset, segment, padding, step)
     for (size_t start_position = padding; start_position < segment - padding; start_position += step) {
       for (size_t i = 0; i < padding; i += 1) {
         if (array[start_offset + start_position + i] > array[start_offset + start_position + i + padding]) {
@@ -123,47 +121,46 @@ bool ShemetovDRadixOddEvenMergeSortOMP::RunImpl() {
     return true;
   }
 
-  size_t middle = power_ / 2;
+  size_t threads = omp_get_max_threads();
+
+  size_t limit = 1;
+  while (limit * 2 <= std::min(threads, power_)) {
+    limit *= 2;
+  }
+
+  size_t chunk_size = power_ / limit;
 
   std::vector<int> &ref_array = array_;
-  size_t &ref_power = power_;
-
+  size_t ref_power = power_;
   bool is_error = false;
 
-#pragma omp parallel sections default(none) shared(ref_array, middle, ref_power, is_error)
+#pragma omp parallel num_threads(limit) default(none) shared(ref_array, ref_power, chunk_size, limit, is_error)
   {
-#pragma omp section
-    {
-      try {
-        std::vector<int> buffer;
-        std::vector<int> position;
+    try {
+      size_t thread_idx = omp_get_thread_num();
+      size_t left = thread_idx * chunk_size;
+      size_t right = left + chunk_size - 1;
 
-        RadixSort(ref_array, 0, middle - 1, buffer, position);
-      } catch (...) {
-#pragma omp critical
-        is_error = true;
+      std::vector<int> buffer;
+      std::vector<int> position;
+
+      RadixSort(ref_array, left, right, buffer, position);
+#pragma omp barrier
+      for (size_t segment = chunk_size * 2; segment <= ref_power; segment *= 2) {
+#pragma omp for
+        for (size_t i = 0; i < ref_power; i += segment) {
+          OddEvenMerge(ref_array, i, segment);
+        }
+#pragma omp barrier
       }
-    }
-
-#pragma omp section
-    {
-      try {
-        std::vector<int> buffer;
-        std::vector<int> position;
-
-        RadixSort(ref_array, middle, ref_power - 1, buffer, position);
-      } catch (...) {
-#pragma omp critical
-        is_error = true;
-      }
+    } catch (...) {
+      is_error = true;
     }
   }
 
   if (is_error) {
-    return false;
+    return !is_error;
   }
-
-  OddEvenMerge(array_, 0, power_);
 
   return true;
 }
