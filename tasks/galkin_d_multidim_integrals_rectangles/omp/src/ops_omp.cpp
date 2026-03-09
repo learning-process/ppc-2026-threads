@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <limits>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "galkin_d_multidim_integrals_rectangles/common/include/common.hpp"
@@ -80,13 +81,13 @@ bool GalkinDMultidimIntegralsRectanglesOMP::RunImpl() {
   if (num_threads <= 0) {
     num_threads = 1;
   }
-  if (static_cast<std::size_t>(num_threads) > total_cells) {
-    num_threads = static_cast<int>(total_cells);
-    if (num_threads <= 0) {
-      num_threads = 1;
-    }
+  const int max_threads_by_work = (total_cells > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+                                      ? std::numeric_limits<int>::max()
+                                      : static_cast<int>(total_cells);
+  if (std::cmp_greater(num_threads, max_threads_by_work)) {
+    num_threads = max_threads_by_work;
   }
-  const std::int64_t total_cells_i64 = static_cast<std::int64_t>(total_cells);
+  const auto total_cells_i64 = static_cast<std::int64_t>(total_cells);
 
 #pragma omp parallel for default(none) shared(borders, h, dim, func, n, total_cells_i64, num_threads) \
     reduction(+ : sum) schedule(static) num_threads(num_threads)
