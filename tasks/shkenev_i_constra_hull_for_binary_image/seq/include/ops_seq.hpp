@@ -32,4 +32,4 @@ class ShkenevIConstrHullSeq : public BaseTask {
   BinaryImage work_;
 };
 
-}  // namespace shkenev_i_constr_hull_for_binary_image_seq
+}  // namespace shkenev_i_constrа_hull_for_binary_image
