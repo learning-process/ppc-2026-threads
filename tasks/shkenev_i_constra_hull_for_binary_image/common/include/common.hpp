@@ -7,7 +7,7 @@
 
 #include "task/include/task.hpp"
 
-namespace shkenev_i_constrа_hull_for_binary_image {
+namespace shkenev_i_constra_hull_for_binary_image {
 
 struct Point {
   int x{0};

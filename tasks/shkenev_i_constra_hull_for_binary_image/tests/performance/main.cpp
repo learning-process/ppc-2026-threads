@@ -3,13 +3,13 @@
 #include <cstddef>
 #include <vector>
 
-#include "shkenev_i_constrа_hull_for_binary_image/common/include/common.hpp"
-#include "shkenev_i_constrа_hull_for_binary_image/seq/include/ops_seq.hpp"
+#include "shkenev_i_constra_hull_for_binary_image/common/include/common.hpp"
+#include "shkenev_i_constra_hull_for_binary_image/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace shkenev_i_constrа_hull_for_binary_image {
+namespace shkenev_i_constra_hull_for_binary_image {
 
-class ShkenevIConstrHullBinaryPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class ShkenevIConstrHullPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr size_t kSize = 512;
 
  protected:
@@ -38,7 +38,7 @@ class ShkenevIConstrHullBinaryPerfTests : public ppc::util::BaseRunPerfTests<InT
   InType input_;
 };
 
-TEST_P(ShkenevIConstrHullBinaryPerfTests, RunPerf) {
+TEST_P(ShkenevIConstrHullPerfTests, RunPerf) {
   ExecuteTest(GetParam());
 }
 
@@ -49,7 +49,7 @@ const auto kPerfTasks =
 
 const auto kValues = ppc::util::TupleToGTestValues(kPerfTasks);
 
-INSTANTIATE_TEST_SUITE_P(Perf, ShkenevIConstrHullBinaryPerfTests, kValues, ShkenevIConstrHullBinaryPerfTests::CustomPerfTestName);
+INSTANTIATE_TEST_SUITE_P(Perf, ShkenevIConstrHullPerfTests, kValues, ShkenevIConstrHullPerfTests::CustomPerfTestName);
 
 }  // namespace
 

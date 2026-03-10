@@ -9,11 +9,11 @@
 #include <tuple>
 #include <vector>
 
-#include "shkenev_i_constrа_hull_for_binary_image/common/include/common.hpp"
-#include "shkenev_i_constrа_hull_for_binary_image/seq/include/ops_seq.hpp"
+#include "shkenev_i_constra_hull_for_binary_image/common/include/common.hpp"
+#include "shkenev_i_constra_hull_for_binary_image/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 
-namespace shkenev_i_constrа_hull_for_binary_image {
+namespace shkenev_i_constra_hull_for_binary_image {
 
 namespace {
 
@@ -121,7 +121,7 @@ bool Compare(const std::vector<std::vector<Point>> &a, const std::vector<std::ve
 
 }  // namespace
 
-class ShkenevIConstrHullBinaryFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class ShkenevIConstrHullFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &p) {
     return std::to_string(std::get<0>(p)) + "_" + std::get<1>(p);
@@ -144,7 +144,7 @@ class ShkenevIConstrHullBinaryFuncTests : public ppc::util::BaseRunFuncTests<InT
 
 namespace {
 
-TEST_P(ShkenevIConstrHullBinaryFuncTests, Test) {
+TEST_P(ShkenevIConstrHullFuncTests, Test) {
   ExecuteTest(GetParam());
 }
 
@@ -156,9 +156,9 @@ const auto kTasks = ppc::util::AddFuncTask<ShkenevIConstrHullSeq, InType>(
     kParams, PPC_SETTINGS_shkenev_i_constrа_hull_for_binary_image);
 
 const auto kValues = ppc::util::ExpandToValues(kTasks);
-const auto kName = ShkenevIConstrHullBinaryFuncTests::PrintFuncTestName<ShkenevIConstrHullBinaryFuncTests>;
+const auto kName = ShkenevIConstrHullFuncTests::PrintFuncTestName<ShkenevIConstrHullFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(ShkenevIConstrHull, ShkenevIConstrHullBinaryFuncTests, kValues, kName);
+INSTANTIATE_TEST_SUITE_P(ShkenevIConstrHull, ShkenevIConstrHullFuncTests, kValues, kName);
 
 }  // namespace
 

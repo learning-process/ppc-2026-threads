@@ -3,10 +3,10 @@
 #include <cstddef>
 #include <vector>
 
-#include "shkenev_i_constrа_hull_for_binary_image/common/include/common.hpp"
+#include "shkenev_i_constra_hull_for_binary_image/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace shkenev_i_constrа_hull_for_binary_image {
+namespace shkenev_i_constra_hull_for_binary_image {
 
 class ShkenevIConstrHullSeq : public BaseTask {
  public:
@@ -32,4 +32,4 @@ class ShkenevIConstrHullSeq : public BaseTask {
   BinaryImage work_;
 };
 
-}  // namespace shkenev_i_constrа_hull_for_binary_image
+}  // namespace shkenev_i_constra_hull_for_binary_image
