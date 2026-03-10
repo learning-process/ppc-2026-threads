@@ -1,8 +1,10 @@
 #include "ovsyannikov_n_simpson_method_stl/stl/include/ops_stl.hpp"
 
 #include <cmath>
+#include <cstddef>
 #include <numeric>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "ovsyannikov_n_simpson_method_stl/common/include/common.hpp"
@@ -69,13 +71,13 @@ bool OvsyannikovNSimpsonMethodSTL::RunImpl() {
     partial_results[static_cast<std::size_t>(thread_idx)] = local_sum;
   };
 
-  int total_tasks = nx_l + 1;
-  int chunk_size = total_tasks / static_cast<int>(num_threads);
-  int extra = total_tasks % static_cast<int>(num_threads);
+  const int total_tasks = nx_l + 1;
+  const int chunk_size = total_tasks / static_cast<int>(num_threads);
+  const int extra = total_tasks % static_cast<int>(num_threads);
 
   int current_start = 0;
   for (unsigned int i_thread = 0; i_thread < num_threads; ++i_thread) {
-    int current_end = current_start + chunk_size + (static_cast<int>(i_thread) < extra ? 1 : 0);
+    int current_end = current_start + chunk_size + (std::cmp_less(i_thread, extra) ? 1 : 0);
     threads.emplace_back(worker, current_start, current_end, static_cast<int>(i_thread));
     current_start = current_end;
   }
@@ -86,9 +88,7 @@ bool OvsyannikovNSimpsonMethodSTL::RunImpl() {
     }
   }
 
-  double total_sum = std::accumulate(partial_results.begin(), partial_results.end(), 0.0);
-  res_ = (hx * hy / 9.0) * total_sum;
-
+  res_ = (hx * hy / 9.0) * std::accumulate(partial_results.begin(), partial_results.end(), 0.0);
   return true;
 }
 
