@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <iostream>
 #include <vector>
 
 #include "chernov_t_radix_sort/common/include/common.hpp"
@@ -76,7 +75,9 @@ void ChernovTRadixSortOMP::SimpleMerge(const std::vector<int> &left, const std::
                                        std::vector<int> &result) {
   result.resize(left.size() + right.size());
 
-  size_t i = 0, j = 0, k = 0;
+  size_t i = 0;
+  size_t j = 0;
+  size_t k = 0;
 
   while (i < left.size() && j < right.size()) {
     if (left[i] <= right[j]) {
@@ -104,7 +105,7 @@ bool ChernovTRadixSortOMP::RunImpl() {
   std::vector<int> left(data.begin(), data.begin() + static_cast<std::ptrdiff_t>(mid));
   std::vector<int> right(data.begin() + static_cast<std::ptrdiff_t>(mid), data.end());
 
-#pragma omp parallel sections
+#pragma omp parallel sections default(none) shared(left, right, data)
   {
 #pragma omp section
     {
