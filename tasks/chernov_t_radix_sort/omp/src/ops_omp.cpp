@@ -112,13 +112,42 @@ void ChernovTRadixSortOMP::RadixSortLSD(std::vector<int> &data) {
   }
 }
 
+void ChernovTRadixSortOMP::SimpleMerge(const std::vector<int> &left, const std::vector<int> &right,
+                                       std::vector<int> &result) {
+  result.resize(left.size() + right.size());
+
+  size_t i = 0, j = 0, k = 0;
+
+  while (i < left.size() && j < right.size()) {
+    if (left[i] <= right[j]) {
+      result[k++] = left[i++];
+    } else {
+      result[k++] = right[j++];
+    }
+  }
+  while (i < left.size()) {
+    result[k++] = left[i++];
+  }
+  while (j < right.size()) {
+    result[k++] = right[j++];
+  }
+}
+
 bool ChernovTRadixSortOMP::RunImpl() {
   auto &data = GetOutput();
+
   if (data.size() <= 1) {
     return true;
   }
 
-  RadixSortLSD(data);
+  const size_t mid = data.size() / 2;
+  std::vector<int> left(data.begin(), data.begin() + static_cast<std::ptrdiff_t>(mid));
+  std::vector<int> right(data.begin() + static_cast<std::ptrdiff_t>(mid), data.end());
+
+  RadixSortLSD(left);
+  RadixSortLSD(right);
+
+  SimpleMerge(left, right, data);
 
   return true;
 }
