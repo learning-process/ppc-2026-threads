@@ -162,4 +162,4 @@ INSTANTIATE_TEST_SUITE_P(ShkenevIConstrHull, ShkenevIConstrHullFuncTests, kValue
 
 }  // namespace
 
-}  // namespace shkenev_i_constrа_hull_for_binary_image
+}  // namespace shkenev_i_constra_hull_for_binary_image

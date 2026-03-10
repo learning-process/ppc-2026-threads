@@ -42,4 +42,4 @@ using OutType = BinaryImage;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace shkenev_i_constrа_hull_for_binary_image
+}  // namespace shkenev_i_constra_hull_for_binary_image
