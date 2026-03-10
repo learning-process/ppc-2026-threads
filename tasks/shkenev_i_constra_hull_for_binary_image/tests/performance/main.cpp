@@ -45,7 +45,7 @@ TEST_P(ShkenevIConstrHullPerfTests, RunPerf) {
 namespace {
 
 const auto kPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ShkenevIConstrHullSeq>(PPC_SETTINGS_shkenev_i_constrа_hull_for_binary_image);
+    ppc::util::MakeAllPerfTasks<InType, ShkenevIConstrHullSeq>(PPC_SETTINGS_shkenev_i_constra_hull_for_binary_image);
 
 const auto kValues = ppc::util::TupleToGTestValues(kPerfTasks);
 

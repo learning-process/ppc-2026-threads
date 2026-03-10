@@ -153,7 +153,7 @@ const std::array<TestType, 5> kParams = {std::make_tuple(0, "one"), std::make_tu
                                          std::make_tuple(4, "fivee")};
 
 const auto kTasks = ppc::util::AddFuncTask<ShkenevIConstrHullSeq, InType>(
-    kParams, PPC_SETTINGS_shkenev_i_constrа_hull_for_binary_image);
+    kParams, PPC_SETTINGS_shkenev_i_constra_hull_for_binary_image);
 
 const auto kValues = ppc::util::ExpandToValues(kTasks);
 const auto kName = ShkenevIConstrHullFuncTests::PrintFuncTestName<ShkenevIConstrHullFuncTests>;
