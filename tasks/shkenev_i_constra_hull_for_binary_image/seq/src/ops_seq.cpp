@@ -1,4 +1,4 @@
-#include "shkenev_i_constr_hull_for_binary_image_seq/seq/include/ops_seq.hpp"
+#include "shkenev_i_constrа_hull_for_binary_image/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <array>
@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-#include "shkenev_i_constr_hull_for_binary_image_seq/common/include/common.hpp"
+#include "shkenev_i_constrа_hull_for_binary_image/common/include/common.hpp"
 
 namespace shkenev_i_constr_hull_for_binary_image_seq {
 
@@ -184,4 +184,4 @@ std::vector<Point> ShkenevIConstrHullSeq::BuildHull(const std::vector<Point> &po
   return lower;
 }
 
-}  // namespace shkenev_i_constr_hull_for_binary_image_seq
+}  // namespace shkenev_i_constrа_hull_for_binary_image

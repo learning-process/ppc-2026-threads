@@ -7,7 +7,7 @@
 
 #include "task/include/task.hpp"
 
-namespace shkenev_i_constr_hull_for_binary_image_seq {
+namespace shkenev_i_constrа_hull_for_binary_image {
 
 struct Point {
   int x{0};
@@ -42,4 +42,4 @@ using OutType = BinaryImage;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace shkenev_i_constr_hull_for_binary_image_seq
+}  // namespace shkenev_i_constrа_hull_for_binary_image

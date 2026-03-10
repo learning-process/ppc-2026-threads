@@ -9,11 +9,11 @@
 #include <tuple>
 #include <vector>
 
-#include "shkenev_i_constr_hull_for_binary_image_seq/common/include/common.hpp"
-#include "shkenev_i_constr_hull_for_binary_image_seq/seq/include/ops_seq.hpp"
+#include "shkenev_i_constrа_hull_for_binary_image/common/include/common.hpp"
+#include "shkenev_i_constrа_hull_for_binary_image/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 
-namespace shkenev_i_constr_hull_for_binary_image_seq {
+namespace shkenev_i_constrа_hull_for_binary_image {
 
 namespace {
 
@@ -121,7 +121,7 @@ bool Compare(const std::vector<std::vector<Point>> &a, const std::vector<std::ve
 
 }  // namespace
 
-class ShkenevIConstrHullFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class ShkenevIConstrHullBinaryFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &p) {
     return std::to_string(std::get<0>(p)) + "_" + std::get<1>(p);
@@ -144,7 +144,7 @@ class ShkenevIConstrHullFuncTests : public ppc::util::BaseRunFuncTests<InType, O
 
 namespace {
 
-TEST_P(ShkenevIConstrHullFuncTests, Test) {
+TEST_P(ShkenevIConstrHullBinaryFuncTests, Test) {
   ExecuteTest(GetParam());
 }
 
@@ -153,13 +153,13 @@ const std::array<TestType, 5> kParams = {std::make_tuple(0, "one"), std::make_tu
                                          std::make_tuple(4, "fivee")};
 
 const auto kTasks = ppc::util::AddFuncTask<ShkenevIConstrHullSeq, InType>(
-    kParams, PPC_SETTINGS_shkenev_i_constr_hull_for_binary_image_seq);
+    kParams, PPC_SETTINGS_shkenev_i_constrа_hull_for_binary_image);
 
 const auto kValues = ppc::util::ExpandToValues(kTasks);
-const auto kName = ShkenevIConstrHullFuncTests::PrintFuncTestName<ShkenevIConstrHullFuncTests>;
+const auto kName = ShkenevIConstrHullBinaryFuncTests::PrintFuncTestName<ShkenevIConstrHullBinaryFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(ShkenevIConstrHull, ShkenevIConstrHullFuncTests, kValues, kName);
+INSTANTIATE_TEST_SUITE_P(ShkenevIConstrHull, ShkenevIConstrHullBinaryFuncTests, kValues, kName);
 
 }  // namespace
 
-}  // namespace shkenev_i_constr_hull_for_binary_image_seq
+}  // namespace shkenev_i_constrа_hull_for_binary_image
