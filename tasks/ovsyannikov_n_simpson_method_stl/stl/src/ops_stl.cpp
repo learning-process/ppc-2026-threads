@@ -1,13 +1,13 @@
 #include "ovsyannikov_n_simpson_method_stl/stl/include/ops_stl.hpp"
 
-#include <algorithm>
 #include <cmath>
-#include <execution>
 #include <functional>
 #include <numeric>
+#include <thread>
 #include <vector>
 
 #include "ovsyannikov_n_simpson_method_stl/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace ovsyannikov_n_simpson_method_stl {
 
@@ -45,21 +45,44 @@ bool OvsyannikovNSimpsonMethodSTL::RunImpl() {
   const double hx = (params_.bx - params_.ax) / nx_l;
   const double hy = (params_.by - params_.ay) / ny_l;
 
-  std::vector<int> indices(nx_l + 1);
-  std::iota(indices.begin(), indices.end(), 0);
+  unsigned int num_threads = ppc::util::GetNumThreads();
+  if (num_threads == 0) {
+    num_threads = 2;
+  }
 
-  double total_sum =
-      std::transform_reduce(std::execution::par, indices.begin(), indices.end(), 0.0, std::plus<>(), [=, this](int i) {
-    const double x = ax_l + (static_cast<double>(i) * hx);
-    const double coeff_x = GetCoeff(i, nx_l);
-    double row_sum = 0.0;
-    for (int j = 0; j <= ny_l; ++j) {
-      const double y = ay_l + (static_cast<double>(j) * hy);
-      const double coeff_y = GetCoeff(j, ny_l);
-      row_sum += coeff_y * Function(x, y);
+  std::vector<double> partial_results(num_threads, 0.0);
+  std::vector<std::thread> threads;
+
+  auto worker = [&](int start_i, int end_i, int thread_idx) {
+    double local_sum = 0.0;
+    for (int i = start_i; i < end_i; ++i) {
+      const double x = ax_l + (static_cast<double>(i) * hx);
+      const double coeff_x = GetCoeff(i, nx_l);
+      double row_sum = 0.0;
+      for (int j = 0; j <= ny_l; ++j) {
+        const double y = ay_l + (static_cast<double>(j) * hy);
+        const double coeff_y = GetCoeff(j, ny_l);
+        row_sum += coeff_y * Function(x, y);
+      }
+      local_sum += coeff_x * row_sum;
     }
-    return coeff_x * row_sum;
-  });
+    partial_results[thread_idx] = local_sum;
+  };
+
+  int chunk_size = (nx_l + 1) / num_threads;
+  for (unsigned int t = 0; t < num_threads; ++t) {
+    int start = t * chunk_size;
+    int end = (t == num_threads - 1) ? (nx_l + 1) : (start + chunk_size);
+    threads.emplace_back(worker, start, end, t);
+  }
+
+  for (auto &th : threads) {
+    if (th.joinable()) {
+      th.join();
+    }
+  }
+
+  double total_sum = std::accumulate(partial_results.begin(), partial_results.end(), 0.0);
 
   res_ = (hx * hy / 9.0) * total_sum;
   return true;
@@ -69,4 +92,5 @@ bool OvsyannikovNSimpsonMethodSTL::PostProcessingImpl() {
   GetOutput() = res_;
   return true;
 }
+
 }  // namespace ovsyannikov_n_simpson_method_stl
