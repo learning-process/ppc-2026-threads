@@ -82,8 +82,8 @@ const auto kTestTasksList = std::tuple_cat(
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kAllPerfTasks = std::tuple_cat(
-    ppc::util::MakeAllPerfTasks<InType, VotincevDRadixMergeSortSEQ>(PPC_SETTINGS_votincev_d_radixmerge_sort),
-    ppc::util::MakeAllPerfTasks<InType, VotincevDRadixMergeSortOMP>(PPC_SETTINGS_votincev_d_radixmerge_sort));
+    ppc::util::AddFuncTask<VotincevDRadixMergeSortSEQ, InType>(kTestParam, PPC_SETTINGS_votincev_d_radixmerge_sort),
+    ppc::util::AddFuncTask<VotincevDRadixMergeSortOMP, InType>(kTestParam, PPC_SETTINGS_votincev_d_radixmerge_sort));
 
 INSTANTIATE_TEST_SUITE_P(RadixSortTests, VotincevDRadixMergeSortRunFuncTestsThreads, kGtestValues, kPerfTestName);
 
