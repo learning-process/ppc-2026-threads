@@ -4,9 +4,9 @@
 #include <vector>
 
 #include "task/include/task.hpp"
-#include "vdovin_a_gauss_block_seq/common/include/common.hpp"
+#include "vdovin_a_gauss_block/common/include/common.hpp"
 
-namespace vdovin_a_gauss_block_seq {
+namespace vdovin_a_gauss_block {
 
 class VdovinAGaussBlockSEQ : public BaseTask {
  public:
@@ -36,4 +36,4 @@ class VdovinAGaussBlockSEQ : public BaseTask {
   std::vector<uint8_t> output_image_;
 };
 
-}  // namespace vdovin_a_gauss_block_seq
+}  // namespace vdovin_a_gauss_block
