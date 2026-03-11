@@ -3,10 +3,10 @@
 #include <complex>
 #include <vector>
 
-#include "ermakov_a_spar_mat_mult_seq/common/include/common.hpp"
+#include "ermakov_a_spar_mat_mult/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace ermakov_a_spar_mat_mult_seq {
+namespace ermakov_a_spar_mat_mult {
 
 class ErmakovASparMatMultSEQ : public BaseTask {
  public:
@@ -30,4 +30,4 @@ class ErmakovASparMatMultSEQ : public BaseTask {
   MatrixCRS c_;
 };
 
-}  // namespace ermakov_a_spar_mat_mult_seq
+}  // namespace ermakov_a_spar_mat_mult
