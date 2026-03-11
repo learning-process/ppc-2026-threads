@@ -83,7 +83,7 @@ const auto kTestTasksList = std::tuple_cat(
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName =
-    VotincevDRadixMergeSortRunFuncTestsThreads::PrintFuncTestName<VotincevDRadixMergeSortRunFuncTestsThreads>
+    VotincevDRadixMergeSortRunFuncTestsThreads::PrintFuncTestName<VotincevDRadixMergeSortRunFuncTestsThreads>;
 
         INSTANTIATE_TEST_SUITE_P(RadixSortTests, VotincevDRadixMergeSortRunFuncTestsThreads, kGtestValues,
                                  kPerfTestName);
