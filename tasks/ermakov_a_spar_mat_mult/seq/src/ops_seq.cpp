@@ -1,13 +1,13 @@
-#include "ermakov_a_spar_mat_mult_seq/seq/include/ops_seq.hpp"
+#include "ermakov_a_spar_mat_mult/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <complex>
 #include <cstddef>
 #include <vector>
 
-#include "ermakov_a_spar_mat_mult_seq/common/include/common.hpp"
+#include "ermakov_a_spar_mat_mult/common/include/common.hpp"
 
-namespace ermakov_a_spar_mat_mult_seq {
+namespace ermakov_a_spar_mat_mult {
 
 ErmakovASparMatMultSEQ::ErmakovASparMatMultSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -159,4 +159,4 @@ bool ErmakovASparMatMultSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace ermakov_a_spar_mat_mult_seq
+}  // namespace ermakov_a_spar_mat_mult

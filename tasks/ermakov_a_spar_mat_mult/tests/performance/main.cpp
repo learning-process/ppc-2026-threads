@@ -6,11 +6,11 @@
 #include <random>
 #include <vector>
 
-#include "ermakov_a_spar_mat_mult_seq/common/include/common.hpp"
-#include "ermakov_a_spar_mat_mult_seq/seq/include/ops_seq.hpp"
+#include "ermakov_a_spar_mat_mult/common/include/common.hpp"
+#include "ermakov_a_spar_mat_mult/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace ermakov_a_spar_mat_mult_seq {
+namespace ermakov_a_spar_mat_mult {
 
 namespace {
 
@@ -111,7 +111,7 @@ TEST_P(ErmakovARunPerfTestSparMatMult, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ErmakovASparMatMultSEQ>(PPC_SETTINGS_ermakov_a_spar_mat_mult_seq);
+    ppc::util::MakeAllPerfTasks<InType, ErmakovASparMatMultSEQ>(PPC_SETTINGS_ermakov_a_spar_mat_mult);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -121,4 +121,4 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, ErmakovARunPerfTestSparMatMult, kGtestVal
 
 }  // namespace
 
-}  // namespace ermakov_a_spar_mat_mult_seq
+}  // namespace ermakov_a_spar_mat_mult
