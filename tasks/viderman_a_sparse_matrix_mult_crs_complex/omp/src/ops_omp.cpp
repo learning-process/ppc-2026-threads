@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 #include "viderman_a_sparse_matrix_mult_crs_complex/common/include/common.hpp"
@@ -16,14 +17,14 @@ VidermanASparseMatrixMultCRSComplexOMP::VidermanASparseMatrixMultCRSComplexOMP(c
 
 bool VidermanASparseMatrixMultCRSComplexOMP::ValidationImpl() {
   const auto &input = GetInput();
-  const auto &A = std::get<0>(input);
-  const auto &B = std::get<1>(input);
+  const auto &a = std::get<0>(input);
+  const auto &b = std::get<1>(input);
 
-  if (!A.IsValid() || !B.IsValid()) {
+  if (!a.IsValid() || !b.IsValid()) {
     return false;
   }
 
-  if (A.cols != B.rows) {
+  if (a.cols != b.rows) {
     return false;
   }
 
@@ -39,33 +40,35 @@ bool VidermanASparseMatrixMultCRSComplexOMP::PreProcessingImpl() {
   return true;
 }
 
-void VidermanASparseMatrixMultCRSComplexOMP::Multiply(const CRSMatrix &A, const CRSMatrix &B, CRSMatrix &C) {
-  C.rows = A.rows;
-  C.cols = B.cols;
-  C.row_ptr.assign(A.rows + 1, 0);
-  C.col_indices.clear();
-  C.values.clear();
+void VidermanASparseMatrixMultCRSComplexOMP::Multiply(
+    const CRSMatrix &a, const CRSMatrix &b,
+    CRSMatrix &c) {  // NOLINT(readability-function-cognitive-complexity)
+  c.rows = a.rows;
+  c.cols = b.cols;
+  c.row_ptr.assign(a.rows + 1, 0);
+  c.col_indices.clear();
+  c.values.clear();
 
-  std::vector<std::vector<int>> row_cols(A.rows);
-  std::vector<std::vector<Complex>> row_vals(A.rows);
+  std::vector<std::vector<int>> row_cols(a.rows);
+  std::vector<std::vector<Complex>> row_vals(a.rows);
 
-#pragma omp parallel shared(A, B, row_cols, row_vals)
+#pragma omp parallel default(none) shared(a, b, row_cols, row_vals, kEpsilon)
   {
-    std::vector<Complex> accumulator(B.cols, Complex(0.0, 0.0));
-    std::vector<int> marker(B.cols, -1);
+    std::vector<std::complex<double>> accumulator(b.cols, std::complex<double>(0.0, 0.0));
+    std::vector<int> marker(b.cols, -1);
     std::vector<int> current_row_indices;
 
 #pragma omp for schedule(static)
-    for (int i = 0; i < A.rows; ++i) {
+    for (int i = 0; i < a.rows; ++i) {
       current_row_indices.clear();
 
-      for (int j = A.row_ptr[i]; j < A.row_ptr[i + 1]; ++j) {
-        const int col_a = A.col_indices[j];
-        const Complex val_a = A.values[j];
+      for (int j = a.row_ptr[i]; j < a.row_ptr[i + 1]; ++j) {
+        const int col_a = a.col_indices[j];
+        const std::complex<double> val_a = a.values[j];
 
-        for (int k = B.row_ptr[col_a]; k < B.row_ptr[col_a + 1]; ++k) {
-          const int col_b = B.col_indices[k];
-          accumulator[col_b] += val_a * B.values[k];
+        for (int k = b.row_ptr[col_a]; k < b.row_ptr[col_a + 1]; ++k) {
+          const int col_b = b.col_indices[k];
+          accumulator[col_b] += val_a * b.values[k];
 
           if (marker[col_b] != i) {
             current_row_indices.push_back(col_b);
@@ -88,20 +91,20 @@ void VidermanASparseMatrixMultCRSComplexOMP::Multiply(const CRSMatrix &A, const 
           dst_cols.push_back(idx);
           dst_vals.push_back(accumulator[idx]);
         }
-        accumulator[idx] = Complex(0.0, 0.0);
+        accumulator[idx] = std::complex<double>(0.0, 0.0);
       }
     }
   }
 
-  for (int i = 0; i < A.rows; ++i) {
-    C.row_ptr[i + 1] = C.row_ptr[i] + static_cast<int>(row_cols[i].size());
+  for (int i = 0; i < a.rows; ++i) {
+    c.row_ptr[i + 1] = c.row_ptr[i] + static_cast<int>(row_cols[i].size());
   }
 
-  C.col_indices.reserve(static_cast<std::size_t>(C.row_ptr[A.rows]));
-  C.values.reserve(static_cast<std::size_t>(C.row_ptr[A.rows]));
-  for (int i = 0; i < A.rows; ++i) {
-    C.col_indices.insert(C.col_indices.end(), row_cols[i].begin(), row_cols[i].end());
-    C.values.insert(C.values.end(), row_vals[i].begin(), row_vals[i].end());
+  c.col_indices.reserve(static_cast<std::size_t>(c.row_ptr[a.rows]));
+  c.values.reserve(static_cast<std::size_t>(c.row_ptr[a.rows]));
+  for (int i = 0; i < a.rows; ++i) {
+    c.col_indices.insert(c.col_indices.end(), row_cols[i].begin(), row_cols[i].end());
+    c.values.insert(c.values.end(), row_vals[i].begin(), row_vals[i].end());
   }
 }
 
@@ -110,15 +113,15 @@ bool VidermanASparseMatrixMultCRSComplexOMP::RunImpl() {
     return false;
   }
 
-  CRSMatrix &C = GetOutput();
-  Multiply(*A_, *B_, C);
+  CRSMatrix &c = GetOutput();
+  Multiply(*A_, *B_, c);
 
   return true;
 }
 
 bool VidermanASparseMatrixMultCRSComplexOMP::PostProcessingImpl() {
-  CRSMatrix &C = GetOutput();
-  return C.IsValid();
+  CRSMatrix &c = GetOutput();
+  return c.IsValid();
 }
 
 }  // namespace viderman_a_sparse_matrix_mult_crs_complex

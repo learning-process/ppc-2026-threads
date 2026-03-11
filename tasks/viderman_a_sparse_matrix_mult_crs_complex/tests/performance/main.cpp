@@ -117,7 +117,10 @@ class VidermanPerfDiagonalMatrix : public ppc::util::BaseRunPerfTests<InType, Ou
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return CheckOutput(output_data, rows_, cols_, exact_nnz_.value(), exact_nnz_);
+    if (!exact_nnz_.has_value()) {
+      return false;
+    }
+    return CheckOutput(output_data, rows_, cols_, *exact_nnz_, exact_nnz_);
   }
 
   InType GetTestInputData() final {
@@ -195,7 +198,10 @@ class VidermanPerfBlockDiagonalMatrix : public ppc::util::BaseRunPerfTests<InTyp
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return CheckOutput(output_data, rows_, cols_, exact_nnz_.value(), exact_nnz_);
+    if (!exact_nnz_.has_value()) {
+      return false;
+    }
+    return CheckOutput(output_data, rows_, cols_, *exact_nnz_, exact_nnz_);
   }
 
   InType GetTestInputData() final {
