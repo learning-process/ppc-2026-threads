@@ -1,13 +1,13 @@
-#include "vdovin_a_gauss_block_seq/seq/include/ops_seq.hpp"
+#include "vdovin_a_gauss_block/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <array>
 #include <cstdint>
 #include <vector>
 
-#include "vdovin_a_gauss_block_seq/common/include/common.hpp"
+#include "vdovin_a_gauss_block/common/include/common.hpp"
 
-namespace vdovin_a_gauss_block_seq {
+namespace vdovin_a_gauss_block {
 
 namespace {
 constexpr int kChannels = 3;
@@ -93,4 +93,4 @@ bool VdovinAGaussBlockSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace vdovin_a_gauss_block_seq
+}  // namespace vdovin_a_gauss_block
