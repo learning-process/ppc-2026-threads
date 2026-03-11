@@ -14,7 +14,7 @@ namespace sokolov_k_matrix_double_fox {
 namespace {
 
 void DecomposeToBlocksOmp(const std::vector<double> &flat, std::vector<double> &blocks, int n, int bs, int q) {
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for default(none) shared(flat, blocks, n, bs, q) schedule(static)
   for (int bi = 0; bi < q; bi++) {
     for (int bj = 0; bj < q; bj++) {
       int block_off = ((bi * q) + bj) * (bs * bs);
@@ -28,7 +28,7 @@ void DecomposeToBlocksOmp(const std::vector<double> &flat, std::vector<double> &
 }
 
 void AssembleFromBlocksOmp(const std::vector<double> &blocks, std::vector<double> &flat, int n, int bs, int q) {
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for default(none) shared(blocks, flat, n, bs, q) schedule(static)
   for (int bi = 0; bi < q; bi++) {
     for (int bj = 0; bj < q; bj++) {
       int block_off = ((bi * q) + bj) * (bs * bs);
@@ -56,7 +56,7 @@ void MultiplyBlocksLocal(const std::vector<double> &a, int a_off, const std::vec
 void FoxStepOmp(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, int bs, int q,
                 int step) {
   int bsq = bs * bs;
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for default(none) shared(a, b, c, bs, q, step, bsq) schedule(static)
   for (int i = 0; i < q; i++) {
     int k = (i + step) % q;
     for (int j = 0; j < q; j++) {
