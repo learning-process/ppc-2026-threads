@@ -85,8 +85,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName =
     VotincevDRadixMergeSortRunFuncTestsThreads::PrintFuncTestName<VotincevDRadixMergeSortRunFuncTestsThreads>;
 
-        INSTANTIATE_TEST_SUITE_P(RadixSortTests, VotincevDRadixMergeSortRunFuncTestsThreads, kGtestValues,
-                                 kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RadixSortTests, VotincevDRadixMergeSortRunFuncTestsThreads, kGtestValues, kPerfTestName);
 
 }  // namespace
 
