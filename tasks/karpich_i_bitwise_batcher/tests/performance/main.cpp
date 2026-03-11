@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <tuple>
+
 #include "karpich_i_bitwise_batcher/common/include/common.hpp"
+#include "karpich_i_bitwise_batcher/omp/include/ops_omp.hpp"
 #include "karpich_i_bitwise_batcher/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -29,8 +32,9 @@ TEST_P(KarpichIBitwiseBatcherPerfTestsThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KarpichIBitwiseBatcherSEQ>(PPC_SETTINGS_karpich_i_bitwise_batcher);
+const auto kAllPerfTasks = std::tuple_cat(
+    ppc::util::MakeAllPerfTasks<InType, KarpichIBitwiseBatcherSEQ>(PPC_SETTINGS_karpich_i_bitwise_batcher),
+    ppc::util::MakeAllPerfTasks<InType, KarpichIBitwiseBatcherOMP>(PPC_SETTINGS_karpich_i_bitwise_batcher));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
