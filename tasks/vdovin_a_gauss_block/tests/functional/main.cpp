@@ -5,10 +5,10 @@
 #include <string>
 #include <tuple>
 
-#include "vdovin_a_gauss_block/common/include/common.hpp"
-#include "vdovin_a_gauss_block/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
+#include "vdovin_a_gauss_block/common/include/common.hpp"
+#include "vdovin_a_gauss_block/seq/include/ops_seq.hpp"
 
 namespace vdovin_a_gauss_block {
 
@@ -24,9 +24,13 @@ class VdovinAGaussBlockFuncTestsThreads : public ppc::util::BaseRunFuncTests<InT
     input_data_ = std::get<0>(params);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final { return output_data == 100; }
+  bool CheckTestOutputData(OutType &output_data) final {
+    return output_data == 100;
+  }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
  private:
   InType input_data_ = 0;
@@ -34,16 +38,18 @@ class VdovinAGaussBlockFuncTestsThreads : public ppc::util::BaseRunFuncTests<InT
 
 namespace {
 
-TEST_P(VdovinAGaussBlockFuncTestsThreads, GaussBlock) { ExecuteTest(GetParam()); }
+TEST_P(VdovinAGaussBlockFuncTestsThreads, GaussBlock) {
+  ExecuteTest(GetParam());
+}
 
-const std::array<TestType, 10> kTestParam = {
-    std::make_tuple(3, "side_3"),    std::make_tuple(4, "side_4"),    std::make_tuple(5, "side_5"),
-    std::make_tuple(6, "side_6"),    std::make_tuple(7, "side_7"),    std::make_tuple(8, "side_8"),
-    std::make_tuple(10, "side_10"),  std::make_tuple(20, "side_20"),  std::make_tuple(50, "side_50"),
-    std::make_tuple(100, "side_100")};
+const std::array<TestType, 10> kTestParam = {std::make_tuple(3, "side_3"),   std::make_tuple(4, "side_4"),
+                                             std::make_tuple(5, "side_5"),   std::make_tuple(6, "side_6"),
+                                             std::make_tuple(7, "side_7"),   std::make_tuple(8, "side_8"),
+                                             std::make_tuple(10, "side_10"), std::make_tuple(20, "side_20"),
+                                             std::make_tuple(50, "side_50"), std::make_tuple(100, "side_100")};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<VdovinAGaussBlockSEQ, InType>(kTestParam, PPC_SETTINGS_vdovin_a_gauss_block));
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<VdovinAGaussBlockSEQ, InType>(kTestParam, PPC_SETTINGS_vdovin_a_gauss_block));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
