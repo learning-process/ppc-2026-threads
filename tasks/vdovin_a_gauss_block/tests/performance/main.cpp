@@ -29,8 +29,7 @@ TEST_P(VdovinAGaussBlockPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, VdovinAGaussBlockSEQ>(PPC_SETTINGS_vdovin_a_gauss_block);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, VdovinAGaussBlockSEQ>(PPC_SETTINGS_vdovin_a_gauss_block);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
