@@ -1,9 +1,10 @@
 #include "sakharov_a_shell_sorting_with_merging_butcher/omp/include/ops_omp.hpp"
 
+#include <omp.h>
+
 #include <algorithm>
 #include <cstddef>
 #include <iterator>
-#include <omp.h>
 #include <utility>
 #include <vector>
 
