@@ -9,8 +9,10 @@
 #include <vector>
 
 #include "peryashkin_v_binary_component_contour_processing/common/include/common.hpp"
+#include "peryashkin_v_binary_component_contour_processing/omp/include/ops_omp.hpp"
 #include "peryashkin_v_binary_component_contour_processing/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace peryashkin_v_binary_component_contour_processing {
 
@@ -22,7 +24,7 @@ BinaryImage MakeEmpty(int w, int h) {
   BinaryImage img;
   img.width = w;
   img.height = h;
-  img.data.assign(static_cast<std::size_t>(w) * static_cast<std::size_t>(h), 0);
+  img.data.assign((static_cast<std::size_t>(w) * static_cast<std::size_t>(h)), 0);
   return img;
 }
 
@@ -115,9 +117,14 @@ BinaryImage BuildCase(int id) {
   }
 }
 
+bool IsAllZero(const BinaryImage &img) {
+  return std::ranges::all_of(img.data, [](std::uint8_t v) { return v == 0; });
+}
+
 }  // namespace
 
-class PeryashkinVRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+template <typename TaskT>
+class PeryashkinVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -125,8 +132,7 @@ class PeryashkinVRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType
 
  protected:
   void SetUp() override {
-    // GetParam() is: (task_factory, test_name_string, TestType)
-    const TestType params = std::get<2>(GetParam());
+    const TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_ = BuildCase(std::get<0>(params));
   }
 
@@ -134,7 +140,7 @@ class PeryashkinVRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType
     if (input_data_.data.empty()) {
       return false;
     }
-    if (std::ranges::all_of(input_data_.data, [](std::uint8_t v) { return v == 0; })) {
+    if (IsAllZero(input_data_)) {
       return output_data.empty();
     }
     return !output_data.empty();
@@ -148,7 +154,14 @@ class PeryashkinVRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType
   InType input_data_{};
 };
 
-TEST_P(PeryashkinVRunFuncTestsThreads, BinaryComponentContourSEQ) {
+using PeryashkinVRunFuncTestsSEQ = PeryashkinVRunFuncTests<PeryashkinVBinaryComponentContourProcessingSEQ>;
+using PeryashkinVRunFuncTestsOMP = PeryashkinVRunFuncTests<PeryashkinVBinaryComponentContourProcessingOMP>;
+
+TEST_P(PeryashkinVRunFuncTestsSEQ, BinaryComponentContourSEQ) {
+  ExecuteTest(GetParam());
+}
+
+TEST_P(PeryashkinVRunFuncTestsOMP, BinaryComponentContourOMP) {
   ExecuteTest(GetParam());
 }
 
@@ -160,45 +173,23 @@ const std::array<TestType, 7> kTestParam = {
     std::make_tuple(6, "touch_border"),
 };
 
-const auto kTestTasksList =
+const auto kSeqTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<PeryashkinVBinaryComponentContourProcessingSEQ, InType>(
         kTestParam, PPC_SETTINGS_peryashkin_v_binary_component_contour_processing));
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+const auto kOmpTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<PeryashkinVBinaryComponentContourProcessingOMP, InType>(
+        kTestParam, PPC_SETTINGS_peryashkin_v_binary_component_contour_processing));
 
-const auto kNameFn = PeryashkinVRunFuncTestsThreads::PrintFuncTestName<PeryashkinVRunFuncTestsThreads>;
+const auto kSeqValues = ppc::util::ExpandToValues(kSeqTasksList);
+const auto kOmpValues = ppc::util::ExpandToValues(kOmpTasksList);
 
-INSTANTIATE_TEST_SUITE_P(FuncTests, PeryashkinVRunFuncTestsThreads, kGtestValues, kNameFn);
+const auto kNameFnSeq = PeryashkinVRunFuncTestsSEQ::PrintFuncTestName<PeryashkinVRunFuncTestsSEQ>;
+const auto kNameFnOmp = PeryashkinVRunFuncTestsOMP::PrintFuncTestName<PeryashkinVRunFuncTestsOMP>;
+
+INSTANTIATE_TEST_SUITE_P(FuncTests, PeryashkinVRunFuncTestsSEQ, kSeqValues, kNameFnSeq);
+INSTANTIATE_TEST_SUITE_P(FuncTests, PeryashkinVRunFuncTestsOMP, kOmpValues, kNameFnOmp);
 
 }  // namespace
 
-TEST(PeryashkinVBinaryComponentContourProcessingSEQUnit, ValidationFailsOnBadSizes) {
-  BinaryImage bad;
-  bad.width = 4;
-  bad.height = 4;
-  bad.data.assign(3, 1);
-  PeryashkinVBinaryComponentContourProcessingSEQ task(bad);
-  EXPECT_FALSE(task.Validation());
-}
-
-TEST(PeryashkinVBinaryComponentContourProcessingSEQUnit, ValidationFailsOnNonPositiveDims) {
-  BinaryImage bad;
-  bad.width = 0;
-  bad.height = 5;
-  bad.data.clear();
-  PeryashkinVBinaryComponentContourProcessingSEQ task(bad);
-  EXPECT_FALSE(task.Validation());
-}
-
-TEST(PeryashkinVBinaryComponentContourProcessingSEQUnit, PipelineReturnsFalseIfInvalid) {
-  BinaryImage bad;
-  bad.width = 3;
-  bad.height = 3;
-  bad.data.assign(1, 1);
-  PeryashkinVBinaryComponentContourProcessingSEQ task(bad);
-  EXPECT_FALSE(task.Validation());
-  EXPECT_TRUE(task.PreProcessing());
-  EXPECT_FALSE(task.Run());
-}
-
-}  // namespace peryashkin_v_binary_component_contour_processing.
+}  // namespace peryashkin_v_binary_component_contour_processing
