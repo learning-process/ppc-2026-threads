@@ -8,6 +8,7 @@
 #include "maslova_u_mult_matr_crs/common/include/common.hpp"
 #include "maslova_u_mult_matr_crs/omp/include/ops_omp.hpp"
 #include "maslova_u_mult_matr_crs/seq/include/ops_seq.hpp"
+#include "maslova_u_mult_matr_crs/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace maslova_u_mult_matr_crs {
@@ -79,7 +80,8 @@ TEST_P(MaslovaUMultMatrRunPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, MaslovaUMultMatrSEQ, MaslovaUMultMatrOMP>(PPC_SETTINGS_maslova_u_mult_matr_crs);
+    ppc::util::MakeAllPerfTasks<InType, MaslovaUMultMatrSEQ, MaslovaUMultMatrOMP, MaslovaUMultMatrTBB>(
+        PPC_SETTINGS_maslova_u_mult_matr_crs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
