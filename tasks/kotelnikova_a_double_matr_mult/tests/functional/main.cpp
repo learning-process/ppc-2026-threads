@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "kotelnikova_a_double_matr_mult/common/include/common.hpp"
+#include "kotelnikova_a_double_matr_mult/omp/include/ops_omp.hpp"
 #include "kotelnikova_a_double_matr_mult/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -26,7 +27,7 @@ SparseMatrixCCS CreateMatrix(int rows, int cols, const std::vector<double> &valu
 }
 }  // namespace
 
-class KotelnikovaARunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class KotelnikovaARunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<3>(test_param);
@@ -133,7 +134,7 @@ class KotelnikovaARunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, O
 
 namespace {
 
-TEST_P(KotelnikovaARunFuncTestsSEQ, SparseMatrixMultiplication) {
+TEST_P(KotelnikovaARunFuncTests, SparseMatrixMultiplication) {
   ExecuteTest(GetParam());
 }
 
@@ -142,14 +143,15 @@ const std::array<TestType, 5> kTestParam = {
     std::make_tuple(3, 0, 0, "zero_result"), std::make_tuple(4, 0, 0, "identity_matrix"),
     std::make_tuple(5, 0, 0, "diagonal_matrices")};
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<KotelnikovaATaskSEQ, InType>(kTestParam, PPC_SETTINGS_kotelnikova_a_double_matr_mult);
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<KotelnikovaATaskSEQ, InType>(kTestParam, PPC_SETTINGS_kotelnikova_a_double_matr_mult),
+    ppc::util::AddFuncTask<KotelnikovaATaskOMP, InType>(kTestParam, PPC_SETTINGS_kotelnikova_a_double_matr_mult));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = KotelnikovaARunFuncTestsSEQ::PrintFuncTestName<KotelnikovaARunFuncTestsSEQ>;
+const auto kPerfTestName = KotelnikovaARunFuncTests::PrintFuncTestName<KotelnikovaARunFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(SparseMatrixMultFixedTests, KotelnikovaARunFuncTestsSEQ, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(SparseMatrixMultFixedTests, KotelnikovaARunFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
