@@ -26,7 +26,7 @@ std::vector<std::size_t> BuildChunkBounds(std::size_t size, int requested_chunks
   bounds.reserve(static_cast<std::size_t>(chunks) + 1);
   const std::size_t base_chunk = size / static_cast<std::size_t>(chunks);
   const std::size_t remainder = size % static_cast<std::size_t>(chunks);
-  const std::size_t chunk_count = static_cast<std::size_t>(chunks);
+  const auto chunk_count = static_cast<std::size_t>(chunks);
 
   bounds.push_back(0);
   for (std::size_t chunk = 0; chunk < chunk_count; ++chunk) {
