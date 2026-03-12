@@ -40,7 +40,7 @@ const auto kPerfTasksOMP =
     ppc::util::MakeAllPerfTasks<InType, OvsyannikovNSimpsonMethodOMP>(PPC_SETTINGS_ovsyannikov_n_simpson_method);
 
 const auto kPerfTasksTBB =
-    ppc::util::MakeAllPerfTasks<InType, OvsyannikovNSimpsonMethodOMP>(PPC_SETTINGS_ovsyannikov_n_simpson_method);
+    ppc::util::MakeAllPerfTasks<InType, OvsyannikovNSimpsonMethodTBB>(PPC_SETTINGS_ovsyannikov_n_simpson_method);
 
 const auto kPerfTestName = OvsyannikovNRunPerfTestThreads::CustomPerfTestName;
 
