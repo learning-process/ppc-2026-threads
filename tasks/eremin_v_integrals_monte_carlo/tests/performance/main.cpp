@@ -56,6 +56,4 @@ INSTANTIATE_TEST_SUITE_P(IntegralsMonteCarloTestsPerf, EreminVRunPerfTestsThread
 }  // namespace
 
 }  // namespace eremin_v_integrals_monte_carlo
-rm -rf build
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --config Release --parallel
+rm - rf build cmake - S.- B build - DCMAKE_BUILD_TYPE = Release cmake-- build build-- config Release-- parallel
