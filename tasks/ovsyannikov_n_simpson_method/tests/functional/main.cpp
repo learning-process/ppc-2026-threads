@@ -9,6 +9,7 @@
 #include "ovsyannikov_n_simpson_method/common/include/common.hpp"
 #include "ovsyannikov_n_simpson_method/omp/include/ops_omp.hpp"
 #include "ovsyannikov_n_simpson_method/seq/include/ops_seq.hpp"
+#include "ovsyannikov_n_simpson_method/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -55,12 +56,18 @@ const auto kTestTasksSEQ =
 const auto kTestTasksOMP =
     ppc::util::AddFuncTask<OvsyannikovNSimpsonMethodOMP, InType>(kTestParam, PPC_SETTINGS_ovsyannikov_n_simpson_method);
 
+const auto kTestTasksTBB =
+    ppc::util::AddFuncTask<OvsyannikovNSimpsonMethodTBB, InType>(kTestParam, PPC_SETTINGS_ovsyannikov_n_simpson_method);
+
 const auto kPerfTestName = OvsyannikovNRunFuncTestsThreads::PrintFuncTestName<OvsyannikovNRunFuncTestsThreads>;
 
 INSTANTIATE_TEST_SUITE_P(SimpsonTest_SEQ, OvsyannikovNRunFuncTestsThreads, ppc::util::ExpandToValues(kTestTasksSEQ),
                          kPerfTestName);
 
 INSTANTIATE_TEST_SUITE_P(SimpsonTest_OMP, OvsyannikovNRunFuncTestsThreads, ppc::util::ExpandToValues(kTestTasksOMP),
+                         kPerfTestName);
+
+INSTANTIATE_TEST_SUITE_P(SimpsonTest_TBB, OvsyannikovNRunFuncTestsThreads, ppc::util::ExpandToValues(kTestTasksTBB),
                          kPerfTestName);
 
 }  // namespace
