@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "shemetov_d_radix_odd_even_mergesort/common/include/common.hpp"
+#include "shemetov_d_radix_odd_even_mergesort/omp/include/ops_omp.hpp"
 #include "shemetov_d_radix_odd_even_mergesort/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -44,8 +45,9 @@ TEST_P(ShemetovDRunPerfTestsThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ShemetovDRadixOddEvenMergeSortSEQ>(
-    PPC_SETTINGS_shemetov_d_radix_odd_even_mergesort);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, ShemetovDRadixOddEvenMergeSortSEQ, ShemetovDRadixOddEvenMergeSortOMP>(
+        PPC_SETTINGS_shemetov_d_radix_odd_even_mergesort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
