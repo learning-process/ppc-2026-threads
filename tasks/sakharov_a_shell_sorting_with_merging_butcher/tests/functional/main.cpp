@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <ostream>
 #include <string>
+#include <tuple>
 
 #include "sakharov_a_shell_sorting_with_merging_butcher/common/include/common.hpp"
 #include "sakharov_a_shell_sorting_with_merging_butcher/omp/include/ops_omp.hpp"

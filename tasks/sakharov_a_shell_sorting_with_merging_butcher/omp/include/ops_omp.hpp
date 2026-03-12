@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "sakharov_a_shell_sorting_with_merging_butcher/common/include/common.hpp"
 #include "task/include/task.hpp"
 

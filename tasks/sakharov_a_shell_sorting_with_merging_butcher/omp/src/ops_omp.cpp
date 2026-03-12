@@ -4,8 +4,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <iterator>
-#include <utility>
 #include <vector>
 
 #include "sakharov_a_shell_sorting_with_merging_butcher/common/include/common.hpp"
@@ -28,10 +26,11 @@ std::vector<std::size_t> BuildChunkBounds(std::size_t size, int requested_chunks
   bounds.reserve(static_cast<std::size_t>(chunks) + 1);
   const std::size_t base_chunk = size / static_cast<std::size_t>(chunks);
   const std::size_t remainder = size % static_cast<std::size_t>(chunks);
+  const std::size_t chunk_count = static_cast<std::size_t>(chunks);
 
   bounds.push_back(0);
-  for (int chunk = 0; chunk < chunks; ++chunk) {
-    const std::size_t chunk_size = base_chunk + (static_cast<std::size_t>(chunk) < remainder ? 1 : 0);
+  for (std::size_t chunk = 0; chunk < chunk_count; ++chunk) {
+    const std::size_t chunk_size = base_chunk + (chunk < remainder ? 1 : 0);
     bounds.push_back(bounds.back() + chunk_size);
   }
 
@@ -41,7 +40,7 @@ std::vector<std::size_t> BuildChunkBounds(std::size_t size, int requested_chunks
 void ParallelSortChunks(std::vector<int> &data, const std::vector<std::size_t> &bounds) {
   const int chunk_count = static_cast<int>(bounds.size()) - 1;
 
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for default(none) shared(data, bounds, chunk_count) schedule(static)
   for (int chunk = 0; chunk < chunk_count; ++chunk) {
     auto begin = data.begin() + static_cast<std::ptrdiff_t>(bounds[static_cast<std::size_t>(chunk)]);
     auto end = data.begin() + static_cast<std::ptrdiff_t>(bounds[static_cast<std::size_t>(chunk) + 1]);
@@ -53,10 +52,9 @@ void ParallelMergePass(const std::vector<int> &source, std::vector<int> &destina
                        const std::vector<std::size_t> &bounds, std::size_t width) {
   const std::size_t chunk_count = bounds.size() - 1;
 
-#pragma omp parallel for schedule(static)
-  for (std::ptrdiff_t left_chunk = 0; left_chunk < static_cast<std::ptrdiff_t>(chunk_count);
-       left_chunk += static_cast<std::ptrdiff_t>(2 * width)) {
-    const std::size_t left = static_cast<std::size_t>(left_chunk);
+#pragma omp parallel for default(none) shared(source, destination, bounds, width, chunk_count) schedule(static)
+  for (std::size_t left_chunk = 0; left_chunk < chunk_count; left_chunk += 2 * width) {
+    auto left = left_chunk;
     const std::size_t mid = std::min(left + width, chunk_count);
     const std::size_t right = std::min(left + (2 * width), chunk_count);
 
