@@ -2,6 +2,7 @@
 
 #include <complex>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "task/include/task.hpp"
@@ -21,7 +22,7 @@ struct SparseMatrix {
   }
 };
 
-using InType = std::vector<SparseMatrix>;
+using InType = std::pair<SparseMatrix, SparseMatrix>;
 using OutType = std::vector<SparseMatrix>;
 using TestType = std::tuple<int, int, int>;
 using BaseTask = ppc::task::Task<InType, OutType>;
