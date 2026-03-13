@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <ranges>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -80,7 +79,10 @@ bool AshihminDMultMatrCrsSEQ::RunImpl() {
 
     std::vector<std::pair<int, double>> sorted_values(accumulator.begin(), accumulator.end());
 
-    std::ranges::sort(sorted_values, {}, &std::pair<int, double>::first);
+    std::sort(sorted_values.begin(), sorted_values.end(),
+              [](const std::pair<int, double> &left_pair, const std::pair<int, double> &right_pair) {
+      return left_pair.first < right_pair.first;
+    });
 
     for (const auto &entry : sorted_values) {
       if (entry.second != 0.0) {
