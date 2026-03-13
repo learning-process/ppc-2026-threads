@@ -6,7 +6,7 @@
 
 #include "task/include/task.hpp"
 
-namespace redkina_a_integral_simpson_seq {
+namespace redkina_a_integral_simpson {
 
 struct InputData {
   std::function<double(const std::vector<double> &)> func;
@@ -17,7 +17,8 @@ struct InputData {
 
 using InType = InputData;
 using OutType = double;
-using TestType = std::tuple<int, InputData, double>;
+using TestType = std::tuple<int, double (*)(const std::vector<double> &), std::vector<double>, std::vector<double>,
+                            std::vector<int>, double>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace redkina_a_integral_simpson_seq
+}  // namespace redkina_a_integral_simpson
