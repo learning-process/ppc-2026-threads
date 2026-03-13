@@ -8,8 +8,8 @@
 #include <vector>
 
 #include "papulina_y_radix_sort/common/include/common.hpp"
+#include "papulina_y_radix_sort/omp/include/ops_omp.hpp"
 #include "papulina_y_radix_sort/seq/include/ops_seq.hpp"
-#include "papulina_y_radix_sort/omp/include/ops_omp.hpp" 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -70,7 +70,7 @@ const std::array<TestType, 7> kTestParam = {
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<PapulinaYRadixSortSEQ, InType>(kTestParam, PPC_SETTINGS_papulina_y_radix_sort),
-   ppc::util::AddFuncTask<PapulinaYRadixSortOMP, InType>(kTestParam, PPC_SETTINGS_papulina_y_radix_sort));
+    ppc::util::AddFuncTask<PapulinaYRadixSortOMP, InType>(kTestParam, PPC_SETTINGS_papulina_y_radix_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

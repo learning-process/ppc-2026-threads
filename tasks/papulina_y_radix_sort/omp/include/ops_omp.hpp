@@ -1,9 +1,10 @@
 #pragma once
-#include "papulina_y_radix_sort/common/include/common.hpp"
-#include "task/include/task.hpp"
 #include <cstdint>
 #include <span>
 #include <vector>
+
+#include "papulina_y_radix_sort/common/include/common.hpp"
+#include "task/include/task.hpp"
 namespace papulina_y_radix_sort {
 
 class PapulinaYRadixSortOMP : public BaseTask {
@@ -24,8 +25,8 @@ class PapulinaYRadixSortOMP : public BaseTask {
   static uint64_t InBytes(double d);
   static double FromBytes(uint64_t bits);
   static void RadixSort(double *arr, int size);
-  void MergeChunks(std::vector<std::span<double>> chunks, std::vector<int> chunks_offsets, double * result);
-  static void Merge(std::span<double> & res, const std::span<double> & left, const std::span<double> & right);
+  void MergeChunks(std::vector<std::span<double>> chunks, std::vector<int> chunks_offsets, double *result);
+  static void Merge(std::span<double> &res, const std::span<double> &left, const std::span<double> &right);
 };
 
 }  // namespace papulina_y_radix_sort
