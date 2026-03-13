@@ -1,8 +1,10 @@
 #include "ashihmin_d_mult_matr_crs/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "ashihmin_d_mult_matr_crs/common/include/common.hpp"
 
@@ -38,9 +40,11 @@ bool AshihminDMultMatrCrsSEQ::ValidationImpl() {
 
 bool AshihminDMultMatrCrsSEQ::PreProcessingImpl() {
   const auto &matrix_a = GetInput().first;
+
   GetOutput().rows = matrix_a.rows;
   GetOutput().cols = GetInput().second.cols;
   GetOutput().row_ptr.resize(matrix_a.rows + 1, 0);
+
   return true;
 }
 
@@ -68,14 +72,20 @@ bool AshihminDMultMatrCrsSEQ::RunImpl() {
       for (std::size_t index_b = col_start; index_b < col_end; ++index_b) {
         int col_b = matrix_b.col_index[index_b];
         double value_b = matrix_b.values[index_b];
+
         accumulator[col_b] += value_a * value_b;
       }
     }
 
-    for (const auto &pair : accumulator) {
-      if (pair.second != 0.0) {
-        matrix_c.values.push_back(pair.second);
-        matrix_c.col_index.push_back(pair.first);
+    std::vector<std::pair<int, double>> sorted_values(accumulator.begin(), accumulator.end());
+
+    std::sort(sorted_values.begin(), sorted_values.end(),
+              [](const auto &left, const auto &right) { return left.first < right.first; });
+
+    for (const auto &entry : sorted_values) {
+      if (entry.second != 0.0) {
+        matrix_c.values.push_back(entry.second);
+        matrix_c.col_index.push_back(entry.first);
       }
     }
 
