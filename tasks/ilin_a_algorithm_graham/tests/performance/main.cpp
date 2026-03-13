@@ -1,10 +1,12 @@
 #include <gtest/gtest.h>
 
 #include <random>
+#include <tuple>
 #include <utility>
 #include <vector>
 
 #include "ilin_a_algorithm_graham/common/include/common.hpp"
+#include "ilin_a_algorithm_graham/omp/include/ops_omp.hpp"
 #include "ilin_a_algorithm_graham/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -44,7 +46,9 @@ TEST_P(IlinAGrahamPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, IlinAGrahamSEQ>(PPC_SETTINGS_ilin_a_algorithm_graham);
+const auto kAllPerfTasks =
+    std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, IlinAGrahamSEQ>(PPC_SETTINGS_ilin_a_algorithm_graham),
+                   ppc::util::MakeAllPerfTasks<InType, IlinAGrahamOMP>(PPC_SETTINGS_ilin_a_algorithm_graham));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
