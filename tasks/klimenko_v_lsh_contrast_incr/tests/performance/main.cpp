@@ -3,13 +3,14 @@
 #include <cstddef>
 #include <random>
 
-#include "klimenko_v_lsh_contrast_incr_seq/common/include/common.hpp"
-#include "klimenko_v_lsh_contrast_incr_seq/seq/include/ops_seq.hpp"
+#include "klimenko_v_lsh_contrast_incr/common/include/common.hpp"
+#include "klimenko_v_lsh_contrast_incr/omp/include/ops_omp.hpp"
+#include "klimenko_v_lsh_contrast_incr/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace klimenko_v_lsh_contrast_incr_seq {
+namespace klimenko_v_lsh_contrast_incr {
 
-class KlimenkoVLSHContrastIncrSEQPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class KlimenkoVRunPerfTestsLSH : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   void SetUp() override {
     const size_t size = 10000000;
@@ -35,21 +36,22 @@ class KlimenkoVLSHContrastIncrSEQPerfTests : public ppc::util::BaseRunPerfTests<
   InType input_data_;
 };
 
-TEST_P(KlimenkoVLSHContrastIncrSEQPerfTests, RunPerfModes) {
+TEST_P(KlimenkoVRunPerfTestsLSH, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KlimenkoVLSHContrastIncrSEQ>(PPC_SETTINGS_klimenko_v_lsh_contrast_incr_seq);
+    ppc::util::MakeAllPerfTasks<InType, KlimenkoVLSHContrastIncrSEQ, KlimenkoVLSHContrastIncrOMP>(
+        PPC_SETTINGS_klimenko_v_lsh_contrast_incr);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = KlimenkoVLSHContrastIncrSEQPerfTests::CustomPerfTestName;
+const auto kPerfTestName = KlimenkoVRunPerfTestsLSH::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, KlimenkoVLSHContrastIncrSEQPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, KlimenkoVRunPerfTestsLSH, kGtestValues, kPerfTestName);
 
 }  // namespace
 
-}  // namespace klimenko_v_lsh_contrast_incr_seq
+}  // namespace klimenko_v_lsh_contrast_incr
