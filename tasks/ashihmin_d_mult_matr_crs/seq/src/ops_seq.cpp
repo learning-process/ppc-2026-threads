@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <ranges>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -59,17 +60,17 @@ bool AshihminDMultMatrCrsSEQ::RunImpl() {
   for (int row_index = 0; row_index < matrix_a.rows; ++row_index) {
     std::unordered_map<int, double> accumulator;
 
-    auto row_start = static_cast<std::size_t>(matrix_a.row_ptr[row_index]);
+    auto row_begin = static_cast<std::size_t>(matrix_a.row_ptr[row_index]);
     auto row_end = static_cast<std::size_t>(matrix_a.row_ptr[row_index + 1]);
 
-    for (std::size_t index_a = row_start; index_a < row_end; ++index_a) {
+    for (std::size_t index_a = row_begin; index_a < row_end; ++index_a) {
       int col_a = matrix_a.col_index[index_a];
       double value_a = matrix_a.values[index_a];
 
-      auto col_start = static_cast<std::size_t>(matrix_b.row_ptr[col_a]);
+      auto col_begin = static_cast<std::size_t>(matrix_b.row_ptr[col_a]);
       auto col_end = static_cast<std::size_t>(matrix_b.row_ptr[col_a + 1]);
 
-      for (std::size_t index_b = col_start; index_b < col_end; ++index_b) {
+      for (std::size_t index_b = col_begin; index_b < col_end; ++index_b) {
         int col_b = matrix_b.col_index[index_b];
         double value_b = matrix_b.values[index_b];
 
@@ -79,10 +80,7 @@ bool AshihminDMultMatrCrsSEQ::RunImpl() {
 
     std::vector<std::pair<int, double>> sorted_values(accumulator.begin(), accumulator.end());
 
-    std::sort(sorted_values.begin(), sorted_values.end(),
-              [](const std::pair<int, double> &left_pair, const std::pair<int, double> &right_pair) {
-      return left_pair.first < right_pair.first;
-    });
+    std::ranges::sort(sorted_values, {}, &std::pair<int, double>::first);
 
     for (const auto &entry : sorted_values) {
       if (entry.second != 0.0) {
