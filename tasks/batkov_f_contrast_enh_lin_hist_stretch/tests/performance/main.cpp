@@ -48,7 +48,7 @@ TEST_P(BatkovFRunPerfTestThreads, RunPerfTests) {
 namespace {
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, BatkovFContrastEnhLinHistStretchSEQ>(
-    PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch_seq);
+    PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

@@ -75,7 +75,7 @@ const std::array<TestType, 4> kTestParam = {std::make_tuple(100, "small_image"),
                                             std::make_tuple(1000, "big_image"), std::make_tuple(2000, "large_image")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchSEQ, InType>(
-    kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch_seq));
+    kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
