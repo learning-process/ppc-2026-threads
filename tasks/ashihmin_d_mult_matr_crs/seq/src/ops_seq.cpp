@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <ranges>
 #include <unordered_map>
 #include <utility>
 #include <vector>
