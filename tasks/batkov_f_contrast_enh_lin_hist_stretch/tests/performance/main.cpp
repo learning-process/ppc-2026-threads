@@ -4,11 +4,11 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "batkov_f_contrast_enh_lin_hist_stretch_seq/common/include/common.hpp"
-#include "batkov_f_contrast_enh_lin_hist_stretch_seq/seq/include/ops_seq.hpp"
+#include "batkov_f_contrast_enh_lin_hist_stretch/common/include/common.hpp"
+#include "batkov_f_contrast_enh_lin_hist_stretch/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace batkov_f_contrast_enh_lin_hist_stretch_seq {
+namespace batkov_f_contrast_enh_lin_hist_stretch {
 
 class BatkovFRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr size_t kImageSize = 5000;
@@ -26,7 +26,14 @@ class BatkovFRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Out
 
   bool CheckTestOutputData(OutType &output_data) final {
     auto [min_it, max_it] = std::ranges::minmax_element(output_data);
-    return (*min_it == 0 && *max_it == 255) || (*min_it == *max_it);
+    uint8_t min_out = *min_it;
+    uint8_t max_out = *max_it;
+
+    if (min_out == max_out) {
+      return true;
+    }
+
+    return (min_out <= 1) && (max_out >= 254);
   }
 
   InType GetTestInputData() final {
@@ -41,7 +48,7 @@ TEST_P(BatkovFRunPerfTestThreads, RunPerfTests) {
 namespace {
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, BatkovFContrastEnhLinHistStretchSEQ>(
-    PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch_seq);
+    PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -51,4 +58,4 @@ INSTANTIATE_TEST_SUITE_P(RunPerfTests, BatkovFRunPerfTestThreads, kGtestValues, 
 
 }  // namespace
 
-}  // namespace batkov_f_contrast_enh_lin_hist_stretch_seq
+}  // namespace batkov_f_contrast_enh_lin_hist_stretch

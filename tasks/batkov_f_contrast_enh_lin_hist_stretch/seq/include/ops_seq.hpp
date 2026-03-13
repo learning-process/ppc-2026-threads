@@ -1,9 +1,9 @@
 #pragma once
 
-#include "batkov_f_contrast_enh_lin_hist_stretch_seq/common/include/common.hpp"
+#include "batkov_f_contrast_enh_lin_hist_stretch/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace batkov_f_contrast_enh_lin_hist_stretch_seq {
+namespace batkov_f_contrast_enh_lin_hist_stretch {
 
 class BatkovFContrastEnhLinHistStretchSEQ : public BaseTask {
  public:
@@ -19,4 +19,4 @@ class BatkovFContrastEnhLinHistStretchSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace batkov_f_contrast_enh_lin_hist_stretch_seq
+}  // namespace batkov_f_contrast_enh_lin_hist_stretch

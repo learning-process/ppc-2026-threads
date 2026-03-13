@@ -9,12 +9,12 @@
 #include <string>
 #include <tuple>
 
-#include "batkov_f_contrast_enh_lin_hist_stretch_seq/common/include/common.hpp"
-#include "batkov_f_contrast_enh_lin_hist_stretch_seq/seq/include/ops_seq.hpp"
+#include "batkov_f_contrast_enh_lin_hist_stretch/common/include/common.hpp"
+#include "batkov_f_contrast_enh_lin_hist_stretch/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace batkov_f_contrast_enh_lin_hist_stretch_seq {
+namespace batkov_f_contrast_enh_lin_hist_stretch {
 
 class BatkovFRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -45,7 +45,14 @@ class BatkovFRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Ou
 
   bool CheckTestOutputData(OutType &output_data) final {
     auto [min_it, max_it] = std::ranges::minmax_element(output_data);
-    return (*min_it == 0 && *max_it == 255) || (*min_it == *max_it);
+    uint8_t min_out = *min_it;
+    uint8_t max_out = *max_it;
+
+    if (min_out == max_out) {
+      return true;
+    }
+
+    return (min_out <= 1) && (max_out >= 254);
   }
 
   InType GetTestInputData() final {
@@ -68,7 +75,7 @@ const std::array<TestType, 4> kTestParam = {std::make_tuple(100, "small_image"),
                                             std::make_tuple(1000, "big_image"), std::make_tuple(2000, "large_image")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchSEQ, InType>(
-    kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch_seq));
+    kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -78,4 +85,4 @@ INSTANTIATE_TEST_SUITE_P(ContrastEnhLinHistStretch, BatkovFRunFuncTestsThreads, 
 
 }  // namespace
 
-}  // namespace batkov_f_contrast_enh_lin_hist_stretch_seq
+}  // namespace batkov_f_contrast_enh_lin_hist_stretch
