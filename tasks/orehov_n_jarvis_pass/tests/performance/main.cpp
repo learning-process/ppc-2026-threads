@@ -2,13 +2,14 @@
 
 #include <cmath>
 
-#include "orehov_n_jarvis_pass_seq/common/include/common.hpp"
-#include "orehov_n_jarvis_pass_seq/seq/include/ops_seq.hpp"
+#include "orehov_n_jarvis_pass/common/include/common.hpp"
+#include "orehov_n_jarvis_pass/seq/include/ops_seq.hpp"
+#include "orehov_n_jarvis_pass/omp/include/ops_omp.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace orehov_n_jarvis_pass_seq {
+namespace orehov_n_jarvis_pass {
 
-class OrehovNJarvisPassSEQPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class OrehovNJarvisPassPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 2000;
   InType input_data_;
 
@@ -33,7 +34,7 @@ class OrehovNJarvisPassSEQPerfTests : public ppc::util::BaseRunPerfTests<InType,
   }
 };
 
-TEST_P(OrehovNJarvisPassSEQPerfTests, RunPerfModes) {
+TEST_P(OrehovNJarvisPassPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -43,10 +44,10 @@ const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, OrehovNJarvisPass
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = OrehovNJarvisPassSEQPerfTests::CustomPerfTestName;
+const auto kPerfTestName = OrehovNJarvisPassPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, OrehovNJarvisPassSEQPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, OrehovNJarvisPassPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
-}  // namespace orehov_n_jarvis_pass_seq
+}  // namespace orehov_n_jarvis_pass
