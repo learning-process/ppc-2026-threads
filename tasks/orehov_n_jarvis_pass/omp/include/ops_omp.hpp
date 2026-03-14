@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "orehov_n_jarvis_pass/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -22,6 +24,8 @@ class OrehovNJarvisPassOMP : public BaseTask {
   [[nodiscard]] Point FindFirstElem() const;
   [[nodiscard]] static double Distance(Point a, Point b);
   [[nodiscard]] Point FindNext(Point current) const;
+  [[nodiscard]] Point FindLocalBest(Point current, Point initial_next) const;
+  [[nodiscard]] void UpdateGlobalBest(Point current, Point local_next, Point &global_next) const;
 
   std::vector<Point> res_;
   std::vector<Point> input_;

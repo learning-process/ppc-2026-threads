@@ -46,45 +46,53 @@ bool OrehovNJarvisPassOMP::RunImpl() {
   return true;
 }
 
+Point OrehovNJarvisPassOMP::FindLocalBest(Point current, Point initial_next) const {
+  Point local_next = initial_next;
+  double local_best_orient = -1e9;
+
+  for (const auto &p : input_) {
+    if (current == p || local_next == p) {
+      continue;
+    }
+
+    double orient = CheckLeft(current, local_next, p);
+
+    if (orient > local_best_orient) {
+      local_best_orient = orient;
+      local_next = p;
+    } else if (orient == local_best_orient && orient == 0) {
+      if (Distance(current, p) > Distance(current, local_next)) {
+        local_next = p;
+      }
+    }
+  }
+
+  return local_next;
+}
+
+void OrehovNJarvisPassOMP::UpdateGlobalBest(Point current, Point local_next, Point &global_next) const {
+  double global_orient = CheckLeft(current, global_next, local_next);
+  double current_orient = CheckLeft(current, global_next, global_next);
+
+  if (global_orient > current_orient) {
+    global_next = local_next;
+  } else if (global_orient == current_orient && global_orient == 0) {
+    if (Distance(current, local_next) > Distance(current, global_next)) {
+      global_next = local_next;
+    }
+  }
+}
+
 Point OrehovNJarvisPassOMP::FindNext(Point current) const {
   Point next = (current == input_[0]) ? input_[1] : input_[0];
 
-#pragma omp parallel
+#pragma omp parallel default(none) shared(current, next, input_)
   {
-    Point local_next = next;
-    double local_best_orient = -1e9;
-
-#pragma omp for nowait
-    for (int i = 0; i < static_cast<int>(input_.size()); ++i) {
-      const Point &p = input_[i];
-      if (current == p || local_next == p) {
-        continue;
-      }
-
-      double orient = CheckLeft(current, local_next, p);
-
-      if (orient > local_best_orient) {
-        local_best_orient = orient;
-        local_next = p;
-      } else if (orient == local_best_orient && orient == 0) {
-        if (Distance(current, p) > Distance(current, local_next)) {
-          local_next = p;
-        }
-      }
-    }
+    Point local_next = FindLocalBest(current, next);
 
 #pragma omp critical
     {
-      double global_orient = CheckLeft(current, next, local_next);
-      double current_orient = CheckLeft(current, next, next);
-
-      if (global_orient > current_orient) {
-        next = local_next;
-      } else if (global_orient == current_orient && global_orient == 0) {
-        if (Distance(current, local_next) > Distance(current, next)) {
-          next = local_next;
-        }
-      }
+      UpdateGlobalBest(current, local_next, next);
     }
   }
 
