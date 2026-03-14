@@ -8,7 +8,7 @@
 
 #include "borunov_v_complex_ccs/common/include/common.hpp"
 
-namespace borunov_v_complex_ccs_seq {
+namespace borunov_v_complex_ccs {
 
 BorunovVComplexCcsSEQ::BorunovVComplexCcsSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -91,4 +91,4 @@ bool BorunovVComplexCcsSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace borunov_v_complex_ccs_seq
+}  // namespace borunov_v_complex_ccs

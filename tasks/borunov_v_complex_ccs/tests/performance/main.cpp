@@ -7,7 +7,7 @@
 #include "borunov_v_complex_ccs/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace borunov_v_complex_ccs_seq {
+namespace borunov_v_complex_ccs {
 
 namespace {
 
@@ -71,4 +71,4 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, BorunovVRunPerfTestThreads, kGtestValues,
 
 }  // namespace
 
-}  // namespace borunov_v_complex_ccs_seq
+}  // namespace borunov_v_complex_ccs

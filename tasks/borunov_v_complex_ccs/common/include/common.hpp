@@ -7,7 +7,7 @@
 
 #include "task/include/task.hpp"
 
-namespace borunov_v_complex_ccs_seq {
+namespace borunov_v_complex_ccs {
 
 struct SparseMatrix {
   int num_rows = 0;
@@ -27,4 +27,4 @@ using OutType = std::vector<SparseMatrix>;
 using TestType = std::tuple<int, int, int>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace borunov_v_complex_ccs_seq
+}  // namespace borunov_v_complex_ccs
