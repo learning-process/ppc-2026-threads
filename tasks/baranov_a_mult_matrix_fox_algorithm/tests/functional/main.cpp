@@ -10,20 +10,20 @@
 #include <vector>
 
 #include "baranov_a_mult_matrix_fox_algorithm/common/include/common.hpp"
-#include "baranov_a_mult_matrix_fox_algorithm/seq/include/ops_seq.hpp"
+#include "baranov_a_mult_matrix_fox_algorithm/omp/include/ops_omp.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace baranov_a_mult_matrix_fox_algorithm_seq {
+namespace baranov_a_mult_matrix_fox_algorithm_omp {
 
-class BaranovAFuncTest : public ppc::util::BaseRunFuncTests<baranov_a_mult_matrix_fox_algorithm::InType,
-                                                            baranov_a_mult_matrix_fox_algorithm::OutType,
-                                                            baranov_a_mult_matrix_fox_algorithm::TestType> {
+class BaranovAOMPFuncTest : public ppc::util::BaseRunFuncTests<baranov_a_mult_matrix_fox_algorithm::InType,
+                                                               baranov_a_mult_matrix_fox_algorithm::OutType,
+                                                               baranov_a_mult_matrix_fox_algorithm::TestType> {
  public:
   static std::string PrintTestParam(const baranov_a_mult_matrix_fox_algorithm::TestType &test_param) {
     size_t n = std::get<0>(test_param);
     std::string type = std::get<1>(test_param);
-    return "n_" + std::to_string(n) + "_" + type;
+    return "n_" + std::to_string(n) + "_" + type + "_omp";
   }
 
  protected:
@@ -184,7 +184,7 @@ class BaranovAFuncTest : public ppc::util::BaseRunFuncTests<baranov_a_mult_matri
 
 namespace {
 
-TEST_P(BaranovAFuncTest, MatrixMultiplicationTest) {
+TEST_P(BaranovAOMPFuncTest, MatrixMultiplicationTest) {
   ExecuteTest(GetParam());
 }
 
@@ -205,15 +205,15 @@ const std::array<baranov_a_mult_matrix_fox_algorithm::TestType, 20> kTestParams 
     std::make_tuple(128, "size128_block")};
 
 const auto kTestTasksList =
-    ppc::util::AddFuncTask<BaranovAMultMatrixFoxAlgorithmSEQ, baranov_a_mult_matrix_fox_algorithm::InType>(
+    ppc::util::AddFuncTask<BaranovAMultMatrixFoxAlgorithmOMP, baranov_a_mult_matrix_fox_algorithm::InType>(
         kTestParams, PPC_SETTINGS_baranov_a_mult_matrix_fox_algorithm);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kTestName = BaranovAFuncTest::PrintFuncTestName<BaranovAFuncTest>;
+const auto kTestName = BaranovAOMPFuncTest::PrintFuncTestName<BaranovAOMPFuncTest>;
 
-INSTANTIATE_TEST_SUITE_P(FoxAlgorithmTests, BaranovAFuncTest, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(FoxAlgorithmOMPTests, BaranovAOMPFuncTest, kGtestValues, kTestName);
 
 }  // namespace
 
-}  // namespace baranov_a_mult_matrix_fox_algorithm_seq
+}  // namespace baranov_a_mult_matrix_fox_algorithm_omp
