@@ -14,7 +14,7 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace borunov_v_complex_ccs_seq {
+namespace borunov_v_complex_ccs {
 
 namespace {
 
@@ -180,4 +180,4 @@ INSTANTIATE_TEST_SUITE_P(SparseMatrixTests, BorunovVRunFuncTestsThreads, kGtestV
 
 }  // namespace
 
-}  // namespace borunov_v_complex_ccs_seq
+}  // namespace borunov_v_complex_ccs
