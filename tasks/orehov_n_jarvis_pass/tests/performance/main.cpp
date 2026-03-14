@@ -3,8 +3,8 @@
 #include <cmath>
 
 #include "orehov_n_jarvis_pass/common/include/common.hpp"
-#include "orehov_n_jarvis_pass/seq/include/ops_seq.hpp"
 #include "orehov_n_jarvis_pass/omp/include/ops_omp.hpp"
+#include "orehov_n_jarvis_pass/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace orehov_n_jarvis_pass {
