@@ -12,6 +12,7 @@
 #include "galkin_d_multidim_integrals_rectangles/omp/include/ops_omp.hpp"
 #include "galkin_d_multidim_integrals_rectangles/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace galkin_d_multidim_integrals_rectangles {
 class GalkinDRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
