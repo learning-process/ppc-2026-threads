@@ -7,6 +7,7 @@
 #include <tuple>
 
 #include "batushin_i_incr_contrast_with_lhs/common/include/common.hpp"
+#include "batushin_i_incr_contrast_with_lhs/omp/include/ops_omp.hpp"
 #include "batushin_i_incr_contrast_with_lhs/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -104,8 +105,10 @@ const std::array<TestType, 10> kTestParams = {std::make_tuple(1, "linear"), std:
                                               std::make_tuple(7, "bw"),     std::make_tuple(8, "black"),
                                               std::make_tuple(9, "white"),  std::make_tuple(10, "single")};
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<BatushinITestTaskSEQ, InType>(kTestParams, PPC_SETTINGS_batushin_i_incr_contrast_with_lhs);
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<BatushinIIncrContrastWithLhsOMP, InType>(kTestParams,
+                                                                    PPC_SETTINGS_batushin_i_incr_contrast_with_lhs),
+    ppc::util::AddFuncTask<BatushinITestTaskSEQ, InType>(kTestParams, PPC_SETTINGS_batushin_i_incr_contrast_with_lhs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
