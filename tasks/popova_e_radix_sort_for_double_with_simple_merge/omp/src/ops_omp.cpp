@@ -2,14 +2,14 @@
 
 #include <omp.h>
 
-#include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstdint>
 #include <cstring>
 #include <random>
 #include <vector>
 
 #include "popova_e_radix_sort_for_double_with_simple_merge/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace popova_e_radix_sort_for_double_with_simple_merge_threads {
 
@@ -17,7 +17,7 @@ namespace {
 
 uint64_t DoubleToSortable(double value) {
   uint64_t bits = 0;
-  memcpy(&bits, &value, sizeof(double));
+  std::memcpy(&bits, &value, sizeof(double));
   bool is_negative = (bits >> 63) == 1;
   if (is_negative) {
     bits = ~bits;
@@ -48,19 +48,22 @@ void RadixSortUInt(std::vector<uint64_t> &arr) {
   std::vector<uint64_t> buffer(arr.size());
   for (int byte_index = 0; byte_index < bytes_count; byte_index++) {
     int sdvig = byte_index * 8;
-    size_t count[base] = {0};
-    for (size_t i = 0; i < arr.size(); i++) {
-      count[(arr[i] >> sdvig) & 0xFF]++;
+    std::array<size_t, base> count = {0};
+
+    for (const auto &val : arr) {
+      count[(val >> sdvig) & 0xFF]++;
     }
+
     size_t offset = 0;
-    for (int i = 0; i < base; i++) {
-      size_t tmp = count[i];
-      count[i] = offset;
+    for (auto &c : count) {
+      size_t tmp = c;
+      c = offset;
       offset += tmp;
     }
-    for (size_t i = 0; i < arr.size(); i++) {
-      size_t pos = (arr[i] >> sdvig) & 0xFF;
-      buffer[count[pos]] = arr[i];
+
+    for (const auto &val : arr) {
+      size_t pos = (val >> sdvig) & 0xFF;
+      buffer[count[pos]] = val;
       count[pos]++;
     }
     arr = buffer;
@@ -110,13 +113,13 @@ bool SameData(const std::vector<double> &original, const std::vector<double> &re
 
   for (const double &value : original) {
     uint64_t bits = 0;
-    memcpy(&bits, &value, sizeof(double));
+    std::memcpy(&bits, &value, sizeof(double));
     hash_original ^= bits;
   }
 
   for (const double &value : result) {
     uint64_t bits = 0;
-    memcpy(&bits, &value, sizeof(double));
+    std::memcpy(&bits, &value, sizeof(double));
     hash_result ^= bits;
   }
 
@@ -157,7 +160,7 @@ bool PopovaERadixSorForDoubleWithSimpleMergeOMP::RunImpl() {
 
   // std::cout << "\n--- [STEP 2] THREAD DISTRIBUTION ---" << std::endl;
 
-#pragma omp parallel num_threads(n_threads)
+#pragma omp parallel num_threads(n_threads) default(shared)
   {
     int thread_id = omp_get_thread_num();
     int left_idx = (thread_id * n) / n_threads;
@@ -200,8 +203,8 @@ bool PopovaERadixSorForDoubleWithSimpleMergeOMP::RunImpl() {
   }
 
   // std::cout << "\n--- [STEP 3] MERGING ---" << std::endl;
-    result_.clear();
-    result_ = local_results[0];
+  result_.clear();
+  result_ = local_results[0];
 
   for (int i = 1; i < n_threads; i++) {
     if (!local_results[i].empty()) {
