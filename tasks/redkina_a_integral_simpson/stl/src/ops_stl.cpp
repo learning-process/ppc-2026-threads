@@ -17,7 +17,6 @@ namespace {
 double ComputeNodeContribution(size_t linear_idx, const std::vector<double> &a, const std::vector<double> &h,
                                const std::vector<int> &n, const std::vector<size_t> &strides,
                                const std::function<double(const std::vector<double> &)> &func) {
-  // Проверка func на всякий случай (для анализатора)
   if (!func) {
     return 0.0;
   }
@@ -70,7 +69,6 @@ double ParallelSum(const std::vector<double> &a, const std::vector<double> &h, c
       break;
     }
 
-    // Захватываем start и end по значению, остальное по ссылке
     futures.push_back(std::async(std::launch::async, [=, &a, &h, &n, &strides, &func]() {
       double local_sum = 0.0;
       for (size_t idx = start; idx < end; ++idx) {
@@ -138,19 +136,16 @@ bool RedkinaAIntegralSimpsonSTL::RunImpl() {
     return false;
   }
 
-  // Вычисляем шаги по каждому измерению
   std::vector<double> h(dim);
   for (size_t i = 0; i < dim; ++i) {
     h[i] = (b_[i] - a_[i]) / static_cast<double>(n_[i]);
   }
 
-  // Произведение шагов
   double h_prod = 1.0;
   for (size_t i = 0; i < dim; ++i) {
     h_prod *= h[i];
   }
 
-  // Размеры сетки (количество точек в каждом измерении = n_i + 1)
   std::vector<int> dim_sizes(dim);
   size_t total_points = 1;
   for (size_t i = 0; i < dim; ++i) {
@@ -158,17 +153,14 @@ bool RedkinaAIntegralSimpsonSTL::RunImpl() {
     total_points *= static_cast<size_t>(dim_sizes[i]);
   }
 
-  // Strides для перехода от линейного индекса к многомерному
   std::vector<size_t> strides(dim);
   strides[dim - 1] = 1;
   for (size_t i = dim - 1; i > 0; --i) {
     strides[i - 1] = strides[i] * static_cast<size_t>(dim_sizes[i]);
   }
 
-  // Параллельное суммирование
   double sum = ParallelSum(a_, h, n_, strides, func_, total_points);
 
-  // Знаменатель (3^dim)
   double denominator = 1.0;
   for (size_t i = 0; i < dim; ++i) {
     denominator *= 3.0;
