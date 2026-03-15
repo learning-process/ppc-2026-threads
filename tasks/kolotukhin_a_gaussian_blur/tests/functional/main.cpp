@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "kolotukhin_a_gaussian_blur/common/include/common.hpp"
+#include "kolotukhin_a_gaussian_blur/omp/include/ops_omp.hpp"
 #include "kolotukhin_a_gaussian_blur/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -66,8 +67,9 @@ const std::array<TestType, 4> kTestParam = {std::make_tuple(InType{test_1, 3, 3}
                                             std::make_tuple(InType{test_3, 3, 3}, expect_3, "test_inside"),
                                             std::make_tuple(InType{test_4, 4, 3}, expect_4, "test_common")};
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<KolotukhinAGaussinBlureSEQ, InType>(kTestParam, PPC_SETTINGS_kolotukhin_a_gaussian_blur);
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<KolotukhinAGaussinBlureSEQ, InType>(kTestParam, PPC_SETTINGS_kolotukhin_a_gaussian_blur),
+    ppc::util::AddFuncTask<KolotukhinAGaussinBlureOMP, InType>(kTestParam, PPC_SETTINGS_kolotukhin_a_gaussian_blur));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
