@@ -9,11 +9,12 @@
 #include "util/include/perf_test_util.hpp"
 #include "util/include/util.hpp"
 #include "vasiliev_m_shell_sort_batcher_merge/common/include/common.hpp"
+#include "vasiliev_m_shell_sort_batcher_merge/omp/include/ops_omp.hpp"
 #include "vasiliev_m_shell_sort_batcher_merge/seq/include/ops_seq.hpp"
 
 namespace vasiliev_m_shell_sort_batcher_merge {
 
-class VasilievMShellSortBatcherMergePerfTestsSEQ : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class VasilievMShellSortBatcherMergePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
 
   void SetUp() override {
@@ -37,7 +38,7 @@ class VasilievMShellSortBatcherMergePerfTestsSEQ : public ppc::util::BaseRunPerf
     input_data_ = vec;
     std::vector<int> basic_vec = input_data_;
 
-    for (int i = 0; i < 500; i++) {
+    for (int i = 0; i < 1000; i++) {
       input_data_.insert(input_data_.end(), basic_vec.begin(), basic_vec.end());
     }
   }
@@ -52,20 +53,21 @@ class VasilievMShellSortBatcherMergePerfTestsSEQ : public ppc::util::BaseRunPerf
   }
 };
 
-TEST_P(VasilievMShellSortBatcherMergePerfTestsSEQ, RunPerfModes) {
+TEST_P(VasilievMShellSortBatcherMergePerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, VasilievMShellSortBatcherMergeSEQ>(
-    PPC_SETTINGS_vasiliev_m_shell_sort_batcher_merge);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, VasilievMShellSortBatcherMergeSEQ, VasilievMShellSortBatcherMergeOMP>(
+        PPC_SETTINGS_vasiliev_m_shell_sort_batcher_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = VasilievMShellSortBatcherMergePerfTestsSEQ::CustomPerfTestName;
+const auto kPerfTestName = VasilievMShellSortBatcherMergePerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(PerfBatcherTest, VasilievMShellSortBatcherMergePerfTestsSEQ, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PerfBatcherTest, VasilievMShellSortBatcherMergePerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
