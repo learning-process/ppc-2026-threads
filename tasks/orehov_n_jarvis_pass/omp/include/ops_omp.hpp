@@ -25,7 +25,7 @@ class OrehovNJarvisPassOMP : public BaseTask {
   [[nodiscard]] static double Distance(Point a, Point b);
   [[nodiscard]] Point FindNext(Point current) const;
   [[nodiscard]] Point FindLocalBest(Point current, Point initial_next) const;
-  void UpdateGlobalBest(Point current, Point local_next, Point &global_next) const;
+  void static UpdateGlobalBest(Point current, Point local_next, Point &global_next);
 
   std::vector<Point> res_;
   std::vector<Point> input_;

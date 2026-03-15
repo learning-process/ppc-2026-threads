@@ -70,7 +70,7 @@ Point OrehovNJarvisPassOMP::FindLocalBest(Point current, Point initial_next) con
   return local_next;
 }
 
-void OrehovNJarvisPassOMP::UpdateGlobalBest(Point current, Point local_next, Point &global_next) const {
+void OrehovNJarvisPassOMP::UpdateGlobalBest(Point current, Point local_next, Point &global_next) {
   double global_orient = CheckLeft(current, global_next, local_next);
   double current_orient = CheckLeft(current, global_next, global_next);
 
