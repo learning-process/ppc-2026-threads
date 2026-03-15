@@ -11,8 +11,8 @@
 #include <tuple>
 
 #include "lopatin_a_sobel_operator/common/include/common.hpp"
-#include "lopatin_a_sobel_operator/seq/include/ops_seq.hpp"
 #include "lopatin_a_sobel_operator/omp/include/ops_omp.hpp"
+#include "lopatin_a_sobel_operator/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
