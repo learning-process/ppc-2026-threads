@@ -17,7 +17,7 @@ namespace {
 double ComputeNodeContribution(size_t linear_idx, const std::vector<double> &a, const std::vector<double> &h,
                                const std::vector<int> &n, const std::vector<size_t> &strides,
                                const std::function<double(const std::vector<double> &)> &func) {
-  // Защита от пустой функции (для анализатора)
+  // Проверка func на всякий случай (для анализатора)
   if (!func) {
     return 0.0;
   }
@@ -48,6 +48,48 @@ double ComputeNodeContribution(size_t linear_idx, const std::vector<double> &a, 
     w_prod *= static_cast<double>(w);
   }
   return w_prod * func(point);
+}
+
+double ParallelSum(const std::vector<double> &a, const std::vector<double> &h, const std::vector<int> &n,
+                   const std::vector<size_t> &strides, const std::function<double(const std::vector<double> &)> &func,
+                   size_t total_points) {
+  unsigned int num_threads = std::thread::hardware_concurrency();
+  if (num_threads == 0) {
+    num_threads = 2;
+  }
+
+  size_t block_size = total_points / num_threads;
+  size_t remainder = total_points % num_threads;
+
+  std::vector<std::future<double>> futures;
+  size_t start = 0;
+
+  for (unsigned int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+    size_t end = std::min(start + block_size + (thread_idx < remainder ? 1 : 0), total_points);
+    if (start >= end) {
+      break;
+    }
+
+    // Захватываем start и end по значению, остальное по ссылке
+    futures.push_back(std::async(std::launch::async, [=, &a, &h, &n, &strides, &func]() {
+      double local_sum = 0.0;
+      for (size_t idx = start; idx < end; ++idx) {
+        local_sum += ComputeNodeContribution(idx, a, h, n, strides, func);
+      }
+      return local_sum;
+    }));
+
+    start = end;
+    if (start >= total_points) {
+      break;
+    }
+  }
+
+  double total = 0.0;
+  for (auto &f : futures) {
+    total += f.get();
+  }
+  return total;
 }
 
 }  // namespace
@@ -88,7 +130,6 @@ bool RedkinaAIntegralSimpsonSTL::PreProcessingImpl() {
 }
 
 bool RedkinaAIntegralSimpsonSTL::RunImpl() {
-  // Проверки для анализатора
   if (!func_) {
     return false;
   }
@@ -97,7 +138,7 @@ bool RedkinaAIntegralSimpsonSTL::RunImpl() {
     return false;
   }
 
-  // Шаги интегрирования по каждому измерению
+  // Вычисляем шаги по каждому измерению
   std::vector<double> h(dim);
   for (size_t i = 0; i < dim; ++i) {
     h[i] = (b_[i] - a_[i]) / static_cast<double>(n_[i]);
@@ -109,7 +150,7 @@ bool RedkinaAIntegralSimpsonSTL::RunImpl() {
     h_prod *= h[i];
   }
 
-  // Размеры сетки (количество точек в каждом измерении)
+  // Размеры сетки (количество точек в каждом измерении = n_i + 1)
   std::vector<int> dim_sizes(dim);
   size_t total_points = 1;
   for (size_t i = 0; i < dim; ++i) {
@@ -117,51 +158,15 @@ bool RedkinaAIntegralSimpsonSTL::RunImpl() {
     total_points *= static_cast<size_t>(dim_sizes[i]);
   }
 
-  // Вычисление strides (шагов для перехода между измерениями)
+  // Strides для перехода от линейного индекса к многомерному
   std::vector<size_t> strides(dim);
   strides[dim - 1] = 1;
   for (size_t i = dim - 1; i > 0; --i) {
     strides[i - 1] = strides[i] * static_cast<size_t>(dim_sizes[i]);
   }
 
-  // Параллельное суммирование с использованием std::async
-  unsigned int num_threads = std::thread::hardware_concurrency();
-  if (num_threads == 0) {
-    num_threads = 2;
-  }
-
-  size_t block_size = total_points / num_threads;
-  size_t remainder_points = total_points % num_threads;
-
-  std::vector<std::future<double>> futures;
-  size_t current_start = 0;
-
-  for (unsigned int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
-    size_t current_end = current_start + block_size + (thread_idx < remainder_points ? 1 : 0);
-    current_end = std::min(current_end, total_points);
-    if (current_start >= current_end) {
-      break;
-    }
-
-    // Запускаем асинхронную задачу. Захватываем необходимые данные:
-    // - this: для доступа к a_, h_, n_, func_
-    // - current_start, current_end: по значению
-    // - strides: копируем, так как это локальный вектор
-    futures.push_back(std::async(std::launch::async, [this, current_start, current_end, strides]() {
-      double local_sum = 0.0;
-      for (size_t idx = current_start; idx < current_end; ++idx) {
-        local_sum += ComputeNodeContribution(idx, a_, h_, n_, strides, func_);
-      }
-      return local_sum;
-    }));
-
-    current_start = current_end;
-  }
-
-  double sum = 0.0;
-  for (auto &fut : futures) {
-    sum += fut.get();
-  }
+  // Параллельное суммирование
+  double sum = ParallelSum(a_, h, n_, strides, func_, total_points);
 
   // Знаменатель (3^dim)
   double denominator = 1.0;
