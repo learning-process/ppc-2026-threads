@@ -106,7 +106,7 @@ void PapulinaYRadixSortOMP::MergeChunks(std::vector<std::span<double>> &chunks, 
     std::vector<std::vector<double>> next((chunks_copy.size() + 1) / 2);
 
 #pragma omp parallel for default(none) shared(chunks_copy, next, pair_count)
-    for (size_t i = 0; i <pair_count; ++i) {
+    for (size_t i = 0; i < pair_count; ++i) {
       size_t idx = i;
       next[idx] = Merge(chunks_copy[2 * idx], chunks_copy[(2 * idx) + 1]);
     }
