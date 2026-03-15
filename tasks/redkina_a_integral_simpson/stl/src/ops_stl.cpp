@@ -2,10 +2,9 @@
 
 #include <cmath>
 #include <cstddef>
-#include <execution>
 #include <functional>
-#include <iterator>
-#include <numeric>
+#include <future>
+#include <thread>
 #include <vector>
 
 #include "redkina_a_integral_simpson/common/include/common.hpp"
@@ -31,7 +30,7 @@ double ComputeNodeContribution(size_t linear_idx, const std::vector<double> &a, 
   double w_prod = 1.0;
   for (size_t i = 0; i < dim; ++i) {
     int idx = indices[i];
-    point[i] = a[i] + (static_cast<double>(idx) * h[i]);  // скобки для ясности
+    point[i] = a[i] + (static_cast<double>(idx) * h[i]);
 
     int w = 0;
     if (idx == 0 || idx == n[i]) {
@@ -44,6 +43,17 @@ double ComputeNodeContribution(size_t linear_idx, const std::vector<double> &a, 
     w_prod *= static_cast<double>(w);
   }
   return w_prod * func(point);
+}
+
+// Функция для вычисления суммы на диапазоне индексов
+double ComputeRange(size_t start, size_t end, const std::vector<double> &a, const std::vector<double> &h,
+                    const std::vector<int> &n, const std::vector<size_t> &strides,
+                    const std::function<double(const std::vector<double> &)> &func) {
+  double local_sum = 0.0;
+  for (size_t linear_idx = start; linear_idx < end; ++linear_idx) {
+    local_sum += ComputeNodeContribution(linear_idx, a, h, n, strides, func);
+  }
+  return local_sum;
 }
 
 }  // namespace
@@ -119,14 +129,42 @@ bool RedkinaAIntegralSimpsonSTL::RunImpl() {
     strides[i - 1] = strides[i] * static_cast<size_t>(dim_sizes[i]);
   }
 
-  // Создаем вектор индексов от 0 до total_points-1 для параллельного обхода
-  std::vector<size_t> indices(total_points);
-  std::iota(indices.begin(), indices.end(), size_t{0});
+  // Определяем количество потоков (можно использовать hardware_concurrency)
+  unsigned int num_threads = std::thread::hardware_concurrency();
+  if (num_threads == 0) {
+    num_threads = 2;  // запасной вариант
+  }
 
-  // Параллельное вычисление суммы с использованием transform_reduce
-  double sum = std::transform_reduce(
-      std::execution::par, indices.begin(), indices.end(), 0.0, std::plus<>(),
-      [&](size_t linear_idx) { return ComputeNodeContribution(linear_idx, a_, h, n_, strides, func_); });
+  // Размер блока для каждого потока
+  size_t block_size = total_points / num_threads;
+  size_t remainder = total_points % num_threads;
+
+  std::vector<std::future<double>> futures;
+  size_t start = 0;
+
+  // Запускаем асинхронные задачи
+  for (unsigned int t = 0; t < num_threads; ++t) {
+    size_t end = start + block_size + (t < remainder ? 1 : 0);
+    if (end > total_points) {
+      end = total_points;
+    }
+    if (start >= end) {
+      break;
+    }
+
+    futures.push_back(std::async(std::launch::async, ComputeRange, start, end, std::cref(a_), std::cref(h),
+                                 std::cref(n_), std::cref(strides), std::cref(func_)));
+    start = end;
+    if (start >= total_points) {
+      break;
+    }
+  }
+
+  // Собираем результаты
+  double sum = 0.0;
+  for (auto &fut : futures) {
+    sum += fut.get();
+  }
 
   // Знаменатель (3^dim)
   double denominator = 1.0;
