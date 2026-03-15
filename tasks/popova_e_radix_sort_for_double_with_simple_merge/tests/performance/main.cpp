@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "popova_e_radix_sort_for_double_with_simple_merge/common/include/common.hpp"
+#include "popova_e_radix_sort_for_double_with_simple_merge/omp/include/ops_omp.hpp"
 #include "popova_e_radix_sort_for_double_with_simple_merge/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -30,7 +31,8 @@ TEST_P(PopovaERadixSortRunPerfTestThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, PopovaERadixSorForDoubleWithSimpleMergeSEQ>(
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, PopovaERadixSorForDoubleWithSimpleMergeSEQ,
+                                                       PopovaERadixSorForDoubleWithSimpleMergeOMP>(
     PPC_SETTINGS_popova_e_radix_sort_for_double_with_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
