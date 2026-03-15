@@ -12,8 +12,8 @@
 #include "redkina_a_integral_simpson/common/include/common.hpp"
 #include "redkina_a_integral_simpson/omp/include/ops_omp.hpp"
 #include "redkina_a_integral_simpson/seq/include/ops_seq.hpp"
-#include "redkina_a_integral_simpson/tbb/include/ops_tbb.hpp"
 #include "redkina_a_integral_simpson/stl/include/ops_stl.hpp"
+#include "redkina_a_integral_simpson/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 

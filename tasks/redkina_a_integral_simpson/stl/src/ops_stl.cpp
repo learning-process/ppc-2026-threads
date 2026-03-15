@@ -15,10 +15,9 @@ namespace redkina_a_integral_simpson {
 namespace {
 
 // Вспомогательная функция для вычисления вклада узла по линейному индексу
-double ComputeNodeContribution(size_t linear_idx, const std::vector<double>& a,
-                                const std::vector<double>& h, const std::vector<int>& n,
-                                const std::vector<size_t>& strides,
-                                const std::function<double(const std::vector<double>&)>& func) {
+double ComputeNodeContribution(size_t linear_idx, const std::vector<double> &a, const std::vector<double> &h,
+                               const std::vector<int> &n, const std::vector<size_t> &strides,
+                               const std::function<double(const std::vector<double> &)> &func) {
   size_t dim = a.size();
   std::vector<double> point(dim);
   size_t remainder = linear_idx;
@@ -49,13 +48,13 @@ double ComputeNodeContribution(size_t linear_idx, const std::vector<double>& a,
 
 }  // namespace
 
-RedkinaAIntegralSimpsonSTL::RedkinaAIntegralSimpsonSTL(const InType& in) {
+RedkinaAIntegralSimpsonSTL::RedkinaAIntegralSimpsonSTL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
 bool RedkinaAIntegralSimpsonSTL::ValidationImpl() {
-  const auto& in = GetInput();
+  const auto &in = GetInput();
   size_t dim = in.a.size();
 
   if (dim == 0 || in.b.size() != dim || in.n.size() != dim) {
@@ -75,7 +74,7 @@ bool RedkinaAIntegralSimpsonSTL::ValidationImpl() {
 }
 
 bool RedkinaAIntegralSimpsonSTL::PreProcessingImpl() {
-  const auto& in = GetInput();
+  const auto &in = GetInput();
   func_ = in.func;
   a_ = in.a;
   b_ = in.b;
@@ -85,9 +84,13 @@ bool RedkinaAIntegralSimpsonSTL::PreProcessingImpl() {
 }
 
 bool RedkinaAIntegralSimpsonSTL::RunImpl() {
-  if (!func_) return false;
+  if (!func_) {
+    return false;
+  }
   size_t dim = a_.size();
-  if (dim == 0) return false;
+  if (dim == 0) {
+    return false;
+  }
 
   // Шаги интегрирования по каждому измерению
   std::vector<double> h(dim);
@@ -122,13 +125,8 @@ bool RedkinaAIntegralSimpsonSTL::RunImpl() {
 
   // Параллельное вычисление суммы с использованием transform_reduce
   double sum = std::transform_reduce(
-      std::execution::par,
-      indices.begin(), indices.end(),
-      0.0,
-      std::plus<>(),
-      [&](size_t linear_idx) {
-        return ComputeNodeContribution(linear_idx, a_, h, n_, strides, func_);
-      });
+      std::execution::par, indices.begin(), indices.end(), 0.0, std::plus<>(),
+      [&](size_t linear_idx) { return ComputeNodeContribution(linear_idx, a_, h, n_, strides, func_); });
 
   // Знаменатель (3^dim)
   double denominator = 1.0;
