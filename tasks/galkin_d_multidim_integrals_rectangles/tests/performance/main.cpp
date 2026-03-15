@@ -10,7 +10,6 @@
 #include "galkin_d_multidim_integrals_rectangles/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-
 namespace galkin_d_multidim_integrals_rectangles {
 
 class GalkinDRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
@@ -45,10 +44,8 @@ TEST_P(GalkinDRunPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, GalkinDMultidimIntegralsRectanglesOMP,
-                                GalkinDMultidimIntegralsRectanglesSEQ>(
+    ppc::util::MakeAllPerfTasks<InType, GalkinDMultidimIntegralsRectanglesOMP, GalkinDMultidimIntegralsRectanglesSEQ>(
         PPC_SETTINGS_galkin_d_multidim_integrals_rectangles);
-
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -59,4 +56,3 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, GalkinDRunPerfTests, kGtestValues, kPerfT
 }  // namespace
 
 }  // namespace galkin_d_multidim_integrals_rectangles
-

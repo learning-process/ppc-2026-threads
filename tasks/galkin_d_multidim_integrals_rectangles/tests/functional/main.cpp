@@ -13,7 +13,6 @@
 #include "galkin_d_multidim_integrals_rectangles/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 
-
 namespace galkin_d_multidim_integrals_rectangles {
 class GalkinDRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -107,11 +106,10 @@ const std::array<TestType, 23> kTestParam = {
              InType{[](const std::vector<double> &) { return 1.0; }, {{0.0, 100.0}, {0.0, 0.01}}, 200}, 1.0},
 };
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<GalkinDMultidimIntegralsRectanglesOMP, InType>(
-        kTestParam, PPC_SETTINGS_galkin_d_multidim_integrals_rectangles),
-    ppc::util::AddFuncTask<GalkinDMultidimIntegralsRectanglesSEQ, InType>(
-        kTestParam, PPC_SETTINGS_galkin_d_multidim_integrals_rectangles));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<GalkinDMultidimIntegralsRectanglesOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_galkin_d_multidim_integrals_rectangles),
+                                           ppc::util::AddFuncTask<GalkinDMultidimIntegralsRectanglesSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_galkin_d_multidim_integrals_rectangles));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
