@@ -62,7 +62,7 @@ void MelnikIRadixSortIntOMP::ParallelCountingSort(OutType &data, int exp, int of
   {
     const int thread_id = omp_get_thread_num();
     const int start = thread_id * chunk_size;
-    const int end = std::min(start + chunk_size, n);
+    const int end = (start + chunk_size < n) ? (start + chunk_size) : n;
     int *local_count = &local_counts[thread_id * kBuckets];
 
     for (int i = start; i < end; i++) {
@@ -92,7 +92,7 @@ void MelnikIRadixSortIntOMP::ParallelCountingSort(OutType &data, int exp, int of
   {
     const int thread_id = omp_get_thread_num();
     const int start = thread_id * chunk_size;
-    const int end = std::min(start + chunk_size, n);
+    const int end = (start + chunk_size < n) ? (start + chunk_size) : n;
 
     std::array<int, kBuckets> local_pos{};
     for (int b = 0; b < kBuckets; b++) {
