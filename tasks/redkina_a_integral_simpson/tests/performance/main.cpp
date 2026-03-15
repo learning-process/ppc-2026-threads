@@ -8,6 +8,7 @@
 #include "redkina_a_integral_simpson/omp/include/ops_omp.hpp"
 #include "redkina_a_integral_simpson/seq/include/ops_seq.hpp"
 #include "redkina_a_integral_simpson/tbb/include/ops_tbb.hpp"
+#include "redkina_a_integral_simpson/stl/include/ops_stl.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace redkina_a_integral_simpson {
@@ -50,15 +51,20 @@ const auto kAllPerfTasksOmp =
 const auto kAllPerfTasksTbb =
     ppc::util::MakeAllPerfTasks<InType, RedkinaAIntegralSimpsonTBB>(PPC_SETTINGS_redkina_a_integral_simpson);
 
-const auto kGtestValuesTbb = ppc::util::TupleToGTestValues(kAllPerfTasksTbb);
+const auto kAllPerfTasksStl =
+    ppc::util::MakeAllPerfTasks<InType, RedkinaAIntegralSimpsonSTL>(PPC_SETTINGS_redkina_a_integral_simpson);
+
 const auto kGtestValuesSeq = ppc::util::TupleToGTestValues(kAllPerfTasksSeq);
 const auto kGtestValuesOmp = ppc::util::TupleToGTestValues(kAllPerfTasksOmp);
+const auto kGtestValuesTbb = ppc::util::TupleToGTestValues(kAllPerfTasksTbb);
+const auto kGtestValuesStl = ppc::util::TupleToGTestValues(kAllPerfTasksStl);
 
 const auto kPerfTestName = RedkinaAIntegralSimpsonPerfTests::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(RunModeTestsSeq, RedkinaAIntegralSimpsonPerfTests, kGtestValuesSeq, kPerfTestName);
 INSTANTIATE_TEST_SUITE_P(RunModeTestsOmp, RedkinaAIntegralSimpsonPerfTests, kGtestValuesOmp, kPerfTestName);
 INSTANTIATE_TEST_SUITE_P(RunModeTestsTbb, RedkinaAIntegralSimpsonPerfTests, kGtestValuesTbb, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTestsStl, RedkinaAIntegralSimpsonPerfTests, kGtestValuesStl, kPerfTestName);
 
 }  // namespace
 
