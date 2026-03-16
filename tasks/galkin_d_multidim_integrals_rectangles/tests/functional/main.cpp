@@ -6,6 +6,7 @@
 #include <libenvpp/detail/environment.hpp>
 #include <limits>
 #include <numbers>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -46,37 +47,59 @@ class GalkinDRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, 
 
 namespace {
 
-void CheckRunWithZeroThreadsEnv() {
+InType MakeOmpInput(const std::function<double(const std::vector<double> &)> &func,
+                    std::vector<std::pair<double, double>> borders, int n) {
+  return InType{func, std::move(borders), n};
+}
+
+std::optional<OutType> RunOmpTaskWithZeroThreadsEnv() {
   env::detail::set_scoped_environment_variable scoped_threads("PPC_NUM_THREADS", "0");
-  InType input{[](const std::vector<double> &) { return 1.0; }, {{0.0, 1.0}}, 10};
+  const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &) { return 1.0; };
+  InType input = MakeOmpInput(func, {{0.0, 1.0}}, 10);
   GalkinDMultidimIntegralsRectanglesOMP task(input);
-  ASSERT_TRUE(task.Validation());
-  ASSERT_TRUE(task.PreProcessing());
-  ASSERT_TRUE(task.Run());
-  ASSERT_TRUE(task.PostProcessing());
-  EXPECT_NEAR(task.GetOutput(), 1.0, 1e-9);
+
+  if (!task.Validation()) {
+    return std::nullopt;
+  }
+  if (!task.PreProcessing()) {
+    return std::nullopt;
+  }
+  if (!task.Run()) {
+    return std::nullopt;
+  }
+  if (!task.PostProcessing()) {
+    return std::nullopt;
+  }
+
+  return task.GetOutput();
 }
 
 TEST(GalkinDOmpDirectTests, ValidationFailsForEmptyBorders) {
-  InType input{[](const std::vector<double> &) { return 1.0; }, {}, 10};
+  const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &) { return 1.0; };
+  InType input = MakeOmpInput(func, std::vector<std::pair<double, double>>{}, 10);
   GalkinDMultidimIntegralsRectanglesOMP task(input);
   EXPECT_FALSE(task.Validation());
 }
 
 TEST(GalkinDOmpDirectTests, ValidationFailsForNonFiniteBorder) {
-  InType input{[](const std::vector<double> &) { return 1.0; }, {{0.0, std::numeric_limits<double>::infinity()}}, 10};
+  const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &) { return 1.0; };
+  InType input = MakeOmpInput(func, {{0.0, std::numeric_limits<double>::infinity()}}, 10);
   GalkinDMultidimIntegralsRectanglesOMP task(input);
   EXPECT_FALSE(task.Validation());
 }
 
 TEST(GalkinDOmpDirectTests, ValidationFailsForInvalidInterval) {
-  InType input{[](const std::vector<double> &) { return 1.0; }, {{2.0, 1.0}}, 10};
+  const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &) { return 1.0; };
+  InType input = MakeOmpInput(func, {{2.0, 1.0}}, 10);
   GalkinDMultidimIntegralsRectanglesOMP task(input);
   EXPECT_FALSE(task.Validation());
 }
 
 TEST(GalkinDOmpDirectTests, RunFailsForNonFiniteFunctionValue) {
-  InType input{[](const std::vector<double> &) { return std::numeric_limits<double>::quiet_NaN(); }, {{0.0, 1.0}}, 10};
+  const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &) {
+    return std::numeric_limits<double>::quiet_NaN();
+  };
+  InType input = MakeOmpInput(func, {{0.0, 1.0}}, 10);
   GalkinDMultidimIntegralsRectanglesOMP task(input);
   ASSERT_TRUE(task.Validation());
   ASSERT_TRUE(task.PreProcessing());
@@ -84,7 +107,9 @@ TEST(GalkinDOmpDirectTests, RunFailsForNonFiniteFunctionValue) {
 }
 
 TEST(GalkinDOmpDirectTests, RunSucceedsWhenNumThreadsEnvIsZeroOrNegative) {
-  CheckRunWithZeroThreadsEnv();
+  const auto result = RunOmpTaskWithZeroThreadsEnv();
+  ASSERT_TRUE(result.has_value());
+  EXPECT_NEAR(*result, 1.0, 1e-9);
 }
 
 TEST_P(GalkinDRunFuncTests, MultiDimRectangleMethod) {
