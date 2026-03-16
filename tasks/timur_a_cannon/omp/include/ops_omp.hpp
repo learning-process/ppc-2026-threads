@@ -35,3 +35,4 @@ class TimurACannonMatrixMultiplicationOMP : public BaseTask {
 };
 
 }  // namespace timur_a_cannon
+
