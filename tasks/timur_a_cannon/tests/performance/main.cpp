@@ -53,4 +53,3 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, TimurACannonPerfTests, kGtestValues, kPer
 }  // namespace
 
 }  // namespace timur_a_cannon
-
