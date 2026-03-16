@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "tsyplakov_k_mul_double_crs_matrix/common/include/common.hpp"
-#include "tsyplakov_k_mul_double_crs_matrix/seq/include/ops_seq.hpp"
+#include "tsyplakov_k_mul_double_crs_matrix/omp/include/ops_omp.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -120,7 +120,7 @@ const std::array<TestType, 4> kTestParam = {std::make_tuple(1, "identity"), std:
                                             std::make_tuple(3, "zero_matrix"), std::make_tuple(4, "sparse_3x3")};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<TsyplakovKTestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_tsyplakov_k_mul_double_crs_matrix));
+    ppc::util::AddFuncTask<TsyplakovKTestTaskOMP, InType>(kTestParam, PPC_SETTINGS_tsyplakov_k_mul_double_crs_matrix));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = TsyplakovKRunFuncTestsThreads::PrintFuncTestName<TsyplakovKRunFuncTestsThreads>;
