@@ -165,14 +165,19 @@ bool KondrashovaVTaskOMP::RunImpl() {
 
   std::vector<int> local_labels(static_cast<size_t>(total), 0);
 
-#pragma omp parallel num_threads(num_threads) default(none) shared(local_labels, width_, height_, image_, num_threads) \
+  // Копируем члены класса в локальные переменные для OpenMP (требование MSVC)
+  const int width = width_;
+  const int height = height_;
+  const std::vector<uint8_t> image = image_;
+
+#pragma omp parallel num_threads(num_threads) default(none) shared(local_labels, width, height, image, num_threads) \
     firstprivate(max_labels_per_thread)
   {
     const int tid = omp_get_thread_num();
-    const int row_start = (tid * height_) / num_threads;
-    const int row_end = ((tid + 1) * height_) / num_threads;
+    const int row_start = (tid * height) / num_threads;
+    const int row_end = ((tid + 1) * height) / num_threads;
     const int label_offset = tid * max_labels_per_thread;
-    ScanStripe(row_start, row_end, width_, label_offset, image_, local_labels);
+    ScanStripe(row_start, row_end, width, label_offset, image, local_labels);
   }
 
   std::vector<int> parent(static_cast<size_t>(max_total_labels));
@@ -181,8 +186,8 @@ bool KondrashovaVTaskOMP::RunImpl() {
     parent[static_cast<size_t>(ii)] = ii;
   }
 
-  MergeHorizontal(height_, width_, local_labels, parent, rnk);
-  MergeBoundaries(height_, width_, num_threads, local_labels, parent, rnk);
+  MergeHorizontal(height, width, local_labels, parent, rnk);
+  MergeBoundaries(height, width, num_threads, local_labels, parent, rnk);
 
   std::vector<int> relabel_map(static_cast<size_t>(max_total_labels), 0);
   GetOutput().count = Relabel(total, local_labels, parent, relabel_map, labels_1d_);
