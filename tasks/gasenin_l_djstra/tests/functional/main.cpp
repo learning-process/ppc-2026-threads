@@ -8,6 +8,7 @@
 #include "gasenin_l_djstra/common/include/common.hpp"
 #include "gasenin_l_djstra/omp/include/ops_omp.hpp"
 #include "gasenin_l_djstra/seq/include/ops_seq.hpp"
+#include "gasenin_l_djstra/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -49,7 +50,8 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_t
 
 const auto kSeqTasks = ppc::util::AddFuncTask<GaseninLDjstraSEQ, InType>(kTestParam, PPC_SETTINGS_gasenin_l_djstra);
 const auto kOmpTasks = ppc::util::AddFuncTask<GaseninLDjstraOMP, InType>(kTestParam, PPC_SETTINGS_gasenin_l_djstra);
-const auto kTestTasksList = std::tuple_cat(kSeqTasks, kOmpTasks);
+const auto kTbbTasks = ppc::util::AddFuncTask<GaseninLDjstraTBB, InType>(kTestParam, PPC_SETTINGS_gasenin_l_djstra);
+const auto kTestTasksList = std::tuple_cat(kSeqTasks, kOmpTasks, kTbbTasks);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = GaseninLRunFuncTestsThreads::PrintFuncTestName<GaseninLRunFuncTestsThreads>;
