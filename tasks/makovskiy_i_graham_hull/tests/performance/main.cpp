@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "makovskiy_i_graham_hull/common/include/common.hpp"
+#include "makovskiy_i_graham_hull/omp/include/ops_omp.hpp"
 #include "makovskiy_i_graham_hull/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -38,7 +39,7 @@ TEST_P(MakovskiyIGrahamHullRunPerfTestsThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ConvexHullGrahamSEQ>(PPC_SETTINGS_makovskiy_i_graham_hull);
+    ppc::util::MakeAllPerfTasks<InType, ConvexHullGrahamSEQ, ConvexHullGrahamOMP>(PPC_SETTINGS_makovskiy_i_graham_hull);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
