@@ -31,8 +31,7 @@ bool SinevAMultMatrixFoxAlgorithmOMP::PreProcessingImpl() {
 }
 
 void SinevAMultMatrixFoxAlgorithmOMP::SimpleMultiply(size_t n, const std::vector<double> &a,
-                                                     const std::vector<double> &b,
-                                                     std::vector<double> &c) {
+                                                     const std::vector<double> &b, std::vector<double> &c) {
 #pragma omp parallel for default(none) shared(n, a, b, c) collapse(2)
   for (size_t i = 0; i < n; ++i) {
     for (size_t j = 0; j < n; ++j) {
@@ -45,17 +44,15 @@ void SinevAMultMatrixFoxAlgorithmOMP::SimpleMultiply(size_t n, const std::vector
   }
 }
 
-void SinevAMultMatrixFoxAlgorithmOMP::DecomposeToBlocks(const std::vector<double> &src,
-                                                        std::vector<double> &dst, size_t n,
-                                                        size_t bs, int q) {
+void SinevAMultMatrixFoxAlgorithmOMP::DecomposeToBlocks(const std::vector<double> &src, std::vector<double> &dst,
+                                                        size_t n, size_t bs, int q) {
 #pragma omp parallel for default(none) shared(src, dst, n, bs, q) collapse(2)
   for (int bi = 0; bi < q; ++bi) {
     for (int bj = 0; bj < q; ++bj) {
       const size_t block_off = (static_cast<size_t>((bi * q) + bj)) * (bs * bs);
       for (size_t i = 0; i < bs; ++i) {
         for (size_t j = 0; j < bs; ++j) {
-          const size_t src_idx = ((static_cast<size_t>(bi) * bs + i) * n) +
-                                  (static_cast<size_t>(bj) * bs + j);
+          const size_t src_idx = ((static_cast<size_t>(bi) * bs + i) * n) + (static_cast<size_t>(bj) * bs + j);
           const size_t dst_idx = block_off + i * bs + j;
           dst[dst_idx] = src[src_idx];
         }
@@ -64,9 +61,8 @@ void SinevAMultMatrixFoxAlgorithmOMP::DecomposeToBlocks(const std::vector<double
   }
 }
 
-void SinevAMultMatrixFoxAlgorithmOMP::AssembleFromBlocks(const std::vector<double> &src,
-                                                          std::vector<double> &dst, size_t n,
-                                                          size_t bs, int q) {
+void SinevAMultMatrixFoxAlgorithmOMP::AssembleFromBlocks(const std::vector<double> &src, std::vector<double> &dst,
+                                                         size_t n, size_t bs, int q) {
 #pragma omp parallel for default(none) shared(src, dst, n, bs, q) collapse(2)
   for (int bi = 0; bi < q; ++bi) {
     for (int bj = 0; bj < q; ++bj) {
@@ -74,8 +70,7 @@ void SinevAMultMatrixFoxAlgorithmOMP::AssembleFromBlocks(const std::vector<doubl
       for (size_t i = 0; i < bs; ++i) {
         for (size_t j = 0; j < bs; ++j) {
           const size_t src_idx = block_off + i * bs + j;
-          const size_t dst_idx = ((static_cast<size_t>(bi) * bs + i) * n) +
-                                  (static_cast<size_t>(bj) * bs + j);
+          const size_t dst_idx = ((static_cast<size_t>(bi) * bs + i) * n) + (static_cast<size_t>(bj) * bs + j);
           dst[dst_idx] = src[src_idx];
         }
       }
@@ -83,10 +78,8 @@ void SinevAMultMatrixFoxAlgorithmOMP::AssembleFromBlocks(const std::vector<doubl
   }
 }
 
-void SinevAMultMatrixFoxAlgorithmOMP::FoxStep(const std::vector<double> &blocks_a,
-                                               const std::vector<double> &blocks_b,
-                                               std::vector<double> &blocks_c, size_t bs, int q,
-                                               int step) {
+void SinevAMultMatrixFoxAlgorithmOMP::FoxStep(const std::vector<double> &blocks_a, const std::vector<double> &blocks_b,
+                                              std::vector<double> &blocks_c, size_t bs, int q, int step) {
   const size_t block_size_bytes = bs * bs;
 #pragma omp parallel for default(none) shared(blocks_a, blocks_b, blocks_c, bs, q, step, block_size_bytes) collapse(2)
   for (int i = 0; i < q; ++i) {
