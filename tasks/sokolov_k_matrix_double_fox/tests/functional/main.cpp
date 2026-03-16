@@ -6,6 +6,7 @@
 #include <tuple>
 
 #include "sokolov_k_matrix_double_fox/common/include/common.hpp"
+#include "sokolov_k_matrix_double_fox/omp/include/ops_omp.hpp"
 #include "sokolov_k_matrix_double_fox/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -56,6 +57,7 @@ const std::array<TestType, 12> kTestParam = {std::make_tuple(1, "single_element"
                                              std::make_tuple(100, "100x100")};
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<SokolovKMatrixDoubleFoxOMP, InType>(kTestParam, PPC_SETTINGS_sokolov_k_matrix_double_fox),
     ppc::util::AddFuncTask<SokolovKMatrixDoubleFoxSEQ, InType>(kTestParam, PPC_SETTINGS_sokolov_k_matrix_double_fox));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
