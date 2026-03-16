@@ -3,12 +3,14 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <functional>
 #include <libenvpp/detail/environment.hpp>
 #include <limits>
 #include <numbers>
 #include <optional>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "galkin_d_multidim_integrals_rectangles/common/include/common.hpp"
@@ -108,8 +110,9 @@ TEST(GalkinDOmpDirectTests, RunFailsForNonFiniteFunctionValue) {
 
 TEST(GalkinDOmpDirectTests, RunSucceedsWhenNumThreadsEnvIsZeroOrNegative) {
   const auto result = RunOmpTaskWithZeroThreadsEnv();
+  const OutType output = result.value_or(std::numeric_limits<double>::quiet_NaN());
   ASSERT_TRUE(result.has_value());
-  EXPECT_NEAR(*result, 1.0, 1e-9);
+  EXPECT_NEAR(output, 1.0, 1e-9);
 }
 
 TEST_P(GalkinDRunFuncTests, MultiDimRectangleMethod) {
