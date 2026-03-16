@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "bortsova_a_integrals_rectangle/common/include/common.hpp"
+#include "bortsova_a_integrals_rectangle/omp/include/ops_omp.hpp"
 #include "bortsova_a_integrals_rectangle/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -127,8 +128,10 @@ const std::array<TestType, 10> kTestParam = {
     std::make_tuple(9, "single_step"),
 };
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<BortsovaAIntegralsRectangleSEQ, InType>(
-    kTestParam, PPC_SETTINGS_bortsova_a_integrals_rectangle));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<BortsovaAIntegralsRectangleOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_bortsova_a_integrals_rectangle),
+                                           ppc::util::AddFuncTask<BortsovaAIntegralsRectangleSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_bortsova_a_integrals_rectangle));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
