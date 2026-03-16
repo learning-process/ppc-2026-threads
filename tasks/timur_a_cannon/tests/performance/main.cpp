@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
-#include <cstddef>
 #include <tuple>
 #include <vector>
 
@@ -14,15 +13,15 @@ namespace timur_a_cannon {
 
 class TimurACannonPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  InType input_data_;
+  InType input_data;
 
   void SetUp() override {
-    const int kCount = 512;
+    const int k_count = 512;
     int size_block = 32;
-    std::vector<std::vector<double>> matrix_a(kCount, std::vector<double>(kCount, 2.0));
-    std::vector<std::vector<double>> matrix_b(kCount, std::vector<double>(kCount, 3.0));
+    std::vector<std::vector<double>> matrix_a(k_count, std::vector<double>(k_count, 2.0));
+    std::vector<std::vector<double>> matrix_b(k_count, std::vector<double>(k_count, 3.0));
 
-    input_data_ = std::make_tuple(size_block, matrix_a, matrix_b);
+    input_data = std::make_tuple(size_block, matrix_a, matrix_b);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -30,7 +29,7 @@ class TimurACannonPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 };
 
