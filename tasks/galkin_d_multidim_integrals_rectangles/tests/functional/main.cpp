@@ -46,6 +46,17 @@ class GalkinDRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, 
 
 namespace {
 
+void CheckRunWithZeroThreadsEnv() {
+  env::detail::set_scoped_environment_variable scoped_threads("PPC_NUM_THREADS", "0");
+  InType input{[](const std::vector<double> &) { return 1.0; }, {{0.0, 1.0}}, 10};
+  GalkinDMultidimIntegralsRectanglesOMP task(input);
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+  EXPECT_NEAR(task.GetOutput(), 1.0, 1e-9);
+}
+
 TEST(GalkinDOmpDirectTests, ValidationFailsForEmptyBorders) {
   InType input{[](const std::vector<double> &) { return 1.0; }, {}, 10};
   GalkinDMultidimIntegralsRectanglesOMP task(input);
@@ -73,14 +84,7 @@ TEST(GalkinDOmpDirectTests, RunFailsForNonFiniteFunctionValue) {
 }
 
 TEST(GalkinDOmpDirectTests, RunSucceedsWhenNumThreadsEnvIsZeroOrNegative) {
-  env::detail::set_scoped_environment_variable scoped_threads("PPC_NUM_THREADS", "0");
-  InType input{[](const std::vector<double> &) { return 1.0; }, {{0.0, 1.0}}, 10};
-  GalkinDMultidimIntegralsRectanglesOMP task(input);
-  ASSERT_TRUE(task.Validation());
-  ASSERT_TRUE(task.PreProcessing());
-  ASSERT_TRUE(task.Run());
-  ASSERT_TRUE(task.PostProcessing());
-  EXPECT_NEAR(task.GetOutput(), 1.0, 1e-9);
+  CheckRunWithZeroThreadsEnv();
 }
 
 TEST_P(GalkinDRunFuncTests, MultiDimRectangleMethod) {
