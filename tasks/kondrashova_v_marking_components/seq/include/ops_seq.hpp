@@ -3,10 +3,10 @@
 #include <cstdint>
 #include <vector>
 
-#include "kondrashova_v_marking_components_seq/common/include/common.hpp"
+#include "kondrashova_v_marking_components/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace kondrashova_v_marking_components_seq {
+namespace kondrashova_v_marking_components {
 
 class KondrashovaVTaskSEQ : public BaseTask {
  public:
@@ -28,4 +28,4 @@ class KondrashovaVTaskSEQ : public BaseTask {
   std::vector<int> labels_1d_;
 };
 
-}  // namespace kondrashova_v_marking_components_seq
+}  // namespace kondrashova_v_marking_components

@@ -1,4 +1,4 @@
-#include "kondrashova_v_marking_components_seq/seq/include/ops_seq.hpp"
+#include "kondrashova_v_marking_components/seq/include/ops_seq.hpp"
 
 #include <array>
 #include <cstddef>
@@ -7,9 +7,9 @@
 #include <utility>
 #include <vector>
 
-#include "kondrashova_v_marking_components_seq/common/include/common.hpp"
+#include "kondrashova_v_marking_components/common/include/common.hpp"
 
-namespace kondrashova_v_marking_components_seq {
+namespace kondrashova_v_marking_components {
 
 KondrashovaVTaskSEQ::KondrashovaVTaskSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -115,4 +115,4 @@ bool KondrashovaVTaskSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace kondrashova_v_marking_components_seq
+}  // namespace kondrashova_v_marking_components
