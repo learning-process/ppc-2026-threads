@@ -3,18 +3,18 @@
 #include <functional>
 #include <vector>
 
-#include "redkina_a_integral_simpson_seq/common/include/common.hpp"
+#include "redkina_a_integral_simpson/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace redkina_a_integral_simpson_seq {
+namespace redkina_a_integral_simpson {
 
-class RedkinaAIntegralSimpsonSEQ : public BaseTask {
+class RedkinaAIntegralSimpsonOMP : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kSEQ;
+    return ppc::task::TypeOfTask::kOMP;
   }
 
-  explicit RedkinaAIntegralSimpsonSEQ(const InType &in);
+  explicit RedkinaAIntegralSimpsonOMP(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -29,4 +29,4 @@ class RedkinaAIntegralSimpsonSEQ : public BaseTask {
   double result_ = 0.0;
 };
 
-}  // namespace redkina_a_integral_simpson_seq
+}  // namespace redkina_a_integral_simpson
