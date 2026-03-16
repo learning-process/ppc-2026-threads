@@ -55,7 +55,6 @@ const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, TimurACannonMatrixMultiplication, TimurACannonMatrixMultiplicationOMP>(
         PPC_SETTINGS_timur_a_cannon);
 
-        
 const auto kPerfTestName = TimurACannonPerfTests::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(RunModeTests, TimurACannonPerfTests, kAllPerfTasks, kPerfTestName);
