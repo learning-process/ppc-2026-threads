@@ -1,13 +1,13 @@
-#include "redkina_a_integral_simpson_seq/seq/include/ops_seq.hpp"
+#include "redkina_a_integral_simpson/seq/include/ops_seq.hpp"
 
 #include <cmath>
 #include <cstddef>
 #include <functional>
 #include <vector>
 
-#include "redkina_a_integral_simpson_seq/common/include/common.hpp"
+#include "redkina_a_integral_simpson/common/include/common.hpp"
 
-namespace redkina_a_integral_simpson_seq {
+namespace redkina_a_integral_simpson {
 
 namespace {
 
@@ -122,4 +122,4 @@ bool RedkinaAIntegralSimpsonSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace redkina_a_integral_simpson_seq
+}  // namespace redkina_a_integral_simpson
