@@ -5,6 +5,7 @@
 #include "dergachev_a_graham_scan/common/include/common.hpp"
 #include "dergachev_a_graham_scan/omp/include/ops_omp.hpp"
 #include "dergachev_a_graham_scan/seq/include/ops_seq.hpp"
+#include "dergachev_a_graham_scan/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace dergachev_a_graham_scan {
@@ -34,7 +35,8 @@ namespace {
 
 const auto kAllPerfTasks = std::tuple_cat(
     ppc::util::MakePerfTaskTuples<DergachevAGrahamScanSEQ, InType>(PPC_SETTINGS_dergachev_a_graham_scan),
-    ppc::util::MakePerfTaskTuples<DergachevAGrahamScanOMP, InType>(PPC_SETTINGS_dergachev_a_graham_scan));
+    ppc::util::MakePerfTaskTuples<DergachevAGrahamScanOMP, InType>(PPC_SETTINGS_dergachev_a_graham_scan),
+    ppc::util::MakePerfTaskTuples<DergachevAGrahamScanTBB, InType>(PPC_SETTINGS_dergachev_a_graham_scan));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
