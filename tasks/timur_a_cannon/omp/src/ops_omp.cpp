@@ -1,4 +1,3 @@
-#include "timur_a_cannon/common/include/common.hpp"
 #include "timur_a_cannon/omp/include/ops_omp.hpp"
 
 #include <omp.h>
@@ -6,6 +5,8 @@
 #include <cstddef>
 #include <utility>
 #include <vector>
+
+#include "timur_a_cannon/common/include/common.hpp"
 
 namespace timur_a_cannon {
 
