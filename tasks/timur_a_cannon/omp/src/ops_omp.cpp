@@ -1,5 +1,7 @@
 #include "timur_a_cannon/omp/include/ops_omp.hpp"
+
 #include <omp.h>
+
 #include <cstddef>
 #include <utility>
 #include <vector>
@@ -17,7 +19,9 @@ bool TimurACannonMatrixMultiplicationOMP::ValidationImpl() {
   const auto &mat_a = std::get<1>(input);
   const auto &mat_b = std::get<2>(input);
 
-  if (b_size <= 0 || mat_a.empty() || mat_b.empty()) return false;
+  if (b_size <= 0 || mat_a.empty() || mat_b.empty()) {
+    return false;
+  }
   size_t n = mat_a.size();
   return (n == mat_a[0].size() && n == mat_b.size() && n == mat_b[0].size() && (n % static_cast<size_t>(b_size) == 0));
 }
@@ -50,8 +54,8 @@ void TimurACannonMatrixMultiplicationOMP::DistributeData(
       int shift = (i + j) % grid_sz;
       for (int row = 0; row < b_size; ++row) {
         for (int col = 0; col < b_size; ++col) {
-          bl_a[i][j][row][col] = src_a[(i * b_size) + row][((shift) * b_size) + col];
-          bl_b[i][j][row][col] = src_b[((shift) * b_size) + row][(j * b_size) + col];
+          bl_a[i][j][row][col] = src_a[(i * b_size) + row][((shift)*b_size) + col];
+          bl_b[i][j][row][col] = src_b[((shift)*b_size) + row][(j * b_size) + col];
         }
       }
     }
@@ -73,8 +77,8 @@ void TimurACannonMatrixMultiplicationOMP::CollectResult(
   }
 }
 
-void TimurACannonMatrixMultiplicationOMP::RotateBlocksA(std::vector<std::vector<std::vector<std::vector<double>>>> &blocks,
-                                                        int grid_sz) {
+void TimurACannonMatrixMultiplicationOMP::RotateBlocksA(
+    std::vector<std::vector<std::vector<std::vector<double>>>> &blocks, int grid_sz) {
 #pragma omp parallel for default(none) shared(blocks, grid_sz)
   for (int i = 0; i < grid_sz; ++i) {
     auto first_block = std::move(blocks[i][0]);
@@ -85,8 +89,8 @@ void TimurACannonMatrixMultiplicationOMP::RotateBlocksA(std::vector<std::vector<
   }
 }
 
-void TimurACannonMatrixMultiplicationOMP::RotateBlocksB(std::vector<std::vector<std::vector<std::vector<double>>>> &blocks,
-                                                        int grid_sz) {
+void TimurACannonMatrixMultiplicationOMP::RotateBlocksB(
+    std::vector<std::vector<std::vector<std::vector<double>>>> &blocks, int grid_sz) {
 #pragma omp parallel for default(none) shared(blocks, grid_sz)
   for (int j = 0; j < grid_sz; ++j) {
     auto first_block = std::move(blocks[0][j]);
