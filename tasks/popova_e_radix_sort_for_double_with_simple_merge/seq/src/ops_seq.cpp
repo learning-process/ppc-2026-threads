@@ -90,7 +90,7 @@ std::vector<double> MergeSorted(const std::vector<double> &left, const std::vect
 }
 
 bool IsSorted(const std::vector<double> &arr) {
-  for (size_t i = 1; i < arr.size(); ++i) {
+  for (size_t i = 1; i < arr.size(); i++) {
     if (arr[i - 1] > arr[i]) {
       return false;
     }
@@ -132,7 +132,7 @@ bool PopovaERadixSorForDoubleWithSimpleMergeSEQ::PreProcessingImpl() {
   int size = GetInput();
   array_.resize(size);
 
-  for (int i = 0; i < size; ++i) {
+  for (int i = 0; i < size; i++) {
     array_[i] = RandomDouble();
   }
 
@@ -150,10 +150,10 @@ bool PopovaERadixSorForDoubleWithSimpleMergeSEQ::RunImpl() {
   left_bits.reserve(mid);
   right_bits.reserve(array_.size() - mid);
 
-  for (size_t i = 0; i < mid; ++i) {
+  for (size_t i = 0; i < mid; i++) {
     left_bits.push_back(DoubleToSortable(array_[i]));
   }
-  for (size_t i = mid; i < array_.size(); ++i) {
+  for (size_t i = mid; i < array_.size(); i++) {
     right_bits.push_back(DoubleToSortable(array_[i]));
   }
 
@@ -163,10 +163,10 @@ bool PopovaERadixSorForDoubleWithSimpleMergeSEQ::RunImpl() {
   std::vector<double> left(left_bits.size());
   std::vector<double> right(right_bits.size());
 
-  for (size_t i = 0; i < left_bits.size(); ++i) {
+  for (size_t i = 0; i < left_bits.size(); i++) {
     left[i] = SortableToDouble(left_bits[i]);
   }
-  for (size_t i = 0; i < right_bits.size(); ++i) {
+  for (size_t i = 0; i < right_bits.size(); i++) {
     right[i] = SortableToDouble(right_bits[i]);
   }
 
