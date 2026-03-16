@@ -164,7 +164,8 @@ bool KondrashovaVTaskOMP::RunImpl() {
 
   std::vector<int> local_labels(static_cast<size_t>(total), 0);
 
-#pragma omp parallel num_threads(num_threads) default(none) shared(local_labels, max_labels_per_thread)
+#pragma omp parallel num_threads(num_threads) default(none) shared(local_labels, width_, height_, image_) \
+    firstprivate(max_labels_per_thread)
   {
     const int tid = omp_get_thread_num();
     const int row_start = (tid * height_) / num_threads;
