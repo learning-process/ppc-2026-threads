@@ -7,7 +7,7 @@
 
 #include "task/include/task.hpp"
 
-namespace kondrashova_v_marking_components_seq {
+namespace kondrashova_v_marking_components {
 
 struct ImageData {
   std::vector<uint8_t> data;
@@ -25,4 +25,4 @@ using OutType = Result;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace kondrashova_v_marking_components_seq
+}  // namespace kondrashova_v_marking_components
