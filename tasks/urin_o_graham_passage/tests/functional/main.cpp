@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "urin_o_graham_passage/common/include/common.hpp"
-#include "urin_o_graham_passage/seq/include/ops_seq.hpp"
+#include "urin_o_graham_passage/omp/include/ops_omp.hpp"  // ИЗМЕНЕНО: вместо seq
 
 namespace urin_o_graham_passage {
 namespace {
@@ -21,7 +21,7 @@ bool IsConvexHull(const std::vector<Point> &hull) {
     size_t prev = (i == 0) ? hull.size() - 1 : i - 1;
     size_t next = (i + 1) % hull.size();
 
-    if (UrinOGrahamPassageSEQ::Orientation(hull[prev], hull[i], hull[next]) < 0) {
+    if (UrinOGrahamPassageOMP::Orientation(hull[prev], hull[i], hull[next]) < 0) {  // ИЗМЕНЕНО
       return false;
     }
   }
@@ -29,41 +29,40 @@ bool IsConvexHull(const std::vector<Point> &hull) {
 }
 
 // Еще более мелкие функции для каждого шага
-bool ValidateTask(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+bool ValidateTask(const std::shared_ptr<UrinOGrahamPassageOMP> &task) {  // ИЗМЕНЕНО
   return task->Validation();
 }
 
-bool PreProcessTask(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+bool PreProcessTask(const std::shared_ptr<UrinOGrahamPassageOMP> &task) {  // ИЗМЕНЕНО
   return task->PreProcessing();
 }
 
-bool RunTask(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+bool RunTask(const std::shared_ptr<UrinOGrahamPassageOMP> &task) {  // ИЗМЕНЕНО
   return task->Run();
 }
 
-bool PostProcessTask(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+bool PostProcessTask(const std::shared_ptr<UrinOGrahamPassageOMP> &task) {  // ИЗМЕНЕНО
   return task->PostProcessing();
 }
 
 // Отдельные функции для проверок с EXPECT_
-void ExpectValidation(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+void ExpectValidation(const std::shared_ptr<UrinOGrahamPassageOMP> &task) {  // ИЗМЕНЕНО
   EXPECT_TRUE(ValidateTask(task));
 }
 
-void ExpectPreProcessing(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+void ExpectPreProcessing(const std::shared_ptr<UrinOGrahamPassageOMP> &task) {  // ИЗМЕНЕНО
   EXPECT_TRUE(PreProcessTask(task));
 }
 
-void ExpectRun(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+void ExpectRun(const std::shared_ptr<UrinOGrahamPassageOMP> &task) {  // ИЗМЕНЕНО
   EXPECT_TRUE(RunTask(task));
 }
 
-void ExpectPostProcessing(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+void ExpectPostProcessing(const std::shared_ptr<UrinOGrahamPassageOMP> &task) {  // ИЗМЕНЕНО
   EXPECT_TRUE(PostProcessTask(task));
 }
 
-// Теперь эта функция будет иметь низкую когнитивную сложность
-void ExecuteTaskPipeline(const std::shared_ptr<UrinOGrahamPassageSEQ> &task) {
+void ExecuteTaskPipeline(const std::shared_ptr<UrinOGrahamPassageOMP> &task) {  // ИЗМЕНЕНО
   ExpectValidation(task);
   ExpectPreProcessing(task);
   ExpectRun(task);
@@ -84,72 +83,72 @@ void VerifyHull(const std::vector<Point> &hull, size_t expected_size) {
 }
 
 void RunAndCheckHull(const InType &points, size_t expected_size) {
-  auto task = std::make_shared<UrinOGrahamPassageSEQ>(points);
+  auto task = std::make_shared<UrinOGrahamPassageOMP>(points);  // ИЗМЕНЕНО
   ExecuteTaskPipeline(task);
   VerifyHull(task->GetOutput(), expected_size);
 }
 
 void RunAndExpectFailure(const InType &points) {
-  auto task = std::make_shared<UrinOGrahamPassageSEQ>(points);
+  auto task = std::make_shared<UrinOGrahamPassageOMP>(points);  // ИЗМЕНЕНО
   EXPECT_FALSE(task->Validation());
   EXPECT_TRUE(task->GetOutput().empty());
 }
 
 // Тесты
-TEST(UrinOGrahamPassageSeq, EmptyInput) {
+TEST(UrinOGrahamPassageOmp, EmptyInput) {  // ИЗМЕНЕНО: Seq -> Omp
   RunAndExpectFailure({});
 }
 
-TEST(UrinOGrahamPassageSeq, SinglePoint) {
+TEST(UrinOGrahamPassageOmp, SinglePoint) {  // ИЗМЕНЕНО
   RunAndExpectFailure({Point(5.0, 3.0)});
 }
 
-TEST(UrinOGrahamPassageSeq, TwoDistinctPoints) {
+TEST(UrinOGrahamPassageOmp, TwoDistinctPoints) {  // ИЗМЕНЕНО
   RunAndExpectFailure({Point(0.0, 0.0), Point(3.0, 4.0)});
 }
 
-TEST(UrinOGrahamPassageSeq, CollinearPoints) {
+TEST(UrinOGrahamPassageOmp, CollinearPoints) {  // ИЗМЕНЕНО
   InType pts = {Point(0.0, 0.0), Point(1.0, 0.0), Point(2.0, 0.0), Point(3.0, 0.0), Point(4.0, 0.0)};
   RunAndCheckHull(pts, 2);
 }
 
-TEST(UrinOGrahamPassageSeq, TrianglePoints) {
+TEST(UrinOGrahamPassageOmp, TrianglePoints) {  // ИЗМЕНЕНО
   InType pts = {Point(0.0, 0.0), Point(4.0, 0.0), Point(2.0, 3.0)};
   RunAndCheckHull(pts, 3);
 }
 
-TEST(UrinOGrahamPassageSeq, SquarePoints) {
+TEST(UrinOGrahamPassageOmp, SquarePoints) {  // ИЗМЕНЕНО
   InType pts = {Point(0.0, 0.0), Point(4.0, 0.0), Point(4.0, 4.0), Point(0.0, 4.0)};
   RunAndCheckHull(pts, 4);
 }
 
-TEST(UrinOGrahamPassageSeq, SquareWithInteriorPoint) {
+TEST(UrinOGrahamPassageOmp, SquareWithInteriorPoint) {  // ИЗМЕНЕНО
   InType pts = {Point(0.0, 0.0), Point(4.0, 0.0), Point(4.0, 4.0), Point(0.0, 4.0), Point(2.0, 2.0)};
   RunAndCheckHull(pts, 4);
 }
 
-TEST(UrinOGrahamPassageSeq, RectangleWithCollinearPoints) {
+TEST(UrinOGrahamPassageOmp, RectangleWithCollinearPoints) {  // ИЗМЕНЕНО
   InType pts = {Point(0.0, 0.0), Point(1.0, 0.0), Point(2.0, 0.0), Point(3.0, 0.0),
                 Point(3.0, 1.0), Point(2.0, 1.0), Point(1.0, 1.0), Point(0.0, 1.0)};
   RunAndCheckHull(pts, 4);
 }
 
-TEST(UrinOGrahamPassageSeq, AllIdenticalPoints) {
+TEST(UrinOGrahamPassageOmp, AllIdenticalPoints) {  // ИЗМЕНЕНО
   InType pts = {Point(3.0, 3.0), Point(3.0, 3.0), Point(3.0, 3.0), Point(3.0, 3.0), Point(3.0, 3.0)};
   RunAndExpectFailure(pts);
 }
 
-TEST(UrinOGrahamPassageSeq, PointOnBoundary) {
+TEST(UrinOGrahamPassageOmp, PointOnBoundary) {  // ИЗМЕНЕНО
   InType pts = {Point(0.0, 0.0), Point(4.0, 0.0), Point(2.0, 0.0), Point(4.0, 4.0), Point(0.0, 4.0)};
   RunAndCheckHull(pts, 4);
 }
 
-TEST(UrinOGrahamPassageSeq, VerticalCollinear) {
+TEST(UrinOGrahamPassageOmp, VerticalCollinear) {  // ИЗМЕНЕНО
   InType pts = {Point(0.0, 0.0), Point(0.0, 1.0), Point(0.0, 2.0), Point(0.0, 5.0)};
   RunAndCheckHull(pts, 2);
 }
 
-TEST(UrinOGrahamPassageSeq, LargeRandomSet) {
+TEST(UrinOGrahamPassageOmp, LargeRandomSet) {  // ИЗМЕНЕНО
   InType pts;
   const int num_points = 100;
   pts.reserve(static_cast<size_t>(num_points));
@@ -162,7 +161,7 @@ TEST(UrinOGrahamPassageSeq, LargeRandomSet) {
   RunAndCheckHull(pts, 100);
 }
 
-TEST(UrinOGrahamPassageSeq, HexagonWithCenter) {
+TEST(UrinOGrahamPassageOmp, HexagonWithCenter) {  // ИЗМЕНЕНО
   InType pts = {Point(2.0, 0.0),    Point(1.0, 1.73),  Point(-1.0, 1.73), Point(-2.0, 0.0),
                 Point(-1.0, -1.73), Point(1.0, -1.73), Point(0.0, 0.0)};
   RunAndCheckHull(pts, 6);

@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "urin_o_graham_passage/common/include/common.hpp"
-#include "urin_o_graham_passage/seq/include/ops_seq.hpp"
+#include "urin_o_graham_passage/omp/include/ops_omp.hpp"  // ИЗМЕНЕНО
 
 namespace urin_o_graham_passage {
 namespace {
@@ -23,7 +23,7 @@ bool IsConvexHull(const std::vector<Point> &hull) {
     size_t prev = (i == 0) ? hull.size() - 1 : i - 1;
     size_t next = (i + 1) % hull.size();
 
-    if (UrinOGrahamPassageSEQ::Orientation(hull[prev], hull[i], hull[next]) < 0) {
+    if (UrinOGrahamPassageOMP::Orientation(hull[prev], hull[i], hull[next]) < 0) {  // ИЗМЕНЕНО
       return false;
     }
   }
@@ -48,41 +48,39 @@ class UrinOGrahamPassagePerfTest : public ::testing::Test {
   }
 };
 
-bool ValidateTask(UrinOGrahamPassageSEQ &task) {
+bool ValidateTask(UrinOGrahamPassageOMP &task) {  // ИЗМЕНЕНО
   return task.Validation();
 }
 
-bool PreProcessTask(UrinOGrahamPassageSEQ &task) {
+bool PreProcessTask(UrinOGrahamPassageOMP &task) {  // ИЗМЕНЕНО
   return task.PreProcessing();
 }
 
-bool RunTask(UrinOGrahamPassageSEQ &task) {
+bool RunTask(UrinOGrahamPassageOMP &task) {  // ИЗМЕНЕНО
   return task.Run();
 }
 
-bool PostProcessTask(UrinOGrahamPassageSEQ &task) {
+bool PostProcessTask(UrinOGrahamPassageOMP &task) {  // ИЗМЕНЕНО
   return task.PostProcessing();
 }
 
-// Отдельные функции для EXPECT_
-void ExpectValidation(UrinOGrahamPassageSEQ &task) {
+void ExpectValidation(UrinOGrahamPassageOMP &task) {  // ИЗМЕНЕНО
   EXPECT_TRUE(ValidateTask(task));
 }
 
-void ExpectPreProcessing(UrinOGrahamPassageSEQ &task) {
+void ExpectPreProcessing(UrinOGrahamPassageOMP &task) {  // ИЗМЕНЕНО
   EXPECT_TRUE(PreProcessTask(task));
 }
 
-void ExpectRun(UrinOGrahamPassageSEQ &task) {
+void ExpectRun(UrinOGrahamPassageOMP &task) {  // ИЗМЕНЕНО
   EXPECT_TRUE(RunTask(task));
 }
 
-void ExpectPostProcessing(UrinOGrahamPassageSEQ &task) {
+void ExpectPostProcessing(UrinOGrahamPassageOMP &task) {  // ИЗМЕНЕНО
   EXPECT_TRUE(PostProcessTask(task));
 }
 
-// Теперь эта функция имеет низкую когнитивную сложность
-void RunTaskPipeline(UrinOGrahamPassageSEQ &task) {
+void RunTaskPipeline(UrinOGrahamPassageOMP &task) {  // ИЗМЕНЕНО
   ExpectValidation(task);
   ExpectPreProcessing(task);
   ExpectRun(task);
@@ -95,15 +93,15 @@ void CheckHullValidity(const std::vector<Point> &hull) {
 }
 
 void PrintPerformanceResult(size_t num_points, int64_t ms, size_t hull_size) {
-  std::cout << "SEQ version with " << num_points << " points took " << ms << " ms\n";
+  std::cout << "OMP version with " << num_points << " points took " << ms << " ms\n";  // ИЗМЕНЕНО
   std::cout << "Convex hull size: " << hull_size << "\n";
 }
 
-TEST_F(UrinOGrahamPassagePerfTest, SeqPerformance) {
+TEST_F(UrinOGrahamPassagePerfTest, OmpPerformance) {  // ИЗМЕНЕНО
   const size_t num_points = 10000;
   InType input_points = GenerateRandomPoints(num_points);
 
-  UrinOGrahamPassageSEQ task(input_points);
+  UrinOGrahamPassageOMP task(input_points);  // ИЗМЕНЕНО
 
   auto start = std::chrono::high_resolution_clock::now();
   RunTaskPipeline(task);
@@ -122,7 +120,7 @@ TEST_F(UrinOGrahamPassagePerfTest, DifferentSizes) {
 
   for (size_t size : sizes) {
     InType test_points = GenerateRandomPoints(size);
-    UrinOGrahamPassageSEQ task(test_points);
+    UrinOGrahamPassageOMP task(test_points);  // ИЗМЕНЕНО
 
     auto start = std::chrono::high_resolution_clock::now();
     RunTaskPipeline(task);
