@@ -20,7 +20,7 @@ constexpr int kKernelSum = 16;
 using KernelRow = std::array<int, kKernelSize>;
 constexpr std::array<KernelRow, kKernelSize> kKernel = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
 
-static uint8_t CalculatePixel(const uint8_t *in, int py, int px, int w, int h, int ch) {
+uint8_t CalculatePixel(const uint8_t *in, int py, int px, int w, int h, int ch) {
   int sum = 0;
   for (int ky = -1; ky <= 1; ++ky) {
     for (int kx = -1; kx <= 1; ++kx) {
@@ -30,7 +30,9 @@ static uint8_t CalculatePixel(const uint8_t *in, int py, int px, int w, int h, i
       size_t idx = (((static_cast<size_t>(ny) * static_cast<size_t>(w)) + static_cast<size_t>(nx)) * 3) +
                    static_cast<size_t>(ch);
 
-      sum += static_cast<int>(in[idx]) * kKernel.at(static_cast<size_t>(ky + 1)).at(static_cast<size_t>(kx + 1));
+      size_t row_idx = static_cast<size_t>(ky) + 1;
+      size_t col_idx = static_cast<size_t>(kx) + 1;
+      sum += static_cast<int>(in[idx]) * kKernel.at(row_idx).at(col_idx);
     }
   }
   return static_cast<uint8_t>(sum / kKernelSum);
@@ -61,7 +63,7 @@ bool BuzulukskiDGausGorizontalOMP::PreProcessingImpl() {
   return true;
 }
 
-void BuzulukskiDGausGorizontalOMP::ApplyGaussianToPixel(int py, int px) {
+[[maybe_unused]] void BuzulukskiDGausGorizontalOMP::ApplyGaussianToPixel(int py, int px) {
   (void)py;
   (void)px;
 }
