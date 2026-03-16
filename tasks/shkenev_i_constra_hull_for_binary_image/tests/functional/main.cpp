@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "shkenev_i_constra_hull_for_binary_image/common/include/common.hpp"
+#include "shkenev_i_constra_hull_for_binary_image/omp/include/ops_omp.hpp"
 #include "shkenev_i_constra_hull_for_binary_image/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 
@@ -152,8 +153,10 @@ const std::array<TestType, 5> kParams = {std::make_tuple(0, "one"), std::make_tu
                                          std::make_tuple(2, "three"), std::make_tuple(3, "four"),
                                          std::make_tuple(4, "fivee")};
 
-const auto kTasks = ppc::util::AddFuncTask<ShkenevIConstrHullSeq, InType>(
-    kParams, PPC_SETTINGS_shkenev_i_constra_hull_for_binary_image);
+const auto kTasks = std::tuple_cat(ppc::util::AddFuncTask<ShkenevIConstrHullSeq, InType>(
+                                       kParams, PPC_SETTINGS_shkenev_i_constra_hull_for_binary_image),
+                                   ppc::util::AddFuncTask<ShkenevIConstrHullOMP, InType>(
+                                       kParams, PPC_SETTINGS_shkenev_i_constra_hull_for_binary_image));
 
 const auto kValues = ppc::util::ExpandToValues(kTasks);
 const auto kName = ShkenevIConstrHullFuncTests::PrintFuncTestName<ShkenevIConstrHullFuncTests>;
