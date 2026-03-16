@@ -3,7 +3,7 @@
 #include "sinev_a_mult_matrix_fox_algorithm/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace sinev_a_mult_matrix_fox_algorithm_seq {
+namespace sinev_a_mult_matrix_fox_algorithm {
 
 class SinevAMultMatrixFoxAlgorithmSEQ : public BaseTask {
  public:
@@ -19,4 +19,4 @@ class SinevAMultMatrixFoxAlgorithmSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace sinev_a_mult_matrix_fox_algorithm_seq
+}  // namespace sinev_a_mult_matrix_fox_algorithm

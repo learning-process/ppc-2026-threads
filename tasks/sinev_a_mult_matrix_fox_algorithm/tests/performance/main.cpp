@@ -9,7 +9,7 @@
 #include "sinev_a_mult_matrix_fox_algorithm/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace sinev_a_mult_matrix_fox_algorithm_seq {
+namespace sinev_a_mult_matrix_fox_algorithm {
 
 // ИСПРАВЛЕНО: Уникальное имя класса
 class SinevAPerformanceTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
@@ -93,4 +93,4 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, SinevAPerformanceTest, kGtestValues, kPer
 
 }  // namespace
 
-}  // namespace sinev_a_mult_matrix_fox_algorithm_seq
+}  // namespace sinev_a_mult_matrix_fox_algorithm
