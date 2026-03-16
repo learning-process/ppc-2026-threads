@@ -94,7 +94,7 @@ void SinevAMultMatrixFoxAlgorithmOMP::FoxStep(const std::vector<double> &blocks_
         for (size_t kk = 0; kk < bs; ++kk) {
           const double val = blocks_a[a_off + (ii * bs) + kk];
           for (size_t jj = 0; jj < bs; ++jj) {
-            blocks_c[c_off + ii * bs + jj] += val * blocks_b[b_off + kk * bs + jj];
+            blocks_c[c_off + (ii * bs) + jj] += val * blocks_b[b_off + (kk * bs) + jj];
           }
         }
       }
@@ -118,14 +118,8 @@ bool SinevAMultMatrixFoxAlgorithmOMP::RunImpl() {
   const int num_threads = omp_get_max_threads();
   int q = static_cast<int>(std::sqrt(static_cast<double>(num_threads)));
 
-  int grid_size = q;
-  while (grid_size * grid_size > num_threads) {
-    --grid_size;
-  }
-  grid_size = std::max(grid_size, 1);
-
   size_t bs = 1;
-  const size_t sqrt_n = static_cast<size_t>(std::sqrt(static_cast<double>(n)));
+  auto sqrt_n = static_cast<size_t>(std::sqrt(static_cast<double>(n)));
   for (size_t div = sqrt_n; div >= 1; --div) {
     if (n % div == 0) {
       bs = div;
@@ -135,8 +129,8 @@ bool SinevAMultMatrixFoxAlgorithmOMP::RunImpl() {
 
   const int actual_q = static_cast<int>(n / bs);
 
-  const size_t total_blocks = static_cast<size_t>(actual_q) * static_cast<size_t>(actual_q);
-  const size_t block_elements = bs * bs;
+  auto total_blocks = static_cast<size_t>(actual_q) * static_cast<size_t>(actual_q);
+  auto block_elements = bs * bs;
 
   std::vector<double> blocks_a(total_blocks * block_elements);
   std::vector<double> blocks_b(total_blocks * block_elements);
