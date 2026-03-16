@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "sizov_d_sparse_crs_mult/common/include/common.hpp"
+#include "sizov_d_sparse_crs_mult/omp/include/ops_omp.hpp"
 #include "sizov_d_sparse_crs_mult/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -119,13 +120,14 @@ const std::array<TestType, 6> kTestParams = {
 };
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<SizovDSparseCRSMultOMP, InType>(kTestParams, PPC_SETTINGS_sizov_d_sparse_crs_mult),
     ppc::util::AddFuncTask<SizovDSparseCRSMultSEQ, InType>(kTestParams, PPC_SETTINGS_sizov_d_sparse_crs_mult));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = SizovDSparseCRSMultFuncTests::PrintFuncTestName<SizovDSparseCRSMultFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(SparseCRSMultSEQTests, SizovDSparseCRSMultFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(SparseCRSMultTests, SizovDSparseCRSMultFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
