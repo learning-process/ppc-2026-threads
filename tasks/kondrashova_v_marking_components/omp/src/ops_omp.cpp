@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "kondrashova_v_marking_components/common/include/common.hpp"
@@ -69,7 +70,7 @@ int GetNeighborLabel(int ii, int jj, int di, int dj, int row_start, int row_end,
   if (ni < row_start || ni >= row_end || nj < 0 || nj >= width) {
     return 0;
   }
-  auto nidx = static_cast<size_t>(ni) * static_cast<size_t>(width) + static_cast<size_t>(nj);
+  auto nidx = (static_cast<size_t>(ni) * static_cast<size_t>(width)) + static_cast<size_t>(nj);
   if (image[nidx] == 0) {
     return local_labels[nidx];
   }
@@ -81,7 +82,7 @@ void ScanStripe(int row_start, int row_end, int width, int label_offset, const s
   int current_label = label_offset;
   for (int ii = row_start; ii < row_end; ++ii) {
     for (int jj = 0; jj < width; ++jj) {
-      auto idx = static_cast<size_t>(ii) * static_cast<size_t>(width) + static_cast<size_t>(jj);
+      auto idx = (static_cast<size_t>(ii) * static_cast<size_t>(width)) + static_cast<size_t>(jj);
       if (image[idx] != 0) {
         continue;
       }
@@ -106,8 +107,8 @@ void MergeHorizontal(int height, int width, const std::vector<int> &local_labels
                      std::vector<int> &rnk) {
   for (int ii = 0; ii < height; ++ii) {
     for (int jj = 1; jj < width; ++jj) {
-      auto idx = static_cast<size_t>(ii) * static_cast<size_t>(width) + static_cast<size_t>(jj);
-      auto lidx = static_cast<size_t>(ii) * static_cast<size_t>(width) + static_cast<size_t>(jj - 1);
+      auto idx = (static_cast<size_t>(ii) * static_cast<size_t>(width)) + static_cast<size_t>(jj);
+      auto lidx = (static_cast<size_t>(ii) * static_cast<size_t>(width)) + static_cast<size_t>(jj - 1);
       if (local_labels[idx] != 0 && local_labels[lidx] != 0 && local_labels[idx] != local_labels[lidx]) {
         Unite(parent, rnk, local_labels[idx], local_labels[lidx]);
       }
@@ -123,8 +124,8 @@ void MergeBoundaries(int height, int width, int num_threads, const std::vector<i
       continue;
     }
     for (int jj = 0; jj < width; ++jj) {
-      auto idx = static_cast<size_t>(boundary_row) * static_cast<size_t>(width) + static_cast<size_t>(jj);
-      auto tidx = static_cast<size_t>(boundary_row - 1) * static_cast<size_t>(width) + static_cast<size_t>(jj);
+      auto idx = (static_cast<size_t>(boundary_row) * static_cast<size_t>(width)) + static_cast<size_t>(jj);
+      auto tidx = (static_cast<size_t>(boundary_row - 1) * static_cast<size_t>(width)) + static_cast<size_t>(jj);
       if (local_labels[idx] != 0 && local_labels[tidx] != 0 && local_labels[idx] != local_labels[tidx]) {
         Unite(parent, rnk, local_labels[idx], local_labels[tidx]);
       }
@@ -198,7 +199,7 @@ bool KondrashovaVTaskOMP::PostProcessingImpl() {
   GetOutput().labels.assign(height_, std::vector<int>(width_, 0));
   for (int ii = 0; ii < height_; ++ii) {
     for (int jj = 0; jj < width_; ++jj) {
-      auto idx = static_cast<size_t>(ii) * static_cast<size_t>(width_) + static_cast<size_t>(jj);
+      auto idx = (static_cast<size_t>(ii) * static_cast<size_t>(width_)) + static_cast<size_t>(jj);
       GetOutput().labels[ii][jj] = labels_1d_[idx];
     }
   }
