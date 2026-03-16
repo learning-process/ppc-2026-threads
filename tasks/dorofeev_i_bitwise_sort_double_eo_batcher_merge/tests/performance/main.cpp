@@ -4,6 +4,7 @@
 #include <random>
 
 #include "dorofeev_i_bitwise_sort_double_eo_batcher_merge/common/include/common.hpp"
+#include "dorofeev_i_bitwise_sort_double_eo_batcher_merge/omp/include/ops_omp.hpp"
 #include "dorofeev_i_bitwise_sort_double_eo_batcher_merge/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -43,13 +44,13 @@ TEST_P(DorofeevIPerfTestThreads, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType,
-                                                       /*DorofeevIBitwiseSortDoubleEOBatcherMergeALL,*/
-                                                       /*DorofeevIBitwiseSortDoubleEOBatcherMergeOMP,*/
-                                                       DorofeevIBitwiseSortDoubleEOBatcherMergeSEQ
-                                                       /*DorofeevIBitwiseSortDoubleEOBatcherMergeSTL,*/
-                                                       /*DorofeevIBitwiseSortDoubleEOBatcherMergeTBB*/>(
-    PPC_SETTINGS_dorofeev_i_bitwise_sort_double_eo_batcher_merge);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType,
+                                /*DorofeevIBitwiseSortDoubleEOBatcherMergeALL,*/
+                                DorofeevIBitwiseSortDoubleEOBatcherMergeOMP, DorofeevIBitwiseSortDoubleEOBatcherMergeSEQ
+                                /*DorofeevIBitwiseSortDoubleEOBatcherMergeSTL,*/
+                                /*DorofeevIBitwiseSortDoubleEOBatcherMergeTBB*/>(
+        PPC_SETTINGS_dorofeev_i_bitwise_sort_double_eo_batcher_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
