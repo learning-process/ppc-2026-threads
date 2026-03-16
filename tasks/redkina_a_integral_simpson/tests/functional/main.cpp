@@ -132,6 +132,7 @@ const auto kTestTasksListOmp =
     ppc::util::AddFuncTask<RedkinaAIntegralSimpsonOMP, InType>(kTestCases, PPC_SETTINGS_redkina_a_integral_simpson);
 const auto kGtestValuesOmp = ppc::util::ExpandToValues(kTestTasksListOmp);
 
+
 const auto kTestTasksListTbb =
     ppc::util::AddFuncTask<RedkinaAIntegralSimpsonTBB, InType>(kTestCases, PPC_SETTINGS_redkina_a_integral_simpson);
 const auto kGtestValuesTbb = ppc::util::ExpandToValues(kTestTasksListTbb);
@@ -141,6 +142,7 @@ const auto kTestName = RedkinaAIntegralSimpsonFuncTests::PrintFuncTestName<Redki
 INSTANTIATE_TEST_SUITE_P(IntegralSimpsonTestsSeq, RedkinaAIntegralSimpsonFuncTests, kGtestValuesSeq, kTestName);
 INSTANTIATE_TEST_SUITE_P(IntegralSimpsonTestsOmp, RedkinaAIntegralSimpsonFuncTests, kGtestValuesOmp, kTestName);
 INSTANTIATE_TEST_SUITE_P(IntegralSimpsonTestsTbb, RedkinaAIntegralSimpsonFuncTests, kGtestValuesTbb, kTestName);
+
 
 TEST_P(RedkinaAIntegralSimpsonFuncTests, CheckIntegral) {
   ExecuteTest(GetParam());
