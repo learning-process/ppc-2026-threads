@@ -8,6 +8,7 @@
 #include <tuple>
 
 #include "smetanin_d_hoare_even_odd_batchelor/common/include/common.hpp"
+#include "smetanin_d_hoare_even_odd_batchelor/omp/include/ops_omp.hpp"
 #include "smetanin_d_hoare_even_odd_batchelor/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -59,8 +60,9 @@ const std::array<TestType, 7> kTestParam = {
     std::make_tuple(10000, "big"),
 };
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<SmetaninDHoarSortSEQ, InType>(kTestParam, PPC_SETTINGS_smetanin_d_hoare_even_odd_batchelor);
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<SmetaninDHoarSortOMP, InType>(kTestParam, PPC_SETTINGS_smetanin_d_hoare_even_odd_batchelor),
+    ppc::util::AddFuncTask<SmetaninDHoarSortSEQ, InType>(kTestParam, PPC_SETTINGS_smetanin_d_hoare_even_odd_batchelor));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
