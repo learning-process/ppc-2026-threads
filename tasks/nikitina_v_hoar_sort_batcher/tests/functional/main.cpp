@@ -6,6 +6,7 @@
 #include <tuple>
 
 #include "nikitina_v_hoar_sort_batcher/common/include/common.hpp"
+#include "nikitina_v_hoar_sort_batcher/omp/include/ops_omp.hpp"
 #include "nikitina_v_hoar_sort_batcher/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 
@@ -60,7 +61,8 @@ const std::array<TestType, 4> kTestParam = {std::make_tuple(1, "empty"), std::ma
                                             std::make_tuple(3, "reverse"), std::make_tuple(4, "random")};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<HoareSortBatcherSEQ, InType>(kTestParam, PPC_SETTINGS_nikitina_v_hoar_sort_batcher));
+    ppc::util::AddFuncTask<HoareSortBatcherSEQ, InType>(kTestParam, PPC_SETTINGS_nikitina_v_hoar_sort_batcher),
+    ppc::util::AddFuncTask<HoareSortBatcherOMP, InType>(kTestParam, PPC_SETTINGS_nikitina_v_hoar_sort_batcher));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
