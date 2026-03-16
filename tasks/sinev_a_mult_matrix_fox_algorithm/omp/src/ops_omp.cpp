@@ -115,9 +115,6 @@ bool SinevAMultMatrixFoxAlgorithmOMP::RunImpl() {
     return true;
   }
 
-  const int num_threads = omp_get_max_threads();
-  int q = static_cast<int>(std::sqrt(static_cast<double>(num_threads)));
-
   size_t bs = 1;
   auto sqrt_n = static_cast<size_t>(std::sqrt(static_cast<double>(n)));
   for (size_t div = sqrt_n; div >= 1; --div) {
