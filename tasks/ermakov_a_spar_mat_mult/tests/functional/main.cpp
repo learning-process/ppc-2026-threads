@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "ermakov_a_spar_mat_mult/common/include/common.hpp"
+#include "ermakov_a_spar_mat_mult/omp/include/ops_omp.hpp"
 #include "ermakov_a_spar_mat_mult/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -210,8 +211,9 @@ TEST_P(ErmakovARunFuncTestSparMatMult, MatmulCRSSeq) {
 const std::array<TestType, 4> kTestParam = {std::make_tuple(3, "SmallFixed"), std::make_tuple(10, "VerySparse"),
                                             std::make_tuple(20, "MediumSparse"), std::make_tuple(30, "Dense")};
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<ErmakovASparMatMultSEQ, InType>(kTestParam, PPC_SETTINGS_ermakov_a_spar_mat_mult);
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<ErmakovASparMatMultOMP, InType>(kTestParam, PPC_SETTINGS_ermakov_a_spar_mat_mult),
+    ppc::util::AddFuncTask<ErmakovASparMatMultSEQ, InType>(kTestParam, PPC_SETTINGS_ermakov_a_spar_mat_mult));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
