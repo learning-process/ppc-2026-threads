@@ -11,6 +11,7 @@
 #include "peryashkin_v_binary_component_contour_processing/common/include/common.hpp"
 #include "peryashkin_v_binary_component_contour_processing/omp/include/ops_omp.hpp"
 #include "peryashkin_v_binary_component_contour_processing/seq/include/ops_seq.hpp"
+#include "peryashkin_v_binary_component_contour_processing/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -156,12 +157,17 @@ class PeryashkinVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutTy
 
 using PeryashkinVRunFuncTestsSEQ = PeryashkinVRunFuncTests<PeryashkinVBinaryComponentContourProcessingSEQ>;
 using PeryashkinVRunFuncTestsOMP = PeryashkinVRunFuncTests<PeryashkinVBinaryComponentContourProcessingOMP>;
+using PeryashkinVRunFuncTestsTBB = PeryashkinVRunFuncTests<PeryashkinVBinaryComponentContourProcessingTBB>;
 
 TEST_P(PeryashkinVRunFuncTestsSEQ, BinaryComponentContourSEQ) {
   ExecuteTest(GetParam());
 }
 
 TEST_P(PeryashkinVRunFuncTestsOMP, BinaryComponentContourOMP) {
+  ExecuteTest(GetParam());
+}
+
+TEST_P(PeryashkinVRunFuncTestsTBB, BinaryComponentContourTBB) {
   ExecuteTest(GetParam());
 }
 
@@ -181,14 +187,21 @@ const auto kOmpTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<PeryashkinVBinaryComponentContourProcessingOMP, InType>(
         kTestParam, PPC_SETTINGS_peryashkin_v_binary_component_contour_processing));
 
+const auto kTbbTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<PeryashkinVBinaryComponentContourProcessingTBB, InType>(
+        kTestParam, PPC_SETTINGS_peryashkin_v_binary_component_contour_processing));
+
 const auto kSeqValues = ppc::util::ExpandToValues(kSeqTasksList);
 const auto kOmpValues = ppc::util::ExpandToValues(kOmpTasksList);
+const auto kTbbValues = ppc::util::ExpandToValues(kTbbTasksList);
 
 const auto kNameFnSeq = PeryashkinVRunFuncTestsSEQ::PrintFuncTestName<PeryashkinVRunFuncTestsSEQ>;
 const auto kNameFnOmp = PeryashkinVRunFuncTestsOMP::PrintFuncTestName<PeryashkinVRunFuncTestsOMP>;
+const auto kNameFnTbb = PeryashkinVRunFuncTestsTBB::PrintFuncTestName<PeryashkinVRunFuncTestsTBB>;
 
 INSTANTIATE_TEST_SUITE_P(FuncTests, PeryashkinVRunFuncTestsSEQ, kSeqValues, kNameFnSeq);
 INSTANTIATE_TEST_SUITE_P(FuncTests, PeryashkinVRunFuncTestsOMP, kOmpValues, kNameFnOmp);
+INSTANTIATE_TEST_SUITE_P(FuncTests, PeryashkinVRunFuncTestsTBB, kTbbValues, kNameFnTbb);
 
 }  // namespace
 
