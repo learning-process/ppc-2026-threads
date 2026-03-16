@@ -54,7 +54,7 @@ namespace {
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, TimurACannonMatrixMultiplication, TimurACannonMatrixMultiplicationOMP>(
         PPC_SETTINGS_timur_a_cannon);
-        
+
 const auto kPerfValues = ppc::util::ExpandToValues(kAllPerfTasks);
 const auto kPerfTestName = TimurACannonPerfTests::CustomPerfTestName;
 
