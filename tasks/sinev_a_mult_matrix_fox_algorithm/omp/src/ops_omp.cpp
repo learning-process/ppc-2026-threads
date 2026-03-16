@@ -53,7 +53,7 @@ void SinevAMultMatrixFoxAlgorithmOMP::DecomposeToBlocks(const std::vector<double
       for (size_t i = 0; i < bs; ++i) {
         for (size_t j = 0; j < bs; ++j) {
           const size_t src_idx = ((static_cast<size_t>(bi) * bs + i) * n) + (static_cast<size_t>(bj) * bs + j);
-          const size_t dst_idx = block_off + i * bs + j;
+          const size_t dst_idx = block_off + (i * bs) + j;
           dst[dst_idx] = src[src_idx];
         }
       }
@@ -69,7 +69,7 @@ void SinevAMultMatrixFoxAlgorithmOMP::AssembleFromBlocks(const std::vector<doubl
       const size_t block_off = (static_cast<size_t>((bi * q) + bj)) * (bs * bs);
       for (size_t i = 0; i < bs; ++i) {
         for (size_t j = 0; j < bs; ++j) {
-          const size_t src_idx = block_off + i * bs + j;
+          const size_t src_idx = block_off + (i * bs) + j;
           const size_t dst_idx = ((static_cast<size_t>(bi) * bs + i) * n) + (static_cast<size_t>(bj) * bs + j);
           dst[dst_idx] = src[src_idx];
         }
@@ -92,7 +92,7 @@ void SinevAMultMatrixFoxAlgorithmOMP::FoxStep(const std::vector<double> &blocks_
 
       for (size_t ii = 0; ii < bs; ++ii) {
         for (size_t kk = 0; kk < bs; ++kk) {
-          const double val = blocks_a[a_off + ii * bs + kk];
+          const double val = blocks_a[a_off + (ii * bs) + kk];
           for (size_t jj = 0; jj < bs; ++jj) {
             blocks_c[c_off + ii * bs + jj] += val * blocks_b[b_off + kk * bs + jj];
           }
@@ -117,36 +117,39 @@ bool SinevAMultMatrixFoxAlgorithmOMP::RunImpl() {
 
   const int num_threads = omp_get_max_threads();
   int q = static_cast<int>(std::sqrt(static_cast<double>(num_threads)));
-  while (q * q > num_threads) {
-    --q;
+
+  int grid_size = q;
+  while (grid_size * grid_size > num_threads) {
+    --grid_size;
   }
-  q = std::max(q, 1);
+  grid_size = std::max(grid_size, 1);
 
   size_t bs = 1;
-  for (size_t div = static_cast<size_t>(std::sqrt(static_cast<double>(n))); div >= 1; --div) {
+  const size_t sqrt_n = static_cast<size_t>(std::sqrt(static_cast<double>(n)));
+  for (size_t div = sqrt_n; div >= 1; --div) {
     if (n % div == 0) {
       bs = div;
       break;
     }
   }
 
-  q = static_cast<int>(n / bs);
+  const int actual_q = static_cast<int>(n / bs);
 
-  const size_t total_blocks = static_cast<size_t>(q) * static_cast<size_t>(q);
+  const size_t total_blocks = static_cast<size_t>(actual_q) * static_cast<size_t>(actual_q);
   const size_t block_elements = bs * bs;
 
   std::vector<double> blocks_a(total_blocks * block_elements);
   std::vector<double> blocks_b(total_blocks * block_elements);
   std::vector<double> blocks_c(total_blocks * block_elements, 0.0);
 
-  DecomposeToBlocks(a, blocks_a, n, bs, q);
-  DecomposeToBlocks(b, blocks_b, n, bs, q);
+  DecomposeToBlocks(a, blocks_a, n, bs, actual_q);
+  DecomposeToBlocks(b, blocks_b, n, bs, actual_q);
 
-  for (int step = 0; step < q; ++step) {
-    FoxStep(blocks_a, blocks_b, blocks_c, bs, q, step);
+  for (int step = 0; step < actual_q; ++step) {
+    FoxStep(blocks_a, blocks_b, blocks_c, bs, actual_q, step);
   }
 
-  AssembleFromBlocks(blocks_c, c, n, bs, q);
+  AssembleFromBlocks(blocks_c, c, n, bs, actual_q);
 
   return true;
 }
