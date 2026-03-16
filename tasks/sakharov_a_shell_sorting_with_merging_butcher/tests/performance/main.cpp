@@ -6,6 +6,7 @@
 #include <random>
 
 #include "sakharov_a_shell_sorting_with_merging_butcher/common/include/common.hpp"
+#include "sakharov_a_shell_sorting_with_merging_butcher/omp/include/ops_omp.hpp"
 #include "sakharov_a_shell_sorting_with_merging_butcher/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 #include "util/include/util.hpp"
@@ -27,7 +28,7 @@ class SakharovAShellButcherPerfTests : public ppc::util::BaseRunPerfTests<InType
   OutType expected_output_;
 
   void SetUp() override {
-    constexpr std::size_t kSize = 40000;
+    constexpr std::size_t kSize = 400000;
     std::random_device random_device;
     std::mt19937 generator(random_device());
     std::uniform_int_distribution<int> distribution(-100000, 100000);
@@ -56,7 +57,7 @@ TEST_P(SakharovAShellButcherPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SakharovAShellButcherSEQ>(
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SakharovAShellButcherSEQ, SakharovAShellButcherOMP>(
     PPC_SETTINGS_sakharov_a_shell_sorting_with_merging_butcher);
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = SakharovAShellButcherPerfTests::CustomPerfTestName;
