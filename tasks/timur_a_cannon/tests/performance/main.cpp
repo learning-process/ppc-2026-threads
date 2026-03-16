@@ -51,13 +51,17 @@ TEST_P(TimurACannonPerfTests, MultiplicationMatrixBlockSchemeCannonPerf) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, TimurACannonMatrixMultiplication, TimurACannonMatrixMultiplicationOMP>(
-        PPC_SETTINGS_timur_a_cannon);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType,
+                                                       TimurACannonMatrixMultiplication,
+                                                       TimurACannonMatrixMultiplicationOMP>(
+    PPC_SETTINGS_timur_a_cannon);
 
-const auto kPerfTestName = TimurACannonPerfTests::CustomPerfTestName;
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, TimurACannonPerfTests, kAllPerfTasks, kPerfTestName);
+const auto kPerfTestName = TimurACannonMatrixMultiplicationPerfTests::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(RunModeTests, TimurACannonMatrixMultiplicationPerfTests, kGtestValues,
+                         kPerfTestName);
 
 }  // namespace
 
