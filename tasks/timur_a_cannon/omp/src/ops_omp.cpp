@@ -15,17 +15,14 @@ TimurACannonMatrixMultiplicationOMP::TimurACannonMatrixMultiplicationOMP(const I
   GetInput() = in;
 }
 
-bool TimurACannonMatrixMultiplicationOMP::ValidationImpl() {
+bbool TimurACannonMatrixMultiplicationOMP::ValidationImpl() {
   const auto &input = GetInput();
   int b_size = std::get<0>(input);
   const auto &mat_a = std::get<1>(input);
   const auto &mat_b = std::get<2>(input);
 
-  if (b_size <= 0 || mat_a.empty() || mat_b.empty()) {
-    return false;
-  }
-  size_t n = mat_a.size();
-  return (n == mat_a[0].size() && n == mat_b.size() && n == mat_b[0].size() && (n % static_cast<size_t>(b_size) == 0));
+  return b_size > 0 && !mat_a.empty() && !mat_b.empty() && mat_a.size() == mat_a[0].size() &&
+         mat_a.size() == mat_b.size() && mat_a.size() % static_cast<size_t>(b_size) == 0;
 }
 
 bool TimurACannonMatrixMultiplicationOMP::PreProcessingImpl() {
