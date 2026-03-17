@@ -5,7 +5,9 @@
 #include <vector>
 
 #include "guseva_crs/common/include/common.hpp"
+#include "guseva_crs/omp/include/ops_omp.hpp"
 #include "guseva_crs/seq/include/ops_seq.hpp"
+#include "guseva_crs/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace guseva_crs {
@@ -55,7 +57,9 @@ TEST_P(GusevaMatMulCRSPerfTest, G) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, GusevaCRSMatMulSeq>(PPC_SETTINGS_guseva_crs);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, GusevaCRSMatMulSeq, GusevaCRSMatMulOmp, GusevaCRSMatMulTbb>(
+        PPC_SETTINGS_guseva_crs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
