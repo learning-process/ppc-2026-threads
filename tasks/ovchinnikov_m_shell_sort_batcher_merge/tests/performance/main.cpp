@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <ranges>
 
 #include "ovchinnikov_m_shell_sort_batcher_merge/common/include/common.hpp"
 #include "ovchinnikov_m_shell_sort_batcher_merge/omp/include/ops_omp.hpp"

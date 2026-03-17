@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <limits>
-#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -170,7 +169,7 @@ bool OvchinnikovMShellSortBatcherMergeOMP::RunImpl() {
   auto &left = halves.first;
   auto &right = halves.second;
 
-#pragma omp parallel sections
+#pragma omp parallel sections default(none) shared(left, right)
   {
 #pragma omp section
     ShellSort(left);
