@@ -15,7 +15,7 @@ TimurACannonMatrixMultiplicationOMP::TimurACannonMatrixMultiplicationOMP(const I
   GetInput() = in;
 }
 
-bbool TimurACannonMatrixMultiplicationOMP::ValidationImpl() {
+bool TimurACannonMatrixMultiplicationOMP::ValidationImpl() {
   const auto &input = GetInput();
   int b_size = std::get<0>(input);
   const auto &mat_a = std::get<1>(input);
