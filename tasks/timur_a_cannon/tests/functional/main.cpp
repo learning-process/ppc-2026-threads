@@ -92,19 +92,19 @@ const std::array<TestType, 8> kTestParam = {
                     std::vector<std::vector<double>>(9, std::vector<double>(9, 2.0)),
                     std::vector<std::vector<double>>(9, std::vector<double>(9, 19.8)))};
 
-TEST(Timur_A_Cannon_OMP_Validation, Invalid_Block_Size) {
+TEST(TimurACannonOMPValidation, InvalidBlockSize) {
   InType in = std::make_tuple(0, std::vector<std::vector<double>>{{1.0}}, std::vector<std::vector<double>>{{1.0}});
   TimurACannonMatrixMultiplicationOMP task(in);
   ASSERT_FALSE(task.Validation());
 }
 
-TEST(Timur_A_Cannon_OMP_Validation, Empty_Matrix) {
+TEST(TimurACannonOMPValidation, EmptyMatrix) {
   InType in = std::make_tuple(1, std::vector<std::vector<double>>{}, std::vector<std::vector<double>>{});
   TimurACannonMatrixMultiplicationOMP task(in);
   ASSERT_FALSE(task.Validation());
 }
 
-TEST(Timur_A_Cannon_OMP_Validation, Non_Square_Matrix) {
+TEST(TimurACannonOMPValidation, NonSquareMatrix) {
   std::vector<std::vector<double>> a = {{1.0, 2.0}};
   std::vector<std::vector<double>> b = {{1.0}, {2.0}};
   InType in = std::make_tuple(1, a, b);
@@ -112,11 +112,10 @@ TEST(Timur_A_Cannon_OMP_Validation, Non_Square_Matrix) {
   ASSERT_FALSE(task.Validation());
 }
 
-TEST(Timur_A_Cannon_OMP_Validation, Non_Divisible_Block) {
+TEST(TimurACannonOMPValidation, NonDivisibleBlock) {
   std::vector<std::vector<double>> a(2, std::vector<double>(2, 1.0));
   InType in = std::make_tuple(3, a, a);
   TimurACannonMatrixMultiplicationOMP task(in);
-  ASSERT_FALSE(task.Validation());
   ASSERT_FALSE(task.Validation());
 }
 
