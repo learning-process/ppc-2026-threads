@@ -6,7 +6,6 @@
 #include <limits>
 #include <mutex>
 #include <thread>
-#include <utility>
 #include <vector>
 
 #include "gasenin_l_djstra/common/include/common.hpp"
@@ -44,9 +43,35 @@ bool GaseninLDjstraSTL::PreProcessingImpl() {
   return true;
 }
 
-void GaseninLDjstraSTL::WorkerLoop(int thread_id) {
+void GaseninLDjstraSTL::DoFindMin(int thread_id) {
   const InType n = GetInput();
   const InType inf = std::numeric_limits<InType>::max();
+
+  InType thread_min = inf;
+  InType thread_vert = -1;
+  for (int idx = thread_id; idx < n; idx += num_threads_) {
+    if (visited_[idx] == 0 && dist_[idx] < thread_min) {
+      thread_min = dist_[idx];
+      thread_vert = idx;
+    }
+  }
+  local_min_[thread_id] = thread_min;
+  local_vert_[thread_id] = thread_vert;
+}
+
+void GaseninLDjstraSTL::DoRelax(int thread_id) {
+  const InType n = GetInput();
+  const InType inf = std::numeric_limits<InType>::max();
+  const InType src = global_vertex_;
+
+  for (int vertex = thread_id; vertex < n; vertex += num_threads_) {
+    if (visited_[vertex] == 0 && vertex != src && dist_[src] != inf) {
+      dist_[vertex] = std::min(dist_[vertex], dist_[src] + std::abs(src - vertex));
+    }
+  }
+}
+
+void GaseninLDjstraSTL::WorkerLoop(int thread_id) {
   int my_gen = 0;
 
   while (true) {
@@ -63,27 +88,13 @@ void GaseninLDjstraSTL::WorkerLoop(int thread_id) {
     }
 
     if (current_phase == Phase::kFindMin) {
-      InType thread_min = inf;
-      InType thread_vert = -1;
-      for (int idx = thread_id; idx < n; idx += num_threads_) {
-        if (visited_[idx] == 0 && dist_[idx] < thread_min) {
-          thread_min = dist_[idx];
-          thread_vert = idx;
-        }
-      }
-      local_min_[thread_id] = thread_min;
-      local_vert_[thread_id] = thread_vert;
+      DoFindMin(thread_id);
     } else {
-      const InType src = global_vertex_;
-      for (int vertex = thread_id; vertex < n; vertex += num_threads_) {
-        if (visited_[vertex] == 0 && vertex != src && dist_[src] != inf) {
-          dist_[vertex] = std::min(dist_[vertex], dist_[src] + std::abs(src - vertex));
-        }
-      }
+      DoRelax(thread_id);
     }
 
     {
-      std::lock_guard<std::mutex> lock(mtx_);
+      std::scoped_lock<std::mutex> lock(mtx_);
       if (--pending_ == 0) {
         cv_done_.notify_one();
       }
@@ -93,7 +104,7 @@ void GaseninLDjstraSTL::WorkerLoop(int thread_id) {
 
 void GaseninLDjstraSTL::Dispatch(Phase phase) {
   {
-    std::lock_guard<std::mutex> lock(mtx_);
+    std::scoped_lock<std::mutex> lock(mtx_);
     phase_ = phase;
     pending_ = num_threads_;
     ++generation_;
@@ -142,7 +153,7 @@ bool GaseninLDjstraSTL::RunImpl() {
 
 bool GaseninLDjstraSTL::PostProcessingImpl() {
   {
-    std::lock_guard<std::mutex> lock(mtx_);
+    std::scoped_lock<std::mutex> lock(mtx_);
     phase_ = Phase::kStop;
     ++generation_;
     cv_start_.notify_all();

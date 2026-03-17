@@ -1,6 +1,7 @@
 #pragma once
 
 #include <condition_variable>
+#include <cstdint>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -23,7 +24,7 @@ class GaseninLDjstraSTL : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  enum class Phase {
+  enum class Phase : std::uint8_t {
     kIdle,
     kFindMin,
     kRelax,
@@ -31,6 +32,8 @@ class GaseninLDjstraSTL : public BaseTask {
   };
 
   void WorkerLoop(int thread_id);
+  void DoFindMin(int thread_id);
+  void DoRelax(int thread_id);
   void Dispatch(Phase phase);
 
   std::vector<InType> dist_;
