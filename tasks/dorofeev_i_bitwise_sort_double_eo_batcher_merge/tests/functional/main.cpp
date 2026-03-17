@@ -11,6 +11,7 @@
 #include "dorofeev_i_bitwise_sort_double_eo_batcher_merge/common/include/common.hpp"
 #include "dorofeev_i_bitwise_sort_double_eo_batcher_merge/omp/include/ops_omp.hpp"
 #include "dorofeev_i_bitwise_sort_double_eo_batcher_merge/seq/include/ops_seq.hpp"
+#include "dorofeev_i_bitwise_sort_double_eo_batcher_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -66,12 +67,12 @@ const std::array<TestType, 4> kTestParam = {std::make_tuple(10, "Small_Array"), 
 const auto kTaskName = PPC_SETTINGS_dorofeev_i_bitwise_sort_double_eo_batcher_merge;
 
 // Собираем все реализации (ALL, OMP, SEQ, STL, TBB) в один тестовый набор
-const auto kTestTasksList =
-    std::tuple_cat(/*ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeALL, InType>(kTestParam, kTaskName),*/
-                   ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeOMP, InType>(kTestParam, kTaskName),
-                   ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeSEQ, InType>(kTestParam, kTaskName)
-                   /*ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeSTL, InType>(kTestParam, kTaskName),
-                   ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeTBB, InType>(kTestParam, kTaskName)*/);
+const auto kTestTasksList = std::
+    tuple_cat(/*ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeALL, InType>(kTestParam, kTaskName),*/
+              ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeOMP, InType>(kTestParam, kTaskName),
+              ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeSEQ, InType>(kTestParam, kTaskName),
+              /*ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeSTL, InType>(kTestParam, kTaskName),*/
+              ppc::util::AddFuncTask<DorofeevIBitwiseSortDoubleEOBatcherMergeTBB, InType>(kTestParam, kTaskName));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
