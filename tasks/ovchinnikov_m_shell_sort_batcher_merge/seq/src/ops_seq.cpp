@@ -1,14 +1,15 @@
-#include "ovchinnikov_m_shell_sort_batcher_merge_seq/seq/include/ops_seq.hpp"
+#include "ovchinnikov_m_shell_sort_batcher_merge/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <cstddef>
 #include <limits>
+#include <ranges>
 #include <utility>
 #include <vector>
 
-#include "ovchinnikov_m_shell_sort_batcher_merge_seq/common/include/common.hpp"
+#include "ovchinnikov_m_shell_sort_batcher_merge/common/include/common.hpp"
 
-namespace ovchinnikov_m_shell_sort_batcher_merge_seq {
+namespace ovchinnikov_m_shell_sort_batcher_merge {
 
 namespace {
 
@@ -183,4 +184,4 @@ bool OvchinnikovMShellSortBatcherMergeSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace ovchinnikov_m_shell_sort_batcher_merge_seq
+}  // namespace ovchinnikov_m_shell_sort_batcher_merge
