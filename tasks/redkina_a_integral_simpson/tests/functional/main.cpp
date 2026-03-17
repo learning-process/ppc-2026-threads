@@ -10,8 +10,9 @@
 #include <vector>
 
 #include "redkina_a_integral_simpson/common/include/common.hpp"
-#include "redkina_a_integral_simpson/omp/include/ops_omp.hpp"  // добавлено
+#include "redkina_a_integral_simpson/omp/include/ops_omp.hpp"
 #include "redkina_a_integral_simpson/seq/include/ops_seq.hpp"
+#include "redkina_a_integral_simpson/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -131,10 +132,16 @@ const auto kTestTasksListOmp =
     ppc::util::AddFuncTask<RedkinaAIntegralSimpsonOMP, InType>(kTestCases, PPC_SETTINGS_redkina_a_integral_simpson);
 const auto kGtestValuesOmp = ppc::util::ExpandToValues(kTestTasksListOmp);
 
+// Для TBB
+const auto kTestTasksListTbb =
+    ppc::util::AddFuncTask<RedkinaAIntegralSimpsonTBB, InType>(kTestCases, PPC_SETTINGS_redkina_a_integral_simpson);
+const auto kGtestValuesTbb = ppc::util::ExpandToValues(kTestTasksListTbb);
+
 const auto kTestName = RedkinaAIntegralSimpsonFuncTests::PrintFuncTestName<RedkinaAIntegralSimpsonFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(IntegralSimpsonTestsSeq, RedkinaAIntegralSimpsonFuncTests, kGtestValuesSeq, kTestName);
 INSTANTIATE_TEST_SUITE_P(IntegralSimpsonTestsOmp, RedkinaAIntegralSimpsonFuncTests, kGtestValuesOmp, kTestName);
+INSTANTIATE_TEST_SUITE_P(IntegralSimpsonTestsTbb, RedkinaAIntegralSimpsonFuncTests, kGtestValuesTbb, kTestName);
 
 TEST_P(RedkinaAIntegralSimpsonFuncTests, CheckIntegral) {
   ExecuteTest(GetParam());
