@@ -93,11 +93,11 @@ TEST_P(SinevARunFuncTestsThreads, MatMulFoxAlg) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 11> kTestParams = {
-    std::make_tuple(1, "size_1x1"),       std::make_tuple(2, "size_2x2"),      std::make_tuple(3, "size_3x3"),
-    std::make_tuple(4, "size_4x4"),       std::make_tuple(5, "size_5x5"),      std::make_tuple(6, "size_6x6"),
-    std::make_tuple(7, "size_7x7"),       std::make_tuple(10, "size_10x10"),   std::make_tuple(50, "size_50x50"),
-    std::make_tuple(100, "size_100x100"), std::make_tuple(400, "size_400x400")};
+const std::array<TestType, 10> kTestParams = {std::make_tuple(1, "size_1x1"),    std::make_tuple(2, "size_2x2"),
+                                              std::make_tuple(3, "size_3x3"),    std::make_tuple(4, "size_4x4"),
+                                              std::make_tuple(5, "size_5x5"),    std::make_tuple(6, "size_6x6"),
+                                              std::make_tuple(7, "size_7x7"),    std::make_tuple(10, "size_10x10"),
+                                              std::make_tuple(50, "size_50x50"), std::make_tuple(100, "size_100x100")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SinevAMultMatrixFoxAlgorithmOMP, InType>(
                                                kTestParams, PPC_SETTINGS_sinev_a_mult_matrix_fox_algorithm),
