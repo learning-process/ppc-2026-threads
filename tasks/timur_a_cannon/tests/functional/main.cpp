@@ -92,9 +92,37 @@ const std::array<TestType, 8> kTestParam = {
                     std::vector<std::vector<double>>(9, std::vector<double>(9, 2.0)),
                     std::vector<std::vector<double>>(9, std::vector<double>(9, 19.8)))};
 
+TEST(Timur_A_Cannon_OMP_Validation, Invalid_Block_Size) {
+  InType in = std::make_tuple(0, std::vector<std::vector<double>>{{1.0}}, std::vector<std::vector<double>>{{1.0}});
+  TimurACannonMatrixMultiplicationOMP task(in);
+  ASSERT_FALSE(task.validation());
+}
+
+TEST(Timur_A_Cannon_OMP_Validation, Empty_Matrix) {
+  InType in = std::make_tuple(1, std::vector<std::vector<double>>{}, std::vector<std::vector<double>>{});
+  TimurACannonMatrixMultiplicationOMP task(in);
+  ASSERT_FALSE(task.validation());
+}
+
+TEST(Timur_A_Cannon_OMP_Validation, Non_Square_Matrix) {
+  std::vector<std::vector<double>> a = {{1.0, 2.0}};
+  std::vector<std::vector<double>> b = {{1.0}, {2.0}};
+  InType in = std::make_tuple(1, a, b);
+  TimurACannonMatrixMultiplicationOMP task(in);
+  ASSERT_FALSE(task.validation());
+}
+
+TEST(Timur_A_Cannon_OMP_Validation, Non_Divisible_Block) {
+  std::vector<std::vector<double>> a(2, std::vector<double>(2, 1.0));
+  InType in = std::make_tuple(3, a, a);
+  TimurACannonMatrixMultiplicationOMP task(in);
+  ASSERT_FALSE(task.validation());
+}
+
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<TimurACannonMatrixMultiplication, InType>(kTestParam, PPC_SETTINGS_timur_a_cannon),
     ppc::util::AddFuncTask<TimurACannonMatrixMultiplicationOMP, InType>(kTestParam, PPC_SETTINGS_timur_a_cannon));
+
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = TimurACannonFuncTests::PrintFuncTestName<TimurACannonFuncTests>;
