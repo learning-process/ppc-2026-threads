@@ -94,9 +94,9 @@ TEST_P(SinevARunFuncTestsThreads, MatMulFoxAlg) {
 }
 
 const std::array<TestType, 13> kTestParams = {
-    std::make_tuple(1, "size_1x1"),      std::make_tuple(2, "size_2x2"),    std::make_tuple(3, "size_3x3"),
-    std::make_tuple(4, "size_4x4"),      std::make_tuple(5, "size_5x5"),    std::make_tuple(6, "size_6x6"),
-    std::make_tuple(7, "size_7x7"),      std::make_tuple(8, "size_8x8"),    std::make_tuple(9, "size_9x9"),
+    std::make_tuple(1, "size_1x1"),      std::make_tuple(2, "size_2x2"),    std::make_tuple(18, "size_18x18"),
+    std::make_tuple(4, "size_4x4"),      std::make_tuple(25, "size_25x25"), std::make_tuple(6, "size_6x6"),
+    std::make_tuple(75, "size_75x75"),   std::make_tuple(8, "size_8x8"),    std::make_tuple(9, "size_9x9"),
     std::make_tuple(10, "size_10x10"),   std::make_tuple(16, "size_16x16"), std::make_tuple(50, "size_50x50"),
     std::make_tuple(100, "size_100x100")};
 
