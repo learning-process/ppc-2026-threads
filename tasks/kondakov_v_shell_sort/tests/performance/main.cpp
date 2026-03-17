@@ -5,6 +5,7 @@
 #include <random>
 
 #include "kondakov_v_shell_sort/common/include/common.hpp"
+#include "kondakov_v_shell_sort/omp/include/ops_omp.hpp"
 #include "kondakov_v_shell_sort/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -43,8 +44,8 @@ TEST_P(KondakovVRunPerfTestsShellSort, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KondakovVShellSortSEQ>(PPC_SETTINGS_kondakov_v_shell_sort);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KondakovVShellSortOMP, KondakovVShellSortSEQ>(
+    PPC_SETTINGS_kondakov_v_shell_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
