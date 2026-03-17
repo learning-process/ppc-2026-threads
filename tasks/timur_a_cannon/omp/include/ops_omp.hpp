@@ -11,7 +11,10 @@ class TimurACannonMatrixMultiplicationOMP : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kOMP;
   }
+
+  TimurACannonMatrixMultiplicationOMP() = default;
   explicit TimurACannonMatrixMultiplicationOMP(const InType &in);
+  ~TimurACannonMatrixMultiplicationOMP() override = default;
 
  private:
   bool ValidationImpl() override;
