@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "kiselev_i_trapezoidal_method_for_multidimensional_integrals/common/include/common.hpp"
+#include "kiselev_i_trapezoidal_method_for_multidimensional_integrals/omp/include/ops_omp.hpp"
 #include "kiselev_i_trapezoidal_method_for_multidimensional_integrals/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -33,7 +34,7 @@ TEST_P(KiselevPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KiselevITestTaskSEQ>(
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KiselevITestTaskSEQ, KiselevITestTaskOMP>(
     PPC_SETTINGS_kiselev_i_trapezoidal_method_for_multidimensional_integrals);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
