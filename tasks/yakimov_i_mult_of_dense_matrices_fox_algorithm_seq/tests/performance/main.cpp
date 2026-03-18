@@ -6,6 +6,7 @@
 
 #include "util/include/perf_test_util.hpp"
 #include "yakimov_i_mult_of_dense_matrices_fox_algorithm_seq/common/include/common.hpp"
+#include "yakimov_i_mult_of_dense_matrices_fox_algorithm_seq/omp/include/ops_omp.hpp"
 #include "yakimov_i_mult_of_dense_matrices_fox_algorithm_seq/seq/include/ops_seq.hpp"
 
 namespace yakimov_i_mult_of_dense_matrices_fox_algorithm_seq {
@@ -29,8 +30,12 @@ TEST_P(YakimovIMultDenseFoxPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, YakimovIMultOfDenseMatricesFoxAlgorithmSEQ>(
-    PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_fox_algorithm_seq);
+const auto kAllPerfTasks = std::tuple_cat(
+    ppc::util::MakeAllPerfTasks<InType, YakimovIMultOfDenseMatricesFoxAlgorithmSEQ>(
+        PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_fox_algorithm_seq),
+    ppc::util::MakeAllPerfTasks<InType, YakimovIMultOfDenseMatricesFoxAlgorithmOMP>(
+        PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_fox_algorithm_seq)
+);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
