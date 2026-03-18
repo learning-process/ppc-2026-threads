@@ -1,12 +1,12 @@
-#include "savva_d_monte_carlo/omp/include/ops_seq.hpp"
+#include <omp.h>
 
 #include <cstddef>
 #include <cstdint>
 #include <random>
 #include <vector>
-#include <omp.h>
 
 #include "savva_d_monte_carlo/common/include/common.hpp"
+#include "savva_d_monte_carlo/omp/include/ops_omp.hpp"
 
 namespace savva_d_monte_carlo {
 
@@ -55,7 +55,7 @@ bool SavvaDMonteCarloOMP::RunImpl() {
   const size_t dim = input.Dimension();
   const double vol = input.Volume();
   // OpenMP исторически лучше работает со знаковыми типами счетчиков циклов
-  const int64_t n = static_cast<int64_t>(input.count_points); 
+  const int64_t n = static_cast<int64_t>(input.count_points);
   const auto &func = input.f;
 
   std::vector<std::uniform_real_distribution<double>> distributions(dim);
@@ -64,15 +64,15 @@ bool SavvaDMonteCarloOMP::RunImpl() {
   }
 
   double sum = 0.0;
-  
+
   // Вычисляем количество полных блоков по 4 элемента и остаток
   const int64_t n_blocks = n / 4;
   const int64_t tail = n % 4;
 
-  // Открываем параллельную секцию. Суммирование собираем через редукцию
-  #pragma omp parallel reduction(+:sum)
+// Открываем параллельную секцию. Суммирование собираем через редукцию
+#pragma omp parallel reduction(+ : sum)
   {
-    // Каждый поток инициализирует свой собственный генератор. 
+    // Каждый поток инициализирует свой собственный генератор.
     // XOR с номером потока гарантирует уникальность последовательностей.
     std::minstd_rand generator(std::random_device{}() ^ omp_get_thread_num());
 
@@ -83,8 +83,8 @@ bool SavvaDMonteCarloOMP::RunImpl() {
     std::vector<double> p3(dim);
     std::vector<double> p4(dim);
 
-    // Параллельный цикл по блокам
-    #pragma omp for schedule(static)
+// Параллельный цикл по блокам
+#pragma omp for schedule(static)
     for (int64_t i = 0; i < n_blocks; ++i) {
       for (size_t j = 0; j < dim; ++j) {
         p1[j] = distributions[j](generator);
