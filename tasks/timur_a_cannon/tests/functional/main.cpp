@@ -58,7 +58,7 @@ TEST_P(TimurACannonFuncTests, MultiplicationMatrixBlockSchemeCannon) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 9> kTestParam = {
+const std::array<TestType, 11> kTestParam = {
     std::make_tuple("a", 1, std::vector<std::vector<double>>{{1.0, 2.0}, {3.0, 4.0}},
                     std::vector<std::vector<double>>{{5.0, 6.0}, {7.0, 8.0}},
                     std::vector<std::vector<double>>{{19.0, 22.0}, {43.0, 50.0}}),
@@ -92,9 +92,16 @@ const std::array<TestType, 9> kTestParam = {
                     std::vector<std::vector<double>>(9, std::vector<double>(9, 2.0)),
                     std::vector<std::vector<double>>(9, std::vector<double>(9, 19.8))),
 
-    std::make_tuple("coverage_boost", 4, std::vector<std::vector<double>>(12, std::vector<double>(12, 1.0)),
+    std::make_tuple("coverage_large", 4, std::vector<std::vector<double>>(12, std::vector<double>(12, 1.0)),
                     std::vector<std::vector<double>>(12, std::vector<double>(12, 1.0)),
-                    std::vector<std::vector<double>>(12, std::vector<double>(12, 12.0)))};
+                    std::vector<std::vector<double>>(12, std::vector<double>(12, 12.0))),
+
+    std::make_tuple("edge_case_1x1", 1, std::vector<std::vector<double>>{{2.0}},
+                    std::vector<std::vector<double>>{{3.0}}, std::vector<std::vector<double>>{{6.0}}),
+
+    std::make_tuple("rotation_deep_coverage", 1, std::vector<std::vector<double>>(4, std::vector<double>(4, 1.0)),
+                    std::vector<std::vector<double>>(4, std::vector<double>(4, 1.0)),
+                    std::vector<std::vector<double>>(4, std::vector<double>(4, 4.0)))};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<TimurACannonMatrixMultiplication, InType>(kTestParam, PPC_SETTINGS_timur_a_cannon),
