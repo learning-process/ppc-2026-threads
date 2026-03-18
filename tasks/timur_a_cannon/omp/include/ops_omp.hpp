@@ -15,10 +15,8 @@ class TimurACannonMatrixMultiplicationOMP : public ppc::core::BaseTask<InType, O
   bool PostProcessingImpl() override;
 
   static TestType GetStaticTypeOfTask() {
-    return std::make_tuple("timur_a_cannon_omp", 0, 
-                           std::vector<std::vector<double>>{}, 
-                           std::vector<std::vector<double>>{}, 
-                           std::vector<std::vector<double>>{});
+    return std::make_tuple("timur_a_cannon_omp", 0, std::vector<std::vector<double>>{},
+                           std::vector<std::vector<double>>{}, std::vector<std::vector<double>>{});
   }
 };
 
