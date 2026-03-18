@@ -3,6 +3,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <tuple>
 
 #include "util/include/perf_test_util.hpp"
 #include "yakimov_i_mult_of_dense_matrices_fox_algorithm_seq/common/include/common.hpp"
