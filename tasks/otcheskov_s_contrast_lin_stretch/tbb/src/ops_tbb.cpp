@@ -45,39 +45,26 @@ bool OtcheskovSContrastLinStretchTBB::RunImpl() {
   MinMax result;
 
   arena.execute([&] {
-    result = tbb::parallel_reduce(
-      tbb::blocked_range<size_t>(0, size),
-      MinMax{},
-      [&](const tbb::blocked_range<size_t>& r, MinMax local) {
-        for (size_t i = r.begin(); i != r.end(); ++i) {
-          local.min = std::min(local.min, input[i]);
-          local.max = std::max(local.max, input[i]);
-        }
-        return local;
-      },
-      [](const MinMax& a, const MinMax& b) {
-        return MinMax{
-          std::min(a.min, b.min),
-          std::max(a.max, b.max)
-        };
-      },
-      tbb::static_partitioner{}
-    );
+    result = tbb::parallel_reduce(tbb::blocked_range<size_t>(0, size), MinMax{},
+                                  [&](const tbb::blocked_range<size_t> &r, MinMax local) {
+      for (size_t i = r.begin(); i != r.end(); ++i) {
+        local.min = std::min(local.min, input[i]);
+        local.max = std::max(local.max, input[i]);
+      }
+      return local;
+    }, [](const MinMax &a, const MinMax &b) { return MinMax{std::min(a.min, b.min), std::max(a.max, b.max)}; },
+                                  tbb::static_partitioner{});
   });
 
   if (result.min == result.max) {
     const size_t threshold_size = 1000000;
     if (input.size() > threshold_size) {
       arena.execute([&] {
-        tbb::parallel_for(
-          tbb::blocked_range<size_t>(0, size),
-          [&](const tbb::blocked_range<size_t>& r) {
-            for (size_t i = r.begin(); i != r.end(); ++i) {
-                output[i] = input[i];
-            }
-          },
-          tbb::static_partitioner{}
-        );
+        tbb::parallel_for(tbb::blocked_range<size_t>(0, size), [&](const tbb::blocked_range<size_t> &r) {
+          for (size_t i = r.begin(); i != r.end(); ++i) {
+            output[i] = input[i];
+          }
+        }, tbb::static_partitioner{});
       });
     } else {
       for (size_t i = 0; i < size; ++i) {
@@ -90,17 +77,13 @@ bool OtcheskovSContrastLinStretchTBB::RunImpl() {
   const int min_i = static_cast<int>(result.min);
   const int range = static_cast<int>(result.max - min_i);
   arena.execute([&] {
-    tbb::parallel_for(
-      tbb::blocked_range<size_t>(0, size),
-      [&](const tbb::blocked_range<size_t>& r) {
-        for (size_t i = r.begin(); i != r.end(); ++i) {
-          int pixel = static_cast<int>(input[i]);
-          int value = (pixel - min_i) * 255 / range;
-          output[i] = static_cast<uint8_t>(std::clamp(value, 0, 255));
-        }
-      },
-      tbb::static_partitioner{}
-    );
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, size), [&](const tbb::blocked_range<size_t> &r) {
+      for (size_t i = r.begin(); i != r.end(); ++i) {
+        int pixel = static_cast<int>(input[i]);
+        int value = (pixel - min_i) * 255 / range;
+        output[i] = static_cast<uint8_t>(std::clamp(value, 0, 255));
+      }
+    }, tbb::static_partitioner{});
   });
   return true;
 }

@@ -13,9 +13,9 @@
 #include <vector>
 
 #include "otcheskov_s_contrast_lin_stretch/common/include/common.hpp"
-#include "otcheskov_s_contrast_lin_stretch/tbb/include/ops_tbb.hpp"
 #include "otcheskov_s_contrast_lin_stretch/omp/include/ops_omp.hpp"
 #include "otcheskov_s_contrast_lin_stretch/seq/include/ops_seq.hpp"
+#include "otcheskov_s_contrast_lin_stretch/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -185,7 +185,7 @@ const auto kTestFuncTasksList = std::tuple_cat(ppc::util::AddFuncTask<OtcheskovS
                                                    kTestFuncParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch),
                                                ppc::util::AddFuncTask<OtcheskovSContrastLinStretchOMP, InType>(
                                                    kTestFuncParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch),
-                                              ppc::util::AddFuncTask<OtcheskovSContrastLinStretchTBB, InType>(
+                                               ppc::util::AddFuncTask<OtcheskovSContrastLinStretchTBB, InType>(
                                                    kTestFuncParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch));
 
 const auto kTestRealTasksList = std::tuple_cat(ppc::util::AddFuncTask<OtcheskovSContrastLinStretchSEQ, InType>(
