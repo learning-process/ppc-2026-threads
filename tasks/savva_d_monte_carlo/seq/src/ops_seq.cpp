@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <random>
 #include <vector>
+#include <omp.h>
 
 #include "savva_d_monte_carlo/common/include/common.hpp"
 
@@ -50,47 +51,64 @@ bool SavvaDMonteCarloSEQ::PreProcessingImpl() {
 bool SavvaDMonteCarloSEQ::RunImpl() {
   const auto &input = GetInput();
   auto &result = GetOutput();
-  static thread_local std::minstd_rand generator(std::random_device{}());
 
   const size_t dim = input.Dimension();
   const double vol = input.Volume();
-  const uint64_t n = input.count_points;
+  // OpenMP исторически лучше работает со знаковыми типами счетчиков циклов
+  const int64_t n = static_cast<int64_t>(input.count_points); 
   const auto &func = input.f;
 
-  std::vector<std::uniform_real_distribution<double>> distributions;
-  distributions.resize(dim);
-
+  std::vector<std::uniform_real_distribution<double>> distributions(dim);
   for (size_t i = 0; i < dim; ++i) {
     distributions[i] = std::uniform_real_distribution<double>(input.lower_bounds[i], input.upper_bounds[i]);
   }
 
   double sum = 0.0;
-  uint64_t i = 0;
+  
+  // Вычисляем количество полных блоков по 4 элемента и остаток
+  const int64_t n_blocks = n / 4;
+  const int64_t tail = n % 4;
 
-  std::vector<double> p1(dim);
-  std::vector<double> p2(dim);
-  std::vector<double> p3(dim);
-  std::vector<double> p4(dim);
+  // Открываем параллельную секцию. Суммирование собираем через редукцию
+  #pragma omp parallel reduction(+:sum)
+  {
+    // Каждый поток инициализирует свой собственный генератор. 
+    // XOR с номером потока гарантирует уникальность последовательностей.
+    std::minstd_rand generator(std::random_device{}() ^ omp_get_thread_num());
 
-  for (; i + 3 < n; i += 4) {
-    for (size_t j = 0; j < dim; ++j) {
-      p1[j] = distributions[j](generator);
-      p2[j] = distributions[j](generator);
-      p3[j] = distributions[j](generator);
-      p4[j] = distributions[j](generator);
+    // Выделяем память под координаты один раз для каждого потока!
+    // Это избавляет от накладных расходов на аллокацию внутри цикла.
+    std::vector<double> p1(dim);
+    std::vector<double> p2(dim);
+    std::vector<double> p3(dim);
+    std::vector<double> p4(dim);
+
+    // Параллельный цикл по блокам
+    #pragma omp for schedule(static)
+    for (int64_t i = 0; i < n_blocks; ++i) {
+      for (size_t j = 0; j < dim; ++j) {
+        p1[j] = distributions[j](generator);
+        p2[j] = distributions[j](generator);
+        p3[j] = distributions[j](generator);
+        p4[j] = distributions[j](generator);
+      }
+      sum += func(p1) + func(p2) + func(p3) + func(p4);
     }
-    sum += func(p1) + func(p2) + func(p3) + func(p4);
   }
 
-  // Обрабатываем оставшиеся точки
-  for (; i < n; ++i) {
-    for (size_t j = 0; j < dim; ++j) {
-      p1[j] = distributions[j](generator);
+  // Обрабатываем хвост последовательно (максимум 3 итерации, параллелить нет смысла)
+  if (tail > 0) {
+    std::minstd_rand generator(std::random_device{}());
+    std::vector<double> p_tail(dim);
+    for (int64_t i = 0; i < tail; ++i) {
+      for (size_t j = 0; j < dim; ++j) {
+        p_tail[j] = distributions[j](generator);
+      }
+      sum += func(p_tail);
     }
-    sum += func(p1);
   }
 
-  // Вычисляем среднее и умножаем на объем (численно устойчивый способ)
+  // Вычисляем интеграл: среднее значение функции умноженное на объем области
   double mean = sum / static_cast<double>(n);
   result = mean * vol;
 

@@ -18,14 +18,20 @@ class SavvaDRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutT
   void SetUp() override {
     std::vector<double> lower_bounds = {-10.0, -10.0, -10.0};
     std::vector<double> upper_bounds = {10.0, 10.0, 10.0};
-    uint64_t num_points = 50000000;
-    auto f = [](const std::vector<double> &) { return 1.0; };
+    uint64_t num_points = 5000000;
+    auto f = [](const std::vector<double> &x) {
+        double res = 0.0;
+        for(size_t i = 0; i < x.size(); ++i) {
+            res += std::sin(x[i]) * std::cos(x[i]) + std::exp(-std::abs(x[i]));
+        }
+        return res;
+     };
     input_data_ = InputData(lower_bounds, upper_bounds, num_points, std::move(f));
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    double expected = 8000.0;
-    double tolerance = 0.1;
+    double expected = 2400.0;
+    double tolerance = 0.1;;
     return std::abs(output_data - expected) / expected <= tolerance;
   }
 
