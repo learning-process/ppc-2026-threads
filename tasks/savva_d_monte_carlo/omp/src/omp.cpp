@@ -1,4 +1,4 @@
-#include "savva_d_monte_carlo/seq/include/ops_seq.hpp"
+#include "savva_d_monte_carlo/omp/include/ops_seq.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -10,13 +10,13 @@
 
 namespace savva_d_monte_carlo {
 
-SavvaDMonteCarloSEQ::SavvaDMonteCarloSEQ(const InType &in) {
+SavvaDMonteCarloOMP::SavvaDMonteCarloOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
 }
 
-bool SavvaDMonteCarloSEQ::ValidationImpl() {
+bool SavvaDMonteCarloOMP::ValidationImpl() {
   const auto &input = GetInput();
 
   // Проверка количества точек
@@ -44,11 +44,11 @@ bool SavvaDMonteCarloSEQ::ValidationImpl() {
   return true;
 }
 
-bool SavvaDMonteCarloSEQ::PreProcessingImpl() {
+bool SavvaDMonteCarloOMP::PreProcessingImpl() {
   return true;
 }
 
-bool SavvaDMonteCarloSEQ::RunImpl() {
+bool SavvaDMonteCarloOMP::RunImpl() {
   const auto &input = GetInput();
   auto &result = GetOutput();
 
@@ -115,7 +115,7 @@ bool SavvaDMonteCarloSEQ::RunImpl() {
   return true;
 }
 
-bool SavvaDMonteCarloSEQ::PostProcessingImpl() {
+bool SavvaDMonteCarloOMP::PostProcessingImpl() {
   return true;
 }
 

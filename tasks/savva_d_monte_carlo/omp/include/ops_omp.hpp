@@ -5,12 +5,12 @@
 
 namespace savva_d_monte_carlo {
 
-class SavvaDMonteCarloSEQ : public BaseTask {
+class SavvaDMonteCarloOMP : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kSEQ;
+    return ppc::task::TypeOfTask::kOMP;
   }
-  explicit SavvaDMonteCarloSEQ(const InType &in);
+  explicit SavvaDMonteCarloOMP(const InType &in);
 
  private:
   bool ValidationImpl() override;

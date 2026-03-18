@@ -13,6 +13,7 @@
 
 #include "savva_d_monte_carlo/common/include/common.hpp"
 #include "savva_d_monte_carlo/seq/include/ops_seq.hpp"
+#include "savva_d_monte_carlo/omp/include/ops_omp.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -265,9 +266,9 @@ const std::array<TestType, 17> kTestParam = {
     std::make_tuple(15, "negative_region"), std::make_tuple(16, "large_range")};
 
 const auto kTestTaskList =
-    std::tuple_cat(  // ppc::util::AddFuncTask<SavvaDMonteCarloALL, InType>(kTestParam,
-                     // PPC_SETTINGS_savva_d_monte_carlo), ppc::util::AddFuncTask<SavvaDMonteCarloOMP,
-                     // InType>(kTestParam, PPC_SETTINGS_savva_d_monte_carlo),
+    std::tuple_cat(  //ppc::util::AddFuncTask<SavvaDMonteCarloALL, InType>(kTestParam,
+                     // PPC_SETTINGS_savva_d_monte_carlo),
+        ppc::util::AddFuncTask<SavvaDMonteCarloOMP, InType>(kTestParam, PPC_SETTINGS_savva_d_monte_carlo),
         ppc::util::AddFuncTask<SavvaDMonteCarloSEQ, InType>(kTestParam, PPC_SETTINGS_savva_d_monte_carlo));
 // ppc::util::AddFuncTask<SavvaDMonteCarloSTL, InType>(kTestParam, PPC_SETTINGS_savva_d_monte_carlo),
 // ppc::util::AddFuncTask<SavvaDMonteCarloTBB, InType>(kTestParam, PPC_SETTINGS_savva_d_monte_carlo)

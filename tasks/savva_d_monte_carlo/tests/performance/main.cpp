@@ -6,7 +6,8 @@
 #include <vector>
 
 #include "savva_d_monte_carlo/common/include/common.hpp"
-#include "savva_d_monte_carlo/seq/include/ops_seq.hpp"
+#include "savva_d_monte_carlo/omp/include/ops_seq.hpp"
+#include "savva_d_monte_carlo/omp/include/ops_omp.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace savva_d_monte_carlo {
@@ -46,8 +47,8 @@ TEST_P(SavvaDRunPerfTestThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SavvaDMonteCarloSEQ>(PPC_SETTINGS_savva_d_monte_carlo);
-// SavvaDMonteCarloALL, SavvaDMonteCarloOMP,  SavvaDMonteCarloSTL, SavvaDMonteCarloTBB
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SavvaDMonteCarloSEQ, SavvaDMonteCarloOMP>(PPC_SETTINGS_savva_d_monte_carlo);
+// SavvaDMonteCarloALL,  SavvaDMonteCarloSTL, SavvaDMonteCarloTBB
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
