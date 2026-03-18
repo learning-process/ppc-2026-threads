@@ -90,7 +90,7 @@ void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &r
   result.data.assign(total_elements, 0.0);
 
   for (int stage = 0; stage < num_blocks; ++stage) {
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(a, b, result, num_blocks, stage, block_size)
     for (int i = 0; i < num_blocks; ++i) {
       int broadcast_block = (i + stage) % num_blocks;
 
@@ -163,9 +163,9 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmOMP::RunImpl() {
 bool YakimovIMultOfDenseMatricesFoxAlgorithmOMP::PostProcessingImpl() {
   double sum = 0.0;
 
-#pragma omp parallel for reduction(+ : sum)
-  for (std::size_t i = 0; i < this->result_matrix_.data.size(); ++i) {
-    sum += this->result_matrix_.data[i];
+#pragma omp parallel for default(none) reduction(+ : sum) shared(this)
+  for (double val : this->result_matrix_.data) {
+    sum += val;
   }
 
   this->GetOutput() = sum;
