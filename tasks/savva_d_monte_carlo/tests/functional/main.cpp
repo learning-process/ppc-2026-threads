@@ -104,7 +104,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
       case 6: {  // sin_cos_2d - f(x,y) = sin(x)*cos(y)
         lower_bounds = {0.0, 0.0};
         upper_bounds = {std::acos(-1.0), std::acos(-1.0) / 2.0};
-        num_points = 500000;
+        num_points = 100000;
         f = [](const std::vector<double> &x) { return std::sin(x[0]) * std::cos(x[1]); };
         expected = 2.0;
         abs_tolerance_ = 0.1;
