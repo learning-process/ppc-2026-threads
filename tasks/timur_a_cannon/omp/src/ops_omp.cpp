@@ -47,6 +47,9 @@ void TimurACannonMatrixMultiplicationOMP::DistributeData(
     const std::vector<std::vector<double>> &src_a, const std::vector<std::vector<double>> &src_b,
     std::vector<std::vector<std::vector<std::vector<double>>>> &bl_a,
     std::vector<std::vector<std::vector<std::vector<double>>>> &bl_b, int b_size, int grid_sz) {
+  if (grid_sz <= 0) {
+    return;
+  }
 #pragma omp parallel for collapse(2) default(none) shared(src_a, src_b, bl_a, bl_b, b_size, grid_sz)
   for (int i = 0; i < grid_sz; ++i) {
     for (int j = 0; j < grid_sz; ++j) {
@@ -64,6 +67,9 @@ void TimurACannonMatrixMultiplicationOMP::DistributeData(
 void TimurACannonMatrixMultiplicationOMP::CollectResult(
     const std::vector<std::vector<std::vector<std::vector<double>>>> &bl_c, std::vector<std::vector<double>> &res,
     int b_size, int grid_sz) {
+  if (grid_sz <= 0) {
+    return;
+  }
 #pragma omp parallel for collapse(2) default(none) shared(bl_c, res, b_size, grid_sz)
   for (int i = 0; i < grid_sz; ++i) {
     for (int j = 0; j < grid_sz; ++j) {
@@ -78,6 +84,9 @@ void TimurACannonMatrixMultiplicationOMP::CollectResult(
 
 void TimurACannonMatrixMultiplicationOMP::RotateBlocksA(
     std::vector<std::vector<std::vector<std::vector<double>>>> &blocks, int grid_sz) {
+  if (grid_sz <= 1) {
+    return;
+  }
 #pragma omp parallel for default(none) shared(blocks, grid_sz)
   for (int i = 0; i < grid_sz; ++i) {
     auto first_block = std::move(blocks[i][0]);
@@ -90,6 +99,9 @@ void TimurACannonMatrixMultiplicationOMP::RotateBlocksA(
 
 void TimurACannonMatrixMultiplicationOMP::RotateBlocksB(
     std::vector<std::vector<std::vector<std::vector<double>>>> &blocks, int grid_sz) {
+  if (grid_sz <= 1) {
+    return;
+  }
 #pragma omp parallel for default(none) shared(blocks, grid_sz)
   for (int j = 0; j < grid_sz; ++j) {
     auto first_block = std::move(blocks[0][j]);
@@ -122,10 +134,8 @@ bool TimurACannonMatrixMultiplicationOMP::RunImpl() {
         BlockMultiplyAccumulate(bl_a[i][j], bl_b[i][j], bl_c[i][j], b_size);
       }
     }
-    if (step < grid_sz - 1) {
-      RotateBlocksA(bl_a, grid_sz);
-      RotateBlocksB(bl_b, grid_sz);
-    }
+    RotateBlocksA(bl_a, grid_sz);
+    RotateBlocksB(bl_b, grid_sz);
   }
 
   Matrix res_mat(n, std::vector<double>(n));
