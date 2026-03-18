@@ -3,8 +3,10 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <tuple>
 
 #include "batkov_f_contrast_enh_lin_hist_stretch/common/include/common.hpp"
+#include "batkov_f_contrast_enh_lin_hist_stretch/omp/include/ops_omp.hpp"
 #include "batkov_f_contrast_enh_lin_hist_stretch/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -47,8 +49,10 @@ TEST_P(BatkovFRunPerfTestThreads, RunPerfTests) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, BatkovFContrastEnhLinHistStretchSEQ>(
-    PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch);
+const auto kAllPerfTasks = std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, BatkovFContrastEnhLinHistStretchSEQ>(
+                                              PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch),
+                                          ppc::util::MakeAllPerfTasks<InType, BatkovFContrastEnhLinHistStretchOMP>(
+                                              PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
