@@ -8,7 +8,7 @@
 #include <vector>
 
 #ifdef _OPENMP
-#include <omp.h>
+#  include <omp.h>
 #endif
 
 #include "util/include/util.hpp"
@@ -90,7 +90,7 @@ void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &r
   result.data.assign(total_elements, 0.0);
 
   for (int stage = 0; stage < num_blocks; ++stage) {
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int i = 0; i < num_blocks; ++i) {
       int broadcast_block = (i + stage) % num_blocks;
 
@@ -163,7 +163,7 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmOMP::RunImpl() {
 bool YakimovIMultOfDenseMatricesFoxAlgorithmOMP::PostProcessingImpl() {
   double sum = 0.0;
 
-  #pragma omp parallel for reduction(+:sum)
+#pragma omp parallel for reduction(+ : sum)
   for (std::size_t i = 0; i < this->result_matrix_.data.size(); ++i) {
     sum += this->result_matrix_.data[i];
   }
