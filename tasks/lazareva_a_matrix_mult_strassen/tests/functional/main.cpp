@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "lazareva_a_matrix_mult_strassen/common/include/common.hpp"
+#include "lazareva_a_matrix_mult_strassen/omp/include/ops_omp.hpp"
 #include "lazareva_a_matrix_mult_strassen/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -75,13 +76,14 @@ TEST_P(LazarevaARunFuncTestsThreads, StrassenMatmul) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {
+const std::array<TestType, 6> kTestParam = {
     std::make_tuple(2, "2"), std::make_tuple(3, "3"),   std::make_tuple(5, "5"),
-    std::make_tuple(7, "7"), std::make_tuple(16, "16"),
+    std::make_tuple(7, "7"), std::make_tuple(16, "16"), std::make_tuple(128, "128"),
 };
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<LazarevaATestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_lazareva_a_matrix_mult_strassen);
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<LazarevaATestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_lazareva_a_matrix_mult_strassen),
+    ppc::util::AddFuncTask<LazarevaATestTaskOMP, InType>(kTestParam, PPC_SETTINGS_lazareva_a_matrix_mult_strassen));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
