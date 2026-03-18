@@ -30,12 +30,11 @@ TEST_P(YakimovIMultDenseFoxPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = std::tuple_cat(
-    ppc::util::MakeAllPerfTasks<InType, YakimovIMultOfDenseMatricesFoxAlgorithmSEQ>(
-        PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_fox_algorithm_seq),
-    ppc::util::MakeAllPerfTasks<InType, YakimovIMultOfDenseMatricesFoxAlgorithmOMP>(
-        PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_fox_algorithm_seq)
-);
+const auto kAllPerfTasks =
+    std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, YakimovIMultOfDenseMatricesFoxAlgorithmSEQ>(
+                       PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_fox_algorithm_seq),
+                   ppc::util::MakeAllPerfTasks<InType, YakimovIMultOfDenseMatricesFoxAlgorithmOMP>(
+                       PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_fox_algorithm_seq));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
