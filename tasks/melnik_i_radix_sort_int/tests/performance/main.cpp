@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "melnik_i_radix_sort_int/common/include/common.hpp"
+#include "melnik_i_radix_sort_int/omp/include/ops_omp.hpp"
 #include "melnik_i_radix_sort_int/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -13,7 +14,7 @@ namespace melnik_i_radix_sort_int {
 
 namespace {
 
-constexpr std::size_t kArraySize = 1'000'000;
+constexpr std::size_t kArraySize = 5'000'000;
 constexpr unsigned int kSeed = 42;
 
 std::vector<int> GenerateRandomData(std::size_t size, unsigned int seed) {
@@ -35,7 +36,7 @@ class MelnikIRadixSortIntPerfTests : public ppc::util::BaseRunPerfTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::ranges::is_sorted(output_data.begin(), output_data.end());
+    return std::ranges::is_sorted(output_data);
   }
 
   InType GetTestInputData() final {
@@ -52,8 +53,8 @@ TEST_P(MelnikIRadixSortIntPerfTests, SortPerformance) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, MelnikIRadixSortIntSEQ>(PPC_SETTINGS_melnik_i_radix_sort_int);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, MelnikIRadixSortIntSEQ, MelnikIRadixSortIntOMP>(
+    PPC_SETTINGS_melnik_i_radix_sort_int);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
