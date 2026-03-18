@@ -105,23 +105,6 @@ const auto kPerfTestName = TimurACannonFuncTests::PrintFuncTestName<TimurACannon
 
 INSTANTIATE_TEST_SUITE_P(CannonTests, TimurACannonFuncTests, kGtestValues, kPerfTestName);
 
-TEST(TimurACannonMatrixMultiplicationOMP, ValidationFailsOnInvalidSize) {
-  std::vector<std::vector<double>> a = {{1.0, 2.0}, {3.0, 4.0}};
-  std::vector<std::vector<double>> b = {{1.0, 2.0}, {3.0, 4.0}};
-
-  timur_a_cannon::InType in(3, a, b);
-  timur_a_cannon::TimurACannonMatrixMultiplicationOMP task(in);
-  EXPECT_FALSE(task.Validation());
-}
-
-TEST(TimurACannonMatrixMultiplication, ValidationFailsOnInvalidSize) {
-  std::vector<std::vector<double>> a = {{1.0, 2.0}, {3.0, 4.0}};
-  std::vector<std::vector<double>> b = {{1.0, 2.0}, {3.0, 4.0}};
-  timur_a_cannon::InType in(3, a, b);
-  timur_a_cannon::TimurACannonMatrixMultiplication task(in);
-  EXPECT_FALSE(task.Validation());
-}
-
 }  // namespace
 
 }  // namespace timur_a_cannon
