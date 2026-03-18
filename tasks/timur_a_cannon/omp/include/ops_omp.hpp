@@ -6,35 +6,20 @@
 
 namespace timur_a_cannon {
 
-class TimurACannonMatrixMultiplicationOMP : public BaseTask {
+class TimurACannonMatrixMultiplicationOMP : public ppc::core::BaseTask<InType, OutType> {
  public:
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kOMP;
-  }
-
-  TimurACannonMatrixMultiplicationOMP() = default;
   explicit TimurACannonMatrixMultiplicationOMP(const InType &in);
-  ~TimurACannonMatrixMultiplicationOMP() override = default;
-
- private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static void RotateBlocksA(std::vector<std::vector<std::vector<std::vector<double>>>> &blocks, int grid_sz);
-  static void RotateBlocksB(std::vector<std::vector<std::vector<std::vector<double>>>> &blocks, int grid_sz);
-  static void BlockMultiplyAccumulate(const std::vector<std::vector<double>> &a,
-                                      const std::vector<std::vector<double>> &b, std::vector<std::vector<double>> &c,
-                                      int b_size);
-
-  static void DistributeData(const std::vector<std::vector<double>> &src_a,
-                             const std::vector<std::vector<double>> &src_b,
-                             std::vector<std::vector<std::vector<std::vector<double>>>> &bl_a,
-                             std::vector<std::vector<std::vector<std::vector<double>>>> &bl_b, int b_size, int grid_sz);
-
-  static void CollectResult(const std::vector<std::vector<std::vector<std::vector<double>>>> &bl_c,
-                            std::vector<std::vector<double>> &res, int b_size, int grid_sz);
+  static TestType GetStaticTypeOfTask() {
+    return std::make_tuple("timur_a_cannon_omp", 0, 
+                           std::vector<std::vector<double>>{}, 
+                           std::vector<std::vector<double>>{}, 
+                           std::vector<std::vector<double>>{});
+  }
 };
 
 }  // namespace timur_a_cannon
