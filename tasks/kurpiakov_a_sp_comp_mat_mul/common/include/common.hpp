@@ -171,7 +171,7 @@ class CSRMatrix {
   }
 
  public:
-  [[nodiscard]] CSRMatrix OMPMultiply(const CSRMatrix &other) const {
+  [[nodiscard]] CSRMatrix OMPMultiply(const CSRMatrix& other) const {
     if (cols != other.rows) {
       return {};
     }
@@ -180,18 +180,19 @@ class CSRMatrix {
     std::vector<std::vector<Complex<T>>> row_values(rows);
     std::vector<std::vector<int>> row_col_indices(rows);
 
+    const CSRMatrix& self = *this;
     const int nrows = rows;
     const int ncols = other.cols;
 
-#pragma omp parallel default(shared)  // NOLINT(openmp-use-default-none)
+#pragma omp parallel default(none) shared(self, other, row_values, row_col_indices, nrows, ncols)
     {
-      std::vector<T> acc_re(static_cast<std::size_t>(ncols), T(0));
-      std::vector<T> acc_im(static_cast<std::size_t>(ncols), T(0));
+      std::vector<T> acc_re(static_cast<std::size_t>(ncols));
+      std::vector<T> acc_im(static_cast<std::size_t>(ncols));
       std::vector<bool> local_used(static_cast<std::size_t>(ncols), false);
 
 #pragma omp for schedule(dynamic)
       for (int i = 0; i < nrows; ++i) {
-        ProcessRow(i, *this, other, acc_re, acc_im, local_used, row_values, row_col_indices);
+        ProcessRow(i, self, other, acc_re, acc_im, local_used, row_values, row_col_indices);
       }
     }
 
