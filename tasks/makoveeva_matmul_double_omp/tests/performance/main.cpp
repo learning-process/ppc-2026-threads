@@ -11,9 +11,8 @@
 
 namespace makoveeva_matmul_double_omp {
 
-class MatmulDoubleOMPPerfTest : public ppc::util::BaseRunPerfTests<
-    makoveeva_matmul_double_seq::InType,
-    makoveeva_matmul_double_seq::OutType> {
+class MatmulDoubleOMPPerfTest
+    : public ppc::util::BaseRunPerfTests<makoveeva_matmul_double_seq::InType, makoveeva_matmul_double_seq::OutType> {
   const int kMatrixSize_ = 800;
   makoveeva_matmul_double_seq::InType input_data_;
   makoveeva_matmul_double_seq::OutType expected_output_;
@@ -22,20 +21,20 @@ class MatmulDoubleOMPPerfTest : public ppc::util::BaseRunPerfTests<
   void SetUp() override {
     size_t n = static_cast<size_t>(kMatrixSize_);
     size_t size = n * n;
-    
+
     std::vector<double> a(size, 1.5);
     std::vector<double> b(size, 2.0);
-    
+
     input_data_ = std::make_tuple(n, a, b);
-    
+
     expected_output_.assign(size, 3.0 * static_cast<double>(n));
   }
 
-  bool CheckTestOutputData(makoveeva_matmul_double_seq::OutType& output_data) final {
+  bool CheckTestOutputData(makoveeva_matmul_double_seq::OutType &output_data) final {
     if (expected_output_.size() != output_data.size()) {
       return false;
     }
-    
+
     const double epsilon = 1e-8;
     for (size_t i = 0; i < expected_output_.size(); ++i) {
       if (std::abs(expected_output_[i] - output_data[i]) > epsilon) {
@@ -56,9 +55,8 @@ TEST_P(MatmulDoubleOMPPerfTest, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<
-    makoveeva_matmul_double_seq::InType,
-    MatmulDoubleOMPTask>(PPC_SETTINGS_makoveeva_matmul_double_omp);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<makoveeva_matmul_double_seq::InType, MatmulDoubleOMPTask>(
+    PPC_SETTINGS_makoveeva_matmul_double_omp);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
