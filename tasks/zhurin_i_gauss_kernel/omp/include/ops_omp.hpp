@@ -31,7 +31,6 @@ class ZhurinIGaussKernelOMP : public BaseTask {
   std::vector<std::vector<int>> padded_;
   std::vector<std::vector<int>> image_;
   std::vector<std::vector<int>> result_;
-  bool output_written_ = false;
 };
 
 }  // namespace zhurin_i_gauss_kernel
