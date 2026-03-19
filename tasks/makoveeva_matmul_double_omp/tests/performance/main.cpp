@@ -14,7 +14,7 @@ namespace makoveeva_matmul_double_omp {
 class MatmulDoubleOMPPerfTest : public ppc::util::BaseRunPerfTests<
     makoveeva_matmul_double_seq::InType,
     makoveeva_matmul_double_seq::OutType> {
-  const int kMatrixSize_ = 800;  // Увеличили с 400 до 800
+  const int kMatrixSize_ = 800;
   makoveeva_matmul_double_seq::InType input_data_;
   makoveeva_matmul_double_seq::OutType expected_output_;
 
@@ -28,7 +28,6 @@ class MatmulDoubleOMPPerfTest : public ppc::util::BaseRunPerfTests<
     
     input_data_ = std::make_tuple(n, a, b);
     
-    // Ожидаемый результат для константных матриц: 1.5 * 2.0 * n = 3.0 * n
     expected_output_.assign(size, 3.0 * static_cast<double>(n));
   }
 

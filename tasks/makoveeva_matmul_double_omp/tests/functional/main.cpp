@@ -11,7 +11,6 @@
 
 namespace makoveeva_matmul_double_omp {
 
-// Используем TestType из common.hpp (через makoveeva_matmul_double_seq)
 using TestType = makoveeva_matmul_double_seq::TestType;
 
 class MatmulDoubleOMPFuncTest : public ppc::util::BaseRunFuncTests<
