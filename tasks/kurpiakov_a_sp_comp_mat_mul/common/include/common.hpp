@@ -140,14 +140,14 @@ class CSRMatrix {
     used_cols.reserve(other.cols);
 
     for (int ja = self.row_ptr[i]; ja < self.row_ptr[i + 1]; ++ja) {
-      int ka = self.col_indices[ja];
-      T a_re = self.values[ja].re;
-      T a_im = self.values[ja].im;
-      int jb_start = other.row_ptr[ka];
-      int jb_end = other.row_ptr[ka + 1];
+      const int ka = self.col_indices[ja];
+      const T a_re = self.values[ja].re;
+      const T a_im = self.values[ja].im;
+      const int jb_start = other.row_ptr[ka];
+      const int jb_end = other.row_ptr[ka + 1];
 
       for (int jb = jb_start; jb < jb_end; ++jb) {
-        int cb = other.col_indices[jb];
+        const int cb = other.col_indices[jb];
         if (!local_used[cb]) {
           local_used[cb] = true;
           acc_re[cb] = T(0);
@@ -160,11 +160,10 @@ class CSRMatrix {
     }
 
     std::ranges::sort(used_cols);
-
     row_values[i].reserve(used_cols.size());
     row_col_indices[i].reserve(used_cols.size());
 
-    for (int c : used_cols) {
+    for (const int c : used_cols) {
       row_values[i].emplace_back(acc_re[c], acc_im[c]);
       row_col_indices[i].push_back(c);
       local_used[c] = false;
@@ -180,16 +179,20 @@ class CSRMatrix {
     CSRMatrix result(rows, other.cols);
     std::vector<std::vector<Complex<T>>> row_values(rows);
     std::vector<std::vector<int>> row_col_indices(rows);
-    int nrows = rows;
-    int ncols = other.cols;
 
-    std::vector<T> acc_re(ncols, T(0));
-    std::vector<T> acc_im(ncols, T(0));
-    std::vector<bool> local_used(ncols, false);
+    const int nrows = rows;
+    const int ncols = other.cols;
+
+#pragma omp parallel default(shared)  // NOLINT(openmp-use-default-none)
+    {
+      std::vector<T> acc_re(static_cast<std::size_t>(ncols), T(0));
+      std::vector<T> acc_im(static_cast<std::size_t>(ncols), T(0));
+      std::vector<bool> local_used(static_cast<std::size_t>(ncols), false);
 
 #pragma omp for schedule(dynamic)
-    for (int i = 0; i < nrows; ++i) {
-      ProcessRow(i, *this, other, acc_re, acc_im, local_used, row_values, row_col_indices);
+      for (int i = 0; i < nrows; ++i) {
+        ProcessRow(i, *this, other, acc_re, acc_im, local_used, row_values, row_col_indices);
+      }
     }
 
     int total_nnz = 0;
@@ -197,8 +200,8 @@ class CSRMatrix {
       total_nnz += static_cast<int>(row_values[i].size());
     }
 
-    result.values.reserve(total_nnz);
-    result.col_indices.reserve(total_nnz);
+    result.values.reserve(static_cast<std::size_t>(total_nnz));
+    result.col_indices.reserve(static_cast<std::size_t>(total_nnz));
 
     for (int i = 0; i < rows; ++i) {
       result.values.insert(result.values.end(), row_values[i].begin(), row_values[i].end());

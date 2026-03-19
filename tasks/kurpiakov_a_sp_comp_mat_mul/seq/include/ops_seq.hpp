@@ -5,12 +5,12 @@
 
 namespace kurpiakov_a_sp_comp_mat_mul {
 
-class KurpiskovACRSMatMulSEQ : public BaseTask {
+class KurpiakovACRSMatMulSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit KurpiskovACRSMatMulSEQ(const InType &in);
+  explicit KurpiakovACRSMatMulSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;

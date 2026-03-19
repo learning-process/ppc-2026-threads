@@ -36,13 +36,13 @@ bool ValidateCSR(const SparseMatrix &m) {
 
 }  // namespace
 
-KurpiskovACRSMatMulSEQ::KurpiskovACRSMatMulSEQ(const InType &in) {
+KurpiakovACRSMatMulSEQ::KurpiakovACRSMatMulSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = SparseMatrix();
 }
 
-bool KurpiskovACRSMatMulSEQ::ValidationImpl() {
+bool KurpiakovACRSMatMulSEQ::ValidationImpl() {
   const auto &[a, b] = GetInput();
 
   if (!ValidateCSR(a) || !ValidateCSR(b)) {
@@ -52,17 +52,17 @@ bool KurpiskovACRSMatMulSEQ::ValidationImpl() {
   return a.cols == b.rows;
 }
 
-bool KurpiskovACRSMatMulSEQ::PreProcessingImpl() {
+bool KurpiakovACRSMatMulSEQ::PreProcessingImpl() {
   return true;
 }
 
-bool KurpiskovACRSMatMulSEQ::RunImpl() {
+bool KurpiakovACRSMatMulSEQ::RunImpl() {
   const auto &[a, b] = GetInput();
   GetOutput() = a.Multiply(b);
   return true;
 }
 
-bool KurpiskovACRSMatMulSEQ::PostProcessingImpl() {
+bool KurpiakovACRSMatMulSEQ::PostProcessingImpl() {
   return true;
 }
 
