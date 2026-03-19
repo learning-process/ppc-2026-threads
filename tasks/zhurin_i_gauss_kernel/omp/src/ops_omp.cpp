@@ -1,6 +1,7 @@
 #include "zhurin_i_gauss_kernel/omp/include/ops_omp.hpp"
 
 #include <algorithm>
+#include <utility>
 #include <vector>
 
 #include "zhurin_i_gauss_kernel/common/include/common.hpp"
@@ -57,7 +58,6 @@ bool ZhurinIGaussKernelOMP::RunImpl() {
   int base_width = w / np;
   int remainder = w % np;
 
-  // Локальные ссылки на поля класса
   auto &local_padded = padded_;
   auto &local_result = result_;
 
@@ -65,7 +65,7 @@ bool ZhurinIGaussKernelOMP::RunImpl() {
     shared(w, h, base_width, remainder, np, local_padded, local_result)
   for (int part = 0; part < np; ++part) {
     int part_width = base_width + (part < remainder ? 1 : 0);
-    int x_start = part * base_width + std::min(part, remainder);
+    int x_start = (part * base_width) + std::min(part, remainder);
     int x_end = x_start + part_width;
 
     for (int i = 1; i <= h; ++i) {
