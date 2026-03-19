@@ -76,7 +76,7 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_t
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<NesterovATestTaskALL, InType>(kTestParam, PPC_SETTINGS_example_threads),
-                   ppc::util::AddFuncTask<NesterovATestTaskOMP, InType>(kTestParam, PPC_SETTINGS_example_threads),
+                   ppc::util::AddFuncTask<ZhurinIGaussKernelOMP, InType>(kTestParam, PPC_SETTINGS_example_threads),
                    ppc::util::AddFuncTask<NesterovATestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_example_threads),
                    ppc::util::AddFuncTask<NesterovATestTaskSTL, InType>(kTestParam, PPC_SETTINGS_example_threads),
                    ppc::util::AddFuncTask<NesterovATestTaskTBB, InType>(kTestParam, PPC_SETTINGS_example_threads));

@@ -4,9 +4,9 @@
 #include <vector>
 
 #include "task/include/task.hpp"
-#include "zhurin_i_gauss_kernel_seq/common/include/common.hpp"
+#include "zhurin_i_gauss_kernel/common/include/common.hpp"
 
-namespace zhurin_i_gauss_kernel_seq {
+namespace zhurin_i_gauss_kernel {
 
 class ZhurinIGaussKernelSEQ : public BaseTask {
  public:
@@ -34,4 +34,4 @@ class ZhurinIGaussKernelSEQ : public BaseTask {
   bool output_written_ = false;
 };
 
-}  // namespace zhurin_i_gauss_kernel_seq
+}  // namespace zhurin_i_gauss_kernel
