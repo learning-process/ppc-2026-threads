@@ -7,7 +7,7 @@
 #include "zhurin_i_gauss_kernel/common/include/common.hpp"
 
 #ifdef _OPENMP
-#include <omp.h>
+#  include <omp.h>
 #endif
 
 namespace zhurin_i_gauss_kernel {
@@ -46,20 +46,17 @@ bool ZhurinIGaussKernelOMP::PreProcessingImpl() {
   num_parts_ = std::get<2>(in);
   image_ = std::get<3>(in);
 
-  // Создаём расширенное изображение с нулевым padding
   padded_.assign(height_ + 2, std::vector<int>(width_ + 2, 0));
   for (int i = 0; i < height_; ++i) {
     std::copy(image_[i].begin(), image_[i].end(), padded_[i + 1].begin() + 1);
   }
 
-  // Выделяем память под результат
   result_.assign(height_, std::vector<int>(width_, 0));
   output_written_ = false;
   return true;
 }
 
 bool ZhurinIGaussKernelOMP::RunImpl() {
-  // Распараллеливаем только внешний цикл по строкам
 #pragma omp parallel for schedule(static)
   for (int i = 0; i < height_; ++i) {
     for (int j = 0; j < width_; ++j) {
