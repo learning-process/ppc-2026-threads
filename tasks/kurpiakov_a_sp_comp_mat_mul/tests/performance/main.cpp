@@ -70,7 +70,6 @@ const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KurpiakovACRSMatM
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = KurpiakovRunPerfTests::CustomPerfTestName;
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(SparseMatMulPerfTests, KurpiakovRunPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
