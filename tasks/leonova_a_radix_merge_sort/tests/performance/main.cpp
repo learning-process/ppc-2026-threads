@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "leonova_a_radix_merge_sort/common/include/common.hpp"
+#include "leonova_a_radix_merge_sort/omp/include/ops_omp.hpp"
 #include "leonova_a_radix_merge_sort/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -78,8 +79,8 @@ TEST_P(LeonovaARunPerfTests, RunPerfRadix) {
 }
 
 namespace {
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, LeonovaARadixMergeSortSEQ>(PPC_SETTINGS_leonova_a_radix_merge_sort);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LeonovaARadixMergeSortSEQ, LeonovaARadixMergeSortOMP>(
+    PPC_SETTINGS_leonova_a_radix_merge_sort);
 
 INSTANTIATE_TEST_SUITE_P(RunPerfRadixTests, LeonovaARunPerfTests, ppc::util::TupleToGTestValues(kAllPerfTasks),
                          LeonovaARunPerfTests::CustomPerfTestName);
