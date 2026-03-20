@@ -9,7 +9,9 @@
 namespace dolov_v_crs_mat_mult_seq {
 class DolovVCrsMatMultOmp : public BaseTask {
  public:
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() { return ppc::task::TypeOfTask::kOMP; }
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kOMP;
+  }
   explicit DolovVCrsMatMultOmp(const InType &in);
 
   bool ValidationImpl() override;

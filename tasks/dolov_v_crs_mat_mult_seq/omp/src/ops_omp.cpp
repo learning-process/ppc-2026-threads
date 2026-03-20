@@ -15,7 +15,9 @@ DolovVCrsMatMultOmp::DolovVCrsMatMultOmp(const InType &in) {
 
 bool DolovVCrsMatMultOmp::ValidationImpl() {
   const auto &input_data = GetInput();
-  if (input_data.size() != 2) return false;
+  if (input_data.size() != 2) {
+    return false;
+  }
   const auto &matrix_a = input_data[0];
   const auto &matrix_b = input_data[1];
   return matrix_a.num_cols == matrix_b.num_rows && matrix_a.num_rows > 0 && matrix_b.num_cols > 0;
@@ -37,8 +39,12 @@ SparseMatrix DolovVCrsMatMultOmp::TransposeMatrix(const SparseMatrix &matrix) {
   transposed.num_cols = matrix.num_rows;
   transposed.row_pointers.assign(transposed.num_rows + 1, 0);
 
-  for (int col_idx : matrix.col_indices) transposed.row_pointers[col_idx + 1]++;
-  for (int i = 0; i < transposed.num_rows; ++i) transposed.row_pointers[i + 1] += transposed.row_pointers[i];
+  for (int col_idx : matrix.col_indices) {
+    transposed.row_pointers[col_idx + 1]++;
+  }
+  for (int i = 0; i < transposed.num_rows; ++i) {
+    transposed.row_pointers[i + 1] += transposed.row_pointers[i];
+  }
 
   transposed.values.resize(matrix.values.size());
   transposed.col_indices.resize(matrix.col_indices.size());
@@ -124,6 +130,8 @@ bool DolovVCrsMatMultOmp::RunImpl() {
   return true;
 }
 
-bool DolovVCrsMatMultOmp::PostProcessingImpl() { return true; }
+bool DolovVCrsMatMultOmp::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace dolov_v_crs_mat_mult_seq

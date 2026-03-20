@@ -47,13 +47,17 @@ class DolovVCrsMatMultSeqRunPerfTestThreads : public ppc::util::BaseRunPerfTests
     return output_data.num_rows == input_data_[0].num_rows && !output_data.values.empty();
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
  private:
   InType input_data_;
 };
 
-TEST_P(DolovVCrsMatMultSeqRunPerfTestThreads, BandMatrixPerformance) { ExecuteTest(GetParam()); }
+TEST_P(DolovVCrsMatMultSeqRunPerfTestThreads, BandMatrixPerformance) {
+  ExecuteTest(GetParam());
+}
 
 namespace {
 

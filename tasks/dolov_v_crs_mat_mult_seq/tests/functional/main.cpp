@@ -83,7 +83,9 @@ TEST(dolov_v_crs_mat_mult_seq_omp, Validation_Fails_On_Empty_Matrix) {
 
 class DolovVCrsMatMultSeqRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType &test_param) { return "Test_" + std::get<1>(test_param); }
+  static std::string PrintTestParam(const TestType &test_param) {
+    return "Test_" + std::get<1>(test_param);
+  }
 
  protected:
   void SetUp() override {
@@ -146,7 +148,9 @@ class DolovVCrsMatMultSeqRunFuncTestsThreads : public ppc::util::BaseRunFuncTest
     return true;
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
  private:
   InType input_data_;
@@ -157,7 +161,9 @@ class DolovVCrsMatMultSeqRunFuncTestsThreads : public ppc::util::BaseRunFuncTest
 
 namespace {
 
-TEST_P(DolovVCrsMatMultSeqRunFuncTestsThreads, RandomSparseMatrices) { ExecuteTest(GetParam()); }
+TEST_P(DolovVCrsMatMultSeqRunFuncTestsThreads, RandomSparseMatrices) {
+  ExecuteTest(GetParam());
+}
 
 const std::array<TestType, 7> kTestParam = {std::make_tuple(1, "SmallSparse"),  std::make_tuple(2, "Rectangular"),
                                             std::make_tuple(3, "ZeroMatrix"),   std::make_tuple(4, "DotProduct"),
