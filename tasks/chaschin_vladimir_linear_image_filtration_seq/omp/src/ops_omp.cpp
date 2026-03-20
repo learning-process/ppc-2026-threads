@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
-#include "chaschin_vladimir_linear_image_filtration_seq/seq/include/ops_seq.hpp"
+#include "chaschin_vladimir_linear_image_filtration_seq/omp/include/ops_omp.hpp"
 namespace chaschin_v_linear_image_filtration_omp {
 
 ChaschinVLinearFiltrationOMP::ChaschinVLinearFiltrationOMP(const InType &in) {
