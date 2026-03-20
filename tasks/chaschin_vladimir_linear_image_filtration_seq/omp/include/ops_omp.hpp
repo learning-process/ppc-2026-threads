@@ -7,12 +7,12 @@
 
 namespace chaschin_v_linear_image_filtration_omp {
 
-class ChaschinVLinearFiltrationOMP : public BaseTask {
+class ChaschinVLinearFiltrationOMP : public chaschin_v_linear_image_filtration_seq::BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kOMP;
   }
-  explicit ChaschinVLinearFiltrationOMP(const InType &in);
+  explicit ChaschinVLinearFiltrationOMP(const chaschin_v_linear_image_filtration_seq::InType &in);
 
  private:
   bool ValidationImpl() override;
