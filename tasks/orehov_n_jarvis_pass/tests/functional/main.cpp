@@ -2,10 +2,10 @@
 #include <stb/stb_image.h>
 
 #include <array>
+#include <iostream>
 #include <string>
 #include <tuple>
 #include <vector>
-#include <iostream>
 
 #include "orehov_n_jarvis_pass/common/include/common.hpp"
 #include "orehov_n_jarvis_pass/omp/include/ops_omp.hpp"
@@ -51,7 +51,7 @@ class OrehovNJarvisPassFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    for (int i = 0; i < output_data.size(); i++){
+    for (int i = 0; i < output_data.size(); i++) {
       std::cout << output_data[i].x << " " << output_data[i].y << "\n";
     }
     return (test_res_ == output_data);
