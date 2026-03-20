@@ -24,6 +24,7 @@ bool OrehovNJarvisPassOMP::PreProcessingImpl() {
   return true;
 }
 
+
 bool OrehovNJarvisPassOMP::RunImpl() {
   if (input_.size() == 1 || input_.size() == 2) {
     res_ = input_;

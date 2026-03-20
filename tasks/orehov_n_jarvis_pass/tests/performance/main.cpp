@@ -40,7 +40,8 @@ TEST_P(OrehovNJarvisPassPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, OrehovNJarvisPassSEQ, OrehovNJarvisPassOMP>(PPC_SETTINGS_orehov_n_jarvis_pass);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, OrehovNJarvisPassSEQ, OrehovNJarvisPassOMP>(PPC_SETTINGS_orehov_n_jarvis_pass);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
