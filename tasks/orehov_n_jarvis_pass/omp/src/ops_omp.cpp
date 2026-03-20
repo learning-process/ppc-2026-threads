@@ -50,19 +50,20 @@ Point OrehovNJarvisPassOMP::FindLocalBest(Point current, Point initial_next) con
   Point local_next = initial_next;
   double local_best_orient = -1e9;
 
-  for (const auto &p : input_) {
-    if (current == p || local_next == p) {
+#pragma omp for
+  for (size_t i = 0; i < input_.size(); i++) {
+    if (current == input_[i] || local_next == input_[i]) {
       continue;
     }
 
-    double orient = CheckLeft(current, local_next, p);
+    double orient = CheckLeft(current, local_next, input_[i]);
 
     if (orient > local_best_orient) {
       local_best_orient = orient;
-      local_next = p;
+      local_next = input_[i];
     } else if (orient == local_best_orient && orient == 0) {
-      if (Distance(current, p) > Distance(current, local_next)) {
-        local_next = p;
+      if (Distance(current, input_[i]) > Distance(current, local_next)) {
+        local_next = input_[i];
       }
     }
   }
