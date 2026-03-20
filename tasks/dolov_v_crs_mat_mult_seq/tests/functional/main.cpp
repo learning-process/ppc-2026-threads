@@ -19,8 +19,7 @@ namespace dolov_v_crs_mat_mult_seq {
 
 namespace {
 
-SparseMatrix GenerateRandomCRS(int rows, int cols, double density,
-                               uint32_t seed) {
+SparseMatrix GenerateRandomCRS(int rows, int cols, double density, uint32_t seed) {
   SparseMatrix matrix;
   matrix.num_rows = rows;
   matrix.num_cols = cols;
@@ -42,19 +41,14 @@ SparseMatrix GenerateRandomCRS(int rows, int cols, double density,
   return matrix;
 }
 
-std::vector<double> DenseMultiply(const SparseMatrix &matrix_a,
-                                  const SparseMatrix &matrix_b) {
-  std::vector<double> res(
-      static_cast<size_t>(matrix_a.num_rows) * matrix_b.num_cols, 0.0);
+std::vector<double> DenseMultiply(const SparseMatrix &matrix_a, const SparseMatrix &matrix_b) {
+  std::vector<double> res(static_cast<size_t>(matrix_a.num_rows) * matrix_b.num_cols, 0.0);
   for (int i = 0; i < matrix_a.num_rows; ++i) {
-    for (int j = matrix_a.row_pointers[i]; j < matrix_a.row_pointers[i + 1];
-         ++j) {
+    for (int j = matrix_a.row_pointers[i]; j < matrix_a.row_pointers[i + 1]; ++j) {
       int col_a = matrix_a.col_indices[j];
       double val_a = matrix_a.values[j];
-      for (int k = matrix_b.row_pointers[col_a];
-           k < matrix_b.row_pointers[col_a + 1]; ++k) {
-        res[(static_cast<size_t>(i) * matrix_b.num_cols) +
-            matrix_b.col_indices[k]] += val_a * matrix_b.values[k];
+      for (int k = matrix_b.row_pointers[col_a]; k < matrix_b.row_pointers[col_a + 1]; ++k) {
+        res[(static_cast<size_t>(i) * matrix_b.num_cols) + matrix_b.col_indices[k]] += val_a * matrix_b.values[k];
       }
     }
   }
@@ -71,8 +65,7 @@ TEST(dolov_v_crs_mat_mult_seq_omp, Validation_Fails_On_Wrong_Input_Size) {
   EXPECT_FALSE(task.ValidationImpl());
 }
 
-TEST(dolov_v_crs_mat_mult_seq_omp,
-     Validation_Fails_On_Incompatible_Dimensions) {
+TEST(dolov_v_crs_mat_mult_seq_omp, Validation_Fails_On_Incompatible_Dimensions) {
   SparseMatrix a = GenerateRandomCRS(2, 3, 1.0, 1);
   SparseMatrix b = GenerateRandomCRS(4, 2, 1.0, 2);
   InType in = {a, b};
@@ -88,18 +81,13 @@ TEST(dolov_v_crs_mat_mult_seq_omp, Validation_Fails_On_Empty_Matrix) {
   EXPECT_FALSE(task.ValidationImpl());
 }
 
-class DolovVCrsMatMultSeqRunFuncTestsThreads
-    : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class DolovVCrsMatMultSeqRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return "Test_" + std::get<1>(test_param);
-  }
+  static std::string PrintTestParam(const TestType &test_param) { return "Test_" + std::get<1>(test_param); }
 
  protected:
   void SetUp() override {
-    int test_id =
-        std::get<0>(std::get<static_cast<std::size_t>(
-                        ppc::util::GTestParamIndex::kTestParams)>(GetParam()));
+    int test_id = std::get<0>(std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()));
 
     SparseMatrix matrix_a;
     SparseMatrix matrix_b;
@@ -143,12 +131,10 @@ class DolovVCrsMatMultSeqRunFuncTestsThreads
       return false;
     }
 
-    std::vector<double> actual_dense(
-        static_cast<size_t>(out.num_rows) * out.num_cols, 0.0);
+    std::vector<double> actual_dense(static_cast<size_t>(out.num_rows) * out.num_cols, 0.0);
     for (int i = 0; i < out.num_rows; ++i) {
       for (int j = out.row_pointers[i]; j < out.row_pointers[i + 1]; ++j) {
-        actual_dense[(static_cast<size_t>(i) * out.num_cols) +
-                     out.col_indices[j]] = out.values[j];
+        actual_dense[(static_cast<size_t>(i) * out.num_cols) + out.col_indices[j]] = out.values[j];
       }
     }
 
@@ -171,30 +157,22 @@ class DolovVCrsMatMultSeqRunFuncTestsThreads
 
 namespace {
 
-TEST_P(DolovVCrsMatMultSeqRunFuncTestsThreads, RandomSparseMatrices) {
-  ExecuteTest(GetParam());
-}
+TEST_P(DolovVCrsMatMultSeqRunFuncTestsThreads, RandomSparseMatrices) { ExecuteTest(GetParam()); }
 
-const std::array<TestType, 7> kTestParam = {
-    std::make_tuple(1, "SmallSparse"),  std::make_tuple(2, "Rectangular"),
-    std::make_tuple(3, "ZeroMatrix"),   std::make_tuple(4, "DotProduct"),
-    std::make_tuple(5, "LargeSparse"),  std::make_tuple(6, "DenseRow"),
-    std::make_tuple(7, "SingleElement")};
+const std::array<TestType, 7> kTestParam = {std::make_tuple(1, "SmallSparse"),  std::make_tuple(2, "Rectangular"),
+                                            std::make_tuple(3, "ZeroMatrix"),   std::make_tuple(4, "DotProduct"),
+                                            std::make_tuple(5, "LargeSparse"),  std::make_tuple(6, "DenseRow"),
+                                            std::make_tuple(7, "SingleElement")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<DolovVCrsMatMultSeq, InType>(
-                       kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult_seq),
-                   ppc::util::AddFuncTask<DolovVCrsMatMultOmp, InType>(
-                       kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult_seq));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<DolovVCrsMatMultSeq, InType>(kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult_seq),
+    ppc::util::AddFuncTask<DolovVCrsMatMultOmp, InType>(kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult_seq));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kFuncTestName =
-    DolovVCrsMatMultSeqRunFuncTestsThreads::PrintFuncTestName<
-        DolovVCrsMatMultSeqRunFuncTestsThreads>;
+    DolovVCrsMatMultSeqRunFuncTestsThreads::PrintFuncTestName<DolovVCrsMatMultSeqRunFuncTestsThreads>;
 
-INSTANTIATE_TEST_SUITE_P(CRS_Functional_Tests,
-                         DolovVCrsMatMultSeqRunFuncTestsThreads, kGtestValues,
-                         kFuncTestName);
+INSTANTIATE_TEST_SUITE_P(CRS_Functional_Tests, DolovVCrsMatMultSeqRunFuncTestsThreads, kGtestValues, kFuncTestName);
 
 }  // namespace
 }  // namespace dolov_v_crs_mat_mult_seq

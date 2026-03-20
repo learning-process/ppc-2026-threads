@@ -18,8 +18,7 @@ bool DolovVCrsMatMultOmp::ValidationImpl() {
   if (input_data.size() != 2) return false;
   const auto &matrix_a = input_data[0];
   const auto &matrix_b = input_data[1];
-  return matrix_a.num_cols == matrix_b.num_rows && matrix_a.num_rows > 0 &&
-         matrix_b.num_cols > 0;
+  return matrix_a.num_cols == matrix_b.num_rows && matrix_a.num_rows > 0 && matrix_b.num_cols > 0;
 }
 
 bool DolovVCrsMatMultOmp::PreProcessingImpl() {
@@ -39,8 +38,7 @@ SparseMatrix DolovVCrsMatMultOmp::TransposeMatrix(const SparseMatrix &matrix) {
   transposed.row_pointers.assign(transposed.num_rows + 1, 0);
 
   for (int col_idx : matrix.col_indices) transposed.row_pointers[col_idx + 1]++;
-  for (int i = 0; i < transposed.num_rows; ++i)
-    transposed.row_pointers[i + 1] += transposed.row_pointers[i];
+  for (int i = 0; i < transposed.num_rows; ++i) transposed.row_pointers[i + 1] += transposed.row_pointers[i];
 
   transposed.values.resize(matrix.values.size());
   transposed.col_indices.resize(matrix.col_indices.size());
@@ -57,8 +55,7 @@ SparseMatrix DolovVCrsMatMultOmp::TransposeMatrix(const SparseMatrix &matrix) {
   return transposed;
 }
 
-double DolovVCrsMatMultOmp::DotProduct(const SparseMatrix &matrix_a, int row_a,
-                                       const SparseMatrix &matrix_b_t,
+double DolovVCrsMatMultOmp::DotProduct(const SparseMatrix &matrix_a, int row_a, const SparseMatrix &matrix_b_t,
                                        int row_b) {
   double sum = 0.0;
   int ptr_a = matrix_a.row_pointers[row_a];

@@ -31,8 +31,7 @@ SparseMatrix CreateBandMatrix(int n, int band_width) {
 
 }  // namespace
 
-class DolovVCrsMatMultSeqRunPerfTestThreads
-    : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class DolovVCrsMatMultSeqRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
     const int n = 2000;
@@ -45,8 +44,7 @@ class DolovVCrsMatMultSeqRunPerfTestThreads
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data.num_rows == input_data_[0].num_rows &&
-           !output_data.values.empty();
+    return output_data.num_rows == input_data_[0].num_rows && !output_data.values.empty();
   }
 
   InType GetTestInputData() final { return input_data_; }
@@ -55,24 +53,18 @@ class DolovVCrsMatMultSeqRunPerfTestThreads
   InType input_data_;
 };
 
-TEST_P(DolovVCrsMatMultSeqRunPerfTestThreads, BandMatrixPerformance) {
-  ExecuteTest(GetParam());
-}
+TEST_P(DolovVCrsMatMultSeqRunPerfTestThreads, BandMatrixPerformance) { ExecuteTest(GetParam()); }
 
 namespace {
 
 const auto kAllPerfTasks =
-    std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultSeq>(
-                       PPC_SETTINGS_dolov_v_crs_mat_mult_seq),
-                   ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultOmp>(
-                       PPC_SETTINGS_dolov_v_crs_mat_mult_seq));
+    std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultSeq>(PPC_SETTINGS_dolov_v_crs_mat_mult_seq),
+                   ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultOmp>(PPC_SETTINGS_dolov_v_crs_mat_mult_seq));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-const auto kPerfTestName =
-    DolovVCrsMatMultSeqRunPerfTestThreads::CustomPerfTestName;
+const auto kPerfTestName = DolovVCrsMatMultSeqRunPerfTestThreads::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(CRS_Band_Perf, DolovVCrsMatMultSeqRunPerfTestThreads,
-                         kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(CRS_Band_Perf, DolovVCrsMatMultSeqRunPerfTestThreads, kGtestValues, kPerfTestName);
 
 }  // namespace
 }  // namespace dolov_v_crs_mat_mult_seq
