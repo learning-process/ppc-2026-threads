@@ -19,4 +19,4 @@ class FrolovaSRadixSortDoubleOMP : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace frolova_s_radix_sort_doubles
+}  // namespace frolova_s_radix_sort_double
