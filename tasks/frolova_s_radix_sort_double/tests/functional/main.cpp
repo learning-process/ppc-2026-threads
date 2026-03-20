@@ -1,14 +1,15 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <array>    // добавлено для std::array
-#include <cstddef>  // добавлено для size_t
+#include <array>
+#include <cstddef>
 #include <fstream>
 #include <string>
-#include <tuple>  // добавлено для std::tuple_cat
+#include <tuple>
 #include <vector>
 
 #include "frolova_s_radix_sort_double/common/include/common.hpp"
+#include "frolova_s_radix_sort_double/omp/include/ops_omp.hpp"
 #include "frolova_s_radix_sort_double/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -45,7 +46,6 @@ class FrolovaSRadixSortDoubleRunFuncTests : public ppc::util::BaseRunFuncTests<I
 
     input_data = vect_data;
     expected_res = vect_data;
-    // Используем ranges-версию алгоритма сортировки (C++20)
     std::ranges::sort(expected_res);
   }
 
@@ -71,7 +71,8 @@ const std::array<TestType, 10> kTestParam = {"test1", "test2", "test3", "test4",
                                              "test6", "test7", "test8", "test9", "test10"};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<FrolovaSRadixSortDoubleSEQ, InType>(kTestParam, PPC_SETTINGS_example_threads));
+    ppc::util::AddFuncTask<FrolovaSRadixSortDoubleSEQ, InType>(kTestParam, PPC_SETTINGS_example_threads),
+    ppc::util::AddFuncTask<FrolovaSRadixSortDoubleOMP, InType>(kTestParam, PPC_SETTINGS_example_threads));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
