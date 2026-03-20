@@ -50,7 +50,7 @@ bool OrehovNJarvisPassOMP::RunImpl() {
 Point OrehovNJarvisPassOMP::FindNext(Point current) const {
   Point next = (current == input_[0]) ? input_[1] : input_[0];
   Point global_next = next;
-  const auto& input = input_;
+  const auto &input = input_;
 #pragma omp parallel default(none) shared(input, current, global_next, next)
   {
     Point local_next = next;
@@ -58,7 +58,7 @@ Point OrehovNJarvisPassOMP::FindNext(Point current) const {
 
 #pragma omp for
     for (size_t i = 0; i < input.size(); i++) {
-      const auto& point = input[i];
+      const auto &point = input[i];
       if (current == point) {
         continue;
       }
