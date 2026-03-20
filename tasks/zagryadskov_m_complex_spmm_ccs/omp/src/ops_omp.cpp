@@ -21,14 +21,14 @@ ZagryadskovMComplexSpMMCCSOMP::ZagryadskovMComplexSpMMCCSOMP(const InType &in) {
 void ZagryadskovMComplexSpMMCCSOMP::SpMMkernel(const CCS &a, const CCS &b, const std::complex<double> &zero, double eps,
                                                std::vector<std::vector<int>> &col_rows,
                                                std::vector<std::vector<std::complex<double>>> &col_vals) {
-#pragma omp parallel default(shared) num_threads(ppc::util::GetNumThreads())
+#pragma omp parallel default(none) shared(a, b, col_rows, col_vals, zero, eps) num_threads(ppc::util::GetNumThreads())
   {
     std::vector<std::complex<double>> acc(a.m, zero);
     std::vector<int> marker(a.m, -1);
     std::vector<int> rows;
     rows.reserve(a.m);
 
-#pragma omp for schedule(static, 4)
+#pragma omp for schedule(static)
     for (int j = 0; j < b.n; ++j) {
       rows.clear();
 
