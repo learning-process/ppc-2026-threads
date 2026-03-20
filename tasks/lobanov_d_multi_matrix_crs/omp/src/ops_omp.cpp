@@ -1,6 +1,7 @@
 #include "lobanov_d_multi_matrix_crs/omp/include/ops_omp.hpp"
 
-#include <algorithm>
+#include <cmath>
+#include <cstddef>
 #include <map>
 #include <vector>
 
@@ -28,10 +29,10 @@ bool LobanovMultyMatrixOMP::ValidationImpl() {
       matrix_b.row_pointer_data.size() != static_cast<size_t>(matrix_b.row_count) + 1) {
     return false;
   }
-  if (matrix_a.non_zero_count != static_cast<int>(matrix_a.value_data.size()) ||
-      matrix_a.non_zero_count != static_cast<int>(matrix_a.column_index_data.size()) ||
-      matrix_b.non_zero_count != static_cast<int>(matrix_b.value_data.size()) ||
-      matrix_b.non_zero_count != static_cast<int>(matrix_b.column_index_data.size())) {
+  if (static_cast<size_t>(matrix_a.non_zero_count) != matrix_a.value_data.size() ||
+      static_cast<size_t>(matrix_a.non_zero_count) != matrix_a.column_index_data.size() ||
+      static_cast<size_t>(matrix_b.non_zero_count) != matrix_b.value_data.size() ||
+      static_cast<size_t>(matrix_b.non_zero_count) != matrix_b.column_index_data.size()) {
     return false;
   }
   return true;
@@ -58,12 +59,12 @@ bool LobanovMultyMatrixOMP::RunImpl() {
 
   const int rows_a = matrix_a.row_count;
 
-  // Вектор для временного хранения результатов каждой строки
   std::vector<std::map<int, double>> row_results(static_cast<size_t>(rows_a));
 
   const int num_threads = ppc::util::GetNumThreads();
 
-#pragma omp parallel for num_threads(num_threads) schedule(dynamic)
+#pragma omp parallel for default(none) shared(matrix_a, matrix_b, row_results) num_threads(num_threads) \
+    schedule(dynamic)
   for (int i = 0; i < rows_a; ++i) {
     const int a_start = matrix_a.row_pointer_data[static_cast<size_t>(i)];
     const int a_end = matrix_a.row_pointer_data[static_cast<size_t>(i) + 1];
@@ -88,7 +89,6 @@ bool LobanovMultyMatrixOMP::RunImpl() {
     }
   }
 
-  // Преобразование временных данных в формат CRS
   int offset = 0;
   result.row_pointer_data[0] = 0;
   for (int i = 0; i < rows_a; ++i) {
