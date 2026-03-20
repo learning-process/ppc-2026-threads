@@ -1,7 +1,7 @@
 #include "orehov_n_jarvis_pass/omp/include/ops_omp.hpp"
 
 #include <cmath>
-#include <iostream>
+#include <cstddef>
 #include <set>
 #include <vector>
 
@@ -47,67 +47,30 @@ bool OrehovNJarvisPassOMP::RunImpl() {
   return true;
 }
 
-Point OrehovNJarvisPassOMP::FindLocalBest(Point current, Point initial_next) const {
-  Point local_next = initial_next;
-  double local_best_orient = -1e9;
-
-#pragma omp for
-  for (size_t i = 0; i < input_.size(); i++) {
-    if (current == input_[i] || local_next == input_[i]) {
-      continue;
-    }
-
-    double orient = CheckLeft(current, local_next, input_[i]);
-
-    if (orient > local_best_orient) {
-      local_best_orient = orient;
-      local_next = input_[i];
-    } else if (orient == local_best_orient && orient == 0) {
-      if (Distance(current, input_[i]) > Distance(current, local_next)) {
-        local_next = input_[i];
-      }
-    }
-  }
-
-  return local_next;
-}
-
-void OrehovNJarvisPassOMP::UpdateGlobalBest(Point current, Point local_next, Point &global_next) {
-  double global_orient = CheckLeft(current, global_next, local_next);
-  double current_orient = CheckLeft(current, global_next, global_next);
-
-  if (global_orient > current_orient) {
-    global_next = local_next;
-  } else if (global_orient == current_orient && global_orient == 0) {
-    if (Distance(current, local_next) > Distance(current, global_next)) {
-      global_next = local_next;
-    }
-  }
-}
-
 Point OrehovNJarvisPassOMP::FindNext(Point current) const {
   Point next = (current == input_[0]) ? input_[1] : input_[0];
   Point global_next = next;
-
-#pragma omp parallel
+  const auto& input = input_;
+#pragma omp parallel default(none) shared(input, current, global_next, next)
   {
     Point local_next = next;
     double local_best_orient = -1e9;
 
 #pragma omp for
-    for (size_t i = 0; i < input_.size(); ++i) {
-      if (current == input_[i]) {
+    for (size_t i = 0; i < input.size(); i++) {
+      const auto& point = input[i];
+      if (current == point) {
         continue;
       }
 
-      double orient = CheckLeft(current, local_next, input_[i]);
+      double orient = CheckLeft(current, local_next, point);
 
       if (orient > local_best_orient) {
         local_best_orient = orient;
-        local_next = input_[i];
+        local_next = point;
       } else if (orient == local_best_orient && orient == 0) {
-        if (Distance(current, input_[i]) > Distance(current, local_next)) {
-          local_next = input_[i];
+        if (Distance(current, point) > Distance(current, local_next)) {
+          local_next = point;
         }
       }
     }
