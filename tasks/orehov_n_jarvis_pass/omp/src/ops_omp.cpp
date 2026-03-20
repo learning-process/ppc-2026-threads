@@ -85,8 +85,7 @@ void OrehovNJarvisPassOMP::UpdateGlobalBest(Point current, Point local_next, Poi
 
 Point OrehovNJarvisPassOMP::FindNext(Point current) const {
   Point next = (current == input_[0]) ? input_[1] : input_[0];
-
-#pragma omp parallel default(none) shared(current, next, input_)
+#pragma omp parallel
   {
     Point local_next = FindLocalBest(current, next);
 
