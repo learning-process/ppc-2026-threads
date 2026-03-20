@@ -8,6 +8,7 @@
 #include <tuple>
 #include <vector>
 
+#include "chaschin_vladimir_linear_image_filtration_omp/omp/include/ops_omp.hpp"
 #include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
 #include "chaschin_vladimir_linear_image_filtration_seq/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
@@ -39,7 +40,6 @@ class ChaschinVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
     std::vector<float> output(
         static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0F);
 
-    // Горизонтальный проход
     for (int yi = 0; yi < height; ++yi) {
       temp[(yi * width) + 0] = (image[(yi * width) + 0] * 2 + image[(yi * width) + 1]) / 3.F;
       for (int xy = 1; xy < width - 1; ++xy) {
@@ -49,7 +49,6 @@ class ChaschinVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
       temp[(yi * width) + width - 1] = (image[(yi * width) + width - 2] + 2.F * image[(yi * width) + width - 1]) / 3.F;
     }
 
-    // Вертикальный проход
     for (int xy = 0; xy < width; ++xy) {
       output[xy] = ((temp[xy] * 2) + temp[width + xy]) / 3.F;
       for (int yi = 1; yi < height - 1; ++yi) {
@@ -71,7 +70,6 @@ class ChaschinVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
     const int height = size;
 
     input_data_ = std::make_tuple(GenerateDeterministicImage(width, height), width, height);
-
     expected_output_ = ApplyGaussianKernel(std::get<0>(input_data_), width, height);
   }
 
@@ -104,16 +102,23 @@ TEST_P(ChaschinVRunFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {
-    std::make_tuple(4, "4"),   std::make_tuple(8, "8"),   std::make_tuple(16, "16"),
-    std::make_tuple(32, "32"), std::make_tuple(64, "64"),
+const std::array<TestType, 5> kTestParamSeq = {
+    std::make_tuple(4, "seq_4"),   std::make_tuple(8, "seq_8"),   std::make_tuple(16, "seq_16"),
+    std::make_tuple(32, "seq_32"), std::make_tuple(64, "seq_64"),
 };
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<ChaschinVLinearFiltrationSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes));
+const std::array<TestType, 5> kTestParamOmp = {
+    std::make_tuple(4, "omp_4"),   std::make_tuple(8, "omp_8"),   std::make_tuple(16, "omp_16"),
+    std::make_tuple(32, "omp_32"), std::make_tuple(64, "omp_64"),
+};
+
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<chaschin_v_linear_image_filtration_seq::ChaschinVLinearFiltrationSEQ, InType>(
+                       kTestParamSeq, PPC_SETTINGS_example_processes),
+                   ppc::util::AddFuncTask<chaschin_v_linear_image_filtration_omp::ChaschinVLinearFiltrationOMP, InType>(
+                       kTestParamOmp, PPC_SETTINGS_example_processes));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-
 const auto kPerfTestName = ChaschinVRunFuncTests::PrintFuncTestName<ChaschinVRunFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(LinearGaussianTests, ChaschinVRunFuncTests, kGtestValues, kPerfTestName);
