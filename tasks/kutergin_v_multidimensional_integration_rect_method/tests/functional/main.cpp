@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "../../common/include/common.hpp"
+#include "../../omp/include/rect_method_omp.hpp"
 #include "../../seq/include/rect_method_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -65,12 +66,24 @@ IntegrationData test_3d = {.limits = {{0.0, 2.0}, {0.0, 3.0}, {0.0, 1.0}},
                            .n_steps = {20, 20, 20},
                            .func = [](const std::vector<double> & /*unused*/) { return 1.0; }};
 
-const std::array<TestType, 3> kTestCases = {std::make_tuple(test_1d, 0.5, "1D_Linear"),
-                                            std::make_tuple(test_2d, 1.0, "2D_Linear"),
-                                            std::make_tuple(test_3d, 6.0, "3D_Constant")};
+IntegrationData test_4d = {.limits = {{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}},
+                           .n_steps = {5, 5, 5, 5},
+                           .func = [](const std::vector<double> &x) { return x[0] + x[1] + x[2] + x[3]; }};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<RectMethodSequential, InType>(
-    kTestCases, PPC_SETTINGS_kutergin_v_multidimensional_integration_rect_method);
+IntegrationData test_5d = {.limits = {{0.0, 2.0}, {0.0, 3.0}, {0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}},
+                           .n_steps = {3, 3, 3, 3, 3},
+                           .func = [](const std::vector<double> &x) { return x[0] + x[1] + x[2] + x[3] + x[4]; }};
+
+const std::array<TestType, 5> kTestCases = {
+    std::make_tuple(test_1d, 0.5, "1D_Linear"), std::make_tuple(test_2d, 1.0, "2D_Linear"),
+    std::make_tuple(test_3d, 6.0, "3D_Constant"), std::make_tuple(test_4d, 2.0, "4D_Sum_Small_Grid"),
+    std::make_tuple(test_5d, 24.0, "5D_Sum_Small_Grid")};
+
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<RectMethodSequential, InType>(
+                       kTestCases, PPC_SETTINGS_kutergin_v_multidimensional_integration_rect_method),
+                   ppc::util::AddFuncTask<RectMethodOMP, InType>(
+                       kTestCases, PPC_SETTINGS_kutergin_v_multidimensional_integration_rect_method));
 
 const auto kGTestValues = ppc::util::ExpandToValues(kTestTasksList);
 
