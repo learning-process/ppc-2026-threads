@@ -3,6 +3,7 @@
 #include <cmath>
 #include <set>
 #include <vector>
+#include <iostream>
 
 #include "orehov_n_jarvis_pass/common/include/common.hpp"
 
@@ -86,17 +87,46 @@ void OrehovNJarvisPassOMP::UpdateGlobalBest(Point current, Point local_next, Poi
 
 Point OrehovNJarvisPassOMP::FindNext(Point current) const {
   Point next = (current == input_[0]) ? input_[1] : input_[0];
+  Point global_next = next;
+  
 #pragma omp parallel
   {
-    Point local_next = FindLocalBest(current, next);
+    
+    Point local_next = next;
+    double local_best_orient = -1e9;
+
+#pragma omp for
+    for (size_t i = 0; i < input_.size(); ++i) {
+      if (current == input_[i]) {
+        continue;
+      }
+
+      double orient = CheckLeft(current, local_next, input_[i]);
+
+      if (orient > local_best_orient) {
+        local_best_orient = orient;
+        local_next = input_[i];
+      } else if (orient == local_best_orient && orient == 0) {
+        if (Distance(current, input_[i]) > Distance(current, local_next)) {
+          local_next = input_[i];
+        }
+      }
+    }
 
 #pragma omp critical
     {
-      UpdateGlobalBest(current, local_next, next);
+      double global_orient = CheckLeft(current, global_next, local_next);
+      if (global_orient > 0) {
+        global_next = local_next;
+      } else if (global_orient == 0) {
+        if (Distance(current, local_next) > Distance(current, global_next)) {
+          global_next = local_next;
+        }
+      }
     }
   }
-
-  return next;
+  
+  return global_next;
 }
 
 double OrehovNJarvisPassOMP::CheckLeft(Point a, Point b, Point c) {
