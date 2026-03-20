@@ -92,8 +92,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, chaschin_v_linear_image_filtration_seq::ChaschinVLinearFiltrationSEQ,
-                                chaschin_v_linear_image_filtration_omp::ChaschinVLinearFiltrationOMP>(
-        PPC_SETTINGS_example_processes);
+                                chaschin_v_linear_image_filtration_seq::ChaschinVLinearFiltrationOMP>(
+        PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = ChaschinVRunPerfTests::CustomPerfTestName;

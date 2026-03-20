@@ -5,7 +5,7 @@
 #include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace chaschin_v_linear_image_filtration_omp {
+namespace chaschin_v_linear_image_filtration_seq {
 
 class ChaschinVLinearFiltrationOMP : public chaschin_v_linear_image_filtration_seq::BaseTask {
  public:
@@ -24,4 +24,4 @@ class ChaschinVLinearFiltrationOMP : public chaschin_v_linear_image_filtration_s
 inline float HorizontalFilterAt(const std::vector<float> &img, int n, int x, int y);
 inline float VerticalFilterAt(const std::vector<float> &temp, int n, int m, int x, int y);
 
-}  // namespace chaschin_v_linear_image_filtration_omp
+}  // namespace chaschin_v_linear_image_filtration_seq
