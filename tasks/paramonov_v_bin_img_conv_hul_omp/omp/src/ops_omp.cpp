@@ -17,14 +17,6 @@ namespace paramonov_v_bin_img_conv_hul_omp {
 
 namespace {
 constexpr std::array<std::pair<int, int>, 4> kNeighbors = {{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}};
-
-bool ComparePoints(const PixelPoint &a, const PixelPoint &b) {
-  if (a.row != b.row) {
-    return a.row < b.row;
-  }
-  return a.col < b.col;
-}
-
 }  // namespace
 
 ConvexHullOMP::ConvexHullOMP(const InputType &input) : HullTaskBase() {
