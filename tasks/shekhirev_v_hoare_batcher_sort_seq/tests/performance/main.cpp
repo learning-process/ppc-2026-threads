@@ -4,6 +4,7 @@
 #include <cstddef>
 
 #include "shekhirev_v_hoare_batcher_sort_seq/common/include/common.hpp"
+#include "shekhirev_v_hoare_batcher_sort_seq/omp/include/ops_omp.hpp"
 #include "shekhirev_v_hoare_batcher_sort_seq/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -40,7 +41,8 @@ TEST_P(ShekhirevVRunPerfTest, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ShekhirevHoareBatcherSortSEQ>(PPC_SETTINGS_shekhirev_v_hoare_batcher_sort_seq);
+    ppc::util::MakeAllPerfTasks<InType, ShekhirevHoareBatcherSortSEQ, ShekhirevHoareBatcherSortOMP>(
+        PPC_SETTINGS_shekhirev_v_hoare_batcher_sort_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

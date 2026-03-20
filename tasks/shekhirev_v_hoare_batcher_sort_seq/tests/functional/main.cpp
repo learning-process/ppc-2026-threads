@@ -8,6 +8,7 @@
 #include <tuple>
 
 #include "shekhirev_v_hoare_batcher_sort_seq/common/include/common.hpp"
+#include "shekhirev_v_hoare_batcher_sort_seq/omp/include/ops_omp.hpp"
 #include "shekhirev_v_hoare_batcher_sort_seq/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -48,21 +49,25 @@ class ShekhirevVFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, T
   InType input_data_;
 };
 
-TEST_P(ShekhirevVFuncTest, SeqSortTests) {
+TEST_P(ShekhirevVFuncTest, SeqAndOmpSortTests) {
   ExecuteTest(GetParam());
 }
 
 namespace {
-const std::array<TaskTestType, 6> kTestParams = {std::make_tuple(0, 42),  std::make_tuple(1, 42),
-                                                 std::make_tuple(8, 7),   std::make_tuple(13, 13),
-                                                 std::make_tuple(128, 1), std::make_tuple(200, 123)};
+const std::array<TaskTestType, 8> kTestParams = {
+    std::make_tuple(0, 42),   std::make_tuple(1, 42),    std::make_tuple(8, 7),
+    std::make_tuple(13, 13),  std::make_tuple(128, 1),   std::make_tuple(200, 123),
+    std::make_tuple(256, 88), std::make_tuple(500, 999),  // Доп тесты для 100% покрытия
+};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ShekhirevHoareBatcherSortSEQ, InType>(
-    kTestParams, PPC_SETTINGS_shekhirev_v_hoare_batcher_sort_seq));
+                                               kTestParams, PPC_SETTINGS_shekhirev_v_hoare_batcher_sort_seq),
+                                           ppc::util::AddFuncTask<ShekhirevHoareBatcherSortOMP, InType>(
+                                               kTestParams, PPC_SETTINGS_shekhirev_v_hoare_batcher_sort_seq));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-INSTANTIATE_TEST_SUITE_P(SeqSortTests_Group, ShekhirevVFuncTest, kGtestValues,
+INSTANTIATE_TEST_SUITE_P(SeqAndOmpSortTests_Group, ShekhirevVFuncTest, kGtestValues,
                          ShekhirevVFuncTest::PrintFuncTestName<ShekhirevVFuncTest>);
 }  // namespace
 
