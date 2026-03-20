@@ -1,9 +1,9 @@
 #include "orehov_n_jarvis_pass/omp/include/ops_omp.hpp"
 
 #include <cmath>
+#include <iostream>
 #include <set>
 #include <vector>
-#include <iostream>
 
 #include "orehov_n_jarvis_pass/common/include/common.hpp"
 
@@ -88,10 +88,9 @@ void OrehovNJarvisPassOMP::UpdateGlobalBest(Point current, Point local_next, Poi
 Point OrehovNJarvisPassOMP::FindNext(Point current) const {
   Point next = (current == input_[0]) ? input_[1] : input_[0];
   Point global_next = next;
-  
+
 #pragma omp parallel
   {
-    
     Point local_next = next;
     double local_best_orient = -1e9;
 
@@ -125,7 +124,7 @@ Point OrehovNJarvisPassOMP::FindNext(Point current) const {
       }
     }
   }
-  
+
   return global_next;
 }
 
