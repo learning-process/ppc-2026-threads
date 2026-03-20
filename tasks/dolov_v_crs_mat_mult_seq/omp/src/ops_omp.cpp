@@ -3,8 +3,9 @@
 #include <omp.h>
 
 #include <cmath>
-#include <numeric>
 #include <vector>
+
+#include "dolov_v_crs_mat_mult_seq/common/include/common.hpp"
 
 namespace dolov_v_crs_mat_mult_seq {
 
@@ -29,10 +30,13 @@ bool DolovVCrsMatMultOmp::PreProcessingImpl() {
   result.num_rows = input_data[0].num_rows;
   result.num_cols = input_data[1].num_cols;
   result.row_pointers.assign(result.num_rows + 1, 0);
+
+  result.values.clear();
+  result.col_indices.clear();
+
   return true;
 }
 
-// Транспонирование тоже можно немного ускорить, но основные затраты в RunImpl
 SparseMatrix DolovVCrsMatMultOmp::TransposeMatrix(const SparseMatrix &matrix) {
   SparseMatrix transposed;
   transposed.num_rows = matrix.num_cols;
@@ -90,8 +94,9 @@ bool DolovVCrsMatMultOmp::RunImpl() {
 
   SparseMatrix matrix_b_t = TransposeMatrix(matrix_b);
 
-// 1. Первый проход: считаем только КОЛИЧЕСТВО ненулевых элементов в каждой
-// строке
+  // Обнуляем перед расчетом
+  std::fill(result.row_pointers.begin(), result.row_pointers.end(), 0);
+
 #pragma omp parallel for schedule(dynamic)
   for (int i = 0; i < matrix_a.num_rows; ++i) {
     int row_nz = 0;
@@ -103,17 +108,18 @@ bool DolovVCrsMatMultOmp::RunImpl() {
     result.row_pointers[i + 1] = row_nz;
   }
 
-  // 2. Формируем финальные row_pointers (префиксная сумма)
   for (int i = 0; i < result.num_rows; ++i) {
     result.row_pointers[i + 1] += result.row_pointers[i];
   }
 
   int total_nz = result.row_pointers[result.num_rows];
-  result.values.resize(total_nz);
-  result.col_indices.resize(total_nz);
+  result.values.assign(total_nz, 0.0);
+  result.col_indices.assign(total_nz, 0);
 
-// 3. Второй проход: теперь вычисляем и записываем данные в заранее выделенную
-// память
+  if (total_nz == 0) {
+    return true;
+  }
+
 #pragma omp parallel for schedule(dynamic)
   for (int i = 0; i < matrix_a.num_rows; ++i) {
     int write_pos = result.row_pointers[i];
@@ -127,10 +133,19 @@ bool DolovVCrsMatMultOmp::RunImpl() {
     }
   }
 
+  if (!result.row_pointers.empty()) {
+    result.row_pointers.back() = static_cast<int>(result.values.size());
+  }
   return true;
 }
 
 bool DolovVCrsMatMultOmp::PostProcessingImpl() {
+  auto &result = GetOutput();
+
+  if (!result.row_pointers.empty()) {
+    result.row_pointers.back() = static_cast<int>(result.values.size());
+  }
+
   return true;
 }
 
