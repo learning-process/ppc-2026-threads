@@ -98,7 +98,7 @@ void SortHulls(std::vector<std::vector<PixelPoint>> &hulls) {
 
 }  // namespace
 
-class ConvexHullFuncTest : public ppc::util::BaseRunFuncTests<InputType, OutputType, TestCase> {
+class ConvexHullOMPFuncTest : public ppc::util::BaseRunFuncTests<InputType, OutputType, TestCase> {
  public:
   static std::string PrintTestParam(const TestCase &test_param) {
     return std::get<2>(test_param);
@@ -212,11 +212,11 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kFuncTestName = ConvexHullFuncTest::PrintFuncTestName<ConvexHullFuncTest>;
+const auto kFuncTestName = ConvexHullOMPFuncTest::PrintFuncTestName<ConvexHullOMPFuncTest>;
 
-INSTANTIATE_TEST_SUITE_P(ParamonovHullTests, ConvexHullFuncTest, kGtestValues, kFuncTestName);
+INSTANTIATE_TEST_SUITE_P(ParamonovOMPHullTests, ConvexHullOMPFuncTest, kGtestValues, kFuncTestName);
 
-TEST_P(ConvexHullFuncTest, RunFunctionalTests) {
+TEST_P(ConvexHullOMPFuncTest, RunFunctionalTests) {
   ExecuteTest(GetParam());
 }
 
