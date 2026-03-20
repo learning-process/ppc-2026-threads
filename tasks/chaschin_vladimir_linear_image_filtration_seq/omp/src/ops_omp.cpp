@@ -1,13 +1,14 @@
+#include "chaschin_vladimir_linear_image_filtration_seq/omp/include/ops_omp.hpp"
+
 #include <omp.h>
 
 #include <utility>
 #include <vector>
 
 #include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
-#include "chaschin_vladimir_linear_image_filtration_seq/omp/include/ops_omp.hpp"
 namespace chaschin_v_linear_image_filtration_omp {
 
-ChaschinVLinearFiltrationOMP::ChaschinVLinearFiltrationOMP(const InType &in) {
+ChaschinVLinearFiltrationOMP::ChaschinVLinearFiltrationOMP(const chaschin_v_linear_image_filtration_seq::InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   auto in_copy = in;
   GetInput() = std::move(in_copy);
