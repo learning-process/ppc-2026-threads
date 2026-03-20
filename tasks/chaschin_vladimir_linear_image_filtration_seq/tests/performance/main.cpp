@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
-#include "chaschin_vladimir_linear_image_filtration_seq/omp/include/ops_omp.hpp"
 #include "chaschin_vladimir_linear_image_filtration_seq/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -31,6 +30,7 @@ class ChaschinVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
     std::vector<float> output(
         static_cast<std::vector<float>::size_type>(width) * static_cast<std::vector<float>::size_type>(height), 0.0F);
 
+    // Горизонтальный проход
     for (int yi = 0; yi < height; ++yi) {
       temp[(yi * width) + 0] = (image[(yi * width) + 0] * 2 + image[(yi * width) + 1]) / 3.F;
       for (int xy = 1; xy < width - 1; ++xy) {
@@ -40,6 +40,7 @@ class ChaschinVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
       temp[(yi * width) + width - 1] = (image[(yi * width) + width - 2] + 2.F * image[(yi * width) + width - 1]) / 3.F;
     }
 
+    // Вертикальный проход
     for (int xy = 0; xy < width; ++xy) {
       output[xy] = ((temp[xy] * 2) + temp[width + xy]) / 3.F;
       for (int yi = 1; yi < height - 1; ++yi) {
@@ -58,6 +59,7 @@ class ChaschinVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
     const int height = kCount;
 
     input_data_ = std::make_tuple(GenerateDeterministicImage(width, height), width, height);
+
     expected_output_ = ApplyGaussianKernel(std::get<0>(input_data_), width, height);
   }
 
@@ -91,11 +93,10 @@ TEST_P(ChaschinVRunPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, chaschin_v_linear_image_filtration_seq::ChaschinVLinearFiltrationSEQ,
-                                chaschin_v_linear_image_filtration_seq::ChaschinVLinearFiltrationOMP>(
-        PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_seq);
+    ppc::util::MakeAllPerfTasks<InType, ChaschinVLinearFiltrationSEQ>(PPC_SETTINGS_example_processes);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+
 const auto kPerfTestName = ChaschinVRunPerfTests::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(RunModeTests, ChaschinVRunPerfTests, kGtestValues, kPerfTestName);
