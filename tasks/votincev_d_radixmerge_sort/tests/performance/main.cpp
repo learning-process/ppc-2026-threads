@@ -6,11 +6,12 @@
 
 #include "util/include/perf_test_util.hpp"
 #include "votincev_d_radixmerge_sort/common/include/common.hpp"
+#include "votincev_d_radixmerge_sort/omp/include/ops_omp.hpp"
 #include "votincev_d_radixmerge_sort/seq/include/ops_seq.hpp"
 
 namespace votincev_d_radixmerge_sort {
 
-class VotincevDRadixMergeSortRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class VotincevDRadixMergeSortRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   InType GetTestInputData() final {
     return input_data;
@@ -44,17 +45,17 @@ class VotincevDRadixMergeSortRunPerfTestsProcesses : public ppc::util::BaseRunPe
 };
 
 namespace {
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, VotincevDRadixMergeSortSEQ>(PPC_SETTINGS_votincev_d_radixmerge_sort);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, VotincevDRadixMergeSortSEQ, VotincevDRadixMergeSortOMP>(
+    PPC_SETTINGS_votincev_d_radixmerge_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-const auto kPerfTestName = VotincevDRadixMergeSortRunPerfTestsProcesses::CustomPerfTestName;
+const auto kPerfTestName = VotincevDRadixMergeSortRunPerfTestsThreads::CustomPerfTestName;
 
-TEST_P(VotincevDRadixMergeSortRunPerfTestsProcesses, RunPerfModes) {
+TEST_P(VotincevDRadixMergeSortRunPerfTestsThreads, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-INSTANTIATE_TEST_SUITE_P(RunPerf, VotincevDRadixMergeSortRunPerfTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunPerf, VotincevDRadixMergeSortRunPerfTestsThreads, kGtestValues, kPerfTestName);
 
 }  // namespace
 
