@@ -5,9 +5,9 @@
 #include <tuple>
 #include <vector>
 
-#include "tasks\chaschin_vladimir_linear_image_filtration_seq\common\include\common.hpp"
-#include "tasks\chaschin_vladimir_linear_image_filtration_seq\omp\include\ops_omp.hpp"
-#include "tasks\chaschin_vladimir_linear_image_filtration_seq\seq\include\ops_seq.hpp"
+#include "chaschin_vladimir_linear_image_filtration_seq\common\include\common.hpp"
+#include "chaschin_vladimir_linear_image_filtration_seq\omp\include\ops_omp.hpp"
+#include "chaschin_vladimir_linear_image_filtration_seq\seq\include\ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace chaschin_v_linear_image_filtration_seq {
