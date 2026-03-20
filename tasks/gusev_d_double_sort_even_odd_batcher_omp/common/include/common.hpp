@@ -6,8 +6,9 @@
 
 namespace gusev_d_double_sort_even_odd_batcher_omp_task_threads {
 
-using InType = std::vector<double>;
-using OutType = std::vector<double>;
+using ValueType = double;
+using InType = std::vector<ValueType>;
+using OutType = std::vector<ValueType>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace gusev_d_double_sort_even_odd_batcher_omp_task_threads
