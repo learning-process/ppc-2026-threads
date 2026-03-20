@@ -56,7 +56,7 @@ bool ComparePoints(const PixelPoint &a, const PixelPoint &b) {
 }
 
 void SortPoints(std::vector<PixelPoint> &points) {
-  std::ranges::sort(points, ComparePoints);
+  std::sort(points.begin(), points.end(), ComparePoints);
 }
 
 bool HullsEqual(const std::vector<PixelPoint> &hull1, const std::vector<PixelPoint> &hull2) {
@@ -92,8 +92,7 @@ void SortHulls(std::vector<std::vector<PixelPoint>> &hulls) {
   for (auto &hull : hulls) {
     SortPoints(hull);
   }
-
-  std::ranges::sort(hulls, CompareHulls);
+  std::sort(hulls.begin(), hulls.end(), CompareHulls);
 }
 
 }  // namespace

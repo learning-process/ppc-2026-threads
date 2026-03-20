@@ -27,7 +27,7 @@ bool ComparePoints(const PixelPoint &a, const PixelPoint &b) {
 
 }  // namespace
 
-ConvexHullOMP::ConvexHullOMP(const InputType &input) {
+ConvexHullOMP::ConvexHullOMP(const InputType &input) : HullTaskBase() {
   SetTypeOfTask(StaticTaskType());
   GetInput() = input;
 }
@@ -103,18 +103,12 @@ void ConvexHullOMP::FloodFill(int start_row, int start_col, std::vector<bool> &v
 
 void ConvexHullOMP::FindStartPoints(const std::vector<uint8_t> &pixels, int rows, int cols, std::vector<bool> &visited,
                                     std::vector<std::pair<int, int>> &start_points) {
-#pragma omp parallel for default(none) shared(rows, cols, pixels, visited, start_points)
   for (int row = 0; row < rows; ++row) {
     for (int col = 0; col < cols; ++col) {
-      size_t idx = (static_cast<size_t>(row) * static_cast<size_t>(cols)) + static_cast<size_t>(col);
+      size_t idx = PixelIndex(row, col, cols);
       if (pixels[idx] == 255 && !visited[idx]) {
-#pragma omp critical
-        {
-          if (!visited[idx]) {
-            visited[idx] = true;
-            start_points.emplace_back(row, col);
-          }
-        }
+        visited[idx] = true;
+        start_points.emplace_back(row, col);
       }
     }
   }
@@ -128,7 +122,7 @@ void ConvexHullOMP::ProcessComponent(int start_row, int start_col, int rows, int
 
   std::stack<PixelPoint> pixel_stack;
   pixel_stack.emplace(start_row, start_col);
-  local_visited[(static_cast<size_t>(start_row) * static_cast<size_t>(cols)) + static_cast<size_t>(start_col)] = true;
+  local_visited[PixelIndex(start_row, start_col, cols)] = true;
 
   while (!pixel_stack.empty()) {
     PixelPoint current = pixel_stack.top();
@@ -142,7 +136,7 @@ void ConvexHullOMP::ProcessComponent(int start_row, int start_col, int rows, int
       int next_col = current.col + dc;
 
       if (next_row >= 0 && next_row < rows && next_col >= 0 && next_col < cols) {
-        size_t idx = (static_cast<size_t>(next_row) * static_cast<size_t>(cols)) + static_cast<size_t>(next_col);
+        size_t idx = PixelIndex(next_row, next_col, cols);
         if (!local_visited[idx] && pixels[idx] == 255) {
           local_visited[idx] = true;
           pixel_stack.emplace(next_row, next_col);
@@ -174,6 +168,7 @@ void ConvexHullOMP::ExtractConnectedComponents() {
   FindStartPoints(pixels, rows, cols, visited, start_points);
 
   const size_t num_points = start_points.size();
+
 #pragma omp parallel for default(none) shared(num_points, start_points, total_pixels, rows, cols, pixels, components)
   for (size_t i = 0; i < num_points; ++i) {
     const auto &start_point = start_points[i];
@@ -195,42 +190,71 @@ std::vector<PixelPoint> ConvexHullOMP::ComputeConvexHull(const std::vector<Pixel
     return points;
   }
 
-  auto lowest_point = *std::ranges::min_element(points, ComparePoints);
-
-  std::vector<PixelPoint> sorted_points;
-  sorted_points.reserve(points.size() - 1);
-  std::ranges::copy_if(points, std::back_inserter(sorted_points), [&lowest_point](const PixelPoint &p) {
-    return (p.row != lowest_point.row) || (p.col != lowest_point.col);
+  auto lowest_point = *std::min_element(points.begin(), points.end(), [](const PixelPoint &a, const PixelPoint &b) {
+    if (a.row != b.row) {
+      return a.row < b.row;
+    }
+    return a.col < b.col;
   });
 
-  std::ranges::sort(sorted_points, [&lowest_point](const PixelPoint &a, const PixelPoint &b) {
+  std::vector<PixelPoint> sorted_points = points;
+  sorted_points.erase(std::remove_if(sorted_points.begin(), sorted_points.end(),
+                                     [&lowest_point](const PixelPoint &p) {
+    return p.row == lowest_point.row && p.col == lowest_point.col;
+  }),
+                      sorted_points.end());
+
+  std::sort(sorted_points.begin(), sorted_points.end(), [&lowest_point](const PixelPoint &a, const PixelPoint &b) {
     int64_t orient = Orientation(lowest_point, a, b);
     if (orient == 0) {
-      int64_t dist_a = ((a.row - lowest_point.row) * (a.row - lowest_point.row)) +
-                       ((a.col - lowest_point.col) * (a.col - lowest_point.col));
-      int64_t dist_b = ((b.row - lowest_point.row) * (b.row - lowest_point.row)) +
-                       ((b.col - lowest_point.col) * (b.col - lowest_point.col));
+      int64_t dist_a = (a.row - lowest_point.row) * (a.row - lowest_point.row) +
+                       (a.col - lowest_point.col) * (a.col - lowest_point.col);
+      int64_t dist_b = (b.row - lowest_point.row) * (b.row - lowest_point.row) +
+                       (b.col - lowest_point.col) * (b.col - lowest_point.col);
       return dist_a < dist_b;
     }
     return orient > 0;
   });
 
   std::vector<PixelPoint> hull;
-  hull.reserve(points.size());
   hull.push_back(lowest_point);
 
   for (const auto &p : sorted_points) {
     while (hull.size() >= 2) {
       const auto &a = hull[hull.size() - 2];
       const auto &b = hull.back();
+      int64_t orient = Orientation(a, b, p);
 
-      if (Orientation(a, b, p) <= 0) {
+      if (orient < 0) {
         hull.pop_back();
+      } else if (orient == 0) {
+        hull.pop_back();
+        hull.push_back(p);
+        break;
       } else {
         break;
       }
     }
     hull.push_back(p);
+  }
+
+  while (hull.size() > 1 && hull.front() == hull.back()) {
+    hull.pop_back();
+  }
+
+  if (hull.size() == 2 && points.size() > 2) {
+    bool all_collinear = true;
+    const auto &p1 = hull[0];
+    const auto &p2 = hull[1];
+    for (const auto &p : points) {
+      if (Orientation(p1, p2, p) != 0) {
+        all_collinear = false;
+        break;
+      }
+    }
+    if (all_collinear) {
+      return hull;
+    }
   }
 
   return hull;
