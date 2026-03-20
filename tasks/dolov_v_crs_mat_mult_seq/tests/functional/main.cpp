@@ -11,6 +11,7 @@
 
 #include "dolov_v_crs_mat_mult_seq/common/include/common.hpp"
 #include "dolov_v_crs_mat_mult_seq/seq/include/ops_seq.hpp"
+#include "dolov_v_crs_mat_mult_seq/omp/include/ops_omp.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -55,6 +56,30 @@ std::vector<double> DenseMultiply(const SparseMatrix &matrix_a, const SparseMatr
 }
 
 }  // namespace
+
+// Тесты на валидацию (входные данные с ошибками)
+TEST(dolov_v_crs_mat_mult_seq_omp, Validation_Fails_On_Wrong_Input_Size) {
+  SparseMatrix a;
+  InType in = {a}; 
+  DolovVCrsMatMultOmp task(in);
+  EXPECT_FALSE(task.ValidationImpl());
+}
+
+TEST(dolov_v_crs_mat_mult_seq_omp, Validation_Fails_On_Incompatible_Dimensions) {
+  SparseMatrix a = GenerateRandomCRS(2, 3, 1.0, 1);
+  SparseMatrix b = GenerateRandomCRS(4, 2, 1.0, 2); 
+  InType in = {a, b};
+  DolovVCrsMatMultOmp task(in);
+  EXPECT_FALSE(task.ValidationImpl());
+}
+
+TEST(dolov_v_crs_mat_mult_seq_omp, Validation_Fails_On_Empty_Matrix) {
+  SparseMatrix a = GenerateRandomCRS(0, 5, 1.0, 1); 
+  SparseMatrix b = GenerateRandomCRS(5, 5, 1.0, 2);
+  InType in = {a, b};
+  DolovVCrsMatMultOmp task(in);
+  EXPECT_FALSE(task.ValidationImpl());
+}
 
 class DolovVCrsMatMultSeqRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -134,25 +159,31 @@ class DolovVCrsMatMultSeqRunFuncTestsThreads : public ppc::util::BaseRunFuncTest
   int cols_res_ = 0;
 };
 
+
 namespace {
 
 TEST_P(DolovVCrsMatMultSeqRunFuncTestsThreads, RandomSparseMatrices) {
   ExecuteTest(GetParam());
 }
+
 const std::array<TestType, 7> kTestParam = {std::make_tuple(1, "SmallSparse"),  std::make_tuple(2, "Rectangular"),
                                             std::make_tuple(3, "ZeroMatrix"),   std::make_tuple(4, "DotProduct"),
                                             std::make_tuple(5, "LargeSparse"),  std::make_tuple(6, "DenseRow"),
                                             std::make_tuple(7, "SingleElement")};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<DolovVCrsMatMultSeq, InType>(kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult_seq));
+    ppc::util::AddFuncTask<DolovVCrsMatMultSeq, InType>(kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult_seq),
+    ppc::util::AddFuncTask<DolovVCrsMatMultOmp, InType>(kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult_seq)
+);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-const auto kPerfTestName =
+const auto kFuncTestName =
     DolovVCrsMatMultSeqRunFuncTestsThreads::PrintFuncTestName<DolovVCrsMatMultSeqRunFuncTestsThreads>;
 
-INSTANTIATE_TEST_SUITE_P(CRS_Functional_Advanced_Tests, DolovVCrsMatMultSeqRunFuncTestsThreads, kGtestValues,
-                         kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(CRS_Functional_Tests, 
+                         DolovVCrsMatMultSeqRunFuncTestsThreads, 
+                         kGtestValues,
+                         kFuncTestName);
 
 }  // namespace
 }  // namespace dolov_v_crs_mat_mult_seq
