@@ -7,31 +7,74 @@
 #include <utility>
 #include <vector>
 
+#include "shekhirev_v_hoare_batcher_sort_seq/common/include/common.hpp"
+
 namespace shekhirev_v_hoare_batcher_sort_seq {
 
 namespace {
+
 void HoareSort(std::vector<int> &arr, int low, int high) {
-  if (low >= high) {
-    return;
-  }
-  int pivot = arr[low + (high - low) / 2];
-  int i = low - 1;
-  int j = high + 1;
-  while (true) {
-    do {
-      i++;
-    } while (arr[i] < pivot);
-    do {
-      j--;
-    } while (arr[j] > pivot);
-    if (i >= j) {
-      break;
+  std::vector<std::pair<int, int>> stack;
+  stack.emplace_back(low, high);
+
+  while (!stack.empty()) {
+    auto [l, h] = stack.back();
+    stack.pop_back();
+
+    if (l >= h) {
+      continue;
     }
-    std::swap(arr[i], arr[j]);
+
+    int pivot = arr[l + ((h - l) / 2)];
+    int i = l - 1;
+    int j = h + 1;
+
+    while (true) {
+      while (arr[++i] < pivot) {
+      }
+      while (arr[--j] > pivot) {
+      }
+      if (i >= j) {
+        break;
+      }
+      std::swap(arr[i], arr[j]);
+    }
+
+    stack.emplace_back(l, j);
+    stack.emplace_back(j + 1, h);
   }
-  HoareSort(arr, low, j);
-  HoareSort(arr, j + 1, high);
 }
+
+void BatcherMerge(std::vector<int> &a, int n_pow2, int chunk_size) {
+  for (int step_p = chunk_size; step_p < n_pow2; step_p *= 2) {
+    for (int step_k = step_p; step_k >= 1; step_k /= 2) {
+      int start = step_k;
+      int num_blocks = (n_pow2 / (2 * step_k)) - 1;
+
+      if (step_k == step_p) {
+        start = 0;
+        num_blocks = n_pow2 / (2 * step_k);
+      }
+
+      int total_pairs = num_blocks * step_k;
+
+#pragma omp parallel for default(none) shared(a, step_p, step_k, start, total_pairs)
+      for (int step = 0; step < total_pairs; ++step) {
+        int i = step % step_k;
+        int b = step / step_k;
+        int j = start + (b * (step_k * 2));
+
+        int idx1 = i + j;
+        int idx2 = i + j + step_k;
+
+        if ((idx1 / (step_p * 2)) == (idx2 / (step_p * 2)) && a[idx1] > a[idx2]) {
+          std::swap(a[idx1], a[idx2]);
+        }
+      }
+    }
+  }
+}
+
 }  // namespace
 
 ShekhirevHoareBatcherSortOMP::ShekhirevHoareBatcherSortOMP(const InType &in) {
@@ -72,40 +115,18 @@ bool ShekhirevHoareBatcherSortOMP::RunImpl() {
   }
 
   int p_threads = 1;
-  while (p_threads * 2 <= num_threads && p_threads * 2 <= n_pow2) {
+  while ((p_threads * 2) <= num_threads && (p_threads * 2) <= n_pow2) {
     p_threads *= 2;
   }
 
   int chunk_size = n_pow2 / p_threads;
 
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(a, p_threads, chunk_size)
   for (int i = 0; i < p_threads; i++) {
-    HoareSort(a, i * chunk_size, (i + 1) * chunk_size - 1);
+    HoareSort(a, i * chunk_size, ((i + 1) * chunk_size) - 1);
   }
 
-  for (int p = chunk_size; p < n_pow2; p *= 2) {
-    for (int k = p; k >= 1; k /= 2) {
-      int start = (k == p) ? 0 : k;
-      int num_blocks = (start == 0) ? (n_pow2 / (2 * k)) : (n_pow2 / (2 * k) - 1);
-      int total_pairs = num_blocks * k;
-
-#pragma omp parallel for
-      for (int step = 0; step < total_pairs; ++step) {
-        int i = step % k;
-        int b = step / k;
-        int j = start + b * (k * 2);
-
-        int idx1 = i + j;
-        int idx2 = i + j + k;
-
-        if (idx1 / (p * 2) == idx2 / (p * 2)) {
-          if (a[idx1] > a[idx2]) {
-            std::swap(a[idx1], a[idx2]);
-          }
-        }
-      }
-    }
-  }
+  BatcherMerge(a, n_pow2, chunk_size);
 
   res_.assign(a.begin(), a.begin() + n);
   return true;
