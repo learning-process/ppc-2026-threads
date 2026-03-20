@@ -63,8 +63,8 @@ bool LobanovMultyMatrixOMP::RunImpl() {
 
   const int num_threads = ppc::util::GetNumThreads();
 
-#pragma omp parallel for default(none) shared(matrix_a, matrix_b, row_results, rows_a, num_threads) private(i) \
-    num_threads(num_threads) schedule(dynamic)
+#pragma omp parallel for shared(matrix_a, matrix_b, row_results, rows_a, num_threads) num_threads(num_threads) \
+    schedule(dynamic)
   for (int i = 0; i < rows_a; ++i) {
     const int a_start = matrix_a.row_pointer_data[static_cast<size_t>(i)];
     const int a_end = matrix_a.row_pointer_data[static_cast<size_t>(i) + 1];
