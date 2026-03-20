@@ -5,7 +5,7 @@
 
 #include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
 #include "chaschin_vladimir_linear_image_filtration_seq/seq/include/ops_seq.hpp"
-namespace chaschin_v_linear_image_filtration_seq {
+namespace chaschin_v_linear_image_filtration_omp {
 
 ChaschinVLinearFiltrationOMP::ChaschinVLinearFiltrationOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -87,4 +87,4 @@ bool ChaschinVLinearFiltrationOMP::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace chaschin_v_linear_image_filtration_seq
+}  // namespace chaschin_v_linear_image_filtration_omp
