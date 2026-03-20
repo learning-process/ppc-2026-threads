@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "kopilov_d_vertical_gauss_filter/common/include/common.hpp"
+#include "kopilov_d_vertical_gauss_filter/omp/include/ops_omp.hpp"
 #include "kopilov_d_vertical_gauss_filter/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -88,6 +89,10 @@ std::vector<ParamType> CreateTestParams() {
     params.emplace_back([](const InType &in) -> std::shared_ptr<BaseTask> {
       return std::make_shared<KopilovDVerticalGaussFilterSEQ>(in);
     }, "seq", test_case);
+
+    params.emplace_back([](const InType &in) -> std::shared_ptr<BaseTask> {
+      return std::make_shared<KopilovDVerticalGaussFilterOMP>(in);
+    }, "omp", test_case);
   }
   return params;
 }
@@ -101,6 +106,7 @@ INSTANTIATE_TEST_SUITE_P(PicMatrixTests, KopilovDVerticalGaussFilterFuncTests, k
 
 }  // namespace
 
+/*****SEQ*****/
 TEST(KopilovDVerticalGaussFilterInvalidInputTest, ZeroSizes) {
   Matrix input;
   input.width = 0;
@@ -152,6 +158,61 @@ TEST(KopilovDVerticalGaussFilterInvalidInputTest, NegativeHeight) {
   input.height = -1;
   input.data.resize(5);
   auto task = std::make_shared<KopilovDVerticalGaussFilterSEQ>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+/*****OMP*****/
+TEST(KopilovDVerticalGaussFilterInvalidInputTestOMP, ZeroSizes) {
+  Matrix input;
+  input.width = 0;
+  input.height = 0;
+  input.data = {};
+  auto task = std::make_shared<KopilovDVerticalGaussFilterOMP>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(KopilovDVerticalGaussFilterInvalidInputTestOMP, ZeroWidthPositiveHeight) {
+  Matrix input;
+  input.width = 0;
+  input.height = 5;
+  input.data.resize(5);
+  auto task = std::make_shared<KopilovDVerticalGaussFilterOMP>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(KopilovDVerticalGaussFilterInvalidInputTestOMP, ZeroHeightPositiveWidth) {
+  Matrix input;
+  input.width = 5;
+  input.height = 0;
+  input.data.resize(5);
+  auto task = std::make_shared<KopilovDVerticalGaussFilterOMP>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(KopilovDVerticalGaussFilterInvalidInputTestOMP, DataSizeMismatch) {
+  Matrix input;
+  input.width = 3;
+  input.height = 3;
+  input.data = {1, 2, 3};
+  auto task = std::make_shared<KopilovDVerticalGaussFilterOMP>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(KopilovDVerticalGaussFilterInvalidInputTestOMP, NegativeWidth) {
+  Matrix input;
+  input.width = -1;
+  input.height = 5;
+  input.data.resize(5);
+  auto task = std::make_shared<KopilovDVerticalGaussFilterOMP>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(KopilovDVerticalGaussFilterInvalidInputTestOMP, NegativeHeight) {
+  Matrix input;
+  input.width = 5;
+  input.height = -1;
+  input.data.resize(5);
+  auto task = std::make_shared<KopilovDVerticalGaussFilterOMP>(input);
   EXPECT_FALSE(task->Validation());
 }
 

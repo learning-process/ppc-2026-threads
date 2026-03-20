@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "kopilov_d_vertical_gauss_filter/common/include/common.hpp"
+#include "kopilov_d_vertical_gauss_filter/omp/include/ops_omp.hpp"
 #include "kopilov_d_vertical_gauss_filter/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -47,7 +48,8 @@ TEST_P(KopilovDVerticalGaussFilterPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KopilovDVerticalGaussFilterSEQ>(PPC_SETTINGS_kopilov_d_vertical_gauss_filter);
+    ppc::util::MakeAllPerfTasks<InType, KopilovDVerticalGaussFilterSEQ, KopilovDVerticalGaussFilterOMP>(
+        PPC_SETTINGS_kopilov_d_vertical_gauss_filter);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
