@@ -1,8 +1,8 @@
 #include "goriacheva_k_mult_sparse_complex_matrix_ccs/omp/include/ops_omp.hpp"
 
 #include <atomic>
-#include <ranges>
 #include <numeric>
+#include <ranges>
 #include <vector>
 
 #include "goriacheva_k_mult_sparse_complex_matrix_ccs/common/include/common.hpp"
