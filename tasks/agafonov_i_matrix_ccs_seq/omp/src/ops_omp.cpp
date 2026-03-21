@@ -31,6 +31,47 @@ bool AgafonovIMatrixCCSOMP::PreProcessingImpl() {
   return true;
 }
 
+void AgafonovIMatrixCCSOMP::ProcessColumn(size_t j, const InType::first_type &a, const InType::second_type &b,
+                                          std::vector<double> &accumulator, std::vector<size_t> &active_rows,
+                                          std::vector<bool> &row_mask, std::vector<double> &local_v,
+                                          std::vector<int> &local_r) {
+  const auto b_col_start = static_cast<size_t>(b.col_ptrs[j]);
+  const auto b_col_end = static_cast<size_t>(b.col_ptrs[j + 1]);
+
+  if (b_col_start == b_col_end) {
+    return;
+  }
+
+  for (size_t kb = b_col_start; kb < b_col_end; ++kb) {
+    const auto k = static_cast<size_t>(b.row_inds[kb]);
+    const double v_b = b.vals[kb];
+    const auto a_col_start = static_cast<size_t>(a.col_ptrs[k]);
+    const auto a_col_end = static_cast<size_t>(a.col_ptrs[k + 1]);
+
+    for (size_t ka = a_col_start; ka < a_col_end; ++ka) {
+      const auto i = static_cast<size_t>(a.row_inds[ka]);
+      if (!row_mask[i]) {
+        row_mask[i] = true;
+        active_rows.push_back(i);
+      }
+      accumulator[i] += a.vals[ka] * v_b;
+    }
+  }
+
+  std::ranges::sort(active_rows);
+
+  for (const auto row_idx : active_rows) {
+    if (std::abs(accumulator[row_idx]) > 1e-15) {
+      local_v.push_back(accumulator[row_idx]);
+      local_r.push_back(static_cast<int>(row_idx));
+    }
+    row_mask[row_idx] = false;
+    accumulator[row_idx] = 0.0;
+  }
+  active_rows.clear();
+}
+
+// Обновленный RunImpl
 bool AgafonovIMatrixCCSOMP::RunImpl() {
   const auto &a = GetInput().first;
   const auto &b = GetInput().second;
@@ -52,49 +93,15 @@ bool AgafonovIMatrixCCSOMP::RunImpl() {
 
 #pragma omp for
     for (size_t j = 0; j < b.cols_num; ++j) {
-      const auto b_col_start = static_cast<size_t>(b.col_ptrs[j]);
-      const auto b_col_end = static_cast<size_t>(b.col_ptrs[j + 1]);
-
-      if (b_col_start == b_col_end) {
-        continue;
-      }
-
-      for (size_t kb = b_col_start; kb < b_col_end; ++kb) {
-        const auto k = static_cast<size_t>(b.row_inds[kb]);
-        const double v_b = b.vals[kb];
-
-        const auto a_col_start = static_cast<size_t>(a.col_ptrs[k]);
-        const auto a_col_end = static_cast<size_t>(a.col_ptrs[k + 1]);
-
-        for (size_t ka = a_col_start; ka < a_col_end; ++ka) {
-          const auto i = static_cast<size_t>(a.row_inds[ka]);
-          if (!row_mask[i]) {
-            row_mask[i] = true;
-            active_rows.push_back(i);
-          }
-          accumulator[i] += a.vals[ka] * v_b;
-        }
-      }
-
-      std::ranges::sort(active_rows);
-
-      for (const auto row_idx : active_rows) {
-        if (std::abs(accumulator[row_idx]) > 1e-15) {
-          local_vals[j].push_back(accumulator[row_idx]);
-          local_rows[j].push_back(static_cast<int>(row_idx));
-        }
-        row_mask[row_idx] = false;
-        accumulator[row_idx] = 0.0;
-      }
-      active_rows.clear();
+      ProcessColumn(j, a, b, accumulator, active_rows, row_mask, local_vals[j], local_rows[j]);
     }
   }
 
+  // ... (дальше код без изменений до конца функции)
   size_t total_nnz = 0;
   for (const auto &v : local_vals) {
     total_nnz += v.size();
   }
-
   c.vals.reserve(total_nnz);
   c.row_inds.reserve(total_nnz);
 
@@ -107,7 +114,6 @@ bool AgafonovIMatrixCCSOMP::RunImpl() {
   }
   c.col_ptrs[b.cols_num] = current_nnz;
   c.nnz = current_nnz;
-
   return true;
 }
 
