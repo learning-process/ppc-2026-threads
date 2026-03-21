@@ -100,6 +100,10 @@ void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &r
       }
     }
   }
+
+#ifdef _OPENMP
+#  pragma omp barrier
+#endif
 }
 
 }  // namespace
@@ -168,6 +172,16 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmOMP::PostProcessingImpl() {
   }
 
   this->GetOutput() = sum;
+
+#ifdef _OPENMP
+#  pragma omp parallel
+  {
+  }
+
+  omp_set_num_threads(omp_get_max_threads());
+
+#  pragma omp barrier
+#endif
 
   return true;
 }
