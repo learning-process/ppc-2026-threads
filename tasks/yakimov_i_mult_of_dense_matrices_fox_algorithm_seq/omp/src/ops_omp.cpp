@@ -174,7 +174,7 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmOMP::PostProcessingImpl() {
   this->GetOutput() = sum;
 
 #ifdef _OPENMP
-#  pragma omp parallel
+#  pragma omp parallel default(none)
   {
   }
 
