@@ -99,3 +99,4 @@ bool FrolovaSRadixSortDoubleOMP::PostProcessingImpl() {
 }
 
 }  // namespace frolova_s_radix_sort_double
+// 
