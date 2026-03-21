@@ -89,16 +89,22 @@ void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &r
   auto total_elements = static_cast<std::size_t>(result.rows) * static_cast<std::size_t>(result.cols);
   result.data.assign(total_elements, 0.0);
 
-#pragma omp parallel default(none) shared(a, b, result, num_blocks, block_size)
-  {
-    for (int stage = 0; stage < num_blocks; ++stage) {
-#pragma omp for
-      for (int i = 0; i < num_blocks; ++i) {
-        int broadcast_block = (i + stage) % num_blocks;
+  const auto &a_local = a;
+  const auto &b_local = b;
+  auto &result_local = result;
+  int num_blocks_local = num_blocks;
+  int block_size_local = block_size;
 
-        for (int j = 0; j < num_blocks; ++j) {
-          MultiplyBlock(a, b, result, i * block_size, j * block_size, block_size, broadcast_block * block_size,
-                        j * block_size);
+#pragma omp parallel default(none) shared(a_local, b_local, result_local, num_blocks_local, block_size_local)
+  {
+    for (int stage = 0; stage < num_blocks_local; ++stage) {
+#pragma omp for
+      for (int i = 0; i < num_blocks_local; ++i) {
+        int broadcast_block = (i + stage) % num_blocks_local;
+
+        for (int j = 0; j < num_blocks_local; ++j) {
+          MultiplyBlock(a_local, b_local, result_local, i * block_size_local, j * block_size_local, block_size_local,
+                        broadcast_block * block_size_local, j * block_size_local);
         }
       }
     }
@@ -166,11 +172,13 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmOMP::RunImpl() {
 bool YakimovIMultOfDenseMatricesFoxAlgorithmOMP::PostProcessingImpl() {
   double sum = 0.0;
 
-#pragma omp parallel default(none) shared(result_matrix_) reduction(+ : sum)
+  const auto &result_data = this->result_matrix_.data;
+
+#pragma omp parallel default(none) shared(result_data) reduction(+ : sum)
   {
 #pragma omp for
-    for (std::size_t i = 0; i < result_matrix_.data.size(); ++i) {
-      sum += result_matrix_.data[i];
+    for (std::size_t i = 0; i < result_data.size(); ++i) {
+      sum += result_data[i];
     }
   }
 
