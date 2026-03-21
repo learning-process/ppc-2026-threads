@@ -34,7 +34,7 @@ class TimofeevRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Ou
       }
 #pragma omp barrier
     }
-
+    num_threadss *= 2;
     return is_true;
   }
 
