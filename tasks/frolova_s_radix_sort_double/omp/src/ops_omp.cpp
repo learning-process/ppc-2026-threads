@@ -36,7 +36,7 @@ bool FrolovaSRadixSortDoubleOMP::RunImpl() {
   const int num_bits = 8;
   const int num_passes = sizeof(uint64_t);
 
-  for (int pass = 0; pass < num_passes; ++pass) {
+  for (int pass = 0; pass < num_passes; pass++) {
     std::vector<int> count(radix, 0);
 
 #pragma omp parallel default(none) shared(working, count, pass, radix, num_bits)
@@ -50,14 +50,14 @@ bool FrolovaSRadixSortDoubleOMP::RunImpl() {
       }
 #pragma omp critical
       {
-        for (int j = 0; j < radix; ++j) {
+        for (int j = 0; j < radix; j++) {
           count[j] += local_count[j];
         }
       }
     }
 
     int total = 0;
-    for (int i = 0; i < radix; ++i) {
+    for (int i = 0; i < radix; i++) {
       int old = count[i];
       count[i] = total;
       total += old;
