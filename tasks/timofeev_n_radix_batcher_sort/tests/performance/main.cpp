@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <utility>
 
 #include "timofeev_n_radix_batcher_sort/common/include/common.hpp"
@@ -22,8 +23,8 @@ class TimofeevRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Ou
 
   bool CheckTestOutputData(OutType &output_data) final {
     bool is_true = true;
-    size_t num_threads = omp_get_max_threads();
-#pragma omp parallel num_threads(num_threads) default(none) shared(output_data, is_true)
+    size_t num_threadss = omp_get_max_threads();
+#pragma omp parallel num_threads(num_threadss) default(none) shared(output_data, is_true)
     {
 #pragma omp for
       for (size_t i = 0; i < output_data.size() - 1; i++) {
