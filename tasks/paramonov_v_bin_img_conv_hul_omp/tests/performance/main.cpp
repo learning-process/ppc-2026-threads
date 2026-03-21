@@ -10,7 +10,7 @@
 #include "paramonov_v_bin_img_conv_hul_omp/omp/include/ops_omp.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace paramonov_v_bin_img_conv_hul {
+namespace paramonov_v_bin_img_conv_hul_omp {
 
 class ConvexHullPerformanceTest : public ppc::util::BaseRunPerfTests<InputType, OutputType> {
   static constexpr int kImageSize = 600;
@@ -79,4 +79,4 @@ INSTANTIATE_TEST_SUITE_P(ParamonovPerfTests, ConvexHullPerformanceTest, kTestVal
 
 }  // namespace
 
-}  // namespace paramonov_v_bin_img_conv_hul
+}  // namespace paramonov_v_bin_img_conv_hul_omp

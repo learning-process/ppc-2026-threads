@@ -8,7 +8,7 @@
 #include "paramonov_v_bin_img_conv_hul_omp/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace paramonov_v_bin_img_conv_hul {
+namespace paramonov_v_bin_img_conv_hul_omp {  // ← исправлено
 
 class ConvexHullOMP : public HullTaskBase {
  public:
@@ -44,4 +44,4 @@ class ConvexHullOMP : public HullTaskBase {
   InputType working_image_;
 };
 
-}  // namespace paramonov_v_bin_img_conv_hul
+}  // namespace paramonov_v_bin_img_conv_hul_omp

@@ -13,7 +13,7 @@
 
 #include "paramonov_v_bin_img_conv_hul_omp/common/include/common.hpp"
 
-namespace paramonov_v_bin_img_conv_hul {
+namespace paramonov_v_bin_img_conv_hul_omp {
 
 namespace {
 constexpr std::array<std::pair<int, int>, 4> kNeighbors = {{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}};
@@ -236,4 +236,4 @@ std::vector<PixelPoint> ConvexHullOMP::ComputeConvexHull(const std::vector<Pixel
   return hull;
 }
 
-}  // namespace paramonov_v_bin_img_conv_hul
+}  // namespace paramonov_v_bin_img_conv_hul_omp
