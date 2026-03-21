@@ -1,9 +1,10 @@
 #include "zaharov_g_linear_contrast_stretch/omp/include/ops_omp.hpp"
 
+#include <omp.h>
+
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <omp.h>
 
 #include "util/include/util.hpp"
 #include "zaharov_g_linear_contrast_stretch/common/include/common.hpp"

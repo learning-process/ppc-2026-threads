@@ -116,9 +116,9 @@ const std::array<TestType, 4> kCases = {
     std::make_tuple(1000, "random"),
 };
 
-const auto kTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<ZaharovGLinContrStrSEQ, InType>(kCases, GetSettingsPath()),
-    ppc::util::AddFuncTask<ZaharovGLinContrStrOMP, InType>(kCases, GetSettingsPath()));
+const auto kTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<ZaharovGLinContrStrSEQ, InType>(kCases, GetSettingsPath()),
+                   ppc::util::AddFuncTask<ZaharovGLinContrStrOMP, InType>(kCases, GetSettingsPath()));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTasksList);
 
