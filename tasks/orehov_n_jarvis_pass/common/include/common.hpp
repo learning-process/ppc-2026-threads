@@ -5,7 +5,7 @@
 
 #include "task/include/task.hpp"
 
-namespace orehov_n_jarvis_pass_seq {
+namespace orehov_n_jarvis_pass {
 
 struct Point {
   double x;
@@ -27,4 +27,4 @@ using OutType = std::vector<Point>;
 using TestType = int;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace orehov_n_jarvis_pass_seq
+}  // namespace orehov_n_jarvis_pass
