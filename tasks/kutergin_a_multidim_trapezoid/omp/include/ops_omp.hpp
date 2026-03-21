@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "kutergin_a_multidim_trapezoid/common/include/common.hpp"
 #include "task/include/task.hpp"
 
