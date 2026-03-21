@@ -178,6 +178,10 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmOMP::PostProcessingImpl() {
 
   this->GetOutput() = sum;
 
+#ifdef _OPENMP
+  omp_set_num_threads(1);
+#endif
+
   return true;
 }
 
