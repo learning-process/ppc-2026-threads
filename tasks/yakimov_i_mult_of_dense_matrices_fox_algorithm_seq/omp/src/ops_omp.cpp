@@ -172,23 +172,17 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmOMP::RunImpl() {
 bool YakimovIMultOfDenseMatricesFoxAlgorithmOMP::PostProcessingImpl() {
   double sum = 0.0;
 
-#ifdef _OPENMP
-  const auto &data = this->result_matrix_.data;
-#  pragma omp parallel for default(none) reduction(+ : sum) shared(data)
-  for (std::size_t i = 0; i < data.size(); ++i) {
-    sum += data[i];
+  const auto &result_data = this->result_matrix_.data;
+
+#pragma omp parallel default(none) shared(result_data) reduction(+ : sum)
+  {
+#pragma omp for
+    for (auto it = result_data.begin(); it != result_data.end(); ++it) {
+      sum += *it;
+    }
   }
-#else
-  for (double val : this->result_matrix_.data) {
-    sum += val;
-  }
-#endif
 
   this->GetOutput() = sum;
-
-#if defined(_OPENMP) && (_OPENMP >= 201811)
-  omp_pause_resource_all(omp_pause_hard);
-#endif
 
   return true;
 }
