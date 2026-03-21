@@ -2,8 +2,8 @@
 
 #include <omp.h>
 
-#include <algorithm>
 #include <cmath>
+#include <utility>
 #include <vector>
 
 #include "dolov_v_crs_mat_mult_seq/common/include/common.hpp"
@@ -26,15 +26,6 @@ bool DolovVCrsMatMultOmp::ValidationImpl() {
 }
 
 bool DolovVCrsMatMultOmp::PreProcessingImpl() {
-  auto &input_data = GetInput();
-  auto &result = GetOutput();
-  result.num_rows = input_data[0].num_rows;
-  result.num_cols = input_data[1].num_cols;
-  result.row_pointers.assign(result.num_rows + 1, 0);
-
-  result.values.clear();
-  result.col_indices.clear();
-
   return true;
 }
 
@@ -94,17 +85,16 @@ bool DolovVCrsMatMultOmp::RunImpl() {
 
   SparseMatrix matrix_b_t = TransposeMatrix(matrix_b);
   int rows = matrix_a.num_rows;
+  int n_threads = ppc::util::GetNumThreads();
 
   std::vector<std::vector<double>> temp_values(rows);
   std::vector<std::vector<int>> temp_cols(rows);
 
-#pragma omp parallel for schedule(dynamic) default(none) shared(matrix_a, matrix_b_t, temp_values, temp_cols, rows)
+#pragma omp parallel for schedule(dynamic, 10) default(none) \
+    shared(matrix_a, matrix_b_t, temp_values, temp_cols, rows) num_threads(n_threads)
   for (int i = 0; i < rows; ++i) {
     std::vector<double> local_vals;
     std::vector<int> local_cols;
-
-    local_vals.reserve(16);
-    local_cols.reserve(16);
 
     for (int j = 0; j < matrix_b_t.num_rows; ++j) {
       double sum = DolovVCrsMatMultOmp::DotProduct(matrix_a, i, matrix_b_t, j);
@@ -113,7 +103,6 @@ bool DolovVCrsMatMultOmp::RunImpl() {
         local_cols.push_back(j);
       }
     }
-
     temp_values[i] = std::move(local_vals);
     temp_cols[i] = std::move(local_cols);
   }
@@ -130,12 +119,13 @@ bool DolovVCrsMatMultOmp::RunImpl() {
   int total_nz = res.row_pointers[rows];
   res.values.reserve(total_nz);
   res.col_indices.reserve(total_nz);
+
   for (int i = 0; i < rows; ++i) {
     res.values.insert(res.values.end(), temp_values[i].begin(), temp_values[i].end());
     res.col_indices.insert(res.col_indices.end(), temp_cols[i].begin(), temp_cols[i].end());
   }
-  GetOutput() = std::move(res);
 
+  GetOutput() = std::move(res);
   return true;
 }
 
