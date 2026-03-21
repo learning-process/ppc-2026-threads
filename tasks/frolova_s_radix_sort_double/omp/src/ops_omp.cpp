@@ -43,8 +43,8 @@ bool FrolovaSRadixSortDoubleOMP::RunImpl() {
     {
       std::vector<int> local_count(radix, 0);
 #pragma omp for nowait
-      for (size_t i = 0; i < working.size(); ++i) {
-        auto bits = std::bit_cast<uint64_t>(working[i]);
+      for (double value : working) {
+        auto bits = std::bit_cast<uint64_t>(value);
         int byte = static_cast<int>((bits >> (pass * num_bits)) & 0xFF);
         ++local_count[byte];
       }
@@ -65,12 +65,12 @@ bool FrolovaSRadixSortDoubleOMP::RunImpl() {
 
     std::vector<double> temp(working.size());
 #pragma omp parallel for default(none) shared(working, temp, count, pass, radix, num_bits)
-    for (size_t i = 0; i < working.size(); ++i) {
-      auto bits = std::bit_cast<uint64_t>(working[i]);
+    for (double value : working) {
+      auto bits = std::bit_cast<uint64_t>(value);
       int byte = static_cast<int>((bits >> (pass * num_bits)) & 0xFF);
       int pos = __sync_fetch_and_add(&count[byte], 1);
-      temp[pos] = working[i];
-    }
+      temp[pos] = value;
+    }    
 
     working.swap(temp);
   }
