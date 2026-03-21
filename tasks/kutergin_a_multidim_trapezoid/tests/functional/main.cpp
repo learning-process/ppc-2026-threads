@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "kutergin_a_multidim_trapezoid/common/include/common.hpp"
+#include "kutergin_a_multidim_trapezoid/omp/include/ops_omp.hpp"
 #include "kutergin_a_multidim_trapezoid/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -113,11 +114,21 @@ const std::array<TestType, 12> kFunctionalTests = {{
 }};
 
 const auto kTaskPack = std::tuple_cat(ppc::util::AddFuncTask<KuterginAMultidimTrapezoidSEQ, InType>(
+                                          kFunctionalTests, PPC_SETTINGS_kutergin_a_multidim_trapezoid),
+
+                                      ppc::util::AddFuncTask<KuterginAMultidimTrapezoidOMP, InType>(
+                                          kFunctionalTests, PPC_SETTINGS_kutergin_a_multidim_trapezoid));
+
+const auto kSeqValues = ppc::util::ExpandToValues(ppc::util::AddFuncTask<KuterginAMultidimTrapezoidSEQ, InType>(
     kFunctionalTests, PPC_SETTINGS_kutergin_a_multidim_trapezoid));
 
-const auto kValues = ppc::util::ExpandToValues(kTaskPack);
+const auto kOmpValues = ppc::util::ExpandToValues(ppc::util::AddFuncTask<KuterginAMultidimTrapezoidOMP, InType>(
+    kFunctionalTests, PPC_SETTINGS_kutergin_a_multidim_trapezoid));
 
-INSTANTIATE_TEST_SUITE_P(KuterginATrapezoidSuite, KuterginATrapezoidFuncTest, kValues,
+INSTANTIATE_TEST_SUITE_P(KuterginATrapezoidSEQ, KuterginATrapezoidFuncTest, kSeqValues,
+                         KuterginATrapezoidFuncTest::GetName);
+
+INSTANTIATE_TEST_SUITE_P(KuterginATrapezoidOMP, KuterginATrapezoidFuncTest, kOmpValues,
                          KuterginATrapezoidFuncTest::GetName);
 
 }  // namespace

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "kutergin_a_multidim_trapezoid/common/include/common.hpp"
+#include "kutergin_a_multidim_trapezoid/omp/include/ops_omp.hpp"
 #include "kutergin_a_multidim_trapezoid/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -46,12 +47,18 @@ TEST_P(KuterginATrapezoidPerfTest, PerformanceModes) {
 
 namespace {
 
-const auto kPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KuterginAMultidimTrapezoidSEQ>(PPC_SETTINGS_kutergin_a_multidim_trapezoid);
+// SEQ
+const auto kPerfValuesSEQ = ppc::util::TupleToGTestValues(
+    ppc::util::MakeAllPerfTasks<InType, KuterginAMultidimTrapezoidSEQ>(PPC_SETTINGS_kutergin_a_multidim_trapezoid));
 
-const auto kPerfValues = ppc::util::TupleToGTestValues(kPerfTasks);
+// OMP
+const auto kPerfValuesOMP = ppc::util::TupleToGTestValues(
+    ppc::util::MakeAllPerfTasks<InType, KuterginAMultidimTrapezoidOMP>(PPC_SETTINGS_kutergin_a_multidim_trapezoid));
 
-INSTANTIATE_TEST_SUITE_P(KuterginATrapezoidPerfSuite, KuterginATrapezoidPerfTest, kPerfValues,
+INSTANTIATE_TEST_SUITE_P(KuterginATrapezoidPerfSEQ, KuterginATrapezoidPerfTest, kPerfValuesSEQ,
+                         KuterginATrapezoidPerfTest::CustomPerfTestName);
+
+INSTANTIATE_TEST_SUITE_P(KuterginATrapezoidPerfOMP, KuterginATrapezoidPerfTest, kPerfValuesOMP,
                          KuterginATrapezoidPerfTest::CustomPerfTestName);
 
 }  // namespace
