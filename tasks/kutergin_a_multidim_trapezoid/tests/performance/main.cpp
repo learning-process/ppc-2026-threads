@@ -62,5 +62,4 @@ INSTANTIATE_TEST_SUITE_P(KuterginATrapezoidPerfOMP, KuterginATrapezoidPerfTest, 
                          KuterginATrapezoidPerfTest::CustomPerfTestName);
 
 }  // namespace
-
 }  // namespace kutergin_a_multidim_trapezoid

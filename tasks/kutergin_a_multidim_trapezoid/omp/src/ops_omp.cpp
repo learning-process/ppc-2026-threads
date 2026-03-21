@@ -9,20 +9,26 @@
 
 namespace kutergin_a_multidim_trapezoid {
 
-KuterginAMultidimTrapezoidOMP::KuterginAMultidimTrapezoidOMP(const InType& in) {
+KuterginAMultidimTrapezoidOMP::KuterginAMultidimTrapezoidOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
 }
 
 bool KuterginAMultidimTrapezoidOMP::ValidationImpl() {
-  const auto& [func, borders, n] = GetInput();
+  const auto &[func, borders, n] = GetInput();
 
-  if (!func) return false;
-  if (borders.empty()) return false;
-  if (n <= 0) return false;
+  if (!func) {
+    return false;
+  }
+  if (borders.empty()) {
+    return false;
+  }
+  if (n <= 0) {
+    return false;
+  }
 
-  for (const auto& [l, r] : borders) {
+  for (const auto &[l, r] : borders) {
     if (!std::isfinite(l) || !std::isfinite(r) || l >= r) {
       return false;
     }
@@ -37,7 +43,7 @@ bool KuterginAMultidimTrapezoidOMP::PreProcessingImpl() {
 }
 
 bool KuterginAMultidimTrapezoidOMP::RunImpl() {
-  const auto& [func, borders, n] = GetInput();
+  const auto &[func, borders, n] = GetInput();
   const int dim = static_cast<int>(borders.size());
 
   // шаги

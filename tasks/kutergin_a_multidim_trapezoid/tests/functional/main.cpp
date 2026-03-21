@@ -130,6 +130,5 @@ INSTANTIATE_TEST_SUITE_P(KuterginATrapezoidSEQ, KuterginATrapezoidFuncTest, kSeq
 
 INSTANTIATE_TEST_SUITE_P(KuterginATrapezoidOMP, KuterginATrapezoidFuncTest, kOmpValues,
                          KuterginATrapezoidFuncTest::GetName);
-
 }  // namespace
 }  // namespace kutergin_a_multidim_trapezoid

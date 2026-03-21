@@ -13,7 +13,7 @@ class KuterginAMultidimTrapezoidOMP : public BaseTask {
     return ppc::task::TypeOfTask::kOMP;
   }
 
-  explicit KuterginAMultidimTrapezoidOMP(const InType& in);
+  explicit KuterginAMultidimTrapezoidOMP(const InType &in);
 
  private:
   bool ValidationImpl() override;
