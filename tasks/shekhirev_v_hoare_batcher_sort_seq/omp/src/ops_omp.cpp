@@ -95,7 +95,7 @@ bool ShekhirevHoareBatcherSortOMP::PreProcessingImpl() {
 bool ShekhirevHoareBatcherSortOMP::RunImpl() {
   int n = static_cast<int>(input_.size());
   if (n <= 1) {
-    res_ = input_;
+    res_.assign(input_.begin(), input_.end());
     return true;
   }
 
