@@ -1,12 +1,12 @@
-#include "nalitov_d_dijkstras_algorithm_seq/seq/include/ops_seq.hpp"
+#include "nalitov_d_dijkstras_algorithm/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <limits>
 #include <vector>
 
-#include "nalitov_d_dijkstras_algorithm_seq/common/include/common.hpp"
+#include "nalitov_d_dijkstras_algorithm/common/include/common.hpp"
 
-namespace nalitov_d_dijkstras_algorithm_seq {
+namespace nalitov_d_dijkstras_algorithm {
 
 namespace {
 
@@ -161,4 +161,4 @@ bool NalitovDDijkstrasAlgorithmSeq::PostProcessingImpl() {
   return GetOutput() >= 0;
 }
 
-}  // namespace nalitov_d_dijkstras_algorithm_seq
+}  // namespace nalitov_d_dijkstras_algorithm

@@ -5,12 +5,12 @@
 #include <string>
 #include <tuple>
 
-#include "nalitov_d_dijkstras_algorithm_seq/common/include/common.hpp"
-#include "nalitov_d_dijkstras_algorithm_seq/seq/include/ops_seq.hpp"
+#include "nalitov_d_dijkstras_algorithm/common/include/common.hpp"
+#include "nalitov_d_dijkstras_algorithm/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace nalitov_d_dijkstras_algorithm_seq {
+namespace nalitov_d_dijkstras_algorithm {
 
 class NalitovDDijkstrasAlgorithmSeqFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -46,7 +46,7 @@ TEST_P(NalitovDDijkstrasAlgorithmSeqFuncTests, AlgorithmIntegration) {
 const std::array<TestType, 3> kTestParam = {std::make_tuple(2, "2"), std::make_tuple(4, "4"), std::make_tuple(6, "6")};
 
 const auto kTestTasksList = ppc::util::AddFuncTask<NalitovDDijkstrasAlgorithmSeq, InType>(
-    kTestParam, PPC_SETTINGS_nalitov_d_dijkstras_algorithm_seq);
+    kTestParam, PPC_SETTINGS_nalitov_d_dijkstras_algorithm);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -57,4 +57,4 @@ INSTANTIATE_TEST_SUITE_P(DijkstraAlgorithmTests, NalitovDDijkstrasAlgorithmSeqFu
 
 }  // namespace
 
-}  // namespace nalitov_d_dijkstras_algorithm_seq
+}  // namespace nalitov_d_dijkstras_algorithm

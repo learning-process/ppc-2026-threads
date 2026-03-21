@@ -1,9 +1,9 @@
 #pragma once
 
-#include "nalitov_d_dijkstras_algorithm_seq/common/include/common.hpp"
+#include "nalitov_d_dijkstras_algorithm/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace nalitov_d_dijkstras_algorithm_seq {
+namespace nalitov_d_dijkstras_algorithm {
 
 class NalitovDDijkstrasAlgorithmSeq : public BaseTask {
  public:
@@ -19,4 +19,4 @@ class NalitovDDijkstrasAlgorithmSeq : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace nalitov_d_dijkstras_algorithm_seq
+}  // namespace nalitov_d_dijkstras_algorithm
