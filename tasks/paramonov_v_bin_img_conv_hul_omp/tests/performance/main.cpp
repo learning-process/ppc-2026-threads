@@ -12,7 +12,7 @@
 
 namespace paramonov_v_bin_img_conv_hul_omp {
 
-class ConvexHullOMPPerformanceTest : public ppc::util::BaseRunPerfTests<InputType, OutputType> {
+class ConvexHullPerformanceTest : public ppc::util::BaseRunPerfTests<InputType, OutputType> {
   static constexpr int kImageSize = 600;
 
   void SetUp() override {
@@ -63,7 +63,7 @@ class ConvexHullOMPPerformanceTest : public ppc::util::BaseRunPerfTests<InputTyp
   InputType input_image_;
 };
 
-TEST_P(ConvexHullOMPPerformanceTest, RunPerformanceTest) {
+TEST_P(ConvexHullPerformanceTest, RunPerformanceTest) {
   ExecuteTest(GetParam());
 }
 
@@ -74,8 +74,8 @@ const auto kPerformanceTasks =
 
 const auto kTestValues = ppc::util::TupleToGTestValues(kPerformanceTasks);
 
-INSTANTIATE_TEST_SUITE_P(ParamonovOMPPerfTests, ConvexHullOMPPerformanceTest, kTestValues,
-                         ConvexHullOMPPerformanceTest::CustomPerfTestName);
+INSTANTIATE_TEST_SUITE_P(ParamonovPerfTests, ConvexHullPerformanceTest, kTestValues,
+                         ConvexHullPerformanceTest::CustomPerfTestName);
 
 }  // namespace
 

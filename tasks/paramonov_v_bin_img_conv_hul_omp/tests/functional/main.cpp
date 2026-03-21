@@ -56,7 +56,7 @@ bool ComparePoints(const PixelPoint &a, const PixelPoint &b) {
 }
 
 void SortPoints(std::vector<PixelPoint> &points) {
-  std::sort(points.begin(), points.end(), ComparePoints);
+  std::ranges::sort(points, ComparePoints);
 }
 
 bool HullsEqual(const std::vector<PixelPoint> &hull1, const std::vector<PixelPoint> &hull2) {
@@ -92,12 +92,13 @@ void SortHulls(std::vector<std::vector<PixelPoint>> &hulls) {
   for (auto &hull : hulls) {
     SortPoints(hull);
   }
-  std::sort(hulls.begin(), hulls.end(), CompareHulls);
+
+  std::ranges::sort(hulls, CompareHulls);
 }
 
 }  // namespace
 
-class ConvexHullOMPFuncTest : public ppc::util::BaseRunFuncTests<InputType, OutputType, TestCase> {
+class ConvexHullFuncTest : public ppc::util::BaseRunFuncTests<InputType, OutputType, TestCase> {
  public:
   static std::string PrintTestParam(const TestCase &test_param) {
     return std::get<2>(test_param);
@@ -206,16 +207,16 @@ const std::array<TestCase, 8> kTestCases = {
 
      std::make_tuple(CreateTestImage(10, 10), std::vector<std::vector<PixelPoint>>{}, "empty_image")}};
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<ConvexHullOMP, InputType>(kTestCases, PPC_SETTINGS_paramonov_v_bin_img_conv_hul_omp);
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<ConvexHullOMP, InputType>(kTestCases, PPC_SETTINGS_paramonov_v_bin_img_conv_hul_omp));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kFuncTestName = ConvexHullOMPFuncTest::PrintFuncTestName<ConvexHullOMPFuncTest>;
+const auto kFuncTestName = ConvexHullFuncTest::PrintFuncTestName<ConvexHullFuncTest>;
 
-INSTANTIATE_TEST_SUITE_P(ParamonovOMPHullTests, ConvexHullOMPFuncTest, kGtestValues, kFuncTestName);
+INSTANTIATE_TEST_SUITE_P(ParamonovHullTests, ConvexHullFuncTest, kGtestValues, kFuncTestName);
 
-TEST_P(ConvexHullOMPFuncTest, RunFunctionalTests) {
+TEST_P(ConvexHullFuncTest, RunFunctionalTests) {
   ExecuteTest(GetParam());
 }
 
