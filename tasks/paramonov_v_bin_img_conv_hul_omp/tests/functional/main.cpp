@@ -214,7 +214,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kFuncTestName = ConvexHullFuncTest::PrintFuncTestName<ConvexHullFuncTest>;
 
-INSTANTIATE_TEST_SUITE_P(ParamonovHullTests, ConvexHullFuncTest, kGtestValues, kFuncTestName);
+INSTANTIATE_TEST_SUITE_P(ParamonovHullOMPTests, ConvexHullFuncTest, kGtestValues, kFuncTestName);
 
 TEST_P(ConvexHullFuncTest, RunFunctionalTests) {
   ExecuteTest(GetParam());

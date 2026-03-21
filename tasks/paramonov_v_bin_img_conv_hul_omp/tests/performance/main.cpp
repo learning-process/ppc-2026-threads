@@ -74,7 +74,7 @@ const auto kPerformanceTasks =
 
 const auto kTestValues = ppc::util::TupleToGTestValues(kPerformanceTasks);
 
-INSTANTIATE_TEST_SUITE_P(ParamonovPerfTests, ConvexHullPerformanceTest, kTestValues,
+INSTANTIATE_TEST_SUITE_P(ParamonovPerfOMPTests, ConvexHullPerformanceTest, kTestValues,
                          ConvexHullPerformanceTest::CustomPerfTestName);
 
 }  // namespace
