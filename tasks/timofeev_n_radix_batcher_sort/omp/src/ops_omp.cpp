@@ -100,27 +100,27 @@ bool TimofeevNRadixBatcherOMP::RunImpl() {
     in.resize(n, max_x);
   }
   size_t n_thr = omp_get_max_threads();
-  size_t numThreads = 1;
-  while (numThreads * 2 <= n_thr && n / numThreads >= 4) {
-    numThreads *= 2;
+  size_t num_threads = 1;
+  while (num_threads * 2 <= n_thr && n / num_threads >= 4) {
+    num_threads *= 2;
   }
   std::vector<int> &r_in = in;
   size_t n_n = n;
   size_t m_m = m;
   std::vector<int> &reff = GetInput();
-#pragma omp parallel num_threads(numThreads) default(none) shared(r_in, max_x, n_n, numThreads, m_m, reff)
+#pragma omp parallel num_threads(num_threads) default(none) shared(r_in, max_x, n_n, num_threads, m_m, reff)
   {
     size_t t_n = omp_get_thread_num();
-    size_t piece = n_n / numThreads;
+    size_t piece = n_n / num_threads;
     for (int k = 1; k <= max_x; k *= 10) {
-      BubbleSort(r_in, k, piece * t_n, piece * t_n + piece);  // [left; right)
+      BubbleSort(r_in, k, static_cast<int>(piece * t_n), static_cast<int>((piece * t_n) + piece));  // [left; right)
     }
 #pragma omp barrier
     size_t c_p = piece * 2;
     for (; c_p <= n_n; c_p *= 2) {
 #pragma omp for
       for (size_t i = 0; i < n_n; i += c_p) {
-        OddEvenMerge(r_in, i, static_cast<int>(c_p));
+        OddEvenMerge(r_in, static_cast<int>(i), static_cast<int>(c_p));
       }
 #pragma omp barrier
     }

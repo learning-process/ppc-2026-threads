@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "timofeev_n_radix_batcher_sort/common/include/common.hpp"
+#include "timofeev_n_radix_batcher_sort/omp/include/ops_omp.hpp"
 #include "timofeev_n_radix_batcher_sort/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -20,12 +21,20 @@ class TimofeevRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Ou
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    for (int i = 0; std::cmp_less(i, static_cast<int>(output_data.size() - 1)); i++) {
-      if (output_data[i] > output_data[i + 1]) {
-        return false;
+    bool is_true = true;
+    size_t num_threads = omp_get_max_threads();
+#pragma omp parallel num_threads(num_threads) default(none) shared(output_data, is_true)
+    {
+#pragma omp for
+      for (size_t i = 0; i < output_data.size() - 1; i++) {
+        if (output_data[i] > output_data[i + 1]) {
+          is_true = false;
+        }
       }
+#pragma omp barrier
     }
-    return true;
+
+    return is_true;
   }
 
   InType GetTestInputData() final {
@@ -39,8 +48,8 @@ TEST_P(TimofeevRunPerfTestThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, TimofeevNRadixBatcherSEQ>(PPC_SETTINGS_timofeev_n_radix_batcher_sort);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, TimofeevNRadixBatcherSEQ, TimofeevNRadixBatcherOMP>(
+    PPC_SETTINGS_timofeev_n_radix_batcher_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
