@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "samoylenko_i_integral_trapezoid/common/include/common.hpp"
+#include "samoylenko_i_integral_trapezoid/omp/include/ops_omp.hpp"
 #include "samoylenko_i_integral_trapezoid/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -12,7 +13,7 @@ class SamoylenkoIIntegralTrapezoidPerfTests : public ppc::util::BaseRunPerfTests
   InType input_data_;
 
   void SetUp() override {
-    input_data_ = InType{{0.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {260, 260, 260}, 2};
+    input_data_ = InType{{0.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {421, 421, 421}, 2};
   }
 
   bool CheckTestOutputData(OutType &output_data) override {
@@ -32,7 +33,8 @@ TEST_P(SamoylenkoIIntegralTrapezoidPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, SamoylenkoIIntegralTrapezoidSEQ>(PPC_SETTINGS_samoylenko_i_integral_trapezoid);
+    ppc::util::MakeAllPerfTasks<InType, SamoylenkoIIntegralTrapezoidSEQ, SamoylenkoIIntegralTrapezoidOMP>(
+        PPC_SETTINGS_samoylenko_i_integral_trapezoid);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
