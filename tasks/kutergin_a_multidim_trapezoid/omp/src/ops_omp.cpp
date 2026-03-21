@@ -2,7 +2,10 @@
 
 #include <omp.h>
 
+#include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <ranges>
 #include <tuple>
 #include <vector>
 
@@ -22,25 +25,13 @@ bool KuterginAMultidimTrapezoidOMP::ValidationImpl() {
   auto borders = std::get<1>(input);
   auto n = std::get<2>(input);
 
-  if (!func) {
-    return false;
-  }
-  if (borders.empty()) {
-    return false;
-  }
-  if (n <= 0) {
+  if (!func || borders.empty() || n <= 0) {
     return false;
   }
 
-  for (const auto &pair : borders) {
-    double l = pair.first;
-    double r = pair.second;
-    if (!std::isfinite(l) || !std::isfinite(r) || l >= r) {
-      return false;
-    }
-  }
-
-  return true;
+  return std::ranges::all_of(borders, [](const std::pair<double, double> &p) {
+    return std::isfinite(p.first) && std::isfinite(p.second) && p.first < p.second;
+  });
 }
 
 bool KuterginAMultidimTrapezoidOMP::PreProcessingImpl() {
@@ -61,31 +52,31 @@ bool KuterginAMultidimTrapezoidOMP::RunImpl() {
     h[i] = (borders[i].second - borders[i].first) / n;
   }
 
-  long long total_points = 1;
+  int64_t total_points = 1;
   for (int i = 0; i < dim; ++i) {
     total_points *= (n + 1);
   }
 
   double global_sum = 0.0;
 
-#pragma omp parallel reduction(+ : global_sum)
+#pragma omp parallel default(none) shared(total_points, h, borders, func) reduction(+ : global_sum)
   {
-    std::vector<int> idx(dim);
+    std::vector<int> indices(dim);
     std::vector<double> point(dim);
 
 #pragma omp for schedule(static)
-    for (long long linear = 0; linear < total_points; ++linear) {
-      long long tmp = linear;
+    for (int64_t linear_idx = 0; linear_idx < total_points; ++linear_idx) {
+      int64_t tmp = linear_idx;
 
-      for (int d = 0; d < dim; ++d) {
-        idx[d] = tmp % (n + 1);
+      for (int axis = 0; axis < dim; ++axis) {
+        indices[axis] = static_cast<int>(tmp % (n + 1));
         tmp /= (n + 1);
-        point[d] = borders[d].first + idx[d] * h[d];
+        point[axis] = borders[axis].first + (indices[axis] * h[axis]);
       }
 
       double weight = 1.0;
-      for (int d = 0; d < dim; ++d) {
-        if (idx[d] == 0 || idx[d] == n) {
+      for (int axis = 0; axis < dim; ++axis) {
+        if (indices[axis] == 0 || indices[axis] == n) {
           weight *= 0.5;
         }
       }
