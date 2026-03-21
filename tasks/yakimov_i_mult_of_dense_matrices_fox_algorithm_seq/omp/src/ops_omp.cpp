@@ -97,14 +97,12 @@ void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &r
 
 #pragma omp parallel for collapse(2) default(none) \
     shared(a_local, b_local, result_local, num_blocks_local, block_size_local)
-  {
-    for (int stage = 0; stage < num_blocks_local; ++stage) {
-      for (int i = 0; i < num_blocks_local; ++i) {
-        int broadcast_block = (i + stage) % num_blocks_local;
-        for (int j = 0; j < num_blocks_local; ++j) {
-          MultiplyBlock(a_local, b_local, result_local, i * block_size_local, j * block_size_local, block_size_local,
-                        broadcast_block * block_size_local, j * block_size_local);
-        }
+  for (int stage = 0; stage < num_blocks_local; ++stage) {
+    for (int i = 0; i < num_blocks_local; ++i) {
+      int broadcast_block = (i + stage) % num_blocks_local;
+      for (int j = 0; j < num_blocks_local; ++j) {
+        MultiplyBlock(a_local, b_local, result_local, i * block_size_local, j * block_size_local, block_size_local,
+                      broadcast_block * block_size_local, j * block_size_local);
       }
     }
   }
