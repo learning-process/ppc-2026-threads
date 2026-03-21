@@ -89,21 +89,20 @@ void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &r
   auto total_elements = static_cast<std::size_t>(result.rows) * static_cast<std::size_t>(result.cols);
   result.data.assign(total_elements, 0.0);
 
-  for (int stage = 0; stage < num_blocks; ++stage) {
-#pragma omp parallel for default(none) shared(a, b, result, num_blocks, stage, block_size)
-    for (int i = 0; i < num_blocks; ++i) {
-      int broadcast_block = (i + stage) % num_blocks;
+#pragma omp parallel default(none) shared(a, b, result, num_blocks, block_size)
+  {
+    for (int stage = 0; stage < num_blocks; ++stage) {
+#pragma omp for
+      for (int i = 0; i < num_blocks; ++i) {
+        int broadcast_block = (i + stage) % num_blocks;
 
-      for (int j = 0; j < num_blocks; ++j) {
-        MultiplyBlock(a, b, result, i * block_size, j * block_size, block_size, broadcast_block * block_size,
-                      j * block_size);
+        for (int j = 0; j < num_blocks; ++j) {
+          MultiplyBlock(a, b, result, i * block_size, j * block_size, block_size, broadcast_block * block_size,
+                        j * block_size);
+        }
       }
     }
   }
-
-#ifdef _OPENMP
-#  pragma omp barrier
-#endif
 }
 
 }  // namespace
@@ -167,21 +166,15 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmOMP::RunImpl() {
 bool YakimovIMultOfDenseMatricesFoxAlgorithmOMP::PostProcessingImpl() {
   double sum = 0.0;
 
-  for (double val : this->result_matrix_.data) {
-    sum += val;
+#pragma omp parallel default(none) shared(result_matrix_) reduction(+ : sum)
+  {
+#pragma omp for
+    for (std::size_t i = 0; i < result_matrix_.data.size(); ++i) {
+      sum += result_matrix_.data[i];
+    }
   }
 
   this->GetOutput() = sum;
-
-#ifdef _OPENMP
-#  pragma omp parallel default(none)
-  {
-  }
-
-  omp_set_num_threads(omp_get_max_threads());
-
-#  pragma omp barrier
-#endif
 
   return true;
 }
