@@ -1,5 +1,7 @@
 #include "artyushkina_markirovka/seq/include/ops_seq.hpp"
 
+#include <array>
+#include <cstddef>
 #include <queue>
 #include <utility>
 
@@ -19,13 +21,13 @@ bool MarkingComponentsSEQ::ValidationImpl() {
 
 bool MarkingComponentsSEQ::PreProcessingImpl() {
   const auto &input = GetInput();
-  rows_ = input[0];
-  cols_ = input[1];
+  rows_ = static_cast<int>(input[0]);
+  cols_ = static_cast<int>(input[1]);
 
   labels_.clear();
-  labels_.resize(rows_);
+  labels_.resize(static_cast<std::size_t>(rows_));
   for (int i = 0; i < rows_; ++i) {
-    labels_[i].assign(cols_, 0);
+    labels_[static_cast<std::size_t>(i)].assign(static_cast<std::size_t>(cols_), 0);
   }
 
   return true;
@@ -42,9 +44,10 @@ bool MarkingComponentsSEQ::RunImpl() {
     int object_count = 0;
     for (int i = 0; i < rows_; ++i) {
       for (int j = 0; j < cols_; ++j) {
-        size_t idx = static_cast<size_t>(i) * cols_ + static_cast<size_t>(j) + 2;
+        std::size_t idx =
+            static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_) + static_cast<std::size_t>(j) + 2;
         if (input[idx] == 0) {
-          object_count++;
+          ++object_count;
         }
       }
     }
@@ -57,33 +60,33 @@ bool MarkingComponentsSEQ::RunImpl() {
 
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
-      size_t idx = static_cast<size_t>(i) * cols_ + static_cast<size_t>(j) + 2;
+      std::size_t idx = static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_) + static_cast<std::size_t>(j) + 2;
 
-      if (input[idx] == 0 && labels_[i][j] == 0) {
+      if (input[idx] == 0 && labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] == 0) {
         std::queue<std::pair<int, int>> q;
-        q.push({i, j});
-        labels_[i][j] = current_label;
+        q.emplace(i, j);
+        labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = current_label;
 
         while (!q.empty()) {
           auto [ci, cj] = q.front();
           q.pop();
 
           if (is_test5) {
-            const int dirs[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-            for (int d = 0; d < 4; ++d) {
-              int ni = ci + dirs[d][0];
-              int nj = cj + dirs[d][1];
+            const std::array<std::array<int, 2>, 4> dirs = {{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}};
+            for (const auto &dir : dirs) {
+              int ni = ci + dir[0];
+              int nj = cj + dir[1];
 
               if ((ci == 2 && cj == 1 && ni == 3 && nj == 1) || (ci == 3 && cj == 1 && ni == 2 && nj == 1)) {
                 continue;
               }
 
               if (ni >= 0 && ni < rows_ && nj >= 0 && nj < cols_) {
-                size_t nidx = static_cast<size_t>(ni) * cols_ + static_cast<size_t>(nj) + 2;
-
-                if (input[nidx] == 0 && labels_[ni][nj] == 0) {
-                  labels_[ni][nj] = current_label;
-                  q.push({ni, nj});
+                std::size_t nidx =
+                    static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_) + static_cast<std::size_t>(nj) + 2;
+                if (input[nidx] == 0 && labels_[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] == 0) {
+                  labels_[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] = current_label;
+                  q.emplace(ni, nj);
                 }
               }
             }
@@ -98,18 +101,17 @@ bool MarkingComponentsSEQ::RunImpl() {
                 int nj = cj + dj;
 
                 if (ni >= 0 && ni < rows_ && nj >= 0 && nj < cols_) {
-                  size_t nidx = static_cast<size_t>(ni) * cols_ + static_cast<size_t>(nj) + 2;
-
-                  if (input[nidx] == 0 && labels_[ni][nj] == 0) {
-                    labels_[ni][nj] = current_label;
-                    q.push({ni, nj});
+                  std::size_t nidx =
+                      static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_) + static_cast<std::size_t>(nj) + 2;
+                  if (input[nidx] == 0 && labels_[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] == 0) {
+                    labels_[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] = current_label;
+                    q.emplace(ni, nj);
                   }
                 }
               }
             }
           }
         }
-
         ++current_label;
       }
     }
@@ -127,7 +129,7 @@ bool MarkingComponentsSEQ::PostProcessingImpl() {
 
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
-      output.push_back(labels_[i][j]);
+      output.push_back(labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)]);
     }
   }
 

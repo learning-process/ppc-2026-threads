@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <vector>
 
 #include "artyushkina_markirovka/common/include/common.hpp"
@@ -21,7 +22,7 @@ class MarkingComponentsOMP : public BaseTask {
   bool PostProcessingImpl() override;
 
   static int FindRoot(std::vector<int> &parent, int label);
-  void UnionLabels(std::vector<int> &parent, int label1, int label2);
+  static void UnionLabels(std::vector<int> &parent, int label1, int label2);
 
   int rows_ = 0;
   int cols_ = 0;
