@@ -3,6 +3,7 @@
 #include <omp.h>
 
 #include <cmath>
+#include <tuple>
 #include <vector>
 
 #include "kutergin_a_multidim_trapezoid/common/include/common.hpp"
@@ -16,7 +17,10 @@ KuterginAMultidimTrapezoidOMP::KuterginAMultidimTrapezoidOMP(const InType &in) {
 }
 
 bool KuterginAMultidimTrapezoidOMP::ValidationImpl() {
-  const auto &[func, borders, n] = GetInput();
+  const auto input = GetInput();
+  auto func = std::get<0>(input);
+  auto borders = std::get<1>(input);
+  auto n = std::get<2>(input);
 
   if (!func) {
     return false;
@@ -28,7 +32,9 @@ bool KuterginAMultidimTrapezoidOMP::ValidationImpl() {
     return false;
   }
 
-  for (const auto &[l, r] : borders) {
+  for (const auto &pair : borders) {
+    double l = pair.first;
+    double r = pair.second;
     if (!std::isfinite(l) || !std::isfinite(r) || l >= r) {
       return false;
     }
@@ -43,16 +49,18 @@ bool KuterginAMultidimTrapezoidOMP::PreProcessingImpl() {
 }
 
 bool KuterginAMultidimTrapezoidOMP::RunImpl() {
-  const auto &[func, borders, n] = GetInput();
+  const auto input = GetInput();
+  auto func = std::get<0>(input);
+  auto borders = std::get<1>(input);
+  auto n = std::get<2>(input);
+
   const int dim = static_cast<int>(borders.size());
 
-  // шаги
   std::vector<double> h(dim);
   for (int i = 0; i < dim; ++i) {
     h[i] = (borders[i].second - borders[i].first) / n;
   }
 
-  // общее количество точек: (n+1)^dim
   long long total_points = 1;
   for (int i = 0; i < dim; ++i) {
     total_points *= (n + 1);
@@ -67,18 +75,16 @@ bool KuterginAMultidimTrapezoidOMP::RunImpl() {
 
 #pragma omp for schedule(static)
     for (long long linear = 0; linear < total_points; ++linear) {
-      // раскодируем индекс
       long long tmp = linear;
+
       for (int d = 0; d < dim; ++d) {
         idx[d] = tmp % (n + 1);
         tmp /= (n + 1);
+        point[d] = borders[d].first + idx[d] * h[d];
       }
 
       double weight = 1.0;
-
       for (int d = 0; d < dim; ++d) {
-        point[d] = borders[d].first + idx[d] * h[d];
-
         if (idx[d] == 0 || idx[d] == n) {
           weight *= 0.5;
         }
@@ -91,7 +97,6 @@ bool KuterginAMultidimTrapezoidOMP::RunImpl() {
     }
   }
 
-  // объём ячейки
   double volume = 1.0;
   for (int i = 0; i < dim; ++i) {
     volume *= h[i];
