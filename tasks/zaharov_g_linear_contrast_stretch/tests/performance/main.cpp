@@ -9,6 +9,7 @@
 
 #include "util/include/perf_test_util.hpp"
 #include "zaharov_g_linear_contrast_stretch/common/include/common.hpp"
+#include "zaharov_g_linear_contrast_stretch/omp/include/ops_omp.hpp"
 #include "zaharov_g_linear_contrast_stretch/seq/include/ops_seq.hpp"
 
 namespace zaharov_g_linear_contrast_stretch {
@@ -79,7 +80,8 @@ TEST_P(ZaharovGRunPerfTestsLinContrStr, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZaharovGLinContrStrSEQ>(GetSettingsPath());
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, ZaharovGLinContrStrSEQ, ZaharovGLinContrStrOMP>(GetSettingsPath());
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = ZaharovGRunPerfTestsLinContrStr::CustomPerfTestName;

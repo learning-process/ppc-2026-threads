@@ -12,6 +12,7 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 #include "zaharov_g_linear_contrast_stretch/common/include/common.hpp"
+#include "zaharov_g_linear_contrast_stretch/omp/include/ops_omp.hpp"
 #include "zaharov_g_linear_contrast_stretch/seq/include/ops_seq.hpp"
 
 namespace zaharov_g_linear_contrast_stretch {
@@ -115,8 +116,9 @@ const std::array<TestType, 4> kCases = {
     std::make_tuple(1000, "random"),
 };
 
-const auto kTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<ZaharovGLinContrStrSEQ, InType>(kCases, GetSettingsPath()));
+const auto kTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<ZaharovGLinContrStrSEQ, InType>(kCases, GetSettingsPath()),
+    ppc::util::AddFuncTask<ZaharovGLinContrStrOMP, InType>(kCases, GetSettingsPath()));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTasksList);
 
