@@ -23,18 +23,11 @@ class TimofeevRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Ou
 
   bool CheckTestOutputData(OutType &output_data) final {
     bool is_true = true;
-    size_t num_threadss = omp_get_max_threads();
-#pragma omp parallel num_threads(num_threadss) default(none) shared(output_data, is_true)
-    {
-#pragma omp for
-      for (size_t i = 0; i < output_data.size() - 1; i++) {
-        if (output_data[i] > output_data[i + 1]) {
-          is_true = false;
-        }
+    for (size_t i = 0; i < output_data.size() - 1; i++) {
+      if (output_data[i] > output_data[i + 1]) {
+        is_true = false;
       }
-#pragma omp barrier
     }
-    num_threadss *= 2;
     return is_true;
   }
 
