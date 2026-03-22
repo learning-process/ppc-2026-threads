@@ -225,8 +225,6 @@ class SparseMatrix {
   }
 };
 
-
-
 inline SparseMatrix GetFromFile(std::ifstream &file) {
   size_t r = 0;
   size_t c = 0;
