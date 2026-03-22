@@ -36,9 +36,9 @@ void CollectNeighbors8ConnectivityImpl(int i, int j, const std::vector<std::vect
       neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)]);
     }
     if (j + 1 < cols) {
-      std::size_t nj = static_cast<std::size_t>(j + 1);
-      if (temp_labels[static_cast<std::size_t>(i - 1)][nj] != 0) {
-        neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][nj]);
+      // Используем static_cast напрямую без промежуточной переменной
+      if (temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j + 1)] != 0) {
+        neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j + 1)]);
       }
     }
   }
