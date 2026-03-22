@@ -61,8 +61,8 @@ bool TitaevSortirovkaBetcheraOMP::PreProcessingImpl() {
 void TitaevSortirovkaBetcheraOMP::ConvertToKeys(const InType &input, std::vector<uint64_t> &keys) {
   const size_t n = input.size();
 #pragma omp parallel for default(none) shared(input, keys, n)
-  for (ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(n); i++) {
-    keys[static_cast<size_t>(i)] = DoubleToOrderedUint(input[static_cast<size_t>(i)]);
+  for (size_t i = 0; i < n; i++) {
+    keys[i] = DoubleToOrderedUint(input[i]);
   }
 }
 
@@ -103,15 +103,15 @@ void TitaevSortirovkaBetcheraOMP::ConvertFromKeys(const std::vector<uint64_t> &k
   const size_t n = keys.size();
   output.resize(n);
 #pragma omp parallel for default(none) shared(keys, output, n)
-  for (ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(n); i++) {
-    output[static_cast<size_t>(i)] = OrderedUintToDouble(keys[static_cast<size_t>(i)]);
+  for (size_t i = 0; i < n; i++) {
+    output[i] = OrderedUintToDouble(keys[i]);
   }
 }
 
 void TitaevSortirovkaBetcheraOMP::BatcherStep(OutType &result, size_t n, size_t step, size_t stage) {
 #pragma omp parallel for default(none) shared(result, n, step, stage)
-  for (ptrdiff_t ii = 0; ii < static_cast<ptrdiff_t>(n); ii++) {
-    size_t i = static_cast<size_t>(ii);
+  for (size_t ii = 0; ii < n; ii++) {
+    auto i = ii;
     size_t j = i ^ stage;
     if (j <= i || j >= n) {
       continue;
