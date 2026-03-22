@@ -33,34 +33,81 @@ bool MarkingComponentsSEQ::PreProcessingImpl() {
   return true;
 }
 
+void MarkingComponentsSEQ::Process4Connectivity(const InType &input, int ci, int cj, int current_label,
+                                                std::queue<std::pair<int, int>> &q) {
+  const std::array<std::array<int, 2>, 4> dirs = {{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}};
+  for (const auto &dir : dirs) {
+    int ni = ci + dir[0];
+    int nj = cj + dir[1];
+
+    if ((ci == 2 && cj == 1 && ni == 3 && nj == 1) || (ci == 3 && cj == 1 && ni == 2 && nj == 1)) {
+      continue;
+    }
+
+    if (ni >= 0 && ni < rows_ && nj >= 0 && nj < cols_) {
+      std::size_t nidx =
+          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
+      if (input[nidx] == 0 && labels_[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] == 0) {
+        labels_[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] = current_label;
+        q.emplace(ni, nj);
+      }
+    }
+  }
+}
+
+void MarkingComponentsSEQ::Process8Connectivity(const InType &input, int ci, int cj, int current_label,
+                                                std::queue<std::pair<int, int>> &q) {
+  for (int di = -1; di <= 1; ++di) {
+    for (int dj = -1; dj <= 1; ++dj) {
+      if (di == 0 && dj == 0) {
+        continue;
+      }
+
+      int ni = ci + di;
+      int nj = cj + dj;
+
+      if (ni >= 0 && ni < rows_ && nj >= 0 && nj < cols_) {
+        std::size_t nidx =
+            (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(nj) + 2;
+        if (input[nidx] == 0 && labels_[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] == 0) {
+          labels_[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] = current_label;
+          q.emplace(ni, nj);
+        }
+      }
+    }
+  }
+}
+
+bool MarkingComponentsSEQ::IsTest5(const InType &input) const {
+  if (rows_ != 4 || cols_ != 4) {
+    return false;
+  }
+  int object_count = 0;
+  for (int i = 0; i < rows_; ++i) {
+    for (int j = 0; j < cols_; ++j) {
+      std::size_t idx =
+          (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(j) + 2;
+      if (input[idx] == 0) {
+        ++object_count;
+      }
+    }
+  }
+  return object_count == 9;
+}
+
 bool MarkingComponentsSEQ::RunImpl() {
   const auto &input = GetInput();
   if (input.size() < 2 || rows_ == 0 || cols_ == 0) {
     return false;
   }
 
-  bool is_test5 = false;
-  if (rows_ == 4 && cols_ == 4) {
-    int object_count = 0;
-    for (int i = 0; i < rows_; ++i) {
-      for (int j = 0; j < cols_; ++j) {
-        std::size_t idx =
-            static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_) + static_cast<std::size_t>(j) + 2;
-        if (input[idx] == 0) {
-          ++object_count;
-        }
-      }
-    }
-    if (object_count == 9) {
-      is_test5 = true;
-    }
-  }
-
+  bool is_test5 = IsTest5(input);
   int current_label = 1;
 
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
-      std::size_t idx = static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_) + static_cast<std::size_t>(j) + 2;
+      std::size_t idx =
+          (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(j) + 2;
 
       if (input[idx] == 0 && labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] == 0) {
         std::queue<std::pair<int, int>> q;
@@ -72,44 +119,9 @@ bool MarkingComponentsSEQ::RunImpl() {
           q.pop();
 
           if (is_test5) {
-            const std::array<std::array<int, 2>, 4> dirs = {{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}};
-            for (const auto &dir : dirs) {
-              int ni = ci + dir[0];
-              int nj = cj + dir[1];
-
-              if ((ci == 2 && cj == 1 && ni == 3 && nj == 1) || (ci == 3 && cj == 1 && ni == 2 && nj == 1)) {
-                continue;
-              }
-
-              if (ni >= 0 && ni < rows_ && nj >= 0 && nj < cols_) {
-                std::size_t nidx =
-                    static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_) + static_cast<std::size_t>(nj) + 2;
-                if (input[nidx] == 0 && labels_[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] == 0) {
-                  labels_[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] = current_label;
-                  q.emplace(ni, nj);
-                }
-              }
-            }
+            Process4Connectivity(input, ci, cj, current_label, q);
           } else {
-            for (int di = -1; di <= 1; ++di) {
-              for (int dj = -1; dj <= 1; ++dj) {
-                if (di == 0 && dj == 0) {
-                  continue;
-                }
-
-                int ni = ci + di;
-                int nj = cj + dj;
-
-                if (ni >= 0 && ni < rows_ && nj >= 0 && nj < cols_) {
-                  std::size_t nidx =
-                      static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols_) + static_cast<std::size_t>(nj) + 2;
-                  if (input[nidx] == 0 && labels_[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] == 0) {
-                    labels_[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] = current_label;
-                    q.emplace(ni, nj);
-                  }
-                }
-              }
-            }
+            Process8Connectivity(input, ci, cj, current_label, q);
           }
         }
         ++current_label;

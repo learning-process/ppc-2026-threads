@@ -37,7 +37,7 @@ class ArtyushkinaMarkirovkaPerfTests : public ppc::util::BaseRunPerfTests<InType
 
     if (std::cmp_not_equal(rows, input_data_[0]) || std::cmp_not_equal(cols, input_data_[1])) {
       std::cerr << "Size mismatch: expected " << static_cast<int>(input_data_[0]) << "x"
-                << static_cast<int>(input_data_[1]) << ", got " << rows << "x" << cols << std::endl;
+                << static_cast<int>(input_data_[1]) << ", got " << rows << "x" << cols << '\n';
       return false;
     }
 
@@ -50,11 +50,11 @@ class ArtyushkinaMarkirovkaPerfTests : public ppc::util::BaseRunPerfTests<InType
             (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
 
         if (input_data_[input_idx] == 0 && output_data[output_idx] == 0) {
-          std::cerr << "Object pixel at (" << i << "," << j << ") not labeled!" << std::endl;
+          std::cerr << "Object pixel at (" << i << "," << j << ") not labeled!\n";
           valid = false;
         }
         if (input_data_[input_idx] != 0 && output_data[output_idx] != 0) {
-          std::cerr << "Background pixel at (" << i << "," << j << ") incorrectly labeled!" << std::endl;
+          std::cerr << "Background pixel at (" << i << "," << j << ") incorrectly labeled!\n";
           valid = false;
         }
       }

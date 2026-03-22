@@ -1,5 +1,6 @@
 #pragma once
 
+#include <queue>
 #include <vector>
 
 #include "artyushkina_markirovka/common/include/common.hpp"
@@ -19,6 +20,10 @@ class MarkingComponentsSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  void Process4Connectivity(const InType &input, int ci, int cj, int current_label, std::queue<std::pair<int, int>> &q);
+  void Process8Connectivity(const InType &input, int ci, int cj, int current_label, std::queue<std::pair<int, int>> &q);
+  [[nodiscard]] bool IsTest5(const InType &input) const;
 
   int rows_ = 0;
   int cols_ = 0;

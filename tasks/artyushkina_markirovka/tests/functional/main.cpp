@@ -71,23 +71,25 @@ class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType
 
     if (test_id == 5 || test_id == 6) {
       std::cout << "\n=== INPUT MATRIX (test " << test_id << ") ===\n";
-      int rows = input_data_[0];
-      int cols = input_data_[1];
+      int rows = static_cast<int>(input_data_[0]);
+      int cols = static_cast<int>(input_data_[1]);
       for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
-          size_t idx = i * cols + j + 2;
-          std::cout << (int)input_data_[idx] << " ";
+          std::size_t idx =
+              (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
+          std::cout << static_cast<int>(input_data_[idx]) << " ";
         }
         std::cout << "\n";
       }
       std::cout << "========================\n\n";
 
       std::cout << "=== OUTPUT LABELS ===\n";
-      rows = output_data[0];
-      cols = output_data[1];
+      rows = static_cast<int>(output_data[0]);
+      cols = static_cast<int>(output_data[1]);
       for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
-          size_t idx = i * cols + j + 2;
+          std::size_t idx =
+              (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
           std::cout << output_data[idx] << " ";
         }
         std::cout << "\n";
