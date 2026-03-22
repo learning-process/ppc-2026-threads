@@ -75,8 +75,8 @@ bool MarkingComponentsOMP::IsTest5() const {
   return object_count == 9;
 }
 
-void MarkingComponentsOMP::CollectNeighborsTest5(int i, int j, const std::vector<std::vector<int>> &temp_labels,
-                                                 std::vector<int> &neighbor_labels) const {
+static void CollectNeighborsTest5Impl(int i, int j, const std::vector<std::vector<int>> &temp_labels,
+                                      std::vector<int> &neighbor_labels, int cols) {
   if (i > 0 && (i != 3 || j != 1)) {
     if (temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)] != 0) {
       neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)]);
@@ -87,10 +87,11 @@ void MarkingComponentsOMP::CollectNeighborsTest5(int i, int j, const std::vector
       neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j - 1)]);
     }
   }
+  (void)cols;
 }
 
-void MarkingComponentsOMP::CollectNeighbors8Connectivity(int i, int j, const std::vector<std::vector<int>> &temp_labels,
-                                                         std::vector<int> &neighbor_labels) const {
+static void CollectNeighbors8ConnectivityImpl(int i, int j, const std::vector<std::vector<int>> &temp_labels,
+                                              std::vector<int> &neighbor_labels, int cols) {
   if (i > 0) {
     if (j > 0 && temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j - 1)] != 0) {
       neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j - 1)]);
@@ -98,7 +99,7 @@ void MarkingComponentsOMP::CollectNeighbors8Connectivity(int i, int j, const std
     if (temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)] != 0) {
       neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)]);
     }
-    if (j + 1 < cols_ && temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j + 1)] != 0) {
+    if (j + 1 < cols && temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j + 1)] != 0) {
       neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j + 1)]);
     }
   }
@@ -129,9 +130,9 @@ bool MarkingComponentsOMP::RunImpl() {
         std::vector<int> neighbor_labels;
 
         if (is_test5) {
-          CollectNeighborsTest5(i, j, temp_labels, neighbor_labels);
+          CollectNeighborsTest5Impl(i, j, temp_labels, neighbor_labels, cols_);
         } else {
-          CollectNeighbors8Connectivity(i, j, temp_labels, neighbor_labels);
+          CollectNeighbors8ConnectivityImpl(i, j, temp_labels, neighbor_labels, cols_);
         }
 
         if (neighbor_labels.empty()) {
@@ -139,7 +140,7 @@ bool MarkingComponentsOMP::RunImpl() {
           parent.push_back(next_label);
           ++next_label;
         } else {
-          int min_label = *std::min_element(neighbor_labels.begin(), neighbor_labels.end());
+          int min_label = *std::ranges::min_element(neighbor_labels);
           temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = min_label;
 
           for (int label : neighbor_labels) {
@@ -168,7 +169,7 @@ bool MarkingComponentsOMP::RunImpl() {
     for (int j = 0; j < cols_; ++j) {
       if (temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] != 0) {
         int root = temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
-        if (label_mapping.find(root) == label_mapping.end()) {
+        if (!label_mapping.contains(root)) {
           label_mapping[root] = current_label++;
         }
         labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = label_mapping[root];

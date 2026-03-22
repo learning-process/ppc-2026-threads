@@ -22,8 +22,6 @@ class MarkingComponentsSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void Process4Connectivity(const InType &input, int ci, int cj, int current_label, std::queue<std::pair<int, int>> &q);
-  void Process8Connectivity(const InType &input, int ci, int cj, int current_label, std::queue<std::pair<int, int>> &q);
   [[nodiscard]] bool IsTest5(const InType &input) const;
 
   int rows_ = 0;
