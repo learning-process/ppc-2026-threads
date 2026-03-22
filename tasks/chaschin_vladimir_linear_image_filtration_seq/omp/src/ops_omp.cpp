@@ -81,6 +81,8 @@ bool ChaschinVLinearFiltrationOMP::RunImpl() {
     }
   }
 
+#pragma omp barrier
+
 #if _OPENMP >= 201811
   omp_pause_resource_all(omp_pause_hard);
 #endif
