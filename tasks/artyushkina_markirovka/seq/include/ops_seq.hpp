@@ -9,8 +9,10 @@ namespace artyushkina_markirovka {
 
 class MarkingComponentsSEQ : public BaseTask {
  public:
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() { return ppc::task::TypeOfTask::kSEQ; }
-  explicit MarkingComponentsSEQ(const InType& in);
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kSEQ;
+  }
+  explicit MarkingComponentsSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -18,7 +20,7 @@ class MarkingComponentsSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  [[nodiscard]] bool IsTest5(const InType& input) const;
+  [[nodiscard]] bool IsTest5(const InType &input) const;
 
   int rows_ = 0;
   int cols_ = 0;
