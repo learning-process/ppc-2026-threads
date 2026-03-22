@@ -5,9 +5,9 @@
 #include <vector>
 
 #include "luzan_e_double_sparse_matrix_mult_seq/common/include/common.hpp"
-// #include "util/include/util.hpp"
+#include "util/include/util.hpp"
 
-#include <omp.h>
+// #include <omp.h>
 
 namespace luzan_e_double_sparse_matrix_mult_seq {
 
@@ -18,9 +18,7 @@ SparseMatrix SparseMatrix::CalcProdOMP(const SparseMatrix &b) const {
   std::vector<std::vector<double>> values_per_col(b.cols_);
   std::vector<std::vector<unsigned>> rows_per_col(b.cols_);
 
-  int threads_num = ppc::util::GetNumThreads();
-#pragma omp parallel for shared(b, values_per_col, rows_per_col, kEPS) schedule(static) default(none) \
-    num_threads(threads_num)
+#pragma omp parallel for shared(b, values_per_col, rows_per_col, kEPS) schedule(static)
   for (unsigned b_col = 0; b_col < static_cast<unsigned>(b.cols_); b_col++) {
     std::vector<double> tmp_col(rows_, 0.0);
 
