@@ -69,6 +69,21 @@ class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType
   bool CheckTestOutputData(OutType &output_data) final {
     int test_id = std::get<0>(std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()));
 
+    auto PrintMatrix = [](const OutType &data, const std::string &title) {
+      std::cout << title;
+      int rows = static_cast<int>(data[0]);
+      int cols = static_cast<int>(data[1]);
+      for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+          std::size_t idx =
+              (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
+          std::cout << data[idx] << " ";
+        }
+        std::cout << "\n";
+      }
+      std::cout << "=====================\n\n";
+    };
+
     if (test_id == 5 || test_id == 6) {
       std::cout << "\n=== INPUT MATRIX (test " << test_id << ") ===\n";
       int rows = static_cast<int>(input_data_[0]);
@@ -82,19 +97,7 @@ class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType
         std::cout << "\n";
       }
       std::cout << "========================\n\n";
-
-      std::cout << "=== OUTPUT LABELS ===\n";
-      rows = static_cast<int>(output_data[0]);
-      cols = static_cast<int>(output_data[1]);
-      for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
-          std::size_t idx =
-              (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
-          std::cout << output_data[idx] << " ";
-        }
-        std::cout << "\n";
-      }
-      std::cout << "=====================\n\n";
+      PrintMatrix(output_data, "=== OUTPUT LABELS ===\n");
     }
 
     if (output_data != expected_) {
@@ -103,7 +106,6 @@ class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType
         std::cout << static_cast<int>(val) << ' ';
       }
       std::cout << '\n';
-
       std::cout << "Actual  : ";
       for (auto val : output_data) {
         std::cout << val << ' ';

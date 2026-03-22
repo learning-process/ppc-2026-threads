@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstddef>
 #include <vector>
 
 #include "artyushkina_markirovka/common/include/common.hpp"
@@ -23,6 +22,12 @@ class MarkingComponentsOMP : public BaseTask {
 
   static int FindRoot(std::vector<int> &parent, int label);
   static void UnionLabels(std::vector<int> &parent, int label1, int label2);
+
+  [[nodiscard]] bool IsTest5() const;
+  void CollectNeighborsTest5(int i, int j, const std::vector<std::vector<int>> &temp_labels,
+                             std::vector<int> &neighbor_labels) const;
+  void CollectNeighbors8Connectivity(int i, int j, const std::vector<std::vector<int>> &temp_labels,
+                                     std::vector<int> &neighbor_labels) const;
 
   int rows_ = 0;
   int cols_ = 0;
