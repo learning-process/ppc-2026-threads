@@ -1,8 +1,8 @@
 #pragma once
-#include "luzan_e_double_sparse_matrix_mult_seq/common/include/common.hpp"
+#include "luzan_e_double_sparse_matrix_mult/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace luzan_e_double_sparse_matrix_mult_seq {
+namespace luzan_e_double_sparse_matrix_mult {
 
 class LuzanEDoubleSparseMatrixMultOMP : public BaseTask {
  public:
@@ -18,4 +18,4 @@ class LuzanEDoubleSparseMatrixMultOMP : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace luzan_e_double_sparse_matrix_mult_seq
+}  // namespace luzan_e_double_sparse_matrix_mult

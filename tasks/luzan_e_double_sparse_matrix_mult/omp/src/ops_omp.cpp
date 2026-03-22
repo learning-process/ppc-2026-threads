@@ -1,15 +1,15 @@
-#include "luzan_e_double_sparse_matrix_mult_seq/omp/include/ops_omp.hpp"
+#include "luzan_e_double_sparse_matrix_mult/omp/include/ops_omp.hpp"
 
 #include <cmath>
 #include <cstddef>
 #include <vector>
 
-#include "luzan_e_double_sparse_matrix_mult_seq/common/include/common.hpp"
+#include "luzan_e_double_sparse_matrix_mult/common/include/common.hpp"
 #include "util/include/util.hpp"
 
 // #include <omp.h>
 
-namespace luzan_e_double_sparse_matrix_mult_seq {
+namespace luzan_e_double_sparse_matrix_mult {
 
 SparseMatrix SparseMatrix::CalcProdOMP(const SparseMatrix &b) const {
   SparseMatrix c(rows_, b.cols_);
@@ -88,4 +88,4 @@ bool LuzanEDoubleSparseMatrixMultOMP::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace luzan_e_double_sparse_matrix_mult_seq
+}  // namespace luzan_e_double_sparse_matrix_mult
