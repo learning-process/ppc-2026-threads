@@ -33,7 +33,6 @@ void Process4ConnectivityImpl(const InType &input, int rows, int cols, std::vect
   }
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void Process8ConnectivityImpl(const InType &input, int rows, int cols, std::vector<std::vector<int>> &labels, int ci,
                               int cj, int current_label, std::queue<std::pair<int, int>> &q) {
   for (int di = -1; di <= 1; ++di) {
@@ -100,7 +99,6 @@ bool MarkingComponentsSEQ::IsTest5(const InType &input) const {
   return object_count == 9;
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 bool MarkingComponentsSEQ::RunImpl() {
   const auto &input = GetInput();
   if (input.size() < 2 || rows_ == 0 || cols_ == 0) {

@@ -35,12 +35,10 @@ void CollectNeighbors8ConnectivityImpl(int i, int j, const std::vector<std::vect
     if (temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)] != 0) {
       neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)]);
     }
-    // NOLINTNEXTLINE(bugprone-misplaced-widening-cast)
     if (j + 1 < cols) {
-      // NOLINTNEXTLINE(bugprone-misplaced-widening-cast)
-      if (temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j + 1)] != 0) {
-        // NOLINTNEXTLINE(bugprone-misplaced-widening-cast)
-        neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j + 1)]);
+      std::size_t nj = static_cast<std::size_t>(j + 1);
+      if (temp_labels[static_cast<std::size_t>(i - 1)][nj] != 0) {
+        neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][nj]);
       }
     }
   }
@@ -115,7 +113,6 @@ bool MarkingComponentsOMP::IsTest5() const {
   return object_count == 9;
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 bool MarkingComponentsOMP::RunImpl() {
   if (input_.size() < 2 || rows_ == 0 || cols_ == 0) {
     return false;
@@ -148,7 +145,6 @@ bool MarkingComponentsOMP::RunImpl() {
           parent.push_back(next_label);
           ++next_label;
         } else {
-          // NOLINTNEXTLINE(modernize-use-ranges)
           int min_label = *std::min_element(neighbor_labels.begin(), neighbor_labels.end());
           temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = min_label;
 
@@ -178,8 +174,8 @@ bool MarkingComponentsOMP::RunImpl() {
     for (int j = 0; j < cols_; ++j) {
       if (temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] != 0) {
         int root = temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
-        // NOLINTNEXTLINE(readability-container-contains)
-        if (label_mapping.find(root) == label_mapping.end()) {
+        auto it = label_mapping.find(root);
+        if (it == label_mapping.end()) {
           label_mapping[root] = current_label++;
         }
         labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = label_mapping[root];
