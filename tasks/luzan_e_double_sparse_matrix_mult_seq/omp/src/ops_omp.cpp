@@ -18,8 +18,9 @@ SparseMatrix SparseMatrix::CalcProdOMP(const SparseMatrix &b) const {
   std::vector<std::vector<double>> values_per_col(b.cols_);
   std::vector<std::vector<unsigned>> rows_per_col(b.cols_);
 
-#pragma omp parallel for shared(b, values_per_col, rows_per_col, kEPS) schedule(static) default(none) num_threads(2)
-  for (unsigned b_col = 0; b_col < static_cast<int>(b.cols_); b_col++) {
+  int threads_num = ppc::util::GetNumThreads();
+#pragma omp parallel for shared(b, values_per_col, rows_per_col, kEPS) schedule(static) default(none) num_threads(threads_num)
+  for (unsigned b_col = 0; b_col < static_cast<unsigned>(b.cols_); b_col++) {
     std::vector<double> tmp_col(rows_, 0.0);
 
     unsigned b_rows_start = b.col_index_[b_col];
