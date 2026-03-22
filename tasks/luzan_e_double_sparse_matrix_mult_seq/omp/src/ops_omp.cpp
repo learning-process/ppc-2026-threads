@@ -1,8 +1,10 @@
 #include "luzan_e_double_sparse_matrix_mult_seq/omp/include/ops_omp.hpp"
-#include "luzan_e_double_sparse_matrix_mult_seq/common/include/common.hpp"
-#include <vector>
+
 #include <cmath>
 #include <cstddef>
+#include <vector>
+
+#include "luzan_e_double_sparse_matrix_mult_seq/common/include/common.hpp"
 // #include "util/include/util.hpp"
 
 #include <omp.h>
