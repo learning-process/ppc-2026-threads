@@ -3,6 +3,7 @@
 #include <omp.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <map>
 #include <vector>
 
@@ -167,7 +168,7 @@ bool MarkingComponentsOMP::RunImpl() {
     for (int j = 0; j < cols_; ++j) {
       if (temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] != 0) {
         int root = temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
-        if (!label_mapping.contains(root)) {
+        if (label_mapping.find(root) == label_mapping.end()) {
           label_mapping[root] = current_label++;
         }
         labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = label_mapping[root];
