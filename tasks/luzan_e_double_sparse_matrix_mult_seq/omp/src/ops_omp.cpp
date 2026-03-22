@@ -1,5 +1,8 @@
 #include "luzan_e_double_sparse_matrix_mult_seq/omp/include/ops_omp.hpp"
-// #include "luzan_e_double_sparse_matrix_mult_seq/common/include/common.hpp"
+#include "luzan_e_double_sparse_matrix_mult_seq/common/include/common.hpp"
+#include <vector>
+#include <cmath>
+#include <cstddef>
 // #include "util/include/util.hpp"
 
 #include <omp.h>
@@ -14,7 +17,7 @@ SparseMatrix SparseMatrix::CalcProdOMP(const SparseMatrix &b) const {
   std::vector<std::vector<unsigned>> rows_per_col(b.cols_);
 
 #pragma omp parallel for shared(b, values_per_col, rows_per_col, kEPS) schedule(static) default(none) num_threads(2)
-  for (int b_col = 0; b_col < static_cast<int>(b.cols_); b_col++) {
+  for (unsigned b_col = 0; b_col < static_cast<int>(b.cols_); b_col++) {
     std::vector<double> tmp_col(rows_, 0.0);
 
     unsigned b_rows_start = b.col_index_[b_col];

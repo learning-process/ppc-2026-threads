@@ -43,7 +43,7 @@ class SparseMatrix {
     Sparse(matrix);
   }
 
-  SparseMatrix CalcProdOMP(const SparseMatrix &b) const;
+  [[nodiscard]]   SparseMatrix CalcProdOMP(const SparseMatrix &b) const;
 
   void GenLineMatrix(unsigned rows, unsigned cols) {
     col_index_.clear();
