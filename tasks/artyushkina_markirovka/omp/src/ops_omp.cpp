@@ -36,9 +36,9 @@ void CollectNeighbors8ConnectivityImpl(int i, int j, const std::vector<std::vect
       neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)]);
     }
     if (j + 1 < cols) {
-      // Используем static_cast напрямую без промежуточной переменной
-      if (temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j + 1)] != 0) {
-        neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j + 1)]);
+      int nj = j + 1;
+      if (temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(nj)] != 0) {
+        neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(nj)]);
       }
     }
   }
@@ -126,6 +126,7 @@ bool MarkingComponentsOMP::RunImpl() {
   parent.push_back(0);
   int next_label = 1;
 
+  // Первый проход
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
       std::size_t idx =
@@ -158,6 +159,7 @@ bool MarkingComponentsOMP::RunImpl() {
     }
   }
 
+  // Второй проход: разрешение эквивалентностей
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
       if (temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] != 0) {
@@ -167,6 +169,7 @@ bool MarkingComponentsOMP::RunImpl() {
     }
   }
 
+  // Переиндексация для последовательных меток
   std::map<int, int> label_mapping;
   int current_label = 1;
 
