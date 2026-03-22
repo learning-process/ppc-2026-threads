@@ -5,6 +5,7 @@
 
 #include "luzan_e_double_sparse_matrix_mult_seq/common/include/common.hpp"
 #include "luzan_e_double_sparse_matrix_mult_seq/seq/include/ops_seq.hpp"
+#include "luzan_e_double_sparse_matrix_mult_seq/omp/include/ops_omp.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace luzan_e_double_sparse_matrix_mult_seq {
@@ -45,7 +46,7 @@ TEST_P(LuzanEDoubleSparseMatrixMultSeqPerfTestThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LuzanEDoubleSparseMatrixMultSeq>(
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LuzanEDoubleSparseMatrixMultSeq, LuzanEDoubleSparseMatrixMultOMP>(
     PPC_SETTINGS_luzan_e_double_sparse_matrix_mult_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

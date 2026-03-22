@@ -43,6 +43,8 @@ class SparseMatrix {
     Sparse(matrix);
   }
 
+  SparseMatrix CalcProdOMP(const SparseMatrix &b) const;
+
   void GenLineMatrix(unsigned rows, unsigned cols) {
     col_index_.clear();
     row_.clear();
@@ -222,6 +224,8 @@ class SparseMatrix {
     }
   }
 };
+
+
 
 inline SparseMatrix GetFromFile(std::ifstream &file) {
   size_t r = 0;
