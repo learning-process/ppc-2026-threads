@@ -1,6 +1,7 @@
 #include "titaev_m_sortirovka_betchera/omp/include/ops_omp.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <vector>
