@@ -3,6 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <string>
+#include <tuple>
 
 #include "olesnitskiy_v_hoare_sort_simple_merge_seq/common/include/common.hpp"
 #include "olesnitskiy_v_hoare_sort_simple_merge_seq/omp/include/ops_omp.hpp"
