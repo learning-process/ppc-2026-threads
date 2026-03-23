@@ -200,17 +200,14 @@ bool MarkingComponentsOMP::RunImpl() {
   parent.push_back(0);
   int next_label = 1;
 
-  // Первый проход
   for (int i = 0; i < rows_; ++i) {
     ProcessFirstPassRow(i, cols_, is_test5, input_, temp_labels, parent, next_label);
   }
 
-  // Второй проход: разрешение эквивалентностей
   for (int i = 0; i < rows_; ++i) {
     ResolveEquivalencesRow(i, cols_, temp_labels, parent);
   }
 
-  // Переиндексация для последовательных меток
   std::map<int, int> label_mapping;
   int current_label = 1;
 
