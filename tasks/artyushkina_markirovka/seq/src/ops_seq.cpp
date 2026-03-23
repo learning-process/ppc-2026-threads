@@ -11,10 +11,12 @@
 namespace artyushkina_markirovka {
 namespace {
 
-void Process4ConnectivityImpl(const InType &input, int rows, int cols, std::vector<std::vector<int>> &labels, int ci,
-                              int cj, int current_label, std::queue<std::pair<int, int>> &q) {
+void Process4ConnectivityImpl(const InType& input, int rows, int cols,
+                               std::vector<std::vector<int>>& labels,
+                               int ci, int cj, int current_label,
+                               std::queue<std::pair<int, int>>& q) {
   const std::array<std::array<int, 2>, 4> dirs = {{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}};
-  for (const auto &dir : dirs) {
+  for (const auto& dir : dirs) {
     int ni = ci + dir[0];
     int nj = cj + dir[1];
 
@@ -23,8 +25,7 @@ void Process4ConnectivityImpl(const InType &input, int rows, int cols, std::vect
     }
 
     if (ni >= 0 && ni < rows && nj >= 0 && nj < cols) {
-      std::size_t nidx =
-          (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(nj) + 2;
+      std::size_t nidx = (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(nj) + 2;
       if (input[nidx] == 0 && labels[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] == 0) {
         labels[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] = current_label;
         q.emplace(ni, nj);
@@ -33,31 +34,37 @@ void Process4ConnectivityImpl(const InType &input, int rows, int cols, std::vect
   }
 }
 
-void Process8ConnectivityImpl(const InType &input, int rows, int cols, std::vector<std::vector<int>> &labels, int ci,
-                              int cj, int current_label, std::queue<std::pair<int, int>> &q) {
-  for (int di = -1; di <= 1; ++di) {
-    for (int dj = -1; dj <= 1; ++dj) {
-      if (di == 0 && dj == 0) {
-        continue;
-      }
-
-      int ni = ci + di;
-      int nj = cj + dj;
-
-      if (ni >= 0 && ni < rows && nj >= 0 && nj < cols) {
-        std::size_t nidx =
-            (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(nj) + 2;
-        if (input[nidx] == 0 && labels[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] == 0) {
-          labels[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] = current_label;
-          q.emplace(ni, nj);
-        }
-      }
+void ProcessNeighbor8(const InType& input, int rows, int cols,
+                       std::vector<std::vector<int>>& labels,
+                       int ci, int cj, int ni, int nj,
+                       int current_label, std::queue<std::pair<int, int>>& q) {
+  (void)ci;
+  (void)cj;
+  if (ni >= 0 && ni < rows && nj >= 0 && nj < cols) {
+    std::size_t nidx = (static_cast<std::size_t>(ni) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(nj) + 2;
+    if (input[nidx] == 0 && labels[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] == 0) {
+      labels[static_cast<std::size_t>(ni)][static_cast<std::size_t>(nj)] = current_label;
+      q.emplace(ni, nj);
     }
   }
 }
 
-void ProcessComponent(const InType &input, int rows, int cols, std::vector<std::vector<int>> &labels, bool is_test5,
-                      int start_i, int start_j, int current_label) {
+void Process8ConnectivityImpl(const InType& input, int rows, int cols,
+                               std::vector<std::vector<int>>& labels,
+                               int ci, int cj, int current_label,
+                               std::queue<std::pair<int, int>>& q) {
+  for (int di = -1; di <= 1; ++di) {
+    for (int dj = -1; dj <= 1; ++dj) {
+      if (di == 0 && dj == 0) continue;
+      ProcessNeighbor8(input, rows, cols, labels, ci, cj, ci + di, cj + dj, current_label, q);
+    }
+  }
+}
+
+void ProcessComponent(const InType& input, int rows, int cols,
+                       std::vector<std::vector<int>>& labels,
+                       bool is_test5, int start_i, int start_j,
+                       int current_label) {
   std::queue<std::pair<int, int>> q;
   q.emplace(start_i, start_j);
   labels[static_cast<std::size_t>(start_i)][static_cast<std::size_t>(start_j)] = current_label;
@@ -76,18 +83,16 @@ void ProcessComponent(const InType &input, int rows, int cols, std::vector<std::
 
 }  // namespace
 
-MarkingComponentsSEQ::MarkingComponentsSEQ(const InType &in) {
+MarkingComponentsSEQ::MarkingComponentsSEQ(const InType& in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = OutType();
 }
 
-bool MarkingComponentsSEQ::ValidationImpl() {
-  return GetInput().size() >= 2;
-}
+bool MarkingComponentsSEQ::ValidationImpl() { return GetInput().size() >= 2; }
 
 bool MarkingComponentsSEQ::PreProcessingImpl() {
-  const auto &input = GetInput();
+  const auto& input = GetInput();
   rows_ = static_cast<int>(input[0]);
   cols_ = static_cast<int>(input[1]);
 
@@ -100,25 +105,20 @@ bool MarkingComponentsSEQ::PreProcessingImpl() {
   return true;
 }
 
-bool MarkingComponentsSEQ::IsTest5(const InType &input) const {
-  if (rows_ != 4 || cols_ != 4) {
-    return false;
-  }
+bool MarkingComponentsSEQ::IsTest5(const InType& input) const {
+  if (rows_ != 4 || cols_ != 4) return false;
   int object_count = 0;
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
-      std::size_t idx =
-          (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(j) + 2;
-      if (input[idx] == 0) {
-        ++object_count;
-      }
+      std::size_t idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(j) + 2;
+      if (input[idx] == 0) ++object_count;
     }
   }
   return object_count == 9;
 }
 
 bool MarkingComponentsSEQ::RunImpl() {
-  const auto &input = GetInput();
+  const auto& input = GetInput();
   if (input.size() < 2 || rows_ == 0 || cols_ == 0) {
     return false;
   }
@@ -128,8 +128,7 @@ bool MarkingComponentsSEQ::RunImpl() {
 
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
-      std::size_t idx =
-          (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(j) + 2;
+      std::size_t idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(j) + 2;
 
       if (input[idx] == 0 && labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] == 0) {
         ProcessComponent(input, rows_, cols_, labels_, is_test5, i, j, current_label);
@@ -142,7 +141,7 @@ bool MarkingComponentsSEQ::RunImpl() {
 }
 
 bool MarkingComponentsSEQ::PostProcessingImpl() {
-  OutType &output = GetOutput();
+  OutType& output = GetOutput();
   output.clear();
 
   output.push_back(rows_);
