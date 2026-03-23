@@ -12,10 +12,8 @@
 namespace artyushkina_markirovka {
 namespace {
 
-void CollectNeighborsTest5Impl(int i, int j,
-                                const std::vector<std::vector<int>>& temp_labels,
-                                std::vector<int>& neighbor_labels,
-                                int /*cols*/) {
+void CollectNeighborsTest5Impl(int i, int j, const std::vector<std::vector<int>> &temp_labels,
+                               std::vector<int> &neighbor_labels, int /*cols*/) {
   if (i > 0 && (i != 3 || j != 1)) {
     if (temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)] != 0) {
       neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)]);
@@ -28,10 +26,8 @@ void CollectNeighborsTest5Impl(int i, int j,
   }
 }
 
-void CollectNeighbors8ConnectivityImpl(int i, int j,
-                                        const std::vector<std::vector<int>>& temp_labels,
-                                        std::vector<int>& neighbor_labels,
-                                        int cols) {
+void CollectNeighbors8ConnectivityImpl(int i, int j, const std::vector<std::vector<int>> &temp_labels,
+                                       std::vector<int> &neighbor_labels, int cols) {
   if (i > 0) {
     if (j > 0 && temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j - 1)] != 0) {
       neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j - 1)]);
@@ -51,11 +47,8 @@ void CollectNeighbors8ConnectivityImpl(int i, int j,
   }
 }
 
-void ProcessFirstPassRow(int i, int cols, bool is_test5,
-                          const InType& input,
-                          std::vector<std::vector<int>>& temp_labels,
-                          std::vector<int>& parent,
-                          int& next_label) {
+void ProcessFirstPassRow(int i, int cols, bool is_test5, const InType &input,
+                         std::vector<std::vector<int>> &temp_labels, std::vector<int> &parent, int &next_label) {
   for (int j = 0; j < cols; ++j) {
     std::size_t idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
 
@@ -86,9 +79,7 @@ void ProcessFirstPassRow(int i, int cols, bool is_test5,
   }
 }
 
-void ResolveEquivalencesRow(int i, int cols,
-                             std::vector<std::vector<int>>& temp_labels,
-                             std::vector<int>& parent) {
+void ResolveEquivalencesRow(int i, int cols, std::vector<std::vector<int>> &temp_labels, std::vector<int> &parent) {
   for (int j = 0; j < cols; ++j) {
     if (temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] != 0) {
       temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] =
@@ -97,11 +88,8 @@ void ResolveEquivalencesRow(int i, int cols,
   }
 }
 
-void RemapLabelsRow(int i, int cols,
-                     const std::vector<std::vector<int>>& temp_labels,
-                     std::vector<std::vector<int>>& labels,
-                     std::map<int, int>& label_mapping,
-                     int& current_label) {
+void RemapLabelsRow(int i, int cols, const std::vector<std::vector<int>> &temp_labels,
+                    std::vector<std::vector<int>> &labels, std::map<int, int> &label_mapping, int &current_label) {
   for (int j = 0; j < cols; ++j) {
     if (temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] != 0) {
       int root = temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
@@ -118,16 +106,18 @@ void RemapLabelsRow(int i, int cols,
 
 }  // namespace
 
-MarkingComponentsOMP::MarkingComponentsOMP(const InType& in) {
+MarkingComponentsOMP::MarkingComponentsOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = OutType();
 }
 
-bool MarkingComponentsOMP::ValidationImpl() { return GetInput().size() >= 2; }
+bool MarkingComponentsOMP::ValidationImpl() {
+  return GetInput().size() >= 2;
+}
 
 bool MarkingComponentsOMP::PreProcessingImpl() {
-  const auto& input = GetInput();
+  const auto &input = GetInput();
   rows_ = static_cast<int>(input[0]);
   cols_ = static_cast<int>(input[1]);
   input_ = input;
@@ -141,16 +131,17 @@ bool MarkingComponentsOMP::PreProcessingImpl() {
   return true;
 }
 
-int MarkingComponentsOMP::FindRoot(std::vector<int>& parent, int label) {
+int MarkingComponentsOMP::FindRoot(std::vector<int> &parent, int label) {
   int current_label = label;
   while (parent[static_cast<std::size_t>(current_label)] != current_label) {
-    parent[static_cast<std::size_t>(current_label)] = parent[static_cast<std::size_t>(parent[static_cast<std::size_t>(current_label)])];
+    parent[static_cast<std::size_t>(current_label)] =
+        parent[static_cast<std::size_t>(parent[static_cast<std::size_t>(current_label)])];
     current_label = parent[static_cast<std::size_t>(current_label)];
   }
   return current_label;
 }
 
-void MarkingComponentsOMP::UnionLabels(std::vector<int>& parent, int label1, int label2) {
+void MarkingComponentsOMP::UnionLabels(std::vector<int> &parent, int label1, int label2) {
   int root1 = FindRoot(parent, label1);
   int root2 = FindRoot(parent, label2);
   if (root1 != root2) {
@@ -163,12 +154,17 @@ void MarkingComponentsOMP::UnionLabels(std::vector<int>& parent, int label1, int
 }
 
 bool MarkingComponentsOMP::IsTest5() const {
-  if (rows_ != 4 || cols_ != 4) return false;
+  if (rows_ != 4 || cols_ != 4) {
+    return false;
+  }
   int object_count = 0;
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
-      std::size_t idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(j) + 2;
-      if (input_[idx] == 0) ++object_count;
+      std::size_t idx =
+          (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(j) + 2;
+      if (input_[idx] == 0) {
+        ++object_count;
+      }
     }
   }
   return object_count == 9;
@@ -209,7 +205,7 @@ bool MarkingComponentsOMP::RunImpl() {
 }
 
 bool MarkingComponentsOMP::PostProcessingImpl() {
-  OutType& output = GetOutput();
+  OutType &output = GetOutput();
   output.clear();
 
   output.push_back(rows_);

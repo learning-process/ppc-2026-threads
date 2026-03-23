@@ -9,11 +9,13 @@ namespace artyushkina_markirovka {
 
 class MarkingComponentsOMP : public BaseTask {
  public:
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() { return ppc::task::TypeOfTask::kOMP; }
-  explicit MarkingComponentsOMP(const InType& in);
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kOMP;
+  }
+  explicit MarkingComponentsOMP(const InType &in);
 
-  static int FindRoot(std::vector<int>& parent, int label);
-  static void UnionLabels(std::vector<int>& parent, int label1, int label2);
+  static int FindRoot(std::vector<int> &parent, int label);
+  static void UnionLabels(std::vector<int> &parent, int label1, int label2);
 
  private:
   bool ValidationImpl() override;
