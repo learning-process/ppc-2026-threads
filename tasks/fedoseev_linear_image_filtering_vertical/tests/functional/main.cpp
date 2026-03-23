@@ -26,6 +26,7 @@ Image ReferenceFilter(const Image &input) {
   int h = input.height;
   const std::vector<int> &src = input.data;
 
+  // Для изображений меньше 3x3 возвращаем пустое (они не должны обрабатываться)
   if (w < 3 || h < 3) {
     return Image{};
   }
@@ -138,8 +139,12 @@ class FedoseevFuncTest : public ppc::util::BaseRunFuncTests<Image, Image, TestTy
 
 namespace {
 
-TEST_P(FedoseevFuncTest, ImageFiltering) {
-  ExecuteTest(GetParam());
+// Вспомогательная функция для снижения когнитивной сложности
+void CheckInvalidSize(const std::shared_ptr<BaseTask> &task) {
+  EXPECT_FALSE(task->Validation());
+  EXPECT_EQ(task->GetOutput().width, 0);
+  EXPECT_EQ(task->GetOutput().height, 0);
+  EXPECT_TRUE(task->GetOutput().data.empty());
 }
 
 TEST(FedoseevValidationTest, InvalidSize) {
@@ -149,16 +154,10 @@ TEST(FedoseevValidationTest, InvalidSize) {
   input.data.resize(4, 0);
 
   auto seq_task = std::make_shared<LinearImageFilteringVerticalSeq>(input);
-  EXPECT_FALSE(seq_task->Validation());
-  EXPECT_EQ(seq_task->GetOutput().width, 0);
-  EXPECT_EQ(seq_task->GetOutput().height, 0);
-  EXPECT_TRUE(seq_task->GetOutput().data.empty());
+  CheckInvalidSize(seq_task);
 
   auto omp_task = std::make_shared<LinearImageFilteringVerticalOMP>(input);
-  EXPECT_FALSE(omp_task->Validation());
-  EXPECT_EQ(omp_task->GetOutput().width, 0);
-  EXPECT_EQ(omp_task->GetOutput().height, 0);
-  EXPECT_TRUE(omp_task->GetOutput().data.empty());
+  CheckInvalidSize(omp_task);
 }
 
 TEST(FedoseevValidationTest, InvalidDataSize) {
@@ -172,6 +171,10 @@ TEST(FedoseevValidationTest, InvalidDataSize) {
 
   auto omp_task = std::make_shared<LinearImageFilteringVerticalOMP>(input);
   EXPECT_FALSE(omp_task->Validation());
+}
+
+TEST_P(FedoseevFuncTest, ImageFiltering) {
+  ExecuteTest(GetParam());
 }
 
 constexpr std::array<int, 5> kSizes = {3, 5, 7, 10, 16};
