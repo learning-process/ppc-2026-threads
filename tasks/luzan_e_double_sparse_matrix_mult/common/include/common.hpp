@@ -106,7 +106,7 @@ class SparseMatrix {
     return rows_;
   }
 
-  const std::vector<double> &GetVal() const {
+  [[nodiscard]] const std::vector<double> &GetVal() const {
     return value_;
   }
 
