@@ -2,15 +2,14 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <stack>
 #include <utility>
 #include <vector>
 
-#include "util/include/util.hpp"
-
 namespace olesnitskiy_v_hoare_sort_simple_merge_seq {
 
-OlesnitskiyVHoareSortSimpleMergeOMP::OlesnitskiyVHoareSortSimpleMergeOMP(const InType &in) {
+OlesnitskiyVHoareSortSimpleMergeOMP::OlesnitskiyVHoareSortSimpleMergeOMP(const std::vector<int> &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};
@@ -87,6 +86,62 @@ void OlesnitskiyVHoareSortSimpleMergeOMP::SimpleMerge(const std::vector<int> &so
   }
 }
 
+void OlesnitskiyVHoareSortSimpleMergeOMP::SortBlocks(std::vector<int> &data, size_t block_size, int num_threads) {
+  const size_t size = data.size();
+  const size_t block_count = (size + block_size - 1) / block_size;
+  const auto block_count_i64 = static_cast<std::int64_t>(block_count);
+
+#pragma omp parallel for default(none) shared(data, size, block_size, block_count_i64) schedule(static) \
+    num_threads(num_threads)
+  for (std::int64_t block_index = 0; block_index < block_count_i64; ++block_index) {
+    size_t block_start = static_cast<size_t>(block_index) * block_size;
+    size_t block_end = std::min(block_start + block_size, size);
+    if ((block_end - block_start) > 1) {
+      HoareQuickSort(data, static_cast<int>(block_start), static_cast<int>(block_end - 1));
+    }
+  }
+}
+
+void OlesnitskiyVHoareSortSimpleMergeOMP::MergeSortedBlocks(std::vector<int> &data, size_t block_size,
+                                                            int num_threads) {
+  const size_t size = data.size();
+  std::vector<int> buffer(size);
+  bool data_is_source = true;
+
+  for (size_t merge_width = block_size; merge_width < size; merge_width *= 2) {
+    const size_t chunk_width = merge_width * 2;
+    const size_t chunk_count = (size + chunk_width - 1) / chunk_width;
+    const auto chunk_count_i64 = static_cast<std::int64_t>(chunk_count);
+    const std::vector<int> &source = data_is_source ? data : buffer;
+    std::vector<int> &destination = data_is_source ? buffer : data;
+
+#pragma omp parallel for default(none) shared(source, destination, size, merge_width, chunk_width, chunk_count_i64) \
+    schedule(static) num_threads(num_threads)
+    for (std::int64_t chunk_index = 0; chunk_index < chunk_count_i64; ++chunk_index) {
+      size_t left = static_cast<size_t>(chunk_index) * chunk_width;
+      size_t middle = std::min(left + merge_width, size);
+      size_t right = std::min(left + chunk_width, size);
+
+      if (middle < right) {
+        SimpleMerge(source, destination, left, middle, right);
+        continue;
+      }
+
+      std::copy(source.begin() + static_cast<std::ptrdiff_t>(left), source.begin() + static_cast<std::ptrdiff_t>(right),
+                destination.begin() + static_cast<std::ptrdiff_t>(left));
+    }
+
+    data_is_source = !data_is_source;
+    if (merge_width > (size / 2)) {
+      break;
+    }
+  }
+
+  if (!data_is_source) {
+    data.swap(buffer);
+  }
+}
+
 bool OlesnitskiyVHoareSortSimpleMergeOMP::ValidationImpl() {
   return !GetInput().empty();
 }
@@ -103,53 +158,9 @@ bool OlesnitskiyVHoareSortSimpleMergeOMP::RunImpl() {
   }
 
   constexpr size_t kBlockSize = 64;
-  const size_t size = data_.size();
-  const size_t block_count = (size + kBlockSize - 1) / kBlockSize;
   const int num_threads = 2;
-
-#pragma omp parallel for schedule(static) num_threads(num_threads)
-  for (long long block_index = 0; block_index < static_cast<long long>(block_count); ++block_index) {
-    size_t block_start = static_cast<size_t>(block_index) * kBlockSize;
-    size_t block_end = std::min(block_start + kBlockSize, size);
-    if ((block_end - block_start) > 1) {
-      HoareQuickSort(data_, static_cast<int>(block_start), static_cast<int>(block_end - 1));
-    }
-  }
-
-  std::vector<int> buffer(size);
-  bool data_is_source = true;
-
-  for (size_t merge_width = kBlockSize; merge_width < size;) {
-    const size_t chunk_width = merge_width * 2;
-    const size_t chunk_count = (size + chunk_width - 1) / chunk_width;
-    const std::vector<int> &source = data_is_source ? data_ : buffer;
-    std::vector<int> &destination = data_is_source ? buffer : data_;
-
-#pragma omp parallel for schedule(static) num_threads(num_threads)
-    for (long long chunk_index = 0; chunk_index < static_cast<long long>(chunk_count); ++chunk_index) {
-      size_t left = static_cast<size_t>(chunk_index) * chunk_width;
-      size_t middle = std::min(left + merge_width, size);
-      size_t right = std::min(left + chunk_width, size);
-
-      if (middle < right) {
-        SimpleMerge(source, destination, left, middle, right);
-      } else {
-        std::ranges::copy(source.begin() + static_cast<std::ptrdiff_t>(left),
-                          source.begin() + static_cast<std::ptrdiff_t>(right),
-                          destination.begin() + static_cast<std::ptrdiff_t>(left));
-      }
-    }
-
-    data_is_source = !data_is_source;
-    if (merge_width > (size / 2)) {
-      break;
-    }
-    merge_width *= 2;
-  }
-
-  if (!data_is_source) {
-    data_.swap(buffer);
-  }
+  SortBlocks(data_, kBlockSize, num_threads);
+  MergeSortedBlocks(data_, kBlockSize, num_threads);
 
   return true;
 }
