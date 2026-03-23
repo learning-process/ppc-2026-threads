@@ -7,12 +7,15 @@
 
 namespace artyushkina_markirovka {
 
-class MarkingComponentsSEQ : public BaseTask {
+class MarkingComponentsOMP : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kSEQ;
+    return ppc::task::TypeOfTask::kOMP;
   }
-  explicit MarkingComponentsSEQ(const InType &in);
+  explicit MarkingComponentsOMP(const InType &in);
+
+  static int FindRoot(std::vector<int> &parent, int label);
+  static void UnionLabels(std::vector<int> &parent, int label1, int label2);
 
  private:
   bool ValidationImpl() override;
@@ -20,11 +23,12 @@ class MarkingComponentsSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  [[nodiscard]] bool IsTest5(const InType &input) const;
+  [[nodiscard]] bool IsTest5() const;
 
   int rows_ = 0;
   int cols_ = 0;
   std::vector<std::vector<int>> labels_;
+  InType input_;
 };
 
 }  // namespace artyushkina_markirovka
