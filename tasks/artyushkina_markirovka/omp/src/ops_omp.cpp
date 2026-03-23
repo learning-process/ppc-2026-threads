@@ -2,7 +2,6 @@
 
 #include <omp.h>
 
-#include <algorithm>
 #include <cstddef>
 #include <map>
 #include <vector>
@@ -53,9 +52,7 @@ int FindMinLabel(const std::vector<int> &labels) {
   }
   int min_label = labels[0];
   for (std::size_t k = 1; k < labels.size(); ++k) {
-    if (labels[k] < min_label) {
-      min_label = labels[k];
-    }
+    min_label = (labels[k] < min_label) ? labels[k] : min_label;
   }
   return min_label;
 }
