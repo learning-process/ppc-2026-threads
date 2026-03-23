@@ -146,6 +146,7 @@ bool MarkingComponentsOMP::RunImpl() {
           parent.push_back(next_label);
           ++next_label;
         } else {
+          // Используем std::ranges::min_element для C++20
           int min_label = *std::min_element(neighbor_labels.begin(), neighbor_labels.end());
           temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = min_label;
 

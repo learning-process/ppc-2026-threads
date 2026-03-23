@@ -56,6 +56,24 @@ void Process8ConnectivityImpl(const InType &input, int rows, int cols, std::vect
   }
 }
 
+void ProcessComponent(const InType &input, int rows, int cols, std::vector<std::vector<int>> &labels, bool is_test5,
+                      int start_i, int start_j, int current_label) {
+  std::queue<std::pair<int, int>> q;
+  q.emplace(start_i, start_j);
+  labels[static_cast<std::size_t>(start_i)][static_cast<std::size_t>(start_j)] = current_label;
+
+  while (!q.empty()) {
+    auto [ci, cj] = q.front();
+    q.pop();
+
+    if (is_test5) {
+      Process4ConnectivityImpl(input, rows, cols, labels, ci, cj, current_label, q);
+    } else {
+      Process8ConnectivityImpl(input, rows, cols, labels, ci, cj, current_label, q);
+    }
+  }
+}
+
 }  // namespace
 
 MarkingComponentsSEQ::MarkingComponentsSEQ(const InType &in) {
@@ -97,24 +115,6 @@ bool MarkingComponentsSEQ::IsTest5(const InType &input) const {
     }
   }
   return object_count == 9;
-}
-
-static void ProcessComponent(const InType &input, int rows, int cols, std::vector<std::vector<int>> &labels,
-                             bool is_test5, int start_i, int start_j, int current_label) {
-  std::queue<std::pair<int, int>> q;
-  q.emplace(start_i, start_j);
-  labels[static_cast<std::size_t>(start_i)][static_cast<std::size_t>(start_j)] = current_label;
-
-  while (!q.empty()) {
-    auto [ci, cj] = q.front();
-    q.pop();
-
-    if (is_test5) {
-      Process4ConnectivityImpl(input, rows, cols, labels, ci, cj, current_label, q);
-    } else {
-      Process8ConnectivityImpl(input, rows, cols, labels, ci, cj, current_label, q);
-    }
-  }
 }
 
 bool MarkingComponentsSEQ::RunImpl() {
