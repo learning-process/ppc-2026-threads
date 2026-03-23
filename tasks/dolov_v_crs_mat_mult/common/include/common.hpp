@@ -6,7 +6,7 @@
 
 #include "task/include/task.hpp"
 
-namespace dolov_v_crs_mat_mult_seq {
+namespace dolov_v_crs_mat_mult {
 
 struct SparseMatrix {
   int num_rows = 0;
@@ -21,4 +21,4 @@ using OutType = SparseMatrix;
 using TestType = std::pair<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace dolov_v_crs_mat_mult_seq
+}  // namespace dolov_v_crs_mat_mult
