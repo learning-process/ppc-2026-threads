@@ -47,6 +47,19 @@ void CollectNeighbors8ConnectivityImpl(int i, int j, const std::vector<std::vect
   }
 }
 
+int FindMinLabel(const std::vector<int> &labels) {
+  if (labels.empty()) {
+    return 0;
+  }
+  int min_label = labels[0];
+  for (std::size_t k = 1; k < labels.size(); ++k) {
+    if (labels[k] < min_label) {
+      min_label = labels[k];
+    }
+  }
+  return min_label;
+}
+
 void ProcessCell(int i, int j, int cols, bool is_test5, const InType &input, std::vector<std::vector<int>> &temp_labels,
                  std::vector<int> &parent, int &next_label) {
   std::size_t idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
@@ -68,7 +81,7 @@ void ProcessCell(int i, int j, int cols, bool is_test5, const InType &input, std
     parent.push_back(next_label);
     ++next_label;
   } else {
-    int min_label = *std::min_element(neighbor_labels.begin(), neighbor_labels.end());
+    int min_label = FindMinLabel(neighbor_labels);
     temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = min_label;
 
     for (int label : neighbor_labels) {
