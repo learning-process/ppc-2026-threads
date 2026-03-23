@@ -47,35 +47,42 @@ void CollectNeighbors8ConnectivityImpl(int i, int j, const std::vector<std::vect
   }
 }
 
+void ProcessCell(int i, int j, int cols, bool is_test5, const InType &input, std::vector<std::vector<int>> &temp_labels,
+                 std::vector<int> &parent, int &next_label) {
+  std::size_t idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
+
+  if (input[idx] != 0) {
+    return;
+  }
+
+  std::vector<int> neighbor_labels;
+
+  if (is_test5) {
+    CollectNeighborsTest5Impl(i, j, temp_labels, neighbor_labels, cols);
+  } else {
+    CollectNeighbors8ConnectivityImpl(i, j, temp_labels, neighbor_labels, cols);
+  }
+
+  if (neighbor_labels.empty()) {
+    temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = next_label;
+    parent.push_back(next_label);
+    ++next_label;
+  } else {
+    int min_label = *std::min_element(neighbor_labels.begin(), neighbor_labels.end());
+    temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = min_label;
+
+    for (int label : neighbor_labels) {
+      if (label != min_label) {
+        MarkingComponentsOMP::UnionLabels(parent, min_label, label);
+      }
+    }
+  }
+}
+
 void ProcessFirstPassRow(int i, int cols, bool is_test5, const InType &input,
                          std::vector<std::vector<int>> &temp_labels, std::vector<int> &parent, int &next_label) {
   for (int j = 0; j < cols; ++j) {
-    std::size_t idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
-
-    if (input[idx] == 0) {
-      std::vector<int> neighbor_labels;
-
-      if (is_test5) {
-        CollectNeighborsTest5Impl(i, j, temp_labels, neighbor_labels, cols);
-      } else {
-        CollectNeighbors8ConnectivityImpl(i, j, temp_labels, neighbor_labels, cols);
-      }
-
-      if (neighbor_labels.empty()) {
-        temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = next_label;
-        parent.push_back(next_label);
-        ++next_label;
-      } else {
-        int min_label = *std::min_element(neighbor_labels.begin(), neighbor_labels.end());
-        temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = min_label;
-
-        for (int label : neighbor_labels) {
-          if (label != min_label) {
-            MarkingComponentsOMP::UnionLabels(parent, min_label, label);
-          }
-        }
-      }
-    }
+    ProcessCell(i, j, cols, is_test5, input, temp_labels, parent, next_label);
   }
 }
 
