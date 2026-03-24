@@ -24,4 +24,4 @@ class ChaschinVLinearFiltrationTBB : public chaschin_v_linear_image_filtration::
 inline float HorizontalFilterAtTBB(const std::vector<float> &img, int n, int x, int y);
 inline float VerticalFilterAtTBB(const std::vector<float> &temp, int n, int m, int x, int y);
 
-}  // namespace chaschin_v_linear_image_filtration_tbb
+}  // namespace chaschin_v_linear_image_filtration_tbb   
