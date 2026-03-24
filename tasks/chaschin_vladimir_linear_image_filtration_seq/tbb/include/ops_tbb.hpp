@@ -5,14 +5,14 @@
 #include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace chaschin_v_linear_image_filtration_omp {
+namespace chaschin_v_linear_image_filtration_tbb {
 
-class ChaschinVLinearFiltrationOMP : public chaschin_v_linear_image_filtration::BaseTask {
+class ChaschinVLinearFiltrationTBB : public chaschin_v_linear_image_filtration::BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kOMP;
+    return ppc::task::TypeOfTask::kTBB;
   }
-  explicit ChaschinVLinearFiltrationOMP(const chaschin_v_linear_image_filtration::InType &in);
+  explicit ChaschinVLinearFiltrationTBB(const chaschin_v_linear_image_filtration::InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -21,7 +21,7 @@ class ChaschinVLinearFiltrationOMP : public chaschin_v_linear_image_filtration::
   bool PostProcessingImpl() override;
 };
 
-inline float HorizontalFilterAtOMP(const std::vector<float> &img, int n, int x, int y);
-inline float VerticalFilterAtOMP(const std::vector<float> &temp, int n, int m, int x, int y);
+inline float HorizontalFilterAtTBB(const std::vector<float> &img, int n, int x, int y);
+inline float VerticalFilterAtTBB(const std::vector<float> &temp, int n, int m, int x, int y);
 
-}  // namespace chaschin_v_linear_image_filtration_omp
+}  // namespace chaschin_v_linear_image_filtration_tbb
