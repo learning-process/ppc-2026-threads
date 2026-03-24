@@ -7,6 +7,8 @@
 
 #include "goriacheva_k_mult_sparse_complex_matrix_ccs/common/include/common.hpp"
 #include "goriacheva_k_mult_sparse_complex_matrix_ccs/seq/include/ops_seq.hpp"
+#include "goriacheva_k_mult_sparse_complex_matrix_ccs/omp/include/ops_omp.hpp"
+#include "goriacheva_k_mult_sparse_complex_matrix_ccs/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace goriacheva_k_mult_sparse_complex_matrix_ccs {
@@ -83,7 +85,9 @@ TEST_P(GoriachevaKMultSparseComplexMatrixCcsPerfTest, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, GoriachevaKMultSparseComplexMatrixCcsSEQ>(
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, GoriachevaKMultSparseComplexMatrixCcsSEQ,
+                                                       GoriachevaKMultSparseComplexMatrixCcsOMP, 
+                                                       GoriachevaKMultSparseComplexMatrixCcsTBB>(
     PPC_SETTINGS_goriacheva_k_mult_sparse_complex_matrix_ccs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
