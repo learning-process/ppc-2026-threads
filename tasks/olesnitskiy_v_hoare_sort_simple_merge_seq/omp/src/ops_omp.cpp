@@ -27,12 +27,23 @@ int GetActualThreadCount() {
 #endif
 }
 
+template <typename In, typename Out>
+void CopyRange(In first, In last, Out result) {
+  std::ranges::copy(first, last, result);
+}
+
 }  // namespace
 
 OlesnitskiyVHoareSortSimpleMergeOMP::OlesnitskiyVHoareSortSimpleMergeOMP(const std::vector<int> &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};
+}
+
+OlesnitskiyVHoareSortSimpleMergeOMP::~OlesnitskiyVHoareSortSimpleMergeOMP() {
+#if defined(_OPENMP) && (_OPENMP >= 201811)
+  omp_pause_resource_all(omp_pause_hard);
+#endif
 }
 
 int OlesnitskiyVHoareSortSimpleMergeOMP::HoarePartition(std::vector<int> &array, int left, int right) {
@@ -119,8 +130,8 @@ void OlesnitskiyVHoareSortSimpleMergeOMP::SortBlocks(std::vector<int> &data, siz
   const size_t block_count = (size + block_size - 1) / block_size;
   const auto block_count_i64 = static_cast<std::int64_t>(block_count);
 
-  const int actual_threads = std::max(1, num_threads);
 #ifdef _OPENMP
+  const int actual_threads = std::max(1, num_threads);
 #  pragma omp parallel for default(none) shared(data, size, block_size, block_count_i64) schedule(static) \
       num_threads(actual_threads)
 #endif
@@ -140,8 +151,6 @@ void OlesnitskiyVHoareSortSimpleMergeOMP::MergeSortedBlocks(std::vector<int> &da
     return;
   }
 
-  const int actual_threads = std::max(1, num_threads);
-
   for (size_t merge_width = block_size; merge_width < size; merge_width *= 2) {
     std::vector<int> merged_data(size);
     const size_t pair_width = merge_width * 2;
@@ -149,6 +158,7 @@ void OlesnitskiyVHoareSortSimpleMergeOMP::MergeSortedBlocks(std::vector<int> &da
     const auto pair_count_i64 = static_cast<std::int64_t>(pair_count);
 
 #ifdef _OPENMP
+    const int actual_threads = std::max(1, num_threads);
 #  pragma omp parallel for default(none) shared(data, merged_data, size, merge_width, pair_width, pair_count_i64) \
       schedule(static) num_threads(actual_threads)
 #endif
@@ -163,9 +173,9 @@ void OlesnitskiyVHoareSortSimpleMergeOMP::MergeSortedBlocks(std::vector<int> &da
         const std::vector<int> right_part(data.begin() + static_cast<std::ptrdiff_t>(middle),
                                           data.begin() + static_cast<std::ptrdiff_t>(right));
         const std::vector<int> merged_part = SimpleMerge(left_part, right_part);
-        std::copy(merged_part.begin(), merged_part.end(), merged_data.begin() + static_cast<std::ptrdiff_t>(left));
+        CopyRange(merged_part.begin(), merged_part.end(), merged_data.begin() + static_cast<std::ptrdiff_t>(left));
       } else {
-        std::copy(data.begin() + static_cast<std::ptrdiff_t>(left), data.begin() + static_cast<std::ptrdiff_t>(right),
+        CopyRange(data.begin() + static_cast<std::ptrdiff_t>(left), data.begin() + static_cast<std::ptrdiff_t>(right),
                   merged_data.begin() + static_cast<std::ptrdiff_t>(left));
       }
     }
@@ -197,7 +207,7 @@ bool OlesnitskiyVHoareSortSimpleMergeOMP::RunImpl() {
 }
 
 bool OlesnitskiyVHoareSortSimpleMergeOMP::PostProcessingImpl() {
-  if (!std::is_sorted(data_.begin(), data_.end())) {
+  if (!std::ranges::is_sorted(data_)) {
     return false;
   }
   GetOutput() = data_;

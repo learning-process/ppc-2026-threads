@@ -14,7 +14,7 @@ class OlesnitskiyVHoareSortSimpleMergeOMP : public BaseTask {
     return ppc::task::TypeOfTask::kOMP;
   }
   explicit OlesnitskiyVHoareSortSimpleMergeOMP(const InType &in);
-  ~OlesnitskiyVHoareSortSimpleMergeOMP() override = default;
+  ~OlesnitskiyVHoareSortSimpleMergeOMP() override;
 
  private:
   static int HoarePartition(std::vector<int> &array, int left, int right);
