@@ -35,10 +35,7 @@ bool GoriachevaKMultSparseComplexMatrixCcsTBB::PreProcessingImpl() {
 
 namespace {
 
-void ProcessColumn(int j,
-                   const SparseMatrixCCS &a,
-                   const SparseMatrixCCS &b,
-                   std::vector<Complex> &values,
+void ProcessColumn(int j, const SparseMatrixCCS &a, const SparseMatrixCCS &b, std::vector<Complex> &values,
                    std::vector<int> &rows) {
   std::vector<Complex> accumulator(a.rows);
   std::vector<int> marker(a.rows, -1);
@@ -85,9 +82,7 @@ bool GoriachevaKMultSparseComplexMatrixCcsTBB::RunImpl() {
   std::vector<std::vector<Complex>> local_values(c.cols);
   std::vector<std::vector<int>> local_rows(c.cols);
 
-  oneapi::tbb::parallel_for(0, b.cols, [&](int j) {
-    ProcessColumn(j, a, b, local_values[j], local_rows[j]);
-  });
+  oneapi::tbb::parallel_for(0, b.cols, [&](int j) { ProcessColumn(j, a, b, local_values[j], local_rows[j]); });
 
   int nnz = 0;
   for (int j = 0; j < c.cols; j++) {
@@ -100,13 +95,9 @@ bool GoriachevaKMultSparseComplexMatrixCcsTBB::RunImpl() {
   c.row_ind.reserve(nnz);
 
   for (int j = 0; j < c.cols; j++) {
-    c.values.insert(c.values.end(),
-                    local_values[j].begin(),
-                    local_values[j].end());
+    c.values.insert(c.values.end(), local_values[j].begin(), local_values[j].end());
 
-    c.row_ind.insert(c.row_ind.end(),
-                     local_rows[j].begin(),
-                     local_rows[j].end());
+    c.row_ind.insert(c.row_ind.end(), local_rows[j].begin(), local_rows[j].end());
   }
 
   return true;
