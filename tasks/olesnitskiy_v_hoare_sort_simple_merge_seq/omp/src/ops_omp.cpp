@@ -105,6 +105,10 @@ void OlesnitskiyVHoareSortSimpleMergeOMP::SortBlocks(std::vector<int> &data, siz
 void OlesnitskiyVHoareSortSimpleMergeOMP::MergeSortedBlocks(std::vector<int> &data, size_t block_size,
                                                             int num_threads) {
   const size_t size = data.size();
+  if (size <= 1) {
+    return;
+  }
+
   std::vector<int> buffer(size);
   bool data_is_source = true;
 
@@ -124,11 +128,11 @@ void OlesnitskiyVHoareSortSimpleMergeOMP::MergeSortedBlocks(std::vector<int> &da
 
       if (middle < right) {
         SimpleMerge(source, destination, left, middle, right);
-        continue;
+      } else {
+        std::copy(source.begin() + static_cast<std::ptrdiff_t>(left),
+                  source.begin() + static_cast<std::ptrdiff_t>(right),
+                  destination.begin() + static_cast<std::ptrdiff_t>(left));
       }
-
-      std::copy(source.begin() + static_cast<std::ptrdiff_t>(left), source.begin() + static_cast<std::ptrdiff_t>(right),
-                destination.begin() + static_cast<std::ptrdiff_t>(left));
     }
 
     data_is_source = !data_is_source;
@@ -166,7 +170,7 @@ bool OlesnitskiyVHoareSortSimpleMergeOMP::RunImpl() {
 }
 
 bool OlesnitskiyVHoareSortSimpleMergeOMP::PostProcessingImpl() {
-  if (!std::ranges::is_sorted(data_)) {
+  if (!std::is_sorted(data_.begin(), data_.end())) {
     return false;
   }
   GetOutput() = data_;
