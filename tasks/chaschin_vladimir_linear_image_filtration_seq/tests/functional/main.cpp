@@ -11,6 +11,7 @@
 #include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
 #include "chaschin_vladimir_linear_image_filtration_seq/omp/include/ops_omp.hpp"
 #include "chaschin_vladimir_linear_image_filtration_seq/seq/include/ops_seq.hpp"
+#include "chaschin_vladimir_linear_image_filtration_seq/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -119,7 +120,9 @@ const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<chaschin_v_linear_image_filtration_seq::ChaschinVLinearFiltrationSEQ, InType>(
                        kTestParamSeq, PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_seq),
                    ppc::util::AddFuncTask<chaschin_v_linear_image_filtration_omp::ChaschinVLinearFiltrationOMP, InType>(
-                       kTestParamOmp, PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_seq));
+                       kTestParamOmp, PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_seq),
+                   ppc::util::AddFuncTask<chaschin_v_linear_image_filtration_tbb::ChaschinVLinearFiltrationTBB, InType>(
+                       kTestParamSeq, PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_seq));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = ChaschinVRunFuncTests::PrintFuncTestName<ChaschinVRunFuncTests>;
