@@ -69,7 +69,7 @@ bool ChaschinVLinearFiltrationOMP::RunImpl() {
 #pragma omp parallel for default(none) shared(n, m, image, temp)
   for (int yi = 0; yi < m; ++yi) {
     for (int xf = 0; xf < n; ++xf) {
-      temp[(yi * n) + xf] = HorizontalFilterAt(image, n, xf, yi);
+      temp[(yi * n) + xf] = HorizontalFilterAtOMP(image, n, xf, yi);
     }
   }
 
@@ -77,7 +77,7 @@ bool ChaschinVLinearFiltrationOMP::RunImpl() {
 #pragma omp parallel for default(none) shared(n, m, temp, out)
   for (int yi = 0; yi < m; ++yi) {
     for (int xy = 0; xy < n; ++xy) {
-      out[(yi * n) + xy] = VerticalFilterAt(temp, n, m, xy, yi);
+      out[(yi * n) + xy] = VerticalFilterAtOMP(temp, n, m, xy, yi);
     }
   }
 
