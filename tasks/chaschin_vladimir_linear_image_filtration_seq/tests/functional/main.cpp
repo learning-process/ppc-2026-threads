@@ -14,7 +14,7 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace chaschin_v_linear_image_filtration_seq {
+namespace chaschin_v_linear_image_filtration {
 
 class ChaschinVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -118,8 +118,8 @@ const std::array<TestType, 5> kTestParamOmp = {
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<chaschin_v_linear_image_filtration_seq::ChaschinVLinearFiltrationSEQ, InType>(
                        kTestParamSeq, PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_seq),
-                   ppc::util::AddFuncTask<chaschin_v_linear_image_filtration_seq::ChaschinVLinearFiltrationOMP, InType>(
-                       kTestParamOmp, PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_seq));
+                   ppc::util::AddFuncTask<chaschin_v_linear_image_filtration_omp::ChaschinVLinearFiltrationOMP, InType>(
+                       kTestParamOmp, PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_omp));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = ChaschinVRunFuncTests::PrintFuncTestName<ChaschinVRunFuncTests>;
@@ -128,4 +128,4 @@ INSTANTIATE_TEST_SUITE_P(LinearGaussianTests, ChaschinVRunFuncTests, kGtestValue
 
 }  // namespace
 
-}  // namespace chaschin_v_linear_image_filtration_seq
+}  // namespace chaschin_v_linear_image_filtration

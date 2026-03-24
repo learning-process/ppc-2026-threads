@@ -6,9 +6,9 @@
 #include <vector>
 
 #include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
-namespace chaschin_v_linear_image_filtration_seq {
+namespace chaschin_v_linear_image_filtration_omp {
 
-ChaschinVLinearFiltrationOMP::ChaschinVLinearFiltrationOMP(const chaschin_v_linear_image_filtration_seq::InType &in) {
+ChaschinVLinearFiltrationOMP::ChaschinVLinearFiltrationOMP(const chaschin_v_linear_image_filtration::InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   auto in_copy = in;
   GetInput() = std::move(in_copy);
@@ -25,7 +25,7 @@ bool ChaschinVLinearFiltrationOMP::PreProcessingImpl() {
   return true;
 }
 
-inline float HorizontalFilterAt(const std::vector<float> &img, int n, int x, int y) {
+inline float HorizontalFilterAtOMP(const std::vector<float> &img, int n, int x, int y) {
   const int idx = (y * n) + x;
 
   if (x == 0) {
@@ -39,7 +39,7 @@ inline float HorizontalFilterAt(const std::vector<float> &img, int n, int x, int
   return (img[idx - 1] + (2.F * img[idx]) + img[idx + 1]) / 4.F;
 }
 
-inline float VerticalFilterAt(const std::vector<float> &temp, int n, int m, int x, int y) {
+inline float VerticalFilterAtOMP(const std::vector<float> &temp, int n, int m, int x, int y) {
   const int idx = (y * n) + x;
 
   if (y == 0) {
@@ -94,4 +94,4 @@ bool ChaschinVLinearFiltrationOMP::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace chaschin_v_linear_image_filtration_seq
+}  // namespace chaschin_v_linear_image_filtration_omp
