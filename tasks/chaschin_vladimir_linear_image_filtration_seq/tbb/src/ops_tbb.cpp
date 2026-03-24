@@ -68,7 +68,7 @@ bool ChaschinVLinearFiltrationTBB::RunImpl() {
     }
   });
 
-  // ---------- вертикальная фильтрация ----------   
+  // ---------- вертикальная фильтрация ----------
   tbb::parallel_for(tbb::blocked_range<int>(0, m), [&](const tbb::blocked_range<int> &r) {
     for (int yi = r.begin(); yi < r.end(); ++yi) {
       for (int xy = 0; xy < n; ++xy) {
