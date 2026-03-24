@@ -119,7 +119,7 @@ const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<chaschin_v_linear_image_filtration_seq::ChaschinVLinearFiltrationSEQ, InType>(
                        kTestParamSeq, PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_seq),
                    ppc::util::AddFuncTask<chaschin_v_linear_image_filtration_omp::ChaschinVLinearFiltrationOMP, InType>(
-                       kTestParamOmp, PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_omp));
+                       kTestParamOmp, PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_seq));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = ChaschinVRunFuncTests::PrintFuncTestName<ChaschinVRunFuncTests>;
