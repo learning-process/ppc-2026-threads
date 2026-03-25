@@ -46,11 +46,11 @@ void BadanovASelectEdgeSobelOMP::ApplySobelOperator(const std::vector<uint8_t> &
   max_magnitude = 0.0F;
   const int height = height_;
   const int width = width_;
-  
-  const auto& kernels_x = kKernelX;
-  const auto& kernels_y = kKernelY;
 
-#pragma omp parallel default(none) shared(input, magnitude, max_magnitude, height, width, kernels_x, kernels_y) 
+  const auto &kernels_x = kKernelX;
+  const auto &kernels_y = kKernelY;
+
+#pragma omp parallel default(none) shared(input, magnitude, max_magnitude, height, width, kernels_x, kernels_y)
   {
     float local_max_magnitude = 0.0F;
 
