@@ -14,14 +14,13 @@ class OlesnitskiyVHoareSortSimpleMergeOMP : public BaseTask {
     return ppc::task::TypeOfTask::kOMP;
   }
   explicit OlesnitskiyVHoareSortSimpleMergeOMP(const InType &in);
-  ~OlesnitskiyVHoareSortSimpleMergeOMP() override;
 
  private:
   static int HoarePartition(std::vector<int> &array, int left, int right);
   static void HoareQuickSort(std::vector<int> &array, int left, int right);
   static std::vector<int> SimpleMerge(const std::vector<int> &left_part, const std::vector<int> &right_part);
-  static void SortBlocks(std::vector<int> &data, size_t block_size);
-  static void MergeSortedBlocks(std::vector<int> &data, size_t block_size);
+  static void SortBlocks(std::vector<int> &data, std::size_t block_size);
+  static void MergeSortedBlocks(std::vector<int> &data, std::size_t block_size);
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
