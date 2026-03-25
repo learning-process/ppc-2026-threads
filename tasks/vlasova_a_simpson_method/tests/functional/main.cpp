@@ -11,6 +11,7 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 #include "vlasova_a_simpson_method/common/include/common.hpp"
+#include "vlasova_a_simpson_method/omp/include/ops_omp.hpp"
 #include "vlasova_a_simpson_method/seq/include/ops_seq.hpp"
 
 namespace vlasova_a_simpson_method {
