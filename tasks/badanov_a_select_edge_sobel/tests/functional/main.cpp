@@ -14,7 +14,6 @@
 
 #include "badanov_a_select_edge_sobel/common/include/common.hpp"
 #include "badanov_a_select_edge_sobel/seq/include/ops_seq.hpp"
-
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -163,7 +162,8 @@ const std::array<TestType, 5> kTestParam = {
     std::make_tuple(50, "test_6.txt")   // Крест
 };
 
-const auto kTestTasksList = ppc::util::AddFuncTask<BadanovASelectEdgeSobelSEQ, InType>(kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel);
+const auto kTestTasksList =
+    ppc::util::AddFuncTask<BadanovASelectEdgeSobelSEQ, InType>(kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel);
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = BadanovASelectEdgeSobelFuncTests::PrintFuncTestName<BadanovASelectEdgeSobelFuncTests>;
