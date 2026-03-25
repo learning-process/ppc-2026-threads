@@ -108,7 +108,7 @@ void BadanovASelectEdgeSobelOMP::ApplyThreshold(const std::vector<float> &magnit
 
 #pragma omp parallel for schedule(static) default(none) shared(magnitude, output, scale, size) firstprivate(threshold)
     for (size_t i = 0; i < size; ++i) {
-      output[i] = (magnitude[i] * scale > static_cast<float>(threshold_)) ? 255 : 0;
+      output[i] = (magnitude[i] * scale > static_cast<float>(threshold)) ? 255 : 0;
     }
   } else {
     std::ranges::fill(output, 0);
