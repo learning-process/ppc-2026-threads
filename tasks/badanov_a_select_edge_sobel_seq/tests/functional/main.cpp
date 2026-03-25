@@ -12,12 +12,12 @@
 #include <tuple>
 #include <vector>
 
-#include "badanov_a_select_edge_sobel_seq/common/include/common.hpp"
-#include "badanov_a_select_edge_sobel_seq/seq/include/ops_seq.hpp"
+#include "badanov_a_select_edge_sobel/common/include/common.hpp"
+#include "badanov_a_select_edge_sobel/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace badanov_a_select_edge_sobel_seq {
+namespace badanov_a_select_edge_sobel {
 
 class BadanovASelectEdgeSobelFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -40,7 +40,7 @@ class BadanovASelectEdgeSobelFuncTests : public ppc::util::BaseRunFuncTests<InTy
     filename_ = filename;
 
     const std::string abs_path =
-        ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_badanov_a_select_edge_sobel_seq), filename);
+        ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_badanov_a_select_edge_sobel), filename);
 
     std::ifstream file(abs_path);
     if (!file.is_open()) {
@@ -163,7 +163,7 @@ const std::array<TestType, 5> kTestParam = {
 };
 
 const auto kTestTasksList = ppc::util::AddFuncTask<BadanovASelectEdgeSobelSEQ, InType>(
-    kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel_seq);
+    kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -173,4 +173,4 @@ INSTANTIATE_TEST_SUITE_P(SobelEdgeTests, BadanovASelectEdgeSobelFuncTests, kGtes
 
 }  // namespace
 
-}  // namespace badanov_a_select_edge_sobel_seq
+}  // namespace badanov_a_select_edge_sobel

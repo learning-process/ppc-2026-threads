@@ -1,4 +1,4 @@
-#include "badanov_a_select_edge_sobel_seq/seq/include/ops_seq.hpp"
+#include "badanov_a_select_edge_sobel/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -6,9 +6,9 @@
 #include <cstdint>
 #include <vector>
 
-#include "badanov_a_select_edge_sobel_seq/common/include/common.hpp"
+#include "badanov_a_select_edge_sobel/common/include/common.hpp"
 
-namespace badanov_a_select_edge_sobel_seq {
+namespace badanov_a_select_edge_sobel {
 
 BadanovASelectEdgeSobelSEQ::BadanovASelectEdgeSobelSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -113,4 +113,4 @@ bool BadanovASelectEdgeSobelSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace badanov_a_select_edge_sobel_seq
+}  // namespace badanov_a_select_edge_sobel

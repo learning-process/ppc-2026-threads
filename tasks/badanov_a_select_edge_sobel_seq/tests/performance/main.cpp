@@ -4,11 +4,11 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "badanov_a_select_edge_sobel_seq/common/include/common.hpp"
-#include "badanov_a_select_edge_sobel_seq/seq/include/ops_seq.hpp"
+#include "badanov_a_select_edge_sobel/common/include/common.hpp"
+#include "badanov_a_select_edge_sobel/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace badanov_a_select_edge_sobel_seq {
+namespace badanov_a_select_edge_sobel {
 
 class BadanovASelectEdgeSobelPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr int kWidth = 3840;
@@ -47,7 +47,7 @@ TEST_P(BadanovASelectEdgeSobelPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, BadanovASelectEdgeSobelSEQ>(PPC_SETTINGS_badanov_a_select_edge_sobel_seq);
+    ppc::util::MakeAllPerfTasks<InType, BadanovASelectEdgeSobelSEQ>(PPC_SETTINGS_badanov_a_select_edge_sobel);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -57,4 +57,4 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, BadanovASelectEdgeSobelPerfTests, kGtestV
 
 }  // namespace
 
-}  // namespace badanov_a_select_edge_sobel_seq
+}  // namespace badanov_a_select_edge_sobel
