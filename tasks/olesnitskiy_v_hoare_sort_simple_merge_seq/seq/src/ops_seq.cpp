@@ -13,86 +13,84 @@ namespace olesnitskiy_v_hoare_sort_simple_merge_seq {
 OlesnitskiyVHoareSortSimpleMergeSEQ::OlesnitskiyVHoareSortSimpleMergeSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = {};
+  GetOutput().clear();
 }
 
-int OlesnitskiyVHoareSortSimpleMergeSEQ::HoarePartition(std::vector<int> &array, int left, int right) {
-  int pivot = array[left + ((right - left) / 2)];
+int OlesnitskiyVHoareSortSimpleMergeSEQ::HoarePartition(std::vector<int> &values, int left, int right) {
+  const int pivot = values[left + ((right - left) / 2)];
   int i = left - 1;
   int j = right + 1;
 
   while (true) {
-    i++;
-    while (array[i] < pivot) {
-      i++;
+    ++i;
+    while (values[i] < pivot) {
+      ++i;
     }
 
-    j--;
-    while (array[j] > pivot) {
-      j--;
+    --j;
+    while (values[j] > pivot) {
+      --j;
     }
 
     if (i >= j) {
       return j;
     }
 
-    std::swap(array[i], array[j]);
+    std::swap(values[i], values[j]);
   }
 }
 
-void OlesnitskiyVHoareSortSimpleMergeSEQ::HoareQuickSort(std::vector<int> &array, int left, int right) {
-  std::stack<std::pair<int, int>> stack;
-  stack.emplace(left, right);
+void OlesnitskiyVHoareSortSimpleMergeSEQ::HoareQuickSort(std::vector<int> &values, int left, int right) {
+  std::stack<std::pair<int, int>> ranges;
+  ranges.emplace(left, right);
 
-  while (!stack.empty()) {
-    auto [current_left, current_right] = stack.top();
-    stack.pop();
+  while (!ranges.empty()) {
+    auto [current_left, current_right] = ranges.top();
+    ranges.pop();
 
     if (current_left >= current_right) {
       continue;
     }
 
-    int middle = HoarePartition(array, current_left, current_right);
+    const int partition_index = HoarePartition(values, current_left, current_right);
 
-    if ((middle - current_left) > (current_right - (middle + 1))) {
-      stack.emplace(current_left, middle);
-      stack.emplace(middle + 1, current_right);
+    if ((partition_index - current_left) > (current_right - (partition_index + 1))) {
+      ranges.emplace(current_left, partition_index);
+      ranges.emplace(partition_index + 1, current_right);
     } else {
-      stack.emplace(middle + 1, current_right);
-      stack.emplace(current_left, middle);
+      ranges.emplace(partition_index + 1, current_right);
+      ranges.emplace(current_left, partition_index);
     }
   }
 }
 
-std::vector<int> OlesnitskiyVHoareSortSimpleMergeSEQ::SimpleMerge(const std::vector<int> &left_part,
-                                                                  const std::vector<int> &right_part) {
-  std::vector<int> result;
-  result.reserve(left_part.size() + right_part.size());
+void OlesnitskiyVHoareSortSimpleMergeSEQ::Merge(std::vector<int> &values, int left, int mid, int right) {
+  std::vector<int> merged;
+  const int merged_size = (right - left) + 1;
+  merged.reserve(static_cast<std::size_t>(merged_size));
 
-  size_t left_index = 0;
-  size_t right_index = 0;
+  int left_index = left;
+  int right_index = mid + 1;
 
-  while (left_index < left_part.size() && right_index < right_part.size()) {
-    if (left_part[left_index] <= right_part[right_index]) {
-      result.push_back(left_part[left_index]);
-      left_index++;
+  while (left_index <= mid && right_index <= right) {
+    if (values[left_index] <= values[right_index]) {
+      merged.push_back(values[left_index++]);
     } else {
-      result.push_back(right_part[right_index]);
-      right_index++;
+      merged.push_back(values[right_index++]);
     }
   }
 
-  while (left_index < left_part.size()) {
-    result.push_back(left_part[left_index]);
-    left_index++;
+  while (left_index <= mid) {
+    merged.push_back(values[left_index++]);
   }
 
-  while (right_index < right_part.size()) {
-    result.push_back(right_part[right_index]);
-    right_index++;
+  while (right_index <= right) {
+    merged.push_back(values[right_index++]);
   }
 
-  return result;
+  for (std::size_t idx = 0; idx < merged.size(); ++idx) {
+    values[static_cast<std::size_t>(left) + idx] = merged[idx];
+  }
 }
 
 bool OlesnitskiyVHoareSortSimpleMergeSEQ::ValidationImpl() {
@@ -100,59 +98,23 @@ bool OlesnitskiyVHoareSortSimpleMergeSEQ::ValidationImpl() {
 }
 
 bool OlesnitskiyVHoareSortSimpleMergeSEQ::PreProcessingImpl() {
-  data_ = GetInput();
-  GetOutput().clear();
+  GetOutput() = GetInput();
   return true;
 }
 
 bool OlesnitskiyVHoareSortSimpleMergeSEQ::RunImpl() {
-  if (data_.size() <= 1) {
+  std::vector<int> &values = GetOutput();
+  const int n = static_cast<int>(values.size());
+  if (n <= 1) {
     return true;
   }
 
-  constexpr size_t kBlockSize = 64;
-  const size_t size = data_.size();
-
-  for (size_t block_start = 0; block_start < size; block_start += kBlockSize) {
-    size_t block_end = std::min(block_start + kBlockSize, size);
-    if ((block_end - block_start) > 1) {
-      HoareQuickSort(data_, static_cast<int>(block_start), static_cast<int>(block_end - 1));
-    }
-  }
-
-  for (size_t merge_width = kBlockSize; merge_width < size; merge_width *= 2) {
-    std::vector<int> merged_data(size);
-
-    for (size_t left = 0; left < size; left += (2 * merge_width)) {
-      size_t middle = std::min(left + merge_width, size);
-      size_t right = std::min(left + (2 * merge_width), size);
-
-      if (middle < right) {
-        std::vector<int> left_part(data_.begin() + static_cast<std::ptrdiff_t>(left),
-                                   data_.begin() + static_cast<std::ptrdiff_t>(middle));
-        std::vector<int> right_part(data_.begin() + static_cast<std::ptrdiff_t>(middle),
-                                    data_.begin() + static_cast<std::ptrdiff_t>(right));
-        std::vector<int> merged_part = SimpleMerge(left_part, right_part);
-        std::ranges::copy(merged_part, merged_data.begin() + static_cast<std::ptrdiff_t>(left));
-      } else {
-        std::ranges::copy(data_.begin() + static_cast<std::ptrdiff_t>(left),
-                          data_.begin() + static_cast<std::ptrdiff_t>(right),
-                          merged_data.begin() + static_cast<std::ptrdiff_t>(left));
-      }
-    }
-
-    data_.swap(merged_data);
-  }
-
-  return true;
+  HoareQuickSort(values, 0, n - 1);
+  return std::ranges::is_sorted(values);
 }
 
 bool OlesnitskiyVHoareSortSimpleMergeSEQ::PostProcessingImpl() {
-  if (!std::ranges::is_sorted(data_)) {
-    return false;
-  }
-  GetOutput() = data_;
-  return true;
+  return !GetOutput().empty() && std::ranges::is_sorted(GetOutput());
 }
 
-}  //  namespace olesnitskiy_v_hoare_sort_simple_merge_seq
+}  // namespace olesnitskiy_v_hoare_sort_simple_merge_seq

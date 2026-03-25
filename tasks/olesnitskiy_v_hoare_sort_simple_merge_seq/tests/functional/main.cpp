@@ -18,7 +18,7 @@ namespace olesnitskiy_v_hoare_sort_simple_merge_seq {
 class OlesnitskiyVRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::get<2>(test_param) + "_n" + std::to_string(std::get<0>(test_param).size());
+    return std::get<1>(test_param) + "_n" + std::to_string(std::get<0>(test_param).size());
   }
 
  protected:
@@ -55,20 +55,16 @@ TEST_P(OlesnitskiyVRunFuncTestsThreads, HoareSortSimpleMergingSEQ) {
 }
 
 const std::array<TestType, 10> kTestParam = {
-    std::make_tuple(std::vector<int>{42}, std::vector<int>{42}, "single"),
-    std::make_tuple(std::vector<int>{2, 1}, std::vector<int>{1, 2}, "two_elements"),
-    std::make_tuple(std::vector<int>{1, 2, 3, 4, 5}, std::vector<int>{1, 2, 3, 4, 5}, "already_sorted"),
-    std::make_tuple(std::vector<int>{5, 4, 3, 2, 1}, std::vector<int>{1, 2, 3, 4, 5}, "reverse_sorted"),
-    std::make_tuple(std::vector<int>{5, 1, 5, 1, 5, 1}, std::vector<int>{1, 1, 1, 5, 5, 5}, "duplicates"),
-    std::make_tuple(std::vector<int>{0, -1, 7, -5, 2, -3}, std::vector<int>{-5, -3, -1, 0, 2, 7}, "mixed_signs"),
-    std::make_tuple(std::vector<int>{10, 3, 8, 6, 4, 9, 2, 7, 1, 5}, std::vector<int>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-                    "random_10"),
-    std::make_tuple(std::vector<int>{100, 1, 50, 2, 75, 3, 60, 4, 20, 5, 30},
-                    std::vector<int>{1, 2, 3, 4, 5, 20, 30, 50, 60, 75, 100}, "odd_count"),
-    std::make_tuple(std::vector<int>{9, 9, 8, 8, 7, 7, 6, 6, 5, 5}, std::vector<int>{5, 5, 6, 6, 7, 7, 8, 8, 9, 9},
-                    "pair_duplicates"),
-    std::make_tuple(std::vector<int>{1000, -1000, 500, -500, 0, 250, -250},
-                    std::vector<int>{-1000, -500, -250, 0, 250, 500, 1000}, "wide_range")};
+    std::make_tuple(std::vector<int>{42}, "single"),
+    std::make_tuple(std::vector<int>{2, 1}, "two_elements"),
+    std::make_tuple(std::vector<int>{1, 2, 3, 4, 5}, "already_sorted"),
+    std::make_tuple(std::vector<int>{5, 4, 3, 2, 1}, "reverse_sorted"),
+    std::make_tuple(std::vector<int>{5, 1, 5, 1, 5, 1}, "duplicates"),
+    std::make_tuple(std::vector<int>{0, -1, 7, -5, 2, -3}, "mixed_signs"),
+    std::make_tuple(std::vector<int>{10, 3, 8, 6, 4, 9, 2, 7, 1, 5}, "random_10"),
+    std::make_tuple(std::vector<int>{100, 1, 50, 2, 75, 3, 60, 4, 20, 5, 30}, "odd_count"),
+    std::make_tuple(std::vector<int>{9, 9, 8, 8, 7, 7, 6, 6, 5, 5}, "pair_duplicates"),
+    std::make_tuple(std::vector<int>{1000, -1000, 500, -500, 0, 250, -250}, "wide_range")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<OlesnitskiyVHoareSortSimpleMergeSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_olesnitskiy_v_hoare_sort_simple_merge_seq),
