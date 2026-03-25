@@ -57,21 +57,7 @@ void BadanovASelectEdgeSobelOMP::ApplySobelOperator(const std::vector<uint8_t> &
         float gradient_x = 0.0F;
         float gradient_y = 0.0F;
 
-        for (int kernel_row = -1; kernel_row <= 1; ++kernel_row) {
-          for (int kernel_col = -1; kernel_col <= 1; ++kernel_col) {
-            const size_t pixel_index = (static_cast<size_t>(row + kernel_row) * static_cast<size_t>(width)) +
-                                       static_cast<size_t>(col + kernel_col);
-            const uint8_t pixel = input[pixel_index];
-
-            const int kx_idx = kernel_row + 1;
-            const int ky_idx = kernel_col + 1;
-            const int kernel_x_value = kKernelX.at(static_cast<size_t>(kx_idx)).at(static_cast<size_t>(ky_idx));
-            const int kernel_y_value = kKernelY.at(static_cast<size_t>(kx_idx)).at(static_cast<size_t>(ky_idx));
-
-            gradient_x += static_cast<float>(pixel) * static_cast<float>(kernel_x_value);
-            gradient_y += static_cast<float>(pixel) * static_cast<float>(kernel_y_value);
-          }
-        }
+        ComputeGradientAtPixel(input, row, col, gradient_x, gradient_y);
 
         const float magnitude_value = std::sqrt((gradient_x * gradient_x) + (gradient_y * gradient_y));
         const size_t idx = (static_cast<size_t>(row) * static_cast<size_t>(width)) + static_cast<size_t>(col);
