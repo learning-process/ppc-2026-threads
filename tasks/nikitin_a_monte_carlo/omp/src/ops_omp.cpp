@@ -1,14 +1,13 @@
 #include "nikitin_a_monte_carlo/omp/include/ops_omp.hpp"
 
+#include <omp.h>
+
 #include <array>
 #include <cmath>
 #include <cstddef>
 #include <vector>
 
 #include "nikitin_a_monte_carlo/common/include/common.hpp"
-
-// Подключаем OpenMP
-#include <omp.h>
 
 namespace nikitin_a_monte_carlo {
 
@@ -43,10 +42,8 @@ double EvaluateFunction(const std::vector<double> &point, FunctionType type) {
 
 // Генерация квазислучайной последовательности Кронекера
 double KroneckerSequence(int index, int dimension) {
-  // Используем простые числа для разных измерений
   const std::array<double, 10> primes = {2.0, 3.0, 5.0, 7.0, 11.0, 13.0, 17.0, 19.0, 23.0, 29.0};
   double alpha = std::sqrt(primes.at(static_cast<std::size_t>(dimension % 10)));
-  // Берем дробную часть
   alpha = alpha - std::floor(alpha);
   return std::fmod(index * alpha, 1.0);
 }
@@ -61,34 +58,34 @@ NikitinAMonteCarloOMP::NikitinAMonteCarloOMP(const InType &in) {
 bool NikitinAMonteCarloOMP::ValidationImpl() {
   const auto &[lower_bounds, upper_bounds, num_points, func_type] = GetInput();
 
-  // Проверка на пустые векторы
   if (lower_bounds.empty() || upper_bounds.empty()) {
     return false;
   }
 
-  // Размерности нижних и верхних границ должны совпадать
   if (lower_bounds.size() != upper_bounds.size()) {
     return false;
   }
 
-  // Проверка, что нижняя граница меньше верхней для каждого измерения
   for (std::size_t i = 0; i < lower_bounds.size(); ++i) {
     if (lower_bounds[i] >= upper_bounds[i]) {
       return false;
     }
   }
 
-  // Количество точек должно быть положительным
   return num_points > 0;
 }
 
 bool NikitinAMonteCarloOMP::PreProcessingImpl() {
-  // Предобработка не требуется, так как все данные уже в GetInput()
   return true;
 }
 
 bool NikitinAMonteCarloOMP::RunImpl() {
-  const auto &[lower_bounds, upper_bounds, num_points, func_type] = GetInput();
+  // Получаем входные данные и распаковываем их в обычные переменные
+  const auto input = GetInput();
+  const auto &lower_bounds = std::get<0>(input);
+  const auto &upper_bounds = std::get<1>(input);
+  const int num_points = std::get<2>(input);
+  const FunctionType func_type = std::get<3>(input);
 
   std::size_t dim = lower_bounds.size();
 
@@ -98,41 +95,26 @@ bool NikitinAMonteCarloOMP::RunImpl() {
     volume *= (upper_bounds[i] - lower_bounds[i]);
   }
 
-  // Сумма значений функции в точках (используем редукцию для параллельной суммы)
   double sum = 0.0;
 
-// Параллельное выполнение цикла с помощью OpenMP
-// schedule(static) для равномерного распределения итераций
-// reduction(+:sum) для безопасного накопления суммы
+// Параллельный цикл — теперь переменные не structured binding
 #pragma omp parallel for schedule(static) reduction(+ : sum)
   for (int i = 0; i < num_points; ++i) {
     std::vector<double> point(dim);
-
-    // Генерация точки с помощью последовательности Кронекера
-    // Квазислучайная последовательность не зависит от порядка итераций,
-    // поэтому ее можно безопасно вычислять параллельно
     for (std::size_t j = 0; j < dim; ++j) {
-      // Получаем значение в единичном гиперкубе [0,1)
       double u = KroneckerSequence(i, static_cast<int>(j));
-      // Масштабируем в реальную область интегрирования
       point[j] = lower_bounds[j] + (u * (upper_bounds[j] - lower_bounds[j]));
     }
-
-    // Вычисляем значение функции в точке
     sum += EvaluateFunction(point, func_type);
   }
 
-  // Вычисляем приближенное значение интеграла
   double result = volume * sum / static_cast<double>(num_points);
-
-  // Сохраняем результат
   GetOutput() = result;
 
   return true;
 }
 
 bool NikitinAMonteCarloOMP::PostProcessingImpl() {
-  // Постобработка не требуется, результат уже сохранен в GetOutput()
   return true;
 }
 
