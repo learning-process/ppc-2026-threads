@@ -46,6 +46,25 @@ void HoareSort(std::vector<int> &arr, int low, int high) {
   }
 }
 
+void ProcessBatcherStep(std::vector<int> &a, int step_p, int step_k, int start, int total_pairs) {
+  tbb::parallel_for(tbb::blocked_range<int>(0, total_pairs), [&](const tbb::blocked_range<int> &r) {
+    for (int step = r.begin(); step != r.end(); ++step) {
+      int i = step % step_k;
+      int b = step / step_k;
+      int j = start + (b * (step_k * 2));
+
+      int idx1 = i + j;
+      int idx2 = i + j + step_k;
+
+      if ((idx1 / (step_p * 2)) == (idx2 / (step_p * 2))) {
+        if (a[idx1] > a[idx2]) {
+          std::swap(a[idx1], a[idx2]);
+        }
+      }
+    }
+  });
+}
+
 void BatcherMerge(std::vector<int> &a, int n_pow2, int chunk_size) {
   for (int step_p = chunk_size; step_p < n_pow2; step_p *= 2) {
     for (int step_k = step_p; step_k >= 1; step_k /= 2) {
@@ -58,21 +77,7 @@ void BatcherMerge(std::vector<int> &a, int n_pow2, int chunk_size) {
       }
 
       int total_pairs = num_blocks * step_k;
-
-      tbb::parallel_for(tbb::blocked_range<int>(0, total_pairs), [&](const tbb::blocked_range<int> &r) {
-        for (int step = r.begin(); step != r.end(); ++step) {
-          int i = step % step_k;
-          int b = step / step_k;
-          int j = start + (b * (step_k * 2));
-
-          int idx1 = i + j;
-          int idx2 = i + j + step_k;
-
-          if ((idx1 / (step_p * 2)) == (idx2 / (step_p * 2)) && a[idx1] > a[idx2]) {
-            std::swap(a[idx1], a[idx2]);
-          }
-        }
-      });
+      ProcessBatcherStep(a, step_p, step_k, start, total_pairs);
     }
   }
 }
