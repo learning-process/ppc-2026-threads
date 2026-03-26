@@ -8,7 +8,7 @@
 
 #include "task/include/task.hpp"
 
-namespace vlasova_a_simpson_method_seq {
+namespace vlasova_a_simpson_method {
 
 struct SimpsonTask {
   std::function<double(const std::vector<double> &)> func;
@@ -27,4 +27,4 @@ using OutType = double;
 using TestType = std::tuple<std::vector<double>, std::vector<double>, std::vector<int>, double, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace vlasova_a_simpson_method_seq
+}  // namespace vlasova_a_simpson_method

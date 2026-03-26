@@ -10,10 +10,11 @@
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
-#include "vlasova_a_simpson_method_seq/common/include/common.hpp"
-#include "vlasova_a_simpson_method_seq/seq/include/ops_seq.hpp"
+#include "vlasova_a_simpson_method/common/include/common.hpp"
+#include "vlasova_a_simpson_method/omp/include/ops_omp.hpp"
+#include "vlasova_a_simpson_method/seq/include/ops_seq.hpp"
 
-namespace vlasova_a_simpson_method_seq {
+namespace vlasova_a_simpson_method {
 
 class VlasovaASimpsonMethodFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -37,6 +38,12 @@ class VlasovaASimpsonMethodFuncTests : public ppc::util::BaseRunFuncTests<InType
       func = [](const std::vector<double> &) { return 1.0; };
     } else if (func_name.find("linear") != std::string::npos) {
       func = [](const std::vector<double> &x) { return x[0]; };
+    } else if (func_name.find("quadratic_2d_only_x") != std::string::npos) {
+      func = [](const std::vector<double> &x) { return x[0] * x[0]; };
+    } else if (func_name.find("quadratic_2d_only_y") != std::string::npos) {
+      func = [](const std::vector<double> &x) { return x[1] * x[1]; };
+    } else if (func_name.find("quadratic_3d") != std::string::npos) {
+      func = [](const std::vector<double> &x) { return (x[0] * x[0]) + (x[1] * x[1]) + (x[2] * x[2]); };
     } else if (func_name.find("quadratic") != std::string::npos) {
       func = [](const std::vector<double> &x) { return (x[0] * x[0]) + (x.size() > 1 ? x[1] * x[1] : 0.0); };
     } else if (func_name.find("product") != std::string::npos) {
@@ -47,6 +54,8 @@ class VlasovaASimpsonMethodFuncTests : public ppc::util::BaseRunFuncTests<InType
         }
         return prod;
       };
+    } else if (func_name.find("cubic") != std::string::npos) {
+      func = [](const std::vector<double> &x) { return x[0] * x[0] * x[0]; };
     } else {
       func = [](const std::vector<double> &) { return 0.0; };
     }
@@ -69,12 +78,20 @@ class VlasovaASimpsonMethodFuncTests : public ppc::util::BaseRunFuncTests<InType
 
 namespace {
 
-const std::array<TestType, 8> kTestCases = {
+const std::array<TestType, 22> kTestCases = {
     // 1D
     std::make_tuple(std::vector<double>{0.0}, std::vector<double>{1.0}, std::vector<int>{10}, 1.0, "constant_1d"),
     std::make_tuple(std::vector<double>{0.0}, std::vector<double>{1.0}, std::vector<int>{10}, 0.5, "linear_1d"),
     std::make_tuple(std::vector<double>{0.0}, std::vector<double>{1.0}, std::vector<int>{10}, 1.0 / 3.0,
                     "quadratic_1d"),
+    std::make_tuple(std::vector<double>{0.0}, std::vector<double>{1.0}, std::vector<int>{2}, 0.5, "linear_1d_min"),
+    std::make_tuple(std::vector<double>{0.0}, std::vector<double>{1.0}, std::vector<int>{100}, 0.5, "linear_1d_many"),
+    std::make_tuple(std::vector<double>{-1.0}, std::vector<double>{1.0}, std::vector<int>{20}, 0.0,
+                    "linear_1d_symmetric"),
+    std::make_tuple(std::vector<double>{0.0}, std::vector<double>{1.0}, std::vector<int>{10}, 0.25, "cubic_1d"),
+    std::make_tuple(std::vector<double>{-1.0}, std::vector<double>{1.0}, std::vector<int>{20}, 0.0,
+                    "cubic_1d_symmetric"),
+    std::make_tuple(std::vector<double>{0.0}, std::vector<double>{2.0}, std::vector<int>{20}, 2.0, "linear_1d_double"),
 
     // 2D
     std::make_tuple(std::vector<double>{0.0, 0.0}, std::vector<double>{1.0, 1.0}, std::vector<int>{10, 10}, 1.0,
@@ -83,15 +100,32 @@ const std::array<TestType, 8> kTestCases = {
                     "product_2d"),
     std::make_tuple(std::vector<double>{0.0, 0.0}, std::vector<double>{1.0, 1.0}, std::vector<int>{10, 10}, 2.0 / 3.0,
                     "quadratic_2d"),
-
+    std::make_tuple(std::vector<double>{-1.0, -1.0}, std::vector<double>{1.0, 1.0}, std::vector<int>{20, 20}, 0.0,
+                    "mixed_2d_symmetric"),
+    std::make_tuple(std::vector<double>{0.0, 0.0}, std::vector<double>{1.0, 1.0}, std::vector<int>{10, 10}, 1.0 / 3.0,
+                    "quadratic_2d_only_x"),
+    std::make_tuple(std::vector<double>{0.0, 0.0}, std::vector<double>{1.0, 1.0}, std::vector<int>{10, 10}, 1.0 / 3.0,
+                    "quadratic_2d_only_y"),
     // 3D
     std::make_tuple(std::vector<double>{0.0, 0.0, 0.0}, std::vector<double>{1.0, 1.0, 1.0}, std::vector<int>{8, 8, 8},
                     1.0, "constant_3d"),
     std::make_tuple(std::vector<double>{0.0, 0.0, 0.0}, std::vector<double>{1.0, 1.0, 1.0}, std::vector<int>{8, 8, 8},
-                    0.125, "product_3d")};
+                    0.125, "product_3d"),
+    std::make_tuple(std::vector<double>{0.0, 0.0, 0.0}, std::vector<double>{1.0, 1.0, 1.0}, std::vector<int>{2, 2, 2},
+                    0.125, "product_3d_min"),
+    std::make_tuple(std::vector<double>{0.0, 0.0, 0.0}, std::vector<double>{1.0, 1.0, 1.0},
+                    std::vector<int>{50, 50, 50}, 0.125, "product_3d_mid"),
+    std::make_tuple(std::vector<double>{-1.0, -1.0, -1.0}, std::vector<double>{1.0, 1.0, 1.0},
+                    std::vector<int>{20, 20, 20}, 8.0, "constant_3d_symmetric"),
+    std::make_tuple(std::vector<double>{-1.0, -1.0, -1.0}, std::vector<double>{1.0, 1.0, 1.0},
+                    std::vector<int>{20, 20, 20}, 0.0, "product_3d_symmetric"),
+    std::make_tuple(std::vector<double>{0.0, 0.0, 0.0}, std::vector<double>{1.0, 1.0, 1.0},
+                    std::vector<int>{10, 10, 10}, 1.0, "quadratic_3d"),
+};
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<VlasovaASimpsonMethodSEQ, InType>(kTestCases, PPC_SETTINGS_vlasova_a_simpson_method_seq);
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<VlasovaASimpsonMethodSEQ, InType>(kTestCases, PPC_SETTINGS_vlasova_a_simpson_method),
+    ppc::util::AddFuncTask<VlasovaASimpsonMethodOMP, InType>(kTestCases, PPC_SETTINGS_vlasova_a_simpson_method));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -105,4 +139,4 @@ TEST_P(VlasovaASimpsonMethodFuncTests, GetIntegral) {
 
 }  // namespace
 
-}  // namespace vlasova_a_simpson_method_seq
+}  // namespace vlasova_a_simpson_method
