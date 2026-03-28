@@ -52,7 +52,6 @@ void ComputeRow(const SparseMatrixCRS &a, const SparseMatrixCRS &b, int row, std
     }
   }
 }
-
 }  // anonymous namespace
 
 bool TsyplakovKTestTaskTBB::RunImpl() {
