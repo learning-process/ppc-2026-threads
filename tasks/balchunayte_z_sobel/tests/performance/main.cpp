@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "balchunayte_z_sobel/common/include/common.hpp"
+#include "balchunayte_z_sobel/omp/include/ops_omp.hpp"
 #include "balchunayte_z_sobel/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -51,8 +52,8 @@ TEST_P(BalchunayteZRunPerfTestSEQ, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, BalchunayteZSobelOpSEQ>(PPC_SETTINGS_balchunayte_z_sobel);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, BalchunayteZSobelOpOMP, BalchunayteZSobelOpSEQ>(
+    PPC_SETTINGS_balchunayte_z_sobel);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

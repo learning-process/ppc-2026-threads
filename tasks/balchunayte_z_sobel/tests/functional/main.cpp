@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "balchunayte_z_sobel/common/include/common.hpp"
+#include "balchunayte_z_sobel/omp/include/ops_omp.hpp"
 #include "balchunayte_z_sobel/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -113,6 +114,7 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(0, "ConstantImage"),
                                             std::make_tuple(2, "HorizontalEdge")};
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<BalchunayteZSobelOpOMP, InType>(kTestParam, PPC_SETTINGS_balchunayte_z_sobel),
     ppc::util::AddFuncTask<BalchunayteZSobelOpSEQ, InType>(kTestParam, PPC_SETTINGS_balchunayte_z_sobel));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
