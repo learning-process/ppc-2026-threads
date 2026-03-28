@@ -29,7 +29,7 @@ bool TsyplakovKTestTaskTBB::PreProcessingImpl() {
 namespace {
 
 void ComputeRow(const SparseMatrixCRS &a, const SparseMatrixCRS &b, int row, std::vector<double> &values,
-                       std::vector<int> &cols) {
+                std::vector<int> &cols) {
   std::unordered_map<int, double> acc;
 
   for (int idx_a = a.row_ptr[row]; idx_a < a.row_ptr[row + 1]; ++idx_a) {
@@ -53,7 +53,7 @@ void ComputeRow(const SparseMatrixCRS &a, const SparseMatrixCRS &b, int row, std
   }
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
 bool TsyplakovKTestTaskTBB::RunImpl() {
   const auto &input = GetInput();
