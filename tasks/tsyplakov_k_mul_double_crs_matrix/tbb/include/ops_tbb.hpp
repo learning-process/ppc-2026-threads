@@ -11,7 +11,7 @@ class TsyplakovKTestTaskTBB : public BaseTask {
     return ppc::task::TypeOfTask::kTBB;
   }
 
-  explicit TsyplakovKTestTaskTBB(const InType& in);
+  explicit TsyplakovKTestTaskTBB(const InType &in);
 
  private:
   bool ValidationImpl() override;
