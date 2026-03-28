@@ -11,13 +11,13 @@
 
 namespace tsyplakov_k_mul_double_crs_matrix {
 
-TsyplakovKTestTaskTBB::TsyplakovKTestTaskTBB(const InType& in) {
+TsyplakovKTestTaskTBB::TsyplakovKTestTaskTBB(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
 bool TsyplakovKTestTaskTBB::ValidationImpl() {
-  const auto& input = GetInput();
+  const auto &input = GetInput();
   return input.a.cols == input.b.rows;
 }
 
@@ -26,16 +26,16 @@ bool TsyplakovKTestTaskTBB::PreProcessingImpl() {
 }
 
 bool TsyplakovKTestTaskTBB::RunImpl() {
-  const auto& input = GetInput();
-  const auto& A = input.a;
-  const auto& B = input.b;
+  const auto &input = GetInput();
+  const auto &A = input.a;
+  const auto &B = input.b;
 
   const int rows = A.rows;
 
   std::vector<std::vector<double>> row_values(rows);
   std::vector<std::vector<int>> row_cols(rows);
 
-  tbb::parallel_for(tbb::blocked_range<int>(0, rows), [&](const tbb::blocked_range<int>& r) {
+  tbb::parallel_for(tbb::blocked_range<int>(0, rows), [&](const tbb::blocked_range<int> &r) {
     for (int i = r.begin(); i < r.end(); ++i) {
       std::unordered_map<int, double> acc;
 
@@ -52,7 +52,7 @@ bool TsyplakovKTestTaskTBB::RunImpl() {
       row_values[i].reserve(acc.size());
       row_cols[i].reserve(acc.size());
 
-      for (const auto& [col, val] : acc) {
+      for (const auto &[col, val] : acc) {
         if (std::fabs(val) > 1e-12) {
           row_cols[i].push_back(col);
           row_values[i].push_back(val);
