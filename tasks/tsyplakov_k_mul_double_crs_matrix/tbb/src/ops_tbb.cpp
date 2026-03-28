@@ -26,6 +26,8 @@ bool TsyplakovKTestTaskTBB::PreProcessingImpl() {
   return true;
 }
 
+namespace {
+
 void ComputeRow(const SparseMatrixCRS &a, const SparseMatrixCRS &b, int row, std::vector<double> &values,
                        std::vector<int> &cols) {
   std::unordered_map<int, double> acc;
@@ -50,6 +52,8 @@ void ComputeRow(const SparseMatrixCRS &a, const SparseMatrixCRS &b, int row, std
     }
   }
 }
+
+} // anonymous namespace
 
 bool TsyplakovKTestTaskTBB::RunImpl() {
   const auto &input = GetInput();
