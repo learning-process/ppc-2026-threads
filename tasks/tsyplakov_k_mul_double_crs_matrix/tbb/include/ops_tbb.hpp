@@ -5,13 +5,13 @@
 
 namespace tsyplakov_k_mul_double_crs_matrix {
 
-class TsyplakovKTestTaskOMP : public BaseTask {
+class TsyplakovKTestTaskTBB : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kOMP;
+    return ppc::task::TypeOfTask::kTBB;
   }
 
-  explicit TsyplakovKTestTaskOMP(const InType &in);
+  explicit TsyplakovKTestTaskTBB(const InType& in);
 
  private:
   bool ValidationImpl() override;
