@@ -4,15 +4,18 @@
 #include <array>
 #include <cstddef>
 #include <string>
+#include <tuple>
 
-#include "klimenko_v_lsh_contrast_incr_seq/common/include/common.hpp"
-#include "klimenko_v_lsh_contrast_incr_seq/seq/include/ops_seq.hpp"
+#include "klimenko_v_lsh_contrast_incr/common/include/common.hpp"
+#include "klimenko_v_lsh_contrast_incr/omp/include/ops_omp.hpp"
+#include "klimenko_v_lsh_contrast_incr/seq/include/ops_seq.hpp"
+#include "klimenko_v_lsh_contrast_incr/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace klimenko_v_lsh_contrast_incr_seq {
+namespace klimenko_v_lsh_contrast_incr {
 
-class KlimenkoVRunFuncTestsLSH : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class KlimenkoVFuncTestsLSH : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(test_param);
@@ -48,7 +51,6 @@ class KlimenkoVRunFuncTestsLSH : public ppc::util::BaseRunFuncTests<InType, OutT
         return false;
       }
     }
-
     return true;
   }
 
@@ -62,21 +64,23 @@ class KlimenkoVRunFuncTestsLSH : public ppc::util::BaseRunFuncTests<InType, OutT
 
 namespace {
 
-TEST_P(KlimenkoVRunFuncTestsLSH, ContrastStretching) {
+TEST_P(KlimenkoVFuncTestsLSH, ContrastStretching) {
   ExecuteTest(GetParam());
 }
 
 const std::array<TestType, 3> kTestParam = {16, 256, 1024};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<KlimenkoVLSHContrastIncrSEQ, InType>(
-    kTestParam, PPC_SETTINGS_klimenko_v_lsh_contrast_incr_seq);
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<KlimenkoVLSHContrastIncrOMP, InType>(kTestParam, PPC_SETTINGS_klimenko_v_lsh_contrast_incr),
+    ppc::util::AddFuncTask<KlimenkoVLSHContrastIncrSEQ, InType>(kTestParam, PPC_SETTINGS_klimenko_v_lsh_contrast_incr),
+    ppc::util::AddFuncTask<KlimenkoVLSHContrastIncrTBB, InType>(kTestParam, PPC_SETTINGS_klimenko_v_lsh_contrast_incr));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kTestName = KlimenkoVRunFuncTestsLSH::PrintFuncTestName<KlimenkoVRunFuncTestsLSH>;
+const auto kTestName = KlimenkoVFuncTestsLSH::PrintFuncTestName<KlimenkoVFuncTestsLSH>;
 
-INSTANTIATE_TEST_SUITE_P(ContrastIncrTests, KlimenkoVRunFuncTestsLSH, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(ContrastIncrTests, KlimenkoVFuncTestsLSH, kGtestValues, kTestName);
 
 }  // namespace
 
-}  // namespace klimenko_v_lsh_contrast_incr_seq
+}  // namespace klimenko_v_lsh_contrast_incr
