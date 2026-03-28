@@ -26,7 +26,7 @@ bool TsyplakovKTestTaskTBB::PreProcessingImpl() {
   return true;
 }
 
-static void ComputeRow(const SparseMatrixCRS &a, const SparseMatrixCRS &b, int row, std::vector<double> &values,
+void ComputeRow(const SparseMatrixCRS &a, const SparseMatrixCRS &b, int row, std::vector<double> &values,
                        std::vector<int> &cols) {
   std::unordered_map<int, double> acc;
 
