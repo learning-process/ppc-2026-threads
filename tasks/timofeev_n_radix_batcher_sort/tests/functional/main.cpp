@@ -11,6 +11,7 @@
 #include "timofeev_n_radix_batcher_sort/common/include/common.hpp"
 #include "timofeev_n_radix_batcher_sort/omp/include/ops_omp.hpp"
 #include "timofeev_n_radix_batcher_sort/seq/include/ops_seq.hpp"
+#include "timofeev_n_radix_batcher_sort/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -60,8 +61,9 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(t1, mt, 1, "3"), std
                                             std::make_tuple(t3, mt, 1, "16")};
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<TimofeevNRadixBatcherOMP, InType>(kTestParam, PPC_SETTINGS_timofeev_n_radix_batcher_sort),
     ppc::util::AddFuncTask<TimofeevNRadixBatcherSEQ, InType>(kTestParam, PPC_SETTINGS_timofeev_n_radix_batcher_sort),
-    ppc::util::AddFuncTask<TimofeevNRadixBatcherOMP, InType>(kTestParam, PPC_SETTINGS_timofeev_n_radix_batcher_sort));
+    ppc::util::AddFuncTask<TimofeevNRadixBatcherTBB, InType>(kTestParam, PPC_SETTINGS_timofeev_n_radix_batcher_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
