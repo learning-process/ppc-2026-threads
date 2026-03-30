@@ -25,6 +25,8 @@ class TimofeevNRadixBatcherTBB : public BaseTask {
   static void BubbleSort(std::vector<int> &arr, int digit, int left, int right);
   static void ComparR(int &a, int &b);
   static void OddEvenMerge(std::vector<int> &arr, int lft, int n);
+
+  void PrepAux(int n, int m, std::vector<int> &in);
 };
 
 }  // namespace timofeev_n_radix_batcher_sort_threads

@@ -79,10 +79,7 @@ bool TimofeevNRadixBatcherTBB::PreProcessingImpl() {
   return true;
 }
 
-bool TimofeevNRadixBatcherTBB::RunImpl() {
-  std::vector<int> in = GetInput();
-  int n = static_cast<int>(in.size());
-  int m = n;
+void TimofeevNRadixBatcherTBB::PrepAux(int n, int m, std::vector<int> &in) {
   while (n % 2 == 0) {
     n /= 2;
   }
@@ -96,6 +93,15 @@ bool TimofeevNRadixBatcherTBB::RunImpl() {
   } else {
     n = m;
   }
+}
+
+bool TimofeevNRadixBatcherTBB::RunImpl() {
+  std::vector<int> in = GetInput();
+  int n = static_cast<int>(in.size());
+  int m = n;
+  // prep
+  PrepAux(n, m, in);
+  // prep
   int max_x = *(std::ranges::max_element(in.begin(), in.end()));
   if (n != m) {
     in.resize(n, max_x);
@@ -113,11 +119,10 @@ bool TimofeevNRadixBatcherTBB::RunImpl() {
 
   tbb::task_arena arena(static_cast<int>(num_threads));
   arena.execute([&] {
-    size_t piece;
+    size_t piece = 0;
     tbb::parallel_for(tbb::blocked_range<size_t>(0, num_threads), [&](const tbb::blocked_range<size_t> &range) {
       size_t t_n = range.begin();
       piece = n_n / num_threads;
-
       for (int k = 1; k <= max_x; k *= 10) {
         BubbleSort(r_in, k, static_cast<int>(piece * t_n), static_cast<int>((piece * t_n) + piece));
       }
