@@ -19,7 +19,7 @@ class RedkinaAIntegralSimpsonPerfTests : public ppc::util::BaseRunPerfTests<InTy
     auto func = [](const std::vector<double> &x) { return std::exp(-((x[0] * x[0]) + (x[1] * x[1]) + (x[2] * x[2]))); };
     std::vector<double> a = {-1.0, -1.0, -1.0};
     std::vector<double> b = {1.0, 1.0, 1.0};
-    std::vector<int> n = {100, 100, 100};
+    std::vector<int> n = {200, 200, 200};
 
     input_data_ = InputData{.func = std::move(func), .a = std::move(a), .b = std::move(b), .n = std::move(n)};
   }
