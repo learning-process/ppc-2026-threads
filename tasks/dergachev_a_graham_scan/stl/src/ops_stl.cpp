@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -70,46 +71,6 @@ int FindPivotParallel(const std::vector<Pt> &pts, int num_threads) {
   return best;
 }
 
-void ParallelSortByAngle(std::vector<Pt> &pts, const Pt &pivot, int num_threads) {
-  int n = static_cast<int>(pts.size());
-  int sort_count = n - 1;
-
-  auto cmp = [&pivot](const Pt &a, const Pt &b) {
-    double cross = CrossProduct(pivot, a, b);
-    if (cross > 0.0) {
-      return true;
-    }
-    if (cross < 0.0) {
-      return false;
-    }
-    return DistSquared(pivot, a) < DistSquared(pivot, b);
-  };
-
-  if (num_threads <= 1 || sort_count <= num_threads) {
-    std::sort(pts.begin() + 1, pts.end(), cmp);
-    return;
-  }
-
-  int chunk = sort_count / num_threads;
-  std::vector<std::thread> threads;
-
-  for (int thread_idx = 0; thread_idx < num_threads; thread_idx++) {
-    int lo = 1 + (thread_idx * chunk);
-    int hi = (thread_idx == num_threads - 1) ? n : 1 + ((thread_idx + 1) * chunk);
-    threads.emplace_back([&pts, lo, hi, &cmp]() { std::sort(pts.begin() + lo, pts.begin() + hi, cmp); });
-  }
-  for (auto &th : threads) {
-    th.join();
-  }
-
-  int boundary = 1 + chunk;
-  for (int thread_idx = 1; thread_idx < num_threads; thread_idx++) {
-    int next = (thread_idx == num_threads - 1) ? n : 1 + ((thread_idx + 1) * chunk);
-    std::inplace_merge(pts.begin() + 1, pts.begin() + boundary, pts.begin() + next, cmp);
-    boundary = next;
-  }
-}
-
 }  // namespace
 
 DergachevAGrahamScanSTL::DergachevAGrahamScanSTL(const InType &in) {
@@ -131,9 +92,30 @@ bool DergachevAGrahamScanSTL::PreProcessingImpl() {
   }
   points_.resize(n);
   double step = (2.0 * kPi) / n;
-  for (int i = 0; i < n; i++) {
-    points_[i] = {std::cos(step * i), std::sin(step * i)};
+
+  const int num_threads = ppc::util::GetNumThreads();
+  if (num_threads > 1 && n > num_threads * 2) {
+    int chunk = n / num_threads;
+    std::vector<std::thread> threads;
+    auto *data = points_.data();
+    for (int t = 0; t < num_threads; t++) {
+      int lo = t * chunk;
+      int hi = (t == num_threads - 1) ? n : (t + 1) * chunk;
+      threads.emplace_back([data, step, lo, hi]() {
+        for (int i = lo; i < hi; i++) {
+          data[i] = {std::cos(step * i), std::sin(step * i)};
+        }
+      });
+    }
+    for (auto &th : threads) {
+      th.join();
+    }
+  } else {
+    for (int i = 0; i < n; i++) {
+      points_[static_cast<std::size_t>(i)] = {std::cos(step * i), std::sin(step * i)};
+    }
   }
+
   if (n > 3) {
     points_.emplace_back(0.0, 0.0);
   }
@@ -156,9 +138,16 @@ bool DergachevAGrahamScanSTL::RunImpl() {
   const int num_threads = ppc::util::GetNumThreads();
 
   int pivot_idx = FindPivotParallel(pts, num_threads);
-  std::swap(pts[0], pts[pivot_idx]);
+  std::swap(pts[0], pts[static_cast<std::size_t>(pivot_idx)]);
 
-  ParallelSortByAngle(pts, pts[0], num_threads);
+  Pt pivot = pts[0];
+  std::sort(pts.begin() + 1, pts.end(), [&pivot](const Pt &a, const Pt &b) {
+    double cross = CrossProduct(pivot, a, b);
+    if (cross != 0.0) {
+      return cross > 0.0;
+    }
+    return DistSquared(pivot, a) < DistSquared(pivot, b);
+  });
 
   for (const auto &p : pts) {
     while (hull_.size() > 1 && CrossProduct(hull_[hull_.size() - 2], hull_.back(), p) <= 0.0) {
