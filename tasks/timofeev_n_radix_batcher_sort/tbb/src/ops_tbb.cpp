@@ -111,21 +111,7 @@ void TimofeevNRadixBatcherTBB::PrepAux(int &n, int &m, std::vector<int> &in, int
   }
 }
 
-bool TimofeevNRadixBatcherTBB::RunImpl() {
-  std::vector<int> in;
-  int n;
-  int m;
-  int max_x;
-  size_t n_thr;  // = tbb::this_task_arena::max_concurrency();
-  size_t num_threads;
-
-  PrepAux(n, m, in, max_x, num_threads, n_thr);
-
-  std::vector<int> &r_in = in;
-  size_t n_n = n;
-  size_t m_m = m;
-  std::vector<int> &reff = GetInput();
-
+void TimofeevNRadixBatcherTBB::HandleTBB(size_t &num_threads, size_t &n_n, size_t &m_m, int &max_x, std::vector<int> &reff, std::vector<int> &r_in) {
   tbb::task_arena arena(static_cast<int>(num_threads));
   arena.execute([&] {
     size_t piece = 0;
@@ -156,6 +142,24 @@ bool TimofeevNRadixBatcherTBB::RunImpl() {
       }
     });
   });
+}
+
+bool TimofeevNRadixBatcherTBB::RunImpl() {
+  std::vector<int> in;
+  int n;
+  int m;
+  int max_x;
+  size_t n_thr;  // = tbb::this_task_arena::max_concurrency();
+  size_t num_threads;
+
+  PrepAux(n, m, in, max_x, num_threads, n_thr);
+
+  std::vector<int> &r_in = in;
+  size_t n_n = n;
+  size_t m_m = m;
+  std::vector<int> &reff = GetInput();
+
+  HandleTBB(num_threads, n_n, m_m, max_x, reff, r_in);
   // tbb
   GetOutput() = reff;
   return true;
