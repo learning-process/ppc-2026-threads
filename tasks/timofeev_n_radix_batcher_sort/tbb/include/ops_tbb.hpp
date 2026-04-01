@@ -28,8 +28,8 @@ class TimofeevNRadixBatcherTBB : public BaseTask {
   static void OddEvenMerge(std::vector<int> &arr, int lft, int n);
 
   void PrepAux(int &n, int &m, std::vector<int> &in, int &max_x, size_t &num_threads, size_t &n_thr);
-  void HandleTBB(size_t &num_threads, size_t &n_n, size_t &m_m, int &max_x, std::vector<int> &reff,
-                 std::vector<int> &r_in);
+  static void HandleTBB(size_t &num_threads, size_t &n_n, size_t &m_m, int &max_x, std::vector<int> &reff,
+                        std::vector<int> &r_in);
 };
 
 }  // namespace timofeev_n_radix_batcher_sort_threads
