@@ -79,7 +79,12 @@ bool TimofeevNRadixBatcherTBB::PreProcessingImpl() {
   return true;
 }
 
-void TimofeevNRadixBatcherTBB::PrepAux(int n, int m, std::vector<int> &in) {
+void TimofeevNRadixBatcherTBB::PrepAux(int &n, int &m, std::vector<int> &in, int &max_x, size_t &num_threads,
+                                       size_t &n_thr) {
+  in = GetInput();
+  n = static_cast<int>(in.size());
+  m = n;
+
   while (n % 2 == 0) {
     n /= 2;
   }
@@ -93,25 +98,29 @@ void TimofeevNRadixBatcherTBB::PrepAux(int n, int m, std::vector<int> &in) {
   } else {
     n = m;
   }
-}
 
-bool TimofeevNRadixBatcherTBB::RunImpl() {
-  std::vector<int> in = GetInput();
-  int n = static_cast<int>(in.size());
-  int m = n;
-  // prep
-  PrepAux(n, m, in);
-  // prep
-  int max_x = *(std::ranges::max_element(in.begin(), in.end()));
+  max_x = *(std::ranges::max_element(in.begin(), in.end()));
   if (n != m) {
     in.resize(n, max_x);
   }
   // tbb
-  size_t n_thr = tbb::this_task_arena::max_concurrency();
-  size_t num_threads = 1;
+  n_thr = tbb::this_task_arena::max_concurrency();
+  num_threads = 1;
   while (num_threads * 2 <= n_thr && n / num_threads >= 4) {
     num_threads *= 2;
   }
+}
+
+bool TimofeevNRadixBatcherTBB::RunImpl() {
+  std::vector<int> in;
+  int n;
+  int m;
+  int max_x;
+  size_t n_thr;  // = tbb::this_task_arena::max_concurrency();
+  size_t num_threads;
+
+  PrepAux(n, m, in, max_x, num_threads, n_thr);
+
   std::vector<int> &r_in = in;
   size_t n_n = n;
   size_t m_m = m;
@@ -137,10 +146,8 @@ bool TimofeevNRadixBatcherTBB::RunImpl() {
       });
     }
 
-    if (m_m != n_n) {
-      if (tbb::this_task_arena::current_thread_index() == 0) {
-        r_in.resize(m_m);
-      }
+    if (m_m != n_n && tbb::this_task_arena::current_thread_index() == 0) {
+      r_in.resize(m_m);
     }
 
     tbb::parallel_for(tbb::blocked_range<size_t>(0, r_in.size()), [&](const tbb::blocked_range<size_t> &range) {
