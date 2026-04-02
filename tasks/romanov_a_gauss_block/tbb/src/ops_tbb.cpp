@@ -1,20 +1,18 @@
 #include "romanov_a_gauss_block/tbb/include/ops_tbb.hpp"
 
+#include <oneapi/tbb/blocked_range2d.h>
+#include <oneapi/tbb/global_control.h>
+#include <oneapi/tbb/parallel_for.h>
 #include <tbb/tbb.h>
 
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <tuple>
-#include <vector>
-
 #include <iostream>
-
-#include <oneapi/tbb/parallel_for.h>
-#include <oneapi/tbb/blocked_range2d.h>
-#include <oneapi/tbb/global_control.h>
+#include <tuple>
 #include <util/include/util.hpp>
+#include <vector>
 
 #include "romanov_a_gauss_block/common/include/common.hpp"
 
@@ -103,38 +101,30 @@ bool RomanovAGaussBlockTBB::RunImpl() {
   const int num_row_blocks = (height + 1 - kBlockSize) / kBlockSize;
   const int num_col_blocks = (width + 1 - kBlockSize) / kBlockSize;
 
-  tbb::parallel_for(
-      tbb::blocked_range2d<int>(0, num_row_blocks, 1, 0, num_col_blocks, 1),
-      [&](const tbb::blocked_range2d<int>& r) {
-          for (int bi = r.rows().begin(); bi < r.rows().end(); ++bi) {
-              for (int bj = r.cols().begin(); bj < r.cols().end(); ++bj) {
-                  ProcessFullBlock(initial_picture, result_picture, width, height,
-                                  bi * kBlockSize, bj * kBlockSize);
-              }
-          }
+  tbb::parallel_for(tbb::blocked_range2d<int>(0, num_row_blocks, 1, 0, num_col_blocks, 1),
+                    [&](const tbb::blocked_range2d<int> &r) {
+    for (int bi = r.rows().begin(); bi < r.rows().end(); ++bi) {
+      for (int bj = r.cols().begin(); bj < r.cols().end(); ++bj) {
+        ProcessFullBlock(initial_picture, result_picture, width, height, bi * kBlockSize, bj * kBlockSize);
       }
-  );
+    }
+  });
 
   if (width % kBlockSize != 0) {
-      tbb::parallel_for(
-          tbb::blocked_range<int>(0, num_row_blocks, 1),
-          [&](const tbb::blocked_range<int>& r) {
-              for (int bi = r.begin(); bi < r.end(); ++bi) {
-                  ProcessPartBlock(initial_picture, result_picture, width, height,
-                                  bi * kBlockSize, width - (width % kBlockSize));
-              }
-          });
+    tbb::parallel_for(tbb::blocked_range<int>(0, num_row_blocks, 1), [&](const tbb::blocked_range<int> &r) {
+      for (int bi = r.begin(); bi < r.end(); ++bi) {
+        ProcessPartBlock(initial_picture, result_picture, width, height, bi * kBlockSize, width - (width % kBlockSize));
+      }
+    });
   }
 
   if (height % kBlockSize != 0) {
-      tbb::parallel_for(
-          tbb::blocked_range<int>(0, num_col_blocks, 1),
-          [&](const tbb::blocked_range<int>& r) {
-              for (int bj = r.begin(); bj < r.end(); ++bj) {
-                  ProcessPartBlock(initial_picture, result_picture, width, height,
-                                  height - (height % kBlockSize), bj * kBlockSize);
-              }
-          });
+    tbb::parallel_for(tbb::blocked_range<int>(0, num_col_blocks, 1), [&](const tbb::blocked_range<int> &r) {
+      for (int bj = r.begin(); bj < r.end(); ++bj) {
+        ProcessPartBlock(initial_picture, result_picture, width, height, height - (height % kBlockSize),
+                         bj * kBlockSize);
+      }
+    });
   }
 
   ProcessPartBlock(initial_picture, result_picture, width, height, height - (height % kBlockSize),
