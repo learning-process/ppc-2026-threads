@@ -12,7 +12,9 @@
 #include <vector>
 
 #include "rychkova_gauss/common/include/common.hpp"
+#include "rychkova_gauss/omp/include/ops_omp.hpp"
 #include "rychkova_gauss/seq/include/ops_seq.hpp"
+#include "rychkova_gauss/stl/include/ops_stl.hpp"
 #include "rychkova_gauss/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -95,6 +97,8 @@ const std::array<TestType, 8> kTestParam = {"high_freq_noize", "img_1", "img_2",
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<RychkovaGaussSEQ, InType>(kTestParam, PPC_SETTINGS_rychkova_gauss),
+                   ppc::util::AddFuncTask<RychkovaGaussSTL, InType>(kTestParam, PPC_SETTINGS_rychkova_gauss),
+                   ppc::util::AddFuncTask<RychkovaGaussOMP, InType>(kTestParam, PPC_SETTINGS_rychkova_gauss),
                    ppc::util::AddFuncTask<RychkovaGaussTBB, InType>(kTestParam, PPC_SETTINGS_rychkova_gauss));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
