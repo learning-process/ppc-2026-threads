@@ -111,13 +111,8 @@ void TimofeevNRadixBatcherSTL::PrepAux(int &n, int &m, std::vector<int> &in, int
   }
 }
 
-void TimofeevNRadixBatcherSTL::HandleSTL(size_t &num_threads, size_t &n_n, size_t &m_m, int &max_x,
-                                         std::vector<int> &reff, std::vector<int> &r_in) {
-  std::vector<std::thread> threads;
-
-  size_t piece = n_n / num_threads;
-  threads.reserve(num_threads);
-
+void TimofeevNRadixBatcherSTL::BubbleSortAux(size_t &num_threads, int &max_x, std::vector<int> &r_in, size_t &piece,
+                                             std::vector<std::thread> &threads) {
   for (size_t t = 0; t < num_threads; ++t) {
     threads.emplace_back([&, t]() {
       for (int k = 1; k <= max_x; k *= 10) {
@@ -125,11 +120,10 @@ void TimofeevNRadixBatcherSTL::HandleSTL(size_t &num_threads, size_t &n_n, size_
       }
     });
   }
+}
 
-  for (auto &th : threads) {
-    th.join();
-  }
-
+void TimofeevNRadixBatcherSTL::OddMergeAux(std::vector<int> &r_in, size_t &piece, std::vector<std::thread> &threads,
+                                           size_t &n_n) {
   for (size_t c_p = piece * 2; c_p <= n_n; c_p *= 2) {
     threads.clear();
 
@@ -141,6 +135,22 @@ void TimofeevNRadixBatcherSTL::HandleSTL(size_t &num_threads, size_t &n_n, size_
       th.join();
     }
   }
+}
+
+void TimofeevNRadixBatcherSTL::HandleSTL(size_t &num_threads, size_t &n_n, size_t &m_m, int &max_x,
+                                         std::vector<int> &reff, std::vector<int> &r_in) {
+  std::vector<std::thread> threads;
+
+  size_t piece = n_n / num_threads;
+  threads.reserve(num_threads);
+
+  BubbleSortAux(num_threads, max_x, r_in, piece, threads);
+
+  for (auto &th : threads) {
+    th.join();
+  }
+
+  OddMergeAux(r_in, piece, threads, n_n);
 
   if (m_m != n_n) {
     r_in.resize(m_m);

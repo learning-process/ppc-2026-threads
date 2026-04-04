@@ -28,6 +28,9 @@ class TimofeevNRadixBatcherSTL : public BaseTask {
   static void OddEvenMerge(std::vector<int> &arr, int lft, int n);
 
   void PrepAux(int &n, int &m, std::vector<int> &in, int &max_x, size_t &num_threads, size_t &n_thr);
+  static void BubbleSortAux(size_t &num_threads, int &max_x, std::vector<int> &r_in, size_t &piece,
+                            std::vector<std::thread> &threads);
+  static void OddMergeAux(std::vector<int> &r_in, size_t &piece, std::vector<std::thread> &threads, size_t &n_n);
   static void HandleSTL(size_t &num_threads, size_t &n_n, size_t &m_m, int &max_x, std::vector<int> &reff,
                         std::vector<int> &r_in);
 };
