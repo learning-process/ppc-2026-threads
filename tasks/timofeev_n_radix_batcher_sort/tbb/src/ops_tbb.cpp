@@ -111,8 +111,8 @@ void TimofeevNRadixBatcherTBB::PrepAux(int &n, int &m, std::vector<int> &in, int
   }
 }
 
-static void TimofeevNRadixBatcherTBB::HandleTBB(size_t &num_threads, size_t &n_n, size_t &m_m, int &max_x,
-                                                std::vector<int> &reff, std::vector<int> &r_in) {
+void TimofeevNRadixBatcherTBB::HandleTBB(size_t &num_threads, size_t &n_n, size_t &m_m, int &max_x,
+                                         std::vector<int> &reff, std::vector<int> &r_in) {
   tbb::task_arena arena(static_cast<int>(num_threads));
   arena.execute([&] {
     size_t piece = 0;
