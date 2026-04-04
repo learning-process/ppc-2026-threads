@@ -1,10 +1,9 @@
 #include "timofeev_n_radix_batcher_sort/stl/include/ops_stl.hpp"
 
-#include <tbb/tbb.h>
-
 #include <algorithm>
 #include <climits>
 #include <cstddef>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -103,8 +102,8 @@ void TimofeevNRadixBatcherSTL::PrepAux(int &n, int &m, std::vector<int> &in, int
   if (n != m) {
     in.resize(n, max_x);
   }
-  // tbb
-  n_thr = tbb::this_task_arena::max_concurrency();
+
+  n_thr = std::thread::hardware_concurrency();
   num_threads = 1;
   while (num_threads * 2 <= n_thr && n / num_threads >= 4) {
     num_threads *= 2;
@@ -113,10 +112,10 @@ void TimofeevNRadixBatcherSTL::PrepAux(int &n, int &m, std::vector<int> &in, int
 
 void TimofeevNRadixBatcherSTL::BubbleSortAux(size_t &num_threads, int &max_x, std::vector<int> &r_in, size_t &piece,
                                              std::vector<std::thread> &threads) {
-  for (size_t t = 0; t < num_threads; ++t) {
-    threads.emplace_back([&, t]() {
+  for (size_t t_s = 0; t_s < num_threads; ++t_s) {
+    threads.emplace_back([&, t_s]() {
       for (int k = 1; k <= max_x; k *= 10) {
-        BubbleSort(r_in, k, static_cast<int>(piece * t), static_cast<int>((piece * t) + piece));
+        BubbleSort(r_in, k, static_cast<int>(piece * t_s), static_cast<int>((piece * t_s) + piece));
       }
     });
   }
@@ -162,9 +161,9 @@ void TimofeevNRadixBatcherSTL::HandleSTL(size_t &num_threads, size_t &n_n, size_
     chunk_size = 1;
   }
 
-  for (size_t t = 0; t < num_threads; ++t) {
-    size_t start = t * chunk_size;
-    size_t end = (t == num_threads - 1) ? r_in.size() : (t + 1) * chunk_size;
+  for (size_t t_s = 0; t_s < num_threads; ++t_s) {
+    size_t start = t_s * chunk_size;
+    size_t end = (t_s == num_threads - 1) ? r_in.size() : (t_s + 1) * chunk_size;
 
     threads.emplace_back([&, start, end]() {
       for (size_t i = start; i < end; ++i) {
