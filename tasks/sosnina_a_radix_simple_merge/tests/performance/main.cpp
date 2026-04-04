@@ -5,13 +5,14 @@
 #include <random>
 
 #include "sosnina_a_radix_simple_merge/common/include/common.hpp"
+#include "sosnina_a_radix_simple_merge/omp/include/ops_omp.hpp"
 #include "sosnina_a_radix_simple_merge/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace sosnina_a_radix_simple_merge {
 
 class SosninaARunPerfTestRadixSort : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr size_t kCount = 100000;
+  static constexpr size_t kCount = 20000000;
   InType input_data_;
 
   void SetUp() override {
@@ -43,8 +44,8 @@ TEST_P(SosninaARunPerfTestRadixSort, RunPerfRadixSort) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, SosninaATestTaskSEQ>(PPC_SETTINGS_sosnina_a_radix_simple_merge);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SosninaATestTaskSEQ, SosninaATestTaskOMP>(
+    PPC_SETTINGS_sosnina_a_radix_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
