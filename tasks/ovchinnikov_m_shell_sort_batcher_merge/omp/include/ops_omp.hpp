@@ -2,17 +2,17 @@
 
 #include <vector>
 
-#include "ovchinnikov_m_shell_sort_batcher_merge_seq/common/include/common.hpp"
+#include "ovchinnikov_m_shell_sort_batcher_merge/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace ovchinnikov_m_shell_sort_batcher_merge_seq {
+namespace ovchinnikov_m_shell_sort_batcher_merge {
 
-class OvchinnikovMShellSortBatcherMergeSEQ : public BaseTask {
+class OvchinnikovMShellSortBatcherMergeOMP : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kSEQ;
+    return ppc::task::TypeOfTask::kOMP;
   }
-  explicit OvchinnikovMShellSortBatcherMergeSEQ(const InType &in);
+  explicit OvchinnikovMShellSortBatcherMergeOMP(const InType &in);
 
  private:
   static void ShellSort(std::vector<int> &data);
@@ -26,4 +26,4 @@ class OvchinnikovMShellSortBatcherMergeSEQ : public BaseTask {
   InType data_;
 };
 
-}  // namespace ovchinnikov_m_shell_sort_batcher_merge_seq
+}  // namespace ovchinnikov_m_shell_sort_batcher_merge
