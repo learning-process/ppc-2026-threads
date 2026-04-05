@@ -23,7 +23,7 @@ class ZagryadskovMRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType
   OutType test_result_;
 
   void SetUp() override {
-    int dim = 20000;
+    int dim = 40000;
     int seed = 0;
     CCS &a = std::get<0>(input_data_);
     CCS &b = std::get<1>(input_data_);
