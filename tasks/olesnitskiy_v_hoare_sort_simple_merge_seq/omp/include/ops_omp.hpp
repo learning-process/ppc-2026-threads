@@ -7,12 +7,12 @@
 
 namespace olesnitskiy_v_hoare_sort_simple_merge_seq {
 
-class OlesnitskiyVHoareSortSimpleMergeSEQ : public BaseTask {
+class OlesnitskiyVHoareSortSimpleMergeOMP : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kSEQ;
+    return ppc::task::TypeOfTask::kOMP;
   }
-  explicit OlesnitskiyVHoareSortSimpleMergeSEQ(const InType &in);
+  explicit OlesnitskiyVHoareSortSimpleMergeOMP(const InType &in);
 
  private:
   static int HoarePartition(std::vector<int> &values, int left, int right);
