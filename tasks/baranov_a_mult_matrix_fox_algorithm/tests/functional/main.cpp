@@ -97,7 +97,7 @@ class BaranovAMatrixMultiplicationFuncTest
 
  private:
   template <typename T>
-  std::string GetImplementationName() const {
+  static std::string GetImplementationName() {
     if constexpr (std::is_same_v<T, baranov_a_mult_matrix_fox_algorithm_seq::BaranovAMultMatrixFoxAlgorithmSEQ>) {
       return "seq";
     } else if constexpr (std::is_same_v<T, baranov_a_mult_matrix_fox_algorithm_omp::BaranovAMultMatrixFoxAlgorithmOMP>) {
