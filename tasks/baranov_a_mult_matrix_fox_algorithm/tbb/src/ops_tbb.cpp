@@ -5,33 +5,33 @@
 #include <cstddef>
 #include <vector>
 
-#include "oneapi/tbb.h"
 #include "baranov_a_mult_matrix_fox_algorithm/common/include/common.hpp"
+#include "oneapi/tbb.h"
 
 namespace baranov_a_mult_matrix_fox_algorithm_tbb {
 
 BaranovAMultMatrixFoxAlgorithmTBB::BaranovAMultMatrixFoxAlgorithmTBB(
-    const baranov_a_mult_matrix_fox_algorithm::InType& in) {
+    const baranov_a_mult_matrix_fox_algorithm::InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<double>();
 }
 
 bool BaranovAMultMatrixFoxAlgorithmTBB::ValidationImpl() {
-  const auto& [matrix_size, matrix_a, matrix_b] = GetInput();
+  const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
   return matrix_size > 0 && matrix_a.size() == matrix_size * matrix_size &&
          matrix_b.size() == matrix_size * matrix_size;
 }
 
 bool BaranovAMultMatrixFoxAlgorithmTBB::PreProcessingImpl() {
-  const auto& [matrix_size, matrix_a, matrix_b] = GetInput();
+  const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
   GetOutput() = std::vector<double>(matrix_size * matrix_size, 0.0);
   return true;
 }
 
 void BaranovAMultMatrixFoxAlgorithmTBB::StandardMultiplication(size_t n) {
-  const auto& [matrix_size, matrix_a, matrix_b] = GetInput();
-  auto& output = GetOutput();
+  const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
+  auto &output = GetOutput();
 
   tbb::parallel_for(size_t(0), n, [&](size_t i) {
     for (size_t j = 0; j < n; ++j) {
@@ -45,15 +45,13 @@ void BaranovAMultMatrixFoxAlgorithmTBB::StandardMultiplication(size_t n) {
 }
 
 void BaranovAMultMatrixFoxAlgorithmTBB::FoxBlockMultiplication(size_t n, size_t block_size) {
-  const auto& [matrix_size, matrix_a, matrix_b] = GetInput();
-  auto& output = GetOutput();
+  const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
+  auto &output = GetOutput();
 
   size_t num_blocks = (n + block_size - 1) / block_size;
 
   // Обнуление выходной матрицы
-  tbb::parallel_for(size_t(0), n * n, [&](size_t idx) {
-    output[idx] = 0.0;
-  });
+  tbb::parallel_for(size_t(0), n * n, [&](size_t idx) { output[idx] = 0.0; });
 
   // Основной цикл алгоритма Фокса
   for (size_t bk = 0; bk < num_blocks; ++bk) {
@@ -88,7 +86,7 @@ void BaranovAMultMatrixFoxAlgorithmTBB::FoxBlockMultiplication(size_t n, size_t 
 }
 
 bool BaranovAMultMatrixFoxAlgorithmTBB::RunImpl() {
-  const auto& [matrix_size, matrix_a, matrix_b] = GetInput();
+  const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
   size_t n = matrix_size;
 
   // Оптимальный размер блока для TBB (можно настроить)

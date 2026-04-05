@@ -13,7 +13,7 @@ class BaranovAMultMatrixFoxAlgorithmTBB : public baranov_a_mult_matrix_fox_algor
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kTBB;
   }
-  explicit BaranovAMultMatrixFoxAlgorithmTBB(const baranov_a_mult_matrix_fox_algorithm::InType& in);
+  explicit BaranovAMultMatrixFoxAlgorithmTBB(const baranov_a_mult_matrix_fox_algorithm::InType &in);
 
  private:
   bool ValidationImpl() override;
