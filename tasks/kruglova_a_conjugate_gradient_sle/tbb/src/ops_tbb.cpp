@@ -103,7 +103,7 @@ bool KruglovaAConjGradSleTBB::RunImpl() {
 
     tbb::parallel_for(tbb::blocked_range<int>(0, n, 1024), [&](const tbb::blocked_range<int> &range) {
       for (int i = range.begin(); i < range.end(); ++i) {
-        p[i] = r[i] + beta * p[i];
+        p[i] = r[i] + (beta * p[i]);
       }
     });
 
