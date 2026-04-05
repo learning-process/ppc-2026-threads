@@ -8,6 +8,7 @@
 #include <tuple>
 
 #include "akimov_i_radixsort_int_merge/common/include/common.hpp"
+#include "akimov_i_radixsort_int_merge/omp/include/ops_omp.hpp"
 #include "akimov_i_radixsort_int_merge/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -59,7 +60,8 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(10, "10"), std::make
                                             std::make_tuple(1000, "1000")};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<AkimovIRadixSortIntMergeSEQ, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge));
+    ppc::util::AddFuncTask<AkimovIRadixSortIntMergeSEQ, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge),
+    ppc::util::AddFuncTask<AkimovIRadixSortIntMergeOMP, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
