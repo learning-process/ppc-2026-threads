@@ -103,7 +103,7 @@ void TimofeevNRadixBatcherSTL::PrepAux(int &n, int &m, std::vector<int> &in, int
     in.resize(n, max_x);
   }
 
-  n_thr = std::thread::hardware_concurrency();
+  n_thr = std::thread::hardware_concurrency(); // from there
   num_threads = 1;
   while (num_threads * 2 <= n_thr && n / num_threads >= 4) {
     num_threads *= 2;
