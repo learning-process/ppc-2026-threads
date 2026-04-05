@@ -131,7 +131,7 @@ void TimofeevNRadixBatcherALL::PrepAux(int &n, int &m, std::vector<int> &in, int
   n = static_cast<int>(in.size());
   m = n;
 
-  // дополняем до степени двойки
+  // дополняем
   while (n % 2 == 0) {
     n /= 2;
   }
