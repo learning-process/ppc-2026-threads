@@ -6,10 +6,11 @@
 #include <vector>
 
 #include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
+#include "chaschin_vladimir_linear_image_filtration_seq/omp/include/ops_omp.hpp"
 #include "chaschin_vladimir_linear_image_filtration_seq/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace chaschin_v_linear_image_filtration_seq {
+namespace chaschin_v_linear_image_filtration {
 
 class ChaschinVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr int kCount = 512;
@@ -93,14 +94,15 @@ TEST_P(ChaschinVRunPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ChaschinVLinearFiltrationSEQ>(PPC_SETTINGS_example_processes);
+    ppc::util::MakeAllPerfTasks<InType, chaschin_v_linear_image_filtration_seq::ChaschinVLinearFiltrationSEQ,
+                                chaschin_v_linear_image_filtration_omp::ChaschinVLinearFiltrationOMP>(
+        PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-
 const auto kPerfTestName = ChaschinVRunPerfTests::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(RunModeTests, ChaschinVRunPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
-}  // namespace chaschin_v_linear_image_filtration_seq
+}  // namespace chaschin_v_linear_image_filtration
