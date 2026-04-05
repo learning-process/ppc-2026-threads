@@ -10,8 +10,8 @@
 #include <vector>
 
 #include "baranov_a_mult_matrix_fox_algorithm/common/include/common.hpp"
-#include "baranov_a_mult_matrix_fox_algorithm/omp/include/ops_omp.hpp"
 #include "baranov_a_mult_matrix_fox_algorithm/seq/include/ops_seq.hpp"
+#include "baranov_a_mult_matrix_fox_algorithm/omp/include/ops_omp.hpp"
 #include "baranov_a_mult_matrix_fox_algorithm/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -24,7 +24,7 @@ class BaranovAMatrixMultiplicationFuncTest
                                          baranov_a_mult_matrix_fox_algorithm::OutType,
                                          baranov_a_mult_matrix_fox_algorithm::TestType> {
  public:
-  static std::string PrintTestParam(const baranov_a_mult_matrix_fox_algorithm::TestType &test_param) {
+  static std::string PrintTestParam(const baranov_a_mult_matrix_fox_algorithm::TestType& test_param) {
     size_t n = std::get<0>(test_param);
     std::string type = std::get<1>(test_param);
     std::string impl = GetImplementationName<TaskType>();
@@ -62,7 +62,7 @@ class BaranovAMatrixMultiplicationFuncTest
     expected_output_ = expected;
   }
 
-  bool CheckTestOutputData(baranov_a_mult_matrix_fox_algorithm::OutType &output_data) final {
+  bool CheckTestOutputData(baranov_a_mult_matrix_fox_algorithm::OutType& output_data) final {
     if (expected_output_.size() != output_data.size()) {
       ADD_FAILURE() << "Size mismatch: expected " << expected_output_.size() << ", got " << output_data.size();
       return false;
@@ -100,17 +100,15 @@ class BaranovAMatrixMultiplicationFuncTest
   static std::string GetImplementationName() {
     if constexpr (std::is_same_v<T, baranov_a_mult_matrix_fox_algorithm_seq::BaranovAMultMatrixFoxAlgorithmSEQ>) {
       return "seq";
-    } else if constexpr (std::is_same_v<T,
-                                        baranov_a_mult_matrix_fox_algorithm_omp::BaranovAMultMatrixFoxAlgorithmOMP>) {
+    } else if constexpr (std::is_same_v<T, baranov_a_mult_matrix_fox_algorithm_omp::BaranovAMultMatrixFoxAlgorithmOMP>) {
       return "omp";
-    } else if constexpr (std::is_same_v<T,
-                                        baranov_a_mult_matrix_fox_algorithm_tbb::BaranovAMultMatrixFoxAlgorithmTBB>) {
+    } else if constexpr (std::is_same_v<T, baranov_a_mult_matrix_fox_algorithm_tbb::BaranovAMultMatrixFoxAlgorithmTBB>) {
       return "tbb";
     }
     return "unknown";
   }
 
-  static void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c,
+  static void ReferenceMultiply(const std::vector<double>& a, const std::vector<double>& b, std::vector<double>& c,
                                 size_t n) {
     for (size_t i = 0; i < n; ++i) {
       for (size_t j = 0; j < n; ++j) {
@@ -123,7 +121,7 @@ class BaranovAMatrixMultiplicationFuncTest
     }
   }
 
-  static void GenerateLinearMatrices(std::vector<double> &a, std::vector<double> &b, size_t n) {
+  static void GenerateLinearMatrices(std::vector<double>& a, std::vector<double>& b, size_t n) {
     size_t size = n * n;
     for (size_t i = 0; i < size; ++i) {
       a[i] = static_cast<double>(i + 1);
@@ -131,7 +129,7 @@ class BaranovAMatrixMultiplicationFuncTest
     }
   }
 
-  static void GenerateIdentityMatrix(std::vector<double> &a, std::vector<double> &b, size_t n) {
+  static void GenerateIdentityMatrix(std::vector<double>& a, std::vector<double>& b, size_t n) {
     for (size_t i = 0; i < n; ++i) {
       for (size_t j = 0; j < n; ++j) {
         a[(i * n) + j] = (i == j) ? 1.0 : 0.0;
@@ -142,7 +140,7 @@ class BaranovAMatrixMultiplicationFuncTest
     }
   }
 
-  static void GenerateRandomMatrices(std::vector<double> &a, std::vector<double> &b, size_t n, int seed) {
+  static void GenerateRandomMatrices(std::vector<double>& a, std::vector<double>& b, size_t n, int seed) {
     std::mt19937 gen(seed);
     std::uniform_real_distribution<double> dist(-100.0, 100.0);
 
@@ -152,7 +150,7 @@ class BaranovAMatrixMultiplicationFuncTest
     }
   }
 
-  static void GenerateExtremeValuesMatrices(std::vector<double> &a, std::vector<double> &b, size_t n) {
+  static void GenerateExtremeValuesMatrices(std::vector<double>& a, std::vector<double>& b, size_t n) {
     for (size_t i = 0; i < n; ++i) {
       for (size_t j = 0; j < n; ++j) {
         if ((i + j) % 2 == 0) {
@@ -166,7 +164,7 @@ class BaranovAMatrixMultiplicationFuncTest
     }
   }
 
-  static void GenerateSparseMatrices(std::vector<double> &a, std::vector<double> &b, size_t n) {
+  static void GenerateSparseMatrices(std::vector<double>& a, std::vector<double>& b, size_t n) {
     for (size_t i = 0; i < n; ++i) {
       for (size_t j = 0; j < n; ++j) {
         a[(i * n) + j] = 0.0;
@@ -187,7 +185,7 @@ class BaranovAMatrixMultiplicationFuncTest
     }
   }
 
-  static void GenerateConstantMatrices(std::vector<double> &a, std::vector<double> &b, size_t n) {
+  static void GenerateConstantMatrices(std::vector<double>& a, std::vector<double>& b, size_t n) {
     double const_a = 2.5;
     double const_b = 1.5;
 
@@ -226,10 +224,11 @@ const std::array<baranov_a_mult_matrix_fox_algorithm::TestType, 20> kTestParams 
     std::make_tuple(1, "size1_simple"),   std::make_tuple(2, "size2_simple"),   std::make_tuple(3, "size3_simple"),
     std::make_tuple(2, "identity_2"),     std::make_tuple(4, "identity_4"),     std::make_tuple(8, "identity_8"),
     std::make_tuple(3, "random_seed123"), std::make_tuple(5, "random_seed456"), std::make_tuple(7, "random_seed789"),
-    std::make_tuple(4, "extreme_4"),      std::make_tuple(6, "extreme_6"),      std::make_tuple(4, "sparse_4"),
-    std::make_tuple(8, "sparse_8"),       std::make_tuple(3, "constant_3"),     std::make_tuple(5, "constant_5"),
-    std::make_tuple(7, "constant_7"),     std::make_tuple(16, "size16_block"),  std::make_tuple(32, "size32_block"),
-    std::make_tuple(64, "size64_block"),  std::make_tuple(128, "size128_block")};
+    std::make_tuple(4, "extreme_4"),      std::make_tuple(6, "extreme_6"),
+    std::make_tuple(4, "sparse_4"),       std::make_tuple(8, "sparse_8"),
+    std::make_tuple(3, "constant_3"),     std::make_tuple(5, "constant_5"),     std::make_tuple(7, "constant_7"),
+    std::make_tuple(16, "size16_block"),  std::make_tuple(32, "size32_block"),  std::make_tuple(64, "size64_block"),
+    std::make_tuple(128, "size128_block")};
 
 const auto kTestTasksListSEQ =
     ppc::util::AddFuncTask<baranov_a_mult_matrix_fox_algorithm_seq::BaranovAMultMatrixFoxAlgorithmSEQ,
