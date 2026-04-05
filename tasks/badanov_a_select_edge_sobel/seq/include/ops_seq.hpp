@@ -4,10 +4,10 @@
 #include <cstdint>
 #include <vector>
 
-#include "badanov_a_select_edge_sobel_seq/common/include/common.hpp"
+#include "badanov_a_select_edge_sobel/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace badanov_a_select_edge_sobel_seq {
+namespace badanov_a_select_edge_sobel {
 
 class BadanovASelectEdgeSobelSEQ : public BaseTask {
  public:
@@ -36,4 +36,4 @@ class BadanovASelectEdgeSobelSEQ : public BaseTask {
   int threshold_ = 50;
 };
 
-}  // namespace badanov_a_select_edge_sobel_seq
+}  // namespace badanov_a_select_edge_sobel

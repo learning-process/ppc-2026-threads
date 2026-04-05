@@ -1,4 +1,4 @@
-#include "badanov_a_select_edge_sobel_seq/seq/include/ops_seq.hpp"
+#include "badanov_a_select_edge_sobel/omp/include/ops_omp.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -6,22 +6,26 @@
 #include <cstdint>
 #include <vector>
 
-#include "badanov_a_select_edge_sobel_seq/common/include/common.hpp"
+#include "badanov_a_select_edge_sobel/common/include/common.hpp"
 
-namespace badanov_a_select_edge_sobel_seq {
+#ifdef _OPENMP
+#  include <omp.h>
+#endif
 
-BadanovASelectEdgeSobelSEQ::BadanovASelectEdgeSobelSEQ(const InType &in) {
+namespace badanov_a_select_edge_sobel {
+
+BadanovASelectEdgeSobelOMP::BadanovASelectEdgeSobelOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<uint8_t>();
 }
 
-bool BadanovASelectEdgeSobelSEQ::ValidationImpl() {
+bool BadanovASelectEdgeSobelOMP::ValidationImpl() {
   const auto &input = GetInput();
   return !input.empty();
 }
 
-bool BadanovASelectEdgeSobelSEQ::PreProcessingImpl() {
+bool BadanovASelectEdgeSobelOMP::PreProcessingImpl() {
   const auto &input = GetInput();
 
   width_ = static_cast<int>(std::sqrt(input.size()));
@@ -37,27 +41,40 @@ bool BadanovASelectEdgeSobelSEQ::PreProcessingImpl() {
   return true;
 }
 
-void BadanovASelectEdgeSobelSEQ::ApplySobelOperator(const std::vector<uint8_t> &input, std::vector<float> &magnitude,
+void BadanovASelectEdgeSobelOMP::ApplySobelOperator(const std::vector<uint8_t> &input, std::vector<float> &magnitude,
                                                     float &max_magnitude) {
   max_magnitude = 0.0F;
+  const int height = height_;
+  const int width = width_;
 
-  for (int row = 1; row < height_ - 1; ++row) {
-    for (int col = 1; col < width_ - 1; ++col) {
-      float gradient_x = 0.0F;
-      float gradient_y = 0.0F;
+#pragma omp parallel default(none) shared(input, magnitude, max_magnitude, height, width)
+  {
+    float local_max_magnitude = 0.0F;
 
-      ComputeGradientAtPixel(input, row, col, gradient_x, gradient_y);
+#pragma omp for schedule(static)
+    for (int row = 1; row < height - 1; ++row) {
+      for (int col = 1; col < width - 1; ++col) {
+        float gradient_x = 0.0F;
+        float gradient_y = 0.0F;
 
-      const float magnitude_value = std::sqrt((gradient_x * gradient_x) + (gradient_y * gradient_y));
-      const size_t idx = (static_cast<size_t>(row) * static_cast<size_t>(width_)) + static_cast<size_t>(col);
-      magnitude[idx] = magnitude_value;
+        ComputeGradientAtPixel(input, row, col, gradient_x, gradient_y);
 
-      max_magnitude = std::max(magnitude_value, max_magnitude);
+        const float magnitude_value = std::sqrt((gradient_x * gradient_x) + (gradient_y * gradient_y));
+        const size_t idx = (static_cast<size_t>(row) * static_cast<size_t>(width)) + static_cast<size_t>(col);
+        magnitude[idx] = magnitude_value;
+
+        local_max_magnitude = std::max(magnitude_value, local_max_magnitude);
+      }
+    }
+
+#pragma omp critical
+    {
+      max_magnitude = std::max(local_max_magnitude, max_magnitude);
     }
   }
 }
 
-void BadanovASelectEdgeSobelSEQ::ComputeGradientAtPixel(const std::vector<uint8_t> &input, int row, int col,
+void BadanovASelectEdgeSobelOMP::ComputeGradientAtPixel(const std::vector<uint8_t> &input, int row, int col,
                                                         float &gradient_x, float &gradient_y) const {
   gradient_x = 0.0F;
   gradient_y = 0.0F;
@@ -79,19 +96,23 @@ void BadanovASelectEdgeSobelSEQ::ComputeGradientAtPixel(const std::vector<uint8_
   }
 }
 
-void BadanovASelectEdgeSobelSEQ::ApplyThreshold(const std::vector<float> &magnitude, float max_magnitude,
+void BadanovASelectEdgeSobelOMP::ApplyThreshold(const std::vector<float> &magnitude, float max_magnitude,
                                                 std::vector<uint8_t> &output) const {
   if (max_magnitude > 0.0F) {
     const float scale = 255.0F / max_magnitude;
-    for (size_t i = 0; i < magnitude.size(); ++i) {
-      output[i] = (magnitude[i] * scale > static_cast<float>(threshold_)) ? 255 : 0;
+    const size_t size = magnitude.size();
+    const int threshold = threshold_;
+
+#pragma omp parallel for schedule(static) default(none) shared(magnitude, output, scale, size) firstprivate(threshold)
+    for (size_t i = 0; i < size; ++i) {
+      output[i] = (magnitude[i] * scale > static_cast<float>(threshold)) ? 255 : 0;
     }
   } else {
     std::ranges::fill(output, 0);
   }
 }
 
-bool BadanovASelectEdgeSobelSEQ::RunImpl() {
+bool BadanovASelectEdgeSobelOMP::RunImpl() {
   const auto &input = GetInput();
   auto &output = GetOutput();
 
@@ -109,8 +130,8 @@ bool BadanovASelectEdgeSobelSEQ::RunImpl() {
   return true;
 }
 
-bool BadanovASelectEdgeSobelSEQ::PostProcessingImpl() {
+bool BadanovASelectEdgeSobelOMP::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace badanov_a_select_edge_sobel_seq
+}  // namespace badanov_a_select_edge_sobel
