@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <climits>
 #include <cstddef>
+#include <cstdint>
 #include <thread>
 #include <utility>
 #include <vector>
