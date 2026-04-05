@@ -6,11 +6,12 @@
 #include <tuple>
 #include <vector>
 
-#include "kondrashova_v_marking_components_seq/common/include/common.hpp"
-#include "kondrashova_v_marking_components_seq/seq/include/ops_seq.hpp"
+#include "kondrashova_v_marking_components/common/include/common.hpp"
+#include "kondrashova_v_marking_components/omp/include/ops_omp.hpp"
+#include "kondrashova_v_marking_components/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 
-namespace kondrashova_v_marking_components_seq {
+namespace kondrashova_v_marking_components {
 
 namespace {
 
@@ -114,12 +115,13 @@ TEST_P(MarkingComponentsFuncTest, VariousBinaryImages) {
 const std::array<TestType, 4> kTestParam = {std::make_tuple(0, "empty"), std::make_tuple(1, "one_component"),
                                             std::make_tuple(2, "isolated_pixels"), std::make_tuple(3, "two_regions")};
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<KondrashovaVTaskSEQ, InType>(kTestParam, PPC_SETTINGS_kondrashova_v_marking_components_seq);
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<KondrashovaVTaskSEQ, InType>(kTestParam, PPC_SETTINGS_kondrashova_v_marking_components),
+    ppc::util::AddFuncTask<KondrashovaVTaskOMP, InType>(kTestParam, PPC_SETTINGS_kondrashova_v_marking_components));
 
 INSTANTIATE_TEST_SUITE_P(KondrashovaVMarkingComponentsFunctionalTests, MarkingComponentsFuncTest,
                          ppc::util::ExpandToValues(kTestTasksList),
                          MarkingComponentsFuncTest::PrintFuncTestName<MarkingComponentsFuncTest>);
 }  // namespace
 
-}  // namespace kondrashova_v_marking_components_seq
+}  // namespace kondrashova_v_marking_components

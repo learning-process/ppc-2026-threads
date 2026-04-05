@@ -5,12 +5,13 @@
 #include <cstdint>
 #include <vector>
 
-#include "kondrashova_v_marking_components_seq/common/include/common.hpp"
-#include "kondrashova_v_marking_components_seq/seq/include/ops_seq.hpp"
+#include "kondrashova_v_marking_components/common/include/common.hpp"
+#include "kondrashova_v_marking_components/omp/include/ops_omp.hpp"
+#include "kondrashova_v_marking_components/seq/include/ops_seq.hpp"
 #include "performance/include/performance.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace kondrashova_v_marking_components_seq {
+namespace kondrashova_v_marking_components {
 
 namespace {
 
@@ -211,8 +212,8 @@ TEST_P(BlocksPerfTest, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KondrashovaVTaskSEQ>(PPC_SETTINGS_kondrashova_v_marking_components_seq);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KondrashovaVTaskSEQ, KondrashovaVTaskOMP>(
+    PPC_SETTINGS_kondrashova_v_marking_components);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -231,4 +232,4 @@ INSTANTIATE_TEST_SUITE_P(KondrashovaVBlocks_RunModeTests, BlocksPerfTest, kGtest
 
 }  // namespace
 
-}  // namespace kondrashova_v_marking_components_seq
+}  // namespace kondrashova_v_marking_components
