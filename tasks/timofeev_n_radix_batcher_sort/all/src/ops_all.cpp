@@ -98,8 +98,8 @@ void TimofeevNRadixBatcherALL::OddMergeAux(std::vector<int> &r_in, size_t &piece
 }
 
 void TimofeevNRadixBatcherALL::ProcessLocalArray(std::vector<int> &local_arr, size_t num_threads) {
-  int n = local_arr.size();
-  int max_x = *std::max_element(local_arr.begin(), local_arr.end());
+  int n = static_cast<int>(local_arr.size());
+  int max_x = *std::ranges::max_element(local_arr.begin(), local_arr.end());
 
   std::vector<std::thread> threads;
   size_t piece = n / num_threads;
@@ -117,7 +117,7 @@ void TimofeevNRadixBatcherALL::ProcessLocalArray(std::vector<int> &local_arr, si
 
 void TimofeevNRadixBatcherALL::ProcessLocalArrayWOSort(std::vector<int> &local_arr, size_t num_threads,
                                                        size_t &elements_per_process) {
-  int n = local_arr.size();
+  int n = static_cast<int>(local_arr.size());
 
   std::vector<std::thread> threads;
   threads.reserve(num_threads);
@@ -146,7 +146,7 @@ void TimofeevNRadixBatcherALL::PrepAux(int &n, int &m, std::vector<int> &in, int
     n = m;
   }
 
-  max_x = *std::max_element(in.begin(), in.end());
+  max_x = *std::ranges::max_element(in);
   if (n != m) {
     in.resize(n, max_x);
   }
@@ -155,7 +155,7 @@ void TimofeevNRadixBatcherALL::PrepAux(int &n, int &m, std::vector<int> &in, int
   while ((n_thr & (n_thr - 1)) != 0 && n_thr > 1) {  // и то, и то - степени двойки, поэтому достаточно вот такого цикла
     n_thr--;
   }
-  if (n_thr > static_cast<size_t>(n)) {
+  if (std::cmp_greater(n_thr, static_cast<size_t>(n))) {
     n_thr = n;
   }
   num_threads = 1;
@@ -173,15 +173,15 @@ void TimofeevNRadixBatcherALL::HandleZero(std::vector<int> &global_array, size_t
 
   size_t numnum = std::thread::hardware_concurrency();
 
-  int ttttt = total_elements;
-  int mmmmm = total_elements_primal;
+  int ttttt = static_cast<int>(total_elements);
+  int mmmmm = static_cast<int>(total_elements_primal);
   size_t nnnnn = num_processes;
 
   PrepAux(ttttt, mmmmm, global_array, maxxx, num_threads_per_process, numnum, nnnnn);
 
   total_elements = ttttt;
   total_elements_primal = mmmmm;
-  num_processes = nnnnn;
+  num_processes = static_cast<int>(nnnnn);
 
   elements_per_process = total_elements / num_processes;
 
@@ -189,16 +189,19 @@ void TimofeevNRadixBatcherALL::HandleZero(std::vector<int> &global_array, size_t
 
   for (int i = 0; i < num_processes; ++i) {
     if (i == 0) {
-      std::copy(global_array.begin(), global_array.begin() + elements_per_process, local_array.begin());
+      std::copy(global_array.begin(), global_array.begin() + static_cast<long>(elements_per_process),
+                local_array.begin());
     } else {
       MPI_Send(&elements_per_process, 1, MPI_UNSIGNED_LONG_LONG, i, 0, MPI_COMM_WORLD);
-      MPI_Send(global_array.data() + i * elements_per_process, elements_per_process, MPI_INT, i, 0, MPI_COMM_WORLD);
+      MPI_Send(global_array.data() + static_cast<long>(i * elements_per_process),
+               static_cast<int>(elements_per_process), MPI_INT, i, 0, MPI_COMM_WORLD);
     }
   }
 }
 
 bool TimofeevNRadixBatcherALL::RunImpl() {
-  int world_size, world_rank;
+  int world_size = 0;
+  int world_rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
@@ -211,7 +214,7 @@ bool TimofeevNRadixBatcherALL::RunImpl() {
   }
   std::vector<int> global_array;
   int maxxx = 0;
-  size_t elements_per_process;
+  size_t elements_per_process = 0;
   std::vector<int> local_array;
 
   if (world_rank == 0) {
@@ -220,7 +223,8 @@ bool TimofeevNRadixBatcherALL::RunImpl() {
   } else if (world_rank < num_processes) {
     MPI_Recv(&elements_per_process, 1, MPI_UNSIGNED_LONG_LONG, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     local_array.resize(elements_per_process);
-    MPI_Recv(local_array.data(), elements_per_process, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(local_array.data(), static_cast<int>(elements_per_process), MPI_INT, 0, 0, MPI_COMM_WORLD,
+             MPI_STATUS_IGNORE);
   }
 
   if (world_rank < num_processes) {
@@ -228,11 +232,11 @@ bool TimofeevNRadixBatcherALL::RunImpl() {
   }
 
   if (world_rank == 0) {
-    std::copy(local_array.begin(), local_array.end(), global_array.begin());
+    std::ranges::copy(local_array, global_array.begin());
 
     for (int i = 1; i < num_processes; ++i) {
-      MPI_Recv(global_array.data() + i * elements_per_process, elements_per_process, MPI_INT, i, 0, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
+      MPI_Recv(global_array.data() + static_cast<int>(i * elements_per_process), static_cast<int>(elements_per_process),
+               MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
 
     ProcessLocalArrayWOSort(global_array, num_threads_per_process, elements_per_process);
@@ -243,16 +247,17 @@ bool TimofeevNRadixBatcherALL::RunImpl() {
 
     for (int i = 1; i < world_size; ++i) {
       MPI_Send(&total_elements_primal, 1, MPI_UNSIGNED_LONG_LONG, i, 0, MPI_COMM_WORLD);
-      MPI_Send(global_array.data(), total_elements_primal, MPI_INT, i, 0, MPI_COMM_WORLD);
+      MPI_Send(global_array.data(), static_cast<int>(total_elements_primal), MPI_INT, i, 0, MPI_COMM_WORLD);
     }
 
   } else {
     if (world_rank < num_processes) {
-      MPI_Send(local_array.data(), elements_per_process, MPI_INT, 0, 0, MPI_COMM_WORLD);
+      MPI_Send(local_array.data(), static_cast<int>(elements_per_process), MPI_INT, 0, 0, MPI_COMM_WORLD);
     }
     MPI_Recv(&total_elements_primal, 1, MPI_UNSIGNED_LONG_LONG, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     global_array.resize(total_elements_primal);
-    MPI_Recv(global_array.data(), total_elements_primal, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(global_array.data(), static_cast<int>(total_elements_primal), MPI_INT, 0, 0, MPI_COMM_WORLD,
+             MPI_STATUS_IGNORE);
   }
 
   GetOutput() = global_array;
