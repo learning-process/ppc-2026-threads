@@ -1,6 +1,7 @@
-#include "kurpiakov_a_sp_comp_mat_mul/seq/include/ops_seq.hpp"
+#include "kurpiakov_a_sp_comp_mat_mul/omp/include/ops_omp.hpp"
 
 #include <utility>
+#include <vector>
 
 #include "kurpiakov_a_sp_comp_mat_mul/common/include/common.hpp"
 
@@ -36,13 +37,13 @@ bool ValidateCSR(const SparseMatrix &m) {
 
 }  // namespace
 
-KurpiakovACRSMatMulSEQ::KurpiakovACRSMatMulSEQ(const InType &in) {
+KurpiakovACRSMatMulOMP::KurpiakovACRSMatMulOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = SparseMatrix();
 }
 
-bool KurpiakovACRSMatMulSEQ::ValidationImpl() {
+bool KurpiakovACRSMatMulOMP::ValidationImpl() {
   const auto &[a, b] = GetInput();
 
   if (!ValidateCSR(a) || !ValidateCSR(b)) {
@@ -52,17 +53,17 @@ bool KurpiakovACRSMatMulSEQ::ValidationImpl() {
   return a.cols == b.rows;
 }
 
-bool KurpiakovACRSMatMulSEQ::PreProcessingImpl() {
+bool KurpiakovACRSMatMulOMP::PreProcessingImpl() {
   return true;
 }
 
-bool KurpiakovACRSMatMulSEQ::RunImpl() {
+bool KurpiakovACRSMatMulOMP::RunImpl() {
   const auto &[a, b] = GetInput();
-  GetOutput() = a.Multiply(b);
+  GetOutput() = a.OMPMultiply(b);
   return true;
 }
 
-bool KurpiakovACRSMatMulSEQ::PostProcessingImpl() {
+bool KurpiakovACRSMatMulOMP::PostProcessingImpl() {
   return true;
 }
 
