@@ -7,11 +7,43 @@
 #include <tuple>
 
 #include "artyushkina_markirovka/common/include/common.hpp"
+#include "artyushkina_markirovka/omp/include/ops_omp.hpp"
 #include "artyushkina_markirovka/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
 namespace artyushkina_markirovka {
+namespace {
+
+void PrintMatrix(const OutType &data, const std::string &title) {
+  std::cout << title;
+  int rows = static_cast<int>(data[0]);
+  int cols = static_cast<int>(data[1]);
+  for (int i = 0; i < rows; ++i) {
+    for (int j = 0; j < cols; ++j) {
+      std::size_t idx =
+          (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
+      std::cout << data[idx] << " ";
+    }
+    std::cout << "\n";
+  }
+  std::cout << "=====================\n\n";
+}
+
+void PrintInputMatrix(const InType &data) {
+  int rows = static_cast<int>(data[0]);
+  int cols = static_cast<int>(data[1]);
+  for (int i = 0; i < rows; ++i) {
+    for (int j = 0; j < cols; ++j) {
+      std::size_t idx =
+          (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
+      std::cout << static_cast<int>(data[idx]) << " ";
+    }
+    std::cout << "\n";
+  }
+}
+
+}  // namespace
 
 class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -50,19 +82,37 @@ class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType
         expected_ = {3, 4, 1, 1, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2};
         break;
       }
+      case 5: {
+        input_data_ = {4, 4, 0, 0, 255, 255, 0, 255, 0, 255, 255, 0, 0, 255, 0, 0, 255, 0};
+        expected_ = {4, 4, 1, 1, 0, 0, 1, 0, 2, 0, 0, 2, 2, 0, 3, 3, 0, 4};
+        break;
+      }
+      case 6: {
+        input_data_ = {2, 2, 0, 255, 255, 0};
+        expected_ = {2, 2, 1, 0, 0, 1};
+        break;
+      }
       default:
         break;
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int test_id = std::get<0>(std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()));
+
+    if (test_id == 5 || test_id == 6) {
+      std::cout << "\n=== INPUT MATRIX (test " << test_id << ") ===\n";
+      PrintInputMatrix(input_data_);
+      std::cout << "========================\n\n";
+      PrintMatrix(output_data, "=== OUTPUT LABELS ===\n");
+    }
+
     if (output_data != expected_) {
       std::cout << "Expected: ";
       for (auto val : expected_) {
         std::cout << static_cast<int>(val) << ' ';
       }
       std::cout << '\n';
-
       std::cout << "Actual  : ";
       for (auto val : output_data) {
         std::cout << val << ' ';
@@ -84,22 +134,41 @@ class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType
 
 namespace {
 
-TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponents) {
+TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponentsSEQ) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {
-    std::make_tuple(0, "L_shaped_component_8connectivity"), std::make_tuple(1, "diagonal_connected_components"),
-    std::make_tuple(2, "all_background"), std::make_tuple(3, "all_objects"), std::make_tuple(4, "two_horizontal_bars")};
+TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponentsOMP) {
+  ExecuteTest(GetParam());
+}
 
-const auto kTestTasksList =
+const std::array<TestType, 7> kTestParam = {std::make_tuple(0, "L_shaped_component_8connectivity"),
+                                            std::make_tuple(1, "diagonal_connected_components"),
+                                            std::make_tuple(2, "all_background"),
+                                            std::make_tuple(3, "all_objects"),
+                                            std::make_tuple(4, "two_horizontal_bars"),
+                                            std::make_tuple(5, "complex_shape_multiple_components"),
+                                            std::make_tuple(6, "diagonal_connectivity_check")};
+
+// SEQ тесты
+const auto kTestTasksListSEQ =
     ppc::util::AddFuncTask<MarkingComponentsSEQ, InType>(kTestParam, PPC_SETTINGS_artyushkina_markirovka);
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+const auto kGtestValuesSEQ = ppc::util::ExpandToValues(kTestTasksListSEQ);
 
-const auto kPerfTestName = ArtyushkinaMarkirovkaFuncTests::PrintFuncTestName<ArtyushkinaMarkirovkaFuncTests>;
+const auto kPerfTestNameSEQ = ArtyushkinaMarkirovkaFuncTests::PrintFuncTestName<ArtyushkinaMarkirovkaFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(ComponentLabeling, ArtyushkinaMarkirovkaFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(ComponentLabelingSEQ, ArtyushkinaMarkirovkaFuncTests, kGtestValuesSEQ, kPerfTestNameSEQ);
+
+// OMP тесты
+const auto kTestTasksListOMP =
+    ppc::util::AddFuncTask<MarkingComponentsOMP, InType>(kTestParam, PPC_SETTINGS_artyushkina_markirovka);
+
+const auto kGtestValuesOMP = ppc::util::ExpandToValues(kTestTasksListOMP);
+
+const auto kPerfTestNameOMP = ArtyushkinaMarkirovkaFuncTests::PrintFuncTestName<ArtyushkinaMarkirovkaFuncTests>;
+
+INSTANTIATE_TEST_SUITE_P(ComponentLabelingOMP, ArtyushkinaMarkirovkaFuncTests, kGtestValuesOMP, kPerfTestNameOMP);
 
 }  // namespace
 
