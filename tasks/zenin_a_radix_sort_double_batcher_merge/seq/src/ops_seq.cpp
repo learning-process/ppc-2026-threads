@@ -1,4 +1,4 @@
-#include "zenin_a_radix_sort_double_batcher_merge_seq/seq/include/ops_seq.hpp"
+#include "zenin_a_radix_sort_double_batcher_merge/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -8,9 +8,9 @@
 #include <vector>
 
 // #include "util/include/util.hpp"
-#include "zenin_a_radix_sort_double_batcher_merge_seq/common/include/common.hpp"
+#include "zenin_a_radix_sort_double_batcher_merge/common/include/common.hpp"
 
-namespace zenin_a_radix_sort_double_batcher_merge_seq {
+namespace zenin_a_radix_sort_double_batcher_merge {
 
 ZeninARadixSortDoubleBatcherMergeSeqseq::ZeninARadixSortDoubleBatcherMergeSeqseq(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -159,4 +159,4 @@ bool ZeninARadixSortDoubleBatcherMergeSeqseq::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace zenin_a_radix_sort_double_batcher_merge_seq
+}  // namespace zenin_a_radix_sort_double_batcher_merge

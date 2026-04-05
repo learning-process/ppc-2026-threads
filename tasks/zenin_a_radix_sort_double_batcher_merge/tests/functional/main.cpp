@@ -11,16 +11,16 @@
 // #include <utility>
 // #include <vector>
 
-// #include "zenin_a_radix_sort_double_batcher_merge_seq/all/include/ops_all.hpp"
-#include "zenin_a_radix_sort_double_batcher_merge_seq/common/include/common.hpp"
-// #include "zenin_a_radix_sort_double_batcher_merge_seq/omp/include/ops_omp.hpp"
-#include "zenin_a_radix_sort_double_batcher_merge_seq/seq/include/ops_seq.hpp"
-// #include "zenin_a_radix_sort_double_batcher_merge_seq/stl/include/ops_stl.hpp"
-// #include "zenin_a_radix_sort_double_batcher_merge_seq/tbb/include/ops_tbb.hpp"
+// #include "zenin_a_radix_sort_double_batcher_merge/all/include/ops_all.hpp"
+#include "zenin_a_radix_sort_double_batcher_merge/common/include/common.hpp"
+// #include "zenin_a_radix_sort_double_batcher_merge/omp/include/ops_omp.hpp"
+#include "zenin_a_radix_sort_double_batcher_merge/seq/include/ops_seq.hpp"
+// #include "zenin_a_radix_sort_double_batcher_merge/stl/include/ops_stl.hpp"
+// #include "zenin_a_radix_sort_double_batcher_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace zenin_a_radix_sort_double_batcher_merge_seq {
+namespace zenin_a_radix_sort_double_batcher_merge {
 
 class ZeninARadixSortDoubleBatcherMergeFuncTestsThreads
     : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
@@ -79,7 +79,7 @@ const std::array<TestType, 12> kTestParam = {
     TestType{InType{0.0, -0.0}, OutType{-0.0, 0.0}, "ZeroAndNegativeZero"}};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ZeninARadixSortDoubleBatcherMergeSeqseq, InType>(
-    kTestParam, PPC_SETTINGS_zenin_a_radix_sort_double_batcher_merge_seq));
+    kTestParam, PPC_SETTINGS_zenin_a_radix_sort_double_batcher_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -91,4 +91,4 @@ INSTANTIATE_TEST_SUITE_P(PicMatrixTests, ZeninARadixSortDoubleBatcherMergeFuncTe
 
 }  // namespace
 
-}  // namespace zenin_a_radix_sort_double_batcher_merge_seq
+}  // namespace zenin_a_radix_sort_double_batcher_merge

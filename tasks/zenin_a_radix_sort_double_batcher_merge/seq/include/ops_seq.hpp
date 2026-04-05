@@ -5,9 +5,9 @@
 #include <vector>
 
 #include "task/include/task.hpp"
-#include "zenin_a_radix_sort_double_batcher_merge_seq/common/include/common.hpp"
+#include "zenin_a_radix_sort_double_batcher_merge/common/include/common.hpp"
 
-namespace zenin_a_radix_sort_double_batcher_merge_seq {
+namespace zenin_a_radix_sort_double_batcher_merge {
 
 class ZeninARadixSortDoubleBatcherMergeSeqseq : public BaseTask {
  public:
@@ -30,4 +30,4 @@ class ZeninARadixSortDoubleBatcherMergeSeqseq : public BaseTask {
   static void BlocksComparing(std::vector<double> &arr, size_t i, size_t step);
 };
 
-}  // namespace zenin_a_radix_sort_double_batcher_merge_seq
+}  // namespace zenin_a_radix_sort_double_batcher_merge

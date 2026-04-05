@@ -4,15 +4,15 @@
 #include <cstddef>
 #include <random>
 
-// #include "zenin_a_radix_sort_double_batcher_merge_seq/all/include/ops_all.hpp"
-#include "zenin_a_radix_sort_double_batcher_merge_seq/common/include/common.hpp"
-// #include "zenin_a_radix_sort_double_batcher_merge_seq/omp/include/ops_omp.hpp"
-#include "zenin_a_radix_sort_double_batcher_merge_seq/seq/include/ops_seq.hpp"
-// #include "zenin_a_radix_sort_double_batcher_merge_seq/stl/include/ops_stl.hpp"
-// #include "zenin_a_radix_sort_double_batcher_merge_seq/tbb/include/ops_tbb.hpp"
+// #include "zenin_a_radix_sort_double_batcher_merge/all/include/ops_all.hpp"
+#include "zenin_a_radix_sort_double_batcher_merge/common/include/common.hpp"
+// #include "zenin_a_radix_sort_double_batcher_merge/omp/include/ops_omp.hpp"
+#include "zenin_a_radix_sort_double_batcher_merge/seq/include/ops_seq.hpp"
+// #include "zenin_a_radix_sort_double_batcher_merge/stl/include/ops_stl.hpp"
+// #include "zenin_a_radix_sort_double_batcher_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace zenin_a_radix_sort_double_batcher_merge_seq {
+namespace zenin_a_radix_sort_double_batcher_merge {
 
 class ZeninARadixSortDoubleBatcherMergePerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 1000000;
@@ -55,7 +55,7 @@ TEST_P(ZeninARadixSortDoubleBatcherMergePerfTestsThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZeninARadixSortDoubleBatcherMergeSeqseq>(
-    PPC_SETTINGS_zenin_a_radix_sort_double_batcher_merge_seq);
+    PPC_SETTINGS_zenin_a_radix_sort_double_batcher_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -65,4 +65,4 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, ZeninARadixSortDoubleBatcherMergePerfTest
 
 }  // namespace
 
-}  // namespace zenin_a_radix_sort_double_batcher_merge_seq
+}  // namespace zenin_a_radix_sort_double_batcher_merge
