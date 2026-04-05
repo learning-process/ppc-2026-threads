@@ -189,11 +189,11 @@ void TimofeevNRadixBatcherALL::HandleZero(std::vector<int> &global_array, size_t
 
   for (int i = 0; i < num_processes; ++i) {
     if (i == 0) {
-      std::copy(global_array.begin(), global_array.begin() + static_cast<long>(elements_per_process),
+      std::copy(global_array.begin(), global_array.begin() + static_cast<int64_t>(elements_per_process),
                 local_array.begin());
     } else {
       MPI_Send(&elements_per_process, 1, MPI_UNSIGNED_LONG_LONG, i, 0, MPI_COMM_WORLD);
-      MPI_Send(global_array.data() + static_cast<long>(i * elements_per_process),
+      MPI_Send(global_array.data() + static_cast<int64_t>(i * elements_per_process),
                static_cast<int>(elements_per_process), MPI_INT, i, 0, MPI_COMM_WORLD);
     }
   }
