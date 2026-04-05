@@ -1,6 +1,6 @@
 #include "timofeev_n_radix_batcher_sort/all/include/ops_all.hpp"
 
-#include <mpi/mpi.h>
+#include <mpi.h>
 
 #include <algorithm>
 #include <climits>
@@ -99,25 +99,7 @@ void TimofeevNRadixBatcherALL::OddMergeAux(std::vector<int> &r_in, size_t &piece
 
 void TimofeevNRadixBatcherALL::ProcessLocalArray(std::vector<int> &local_arr, size_t num_threads) {
   int n = local_arr.size();
-  int m = n;
   int max_x = *std::max_element(local_arr.begin(), local_arr.end());
-
-  while (n % 2 == 0) {
-    n /= 2;
-  }
-  if (n > 1) {
-    n = static_cast<int>(local_arr.size());
-    int p = 1;
-    while (p < n) {
-      p *= 2;
-    }
-    n = p;
-  } else {
-    n = m;
-  }
-  if (n != m) {
-    local_arr.resize(n, max_x);
-  }
 
   std::vector<std::thread> threads;
   size_t piece = n / num_threads;
@@ -131,44 +113,17 @@ void TimofeevNRadixBatcherALL::ProcessLocalArray(std::vector<int> &local_arr, si
 
   size_t nnn = n;
   OddMergeAux(local_arr, piece, threads, nnn);
-
-  if (m != n) {
-    local_arr.resize(m);
-  }
 }
 
 void TimofeevNRadixBatcherALL::ProcessLocalArrayWOSort(std::vector<int> &local_arr, size_t num_threads,
                                                        size_t &elements_per_process) {
   int n = local_arr.size();
-  int m = n;
-  int max_x = *std::max_element(local_arr.begin(), local_arr.end());
-
-  while (n % 2 == 0) {
-    n /= 2;
-  }
-  if (n > 1) {
-    n = static_cast<int>(local_arr.size());
-    int p = 1;
-    while (p < n) {
-      p *= 2;
-    }
-    n = p;
-  } else {
-    n = m;
-  }
-  if (n != m) {
-    local_arr.resize(n, max_x);
-  }
 
   std::vector<std::thread> threads;
   threads.reserve(num_threads);
 
   size_t nnn = n;
   OddMergeAux(local_arr, elements_per_process, threads, nnn);
-
-  if (m != n) {
-    local_arr.resize(m);
-  }
 }
 
 void TimofeevNRadixBatcherALL::PrepAux(int &n, int &m, std::vector<int> &in, int &max_x, size_t &num_threads,
