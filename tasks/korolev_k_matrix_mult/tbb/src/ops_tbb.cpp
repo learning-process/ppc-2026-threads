@@ -39,17 +39,19 @@ bool KorolevKMatrixMultTBB::RunImpl() {
   if (np2 == n) {
     strassen_impl::StrassenMultiply(in.A, in.B, GetOutput(), n, parallel_run);
   } else {
-    std::vector<double> A_pad(np2 * np2, 0), B_pad(np2 * np2, 0), C_pad(np2 * np2, 0);
+    std::vector<double> a_pad(np2 * np2, 0);
+    std::vector<double> b_pad(np2 * np2, 0);
+    std::vector<double> c_pad(np2 * np2, 0);
     for (size_t i = 0; i < n; ++i) {
       for (size_t j = 0; j < n; ++j) {
-        A_pad[i * np2 + j] = in.A[i * n + j];
-        B_pad[i * np2 + j] = in.B[i * n + j];
+        a_pad[(i * np2) + j] = in.A[(i * n) + j];
+        b_pad[(i * np2) + j] = in.B[(i * n) + j];
       }
     }
-    strassen_impl::StrassenMultiply(A_pad, B_pad, C_pad, np2, parallel_run);
+    strassen_impl::StrassenMultiply(a_pad, b_pad, c_pad, np2, parallel_run);
     for (size_t i = 0; i < n; ++i) {
       for (size_t j = 0; j < n; ++j) {
-        GetOutput()[i * n + j] = C_pad[i * np2 + j];
+        GetOutput()[(i * n) + j] = c_pad[(i * np2) + j];
       }
     }
   }
