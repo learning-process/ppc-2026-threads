@@ -193,6 +193,7 @@ void TimofeevNRadixBatcherALL::HandleZero(std::vector<int> &global_array, size_t
       std::copy(global_array.begin(), global_array.begin() + static_cast<int64_t>(elements_per_process),
                 local_array.begin());
     } else {
+      MPI_Send(&num_threads_per_process, 1, MPI_UNSIGNED_LONG_LONG, i, 0, MPI_COMM_WORLD);
       MPI_Send(&elements_per_process, 1, MPI_UNSIGNED_LONG_LONG, i, 0, MPI_COMM_WORLD);
       MPI_Send(global_array.data() + static_cast<int64_t>(i * elements_per_process),
                static_cast<int>(elements_per_process), MPI_INT, i, 0, MPI_COMM_WORLD);
@@ -221,7 +222,9 @@ bool TimofeevNRadixBatcherALL::RunImpl() {
   if (world_rank == 0) {
     HandleZero(global_array, total_elements, total_elements_primal, num_processes, local_array, maxxx,
                num_threads_per_process, elements_per_process);
+    // std::cout << "lbl-1 " << num_threads_per_process << "\n";
   } else if (world_rank < num_processes) {
+    MPI_Recv(&num_threads_per_process, 1, MPI_UNSIGNED_LONG_LONG, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     MPI_Recv(&elements_per_process, 1, MPI_UNSIGNED_LONG_LONG, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     local_array.resize(elements_per_process);
     MPI_Recv(local_array.data(), static_cast<int>(elements_per_process), MPI_INT, 0, 0, MPI_COMM_WORLD,
@@ -229,6 +232,7 @@ bool TimofeevNRadixBatcherALL::RunImpl() {
   }
 
   if (world_rank < num_processes) {
+    // std::cout << "lbl-2 " << num_threads_per_process << "\n";
     ProcessLocalArray(local_array, num_threads_per_process);
   }
 
