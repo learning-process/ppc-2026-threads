@@ -17,9 +17,10 @@ class ZagryadskovMComplexSpMMCCSOMP : public BaseTask {
 
  private:
   static void SpMM(const CCS &a, const CCS &b, CCS &c);
-  static void SpMMkernel(const CCS &a, const CCS &b, const std::complex<double> &zero, double eps,
-                         std::vector<std::vector<int>> &col_rows,
-                         std::vector<std::vector<std::complex<double>>> &col_vals);
+  static void SpMMkernel(const CCS &a, const CCS &b, const std::complex<double> &zero, double eps, int num_threads,
+                         std::vector<std::vector<int>> &t_row_ind,
+                         std::vector<std::vector<std::complex<double>>> &t_values,
+                         std::vector<std::vector<int>> &t_col_ptr);
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
