@@ -7,7 +7,10 @@
 #include <vector>
 
 #include "shilin_n_monte_carlo_integration/common/include/common.hpp"
+#include "shilin_n_monte_carlo_integration/omp/include/ops_omp.hpp"
 #include "shilin_n_monte_carlo_integration/seq/include/ops_seq.hpp"
+#include "shilin_n_monte_carlo_integration/stl/include/ops_stl.hpp"
+#include "shilin_n_monte_carlo_integration/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace shilin_n_monte_carlo_integration {
@@ -44,7 +47,9 @@ TEST_P(ShilinNRunPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ShilinNMonteCarloIntegrationSEQ>(PPC_SETTINGS_shilin_n_monte_carlo_integration);
+    ppc::util::MakeAllPerfTasks<InType, ShilinNMonteCarloIntegrationSEQ, ShilinNMonteCarloIntegrationOMP,
+                                ShilinNMonteCarloIntegrationTBB, ShilinNMonteCarloIntegrationSTL>(
+        PPC_SETTINGS_shilin_n_monte_carlo_integration);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

@@ -8,12 +8,14 @@
 
 #include "util/include/perf_test_util.hpp"
 #include "zavyalov_a_complex_sparse_matrix_mult/common/include/common.hpp"
+#include "zavyalov_a_complex_sparse_matrix_mult/omp/include/ops_omp.hpp"
 #include "zavyalov_a_complex_sparse_matrix_mult/seq/include/ops_seq.hpp"
+#include "zavyalov_a_complex_sparse_matrix_mult/tbb/include/ops_tbb.hpp"
 
-namespace zavyalov_a_compl_sparse_matr_mult {  // comm for ci1
+namespace zavyalov_a_compl_sparse_matr_mult {
 
 class ZavyalovAComplexSparseMatrMultPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr size_t kCount = 1000;
+  static constexpr size_t kCount = 11000;
   InType input_data_;
 
   void SetUp() override {
@@ -43,47 +45,11 @@ class ZavyalovAComplexSparseMatrMultPerfTest : public ppc::util::BaseRunPerfTest
     const SparseMatrix &matr1 = std::get<0>(input_data_);
     const SparseMatrix &matr2 = std::get<1>(input_data_);
 
-    auto matr_a = RestoreDense(matr1, matr1.height, matr1.width);
-    auto matr_b = RestoreDense(matr2, matr2.height, matr2.width);
-
-    auto matr_c = MultiplyDense(matr_a, matr_b);
-
-    SparseMatrix expected(matr_c);
+    SparseMatrix expected(matr1 * matr2);
 
     return CompareSparse(expected, output_data);
   }
 
-  std::vector<std::vector<Complex>> static RestoreDense(const SparseMatrix &matr, size_t rows, size_t cols) {
-    std::vector<std::vector<Complex>> result(rows, std::vector<Complex>(cols, Complex(0.0, 0.0)));
-
-    for (size_t idx = 0; idx < matr.Count(); ++idx) {
-      size_t row = matr.row_ind[idx];
-      size_t col = matr.col_ind[idx];
-      if (row < rows && col < cols) {
-        result[row][col] = matr.val[idx];
-      }
-    }
-
-    return result;
-  }
-  std::vector<std::vector<Complex>> static MultiplyDense(const std::vector<std::vector<Complex>> &a,
-                                                         const std::vector<std::vector<Complex>> &b) {
-    size_t rows = a.size();
-    size_t inner = b.size();
-    size_t cols = b[0].size();
-
-    std::vector<std::vector<Complex>> result(rows, std::vector<Complex>(cols, Complex(0.0, 0.0)));
-
-    for (size_t i = 0; i < rows; ++i) {
-      for (size_t j = 0; j < cols; ++j) {
-        for (size_t k = 0; k < inner; ++k) {
-          result[i][j] += a[i][k] * b[k][j];
-        }
-      }
-    }
-
-    return result;
-  }
   bool static CompareSparse(const SparseMatrix &expected, const SparseMatrix &output) {
     if (expected.Count() != output.Count()) {
       return false;
@@ -117,8 +83,9 @@ TEST_P(ZavyalovAComplexSparseMatrMultPerfTest, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZavyalovAComplSparseMatrMultSEQ>(
-    PPC_SETTINGS_zavyalov_a_complex_sparse_matrix_mult);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, ZavyalovAComplSparseMatrMultSEQ, ZavyalovAComplSparseMatrMultOMP,
+                                ZavyalovAComplSparseMatrMultTBB>(PPC_SETTINGS_zavyalov_a_complex_sparse_matrix_mult);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

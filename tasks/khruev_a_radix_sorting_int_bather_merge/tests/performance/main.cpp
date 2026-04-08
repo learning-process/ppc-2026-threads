@@ -6,6 +6,7 @@
 // #include <ranges>
 
 #include "khruev_a_radix_sorting_int_bather_merge/common/include/common.hpp"
+#include "khruev_a_radix_sorting_int_bather_merge/omp/include/ops_omp.hpp"
 #include "khruev_a_radix_sorting_int_bather_merge/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -59,8 +60,9 @@ TEST_P(KhruevARadixSortingIntBatherMergePerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KhruevARadixSortingIntBatherMergeSEQ>(
-    PPC_SETTINGS_klimenko_v_lsh_contrast_incr_seq);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, KhruevARadixSortingIntBatherMergeSEQ, KhruevARadixSortingIntBatherMergeOMP>(
+        PPC_SETTINGS_khruev_a_radix_sorting_int_bather_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
