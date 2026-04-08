@@ -7,9 +7,9 @@
 #include <string>
 #include <tuple>
 
-#include "mityaeva_radix/omp/include/ops_omp.hpp"
 #include "mityaeva_radix/common/include/common.hpp"
 #include "mityaeva_radix/common/include/test_generator.hpp"
+#include "mityaeva_radix/omp/include/ops_omp.hpp"
 #include "mityaeva_radix/seq/include/ops_seq.hpp"
 #include "mityaeva_radix/stl/include/ops_stl.hpp"
 #include "mityaeva_radix/tbb/include/ops_omp.hpp"
