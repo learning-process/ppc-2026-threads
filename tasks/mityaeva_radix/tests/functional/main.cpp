@@ -12,7 +12,7 @@
 #include "mityaeva_radix/omp/include/ops_omp.hpp"
 #include "mityaeva_radix/seq/include/ops_seq.hpp"
 #include "mityaeva_radix/stl/include/ops_stl.hpp"
-#include "mityaeva_radix/tbb/include/ops_omp.hpp"
+#include "mityaeva_radix/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
