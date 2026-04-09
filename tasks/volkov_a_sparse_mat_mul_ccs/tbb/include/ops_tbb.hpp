@@ -7,10 +7,10 @@
 
 namespace volkov_a_sparse_mat_mul_ccs {
 
-class VolkovASparseMatMulCcsTbb : public ppc::core::Task {
+class VolkovASparseMatMulCcsTbb : public BaseTask {
  public:
-  static constexpr ppc::core::TaskType GetStaticTypeOfTask() {
-    return ppc::core::TaskType::TBB;
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kTBB;
   }
   explicit VolkovASparseMatMulCcsTbb(const InType &in);
 
