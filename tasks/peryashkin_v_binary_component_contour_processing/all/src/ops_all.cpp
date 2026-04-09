@@ -183,7 +183,8 @@ inline std::vector<int> MakeComponentCounts(int total_components, int proc_count
 }
 
 inline std::vector<int> FlattenDistributedComponents(const std::vector<std::vector<Point>> &all_components,
-                                                     const std::vector<int> &comp_counts, std::vector<int> &send_counts) {
+                                                     const std::vector<int> &comp_counts,
+                                                     std::vector<int> &send_counts) {
   std::vector<int> flat_send;
   int comp_offset = 0;
 
