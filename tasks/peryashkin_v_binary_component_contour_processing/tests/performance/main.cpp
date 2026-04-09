@@ -1,9 +1,12 @@
+// tasks/peryashkin_v_binary_component_contour_processing/tests/performance/main.cpp
 #include <gtest/gtest.h>
 
 #include <cstddef>
 #include <tuple>
 #include <vector>
 
+#include "peryashkin_v_binary_component_contour_processing/all/include/ops_all.hpp"
+#include "peryashkin_v_binary_component_contour_processing/all/src/ops_all.cpp"  // NOLINT(bugprone-suspicious-include)
 #include "peryashkin_v_binary_component_contour_processing/common/include/common.hpp"
 #include "peryashkin_v_binary_component_contour_processing/omp/include/ops_omp.hpp"
 #include "peryashkin_v_binary_component_contour_processing/seq/include/ops_seq.hpp"
@@ -64,6 +67,8 @@ const auto kAllPerfTasks =
                    ppc::util::MakeAllPerfTasks<InType, PeryashkinVBinaryComponentContourProcessingTBB>(
                        PPC_SETTINGS_peryashkin_v_binary_component_contour_processing),
                    ppc::util::MakeAllPerfTasks<InType, PeryashkinVBinaryComponentContourProcessingSTL>(
+                       PPC_SETTINGS_peryashkin_v_binary_component_contour_processing),
+                   ppc::util::MakeAllPerfTasks<InType, PeryashkinVBinaryComponentContourProcessingALL>(
                        PPC_SETTINGS_peryashkin_v_binary_component_contour_processing));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
