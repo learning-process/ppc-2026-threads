@@ -9,22 +9,22 @@
 
 namespace nesterov_a_test_task_threads {
 
-NesterovATestTaskOMP::NesterovATestTaskOMP(const InType &in) {
+ZhurinIGaussKernelOMP::ZhurinIGaussKernelOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
 }
 
-bool NesterovATestTaskOMP::ValidationImpl() {
+bool ZhurinIGaussKernelOMP::ValidationImpl() {
   return (GetInput() > 0) && (GetOutput() == 0);
 }
 
-bool NesterovATestTaskOMP::PreProcessingImpl() {
+bool ZhurinIGaussKernelOMP::PreProcessingImpl() {
   GetOutput() = 2 * GetInput();
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskOMP::RunImpl() {
+bool ZhurinIGaussKernelOMP::RunImpl() {
   for (InType i = 0; i < GetInput(); i++) {
     for (InType j = 0; j < GetInput(); j++) {
       for (InType k = 0; k < GetInput(); k++) {
@@ -46,7 +46,7 @@ bool NesterovATestTaskOMP::RunImpl() {
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskOMP::PostProcessingImpl() {
+bool ZhurinIGaussKernelOMP::PostProcessingImpl() {
   GetOutput() -= GetInput();
   return GetOutput() > 0;
 }
