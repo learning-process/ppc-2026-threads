@@ -4,8 +4,9 @@
 #include <tuple>
 
 #include "sabirov_s_monte_carlo/common/include/common.hpp"
-#include "sabirov_s_monte_carlo/omp/include/ops_seq.hpp"
+#include "sabirov_s_monte_carlo/omp/include/ops_omp.hpp"
 #include "sabirov_s_monte_carlo/seq/include/ops_seq.hpp"
+#include "sabirov_s_monte_carlo/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace sabirov_s_monte_carlo {
@@ -37,7 +38,8 @@ namespace {
 
 const auto kAllPerfTasks =
     std::tuple_cat(ppc::util::MakePerfTaskTuples<SabirovSMonteCarloSEQ, InType>(PPC_SETTINGS_sabirov_s_monte_carlo),
-                   ppc::util::MakePerfTaskTuples<SabirovSMonteCarloOMP, InType>(PPC_SETTINGS_sabirov_s_monte_carlo));
+                   ppc::util::MakePerfTaskTuples<SabirovSMonteCarloOMP, InType>(PPC_SETTINGS_sabirov_s_monte_carlo),
+                   ppc::util::MakePerfTaskTuples<SabirovSMonteCarloTBB, InType>(PPC_SETTINGS_sabirov_s_monte_carlo));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
