@@ -19,7 +19,7 @@ class ZagryadskovMComplexSpMMCCSSTL : public BaseTask {
   inline static void SpMM(const CCS &a, const CCS &b, CCS &c);
   inline static void SpMMSymbolic(const CCS &a, const CCS &b, std::vector<int> &col_ptr, int jstart, int jend);
   inline static void SpMMNumeric(const CCS &a, const CCS &b, CCS &c, const std::complex<double> &zero, int jstart,
-                                int jend);
+                                 int jend);
   inline static void SpMMKernel(const CCS &a, const CCS &b, CCS &c, const std::complex<double> &zero,
                                 std::vector<int> &rows, std::vector<std::complex<double>> &acc,
                                 std::vector<int> &marker, int j);
