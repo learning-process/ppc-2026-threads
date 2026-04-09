@@ -9,6 +9,7 @@
 
 #include "task/include/task.hpp"
 #include "titaev_m_sortirovka_betchera/common/include/common.hpp"
+#include "titaev_m_sortirovka_betchera/omp/include/ops_omp.hpp"
 #include "titaev_m_sortirovka_betchera/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 
@@ -66,12 +67,21 @@ std::shared_ptr<ppc::task::Task<InType, OutType>> MakeSeqTask(const InType &in) 
   return std::make_shared<TitaevSortirovkaBetcheraSEQ>(in);
 }
 
+std::shared_ptr<ppc::task::Task<InType, OutType>> MakeOmpTask(const InType &in) {
+  return std::make_shared<TitaevSortirovkaBetcheraOMP>(in);
+}
+
 const ParamType kParamSmall{MakeSeqTask, "titaev_m_sortirovka_betchera_seq_size_100", TestType{100, "size_100"}};
 const ParamType kParamMedium{MakeSeqTask, "titaev_m_sortirovka_betchera_seq_size_500", TestType{500, "size_500"}};
 const ParamType kParamLarge{MakeSeqTask, "titaev_m_sortirovka_betchera_seq_size_1000", TestType{1000, "size_1000"}};
 
+const ParamType kParamSmallOMP{MakeOmpTask, "titaev_m_sortirovka_betchera_omp_size_100", TestType{100, "size_100"}};
+const ParamType kParamMediumOMP{MakeOmpTask, "titaev_m_sortirovka_betchera_omp_size_500", TestType{500, "size_500"}};
+const ParamType kParamLargeOMP{MakeOmpTask, "titaev_m_sortirovka_betchera_omp_size_1000", TestType{1000, "size_1000"}};
+
 INSTANTIATE_TEST_SUITE_P(FunctionalSortingTests, TitaevBatcherRadixFuncTests,
-                         ::testing::Values(kParamSmall, kParamMedium, kParamLarge),
+                         ::testing::Values(kParamSmall, kParamMedium, kParamLarge, kParamSmallOMP, kParamMediumOMP,
+                                           kParamLargeOMP),
                          TitaevBatcherRadixFuncTests::PrintTestParam);
 
 }  // namespace
