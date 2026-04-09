@@ -1,4 +1,4 @@
-#include "vlasova_a_simpson_method_seq/seq/include/ops_seq.hpp"
+#include "vlasova_a_simpson_method/seq/include/ops_seq.hpp"
 
 #include <cmath>
 #include <cstddef>
@@ -6,9 +6,9 @@
 #include <utility>
 #include <vector>
 
-#include "vlasova_a_simpson_method_seq/common/include/common.hpp"
+#include "vlasova_a_simpson_method/common/include/common.hpp"
 
-namespace vlasova_a_simpson_method_seq {
+namespace vlasova_a_simpson_method {
 
 VlasovaASimpsonMethodSEQ::VlasovaASimpsonMethodSEQ(InType in) : task_data_(std::move(in)) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -133,4 +133,4 @@ bool VlasovaASimpsonMethodSEQ::PostProcessingImpl() {
   return std::isfinite(GetOutput());
 }
 
-}  // namespace vlasova_a_simpson_method_seq
+}  // namespace vlasova_a_simpson_method

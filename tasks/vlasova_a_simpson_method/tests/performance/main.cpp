@@ -4,10 +4,11 @@
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
-#include "vlasova_a_simpson_method_seq/common/include/common.hpp"
-#include "vlasova_a_simpson_method_seq/seq/include/ops_seq.hpp"
+#include "vlasova_a_simpson_method/common/include/common.hpp"
+#include "vlasova_a_simpson_method/omp/include/ops_omp.hpp"
+#include "vlasova_a_simpson_method/seq/include/ops_seq.hpp"
 
-namespace vlasova_a_simpson_method_seq {
+namespace vlasova_a_simpson_method {
 
 namespace {
 double Gaussian3D(const std::vector<double> &x) {
@@ -42,8 +43,8 @@ TEST_P(VlasovaASimpsonMethodPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, VlasovaASimpsonMethodSEQ>(PPC_SETTINGS_vlasova_a_simpson_method_seq);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, VlasovaASimpsonMethodSEQ, VlasovaASimpsonMethodOMP>(
+    PPC_SETTINGS_vlasova_a_simpson_method);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = VlasovaASimpsonMethodPerfTests::CustomPerfTestName;
@@ -52,4 +53,4 @@ INSTANTIATE_TEST_SUITE_P(SimpsonMethodPerfTests, VlasovaASimpsonMethodPerfTests,
 
 }  // namespace
 
-}  // namespace vlasova_a_simpson_method_seq
+}  // namespace vlasova_a_simpson_method
