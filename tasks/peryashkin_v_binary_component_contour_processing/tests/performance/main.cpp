@@ -4,6 +4,7 @@
 #include <tuple>
 #include <vector>
 
+#include "peryashkin_v_binary_component_contour_processing/all/include/ops_all.hpp"
 #include "peryashkin_v_binary_component_contour_processing/common/include/common.hpp"
 #include "peryashkin_v_binary_component_contour_processing/omp/include/ops_omp.hpp"
 #include "peryashkin_v_binary_component_contour_processing/seq/include/ops_seq.hpp"
@@ -64,6 +65,8 @@ const auto kAllPerfTasks =
                    ppc::util::MakeAllPerfTasks<InType, PeryashkinVBinaryComponentContourProcessingTBB>(
                        PPC_SETTINGS_peryashkin_v_binary_component_contour_processing),
                    ppc::util::MakeAllPerfTasks<InType, PeryashkinVBinaryComponentContourProcessingSTL>(
+                       PPC_SETTINGS_peryashkin_v_binary_component_contour_processing),
+                   ppc::util::MakeAllPerfTasks<InType, PeryashkinVBinaryComponentContourProcessingALL>(
                        PPC_SETTINGS_peryashkin_v_binary_component_contour_processing));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
