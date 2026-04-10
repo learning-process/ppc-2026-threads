@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <execution>
 #include <numeric>
 #include <vector>
 
@@ -17,7 +16,7 @@ Matrix AddMatrixImpl(const Matrix &a, const Matrix &b) {
   int n = a.size;
   Matrix result(n);
 
-  std::transform(std::execution::par, a.data.begin(), a.data.end(), b.data.begin(), result.data.begin(),
+  std::transform(a.data.begin(), a.data.end(), b.data.begin(), result.data.begin(),
                  [](double x, double y) { return x + y; });
 
   return result;
@@ -27,7 +26,7 @@ Matrix SubtractMatrixImpl(const Matrix &a, const Matrix &b) {
   int n = a.size;
   Matrix result(n);
 
-  std::transform(std::execution::par, a.data.begin(), a.data.end(), b.data.begin(), result.data.begin(),
+  std::transform(a.data.begin(), a.data.end(), b.data.begin(), result.data.begin(),
                  [](double x, double y) { return x - y; });
 
   return result;
@@ -37,10 +36,7 @@ Matrix MultiplyStandardImpl(const Matrix &a, const Matrix &b) {
   int n = a.size;
   Matrix result(n);
 
-  std::vector<int> indices(n);
-  std::ranges::iota(indices, 0);
-
-  std::for_each(std::execution::par, indices.begin(), indices.end(), [&a, &b, &result, n](int i) {
+  for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
       double sum = 0.0;
       for (int k = 0; k < n; ++k) {
@@ -48,7 +44,7 @@ Matrix MultiplyStandardImpl(const Matrix &a, const Matrix &b) {
       }
       result(i, j) = sum;
     }
-  });
+  }
 
   return result;
 }
@@ -57,17 +53,14 @@ void SplitMatrixImpl(const Matrix &m, Matrix &m11, Matrix &m12, Matrix &m21, Mat
   int n = m.size;
   int half = n / 2;
 
-  std::vector<int> indices(half);
-  std::ranges::iota(indices, 0);
-
-  std::for_each(std::execution::par, indices.begin(), indices.end(), [&m, &m11, &m12, &m21, &m22, half](int i) {
+  for (int i = 0; i < half; ++i) {
     for (int j = 0; j < half; ++j) {
       m11(i, j) = m(i, j);
       m12(i, j) = m(i, j + half);
       m21(i, j) = m(i + half, j);
       m22(i, j) = m(i + half, j + half);
     }
-  });
+  }
 }
 
 Matrix MergeMatricesImpl(const Matrix &m11, const Matrix &m12, const Matrix &m21, const Matrix &m22) {
@@ -75,37 +68,14 @@ Matrix MergeMatricesImpl(const Matrix &m11, const Matrix &m12, const Matrix &m21
   int n = 2 * half;
   Matrix result(n);
 
-  std::vector<int> indices(half);
-  std::ranges::iota(indices, 0);
-
-  std::for_each(std::execution::par, indices.begin(), indices.end(), [&m11, &m12, &m21, &m22, &result, half](int i) {
+  for (int i = 0; i < half; ++i) {
     for (int j = 0; j < half; ++j) {
       result(i, j) = m11(i, j);
       result(i, j + half) = m12(i, j);
       result(i + half, j) = m21(i, j);
       result(i + half, j + half) = m22(i, j);
     }
-  });
-
-  return result;
-}
-
-Matrix MultiplyStandardParallelImpl(const Matrix &a, const Matrix &b) {
-  int n = a.size;
-  Matrix result(n);
-
-  std::vector<int> indices(n);
-  std::ranges::iota(indices, 0);
-
-  std::for_each(std::execution::par, indices.begin(), indices.end(), [&a, &b, &result, n](int i) {
-    for (int j = 0; j < n; ++j) {
-      double sum = 0.0;
-      for (int k = 0; k < n; ++k) {
-        sum += a(i, k) * b(k, j);
-      }
-      result(i, j) = sum;
-    }
-  });
+  }
 
   return result;
 }
@@ -114,7 +84,7 @@ Matrix MultiplyStrassenIterative(const Matrix &a, const Matrix &b, int leaf_size
   int n = a.size;
 
   if (n <= leaf_size || n % 2 != 0) {
-    return MultiplyStandardParallelImpl(a, b);
+    return MultiplyStandardImpl(a, b);
   }
 
   int half = n / 2;
@@ -131,13 +101,13 @@ Matrix MultiplyStrassenIterative(const Matrix &a, const Matrix &b, int leaf_size
   SplitMatrixImpl(a, a11, a12, a21, a22);
   SplitMatrixImpl(b, b11, b12, b21, b22);
 
-  Matrix p1 = MultiplyStandardParallelImpl(a11, SubtractMatrixImpl(b12, b22));
-  Matrix p2 = MultiplyStandardParallelImpl(AddMatrixImpl(a11, a12), b22);
-  Matrix p3 = MultiplyStandardParallelImpl(AddMatrixImpl(a21, a22), b11);
-  Matrix p4 = MultiplyStandardParallelImpl(a22, SubtractMatrixImpl(b21, b11));
-  Matrix p5 = MultiplyStandardParallelImpl(AddMatrixImpl(a11, a22), AddMatrixImpl(b11, b22));
-  Matrix p6 = MultiplyStandardParallelImpl(SubtractMatrixImpl(a12, a22), AddMatrixImpl(b21, b22));
-  Matrix p7 = MultiplyStandardParallelImpl(SubtractMatrixImpl(a11, a21), AddMatrixImpl(b11, b12));
+  Matrix p1 = MultiplyStandardImpl(a11, SubtractMatrixImpl(b12, b22));
+  Matrix p2 = MultiplyStandardImpl(AddMatrixImpl(a11, a12), b22);
+  Matrix p3 = MultiplyStandardImpl(AddMatrixImpl(a21, a22), b11);
+  Matrix p4 = MultiplyStandardImpl(a22, SubtractMatrixImpl(b21, b11));
+  Matrix p5 = MultiplyStandardImpl(AddMatrixImpl(a11, a22), AddMatrixImpl(b11, b22));
+  Matrix p6 = MultiplyStandardImpl(SubtractMatrixImpl(a12, a22), AddMatrixImpl(b21, b22));
+  Matrix p7 = MultiplyStandardImpl(SubtractMatrixImpl(a11, a21), AddMatrixImpl(b11, b12));
 
   Matrix c11 = AddMatrixImpl(SubtractMatrixImpl(AddMatrixImpl(p5, p4), p2), p6);
   Matrix c12 = AddMatrixImpl(p1, p2);
@@ -208,7 +178,7 @@ bool MorozovaSStrassenMultiplicationSTL::RunImpl() {
   const int leaf_size = 64;
 
   if (n_ <= leaf_size) {
-    c_ = MultiplyStandardParallelImpl(a_, b_);
+    c_ = MultiplyStandardImpl(a_, b_);
   } else {
     c_ = MultiplyStrassenIterative(a_, b_, leaf_size);
   }
@@ -262,7 +232,7 @@ Matrix MorozovaSStrassenMultiplicationSTL::MultiplyStrassen(const Matrix &a, con
 }
 
 Matrix MorozovaSStrassenMultiplicationSTL::MultiplyStandardParallel(const Matrix &a, const Matrix &b) {
-  return MultiplyStandardParallelImpl(a, b);
+  return MultiplyStandardImpl(a, b);
 }
 
 }  // namespace morozova_s_strassen_multiplication
