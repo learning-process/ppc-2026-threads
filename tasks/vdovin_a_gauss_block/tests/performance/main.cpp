@@ -2,7 +2,9 @@
 
 #include "util/include/perf_test_util.hpp"
 #include "vdovin_a_gauss_block/common/include/common.hpp"
+#include "vdovin_a_gauss_block/omp/include/ops_omp.hpp"
 #include "vdovin_a_gauss_block/seq/include/ops_seq.hpp"
+#include "vdovin_a_gauss_block/tbb/include/ops_tbb.hpp"
 
 namespace vdovin_a_gauss_block {
 
@@ -29,7 +31,9 @@ TEST_P(VdovinAGaussBlockPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, VdovinAGaussBlockSEQ>(PPC_SETTINGS_vdovin_a_gauss_block);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, VdovinAGaussBlockSEQ, VdovinAGaussBlockOMP, VdovinAGaussBlockTBB>(
+        PPC_SETTINGS_vdovin_a_gauss_block);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "posternak_a_crs_mul_complex_matrix/common/include/common.hpp"
+#include "posternak_a_crs_mul_complex_matrix/omp/include/ops_omp.hpp"
 #include "posternak_a_crs_mul_complex_matrix/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -178,8 +179,10 @@ const std::array<TestType, 6> kTestParams = {
     std::make_tuple(2, "multiply_by_identity"), std::make_tuple(3, "empty_matrices"),
     std::make_tuple(4, "multiply_by_zero"),     std::make_tuple(5, "complex_4x3_3x4")};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<PosternakACRSMulComplexMatrixSEQ, InType>(
-    kTestParams, PPC_SETTINGS_posternak_a_crs_mul_complex_matrix);
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<PosternakACRSMulComplexMatrixSEQ, InType>(
+                                               kTestParams, PPC_SETTINGS_posternak_a_crs_mul_complex_matrix),
+                                           ppc::util::AddFuncTask<PosternakACRSMulComplexMatrixOMP, InType>(
+                                               kTestParams, PPC_SETTINGS_posternak_a_crs_mul_complex_matrix));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

@@ -4,6 +4,7 @@
 #include <numbers>
 
 #include "shakirova_e_sobel_edge_detection/common/include/common.hpp"
+#include "shakirova_e_sobel_edge_detection/omp/include/ops_omp.hpp"
 #include "shakirova_e_sobel_edge_detection/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -63,7 +64,8 @@ TEST_P(ShakirovaESobelEdgeDetectionPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ShakirovaESobelEdgeDetectionSEQ>(PPC_SETTINGS_shakirova_e_sobel_edge_detection);
+    ppc::util::MakeAllPerfTasks<InType, ShakirovaESobelEdgeDetectionSEQ, ShakirovaESobelEdgeDetectionOMP>(
+        PPC_SETTINGS_shakirova_e_sobel_edge_detection);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

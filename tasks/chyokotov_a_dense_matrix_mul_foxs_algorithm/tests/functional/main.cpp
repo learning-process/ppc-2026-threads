@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "chyokotov_a_dense_matrix_mul_foxs_algorithm/common/include/common.hpp"
+#include "chyokotov_a_dense_matrix_mul_foxs_algorithm/omp/include/ops_omp.hpp"
 #include "chyokotov_a_dense_matrix_mul_foxs_algorithm/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -87,6 +88,7 @@ const std::array<TestType, 4> kTestParam = {
 };
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<ChyokotovADenseMatMulFoxAlgorithmOMP, InType>(kTestParam, PPC_SETTINGS_example_threads),
     ppc::util::AddFuncTask<ChyokotovADenseMatMulFoxAlgorithmSEQ, InType>(kTestParam, PPC_SETTINGS_example_threads));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

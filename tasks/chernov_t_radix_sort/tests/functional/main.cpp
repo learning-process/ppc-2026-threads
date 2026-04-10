@@ -11,6 +11,7 @@
 #include "chernov_t_radix_sort/common/include/common.hpp"
 #include "chernov_t_radix_sort/omp/include/ops_omp.hpp"
 #include "chernov_t_radix_sort/seq/include/ops_seq.hpp"
+#include "chernov_t_radix_sort/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -62,7 +63,8 @@ const std::array<TestType, 8> kTestParam = {
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<ChernovTRadixSortSEQ, InType>(kTestParam, PPC_SETTINGS_chernov_t_radix_sort),
-                   ppc::util::AddFuncTask<ChernovTRadixSortOMP, InType>(kTestParam, PPC_SETTINGS_chernov_t_radix_sort));
+                   ppc::util::AddFuncTask<ChernovTRadixSortOMP, InType>(kTestParam, PPC_SETTINGS_chernov_t_radix_sort),
+                   ppc::util::AddFuncTask<ChernovTRadixSortTBB, InType>(kTestParam, PPC_SETTINGS_chernov_t_radix_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

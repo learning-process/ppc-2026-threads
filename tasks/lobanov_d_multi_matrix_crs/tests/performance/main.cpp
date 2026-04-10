@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "lobanov_d_multi_matrix_crs/common/include/common.hpp"
-#include "lobanov_d_multi_matrix_crs/seq/include/ops_seq.hpp"
+#include "lobanov_d_multi_matrix_crs/omp/include/ops_omp.hpp"
 
 namespace lobanov_d_multi_matrix_crs {
 namespace {
@@ -119,7 +119,7 @@ class LobanovDMultiplyMatrixPerfTest : public ::testing::TestWithParam<std::tupl
             CreateRandomCompressedRowMatrix(dimension, dimension, density, 200)};
   }
 
-  static bool ExecuteTask(LobanovMultyMatrixSEQ &task) {
+  static bool ExecuteTask(LobanovMultyMatrixOMP &task) {
     return task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing();
   }
 
@@ -154,7 +154,7 @@ class LobanovDMultiplyMatrixPerfTest : public ::testing::TestWithParam<std::tupl
   void RunPerformanceTest() {
     // Подготовка
     const auto [matrix_a, matrix_b] = PrepareMatrices();
-    LobanovMultyMatrixSEQ task(std::make_pair(matrix_a, matrix_b));
+    LobanovMultyMatrixOMP task(std::make_pair(matrix_a, matrix_b));
 
     // Выполнение с измерением времени
     const auto duration = MeasureTime([&]() { ASSERT_TRUE(ExecuteTask(task)); });

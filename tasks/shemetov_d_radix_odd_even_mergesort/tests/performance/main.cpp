@@ -8,6 +8,7 @@
 #include "shemetov_d_radix_odd_even_mergesort/common/include/common.hpp"
 #include "shemetov_d_radix_odd_even_mergesort/omp/include/ops_omp.hpp"
 #include "shemetov_d_radix_odd_even_mergesort/seq/include/ops_seq.hpp"
+#include "shemetov_d_radix_odd_even_mergesort/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace shemetov_d_radix_odd_even_mergesort {
@@ -46,8 +47,8 @@ TEST_P(ShemetovDRunPerfTestsThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ShemetovDRadixOddEvenMergeSortSEQ, ShemetovDRadixOddEvenMergeSortOMP>(
-        PPC_SETTINGS_shemetov_d_radix_odd_even_mergesort);
+    ppc::util::MakeAllPerfTasks<InType, ShemetovDRadixOddEvenMergeSortSEQ, ShemetovDRadixOddEvenMergeSortOMP,
+                                ShemetovDRadixOddEvenMergeSortTBB>(PPC_SETTINGS_shemetov_d_radix_odd_even_mergesort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

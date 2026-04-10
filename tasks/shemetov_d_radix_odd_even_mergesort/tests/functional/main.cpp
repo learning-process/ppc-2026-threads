@@ -11,6 +11,7 @@
 #include "shemetov_d_radix_odd_even_mergesort/common/include/common.hpp"
 #include "shemetov_d_radix_odd_even_mergesort/omp/include/ops_omp.hpp"
 #include "shemetov_d_radix_odd_even_mergesort/seq/include/ops_seq.hpp"
+#include "shemetov_d_radix_odd_even_mergesort/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -101,6 +102,8 @@ const std::array<TestType, 12> kTestParam = {
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ShemetovDRadixOddEvenMergeSortSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_shemetov_d_radix_odd_even_mergesort),
                                            ppc::util::AddFuncTask<ShemetovDRadixOddEvenMergeSortOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_shemetov_d_radix_odd_even_mergesort),
+                                           ppc::util::AddFuncTask<ShemetovDRadixOddEvenMergeSortTBB, InType>(
                                                kTestParam, PPC_SETTINGS_shemetov_d_radix_odd_even_mergesort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

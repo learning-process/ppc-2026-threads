@@ -8,6 +8,8 @@
 #include "sokolov_k_matrix_double_fox/common/include/common.hpp"
 #include "sokolov_k_matrix_double_fox/omp/include/ops_omp.hpp"
 #include "sokolov_k_matrix_double_fox/seq/include/ops_seq.hpp"
+#include "sokolov_k_matrix_double_fox/stl/include/ops_stl.hpp"
+#include "sokolov_k_matrix_double_fox/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -58,7 +60,9 @@ const std::array<TestType, 12> kTestParam = {std::make_tuple(1, "single_element"
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<SokolovKMatrixDoubleFoxOMP, InType>(kTestParam, PPC_SETTINGS_sokolov_k_matrix_double_fox),
-    ppc::util::AddFuncTask<SokolovKMatrixDoubleFoxSEQ, InType>(kTestParam, PPC_SETTINGS_sokolov_k_matrix_double_fox));
+    ppc::util::AddFuncTask<SokolovKMatrixDoubleFoxSEQ, InType>(kTestParam, PPC_SETTINGS_sokolov_k_matrix_double_fox),
+    ppc::util::AddFuncTask<SokolovKMatrixDoubleFoxSTL, InType>(kTestParam, PPC_SETTINGS_sokolov_k_matrix_double_fox),
+    ppc::util::AddFuncTask<SokolovKMatrixDoubleFoxTBB, InType>(kTestParam, PPC_SETTINGS_sokolov_k_matrix_double_fox));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

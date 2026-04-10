@@ -1,7 +1,11 @@
 #include <gtest/gtest.h>
 
+#include "kamaletdinov_r_bitwise_int/all/include/ops_all.hpp"
 #include "kamaletdinov_r_bitwise_int/common/include/common.hpp"
+#include "kamaletdinov_r_bitwise_int/omp/include/ops_omp.hpp"
 #include "kamaletdinov_r_bitwise_int/seq/include/ops_seq.hpp"
+#include "kamaletdinov_r_bitwise_int/stl/include/ops_stl.hpp"
+#include "kamaletdinov_r_bitwise_int/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace kamaletdinov_r_bitwise_int {
@@ -30,7 +34,9 @@ TEST_P(KamaletdinovRBitwiseIntRunPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KamaletdinovRBitwiseIntSEQ>(PPC_SETTINGS_kamaletdinov_r_bitwise_int);
+    ppc::util::MakeAllPerfTasks<InType, KamaletdinovRBitwiseIntALL, KamaletdinovRBitwiseIntOMP,
+                                KamaletdinovRBitwiseIntSEQ, KamaletdinovRBitwiseIntSTL, KamaletdinovRBitwiseIntTBB>(
+        PPC_SETTINGS_kamaletdinov_r_bitwise_int);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

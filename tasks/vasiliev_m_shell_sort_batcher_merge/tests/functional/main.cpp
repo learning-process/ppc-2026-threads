@@ -14,11 +14,12 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 #include "vasiliev_m_shell_sort_batcher_merge/common/include/common.hpp"
+#include "vasiliev_m_shell_sort_batcher_merge/omp/include/ops_omp.hpp"
 #include "vasiliev_m_shell_sort_batcher_merge/seq/include/ops_seq.hpp"
 
 namespace vasiliev_m_shell_sort_batcher_merge {
 
-class VasilievMShellSortBatcherMergeFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class VasilievMShellSortBatcherMergeFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     std::string name = std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -85,7 +86,7 @@ class VasilievMShellSortBatcherMergeFuncTestsSEQ : public ppc::util::BaseRunFunc
 
 namespace {
 
-TEST_P(VasilievMShellSortBatcherMergeFuncTestsSEQ, BatcherSorting) {
+TEST_P(VasilievMShellSortBatcherMergeFuncTests, BatcherSorting) {
   ExecuteTest(GetParam());
 }
 
@@ -94,14 +95,16 @@ const std::array<TestType, 6> kTestParam = {std::make_tuple(0, "test_vec_1.txt")
                                             std::make_tuple(4, "test_vec_5.txt"), std::make_tuple(5, "test_vec_6.txt")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<VasilievMShellSortBatcherMergeSEQ, InType>(
-    kTestParam, PPC_SETTINGS_vasiliev_m_shell_sort_batcher_merge));
+                                               kTestParam, PPC_SETTINGS_vasiliev_m_shell_sort_batcher_merge),
+                                           ppc::util::AddFuncTask<VasilievMShellSortBatcherMergeOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_vasiliev_m_shell_sort_batcher_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName =
-    VasilievMShellSortBatcherMergeFuncTestsSEQ::PrintFuncTestName<VasilievMShellSortBatcherMergeFuncTestsSEQ>;
+    VasilievMShellSortBatcherMergeFuncTests::PrintFuncTestName<VasilievMShellSortBatcherMergeFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(FuncBatcherTests, VasilievMShellSortBatcherMergeFuncTestsSEQ, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(FuncBatcherTests, VasilievMShellSortBatcherMergeFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 

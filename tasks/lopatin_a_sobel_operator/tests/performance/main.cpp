@@ -5,6 +5,7 @@
 #include <random>
 
 #include "lopatin_a_sobel_operator/common/include/common.hpp"
+#include "lopatin_a_sobel_operator/omp/include/ops_omp.hpp"
 #include "lopatin_a_sobel_operator/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -15,8 +16,8 @@ class LopatinARunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
   OutType output_chekup_data_;
 
   void SetUp() override {
-    std::size_t height = 3840;
-    std::size_t width = 2160;
+    std::size_t height = 7680;
+    std::size_t width = 4320;
 
     input_data_.height = height;
     input_data_.width = width;
@@ -49,8 +50,8 @@ TEST_P(LopatinARunPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, LopatinASobelOperatorSEQ>(PPC_SETTINGS_lopatin_a_sobel_operator);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LopatinASobelOperatorSEQ, LopatinASobelOperatorOMP>(
+    PPC_SETTINGS_lopatin_a_sobel_operator);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

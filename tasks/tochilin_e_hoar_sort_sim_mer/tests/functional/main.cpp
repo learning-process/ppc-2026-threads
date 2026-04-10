@@ -8,6 +8,7 @@
 #include <tuple>
 
 #include "tochilin_e_hoar_sort_sim_mer/common/include/common.hpp"
+#include "tochilin_e_hoar_sort_sim_mer/omp/include/ops_omp.hpp"
 #include "tochilin_e_hoar_sort_sim_mer/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -78,6 +79,7 @@ const std::array<TestType, 8> kTestParam = {
     std::make_tuple(127, "ReverseSorted"), std::make_tuple(512, "LargeSize")};
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<TochilinEHoarSortSimMerOMP, InType>(kTestParam, PPC_SETTINGS_tochilin_e_hoar_sort_sim_mer),
     ppc::util::AddFuncTask<TochilinEHoarSortSimMerSEQ, InType>(kTestParam, PPC_SETTINGS_tochilin_e_hoar_sort_sim_mer));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
