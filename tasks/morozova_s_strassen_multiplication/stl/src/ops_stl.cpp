@@ -38,7 +38,7 @@ Matrix MultiplyStandardImpl(const Matrix &a, const Matrix &b) {
   Matrix result(n);
 
   std::vector<int> indices(n);
-  std::iota(indices.begin(), indices.end(), 0);
+  std::ranges::iota(indices, 0);
 
   std::for_each(std::execution::par, indices.begin(), indices.end(), [&a, &b, &result, n](int i) {
     for (int j = 0; j < n; ++j) {
@@ -58,7 +58,7 @@ void SplitMatrixImpl(const Matrix &m, Matrix &m11, Matrix &m12, Matrix &m21, Mat
   int half = n / 2;
 
   std::vector<int> indices(half);
-  std::iota(indices.begin(), indices.end(), 0);
+  std::ranges::iota(indices, 0);
 
   std::for_each(std::execution::par, indices.begin(), indices.end(), [&m, &m11, &m12, &m21, &m22, half](int i) {
     for (int j = 0; j < half; ++j) {
@@ -76,7 +76,7 @@ Matrix MergeMatricesImpl(const Matrix &m11, const Matrix &m12, const Matrix &m21
   Matrix result(n);
 
   std::vector<int> indices(half);
-  std::iota(indices.begin(), indices.end(), 0);
+  std::ranges::iota(indices, 0);
 
   std::for_each(std::execution::par, indices.begin(), indices.end(), [&m11, &m12, &m21, &m22, &result, half](int i) {
     for (int j = 0; j < half; ++j) {
@@ -95,7 +95,7 @@ Matrix MultiplyStandardParallelImpl(const Matrix &a, const Matrix &b) {
   Matrix result(n);
 
   std::vector<int> indices(n);
-  std::iota(indices.begin(), indices.end(), 0);
+  std::ranges::iota(indices, 0);
 
   std::for_each(std::execution::par, indices.begin(), indices.end(), [&a, &b, &result, n](int i) {
     for (int j = 0; j < n; ++j) {
