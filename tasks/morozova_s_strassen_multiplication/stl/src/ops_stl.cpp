@@ -1,0 +1,268 @@
+#include "morozova_s_strassen_multiplication/stl/include/ops_stl.hpp"
+
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <execution>
+#include <numeric>
+#include <vector>
+
+#include "morozova_s_strassen_multiplication/common/include/common.hpp"
+
+namespace morozova_s_strassen_multiplication {
+
+namespace {
+
+Matrix AddMatrixImpl(const Matrix &a, const Matrix &b) {
+  int n = a.size;
+  Matrix result(n);
+
+  std::transform(std::execution::par, a.data.begin(), a.data.end(), b.data.begin(), result.data.begin(),
+                 [](double x, double y) { return x + y; });
+
+  return result;
+}
+
+Matrix SubtractMatrixImpl(const Matrix &a, const Matrix &b) {
+  int n = a.size;
+  Matrix result(n);
+
+  std::transform(std::execution::par, a.data.begin(), a.data.end(), b.data.begin(), result.data.begin(),
+                 [](double x, double y) { return x - y; });
+
+  return result;
+}
+
+Matrix MultiplyStandardImpl(const Matrix &a, const Matrix &b) {
+  int n = a.size;
+  Matrix result(n);
+
+  std::vector<int> indices(n);
+  std::iota(indices.begin(), indices.end(), 0);
+
+  std::for_each(std::execution::par, indices.begin(), indices.end(), [&a, &b, &result, n](int i) {
+    for (int j = 0; j < n; ++j) {
+      double sum = 0.0;
+      for (int k = 0; k < n; ++k) {
+        sum += a(i, k) * b(k, j);
+      }
+      result(i, j) = sum;
+    }
+  });
+
+  return result;
+}
+
+void SplitMatrixImpl(const Matrix &m, Matrix &m11, Matrix &m12, Matrix &m21, Matrix &m22) {
+  int n = m.size;
+  int half = n / 2;
+
+  std::vector<int> indices(half);
+  std::iota(indices.begin(), indices.end(), 0);
+
+  std::for_each(std::execution::par, indices.begin(), indices.end(), [&m, &m11, &m12, &m21, &m22, half](int i) {
+    for (int j = 0; j < half; ++j) {
+      m11(i, j) = m(i, j);
+      m12(i, j) = m(i, j + half);
+      m21(i, j) = m(i + half, j);
+      m22(i, j) = m(i + half, j + half);
+    }
+  });
+}
+
+Matrix MergeMatricesImpl(const Matrix &m11, const Matrix &m12, const Matrix &m21, const Matrix &m22) {
+  int half = m11.size;
+  int n = 2 * half;
+  Matrix result(n);
+
+  std::vector<int> indices(half);
+  std::iota(indices.begin(), indices.end(), 0);
+
+  std::for_each(std::execution::par, indices.begin(), indices.end(), [&m11, &m12, &m21, &m22, &result, half](int i) {
+    for (int j = 0; j < half; ++j) {
+      result(i, j) = m11(i, j);
+      result(i, j + half) = m12(i, j);
+      result(i + half, j) = m21(i, j);
+      result(i + half, j + half) = m22(i, j);
+    }
+  });
+
+  return result;
+}
+
+Matrix MultiplyStandardParallelImpl(const Matrix &a, const Matrix &b) {
+  int n = a.size;
+  Matrix result(n);
+
+  std::vector<int> indices(n);
+  std::iota(indices.begin(), indices.end(), 0);
+
+  std::for_each(std::execution::par, indices.begin(), indices.end(), [&a, &b, &result, n](int i) {
+    for (int j = 0; j < n; ++j) {
+      double sum = 0.0;
+      for (int k = 0; k < n; ++k) {
+        sum += a(i, k) * b(k, j);
+      }
+      result(i, j) = sum;
+    }
+  });
+
+  return result;
+}
+
+Matrix MultiplyStrassenIterative(const Matrix &a, const Matrix &b, int leaf_size) {
+  int n = a.size;
+
+  if (n <= leaf_size || n % 2 != 0) {
+    return MultiplyStandardParallelImpl(a, b);
+  }
+
+  int half = n / 2;
+
+  Matrix a11(half);
+  Matrix a12(half);
+  Matrix a21(half);
+  Matrix a22(half);
+  Matrix b11(half);
+  Matrix b12(half);
+  Matrix b21(half);
+  Matrix b22(half);
+
+  SplitMatrixImpl(a, a11, a12, a21, a22);
+  SplitMatrixImpl(b, b11, b12, b21, b22);
+
+  Matrix p1 = MultiplyStandardParallelImpl(a11, SubtractMatrixImpl(b12, b22));
+  Matrix p2 = MultiplyStandardParallelImpl(AddMatrixImpl(a11, a12), b22);
+  Matrix p3 = MultiplyStandardParallelImpl(AddMatrixImpl(a21, a22), b11);
+  Matrix p4 = MultiplyStandardParallelImpl(a22, SubtractMatrixImpl(b21, b11));
+  Matrix p5 = MultiplyStandardParallelImpl(AddMatrixImpl(a11, a22), AddMatrixImpl(b11, b22));
+  Matrix p6 = MultiplyStandardParallelImpl(SubtractMatrixImpl(a12, a22), AddMatrixImpl(b21, b22));
+  Matrix p7 = MultiplyStandardParallelImpl(SubtractMatrixImpl(a11, a21), AddMatrixImpl(b11, b12));
+
+  Matrix c11 = AddMatrixImpl(SubtractMatrixImpl(AddMatrixImpl(p5, p4), p2), p6);
+  Matrix c12 = AddMatrixImpl(p1, p2);
+  Matrix c21 = AddMatrixImpl(p3, p4);
+  Matrix c22 = SubtractMatrixImpl(SubtractMatrixImpl(AddMatrixImpl(p5, p1), p3), p7);
+
+  return MergeMatricesImpl(c11, c12, c21, c22);
+}
+
+}  // namespace
+
+MorozovaSStrassenMultiplicationSTL::MorozovaSStrassenMultiplicationSTL(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = OutType();
+}
+
+bool MorozovaSStrassenMultiplicationSTL::ValidationImpl() {
+  return true;
+}
+
+bool MorozovaSStrassenMultiplicationSTL::PreProcessingImpl() {
+  if (GetInput().empty()) {
+    valid_data_ = false;
+    return true;
+  }
+
+  double size_val = GetInput()[0];
+  if (size_val <= 0.0) {
+    valid_data_ = false;
+    return true;
+  }
+
+  int n = static_cast<int>(size_val);
+
+  if (GetInput().size() != 1 + (2 * static_cast<size_t>(n) * static_cast<size_t>(n))) {
+    valid_data_ = false;
+    return true;
+  }
+
+  valid_data_ = true;
+  n_ = n;
+
+  a_ = Matrix(n_);
+  b_ = Matrix(n_);
+
+  int idx = 1;
+  for (int i = 0; i < n_; ++i) {
+    for (int j = 0; j < n_; ++j) {
+      a_(i, j) = GetInput()[idx++];
+    }
+  }
+
+  for (int i = 0; i < n_; ++i) {
+    for (int j = 0; j < n_; ++j) {
+      b_(i, j) = GetInput()[idx++];
+    }
+  }
+
+  return true;
+}
+
+bool MorozovaSStrassenMultiplicationSTL::RunImpl() {
+  if (!valid_data_) {
+    return true;
+  }
+
+  const int leaf_size = 64;
+
+  if (n_ <= leaf_size) {
+    c_ = MultiplyStandardParallelImpl(a_, b_);
+  } else {
+    c_ = MultiplyStrassenIterative(a_, b_, leaf_size);
+  }
+
+  return true;
+}
+
+bool MorozovaSStrassenMultiplicationSTL::PostProcessingImpl() {
+  OutType &output = GetOutput();
+  output.clear();
+
+  if (!valid_data_) {
+    return true;
+  }
+
+  output.push_back(static_cast<double>(n_));
+
+  for (int i = 0; i < n_; ++i) {
+    for (int j = 0; j < n_; ++j) {
+      output.push_back(c_(i, j));
+    }
+  }
+
+  return true;
+}
+
+Matrix MorozovaSStrassenMultiplicationSTL::AddMatrix(const Matrix &a, const Matrix &b) {
+  return AddMatrixImpl(a, b);
+}
+
+Matrix MorozovaSStrassenMultiplicationSTL::SubtractMatrix(const Matrix &a, const Matrix &b) {
+  return SubtractMatrixImpl(a, b);
+}
+
+Matrix MorozovaSStrassenMultiplicationSTL::MultiplyStandard(const Matrix &a, const Matrix &b) {
+  return MultiplyStandardImpl(a, b);
+}
+
+void MorozovaSStrassenMultiplicationSTL::SplitMatrix(const Matrix &m, Matrix &m11, Matrix &m12, Matrix &m21,
+                                                     Matrix &m22) {
+  SplitMatrixImpl(m, m11, m12, m21, m22);
+}
+
+Matrix MorozovaSStrassenMultiplicationSTL::MergeMatrices(const Matrix &m11, const Matrix &m12, const Matrix &m21,
+                                                         const Matrix &m22) {
+  return MergeMatricesImpl(m11, m12, m21, m22);
+}
+
+Matrix MorozovaSStrassenMultiplicationSTL::MultiplyStrassen(const Matrix &a, const Matrix &b, int leaf_size) {
+  return MultiplyStrassenIterative(a, b, leaf_size);
+}
+
+Matrix MorozovaSStrassenMultiplicationSTL::MultiplyStandardParallel(const Matrix &a, const Matrix &b) {
+  return MultiplyStandardParallelImpl(a, b);
+}
+
+}  // namespace morozova_s_strassen_multiplication

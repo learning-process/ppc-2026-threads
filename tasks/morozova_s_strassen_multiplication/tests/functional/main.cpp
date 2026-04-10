@@ -325,3 +325,23 @@ namespace {
 INSTANTIATE_TEST_SUITE_P(StrassenMultiplicationTBBTests, MorozovaSStrassenMultiplicationTBBFuncTests, kGtestValuesTBB,
                          kPerfTestNameTBB);
 }  // namespace
+
+using MorozovaSStrassenMultiplicationSTLFuncTests =
+    MorozovaSStrassenMultiplicationFuncTests<morozova_s_strassen_multiplication::MorozovaSStrassenMultiplicationSTL>;
+
+TEST_P(MorozovaSStrassenMultiplicationSTLFuncTests, MatrixMultiplication) {
+  ExecuteTest(GetParam());
+}
+
+const auto kTestTasksSTL =
+    ppc::util::AddFuncTask<morozova_s_strassen_multiplication::MorozovaSStrassenMultiplicationSTL, InType>(
+        kTestParam, PPC_SETTINGS_morozova_s_strassen_multiplication);
+
+const auto kGtestValuesSTL = ppc::util::ExpandToValues(kTestTasksSTL);
+const auto kPerfTestNameSTL =
+    MorozovaSStrassenMultiplicationSTLFuncTests::PrintFuncTestName<MorozovaSStrassenMultiplicationSTLFuncTests>;
+
+namespace {
+INSTANTIATE_TEST_SUITE_P(StrassenMultiplicationSTLTests, MorozovaSStrassenMultiplicationSTLFuncTests, kGtestValuesSTL,
+                         kPerfTestNameSTL);
+}  // namespace
