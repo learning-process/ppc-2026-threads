@@ -247,7 +247,6 @@ inline std::vector<int> GatherFlatHulls(const std::vector<int> &flat_local_hulls
   return flat_hulls_root;
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 inline OutType SolveALL(const BinaryImage &img) {
   int rank = 0;
   int size = 1;
