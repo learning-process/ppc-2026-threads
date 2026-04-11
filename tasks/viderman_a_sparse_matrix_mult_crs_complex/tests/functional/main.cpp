@@ -172,6 +172,7 @@ class VidermanRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
     return test_case_.check(output_data);
   }
 
+<<<<<<< Updated upstream
   InType GetTestInputData() final {
     return input_data_;
   }
@@ -202,6 +203,32 @@ const std::array<TestCaseType, 34> kTestParam = {
     MakeInvalid("incompatible_dimensions", CRSMatrix(2, 3), CRSMatrix(4, 5)),
     [] {
   CRSMatrix a(2, 2);
+=======
+  // === Вспомогательные функции для проверки угловых элементов 5x5 ===
+  void CheckCornerElement(const std::vector<std::vector<Complex>> &d, int i, int j, double expected_real,
+                          double expected_imag) {
+    EXPECT_NEAR(d[i][j].real(), expected_real, 1e-12);
+    EXPECT_NEAR(d[i][j].imag(), expected_imag, 1e-12);
+  }
+
+  void CheckCornerElements5x5(const CRSMatrix &c) {
+    EXPECT_EQ(c.rows, 5);
+    EXPECT_EQ(c.cols, 5);
+    EXPECT_EQ(c.NonZeros(), 2U);
+    auto d = ToDense(c);
+    CheckCornerElement(d, 0, 0, 2.0, 0.0);
+    CheckCornerElement(d, 4, 4, 1.0, 0.0);
+  }
+
+  // === Подготовка данных для тестов ===
+  void PrepareIncompatibleDimensions(CRSMatrix &a, CRSMatrix &b) {
+    a = CRSMatrix(2, 3);
+    b = CRSMatrix(4, 5);
+  }
+
+  void PrepareNegativeColIndex(CRSMatrix &a, CRSMatrix &b) {
+    a = CRSMatrix(2, 2);
+>>>>>>> Stashed changes
   a.row_ptr = {0, 1, 2};
   a.col_indices = {0, -1};
   a.values = {Complex(1, 0), Complex(2, 0)};
@@ -667,4 +694,251 @@ INSTANTIATE_TEST_SUITE_P(CRSComplexTests, VidermanRunFuncTests, kGtestValues, kT
 
 }  // namespace
 
+<<<<<<< Updated upstream
+=======
+// ---------------- TESTS ----------------
+
+TEST(VidermanValidation, IncompatibleDimensions) {
+  CRSMatrix a, b;
+  PrepareIncompatibleDimensions(a, b);
+  RunTask(a, b, false);
+}
+
+TEST(VidermanValidation, NegativeColIndex) {
+  CRSMatrix a, b;
+  PrepareNegativeColIndex(a, b);
+  VidermanASparseMatrixMultCRSComplexSEQ task(std::make_tuple(a, b));
+  EXPECT_FALSE(task.Validation());
+}
+
+TEST(VidermanValidation, ColIndexOutOfRange) {
+  CRSMatrix a, b;
+  PrepareColIndexOutOfRange(a, b);
+  VidermanASparseMatrixMultCRSComplexSEQ task(std::make_tuple(a, b));
+  EXPECT_FALSE(task.Validation());
+}
+
+TEST(VidermanValidation, UnsortedColIndices) {
+  CRSMatrix a, b;
+  PrepareUnsortedColIndices(a, b);
+  VidermanASparseMatrixMultCRSComplexSEQ task(std::make_tuple(a, b));
+  EXPECT_FALSE(task.Validation());
+}
+
+TEST(VidermanValidation, NonMonotonicRowPtr) {
+  CRSMatrix a, b;
+  PrepareNonMonotonicRowPtr(a, b);
+  VidermanASparseMatrixMultCRSComplexSEQ task(std::make_tuple(a, b));
+  EXPECT_FALSE(task.Validation());
+}
+
+TEST(VidermanValidation, WrongRowPtrSize) {
+  CRSMatrix a, b;
+  PrepareWrongRowPtrSize(a, b);
+  VidermanASparseMatrixMultCRSComplexSEQ task(std::make_tuple(a, b));
+  EXPECT_FALSE(task.Validation());
+}
+
+TEST(VidermanValidation, ColIndicesValuesSizeMismatch) {
+  CRSMatrix a, b;
+  PrepareColIndicesValuesSizeMismatch(a, b);
+  VidermanASparseMatrixMultCRSComplexSEQ task(std::make_tuple(a, b));
+  EXPECT_FALSE(task.Validation());
+}
+
+TEST(VidermanEdgeCases, SingleElement) {
+  CRSMatrix a, b, expected;
+  PrepareSingleElement(a, b, expected);
+  CompareCRSMatrices(expected, RunTask(a, b));
+}
+
+TEST(VidermanEdgeCases, BothZeroMatrices) {
+  CRSMatrix a, b;
+  PrepareBothZeroMatrices(a, b);
+  CRSMatrix c = RunTask(a, b);
+  VerifyBothZeroMatricesResult(c);
+}
+
+TEST(VidermanEdgeCases, ZeroANonzeroB) {
+  CRSMatrix a, b;
+  PrepareZeroANonzeroB(a, b);
+  CRSMatrix c = RunTask(a, b);
+  EXPECT_EQ(c.rows, 2);
+  EXPECT_EQ(c.cols, 2);
+  EXPECT_TRUE(c.values.empty());
+}
+
+TEST(VidermanEdgeCases, NonzeroAZeroB) {
+  CRSMatrix a, b;
+  PrepareNonzeroAZeroB(a, b);
+  CRSMatrix c = RunTask(a, b);
+  EXPECT_EQ(c.rows, 2);
+  EXPECT_EQ(c.cols, 4);
+  EXPECT_TRUE(c.values.empty());
+}
+
+TEST(VidermanEdgeCases, RowVectorTimesColVector) {
+  CRSMatrix a, b, expected;
+  PrepareRowVectorTimesColVector(a, b, expected);
+  CompareCRSMatrices(expected, RunTask(a, b));
+}
+
+TEST(VidermanEdgeCases, ColVectorTimesRowVector) {
+  CRSMatrix a, b;
+  std::vector<std::vector<Complex>> expected;
+  PrepareColVectorTimesRowVector(a, b, expected);
+  CompareDense(expected, RunTask(a, b));
+}
+
+TEST(VidermanEdgeCases, TallSkinnyMatrix) {
+  CRSMatrix a, b;
+  std::vector<std::vector<Complex>> expected;
+  PrepareTallSkinnyMatrix(a, b, expected);
+  CompareDense(expected, RunTask(a, b));
+}
+
+TEST(VidermanComplexArithmetic, DiagonalMultiplication) {
+  CRSMatrix a, b, expected;
+  PrepareDiagonalMultiplication(a, b, expected);
+  CompareCRSMatrices(expected, RunTask(a, b));
+}
+
+TEST(VidermanComplexArithmetic, PureImaginarySquared) {
+  CRSMatrix a, b, expected;
+  PreparePureImaginarySquared(a, b, expected);
+  CompareCRSMatrices(expected, RunTask(a, b));
+}
+
+TEST(VidermanComplexArithmetic, ConjugateProduct) {
+  CRSMatrix a, b, expected;
+  PrepareConjugateProduct(a, b, expected);
+  CompareCRSMatrices(expected, RunTask(a, b));
+}
+
+TEST(VidermanComplexArithmetic, CancellationToZero) {
+  CRSMatrix a, b;
+  PrepareCancellationToZero(a, b);
+  CRSMatrix c = RunTask(a, b);
+  VerifyCancellationToZero(c);
+}
+
+TEST(VidermanComplexArithmetic, PartialCancellation) {
+  CRSMatrix a, b;
+  PreparePartialCancellation(a, b);
+  CRSMatrix c = RunTask(a, b);
+  VerifyPartialCancellationResult(c);
+}
+
+TEST(VidermanAlgebraic, RightIdentity) {
+  CRSMatrix a, i;
+  PrepareRightIdentity(a, i);
+  CompareCRSMatrices(a, RunTask(a, i));
+}
+
+TEST(VidermanAlgebraic, LeftIdentity) {
+  CRSMatrix a, i;
+  PrepareLeftIdentity(a, i);
+  CompareCRSMatrices(a, RunTask(i, a));
+}
+
+TEST(VidermanAlgebraic, Associativity) {
+  CRSMatrix a, b, c;
+  PrepareAssociativity(a, b, c);
+  CRSMatrix ab = RunTask(a, b);
+  CRSMatrix abc_left = RunTask(ab, c);
+  CRSMatrix bc = RunTask(b, c);
+  CRSMatrix abc_right = RunTask(a, bc);
+  VerifyAssociativity(abc_left, abc_right);
+}
+
+TEST(VidermanAlgebraic, SquareOfScaledIdentity) {
+  CRSMatrix i_i, minus_i;
+  PrepareSquareOfScaledIdentity(i_i, minus_i);
+  CompareCRSMatrices(minus_i, RunTask(i_i, i_i));
+}
+
+TEST(VidermanAlgebraic, PermutationTimesTranspose) {
+  CRSMatrix p, pt, i;
+  PreparePermutationTimesTranspose(p, pt, i);
+  CompareCRSMatrices(i, RunTask(p, pt));
+}
+
+TEST(VidermanStructural, OutputIsValidCRS) {
+  CRSMatrix a, b;
+  PrepareStructuralOutputIsValidCRS(a, b);
+  CRSMatrix c = RunTask(a, b);
+  VerifyStructuralOutputIsValidCRS(c);
+}
+
+TEST(VidermanStructural, ColIndicesSortedInOutput) {
+  CRSMatrix a, b;
+  PrepareColIndicesSortedInOutput(a, b);
+  CRSMatrix c = RunTask(a, b);
+  VerifyColIndicesSortedInOutput(c);
+}
+
+TEST(VidermanStructural, RowPtrStartsAtZero) {
+  CRSMatrix a, b;
+  PrepareRowPtrStartsAtZero(a, b);
+  CRSMatrix c = RunTask(a, b);
+  VerifyRowPtrStartsAtZero(c);
+}
+
+TEST(VidermanStructural, RowPtrLastEqualsNNZ) {
+  CRSMatrix a, b;
+  PrepareRowPtrLastEqualsNNZ(a, b);
+  CRSMatrix c = RunTask(a, b);
+  VerifyRowPtrLastEqualsNNZ(c);
+}
+
+TEST(VidermanStructural, NoExplicitZerosInOutput) {
+  CRSMatrix a, b;
+  PrepareNoExplicitZerosInOutput(a, b);
+  CRSMatrix c = RunTask(a, b);
+  VerifyNoExplicitZerosInOutput(c);
+}
+
+TEST(VidermanNonTrivial, RectangularWithAccumulation) {
+  CRSMatrix a, b;
+  std::vector<std::vector<Complex>> expected;
+  PrepareRectangularWithAccumulation(a, b, expected);
+  CompareDense(expected, RunTask(a, b));
+}
+
+TEST(VidermanNonTrivial, MultipleRowsContributeToSameColumn) {
+  CRSMatrix a, b, expected;
+  PrepareMultipleRowsContributeToSameColumn(a, b, expected);
+  CompareCRSMatrices(expected, RunTask(a, b));
+}
+
+TEST(VidermanNonTrivial, CornerElementsOnly5x5) {
+  CRSMatrix a, b;
+  PrepareCornerElementsOnly5x5(a, b);
+  CheckCornerElements5x5(RunTask(a, b));
+}
+
+TEST(VidermanNonTrivial, DenseRowTimesIdentity) {
+  CRSMatrix a, i;
+  PrepareDenseRowTimesIdentity(a, i);
+  CRSMatrix c = RunTask(a, i);
+
+  ASSERT_EQ(c.NonZeros(), 4U);
+  auto d = ToDense(c);
+  EXPECT_NEAR(d[0][0].real(), 1.0, 1e-12);
+  EXPECT_NEAR(d[0][0].imag(), 1.0, 1e-12);
+  EXPECT_NEAR(d[0][1].real(), 2.0, 1e-12);
+  EXPECT_NEAR(d[0][1].imag(), 0.0, 1e-12);
+  EXPECT_NEAR(d[0][2].real(), 3.0, 1e-12);
+  EXPECT_NEAR(d[0][2].imag(), -1.0, 1e-12);
+  EXPECT_NEAR(d[0][3].real(), 0.0, 1e-12);
+  EXPECT_NEAR(d[0][3].imag(), 4.0, 1e-12);
+}
+
+TEST(VidermanNonTrivial, MatrixSquaredKnownResult) {
+  CRSMatrix j, minus_i;
+  PrepareMatrixSquaredKnownResult(j, minus_i);
+  CompareCRSMatrices(minus_i, RunTask(j, j));
+}
+
+>>>>>>> Stashed changes
 }  // namespace viderman_a_sparse_matrix_mult_crs_complex
