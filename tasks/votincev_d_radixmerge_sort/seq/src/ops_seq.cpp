@@ -1,8 +1,10 @@
 #include "votincev_d_radixmerge_sort/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "votincev_d_radixmerge_sort/common/include/common.hpp"
@@ -26,25 +28,23 @@ bool VotincevDRadixMergeSortSEQ::PreProcessingImpl() {
 void VotincevDRadixMergeSortSEQ::SortByDigit(std::vector<int32_t> &array, int32_t exp) {
   size_t n = array.size();
   std::vector<int32_t> output(n);
-  int32_t count[10] = {0};
+  std::array<int32_t, 10> count{};
 
   for (size_t i = 0; i < n; i++) {
     int32_t digit = (array[i] / exp) % 10;
-    count[digit]++;
+    count[static_cast<size_t>(digit)]++;
   }
 
   // префиксные суммы
-  for (int i = 1; i < 10; i++) {
+  for (size_t i = 1; i < 10; i++) {
     count[i] += count[i - 1];
   }
 
-  // теперь count[i] содержит позицию, перед которой заканчиваются элементы с цифрой i
-
   // формирую выходной массив
-  for (int64_t i = n - 1; i >= 0; i--) {
-    int32_t digit = (array[i] / exp) % 10;
-    output[count[digit] - 1] = array[i];
-    count[digit]--;
+  for (int64_t i = static_cast<int64_t>(n) - 1; i >= 0; i--) {
+    int32_t digit = (array[static_cast<size_t>(i)] / exp) % 10;
+    output[static_cast<size_t>(count[static_cast<size_t>(digit)]) - 1] = array[static_cast<size_t>(i)];
+    count[static_cast<size_t>(digit)]--;
   }
 
   array = std::move(output);
@@ -53,8 +53,7 @@ void VotincevDRadixMergeSortSEQ::SortByDigit(std::vector<int32_t> &array, int32_
 bool VotincevDRadixMergeSortSEQ::RunImpl() {
   std::vector<int32_t> working_array = GetInput();
 
-  // поиск min и max за один проход
-  auto [min_it, max_it] = std::minmax_element(working_array.begin(), working_array.end());
+  auto [min_it, max_it] = std::ranges::minmax_element(working_array);
   int32_t min_val = *min_it;
   int32_t max_val = *max_it;
 
@@ -66,8 +65,8 @@ bool VotincevDRadixMergeSortSEQ::RunImpl() {
     max_val -= min_val;
   }
 
-  // цикл по разрядам, int64_t для exp, чтобы избежать переполнения при exp * 10
-  for (int64_t exp = 1; max_val / exp > 0; exp *= 10) {
+  // цикл по разрядам
+  for (int64_t exp = 1; static_cast<int64_t>(max_val) / exp > 0; exp *= 10) {
     SortByDigit(working_array, static_cast<int32_t>(exp));
   }
 
