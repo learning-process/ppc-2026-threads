@@ -3,11 +3,8 @@
 #include <omp.h>
 
 #include <algorithm>
-#include <cstddef>
-#include <cstdint>
+#include <cstring>
 #include <vector>
-
-#include "votincev_d_radixmerge_sort/common/include/common.hpp"
 
 namespace votincev_d_radixmerge_sort {
 
@@ -24,63 +21,121 @@ bool VotincevDRadixMergeSortOMP::PreProcessingImpl() {
   return true;
 }
 
-void VotincevDRadixMergeSortOMP::SortByDigit(std::vector<int32_t> &array, int32_t exp) {
-  std::vector<std::vector<int32_t>> buckets(10);
-
-  for (const auto &num : array) {
-    int32_t digit = (num / exp) % 10;
-    buckets[digit].push_back(num);
+void VotincevDRadixMergeSortOMP::LocalRadixSort(uint32_t *begin, uint32_t *end) {
+  int32_t n = static_cast<int32_t>(end - begin);
+  if (n <= 1) {
+    return;
   }
 
-  size_t index = 0;
-  for (int i = 0; i < 10; ++i) {
-    for (const auto &val : buckets[i]) {
-      array[index++] = val;
+  uint32_t max_val = begin[0];
+  for (int32_t i = 1; i < n; ++i) {
+    if (begin[i] > max_val) {
+      max_val = begin[i];
     }
-    buckets[i].clear();
+  }
+
+  std::vector<uint32_t> buffer(n);
+  uint32_t *src = begin;
+  uint32_t *dst = buffer.data();
+
+  //  int64_t для exp, чтобы избежать переполнения при exp * 10
+  for (int64_t exp = 1; static_cast<int64_t>(max_val) / exp > 0; exp *= 10) {
+    int32_t count[10] = {0};
+
+    for (int32_t i = 0; i < n; ++i) {
+      count[(src[i] / exp) % 10]++;
+    }
+    for (int32_t i = 1; i < 10; ++i) {
+      count[i] += count[i - 1];
+    }
+    for (int32_t i = n - 1; i >= 0; --i) {
+      uint32_t digit = (src[i] / exp) % 10;
+      dst[--count[digit]] = src[i];
+    }
+    std::swap(src, dst);
+  }
+
+  if (src != begin) {
+    std::copy(src, src + n, begin);
+  }
+}
+
+void VotincevDRadixMergeSortOMP::Merge(uint32_t *src, uint32_t *dst, int32_t left, int32_t mid, int32_t right) {
+  int32_t i = left, j = mid, k = left;
+  while (i < mid && j < right) {
+    dst[k++] = (src[i] <= src[j]) ? src[i++] : src[j++];
+  }
+  while (i < mid) {
+    dst[k++] = src[i++];
+  }
+  while (j < right) {
+    dst[k++] = src[j++];
   }
 }
 
 bool VotincevDRadixMergeSortOMP::RunImpl() {
-  if (GetInput().empty()) {
+  const auto &input = GetInput();
+  int32_t n = static_cast<int32_t>(input.size());
+  if (n == 0) {
     return false;
   }
 
-  std::vector<int32_t> working_array = GetInput();
-  auto n = static_cast<int32_t>(working_array.size());
+  //  uint32_t для работы с полным диапазоном int32_t без переполнений
+  std::vector<uint32_t> working_array(n);
+  int32_t min_val = input[0];
 
-  int32_t min_val = working_array[0];
-#pragma omp parallel for reduction(min : min_val) default(none) shared(working_array, n)
+#pragma omp parallel for reduction(min : min_val)
   for (int32_t i = 0; i < n; ++i) {
-    min_val = std::min(min_val, working_array[i]);
-  }
-
-  if (min_val < 0) {
-#pragma omp parallel for default(none) shared(working_array, n, min_val)
-    for (int32_t i = 0; i < n; ++i) {
-      working_array[i] -= min_val;
+    if (input[i] < min_val) {
+      min_val = input[i];
     }
   }
 
-  int32_t max_val = working_array[0];
-#pragma omp parallel for reduction(max : max_val) default(none) shared(working_array, n)
+#pragma omp parallel for
   for (int32_t i = 0; i < n; ++i) {
-    max_val = std::max(max_val, working_array[i]);
+    working_array[i] = static_cast<uint32_t>(input[i]) - static_cast<uint32_t>(min_val);
   }
 
-  for (int32_t exp = 1; max_val / exp > 0; exp *= 10) {
-    SortByDigit(working_array, exp);
-  }
+  std::vector<uint32_t> temp_buffer(n);
 
-  if (min_val < 0) {
-#pragma omp parallel for default(none) shared(working_array, n, min_val)
-    for (int32_t i = 0; i < n; ++i) {
-      working_array[i] += min_val;
+#pragma omp parallel
+  {
+    int tid = omp_get_thread_num();
+    int n_threads = omp_get_num_threads();
+
+    // равномерное распределение нагрузки
+    int32_t items = n / n_threads;
+    int32_t rem = n % n_threads;
+    int32_t l = tid * items + std::min(tid, rem);
+    int32_t r = l + items + (tid < rem ? 1 : 0);
+
+    if (l < r) {
+      LocalRadixSort(working_array.data() + l, working_array.data() + r);
+    }
+
+    // слияние блоков
+    for (int32_t step = 1; step < n_threads; step *= 2) {
+#pragma omp barrier
+      if (tid % (2 * step) == 0 && tid + step < n_threads) {
+        int32_t m = (tid + step) * items + std::min(tid + step, rem);
+        int32_t next_r = (tid + 2 * step) * items + std::min(tid + 2 * step, rem);
+        if (next_r > n) {
+          next_r = n;
+        }
+
+        Merge(working_array.data(), temp_buffer.data(), l, m, next_r);
+        std::copy(temp_buffer.data() + l, temp_buffer.data() + next_r, working_array.data() + l);
+      }
     }
   }
 
-  GetOutput() = working_array;
+  std::vector<int32_t> result(n);
+#pragma omp parallel for
+  for (int32_t i = 0; i < n; ++i) {
+    result[i] = static_cast<int32_t>(working_array[i] + static_cast<uint32_t>(min_val));
+  }
 
+  GetOutput() = std::move(result);
   return true;
 }
 
