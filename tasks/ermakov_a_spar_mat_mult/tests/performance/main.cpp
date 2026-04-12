@@ -3,6 +3,7 @@
 #include <cmath>
 #include <complex>
 #include <cstddef>
+#include <cstdint>
 #include <random>
 #include <vector>
 
@@ -19,10 +20,13 @@ namespace {
 
 using DenseMatrix = std::vector<std::vector<std::complex<double>>>;
 
-DenseMatrix MakeRandomDense(int n, double density) {
+constexpr std::uint32_t kPerfSeedA = 0x13579BDFU;
+constexpr std::uint32_t kPerfSeedB = 0x2468ACE0U;
+
+DenseMatrix MakeRandomDense(int n, double density, std::uint32_t seed) {
   DenseMatrix m(n, std::vector<std::complex<double>>(n, {0.0, 0.0}));
 
-  std::mt19937 gen(std::random_device{}());
+  std::mt19937 gen(seed);
   std::uniform_real_distribution<double> dis_val(-5.0, 5.0);
   std::uniform_real_distribution<double> dis_prob(0.0, 1.0);
 
@@ -71,8 +75,8 @@ class ErmakovARunPerfTestSparMatMult : public ppc::util::BaseRunPerfTests<InType
   void SetUp() override {
     const double density = 0.001;
 
-    auto a_dense = MakeRandomDense(k_count, density);
-    auto b_dense = MakeRandomDense(k_count, density);
+    auto a_dense = MakeRandomDense(k_count, density, kPerfSeedA);
+    auto b_dense = MakeRandomDense(k_count, density, kPerfSeedB);
 
     input_data.A = DenseToCRS(a_dense);
     input_data.B = DenseToCRS(b_dense);
