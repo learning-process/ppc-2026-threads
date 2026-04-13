@@ -42,8 +42,8 @@ void VotincevDRadixMergeSortSEQ::SortByDigit(std::vector<int32_t> &array, int32_
 
   // формирую выходной массив
   for (int64_t i = static_cast<int64_t>(n) - 1; i >= 0; i--) {
-    size_t idx = static_cast<size_t>(i);
-    size_t digit = static_cast<size_t>((array.at(idx) / exp) % 10);
+    auto idx = static_cast<size_t>(i);
+    auto digit = static_cast<size_t>((array.at(idx) / exp) % 10);
     size_t pos = static_cast<size_t>(count.at(digit)) - 1;
     output.at(pos) = array.at(idx);
     count.at(digit)--;
