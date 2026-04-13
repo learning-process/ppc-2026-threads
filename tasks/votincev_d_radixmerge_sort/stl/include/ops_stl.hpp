@@ -22,8 +22,9 @@ class VotincevDRadixMergeSortSTL : public BaseTask {
 
   // ==============================
   // мои дополнительные функции ===
-  static void LocalRadixSort(uint32_t *begin, uint32_t *end);
-  static void Merge(uint32_t *data, int32_t left, int32_t mid, int32_t right, uint32_t *temp);
+  static void LocalRadixSort(uint32_t *begin, uint32_t *end) static void Merge(uint32_t *data, int32_t left,
+                                                                               int32_t mid, int32_t right,
+                                                                               uint32_t *temp);
   static void ParallelRadixMergeSort(uint32_t *data, int32_t left, int32_t right, uint32_t *temp);
 };
 }  // namespace votincev_d_radixmerge_sort
