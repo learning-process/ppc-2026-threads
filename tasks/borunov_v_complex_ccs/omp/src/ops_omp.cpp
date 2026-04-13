@@ -2,7 +2,6 @@
 
 #include <omp.h>
 
-#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <cstddef>
