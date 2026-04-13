@@ -10,38 +10,40 @@
 #include "redkina_a_integral_simpson/common/include/common.hpp"
 
 namespace redkina_a_integral_simpson {
-
 namespace {
-double ComputeNodeContribution(size_t linear_idx, const std::vector<double> &a, const std::vector<double> &h,
-                               const std::vector<int> &n, const std::vector<size_t> &strides,
-                               const std::function<double(const std::vector<double> &)> &func) {
-  size_t dim = a.size();
-  std::vector<double> point(dim);
-  size_t remainder = linear_idx;
-  std::vector<int> indices(dim);
 
+std::vector<std::vector<double>> PrecomputeWeights(const std::vector<int> &n) {
+  const size_t dim = n.size();
+  std::vector<std::vector<double>> weights(dim);
   for (size_t i = 0; i < dim; ++i) {
-    indices[i] = static_cast<int>(remainder / strides[i]);
-    remainder %= strides[i];
-  }
-
-  double w_prod = 1.0;
-  for (size_t i = 0; i < dim; ++i) {
-    int idx = indices[i];
-    point[i] = a[i] + (static_cast<double>(idx) * h[i]);
-
-    int w = 0;
-    if (idx == 0 || idx == n[i]) {
-      w = 1;
-    } else if (idx % 2 == 1) {
-      w = 4;
-    } else {
-      w = 2;
+    const int ni = n[i];
+    weights[i].resize(ni + 1);
+    for (int idx = 0; idx <= ni; ++idx) {
+      if (idx == 0 || idx == ni) {
+        weights[i][idx] = 1.0;
+      } else if (idx % 2 == 1) {
+        weights[i][idx] = 4.0;
+      } else {
+        weights[i][idx] = 2.0;
+      }
     }
-    w_prod *= static_cast<double>(w);
   }
-  return w_prod * func(point);
+  return weights;
 }
+
+std::vector<size_t> ComputeStrides(const std::vector<int> &n) {
+  const size_t dim = n.size();
+  std::vector<size_t> strides(dim);
+  if (dim == 0) {
+    return strides;
+  }
+  strides[dim - 1] = 1;
+  for (size_t i = dim - 1; i > 0; --i) {
+    strides[i - 1] = strides[i] * static_cast<size_t>(n[i] + 1);
+  }
+  return strides;
+}
+
 }  // namespace
 
 RedkinaAIntegralSimpsonTBB::RedkinaAIntegralSimpsonTBB(const InType &in) {
@@ -56,7 +58,6 @@ bool RedkinaAIntegralSimpsonTBB::ValidationImpl() {
   if (dim == 0 || in.b.size() != dim || in.n.size() != dim) {
     return false;
   }
-
   for (size_t i = 0; i < dim; ++i) {
     if (in.a[i] >= in.b[i]) {
       return false;
@@ -65,7 +66,6 @@ bool RedkinaAIntegralSimpsonTBB::ValidationImpl() {
       return false;
     }
   }
-
   return static_cast<bool>(in.func);
 }
 
@@ -83,38 +83,46 @@ bool RedkinaAIntegralSimpsonTBB::RunImpl() {
   if (!func_) {
     return false;
   }
-  size_t dim = a_.size();
+  const size_t dim = a_.size();
   if (dim == 0) {
     return false;
   }
 
   std::vector<double> h(dim);
-  for (size_t i = 0; i < dim; ++i) {
-    h[i] = (b_[i] - a_[i]) / static_cast<double>(n_[i]);
-  }
-
   double h_prod = 1.0;
   for (size_t i = 0; i < dim; ++i) {
+    h[i] = (b_[i] - a_[i]) / static_cast<double>(n_[i]);
     h_prod *= h[i];
   }
 
-  std::vector<int> dim_sizes(dim);
-  size_t total_points = 1;
-  for (size_t i = 0; i < dim; ++i) {
-    dim_sizes[i] = n_[i] + 1;
-    total_points *= static_cast<size_t>(dim_sizes[i]);
+  const auto weights = PrecomputeWeights(n_);
+  const auto strides = ComputeStrides(n_);
+  if (strides.empty()) {
+    return false;
   }
 
-  std::vector<size_t> strides(dim);
-  strides[dim - 1] = 1;
-  for (size_t i = dim - 1; i > 0; --i) {
-    strides[i - 1] = strides[i] * static_cast<size_t>(dim_sizes[i]);
-  }
+  const size_t total_points = strides[0] * static_cast<size_t>(n_[0] + 1);
 
   double sum = tbb::parallel_reduce(tbb::blocked_range<size_t>(0, total_points), 0.0,
-                                    [&](const tbb::blocked_range<size_t> &r, double local_sum) {
-    for (size_t linear_idx = r.begin(); linear_idx != r.end(); ++linear_idx) {
-      local_sum += ComputeNodeContribution(linear_idx, a_, h, n_, strides, func_);
+                                    [&](const tbb::blocked_range<size_t> &range, double local_sum) {
+    std::vector<int> indices(dim);
+    std::vector<double> point(dim);
+
+    for (size_t linear_idx = range.begin(); linear_idx != range.end(); ++linear_idx) {
+      size_t remainder = linear_idx;
+      for (size_t dim_idx = 0; dim_idx < dim; ++dim_idx) {
+        indices[dim_idx] = static_cast<int>(remainder / strides[dim_idx]);
+        remainder %= strides[dim_idx];
+      }
+
+      double w_prod = 1.0;
+      for (size_t dim_idx = 0; dim_idx < dim; ++dim_idx) {
+        const int i_idx = indices[dim_idx];
+        point[dim_idx] = a_[dim_idx] + (static_cast<double>(i_idx) * h[dim_idx]);
+        w_prod *= weights[dim_idx][i_idx];
+      }
+
+      local_sum += w_prod * func_(point);
     }
     return local_sum;
   }, [](double x, double y) -> double { return x + y; });
