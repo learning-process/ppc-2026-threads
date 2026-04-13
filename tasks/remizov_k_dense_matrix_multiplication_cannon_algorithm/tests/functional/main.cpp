@@ -102,21 +102,21 @@ const std::array<TestType, 8> kTestCases = {
                     std::vector<std::vector<double>>(4, std::vector<double>(4, 1.0)),
                     std::vector<std::vector<double>>(4, std::vector<double>(4, 4.0)))};
 
+const auto kTestNameFunc = RemizovKDenseMatrixMultiplicationCannonAlgorithmFuncTests::PrintFuncTestName<
+    RemizovKDenseMatrixMultiplicationCannonAlgorithmFuncTests>;
+
+}  // namespace
+
+namespace {
+
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<RemizovKDenseMatrixMultiplicationCannonAlgorithm, InType>(
         kTestCases, PPC_SETTINGS_remizov_k_dense_matrix_multiplication_cannon_algorithm));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kTestNameFunc = RemizovKDenseMatrixMultiplicationCannonAlgorithmFuncTests::PrintFuncTestName<
-    RemizovKDenseMatrixMultiplicationCannonAlgorithmFuncTests>;
-
 INSTANTIATE_TEST_SUITE_P(CannonTests, RemizovKDenseMatrixMultiplicationCannonAlgorithmFuncTests, kGtestValues,
                          kTestNameFunc);
-
-}  // namespace
-
-namespace {
 
 const auto kTestTasksListOmp =
     std::tuple_cat(ppc::util::AddFuncTask<RemizovKDenseMatrixMultiplicationCannonAlgorithmOmp, InType>(
