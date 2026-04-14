@@ -2,7 +2,6 @@
 
 #include <tbb/blocked_range2d.h>
 #include <tbb/parallel_for.h>
-#include <tbb/parallel_for_each.h>
 
 #include <cmath>
 #include <cstddef>
@@ -82,28 +81,36 @@ void SinevAMultMatrixFoxAlgorithmTBB::AssembleFromBlocks(const std::vector<doubl
   });
 }
 
+// Вынесем умножение блоков в отдельную функцию для уменьшения когнитивной сложности
+void SinevAMultMatrixFoxAlgorithmTBB::MultiplyBlocks(const std::vector<double> &blocks_a,
+                                                     const std::vector<double> &blocks_b, std::vector<double> &blocks_c,
+                                                     size_t bs, size_t a_off, size_t b_off, size_t c_off) {
+  for (size_t ii = 0; ii < bs; ++ii) {
+    for (size_t kk = 0; kk < bs; ++kk) {
+      const double val = blocks_a[a_off + (ii * bs) + kk];
+      const size_t b_base = b_off + (kk * bs);
+      const size_t c_base = c_off + (ii * bs);
+      for (size_t jj = 0; jj < bs; ++jj) {
+        blocks_c[c_base + jj] += val * blocks_b[b_base + jj];
+      }
+    }
+  }
+}
+
 void SinevAMultMatrixFoxAlgorithmTBB::FoxStep(const std::vector<double> &blocks_a, const std::vector<double> &blocks_b,
                                               std::vector<double> &blocks_c, size_t bs, int q, int step) {
-  const size_t block_size_bytes = bs * bs;
+  const size_t block_size = bs * bs;
 
   tbb::parallel_for(tbb::blocked_range2d<int>(0, q, 0, q), [&](const tbb::blocked_range2d<int> &r) {
     for (int i = r.rows().begin(); i < r.rows().end(); ++i) {
       for (int j = r.cols().begin(); j < r.cols().end(); ++j) {
         const int k = (i + step) % q;
 
-        const size_t a_off = (static_cast<size_t>((i * q) + k)) * block_size_bytes;
-        const size_t b_off = (static_cast<size_t>((k * q) + j)) * block_size_bytes;
-        const size_t c_off = (static_cast<size_t>((i * q) + j)) * block_size_bytes;
+        const size_t a_off = (static_cast<size_t>((i * q) + k)) * block_size;
+        const size_t b_off = (static_cast<size_t>((k * q) + j)) * block_size;
+        const size_t c_off = (static_cast<size_t>((i * q) + j)) * block_size;
 
-        // Умножение блоков
-        for (size_t ii = 0; ii < bs; ++ii) {
-          for (size_t kk = 0; kk < bs; ++kk) {
-            const double val = blocks_a[a_off + (ii * bs) + kk];
-            for (size_t jj = 0; jj < bs; ++jj) {
-              blocks_c[c_off + (ii * bs) + jj] += val * blocks_b[b_off + (kk * bs) + jj];
-            }
-          }
-        }
+        MultiplyBlocks(blocks_a, blocks_b, blocks_c, bs, a_off, b_off, c_off);
       }
     }
   });
@@ -122,19 +129,11 @@ bool SinevAMultMatrixFoxAlgorithmTBB::RunImpl() {
     return true;
   }
 
-  size_t bs = 1;
-  auto sqrt_n = static_cast<size_t>(std::sqrt(static_cast<double>(n)));
-  for (size_t div = sqrt_n; div >= 1; --div) {
-    if (n % div == 0) {
-      bs = div;
-      break;
-    }
-  }
-
+  size_t bs = ChooseBlockSize(n);
   const int actual_q = static_cast<int>(n / bs);
 
-  auto total_blocks = static_cast<size_t>(actual_q) * static_cast<size_t>(actual_q);
-  auto block_elements = bs * bs;
+  const auto total_blocks = static_cast<size_t>(actual_q) * static_cast<size_t>(actual_q);
+  const auto block_elements = bs * bs;
 
   std::vector<double> blocks_a(total_blocks * block_elements);
   std::vector<double> blocks_b(total_blocks * block_elements);
@@ -150,6 +149,18 @@ bool SinevAMultMatrixFoxAlgorithmTBB::RunImpl() {
   AssembleFromBlocks(blocks_c, c, n, bs, actual_q);
 
   return true;
+}
+
+size_t SinevAMultMatrixFoxAlgorithmTBB::ChooseBlockSize(size_t n) {
+  size_t bs = 1;
+  const auto sqrt_n = static_cast<size_t>(std::sqrt(static_cast<double>(n)));
+  for (size_t div = sqrt_n; div >= 1; --div) {
+    if (n % div == 0) {
+      bs = div;
+      break;
+    }
+  }
+  return bs;
 }
 
 bool SinevAMultMatrixFoxAlgorithmTBB::PostProcessingImpl() {
