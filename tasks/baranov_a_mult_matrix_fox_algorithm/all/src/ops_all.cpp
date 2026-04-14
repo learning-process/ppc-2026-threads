@@ -174,9 +174,9 @@ void MultiplyDispatch(bool use_parallel, const std::vector<double> &matrix_a, co
     return;
   }
 
-#if defined(TBB)
+#ifdef TBB
   MultiplyTBB(matrix_a, matrix_b, output, n);
-#elif defined(_OPENMP)
+#elifdef _OPENMP
   MultiplyOMP(matrix_a, matrix_b, output, n);
 #else
   MultiplySEQ(matrix_a, matrix_b, output, n);
@@ -190,9 +190,9 @@ void FoxBlockDispatch(bool use_parallel, const std::vector<double> &matrix_a, co
     return;
   }
 
-#if defined(TBB)
+#ifdef TBB
   FoxBlockTBB(matrix_a, matrix_b, output, n, block_size);
-#elif defined(_OPENMP)
+#elifdef _OPENMP
   FoxBlockOMP(matrix_a, matrix_b, output, n, block_size);
 #else
   FoxBlockSEQ(matrix_a, matrix_b, output, n, block_size);
