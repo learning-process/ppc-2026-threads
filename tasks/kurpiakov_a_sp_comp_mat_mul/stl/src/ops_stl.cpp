@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cstddef>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -39,6 +40,97 @@ bool ValidateCSR(const SparseMatrix &m) {
   return true;
 }
 
+struct ThreadLocalRowState {
+  explicit ThreadLocalRowState(int cols) : row_acc(cols), row_used(cols, 0) {}
+
+  std::vector<ComplexD> row_acc;
+  std::vector<char> row_used;
+  std::vector<int> used_cols;
+};
+
+void MultiplySingleRow(const SparseMatrix &a, const SparseMatrix &b, int row_idx, ThreadLocalRowState &state,
+                       std::vector<ComplexD> &out_values, std::vector<int> &out_cols) {
+  state.used_cols.clear();
+
+  for (int ja = a.row_ptr[row_idx]; ja < a.row_ptr[row_idx + 1]; ++ja) {
+    const int ka = a.col_indices[ja];
+    const ComplexD &a_val = a.values[ja];
+
+    for (int jb = b.row_ptr[ka]; jb < b.row_ptr[ka + 1]; ++jb) {
+      const int cb = b.col_indices[jb];
+      const ComplexD &b_val = b.values[jb];
+
+      if (state.row_used[cb] == 0) {
+        state.row_used[cb] = 1;
+        state.row_acc[cb] = ComplexD();
+        state.used_cols.push_back(cb);
+      }
+
+      state.row_acc[cb] += a_val * b_val;
+    }
+  }
+
+  std::ranges::sort(state.used_cols);
+
+  out_values.clear();
+  out_cols.clear();
+  out_values.reserve(state.used_cols.size());
+  out_cols.reserve(state.used_cols.size());
+
+  for (int col : state.used_cols) {
+    out_values.push_back(state.row_acc[col]);
+    out_cols.push_back(col);
+    state.row_used[col] = 0;
+  }
+}
+
+void ComputeRowsWithThreads(const SparseMatrix &a, const SparseMatrix &b, int rows, int num_threads,
+                            std::vector<std::vector<ComplexD>> &row_values, std::vector<std::vector<int>> &row_cols) {
+  std::atomic<int> next_row(0);
+  std::vector<std::thread> workers;
+  workers.reserve(num_threads);
+
+  for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+    workers.emplace_back([&]() {
+      ThreadLocalRowState state(b.cols);
+
+      while (true) {
+        const int row_idx = next_row.fetch_add(1, std::memory_order_relaxed);
+        if (row_idx >= rows) {
+          break;
+        }
+
+        MultiplySingleRow(a, b, row_idx, state, row_values[row_idx], row_cols[row_idx]);
+      }
+    });
+  }
+
+  for (auto &worker : workers) {
+    worker.join();
+  }
+}
+
+SparseMatrix BuildResult(int rows, int cols, const std::vector<std::vector<ComplexD>> &row_values,
+                         const std::vector<std::vector<int>> &row_cols) {
+  SparseMatrix result(rows, cols);
+
+  std::size_t total_nnz = 0;
+  for (int i = 0; i < rows; ++i) {
+    total_nnz += row_values[i].size();
+  }
+
+  result.values.reserve(total_nnz);
+  result.col_indices.reserve(total_nnz);
+
+  for (int i = 0; i < rows; ++i) {
+    result.values.insert(result.values.end(), row_values[i].begin(), row_values[i].end());
+    result.col_indices.insert(result.col_indices.end(), row_cols[i].begin(), row_cols[i].end());
+    result.row_ptr[i + 1] = static_cast<int>(result.values.size());
+  }
+
+  return result;
+}
+
 }  // namespace
 
 KurpiakovACRSMatMulSTL::KurpiakovACRSMatMulSTL(const InType &in) {
@@ -72,79 +164,8 @@ bool KurpiakovACRSMatMulSTL::RunImpl() {
   std::vector<std::vector<ComplexD>> row_values(rows);
   std::vector<std::vector<int>> row_cols(rows);
 
-  std::atomic<int> next_row(0);
-  std::vector<std::thread> threads;
-  threads.reserve(num_threads);
-
-  for (int t = 0; t < num_threads; ++t) {
-    threads.emplace_back([&]() {
-      std::vector<ComplexD> row_acc(cols);
-      std::vector<char> row_used(cols, 0);
-      std::vector<int> used_cols;
-
-      while (true) {
-        const int i = next_row.fetch_add(1, std::memory_order_relaxed);
-        if (i >= rows) {
-          break;
-        }
-
-        used_cols.clear();
-
-        for (int ja = a.row_ptr[i]; ja < a.row_ptr[i + 1]; ++ja) {
-          const int ka = a.col_indices[ja];
-          const ComplexD &a_val = a.values[ja];
-
-          for (int jb = b.row_ptr[ka]; jb < b.row_ptr[ka + 1]; ++jb) {
-            const int cb = b.col_indices[jb];
-            const ComplexD &b_val = b.values[jb];
-
-            if (row_used[cb] == 0) {
-              row_used[cb] = 1;
-              row_acc[cb] = ComplexD();
-              used_cols.push_back(cb);
-            }
-            row_acc[cb] += a_val * b_val;
-          }
-        }
-
-        std::sort(used_cols.begin(), used_cols.end());
-
-        auto &current_row_values = row_values[i];
-        auto &current_row_cols = row_cols[i];
-        current_row_values.clear();
-        current_row_cols.clear();
-        current_row_values.reserve(used_cols.size());
-        current_row_cols.reserve(used_cols.size());
-
-        for (int c : used_cols) {
-          current_row_values.push_back(row_acc[c]);
-          current_row_cols.push_back(c);
-          row_used[c] = 0;
-        }
-      }
-    });
-  }
-
-  for (auto &thread : threads) {
-    thread.join();
-  }
-
-  SparseMatrix result(rows, cols);
-  std::size_t total_nnz = 0;
-  for (int i = 0; i < rows; ++i) {
-    total_nnz += row_values[i].size();
-  }
-
-  result.values.reserve(total_nnz);
-  result.col_indices.reserve(total_nnz);
-
-  for (int i = 0; i < rows; ++i) {
-    result.values.insert(result.values.end(), row_values[i].begin(), row_values[i].end());
-    result.col_indices.insert(result.col_indices.end(), row_cols[i].begin(), row_cols[i].end());
-    result.row_ptr[i + 1] = static_cast<int>(result.values.size());
-  }
-
-  GetOutput() = std::move(result);
+  ComputeRowsWithThreads(a, b, rows, num_threads, row_values, row_cols);
+  GetOutput() = BuildResult(rows, cols, row_values, row_cols);
   return true;
 }
 
