@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "rychkova_gauss/all/include/ops_all.hpp"
 #include "rychkova_gauss/common/include/common.hpp"
 #include "rychkova_gauss/omp/include/ops_omp.hpp"
 #include "rychkova_gauss/seq/include/ops_seq.hpp"
@@ -43,8 +44,9 @@ TEST_P(RychkovaGaussPerf, R) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, RychkovaGaussSEQ, RychkovaGaussOMP, RychkovaGaussTBB>(
-    PPC_SETTINGS_rychkova_gauss);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, RychkovaGaussSEQ, RychkovaGaussOMP, RychkovaGaussTBB, RychkovaGaussALL>(
+        PPC_SETTINGS_rychkova_gauss);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
