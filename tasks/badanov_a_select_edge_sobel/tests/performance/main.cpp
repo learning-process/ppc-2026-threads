@@ -48,8 +48,9 @@ TEST_P(BadanovASelectEdgeSobelPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, BadanovASelectEdgeSobelSEQ, BadanovASelectEdgeSobelOMP, BadanovASelectEdgeSobelTBB>(
-    PPC_SETTINGS_badanov_a_select_edge_sobel);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, BadanovASelectEdgeSobelSEQ, BadanovASelectEdgeSobelOMP,
+                                BadanovASelectEdgeSobelTBB>(PPC_SETTINGS_badanov_a_select_edge_sobel);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

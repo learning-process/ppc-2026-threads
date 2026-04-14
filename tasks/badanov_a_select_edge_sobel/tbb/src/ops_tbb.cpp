@@ -1,5 +1,9 @@
 #include "badanov_a_select_edge_sobel/tbb/include/ops_tbb.hpp"
 
+#include <tbb/blocked_range.h>
+#include <tbb/parallel_for.h>
+#include <tbb/parallel_reduce.h>
+
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
@@ -7,9 +11,6 @@
 #include <vector>
 
 #include "badanov_a_select_edge_sobel/common/include/common.hpp"
-#include <tbb/parallel_for.h>
-#include <tbb/parallel_reduce.h>
-#include <tbb/blocked_range.h>
 
 namespace badanov_a_select_edge_sobel {
 
@@ -45,40 +46,28 @@ void BadanovASelectEdgeSobelTBB::ApplySobelOperator(const std::vector<uint8_t> &
   const int height = height_;
   const int width = width_;
 
-  if (height < 3 || width < 3) {
-    max_magnitude = 0.0F;
-    return;
-  }
-
   using Range = tbb::blocked_range<int>;
-  
-  max_magnitude = tbb::parallel_reduce(
-      Range(1, height - 1),
-      0.0F,
-      [&](const Range& r, float init) -> float {
-        float local_max = init;
-        for (int row = r.begin(); row < r.end(); ++row) {
-          for (int col = 1; col < width - 1; ++col) {
-            float gradient_x = 0.0F;
-            float gradient_y = 0.0F;
-            
-            ComputeGradientAtPixel(input, row, col, gradient_x, gradient_y);
-            
-            const float magnitude_value = std::sqrt((gradient_x * gradient_x) + (gradient_y * gradient_y));
-            const size_t idx = (static_cast<size_t>(row) * static_cast<size_t>(width)) + static_cast<size_t>(col);
-            magnitude[idx] = magnitude_value;
-            
-            if (magnitude_value > local_max) {
-              local_max = magnitude_value;
-            }
-          }
+
+  max_magnitude = tbb::parallel_reduce(Range(1, height - 1), 0.0F, [&](const Range &r, float init) -> float {
+    float local_max = init;
+    for (int row = r.begin(); row < r.end(); ++row) {
+      for (int col = 1; col < width - 1; ++col) {
+        float gradient_x = 0.0F;
+        float gradient_y = 0.0F;
+
+        ComputeGradientAtPixel(input, row, col, gradient_x, gradient_y);
+
+        const float magnitude_value = std::sqrt((gradient_x * gradient_x) + (gradient_y * gradient_y));
+        const size_t idx = (static_cast<size_t>(row) * static_cast<size_t>(width)) + static_cast<size_t>(col);
+        magnitude[idx] = magnitude_value;
+
+        if (magnitude_value > local_max) {
+          local_max = magnitude_value;
         }
-        return local_max;
-      },
-      [](float a, float b) -> float {
-        return std::max(a, b);
       }
-  );
+    }
+    return local_max;
+  }, [](float a, float b) -> float { return std::max(a, b); });
 }
 
 void BadanovASelectEdgeSobelTBB::ComputeGradientAtPixel(const std::vector<uint8_t> &input, int row, int col,
@@ -109,14 +98,12 @@ void BadanovASelectEdgeSobelTBB::ApplyThreshold(const std::vector<float> &magnit
     const float scale = 255.0F / max_magnitude;
     const size_t size = magnitude.size();
     const int threshold = threshold_;
-    
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, size),
-      [&](const tbb::blocked_range<size_t>& r) {
-        for (size_t i = r.begin(); i < r.end(); ++i) {
-          output[i] = (magnitude[i] * scale > static_cast<float>(threshold)) ? 255 : 0;
-        }
+
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, size), [&](const tbb::blocked_range<size_t> &r) {
+      for (size_t i = r.begin(); i < r.end(); ++i) {
+        output[i] = (magnitude[i] * scale > static_cast<float>(threshold)) ? 255 : 0;
       }
-    );
+    });
   } else {
     std::ranges::fill(output, 0);
   }

@@ -260,6 +260,24 @@ TEST(BadanovASelectEdgeSobelOMPEdgeCases, ConstantImageNoEdges) {
   }
 }
 
+TEST(BadanovASelectEdgeSobelTBBEdgeCases, VerySmallImage_2x2) {
+  InType small_input(4, 0);
+  small_input[0] = 0;
+  small_input[1] = 255;
+  small_input[2] = 255;
+  small_input[3] = 0;
+
+  BadanovASelectEdgeSobelTBB task(small_input);
+  task.Validation();
+  task.PreProcessing();
+  task.Run();
+  task.PostProcessing();
+
+  auto output = task.GetOutput();
+  EXPECT_EQ(output.size(), static_cast<size_t>(4));
+  EXPECT_EQ(output, small_input);
+}
+
 namespace {
 
 TEST_P(BadanovASelectEdgeSobelFuncTests, SobelOnFiles) {
