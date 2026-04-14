@@ -39,6 +39,74 @@ bool ValidateCSR(const SparseMatrix &m) {
   return true;
 }
 
+struct ThreadLocalRowBuffers {
+  explicit ThreadLocalRowBuffers(int cols) : row_acc(cols), row_used(cols, 0) {}
+
+  std::vector<ComplexD> row_acc;
+  std::vector<char> row_used;
+  std::vector<int> used_cols;
+};
+
+void ComputeRow(const SparseMatrix &a, const SparseMatrix &b, int row_idx, ThreadLocalRowBuffers &buffers,
+                std::vector<ComplexD> &out_values, std::vector<int> &out_cols) {
+  buffers.used_cols.clear();
+
+  for (int ja = a.row_ptr[row_idx]; ja < a.row_ptr[row_idx + 1]; ++ja) {
+    const int ka = a.col_indices[ja];
+    const ComplexD &a_val = a.values[ja];
+
+    for (int jb = b.row_ptr[ka]; jb < b.row_ptr[ka + 1]; ++jb) {
+      const int cb = b.col_indices[jb];
+      const ComplexD &b_val = b.values[jb];
+
+      if (buffers.row_used[cb] == 0) {
+        buffers.row_used[cb] = 1;
+        buffers.row_acc[cb] = ComplexD();
+        buffers.used_cols.push_back(cb);
+      }
+
+      buffers.row_acc[cb] += a_val * b_val;
+    }
+  }
+
+  std::ranges::sort(buffers.used_cols);
+
+  out_values.clear();
+  out_cols.clear();
+  out_values.reserve(buffers.used_cols.size());
+  out_cols.reserve(buffers.used_cols.size());
+
+  for (int c : buffers.used_cols) {
+    out_values.push_back(buffers.row_acc[c]);
+    out_cols.push_back(c);
+    buffers.row_used[c] = 0;
+  }
+}
+
+SparseMatrix BuildResultFromRows(int rows, int cols, const std::vector<std::vector<ComplexD>> &row_values,
+                                 const std::vector<std::vector<int>> &row_cols) {
+  SparseMatrix result(rows, cols);
+
+  for (int i = 0; i < rows; ++i) {
+    result.row_ptr[i + 1] = result.row_ptr[i] + static_cast<int>(row_values[i].size());
+  }
+
+  const auto total_nnz = static_cast<std::size_t>(result.row_ptr[rows]);
+
+  result.values.resize(total_nnz);
+  result.col_indices.resize(total_nnz);
+
+  tbb::parallel_for(tbb::blocked_range<int>(0, rows), [&](const tbb::blocked_range<int> &range) {
+    for (int i = range.begin(); i < range.end(); ++i) {
+      const auto offset = static_cast<std::vector<ComplexD>::difference_type>(result.row_ptr[i]);
+      std::copy(row_values[i].begin(), row_values[i].end(), result.values.begin() + offset);
+      std::copy(row_cols[i].begin(), row_cols[i].end(), result.col_indices.begin() + offset);
+    }
+  });
+
+  return result;
+}
+
 }  // namespace
 
 KurpiakovACRSMatMulTBB::KurpiakovACRSMatMulTBB(const InType &in) {
@@ -69,64 +137,16 @@ bool KurpiakovACRSMatMulTBB::RunImpl() {
   std::vector<std::vector<ComplexD>> row_values(rows);
   std::vector<std::vector<int>> row_cols(rows);
 
+  tbb::enumerable_thread_specific<ThreadLocalRowBuffers> tls_buffers([&] { return ThreadLocalRowBuffers(cols); });
+
   tbb::parallel_for(tbb::blocked_range<int>(0, rows), [&](const tbb::blocked_range<int> &range) {
-    std::vector<ComplexD> row_acc(cols);
-    std::vector<char> row_used(cols, 0);
-    std::vector<int> used_cols;
-
+    auto &buffers = tls_buffers.local();
     for (int i = range.begin(); i < range.end(); ++i) {
-      used_cols.clear();
-
-      for (int ja = a.row_ptr[i]; ja < a.row_ptr[i + 1]; ++ja) {
-        const int ka = a.col_indices[ja];
-        const ComplexD &a_val = a.values[ja];
-
-        for (int jb = b.row_ptr[ka]; jb < b.row_ptr[ka + 1]; ++jb) {
-          const int cb = b.col_indices[jb];
-          const ComplexD &b_val = b.values[jb];
-
-          if (row_used[cb] == 0) {
-            row_used[cb] = 1;
-            row_acc[cb] = ComplexD();
-            used_cols.push_back(cb);
-          }
-          row_acc[cb] += a_val * b_val;
-        }
-      }
-
-      std::ranges::sort(used_cols);
-
-      auto &current_row_values = row_values[i];
-      auto &current_row_cols = row_cols[i];
-      current_row_values.clear();
-      current_row_cols.clear();
-      current_row_values.reserve(used_cols.size());
-      current_row_cols.reserve(used_cols.size());
-
-      for (int c : used_cols) {
-        current_row_values.push_back(row_acc[c]);
-        current_row_cols.push_back(c);
-        row_used[c] = 0;
-      }
+      ComputeRow(a, b, i, buffers, row_values[i], row_cols[i]);
     }
   });
 
-  SparseMatrix result(rows, cols);
-  std::size_t total_nnz = 0;
-  for (int i = 0; i < rows; ++i) {
-    total_nnz += row_values[i].size();
-  }
-
-  result.values.reserve(total_nnz);
-  result.col_indices.reserve(total_nnz);
-
-  for (int i = 0; i < rows; ++i) {
-    result.values.insert(result.values.end(), row_values[i].begin(), row_values[i].end());
-    result.col_indices.insert(result.col_indices.end(), row_cols[i].begin(), row_cols[i].end());
-    result.row_ptr[i + 1] = static_cast<int>(result.values.size());
-  }
-
-  GetOutput() = std::move(result);
+  GetOutput() = BuildResultFromRows(rows, cols, row_values, row_cols);
   return true;
 }
 
