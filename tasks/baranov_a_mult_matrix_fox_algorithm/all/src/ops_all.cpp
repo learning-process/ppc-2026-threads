@@ -44,9 +44,10 @@ void MultiplySEQ(const std::vector<double> &matrix_a, const std::vector<double> 
   }
 }
 
+#ifdef _OPENMP
 void MultiplyOMP(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b, std::vector<double> &output,
                  size_t n) {
-#pragma omp parallel for
+#  pragma omp parallel for
   for (size_t i = 0; i < n; ++i) {
     for (size_t j = 0; j < n; ++j) {
       double sum = 0.0;
@@ -57,7 +58,9 @@ void MultiplyOMP(const std::vector<double> &matrix_a, const std::vector<double> 
     }
   }
 }
+#endif
 
+#ifdef TBB
 void MultiplyTBB(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b, std::vector<double> &output,
                  size_t n) {
   tbb::parallel_for(static_cast<size_t>(0), n, [&](size_t i) {
@@ -70,6 +73,7 @@ void MultiplyTBB(const std::vector<double> &matrix_a, const std::vector<double> 
     }
   });
 }
+#endif
 
 void MultiplySTL(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b, std::vector<double> &output,
                  size_t n) {
@@ -130,17 +134,18 @@ void FoxBlockSEQ(const std::vector<double> &matrix_a, const std::vector<double> 
   }
 }
 
+#ifdef _OPENMP
 void FoxBlockOMP(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b, std::vector<double> &output,
                  size_t n, size_t block_size) {
   size_t num_blocks = (n + block_size - 1) / block_size;
 
-#pragma omp parallel for
+#  pragma omp parallel for
   for (size_t idx = 0; idx < n * n; ++idx) {
     output[idx] = 0.0;
   }
 
   for (size_t bk = 0; bk < num_blocks; ++bk) {
-#pragma omp parallel for
+#  pragma omp parallel for
     for (size_t linear_idx = 0; linear_idx < num_blocks * num_blocks; ++linear_idx) {
       size_t bi = linear_idx / num_blocks;
       size_t bj = linear_idx % num_blocks;
@@ -166,7 +171,9 @@ void FoxBlockOMP(const std::vector<double> &matrix_a, const std::vector<double> 
     }
   }
 }
+#endif
 
+#ifdef TBB
 void FoxBlockTBB(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b, std::vector<double> &output,
                  size_t n, size_t block_size) {
   size_t num_blocks = (n + block_size - 1) / block_size;
@@ -199,6 +206,7 @@ void FoxBlockTBB(const std::vector<double> &matrix_a, const std::vector<double> 
     });
   }
 }
+#endif
 
 void FoxBlockSTL(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b, std::vector<double> &output,
                  size_t n, size_t block_size) {
