@@ -131,6 +131,88 @@ class CSRMatrix {
     return result;
   }
 
+ private:
+  static void ProcessRow(int i, const CSRMatrix &self, const CSRMatrix &other, std::vector<T> &acc_re,
+                         std::vector<T> &acc_im, std::vector<bool> &local_used,
+                         std::vector<std::vector<Complex<T>>> &row_values,
+                         std::vector<std::vector<int>> &row_col_indices) {
+    std::vector<int> used_cols;
+    used_cols.reserve(other.cols);
+
+    for (int ja = self.row_ptr[i]; ja < self.row_ptr[i + 1]; ++ja) {
+      const int ka = self.col_indices[ja];
+      const T a_re = self.values[ja].re;
+      const T a_im = self.values[ja].im;
+      const int jb_start = other.row_ptr[ka];
+      const int jb_end = other.row_ptr[ka + 1];
+
+      for (int jb = jb_start; jb < jb_end; ++jb) {
+        const int cb = other.col_indices[jb];
+        if (!local_used[cb]) {
+          local_used[cb] = true;
+          acc_re[cb] = T(0);
+          acc_im[cb] = T(0);
+          used_cols.push_back(cb);
+        }
+        acc_re[cb] += (a_re * other.values[jb].re) - (a_im * other.values[jb].im);
+        acc_im[cb] += (a_re * other.values[jb].im) + (a_im * other.values[jb].re);
+      }
+    }
+
+    std::ranges::sort(used_cols);
+    row_values[i].reserve(used_cols.size());
+    row_col_indices[i].reserve(used_cols.size());
+
+    for (const int c : used_cols) {
+      row_values[i].emplace_back(acc_re[c], acc_im[c]);
+      row_col_indices[i].push_back(c);
+      local_used[c] = false;
+    }
+  }
+
+ public:
+  [[nodiscard]] CSRMatrix OMPMultiply(const CSRMatrix &other) const {
+    if (cols != other.rows) {
+      return {};
+    }
+
+    CSRMatrix result(rows, other.cols);
+    std::vector<std::vector<Complex<T>>> row_values(rows);
+    std::vector<std::vector<int>> row_col_indices(rows);
+
+    const CSRMatrix &self = *this;
+    const int nrows = rows;
+    const int ncols = other.cols;
+
+#pragma omp parallel default(none) shared(self, other, row_values, row_col_indices, nrows, ncols)
+    {
+      std::vector<T> acc_re(static_cast<std::size_t>(ncols));
+      std::vector<T> acc_im(static_cast<std::size_t>(ncols));
+      std::vector<bool> local_used(static_cast<std::size_t>(ncols), false);
+
+#pragma omp for schedule(dynamic)
+      for (int i = 0; i < nrows; ++i) {
+        ProcessRow(i, self, other, acc_re, acc_im, local_used, row_values, row_col_indices);
+      }
+    }
+
+    int total_nnz = 0;
+    for (int i = 0; i < rows; ++i) {
+      total_nnz += static_cast<int>(row_values[i].size());
+    }
+
+    result.values.reserve(static_cast<std::size_t>(total_nnz));
+    result.col_indices.reserve(static_cast<std::size_t>(total_nnz));
+
+    for (int i = 0; i < rows; ++i) {
+      result.values.insert(result.values.end(), row_values[i].begin(), row_values[i].end());
+      result.col_indices.insert(result.col_indices.end(), row_col_indices[i].begin(), row_col_indices[i].end());
+      result.row_ptr[i + 1] = static_cast<int>(result.values.size());
+    }
+
+    return result;
+  }
+
   [[nodiscard]] std::vector<Complex<T>> ToDense() const {
     std::vector<Complex<T>> dense(rows * cols);
     for (int i = 0; i < rows; ++i) {
