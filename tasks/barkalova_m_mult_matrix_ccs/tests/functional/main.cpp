@@ -1,262 +1,264 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <stdexcept>
+#include <random>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
-#include "barkalova_m_mult_matrix_ccs/common/include/common.hpp"
-#include "barkalova_m_mult_matrix_ccs/omp/include/ops_omp.hpp"
-#include "barkalova_m_mult_matrix_ccs/seq/include/ops_seq.hpp"
+#include "baranov_a_mult_matrix_fox_algorithm/common/include/common.hpp"
+#include "baranov_a_mult_matrix_fox_algorithm/omp/include/ops_omp.hpp"
+#include "baranov_a_mult_matrix_fox_algorithm/seq/include/ops_seq.hpp"
+#include "baranov_a_mult_matrix_fox_algorithm/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace barkalova_m_mult_matrix_ccs {
+namespace baranov_a_mult_matrix_fox_algorithm_test {
 
-class BarkalovaMatrixMultiplyFixedTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+template <typename TaskType>
+class BaranovAMatrixMultiplicationFuncTest
+    : public ppc::util::BaseRunFuncTests<baranov_a_mult_matrix_fox_algorithm::InType,
+                                         baranov_a_mult_matrix_fox_algorithm::OutType,
+                                         baranov_a_mult_matrix_fox_algorithm::TestType> {
  public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return "test_" + std::to_string(std::get<0>(test_param));
+  static std::string PrintTestParam(const baranov_a_mult_matrix_fox_algorithm::TestType &test_param) {
+    size_t n = std::get<0>(test_param);
+    std::string type = std::get<1>(test_param);
+    std::string impl = GetImplementationName<TaskType>();
+    return "n_" + std::to_string(n) + "_" + type + "_" + impl;
   }
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    int test_case = std::get<0>(params);
+    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    CCSMatrix matrix_a;
-    CCSMatrix matrix_b;
-    expected_result_ = CCSMatrix();
+    size_t n = std::get<0>(params);
+    std::string test_type = std::get<1>(params);
+    size_t size = n * n;
 
-    switch (test_case) {
-      case 1: {
-        matrix_a.rows = 2;
-        matrix_a.cols = 2;
-        matrix_a.col_ptrs = {0, 1, 2};
-        matrix_a.row_indices = {0, 1};
-        matrix_a.values = {Complex(1.0, 2.0), Complex(3.0, 4.0)};
-        matrix_a.nnz = static_cast<int>(matrix_a.values.size());
+    std::vector<double> a(size);
+    std::vector<double> b(size);
 
-        matrix_b.rows = 2;
-        matrix_b.cols = 2;
-        matrix_b.col_ptrs = {0, 1, 2};
-        matrix_b.row_indices = {0, 1};
-        matrix_b.values = {Complex(2.0, -1.0), Complex(1.0, 1.0)};
-        matrix_b.nnz = static_cast<int>(matrix_b.values.size());
-
-        expected_result_.rows = 2;
-        expected_result_.cols = 2;
-        expected_result_.col_ptrs = {0, 1, 2};
-        expected_result_.row_indices = {0, 1};
-        expected_result_.values = {Complex(4.0, 3.0), Complex(-1.0, 7.0)};
-        expected_result_.nnz = static_cast<int>(expected_result_.values.size());
-        break;
-      }
-
-      case 2: {
-        matrix_a.rows = 3;
-        matrix_a.cols = 3;
-        matrix_a.col_ptrs = {0, 1, 2, 3};
-        matrix_a.row_indices = {0, 1, 2};
-        matrix_a.values = {Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0)};
-        matrix_a.nnz = static_cast<int>(matrix_a.values.size());
-
-        matrix_b.rows = 3;
-        matrix_b.cols = 3;
-        matrix_b.col_ptrs = {0, 1, 2, 3};
-        matrix_b.row_indices = {0, 1, 2};
-        matrix_b.values = {Complex(2.0, 3.0), Complex(4.0, -1.0), Complex(5.0, 2.0)};
-        matrix_b.nnz = static_cast<int>(matrix_b.values.size());
-
-        expected_result_.rows = 3;
-        expected_result_.cols = 3;
-        expected_result_.col_ptrs = {0, 1, 2, 3};
-        expected_result_.row_indices = {0, 1, 2};
-        expected_result_.values = {Complex(2.0, 3.0), Complex(4.0, -1.0), Complex(5.0, 2.0)};
-        expected_result_.nnz = static_cast<int>(expected_result_.values.size());
-        break;
-      }
-
-      case 3: {
-        matrix_a.rows = 2;
-        matrix_a.cols = 2;
-        matrix_a.col_ptrs = {0, 1, 2};
-        matrix_a.row_indices = {0, 1};
-        matrix_a.values = {Complex(1.0, 0.0), Complex(2.0, 0.0)};
-        matrix_a.nnz = static_cast<int>(matrix_a.values.size());
-
-        matrix_b.rows = 2;
-        matrix_b.cols = 2;
-        matrix_b.col_ptrs = {0, 1, 2};
-        matrix_b.row_indices = {0, 1};
-        matrix_b.values = {Complex(3.0, 0.0), Complex(4.0, 0.0)};
-        matrix_b.nnz = static_cast<int>(matrix_b.values.size());
-
-        expected_result_.rows = 2;
-        expected_result_.cols = 2;
-        expected_result_.col_ptrs = {0, 1, 2};
-        expected_result_.row_indices = {0, 1};
-        expected_result_.values = {Complex(3.0, 0.0), Complex(8.0, 0.0)};
-        expected_result_.nnz = 2;
-        break;
-      }
-
-      case 4: {
-        matrix_a.rows = 2;
-        matrix_a.cols = 2;
-        matrix_a.col_ptrs = {0, 1, 2};
-        matrix_a.row_indices = {0, 1};
-        matrix_a.values = {Complex(1.0, 1.0), Complex(2.0, -1.0)};
-        matrix_a.nnz = 2;
-
-        matrix_b.rows = 2;
-        matrix_b.cols = 3;
-        matrix_b.col_ptrs = {0, 2, 4, 6};
-        matrix_b.row_indices = {0, 1, 0, 1, 0, 1};
-        matrix_b.values = {Complex(2.0, 0.0), Complex(5.0, 0.0), Complex(3.0, 0.0),
-                           Complex(6.0, 0.0), Complex(4.0, 0.0), Complex(7.0, 0.0)};
-        matrix_b.nnz = 6;
-
-        expected_result_.rows = 2;
-        expected_result_.cols = 3;
-        expected_result_.col_ptrs = {0, 2, 4, 6};
-        expected_result_.row_indices = {0, 1, 0, 1, 0, 1};
-        expected_result_.values = {Complex(2.0, 2.0),   Complex(10.0, -5.0), Complex(3.0, 3.0),
-                                   Complex(12.0, -6.0), Complex(4.0, 4.0),   Complex(14.0, -7.0)};
-        expected_result_.nnz = 6;
-        break;
-      }
-
-      case 5: {
-        matrix_a.rows = 3;
-        matrix_a.cols = 3;
-        matrix_a.col_ptrs = {0, 2, 3, 4};
-        matrix_a.row_indices = {0, 2, 1, 2};
-        matrix_a.values = {Complex(1.0, 2.0), Complex(3.0, 1.0), Complex(2.0, -3.0), Complex(4.0, -2.0)};
-        matrix_a.nnz = 4;
-
-        matrix_b.rows = 3;
-        matrix_b.cols = 3;
-        matrix_b.col_ptrs = {0, 2, 3, 4};
-        matrix_b.row_indices = {0, 2, 1, 2};
-        matrix_b.values = {Complex(5.0, -1.0), Complex(7.0, 3.0), Complex(6.0, 2.0), Complex(8.0, -4.0)};
-        matrix_b.nnz = 4;
-
-        expected_result_.rows = 3;
-        expected_result_.cols = 3;
-        expected_result_.col_ptrs = {0, 2, 3, 4};
-        expected_result_.row_indices = {0, 2, 1, 2};
-        expected_result_.values = {Complex(7.0, 9.0), Complex(50.0, 0.0), Complex(18.0, -14.0), Complex(24.0, -32.0)};
-        expected_result_.nnz = 4;
-        break;
-      }
-      case 6: {
-        matrix_a.rows = 3;
-        matrix_a.cols = 2;
-        matrix_a.col_ptrs = {0, 2, 4};
-        matrix_a.row_indices = {0, 1, 0, 2};
-        matrix_a.values = {Complex(1.0, 1.0), Complex(3.0, 3.0), Complex(2.0, -2.0), Complex(4.0, -4.0)};
-        matrix_a.nnz = 4;
-
-        matrix_b.rows = 2;
-        matrix_b.cols = 4;
-        matrix_b.col_ptrs = {0, 2, 4, 6, 8};
-        matrix_b.row_indices = {0, 1, 0, 1, 0, 1, 0, 1};
-        matrix_b.values = {Complex(1.0, 0.0), Complex(5.0, 0.0), Complex(2.0, 0.0), Complex(6.0, 0.0),
-                           Complex(3.0, 0.0), Complex(7.0, 0.0), Complex(4.0, 0.0), Complex(8.0, 0.0)};
-        matrix_b.nnz = 8;
-
-        expected_result_.rows = 3;
-        expected_result_.cols = 4;
-        expected_result_.col_ptrs = {0, 3, 6, 9, 12};
-        expected_result_.row_indices = {0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2};
-        expected_result_.values = {Complex(11.0, -9.0),  Complex(3.0, 3.0),   Complex(20.0, -20.0),
-                                   Complex(14.0, -10.0), Complex(6.0, 6.0),   Complex(24.0, -24.0),
-                                   Complex(17.0, -11.0), Complex(9.0, 9.0),   Complex(28.0, -28.0),
-                                   Complex(20.0, -12.0), Complex(12.0, 12.0), Complex(32.0, -32.0)};
-        expected_result_.nnz = 12;
-        break;
-      }
-
-      default:
-        throw std::runtime_error("Unknown test case");
+    if (test_type.find("identity") != std::string::npos) {
+      GenerateIdentityMatrix(a, b, n);
+    } else if (test_type.find("random") != std::string::npos) {
+      GenerateRandomMatrices(a, b, n, std::stoi(test_type.substr(test_type.find("_seed") + 5)));
+    } else if (test_type.find("extreme") != std::string::npos) {
+      GenerateExtremeValuesMatrices(a, b, n);
+    } else if (test_type.find("sparse") != std::string::npos) {
+      GenerateSparseMatrices(a, b, n);
+    } else if (test_type.find("constant") != std::string::npos) {
+      GenerateConstantMatrices(a, b, n);
+    } else {
+      GenerateLinearMatrices(a, b, n);
     }
 
-    input_data_ = std::make_pair(matrix_a, matrix_b);
+    input_data_ = std::make_tuple(n, a, b);
+    std::vector<double> expected(size, 0.0);
+    ReferenceMultiply(a, b, expected, n);
+    expected_output_ = expected;
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    const double eps = 1e-10;
-
-    if (output_data.rows != expected_result_.rows || output_data.cols != expected_result_.cols) {
+  bool CheckTestOutputData(baranov_a_mult_matrix_fox_algorithm::OutType &output_data) final {
+    if (expected_output_.size() != output_data.size()) {
+      ADD_FAILURE() << "Size mismatch: expected " << expected_output_.size() << ", got " << output_data.size();
       return false;
     }
 
-    if (output_data.nnz != expected_result_.nnz) {
-      return false;
-    }
+    const double epsilon = 1e-8;
+    size_t mismatches = 0;
+    double max_diff = 0.0;
 
-    if (output_data.col_ptrs.size() != expected_result_.col_ptrs.size()) {
-      return false;
-    }
-
-    for (size_t i = 0; i < output_data.col_ptrs.size(); ++i) {
-      if (output_data.col_ptrs[i] != expected_result_.col_ptrs[i]) {
-        return false;
+    for (size_t i = 0; i < expected_output_.size(); ++i) {
+      double diff = std::abs(expected_output_[i] - output_data[i]);
+      max_diff = std::max(max_diff, diff);
+      if (diff > epsilon) {
+        mismatches++;
+        if (mismatches <= 5) {
+          ADD_FAILURE() << "Mismatch at index " << i << ": expected " << expected_output_[i] << ", got "
+                        << output_data[i];
+        }
       }
     }
 
-    if (output_data.row_indices.size() != expected_result_.row_indices.size()) {
+    if (mismatches > 0) {
+      ADD_FAILURE() << "Total mismatches: " << mismatches << ", max difference: " << max_diff;
       return false;
     }
-
-    for (size_t i = 0; i < output_data.row_indices.size(); ++i) {
-      if (output_data.row_indices[i] != expected_result_.row_indices[i]) {
-        return false;
-      }
-    }
-
-    for (size_t i = 0; i < output_data.values.size(); ++i) {
-      if (std::abs(output_data.values[i].real() - expected_result_.values[i].real()) > eps ||
-          std::abs(output_data.values[i].imag() - expected_result_.values[i].imag()) > eps) {
-        return false;
-      }
-    }
-
     return true;
   }
 
-  InType GetTestInputData() final {
+  baranov_a_mult_matrix_fox_algorithm::InType GetTestInputData() final {
     return input_data_;
   }
 
  private:
-  InType input_data_;
-  CCSMatrix expected_result_;
+  template <typename T>
+  static std::string GetImplementationName() {
+    if constexpr (std::is_same_v<T, baranov_a_mult_matrix_fox_algorithm_seq::BaranovAMultMatrixFoxAlgorithmSEQ>) {
+      return "seq";
+    } else if constexpr (std::is_same_v<T,
+                                        baranov_a_mult_matrix_fox_algorithm_omp::BaranovAMultMatrixFoxAlgorithmOMP>) {
+      return "omp";
+    } else if constexpr (std::is_same_v<T,
+                                        baranov_a_mult_matrix_fox_algorithm_tbb::BaranovAMultMatrixFoxAlgorithmTBB>) {
+      return "tbb";
+    }
+  }
+
+  static void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c,
+                                size_t n) {
+    for (size_t i = 0; i < n; ++i) {
+      for (size_t j = 0; j < n; ++j) {
+        double sum = 0.0;
+        for (size_t k = 0; k < n; ++k) {
+          sum += a[(i * n) + k] * b[(k * n) + j];
+        }
+        c[(i * n) + j] = sum;
+      }
+    }
+  }
+
+  static void GenerateLinearMatrices(std::vector<double> &a, std::vector<double> &b, size_t n) {
+    size_t size = n * n;
+    for (size_t i = 0; i < size; ++i) {
+      a[i] = static_cast<double>(i + 1);
+      b[i] = static_cast<double>(size - i);
+    }
+  }
+
+  static void GenerateIdentityMatrix(std::vector<double> &a, std::vector<double> &b, size_t n) {
+    for (size_t i = 0; i < n; ++i) {
+      for (size_t j = 0; j < n; ++j) {
+        a[(i * n) + j] = (i == j) ? 1.0 : 0.0;
+      }
+    }
+    for (size_t i = 0; i < n * n; ++i) {
+      b[i] = static_cast<double>(i + 1) * 0.5;
+    }
+  }
+
+  static void GenerateRandomMatrices(std::vector<double> &a, std::vector<double> &b, size_t n, int seed) {
+    std::mt19937 gen(seed);
+    std::uniform_real_distribution<double> dist(-100.0, 100.0);
+
+    for (size_t i = 0; i < n * n; ++i) {
+      a[i] = dist(gen);
+      b[i] = dist(gen);
+    }
+  }
+
+  static void GenerateExtremeValuesMatrices(std::vector<double> &a, std::vector<double> &b, size_t n) {
+    for (size_t i = 0; i < n; ++i) {
+      for (size_t j = 0; j < n; ++j) {
+        if ((i + j) % 2 == 0) {
+          a[(i * n) + j] = 1e6 * static_cast<double>(i + 1);
+          b[(i * n) + j] = 1e-6 * static_cast<double>(j + 1);
+        } else {
+          a[(i * n) + j] = 1e-6 * static_cast<double>(i + 1);
+          b[(i * n) + j] = 1e6 * static_cast<double>(j + 1);
+        }
+      }
+    }
+  }
+
+  static void GenerateSparseMatrices(std::vector<double> &a, std::vector<double> &b, size_t n) {
+    for (size_t i = 0; i < n; ++i) {
+      for (size_t j = 0; j < n; ++j) {
+        a[(i * n) + j] = 0.0;
+        b[(i * n) + j] = 0.0;
+      }
+    }
+
+    for (size_t i = 0; i < n; ++i) {
+      a[(i * n) + i] = static_cast<double>(i + 1);
+      b[(i * n) + i] = static_cast<double>(n - i);
+    }
+
+    if (n > 2) {
+      a[(0 * n) + 2] = 5.0;
+      a[(1 * n) + 3] = 7.0;
+      b[(2 * n) + 1] = 3.0;
+      b[(3 * n) + 0] = 4.0;
+    }
+  }
+
+  static void GenerateConstantMatrices(std::vector<double> &a, std::vector<double> &b, size_t n) {
+    double const_a = 2.5;
+    double const_b = 1.5;
+
+    for (size_t i = 0; i < n * n; ++i) {
+      a[i] = const_a;
+      b[i] = const_b;
+    }
+  }
+
+  baranov_a_mult_matrix_fox_algorithm::InType input_data_;
+  baranov_a_mult_matrix_fox_algorithm::OutType expected_output_;
 };
+
+using BaranovASEQFuncTest =
+    BaranovAMatrixMultiplicationFuncTest<baranov_a_mult_matrix_fox_algorithm_seq::BaranovAMultMatrixFoxAlgorithmSEQ>;
+using BaranovAOMPFuncTest =
+    BaranovAMatrixMultiplicationFuncTest<baranov_a_mult_matrix_fox_algorithm_omp::BaranovAMultMatrixFoxAlgorithmOMP>;
+using BaranovATBBFuncTest =
+    BaranovAMatrixMultiplicationFuncTest<baranov_a_mult_matrix_fox_algorithm_tbb::BaranovAMultMatrixFoxAlgorithmTBB>;
 
 namespace {
 
-TEST_P(BarkalovaMatrixMultiplyFixedTest, MatrixMultiplyFixedTest) {
+TEST_P(BaranovASEQFuncTest, MatrixMultiplicationTest) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 6> kTestParam = {std::make_tuple(1, ""), std::make_tuple(2, ""), std::make_tuple(3, ""),
-                                            std::make_tuple(4, ""), std::make_tuple(5, ""), std::make_tuple(6, "")};
+TEST_P(BaranovAOMPFuncTest, MatrixMultiplicationTest) {
+  ExecuteTest(GetParam());
+}
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsSEQ, InType>(kTestParam, PPC_SETTINGS_barkalova_m_mult_matrix_ccs),
-    ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsOMP, InType>(kTestParam, PPC_SETTINGS_barkalova_m_mult_matrix_ccs));
+TEST_P(BaranovATBBFuncTest, MatrixMultiplicationTest) {
+  ExecuteTest(GetParam());
+}
 
+const std::array<baranov_a_mult_matrix_fox_algorithm::TestType, 20> kTestParams = {
+    std::make_tuple(1, "size1_simple"),   std::make_tuple(2, "size2_simple"),   std::make_tuple(3, "size3_simple"),
+    std::make_tuple(2, "identity_2"),     std::make_tuple(4, "identity_4"),     std::make_tuple(8, "identity_8"),
+    std::make_tuple(3, "random_seed123"), std::make_tuple(5, "random_seed456"), std::make_tuple(7, "random_seed789"),
+    std::make_tuple(4, "extreme_4"),      std::make_tuple(6, "extreme_6"),      std::make_tuple(4, "sparse_4"),
+    std::make_tuple(8, "sparse_8"),       std::make_tuple(3, "constant_3"),     std::make_tuple(5, "constant_5"),
+    std::make_tuple(7, "constant_7"),     std::make_tuple(16, "size16_block"),  std::make_tuple(32, "size32_block"),
+    std::make_tuple(64, "size64_block"),  std::make_tuple(128, "size128_block")};
+
+const auto kTestTasksListSEQ =
+    ppc::util::AddFuncTask<baranov_a_mult_matrix_fox_algorithm_seq::BaranovAMultMatrixFoxAlgorithmSEQ,
+                           baranov_a_mult_matrix_fox_algorithm::InType>(
+        kTestParams, PPC_SETTINGS_baranov_a_mult_matrix_fox_algorithm);
+
+const auto kTestTasksListOMP =
+    ppc::util::AddFuncTask<baranov_a_mult_matrix_fox_algorithm_omp::BaranovAMultMatrixFoxAlgorithmOMP,
+                           baranov_a_mult_matrix_fox_algorithm::InType>(
+        kTestParams, PPC_SETTINGS_baranov_a_mult_matrix_fox_algorithm);
+
+const auto kTestTasksListTBB =
+    ppc::util::AddFuncTask<baranov_a_mult_matrix_fox_algorithm_tbb::BaranovAMultMatrixFoxAlgorithmTBB,
+                           baranov_a_mult_matrix_fox_algorithm::InType>(
+        kTestParams, PPC_SETTINGS_baranov_a_mult_matrix_fox_algorithm);
+
+const auto kTestTasksList = std::tuple_cat(kTestTasksListSEQ, kTestTasksListOMP, kTestTasksListTBB);
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kTestName = BarkalovaMatrixMultiplyFixedTest::PrintFuncTestName<BarkalovaMatrixMultiplyFixedTest>;
+const auto kTestNameSEQ = BaranovASEQFuncTest::PrintFuncTestName<BaranovASEQFuncTest>;
+const auto kTestNameOMP = BaranovAOMPFuncTest::PrintFuncTestName<BaranovAOMPFuncTest>;
+const auto kTestNameTBB = BaranovATBBFuncTest::PrintFuncTestName<BaranovATBBFuncTest>;
 
-INSTANTIATE_TEST_SUITE_P(FixedMatrixTests, BarkalovaMatrixMultiplyFixedTest, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(FoxAlgorithmSEQTes, BaranovASEQFuncTest, ppc::util::ExpandToValues(kTestTasksListSEQ),
+                         kTestNameSEQ);
+INSTANTIATE_TEST_SUITE_P(FoxAlgorithmOMPTests, BaranovAOMPFuncTest, ppc::util::ExpandToValues(kTestTasksListOMP),
+                         kTestNameOMP);
+INSTANTIATE_TEST_SUITE_P(FoxAlgorithmTBBTests, BaranovATBBFuncTest, ppc::util::ExpandToValues(kTestTasksListTBB),
+                         kTestNameTBB);
 
 }  // namespace
-}  // namespace barkalova_m_mult_matrix_ccs
+
+}  // namespace baranov_a_mult_matrix_fox_algorithm_test
