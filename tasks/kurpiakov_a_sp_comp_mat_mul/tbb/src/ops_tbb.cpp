@@ -39,6 +39,87 @@ bool ValidateCSR(const SparseMatrix &m) {
   return true;
 }
 
+void MultiplyRowIntoBuffers(const SparseMatrix &a, const SparseMatrix &b, int row_idx, std::vector<ComplexD> &row_acc,
+                            std::vector<char> &row_used, std::vector<int> &used_cols,
+                            std::vector<ComplexD> &current_row_values, std::vector<int> &current_row_cols) {
+  used_cols.clear();
+
+  for (int ja = a.row_ptr[row_idx]; ja < a.row_ptr[row_idx + 1]; ++ja) {
+    const int ka = a.col_indices[ja];
+    const ComplexD &a_val = a.values[ja];
+
+    for (int jb = b.row_ptr[ka]; jb < b.row_ptr[ka + 1]; ++jb) {
+      const int cb = b.col_indices[jb];
+      const ComplexD &b_val = b.values[jb];
+
+      if (row_used[cb] == 0) {
+        row_used[cb] = 1;
+        row_acc[cb] = ComplexD();
+        used_cols.push_back(cb);
+      }
+      row_acc[cb] += a_val * b_val;
+    }
+  }
+
+  std::ranges::sort(used_cols);
+
+  current_row_values.clear();
+  current_row_cols.clear();
+  current_row_values.reserve(used_cols.size());
+  current_row_cols.reserve(used_cols.size());
+
+  for (int c : used_cols) {
+    current_row_values.push_back(row_acc[c]);
+    current_row_cols.push_back(c);
+    row_used[c] = 0;
+  }
+}
+
+class TbbRowsMultiplierBody {
+ public:
+  TbbRowsMultiplierBody(const SparseMatrix &a, const SparseMatrix &b, std::vector<std::vector<ComplexD>> &row_values,
+                       std::vector<std::vector<int>> &row_cols, int cols)
+      : a_(a), b_(b), row_values_(row_values), row_cols_(row_cols), cols_(cols) {}
+
+  void operator()(const tbb::blocked_range<int> &range) const {
+    std::vector<ComplexD> row_acc(cols_);
+    std::vector<char> row_used(cols_, 0);
+    std::vector<int> used_cols;
+
+    for (int i = range.begin(); i < range.end(); ++i) {
+      MultiplyRowIntoBuffers(a_, b_, i, row_acc, row_used, used_cols, row_values_[i], row_cols_[i]);
+    }
+  }
+
+ private:
+  const SparseMatrix &a_;
+  const SparseMatrix &b_;
+  std::vector<std::vector<ComplexD>> &row_values_;
+  std::vector<std::vector<int>> &row_cols_;
+  int cols_;
+};
+
+SparseMatrix BuildResultFromRows(int rows, int cols, const std::vector<std::vector<ComplexD>> &row_values,
+                                 const std::vector<std::vector<int>> &row_cols) {
+  SparseMatrix result(rows, cols);
+
+  std::size_t total_nnz = 0;
+  for (int i = 0; i < rows; ++i) {
+    total_nnz += row_values[i].size();
+  }
+
+  result.values.reserve(total_nnz);
+  result.col_indices.reserve(total_nnz);
+
+  for (int i = 0; i < rows; ++i) {
+    result.values.insert(result.values.end(), row_values[i].begin(), row_values[i].end());
+    result.col_indices.insert(result.col_indices.end(), row_cols[i].begin(), row_cols[i].end());
+    result.row_ptr[i + 1] = static_cast<int>(result.values.size());
+  }
+
+  return result;
+}
+
 }  // namespace
 
 KurpiakovACRSMatMulTBB::KurpiakovACRSMatMulTBB(const InType &in) {
@@ -69,64 +150,9 @@ bool KurpiakovACRSMatMulTBB::RunImpl() {
   std::vector<std::vector<ComplexD>> row_values(rows);
   std::vector<std::vector<int>> row_cols(rows);
 
-  tbb::parallel_for(tbb::blocked_range<int>(0, rows), [&](const tbb::blocked_range<int> &range) {
-    std::vector<ComplexD> row_acc(cols);
-    std::vector<char> row_used(cols, 0);
-    std::vector<int> used_cols;
+  tbb::parallel_for(tbb::blocked_range<int>(0, rows), TbbRowsMultiplierBody(a, b, row_values, row_cols, cols));
 
-    for (int i = range.begin(); i < range.end(); ++i) {
-      used_cols.clear();
-
-      for (int ja = a.row_ptr[i]; ja < a.row_ptr[i + 1]; ++ja) {
-        const int ka = a.col_indices[ja];
-        const ComplexD &a_val = a.values[ja];
-
-        for (int jb = b.row_ptr[ka]; jb < b.row_ptr[ka + 1]; ++jb) {
-          const int cb = b.col_indices[jb];
-          const ComplexD &b_val = b.values[jb];
-
-          if (row_used[cb] == 0) {
-            row_used[cb] = 1;
-            row_acc[cb] = ComplexD();
-            used_cols.push_back(cb);
-          }
-          row_acc[cb] += a_val * b_val;
-        }
-      }
-
-      std::ranges::sort(used_cols);
-
-      auto &current_row_values = row_values[i];
-      auto &current_row_cols = row_cols[i];
-      current_row_values.clear();
-      current_row_cols.clear();
-      current_row_values.reserve(used_cols.size());
-      current_row_cols.reserve(used_cols.size());
-
-      for (int c : used_cols) {
-        current_row_values.push_back(row_acc[c]);
-        current_row_cols.push_back(c);
-        row_used[c] = 0;
-      }
-    }
-  });
-
-  SparseMatrix result(rows, cols);
-  std::size_t total_nnz = 0;
-  for (int i = 0; i < rows; ++i) {
-    total_nnz += row_values[i].size();
-  }
-
-  result.values.reserve(total_nnz);
-  result.col_indices.reserve(total_nnz);
-
-  for (int i = 0; i < rows; ++i) {
-    result.values.insert(result.values.end(), row_values[i].begin(), row_values[i].end());
-    result.col_indices.insert(result.col_indices.end(), row_cols[i].begin(), row_cols[i].end());
-    result.row_ptr[i + 1] = static_cast<int>(result.values.size());
-  }
-
-  GetOutput() = std::move(result);
+  GetOutput() = BuildResultFromRows(rows, cols, row_values, row_cols);
   return true;
 }
 
