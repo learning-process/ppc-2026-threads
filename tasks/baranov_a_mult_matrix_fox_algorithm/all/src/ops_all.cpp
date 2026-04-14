@@ -46,7 +46,7 @@ void MultiplySEQ(const std::vector<double> &matrix_a, const std::vector<double> 
 #ifdef _OPENMP
 void MultiplyOMP(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b, std::vector<double> &output,
                  size_t n) {
-#  pragma omp parallel for
+#  pragma omp parallel for  // NOLINT(openmp-use-default-none)
   for (size_t i = 0; i < n; ++i) {
     for (size_t j = 0; j < n; ++j) {
       double sum = 0.0;
@@ -78,6 +78,7 @@ void FoxBlockSEQ(const std::vector<double> &matrix_a, const std::vector<double> 
                  size_t n, size_t block_size) {
   size_t num_blocks = (n + block_size - 1) / block_size;
 
+  // NOLINTNEXTLINE(modernize-use-ranges)
   std::fill(output.begin(), output.end(), 0.0);
 
   for (size_t bk = 0; bk < num_blocks; ++bk) {
@@ -98,17 +99,18 @@ void FoxBlockSEQ(const std::vector<double> &matrix_a, const std::vector<double> 
 }
 
 #ifdef _OPENMP
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void FoxBlockOMP(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b, std::vector<double> &output,
                  size_t n, size_t block_size) {
   size_t num_blocks = (n + block_size - 1) / block_size;
 
-#  pragma omp parallel for
+#  pragma omp parallel for  // NOLINT(openmp-use-default-none)
   for (size_t idx = 0; idx < n * n; ++idx) {
     output[idx] = 0.0;
   }
 
   for (size_t bk = 0; bk < num_blocks; ++bk) {
-#  pragma omp parallel for
+#  pragma omp parallel for  // NOLINT(openmp-use-default-none)
     for (size_t linear_idx = 0; linear_idx < num_blocks * num_blocks; ++linear_idx) {
       size_t bi = linear_idx / num_blocks;
       size_t bj = linear_idx % num_blocks;
@@ -176,7 +178,7 @@ void MultiplyDispatch(bool use_parallel, const std::vector<double> &matrix_a, co
 
 #ifdef TBB
   MultiplyTBB(matrix_a, matrix_b, output, n);
-#elifdef _OPENMP
+#elifdef _OPENMP  // NOLINT(readability-use-concise-preprocessor-directives)
   MultiplyOMP(matrix_a, matrix_b, output, n);
 #else
   MultiplySEQ(matrix_a, matrix_b, output, n);
@@ -192,7 +194,7 @@ void FoxBlockDispatch(bool use_parallel, const std::vector<double> &matrix_a, co
 
 #ifdef TBB
   FoxBlockTBB(matrix_a, matrix_b, output, n, block_size);
-#elifdef _OPENMP
+#elifdef _OPENMP  // NOLINT(readability-use-concise-preprocessor-directives)
   FoxBlockOMP(matrix_a, matrix_b, output, n, block_size);
 #else
   FoxBlockSEQ(matrix_a, matrix_b, output, n, block_size);
