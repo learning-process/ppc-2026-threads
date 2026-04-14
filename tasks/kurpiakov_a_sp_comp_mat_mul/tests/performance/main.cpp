@@ -9,7 +9,6 @@
 #include "kurpiakov_a_sp_comp_mat_mul/stl/include/ops_stl.hpp"
 #include "kurpiakov_a_sp_comp_mat_mul/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace kurpiakov_a_sp_comp_mat_mul {
 
