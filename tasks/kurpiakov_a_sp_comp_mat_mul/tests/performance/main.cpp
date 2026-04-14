@@ -4,7 +4,9 @@
 #include <vector>
 
 #include "kurpiakov_a_sp_comp_mat_mul/common/include/common.hpp"
+#include "kurpiakov_a_sp_comp_mat_mul/omp/include/ops_omp.hpp"
 #include "kurpiakov_a_sp_comp_mat_mul/seq/include/ops_seq.hpp"
+#include "kurpiakov_a_sp_comp_mat_mul/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace kurpiakov_a_sp_comp_mat_mul {
