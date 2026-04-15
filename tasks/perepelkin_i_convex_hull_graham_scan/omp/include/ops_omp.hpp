@@ -26,8 +26,8 @@ class PerepelkinIConvexHullGrahamScanOMP : public BaseTask {
   static void ParallelSort(std::vector<std::pair<double, double>> &data, const std::pair<double, double> &pivot);
 
   static void HullConstruction(std::vector<std::pair<double, double>> &hull,
-                              const std::vector<std::pair<double, double>> &pts,
-                              const std::pair<double, double> &pivot);
+                               const std::vector<std::pair<double, double>> &pts,
+                               const std::pair<double, double> &pivot);
   static bool AngleCmp(const std::pair<double, double> &a, const std::pair<double, double> &b,
                        const std::pair<double, double> &pivot);
   static double Orientation(const std::pair<double, double> &p, const std::pair<double, double> &q,

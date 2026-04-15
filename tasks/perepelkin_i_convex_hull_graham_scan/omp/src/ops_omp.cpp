@@ -115,9 +115,9 @@ void PerepelkinIConvexHullGrahamScanOMP::ParallelSort(std::vector<std::pair<doub
   }
 }
 
-void PerepelkinIConvexHullGrahamScanOMP::HullConstruction(
-    std::vector<std::pair<double, double>> &hull, const std::vector<std::pair<double, double>> &pts,
-    const std::pair<double, double> &pivot) {
+void PerepelkinIConvexHullGrahamScanOMP::HullConstruction(std::vector<std::pair<double, double>> &hull,
+                                                          const std::vector<std::pair<double, double>> &pts,
+                                                          const std::pair<double, double> &pivot) {
   hull.reserve(pts.size() + 1);
 
   hull.push_back(pivot);
