@@ -85,11 +85,6 @@ void PerepelkinIConvexHullGrahamScanOMP::ParallelSort(std::vector<std::pair<doub
   size_t n = data.size();
   int threads = ppc::util::GetNumThreads();
 
-  if (n < 10000) {
-    std::ranges::sort(data, [&](const auto &a, const auto &b) { return AngleCmp(a, b, pivot); });
-    return;
-  }
-
   std::vector<int> start(threads + 1);
   for (int i = 0; i <= threads; i++) {
     start[i] = static_cast<int>(i * n / threads);
