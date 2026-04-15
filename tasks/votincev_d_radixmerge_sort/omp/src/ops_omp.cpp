@@ -48,9 +48,12 @@ void VotincevDRadixMergeSortOMP::LocalRadixSort(uint32_t *begin, uint32_t *end) 
       count.at(static_cast<size_t>(i)) += count.at(static_cast<size_t>(i - 1));
     }
     for (int32_t i = n - 1; i >= 0; --i) {
-      uint32_t digit = (src[i] / exp) % 10;
-      dst[count.at(static_cast<size_t>(digit))] = src[i];
-      count.at(static_cast<size_t>(digit))--;
+      size_t digit = static_cast<size_t>((src[i] / exp) % 10);
+
+      size_t target_idx = static_cast<size_t>(count.at(digit)) - 1;
+      dst[target_idx] = src[i];
+
+      count.at(digit)--;
     }
     std::swap(src, dst);
   }
@@ -112,8 +115,8 @@ bool VotincevDRadixMergeSortOMP::RunImpl() {
 #pragma omp barrier
       if ((tid % (2 * step) == 0) && (tid + step < n_threads)) {
         int32_t m = ((tid + step) * items) + std::min(tid + step, rem);
-        int32_t next_r = ((tid + (2 * step)) * items) + std::min(tid + (2 * step), rem);
-        next_r = std::min(next_r, n);
+        int32_t next_tid = std::min(tid + (2 * step), n_threads);
+        int32_t next_r = (next_tid * items) + std::min(next_tid, rem);
 
         Merge(working_array.data(), temp_buffer.data(), l, m, next_r);
         std::copy(temp_buffer.data() + l, temp_buffer.data() + next_r, working_array.data() + l);
