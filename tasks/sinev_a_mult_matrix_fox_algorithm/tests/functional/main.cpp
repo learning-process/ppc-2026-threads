@@ -12,7 +12,7 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace sinev_a_mult_matrix_fox_algorithm_seq {
+namespace sinev_a_mult_matrix_fox_algorithm {
 
 class SinevARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -108,4 +108,4 @@ INSTANTIATE_TEST_SUITE_P(MatMulFoxAlg_ArithmeticProgression, SinevARunFuncTestsT
 
 }  // namespace
 
-}  // namespace sinev_a_mult_matrix_fox_algorithm_seq
+}  // namespace sinev_a_mult_matrix_fox_algorithm

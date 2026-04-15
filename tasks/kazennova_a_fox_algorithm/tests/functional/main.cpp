@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "kazennova_a_fox_algorithm/common/include/common.hpp"
+#include "kazennova_a_fox_algorithm/omp/include/ops_omp.hpp"
 #include "kazennova_a_fox_algorithm/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -29,7 +30,6 @@ class KazennovaAFuncTestSeq : public ppc::util::BaseRunFuncTests<InType, OutType
     std::mt19937 gen(rd());
     std::uniform_real_distribution<double> dis(-10.0, 10.0);
 
-    // Матрица A (size × size)
     input_data_.A.rows = size;
     input_data_.A.cols = size;
     input_data_.A.data.resize(static_cast<size_t>(size) * size);
@@ -37,7 +37,6 @@ class KazennovaAFuncTestSeq : public ppc::util::BaseRunFuncTests<InType, OutType
       input_data_.A.data[i] = dis(gen);
     }
 
-    // Матрица B (size × size)
     input_data_.B.rows = size;
     input_data_.B.cols = size;
     input_data_.B.data.resize(static_cast<size_t>(size) * size);
@@ -47,13 +46,8 @@ class KazennovaAFuncTestSeq : public ppc::util::BaseRunFuncTests<InType, OutType
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.rows != input_data_.A.rows || output_data.cols != input_data_.B.cols) {
-      return false;
-    }
-    if (output_data.data.size() != static_cast<size_t>(output_data.rows) * output_data.cols) {
-      return false;
-    }
-    return true;
+    return output_data.rows == input_data_.A.rows && output_data.cols == input_data_.B.cols &&
+           output_data.data.size() == static_cast<size_t>(output_data.rows) * output_data.cols;
   }
 
   InType GetTestInputData() final {
@@ -74,7 +68,8 @@ const std::array<TestType, 4> kTestParam = {std::make_tuple(2, "2x2"), std::make
                                             std::make_tuple(5, "5x5"), std::make_tuple(10, "10x10")};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<KazennovaATestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_kazennova_a_fox_algorithm));
+    ppc::util::AddFuncTask<KazennovaATestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_kazennova_a_fox_algorithm),
+    ppc::util::AddFuncTask<KazennovaATestTaskOMP, InType>(kTestParam, PPC_SETTINGS_kazennova_a_fox_algorithm));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

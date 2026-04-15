@@ -7,7 +7,7 @@
 #include "borunov_v_complex_ccs/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace borunov_v_complex_ccs_seq {
+namespace borunov_v_complex_ccs {
 
 namespace {
 
@@ -35,9 +35,9 @@ class BorunovVRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Ou
   InType input_data_;
 
   void SetUp() override {
-    int m = 200000;
-    int k = 200000;
-    int n = 200000;
+    int m = 20000;
+    int k = 20000;
+    int n = 20000;
 
     SparseMatrix a = GenerateSparseMatrixPerf(m, k, 20);
     SparseMatrix b = GenerateSparseMatrixPerf(k, n, 20);
@@ -71,4 +71,4 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, BorunovVRunPerfTestThreads, kGtestValues,
 
 }  // namespace
 
-}  // namespace borunov_v_complex_ccs_seq
+}  // namespace borunov_v_complex_ccs

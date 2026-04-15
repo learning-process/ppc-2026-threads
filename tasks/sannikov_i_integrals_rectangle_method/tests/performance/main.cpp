@@ -6,7 +6,9 @@
 #include <vector>
 
 #include "sannikov_i_integrals_rectangle_method/common/include/common.hpp"
+#include "sannikov_i_integrals_rectangle_method/omp/include/ops_omp.hpp"
 #include "sannikov_i_integrals_rectangle_method/seq/include/ops_seq.hpp"
+#include "sannikov_i_integrals_rectangle_method/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace sannikov_i_integrals_rectangle_method {
@@ -42,8 +44,10 @@ TEST_P(SannikovIRunPerfTest, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SannikovIIntegralsRectangleMethodSEQ>(
-    PPC_SETTINGS_sannikov_i_integrals_rectangle_method);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, SannikovIIntegralsRectangleMethodSEQ, SannikovIIntegralsRectangleMethodOMP,
+                                SannikovIIntegralsRectangleMethodTBB>(
+        PPC_SETTINGS_sannikov_i_integrals_rectangle_method);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -52,5 +56,4 @@ const auto kPerfTestName = SannikovIRunPerfTest::CustomPerfTestName;
 INSTANTIATE_TEST_SUITE_P(RunModeTests, SannikovIRunPerfTest, kGtestValues, kPerfTestName);
 
 }  // namespace
-
 }  // namespace sannikov_i_integrals_rectangle_method

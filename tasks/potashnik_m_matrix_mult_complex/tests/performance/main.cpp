@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "potashnik_m_matrix_mult_complex/common/include/common.hpp"
+#include "potashnik_m_matrix_mult_complex/omp/include/ops_omp.hpp"
 #include "potashnik_m_matrix_mult_complex/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -90,7 +91,8 @@ TEST_P(PotashnikMMatrixMultComplexPerfTest, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, PotashnikMMatrixMultComplexSEQ>(PPC_SETTINGS_potashnik_m_matrix_mult_complex);
+    ppc::util::MakeAllPerfTasks<InType, PotashnikMMatrixMultComplexSEQ, PotashnikMMatrixMultComplexOMP>(
+        PPC_SETTINGS_potashnik_m_matrix_mult_complex);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

@@ -2,6 +2,7 @@
 
 #include <tuple>
 
+#include "../../omp/include/ops_omp.hpp"
 #include "shvetsova_k_mult_matrix_complex_col/common/include/common.hpp"
 #include "shvetsova_k_mult_matrix_complex_col/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
@@ -12,7 +13,7 @@ class ShvetsovaKRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, 
   InType input_data_;
 
   void SetUp() override {
-    const int size = 100;
+    const int size = 1000;
     const int nnz_per_col = 20;
 
     MatrixCCS matrix_a;
@@ -64,8 +65,11 @@ TEST_P(ShvetsovaKRunPerfTestThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ShvetsovaKMultMatrixComplexSEQ>(
+const auto kSEQPerfTasks = ppc::util::MakeAllPerfTasks<InType, ShvetsovaKMultMatrixComplexSEQ>(
     PPC_SETTINGS_shvetsova_k_mult_matrix_complex_col);
+const auto kOMPPerfTasks = ppc::util::MakeAllPerfTasks<InType, ShvetsovaKMultMatrixComplexOMP>(
+    PPC_SETTINGS_shvetsova_k_mult_matrix_complex_col);
+const auto kAllPerfTasks = std::tuple_cat(kSEQPerfTasks, kOMPPerfTasks);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

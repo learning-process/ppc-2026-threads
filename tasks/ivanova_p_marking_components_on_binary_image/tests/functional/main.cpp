@@ -9,6 +9,7 @@
 
 #include "ivanova_p_marking_components_on_binary_image/common/include/common.hpp"
 #include "ivanova_p_marking_components_on_binary_image/data/image_generator.hpp"
+#include "ivanova_p_marking_components_on_binary_image/omp/include/ops_omp.hpp"
 #include "ivanova_p_marking_components_on_binary_image/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 
@@ -174,7 +175,9 @@ const std::array<TestType, 14> kTestParam = {
     std::make_tuple(13, "file_image3"),       std::make_tuple(14, "file_image4")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<IvanovaPMarkingComponentsOnBinaryImageSEQ, InType>(
-    kTestParam, PPC_SETTINGS_ivanova_p_marking_components_on_binary_image));
+                                               kTestParam, PPC_SETTINGS_ivanova_p_marking_components_on_binary_image),
+                                           ppc::util::AddFuncTask<IvanovaPMarkingComponentsOnBinaryImageOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_ivanova_p_marking_components_on_binary_image));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

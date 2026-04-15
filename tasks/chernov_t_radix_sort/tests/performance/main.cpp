@@ -4,7 +4,9 @@
 #include <climits>
 
 #include "chernov_t_radix_sort/common/include/common.hpp"
+#include "chernov_t_radix_sort/omp/include/ops_omp.hpp"
 #include "chernov_t_radix_sort/seq/include/ops_seq.hpp"
+#include "chernov_t_radix_sort/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace chernov_t_radix_sort {
@@ -42,7 +44,9 @@ TEST_P(ChernovTRadixSortPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ChernovTRadixSortSEQ>(PPC_SETTINGS_chernov_t_radix_sort);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, ChernovTRadixSortSEQ, ChernovTRadixSortOMP, ChernovTRadixSortTBB>(
+        PPC_SETTINGS_chernov_t_radix_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
