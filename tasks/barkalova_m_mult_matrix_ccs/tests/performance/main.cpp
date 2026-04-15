@@ -1,128 +1,106 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <cstddef>
-#include <random>
-#include <utility>
+#include <tuple>
 #include <vector>
 
-#include "barkalova_m_mult_matrix_ccs/common/include/common.hpp"
-#include "barkalova_m_mult_matrix_ccs/omp/include/ops_omp.hpp"
-#include "barkalova_m_mult_matrix_ccs/seq/include/ops_seq.hpp"
+#include "baranov_a_mult_matrix_fox_algorithm/common/include/common.hpp"
+#include "baranov_a_mult_matrix_fox_algorithm/omp/include/ops_omp.hpp"
+#include "baranov_a_mult_matrix_fox_algorithm/seq/include/ops_seq.hpp"
+#include "baranov_a_mult_matrix_fox_algorithm/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace barkalova_m_mult_matrix_ccs {
+namespace baranov_a_mult_matrix_fox_algorithm_test {
 
-namespace {
-
-CCSMatrix CreateRandomSparseMatrix(int rows, int cols, double density) {
-  CCSMatrix matrix;
-  matrix.rows = rows;
-  matrix.cols = cols;
-  matrix.col_ptrs.resize(cols + 1, 0);
-
-  static std::random_device rd;
-  static std::mt19937 gen(rd());
-  static std::uniform_real_distribution<double> dist(0.0, 1.0);
-  static std::uniform_real_distribution<double> value_dist(0.1, 10.0);
-
-  std::vector<int> col_counts(cols, 0);
-  std::vector<std::vector<Complex>> col_values(cols);
-  std::vector<std::vector<int>> col_rows(cols);
-
-  int total_nnz = 0;
-
-  for (int col = 0; col < cols; ++col) {
-    for (int row = 0; row < rows; ++row) {
-      double random_value = dist(gen);
-
-      if (random_value < density) {
-        double real = value_dist(gen);
-        double imag = value_dist(gen);
-
-        col_values[col].emplace_back(real, imag);
-        col_rows[col].push_back(row);
-        ++col_counts[col];
-        ++total_nnz;
-      }
-    }
-  }
-
-  matrix.nnz = total_nnz;
-  matrix.values.resize(total_nnz);
-  matrix.row_indices.resize(total_nnz);
-
-  int current_index = 0;
-  matrix.col_ptrs[0] = 0;
-
-  for (int col = 0; col < cols; ++col) {
-    for (int i = 0; i < col_counts[col]; ++i) {
-      matrix.values[current_index] = col_values[col][i];
-      matrix.row_indices[current_index] = col_rows[col][i];
-      ++current_index;
-    }
-    matrix.col_ptrs[col + 1] = current_index;
-  }
-
-  return matrix;
-}
-
-}  // namespace
-
-class BarkalovaMMultMatrixCcsPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
- protected:
+template <typename TaskType>
+class BaranovAMultMatrixFoxAlgorithmPerfTests
+    : public ppc::util::BaseRunPerfTests<baranov_a_mult_matrix_fox_algorithm::InType,
+                                         baranov_a_mult_matrix_fox_algorithm::OutType> {
   void SetUp() override {
-    int size = 1500;
-    double density = 0.01;
+    size_t n = 512;
 
-    matrix_a_ = CreateRandomSparseMatrix(size, size, density);
-    matrix_b_ = CreateRandomSparseMatrix(size, size, density);
+    size_t size = n * n;
+    std::vector<double> a(size, 1.5);
+    std::vector<double> b(size, 2.0);
 
-    input_data_ = std::make_pair(matrix_a_, matrix_b_);
+    input_data_ = std::make_tuple(n, a, b);
+
+    double expected_value = 3.0 * static_cast<double>(n);
+    expected_output_.resize(size, expected_value);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.rows != matrix_a_.rows || output_data.cols != matrix_b_.cols) {
+  bool CheckTestOutputData(baranov_a_mult_matrix_fox_algorithm::OutType &output_data) final {
+    if (expected_output_.size() != output_data.size()) {
       return false;
     }
 
-    if (output_data.col_ptrs.size() != static_cast<size_t>(output_data.cols) + 1) {
-      return false;
-    }
-
-    for (size_t i = 0; i < output_data.col_ptrs.size() - 1; ++i) {
-      if (output_data.col_ptrs[i] > output_data.col_ptrs[i + 1]) {
+    double epsilon = 1e-8;
+    for (size_t i = 0; i < expected_output_.size(); ++i) {
+      if (std::abs(expected_output_[i] - output_data[i]) > epsilon) {
         return false;
       }
     }
-
     return true;
   }
 
-  InType GetTestInputData() final {
+  baranov_a_mult_matrix_fox_algorithm::InType GetTestInputData() final {
     return input_data_;
   }
 
  private:
-  CCSMatrix matrix_a_;
-  CCSMatrix matrix_b_;
-  InType input_data_;
+  baranov_a_mult_matrix_fox_algorithm::InType input_data_;
+  baranov_a_mult_matrix_fox_algorithm::OutType expected_output_;
 };
 
-TEST_P(BarkalovaMMultMatrixCcsPerfTest, RunPerfModes) {
+using BaranovASEQPerfTests =
+    BaranovAMultMatrixFoxAlgorithmPerfTests<baranov_a_mult_matrix_fox_algorithm_seq::BaranovAMultMatrixFoxAlgorithmSEQ>;
+using BaranovAOMPPerfTests =
+    BaranovAMultMatrixFoxAlgorithmPerfTests<baranov_a_mult_matrix_fox_algorithm_omp::BaranovAMultMatrixFoxAlgorithmOMP>;
+using BaranovATBBPerfTests =
+    BaranovAMultMatrixFoxAlgorithmPerfTests<baranov_a_mult_matrix_fox_algorithm_tbb::BaranovAMultMatrixFoxAlgorithmTBB>;
+
+TEST_P(BaranovASEQPerfTests, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
+
+TEST_P(BaranovAOMPPerfTests, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
+
+TEST_P(BaranovATBBPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, BarkalovaMMultMatrixCcsSEQ, BarkalovaMMultMatrixCcsOMP>(
-    PPC_SETTINGS_barkalova_m_mult_matrix_ccs);
+const auto kAllPerfTasksSeq =
+    ppc::util::MakeAllPerfTasks<baranov_a_mult_matrix_fox_algorithm::InType,
+                                baranov_a_mult_matrix_fox_algorithm_seq::BaranovAMultMatrixFoxAlgorithmSEQ>(
+        PPC_SETTINGS_baranov_a_mult_matrix_fox_algorithm);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kAllPerfTasksOmp =
+    ppc::util::MakeAllPerfTasks<baranov_a_mult_matrix_fox_algorithm::InType,
+                                baranov_a_mult_matrix_fox_algorithm_omp::BaranovAMultMatrixFoxAlgorithmOMP>(
+        PPC_SETTINGS_baranov_a_mult_matrix_fox_algorithm);
 
-const auto kPerfTestName = BarkalovaMMultMatrixCcsPerfTest::CustomPerfTestName;
+const auto kAllPerfTasksTbb =
+    ppc::util::MakeAllPerfTasks<baranov_a_mult_matrix_fox_algorithm::InType,
+                                baranov_a_mult_matrix_fox_algorithm_tbb::BaranovAMultMatrixFoxAlgorithmTBB>(
+        PPC_SETTINGS_baranov_a_mult_matrix_fox_algorithm);
 
-INSTANTIATE_TEST_SUITE_P(MatrixMultiplyPerfTests, BarkalovaMMultMatrixCcsPerfTest, kGtestValues, kPerfTestName);
+const auto kGtestValuesSeq = ppc::util::TupleToGTestValues(kAllPerfTasksSeq);
+const auto kGtestValuesOmp = ppc::util::TupleToGTestValues(kAllPerfTasksOmp);
+const auto kGtestValuesTbb = ppc::util::TupleToGTestValues(kAllPerfTasksTbb);
+
+const auto kPerfTestNameSeq = BaranovASEQPerfTests::CustomPerfTestName;
+const auto kPerfTestNameOmp = BaranovAOMPPerfTests::CustomPerfTestName;
+const auto kPerfTestNameTbb = BaranovATBBPerfTests::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(PerfTestsSeq, BaranovASEQPerfTests, kGtestValuesSeq, kPerfTestNameSeq);
+INSTANTIATE_TEST_SUITE_P(PerfTestsOmp, BaranovAOMPPerfTests, kGtestValuesOmp, kPerfTestNameOmp);
+INSTANTIATE_TEST_SUITE_P(PerfTestsTbb, BaranovATBBPerfTests, kGtestValuesTbb, kPerfTestNameTbb);
 
 }  // namespace
 
-}  // namespace barkalova_m_mult_matrix_ccs
+}  // namespace baranov_a_mult_matrix_fox_algorithm_test
