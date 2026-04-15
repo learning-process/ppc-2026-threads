@@ -7,6 +7,7 @@
 #include <string>
 #include <tuple>
 
+#include "mityaeva_radix/all/include/ops_all.hpp"
 #include "mityaeva_radix/common/include/common.hpp"
 #include "mityaeva_radix/common/include/test_generator.hpp"
 #include "mityaeva_radix/omp/include/ops_omp.hpp"
@@ -51,8 +52,9 @@ const std::array<TestType, 12> kTestParam = {1, 2, 15, 20, 30, 40, 50, 60, 70, 8
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<MityaevaRadixSeq, InType>(kTestParam, PPC_SETTINGS_mityaeva_radix),
+                   ppc::util::AddFuncTask<MityaevaRadixOmp, InType>(kTestParam, PPC_SETTINGS_mityaeva_radix),
                    ppc::util::AddFuncTask<MityaevaRadixTbb, InType>(kTestParam, PPC_SETTINGS_mityaeva_radix),
-                   ppc::util::AddFuncTask<MityaevaRadixOmp, InType>(kTestParam, PPC_SETTINGS_mityaeva_radix));
+                   ppc::util::AddFuncTask<MityaevaRadixAll, InType>(kTestParam, PPC_SETTINGS_mityaeva_radix));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
