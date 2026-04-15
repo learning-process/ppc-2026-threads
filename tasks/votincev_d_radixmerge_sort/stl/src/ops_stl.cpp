@@ -25,7 +25,6 @@ bool VotincevDRadixMergeSortSTL::PreProcessingImpl() {
   return true;
 }
 
-// поразрядная сортировка для локальных блоков (LSD)
 void VotincevDRadixMergeSortSTL::LocalRadixSort(uint32_t *begin, uint32_t *end) {
   auto n = static_cast<int32_t>(end - begin);
   if (n <= 1) {
@@ -42,14 +41,18 @@ void VotincevDRadixMergeSortSTL::LocalRadixSort(uint32_t *begin, uint32_t *end) 
     std::array<int32_t, 10> count{};
 
     for (int32_t i = 0; i < n; ++i) {
-      count[static_cast<size_t>((src[static_cast<size_t>(i)] / exp) % 10)]++;
+      count.at(static_cast<size_t>((src[i] / exp) % 10))++;
     }
     for (int32_t i = 1; i < 10; ++i) {
-      count[static_cast<size_t>(i)] += count[static_cast<size_t>(i - 1)];
+      count.at(static_cast<size_t>(i)) += count.at(static_cast<size_t>(i - 1));
     }
     for (int32_t i = n - 1; i >= 0; --i) {
-      uint32_t digit = (src[static_cast<size_t>(i)] / exp) % 10;
-      dst[--count[static_cast<size_t>(digit)]] = src[static_cast<size_t>(i)];
+      size_t digit = static_cast<size_t>((src[i] / exp) % 10);
+
+      size_t target_idx = static_cast<size_t>(count.at(digit)) - 1;
+      dst[target_idx] = src[i];
+
+      count.at(digit)--;
     }
     std::swap(src, dst);
   }

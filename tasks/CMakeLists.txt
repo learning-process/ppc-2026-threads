@@ -16,14 +16,15 @@ ppc_add_test(${PERF_TEST_EXEC} common/runners/performance.cpp USE_PERF_TESTS)
 # ——— List of implementations ————————————————————————————————————————
 set(PPC_IMPLEMENTATIONS "all;mpi;omp;seq;stl;tbb" CACHE STRING "Implementations to build (semicolon-separated)")
 
-# ——— Configure each subproject —————————————————————————————————————
-file(
-  GLOB subdirs
-  RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-  "${CMAKE_CURRENT_SOURCE_DIR}/*")
-foreach(sub IN LISTS subdirs)
-  if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${sub}" AND NOT sub STREQUAL
-                                                           "common")
-    ppc_configure_subproject(${sub})
-  endif()
-endforeach()
+# ——— Configure ONLY MY subproject ——————————————————————————————————
+# Мы закомментировали автоматический поиск всех папок (GLOB)
+# и прописали вашу папку вручную.
+
+set(MY_TASK "votincev_d_radixmerge_sort")
+
+if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${MY_TASK}")
+    message(STATUS "Configuring only: ${MY_TASK}")
+    ppc_configure_subproject(${MY_TASK})
+else()
+    message(FATAL_ERROR "Directory ${MY_TASK} not found!")
+endif()
