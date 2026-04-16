@@ -54,4 +54,12 @@ static void ParallelFor2D(int rows_begin, int rows_end, int cols_begin, int cols
   });
 }
 
+
+RemizovKDenseMatrixMultiplicationCannonAlgorithmStl::RemizovKDenseMatrixMultiplicationCannonAlgorithmStl(
+    const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+}
+
+
 }  // namespace remizov_k_dense_matrix_multiplication_cannon_algorithm
