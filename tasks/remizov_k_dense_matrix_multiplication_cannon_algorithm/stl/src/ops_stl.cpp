@@ -40,4 +40,18 @@ static void ParallelFor(IndexType begin, IndexType end, Func&& func) {
   }
 }
 
+template <typename Func>
+static void ParallelFor2D(int rows_begin, int rows_end, int cols_begin, int cols_end, Func&& func) {
+  const int rows = rows_end - rows_begin;
+  const int cols = cols_end - cols_begin;
+  const int total = rows * cols;
+  if (total <= 0) return;
+
+  ParallelFor(0, total, [&](int linear_idx) {
+    int i = rows_begin + linear_idx / cols;
+    int j = cols_begin + linear_idx % cols;
+    func(i, j);
+  });
+}
+
 }  // namespace remizov_k_dense_matrix_multiplication_cannon_algorithm
