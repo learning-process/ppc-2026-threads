@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cstddef>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -230,10 +231,10 @@ bool KurpiakovACRSMatMulALL::RunImpl() {
   SparseMatrix result(rows, cols);
   result.row_ptr = std::move(global_row_ptr);
   result.col_indices = std::move(global_col_indices);
-  result.values.resize(static_cast<std::size_t>(total_nnz));
+  result.values.resize(static_cast<size_t>(total_nnz));
 
   for (int i = 0; i < total_nnz; ++i) {
-    result.values[static_cast<std::size_t>(i)] = ComplexD(global_re[i], global_im[i]);
+    result.values[static_cast<size_t>(i)] = ComplexD(global_re[i], global_im[i]);
   }
 
   GetOutput() = std::move(result);
