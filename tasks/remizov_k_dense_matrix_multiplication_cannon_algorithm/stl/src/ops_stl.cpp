@@ -78,4 +78,10 @@ bool RemizovKDenseMatrixMultiplicationCannonAlgorithmStl::ValidationImpl() {
   return (n % static_cast<size_t>(block_dim) == 0);
 }
 
+bool RemizovKDenseMatrixMultiplicationCannonAlgorithmStl::PreProcessingImpl() {
+  GetOutput().clear();
+  return true;
+}
+
+
 }  // namespace remizov_k_dense_matrix_multiplication_cannon_algorithm
