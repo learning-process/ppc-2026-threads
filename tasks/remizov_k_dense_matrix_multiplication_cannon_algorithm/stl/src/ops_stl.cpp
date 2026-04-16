@@ -100,4 +100,17 @@ void RemizovKDenseMatrixMultiplicationCannonAlgorithmStl::MultiplyBlock(
   }
 }
 
+void RemizovKDenseMatrixMultiplicationCannonAlgorithmStl::ShiftBlocksLeft(
+    std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks,
+    int block_count) {
+  ParallelFor(0, block_count, [&](int i) {
+    auto first = std::move(matrix_blocks[i][0]);
+    for (int j = 1; j < block_count; ++j) {
+      matrix_blocks[i][j - 1] = std::move(matrix_blocks[i][j]);
+    }
+    matrix_blocks[i][block_count - 1] = std::move(first);
+  });
+}
+
+
 }  // namespace remizov_k_dense_matrix_multiplication_cannon_algorithm
