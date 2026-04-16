@@ -4,13 +4,14 @@
 #include <cmath>
 
 #include "lukin_i_ench_contr_lin_hist/common/include/common.hpp"
+#include "lukin_i_ench_contr_lin_hist/omp/include/ops_omp.hpp"
 #include "lukin_i_ench_contr_lin_hist/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace lukin_i_ench_contr_lin_hist {
 
 class LukinIPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int image_size_ = 4096;
+  const int image_size_ = 8192;
   InType input_data_;
 
   void SetUp() override {
@@ -55,7 +56,7 @@ TEST_P(LukinIPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, LukinITestTaskSEQ>(PPC_SETTINGS_lukin_i_ench_contr_lin_hist);
+    ppc::util::MakeAllPerfTasks<InType, LukinITestTaskSEQ, LukinITestTaskOMP>(PPC_SETTINGS_lukin_i_ench_contr_lin_hist);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

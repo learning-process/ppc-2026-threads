@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <tuple>
 
 #include "fatehov_k_gaussian/common/include/common.hpp"
+#include "fatehov_k_gaussian/omp/include/ops_omp.hpp"
 #include "fatehov_k_gaussian/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -32,7 +34,9 @@ TEST_P(FatehovKGaussianPerfTests, RunPerfModes) {
 }
 
 namespace {
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, FatehovKGaussianSEQ>(PPC_SETTINGS_fatehov_k_gaussian);
+const auto kAllPerfTasks =
+    std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, FatehovKGaussianSEQ>(PPC_SETTINGS_fatehov_k_gaussian),
+                   ppc::util::MakeAllPerfTasks<InType, FatehovKGaussianOMP>(PPC_SETTINGS_fatehov_k_gaussian));
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 INSTANTIATE_TEST_SUITE_P(FatehovKPerfTests, FatehovKGaussianPerfTests, kGtestValues,

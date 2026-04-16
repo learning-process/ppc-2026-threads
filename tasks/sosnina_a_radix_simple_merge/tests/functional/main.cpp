@@ -9,7 +9,9 @@
 #include <vector>
 
 #include "sosnina_a_radix_simple_merge/common/include/common.hpp"
+#include "sosnina_a_radix_simple_merge/omp/include/ops_omp.hpp"
 #include "sosnina_a_radix_simple_merge/seq/include/ops_seq.hpp"
+#include "sosnina_a_radix_simple_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -118,8 +120,10 @@ const std::array<TestType, 48> kTestParam = []() {
   return arr;
 }();
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<SosninaATestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_sosnina_a_radix_simple_merge);
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<SosninaATestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_sosnina_a_radix_simple_merge),
+    ppc::util::AddFuncTask<SosninaATestTaskOMP, InType>(kTestParam, PPC_SETTINGS_sosnina_a_radix_simple_merge),
+    ppc::util::AddFuncTask<SosninaATestTaskTBB, InType>(kTestParam, PPC_SETTINGS_sosnina_a_radix_simple_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

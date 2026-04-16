@@ -9,6 +9,7 @@
 #include <tuple>
 
 #include "krymova_k_lsd_sort_merge_double/common/include/common.hpp"
+#include "krymova_k_lsd_sort_merge_double/omp/include/ops_omp.hpp"
 #include "krymova_k_lsd_sort_merge_double/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -113,9 +114,10 @@ const std::array<TestType, 13> kTestParam = {std::make_tuple(1, "single"),
                                              std::make_tuple(100, "mixed"),
                                              std::make_tuple(100000, "random_huge")};
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KrymovaKLsdSortMergeDoubleSEQ, InType>(
-    kTestParam, PPC_SETTINGS_krymova_k_lsd_sort_merge_double));
-
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KrymovaKLsdSortMergeDoubleOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_krymova_k_lsd_sort_merge_double),
+                                           ppc::util::AddFuncTask<KrymovaKLsdSortMergeDoubleSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_krymova_k_lsd_sort_merge_double));
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = KrymovaKFuncTests::PrintFuncTestName<KrymovaKFuncTests>;

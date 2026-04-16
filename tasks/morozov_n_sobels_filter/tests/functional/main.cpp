@@ -10,6 +10,7 @@
 #include <tuple>
 
 #include "morozov_n_sobels_filter/common/include/common.hpp"
+#include "morozov_n_sobels_filter/omp/include/ops_omp.hpp"
 #include "morozov_n_sobels_filter/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -94,7 +95,8 @@ const std::array<TestType, 5> kTestParam = {std::string("test_img_3x3"), std::st
                                             std::string("test_zero_9x9")};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<MorozovNSobelsFilterSEQ, InType>(kTestParam, PPC_SETTINGS_morozov_n_sobels_filter));
+    ppc::util::AddFuncTask<MorozovNSobelsFilterSEQ, InType>(kTestParam, PPC_SETTINGS_morozov_n_sobels_filter),
+    ppc::util::AddFuncTask<MorozovNSobelsFilterOMP, InType>(kTestParam, PPC_SETTINGS_morozov_n_sobels_filter));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

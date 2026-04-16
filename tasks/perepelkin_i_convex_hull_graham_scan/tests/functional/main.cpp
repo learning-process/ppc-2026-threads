@@ -7,7 +7,9 @@
 #include <tuple>
 
 #include "perepelkin_i_convex_hull_graham_scan/common/include/common.hpp"
+#include "perepelkin_i_convex_hull_graham_scan/omp/include/ops_omp.hpp"
 #include "perepelkin_i_convex_hull_graham_scan/seq/include/ops_seq.hpp"
+#include "perepelkin_i_convex_hull_graham_scan/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -80,8 +82,12 @@ const std::array<TestType, 12> kTestParam = {
                             {0.4, 0.5}}},
                     OutType{{{0.0, 0.0}, {1.0, 0.0}, {1.0, 1.0}, {0.0, 1.0}}})};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<PerepelkinIConvexHullGrahamScanSEQ, InType>(
-    kTestParam, PPC_SETTINGS_perepelkin_i_convex_hull_graham_scan);
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<PerepelkinIConvexHullGrahamScanSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_perepelkin_i_convex_hull_graham_scan),
+                                           ppc::util::AddFuncTask<PerepelkinIConvexHullGrahamScanOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_perepelkin_i_convex_hull_graham_scan),
+                                           ppc::util::AddFuncTask<PerepelkinIConvexHullGrahamScanTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_perepelkin_i_convex_hull_graham_scan));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

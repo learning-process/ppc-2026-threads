@@ -5,6 +5,7 @@
 #include <random>
 
 #include "chetverikova_e_shell_sort_simple_merge/common/include/common.hpp"
+#include "chetverikova_e_shell_sort_simple_merge/omp/include/ops_omp.hpp"
 #include "chetverikova_e_shell_sort_simple_merge/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -44,8 +45,9 @@ TEST_P(ChetverikovaERunPerfTestThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ChetverikovaEShellSortSimpleMergeSEQ>(
-    PPC_SETTINGS_chetverikova_e_shell_sort_simple_merge);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, ChetverikovaEShellSortSimpleMergeSEQ, ChetverikovaEShellSortSimpleMergeOMP>(
+        PPC_SETTINGS_chetverikova_e_shell_sort_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

@@ -5,7 +5,9 @@
 
 #include "util/include/perf_test_util.hpp"
 #include "zorin_d_strassen_alg_matrix_seq/common/include/common.hpp"
+#include "zorin_d_strassen_alg_matrix_seq/omp/include/ops_omp.hpp"
 #include "zorin_d_strassen_alg_matrix_seq/seq/include/ops_seq.hpp"
+#include "zorin_d_strassen_alg_matrix_seq/tbb/include/ops_tbb.hpp"
 
 namespace zorin_d_strassen_alg_matrix_seq {
 
@@ -18,7 +20,7 @@ std::vector<double> MakeOnes(std::size_t n) {
 class ZorinDRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    constexpr std::size_t kN = 256;
+    constexpr std::size_t kN = 512;
     input_.n = kN;
     input_.a = MakeOnes(kN);
     input_.b = MakeOnes(kN);
@@ -41,7 +43,8 @@ TEST_P(ZorinDRunPerfTests, ZorinDSEQStrassenRunPerfModes) {
 }
 
 const auto kPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZorinDStrassenAlgMatrixSEQ>(PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq);
+    ppc::util::MakeAllPerfTasks<InType, ZorinDStrassenAlgMatrixSEQ, ZorinDStrassenAlgMatrixOMP,
+                                ZorinDStrassenAlgMatrixTBB>(PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq);
 
 const auto kValues = ppc::util::TupleToGTestValues(kPerfTasks);
 const auto kName = ZorinDRunPerfTests::CustomPerfTestName;

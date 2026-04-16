@@ -7,7 +7,10 @@
 #include <vector>
 
 #include "ermakov_a_spar_mat_mult/common/include/common.hpp"
+#include "ermakov_a_spar_mat_mult/omp/include/ops_omp.hpp"
 #include "ermakov_a_spar_mat_mult/seq/include/ops_seq.hpp"
+#include "ermakov_a_spar_mat_mult/stl/include/ops_stl.hpp"
+#include "ermakov_a_spar_mat_mult/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace ermakov_a_spar_mat_mult {
@@ -111,7 +114,8 @@ TEST_P(ErmakovARunPerfTestSparMatMult, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ErmakovASparMatMultSEQ>(PPC_SETTINGS_ermakov_a_spar_mat_mult);
+    ppc::util::MakeAllPerfTasks<InType, ErmakovASparMatMultSEQ, ErmakovASparMatMultOMP, ErmakovASparMatMultTBB,
+                                ErmakovASparMatMultSTL>(PPC_SETTINGS_ermakov_a_spar_mat_mult);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

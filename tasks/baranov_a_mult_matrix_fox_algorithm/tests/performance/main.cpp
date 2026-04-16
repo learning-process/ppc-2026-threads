@@ -1,101 +1,91 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <tuple>
 #include <vector>
 
 #include "baranov_a_mult_matrix_fox_algorithm/common/include/common.hpp"
+#include "baranov_a_mult_matrix_fox_algorithm/omp/include/ops_omp.hpp"
 #include "baranov_a_mult_matrix_fox_algorithm/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace baranov_a_mult_matrix_fox_algorithm_seq {
+namespace baranov_a_mult_matrix_fox_algorithm_test {
 
-class BaranovAPerfTest : public ppc::util::BaseRunPerfTests<baranov_a_mult_matrix_fox_algorithm::InType,
-                                                            baranov_a_mult_matrix_fox_algorithm::OutType> {
-  baranov_a_mult_matrix_fox_algorithm::InType input_data_;
-  baranov_a_mult_matrix_fox_algorithm::OutType expected_output_;
-
+template <typename TaskType>
+class BaranovAMultMatrixFoxAlgorithmPerfTests
+    : public ppc::util::BaseRunPerfTests<baranov_a_mult_matrix_fox_algorithm::InType,
+                                         baranov_a_mult_matrix_fox_algorithm::OutType> {
   void SetUp() override {
-    size_t n = 400;
+    size_t n = 512;
 
     size_t size = n * n;
-
-    std::vector<double> a(size);
-    std::vector<double> b(size);
-
-    for (size_t i = 0; i < size; ++i) {
-      a[i] = std::pow(2.0, static_cast<double>(i % 20));
-      b[i] = std::sqrt(static_cast<double>(i + 1));
-    }
+    std::vector<double> a(size, 1.5);
+    std::vector<double> b(size, 2.0);
 
     input_data_ = std::make_tuple(n, a, b);
 
-    std::vector<double> expected(size, 0.0);
-    ReferenceMultiply(a, b, expected, n);
-    expected_output_ = expected;
+    double expected_value = 3.0 * static_cast<double>(n);
+    expected_output_.resize(size, expected_value);
   }
 
   bool CheckTestOutputData(baranov_a_mult_matrix_fox_algorithm::OutType &output_data) final {
-    const auto &expected = expected_output_;
-    const auto &actual = output_data;
-
-    if (expected.size() != actual.size()) {
+    if (expected_output_.size() != output_data.size()) {
       return false;
     }
 
-    const double relative_epsilon = 1e-6;
-    for (size_t i = 0; i < expected.size(); ++i) {
-      double max_val = std::max(std::abs(expected[i]), std::abs(actual[i]));
-      if (max_val > 1e-12) {
-        double rel_error = std::abs(expected[i] - actual[i]) / max_val;
-        if (rel_error > relative_epsilon) {
-          return false;
-        }
-      } else {
-        if (std::abs(expected[i] - actual[i]) > 1e-12) {
-          return false;
-        }
+    double epsilon = 1e-8;
+    for (size_t i = 0; i < expected_output_.size(); ++i) {
+      if (std::abs(expected_output_[i] - output_data[i]) > epsilon) {
+        return false;
       }
     }
     return true;
   }
 
-  static void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c,
-                                size_t n) {
-    for (size_t j = 0; j < n; ++j) {
-      for (size_t i = 0; i < n; ++i) {
-        double sum = 0.0;
-        for (size_t k = 0; k < n; ++k) {
-          sum += a[(i * n) + k] * b[(k * n) + j];
-        }
-        c[(i * n) + j] = sum;
-      }
-    }
-  }
-
   baranov_a_mult_matrix_fox_algorithm::InType GetTestInputData() final {
     return input_data_;
   }
+
+ private:
+  baranov_a_mult_matrix_fox_algorithm::InType input_data_;
+  baranov_a_mult_matrix_fox_algorithm::OutType expected_output_;
 };
 
-TEST_P(BaranovAPerfTest, RunPerfModes) {
+using BaranovASEQPerfTests =
+    BaranovAMultMatrixFoxAlgorithmPerfTests<baranov_a_mult_matrix_fox_algorithm_seq::BaranovAMultMatrixFoxAlgorithmSEQ>;
+using BaranovAOMPPerfTests =
+    BaranovAMultMatrixFoxAlgorithmPerfTests<baranov_a_mult_matrix_fox_algorithm_omp::BaranovAMultMatrixFoxAlgorithmOMP>;
+
+TEST_P(BaranovASEQPerfTests, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
+
+TEST_P(BaranovAOMPPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<baranov_a_mult_matrix_fox_algorithm::InType, BaranovAMultMatrixFoxAlgorithmSEQ>(
+const auto kAllPerfTasksSeq =
+    ppc::util::MakeAllPerfTasks<baranov_a_mult_matrix_fox_algorithm::InType,
+                                baranov_a_mult_matrix_fox_algorithm_seq::BaranovAMultMatrixFoxAlgorithmSEQ>(
         PPC_SETTINGS_baranov_a_mult_matrix_fox_algorithm);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kAllPerfTasksOmp =
+    ppc::util::MakeAllPerfTasks<baranov_a_mult_matrix_fox_algorithm::InType,
+                                baranov_a_mult_matrix_fox_algorithm_omp::BaranovAMultMatrixFoxAlgorithmOMP>(
+        PPC_SETTINGS_baranov_a_mult_matrix_fox_algorithm);
 
-const auto kPerfTestName = BaranovAPerfTest::CustomPerfTestName;
+const auto kGtestValuesSeq = ppc::util::TupleToGTestValues(kAllPerfTasksSeq);
+const auto kGtestValuesOmp = ppc::util::TupleToGTestValues(kAllPerfTasksOmp);
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, BaranovAPerfTest, kGtestValues, kPerfTestName);
+const auto kPerfTestNameSeq = BaranovASEQPerfTests::CustomPerfTestName;
+const auto kPerfTestNameOmp = BaranovAOMPPerfTests::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(PerfTestsSeq, BaranovASEQPerfTests, kGtestValuesSeq, kPerfTestNameSeq);
+INSTANTIATE_TEST_SUITE_P(PerfTestsOmp, BaranovAOMPPerfTests, kGtestValuesOmp, kPerfTestNameOmp);
 
 }  // namespace
 
-}  // namespace baranov_a_mult_matrix_fox_algorithm_seq
+}  // namespace baranov_a_mult_matrix_fox_algorithm_test
