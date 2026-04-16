@@ -8,8 +8,8 @@
 #include "remizov_k_dense_matrix_multiplication_cannon_algorithm/common/include/common.hpp"
 #include "remizov_k_dense_matrix_multiplication_cannon_algorithm/omp/include/ops_omp.hpp"
 #include "remizov_k_dense_matrix_multiplication_cannon_algorithm/seq/include/ops_seq.hpp"
-#include "remizov_k_dense_matrix_multiplication_cannon_algorithm/tbb/include/ops_tbb.hpp"
 #include "remizov_k_dense_matrix_multiplication_cannon_algorithm/stl/include/ops_stl.hpp"
+#include "remizov_k_dense_matrix_multiplication_cannon_algorithm/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace remizov_k_dense_matrix_multiplication_cannon_algorithm {
