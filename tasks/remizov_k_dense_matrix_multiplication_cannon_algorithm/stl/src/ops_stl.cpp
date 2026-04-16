@@ -210,4 +210,8 @@ bool RemizovKDenseMatrixMultiplicationCannonAlgorithmStl::RunImpl() {
   return true;
 }
 
+bool RemizovKDenseMatrixMultiplicationCannonAlgorithmStl::PostProcessingImpl() {
+  return true;
+}
+
 }  // namespace remizov_k_dense_matrix_multiplication_cannon_algorithm
