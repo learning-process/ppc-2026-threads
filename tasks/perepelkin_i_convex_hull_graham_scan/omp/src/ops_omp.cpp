@@ -93,7 +93,7 @@ void PerepelkinIConvexHullGrahamScanOMP::ParallelSort(std::vector<std::pair<doub
   const int threads = std::min(ppc::util::GetNumThreads(), static_cast<int>(data.size()));
 
   // Partitioning
-  std::vector<size_t> start(threads + 1);
+  std::vector<int> start(threads + 1);
   DataPartitioning(data.size(), threads, start);
 
   // Parallel local sorting
@@ -123,20 +123,20 @@ void PerepelkinIConvexHullGrahamScanOMP::ParallelSort(std::vector<std::pair<doub
 }
 
 void PerepelkinIConvexHullGrahamScanOMP::DataPartitioning(size_t total_size, const int &threads,
-                                                          std::vector<size_t> &start) {
+                                                          std::vector<int> &start) {
   size_t base = total_size / threads;
   size_t rem = total_size % threads;
 
   size_t offset = 0;
 
   for (int i = 0; i < threads; i++) {
-    start[i] = offset;
+    start[i] = static_cast<int>(offset);
 
-    size_t extra = (i < static_cast<int>(rem)) ? 1 : 0;
+    size_t extra = std::cmp_less(i, rem) ? 1 : 0;
     offset += base + extra;
   }
 
-  start[threads] = total_size;
+  start[threads] = static_cast<int>(total_size);
 }
 
 void PerepelkinIConvexHullGrahamScanOMP::HullConstruction(std::vector<std::pair<double, double>> &hull,
