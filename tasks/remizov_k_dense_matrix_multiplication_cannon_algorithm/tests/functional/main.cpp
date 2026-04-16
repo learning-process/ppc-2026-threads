@@ -10,6 +10,7 @@
 #include "remizov_k_dense_matrix_multiplication_cannon_algorithm/common/include/common.hpp"
 #include "remizov_k_dense_matrix_multiplication_cannon_algorithm/omp/include/ops_omp.hpp"
 #include "remizov_k_dense_matrix_multiplication_cannon_algorithm/seq/include/ops_seq.hpp"
+#include "remizov_k_dense_matrix_multiplication_cannon_algorithm/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -102,21 +103,21 @@ const std::array<TestType, 8> kTestCases = {
                     std::vector<std::vector<double>>(4, std::vector<double>(4, 1.0)),
                     std::vector<std::vector<double>>(4, std::vector<double>(4, 4.0)))};
 
+const auto kTestNameFunc = RemizovKDenseMatrixMultiplicationCannonAlgorithmFuncTests::PrintFuncTestName<
+    RemizovKDenseMatrixMultiplicationCannonAlgorithmFuncTests>;
+
+}  // namespace
+
+namespace {
+
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<RemizovKDenseMatrixMultiplicationCannonAlgorithm, InType>(
         kTestCases, PPC_SETTINGS_remizov_k_dense_matrix_multiplication_cannon_algorithm));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kTestNameFunc = RemizovKDenseMatrixMultiplicationCannonAlgorithmFuncTests::PrintFuncTestName<
-    RemizovKDenseMatrixMultiplicationCannonAlgorithmFuncTests>;
-
 INSTANTIATE_TEST_SUITE_P(CannonTests, RemizovKDenseMatrixMultiplicationCannonAlgorithmFuncTests, kGtestValues,
                          kTestNameFunc);
-
-}  // namespace
-
-namespace {
 
 const auto kTestTasksListOmp =
     std::tuple_cat(ppc::util::AddFuncTask<RemizovKDenseMatrixMultiplicationCannonAlgorithmOmp, InType>(
@@ -125,6 +126,15 @@ const auto kTestTasksListOmp =
 const auto kGtestValuesOmp = ppc::util::ExpandToValues(kTestTasksListOmp);
 
 INSTANTIATE_TEST_SUITE_P(CannonTestsOmp, RemizovKDenseMatrixMultiplicationCannonAlgorithmFuncTests, kGtestValuesOmp,
+                         kTestNameFunc);
+
+const auto kTestTasksListTbb =
+    std::tuple_cat(ppc::util::AddFuncTask<RemizovKDenseMatrixMultiplicationCannonAlgorithmTbb, InType>(
+        kTestCases, PPC_SETTINGS_remizov_k_dense_matrix_multiplication_cannon_algorithm));
+
+const auto kGtestValuesTbb = ppc::util::ExpandToValues(kTestTasksListTbb);
+
+INSTANTIATE_TEST_SUITE_P(CannonTestsTbb, RemizovKDenseMatrixMultiplicationCannonAlgorithmFuncTests, kGtestValuesTbb,
                          kTestNameFunc);
 
 }  // namespace
