@@ -146,4 +146,23 @@ void RemizovKDenseMatrixMultiplicationCannonAlgorithmStl::RunCannonCycle(
 }
 
 
+void RemizovKDenseMatrixMultiplicationCannonAlgorithmStl::InitializeBlocks(
+    const std::vector<std::vector<double>> &matrix_a,
+    const std::vector<std::vector<double>> &matrix_b,
+    std::vector<std::vector<std::vector<std::vector<double>>>> &a_blocks,
+    std::vector<std::vector<std::vector<std::vector<double>>>> &b_blocks,
+    int block_size,
+    int block_count) {
+  ParallelFor2D(0, block_count, 0, block_count,
+                [&](int i, int j) {
+                  int shift = (i + j) % block_count;
+                  for (int bi = 0; bi < block_size; ++bi) {
+                    for (int bj = 0; bj < block_size; ++bj) {
+                      a_blocks[i][j][bi][bj] = matrix_a[(i * block_size) + bi][(shift * block_size) + bj];
+                      b_blocks[i][j][bi][bj] = matrix_b[(shift * block_size) + bi][(j * block_size) + bj];
+                    }
+                  }
+                });
+}
+
 }  // namespace remizov_k_dense_matrix_multiplication_cannon_algorithm
