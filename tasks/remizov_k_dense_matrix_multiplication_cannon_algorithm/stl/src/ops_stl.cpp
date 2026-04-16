@@ -1,0 +1,43 @@
+#include "remizov_k_dense_matrix_multiplication_cannon_algorithm/stl/include/ops_stl.hpp"
+
+#include <algorithm>
+#include <cstddef>
+#include <thread>
+#include <utility>
+#include <vector>
+#include <functional>
+
+#include "remizov_k_dense_matrix_multiplication_cannon_algorithm/common/include/common.hpp"
+
+namespace remizov_k_dense_matrix_multiplication_cannon_algorithm {
+
+template <typename IndexType, typename Func>
+static void ParallelFor(IndexType begin, IndexType end, Func&& func) {
+  const std::size_t num_threads = std::max(1u, std::thread::hardware_concurrency());
+  const IndexType range_length = end - begin;
+  if (range_length <= 0) return;
+
+  std::vector<std::thread> threads;
+  threads.reserve(num_threads);
+
+  IndexType chunk_size = (range_length + num_threads - 1) / num_threads;
+  IndexType start = begin;
+
+  for (std::size_t t = 0; t < num_threads; ++t) {
+    IndexType chunk_end = std::min(end, start + chunk_size);
+    if (start >= chunk_end) break;
+
+    threads.emplace_back([start, chunk_end, &func]() {
+      for (IndexType i = start; i < chunk_end; ++i) {
+        func(i);
+      }
+    });
+    start = chunk_end;
+  }
+
+  for (auto& th : threads) {
+    if (th.joinable()) th.join();
+  }
+}
+
+}  // namespace remizov_k_dense_matrix_multiplication_cannon_algorithm
