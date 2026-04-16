@@ -84,4 +84,20 @@ bool RemizovKDenseMatrixMultiplicationCannonAlgorithmStl::PreProcessingImpl() {
 }
 
 
+void RemizovKDenseMatrixMultiplicationCannonAlgorithmStl::MultiplyBlock(
+    const std::vector<std::vector<double>> &a,
+    const std::vector<std::vector<double>> &b,
+    std::vector<std::vector<double>> &c,
+    int block_size) {
+  for (int i = 0; i < block_size; ++i) {
+    for (int j = 0; j < block_size; ++j) {
+      double acc = 0.0;
+      for (int k = 0; k < block_size; ++k) {
+        acc += a[i][k] * b[k][j];
+      }
+      c[i][j] += acc;
+    }
+  }
+}
+
 }  // namespace remizov_k_dense_matrix_multiplication_cannon_algorithm
