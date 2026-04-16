@@ -24,5 +24,7 @@ class VotincevDRadixMergeSortOMP : public BaseTask {
   // ==============================
   // мои дополнительные функции ===
   static void SortByDigit(std::vector<int32_t> &array, int32_t exp);
+  static void LocalRadixSort(uint32_t *begin, uint32_t *end);
+  static void Merge(const uint32_t *src, uint32_t *dst, int32_t left, int32_t mid, int32_t right);
 };
 }  // namespace votincev_d_radixmerge_sort
