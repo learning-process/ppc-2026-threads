@@ -180,4 +180,34 @@ void RemizovKDenseMatrixMultiplicationCannonAlgorithmStl::AssembleOutput(
                 });
 }
 
+bool RemizovKDenseMatrixMultiplicationCannonAlgorithmStl::RunImpl() {
+  const auto &params = GetInput();
+  int block_dim = std::get<0>(params);
+  const auto &source_a = std::get<1>(params);
+  const auto &source_b = std::get<2>(params);
+
+  int matrix_size = static_cast<int>(source_a.size());
+  int blocks_per_dim = matrix_size / block_dim;
+
+  using Block4D = std::vector<std::vector<std::vector<std::vector<double>>>>;
+  Block4D blocks_a(blocks_per_dim,
+                   std::vector<std::vector<std::vector<double>>>(
+                       blocks_per_dim, std::vector<std::vector<double>>(block_dim, std::vector<double>(block_dim, 0.0))));
+  Block4D blocks_b(blocks_per_dim,
+                   std::vector<std::vector<std::vector<double>>>(
+                       blocks_per_dim, std::vector<std::vector<double>>(block_dim, std::vector<double>(block_dim, 0.0))));
+  Block4D blocks_c(blocks_per_dim,
+                   std::vector<std::vector<std::vector<double>>>(
+                       blocks_per_dim, std::vector<std::vector<double>>(block_dim, std::vector<double>(block_dim, 0.0))));
+
+  InitializeBlocks(source_a, source_b, blocks_a, blocks_b, block_dim, blocks_per_dim);
+  RunCannonCycle(blocks_a, blocks_b, blocks_c, block_dim, blocks_per_dim);
+
+  std::vector<std::vector<double>> result(matrix_size, std::vector<double>(matrix_size, 0.0));
+  AssembleOutput(blocks_c, result, block_dim, blocks_per_dim);
+
+  GetOutput() = std::move(result);
+  return true;
+}
+
 }  // namespace remizov_k_dense_matrix_multiplication_cannon_algorithm
