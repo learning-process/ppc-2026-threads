@@ -1,13 +1,13 @@
-#include "orehov_n_jarvis_pass/omp/include/ops_omp.hpp"
+#include "orehov_n_jarvis_pass_seq/omp/include/ops_omp.hpp"
 
 #include <cmath>
 #include <cstddef>
 #include <set>
 #include <vector>
 
-#include "orehov_n_jarvis_pass/common/include/common.hpp"
+#include "orehov_n_jarvis_pass_seq/common/include/common.hpp"
 
-namespace orehov_n_jarvis_pass {
+namespace orehov_n_jarvis_pass_seq {
 
 OrehovNJarvisPassOMP::OrehovNJarvisPassOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -116,4 +116,4 @@ bool OrehovNJarvisPassOMP::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace orehov_n_jarvis_pass
+}  // namespace orehov_n_jarvis_pass_seq

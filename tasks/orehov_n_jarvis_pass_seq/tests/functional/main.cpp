@@ -6,15 +6,14 @@
 #include <tuple>
 #include <vector>
 
-#include "orehov_n_jarvis_pass/common/include/common.hpp"
-#include "orehov_n_jarvis_pass/omp/include/ops_omp.hpp"
-#include "orehov_n_jarvis_pass/seq/include/ops_seq.hpp"
+#include "orehov_n_jarvis_pass_seq/common/include/common.hpp"
+#include "orehov_n_jarvis_pass_seq/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace orehov_n_jarvis_pass {
+namespace orehov_n_jarvis_pass_seq {
 
-class OrehovNJarvisPassFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class OrehovNJarvisPassSEQFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(test_param);
@@ -64,22 +63,21 @@ class OrehovNJarvisPassFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
 
 namespace {
 
-TEST_P(OrehovNJarvisPassFuncTests, MatmulFromPic) {
+TEST_P(OrehovNJarvisPassSEQFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
 const std::array<TestType, 3> kTestParam = {1, 2, 3};
 
 const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<OrehovNJarvisPassSEQ, InType>(kTestParam, PPC_SETTINGS_orehov_n_jarvis_pass),
-                   ppc::util::AddFuncTask<OrehovNJarvisPassOMP, InType>(kTestParam, PPC_SETTINGS_orehov_n_jarvis_pass));
+    std::tuple_cat(ppc::util::AddFuncTask<OrehovNJarvisPassSEQ, InType>(kTestParam, PPC_SETTINGS_example_threads));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = OrehovNJarvisPassFuncTests::PrintFuncTestName<OrehovNJarvisPassFuncTests>;
+const auto kPerfTestName = OrehovNJarvisPassSEQFuncTests::PrintFuncTestName<OrehovNJarvisPassSEQFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, OrehovNJarvisPassFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PicMatrixTests, OrehovNJarvisPassSEQFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
-}  // namespace orehov_n_jarvis_pass
+}  // namespace orehov_n_jarvis_pass_seq
