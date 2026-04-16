@@ -70,7 +70,7 @@ void MultiplySingleRow(const SparseMatrix &a, const SparseMatrix &b, int row_idx
     }
   }
 
-  std::sort(used_cols.begin(), used_cols.end());
+  std::ranges::sort(used_cols);
 
   out_values.clear();
   out_cols.clear();
@@ -96,7 +96,7 @@ void ComputeLocalRowsThreads(const SparseMatrix &a, const SparseMatrix &b, int r
   std::vector<std::thread> workers;
   workers.reserve(num_threads);
 
-  for (int t = 0; t < num_threads; ++t) {
+  for (int tid = 0; tid < num_threads; ++tid) {
     workers.emplace_back([&]() {
       std::vector<ComplexD> row_acc(b.cols);
       std::vector<char> row_used(b.cols, 0);
@@ -184,7 +184,7 @@ bool KurpiakovACRSMatMulALL::RunImpl() {
     const auto &vals = local_values[local_i];
     const auto &cols_row = local_cols[local_i];
 
-    for (std::size_t j = 0; j < vals.size(); ++j) {
+    for (size_t j = 0; j < vals.size(); ++j) {
       local_re[pos] = vals[j].re;
       local_im[pos] = vals[j].im;
       local_col_indices[pos] = cols_row[j];
@@ -196,8 +196,8 @@ bool KurpiakovACRSMatMulALL::RunImpl() {
   MPI_Allgather(&local_nnz, 1, MPI_INT, recv_counts.data(), 1, MPI_INT, MPI_COMM_WORLD);
 
   std::vector<int> recv_displs(world_size, 0);
-  for (int r = 1; r < world_size; ++r) {
-    recv_displs[r] = recv_displs[r - 1] + recv_counts[r - 1];
+  for (int rec = 1; rec < world_size; ++rec) {
+    recv_displs[rec] = recv_displs[rec - 1] + recv_counts[rec - 1];
   }
 
   std::vector<double> global_re;
