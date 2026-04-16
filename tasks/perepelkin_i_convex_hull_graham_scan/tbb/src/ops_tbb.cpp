@@ -5,7 +5,6 @@
 #include <tbb/parallel_reduce.h>
 #include <tbb/parallel_sort.h>
 
-#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <utility>
@@ -80,19 +79,12 @@ size_t PerepelkinIConvexHullGrahamScanTBB::FindPivotParallel(const std::vector<s
 
 void PerepelkinIConvexHullGrahamScanTBB::ParallelSort(std::vector<std::pair<double, double>> &data,
                                                       const std::pair<double, double> &pivot) {
-  size_t n = data.size();
-
-  if (n < 10000) {
-    std::ranges::sort(data, [&](const auto &a, const auto &b) { return AngleCmp(a, b, pivot); });
-    return;
-  }
-
   tbb::parallel_sort(data.begin(), data.end(), [&](const auto &a, const auto &b) { return AngleCmp(a, b, pivot); });
 }
 
-void perepelkin_i_convex_hull_graham_scan::PerepelkinIConvexHullGrahamScanTBB::HullConstruction(
-    std::vector<std::pair<double, double>> &hull, const std::vector<std::pair<double, double>> &pts,
-    const std::pair<double, double> &pivot) {
+void PerepelkinIConvexHullGrahamScanTBB::HullConstruction(std::vector<std::pair<double, double>> &hull,
+                                                          const std::vector<std::pair<double, double>> &pts,
+                                                          const std::pair<double, double> &pivot) {
   hull.reserve(pts.size() + 1);
 
   hull.push_back(pivot);
