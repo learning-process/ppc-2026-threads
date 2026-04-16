@@ -165,4 +165,19 @@ void RemizovKDenseMatrixMultiplicationCannonAlgorithmStl::InitializeBlocks(
                 });
 }
 
+void RemizovKDenseMatrixMultiplicationCannonAlgorithmStl::AssembleOutput(
+    std::vector<std::vector<std::vector<std::vector<double>>>> &c_blocks,
+    std::vector<std::vector<double>> &output,
+    int block_size,
+    int block_count) {
+  ParallelFor2D(0, block_count, 0, block_count,
+                [&](int i, int j) {
+                  for (int bi = 0; bi < block_size; ++bi) {
+                    for (int bj = 0; bj < block_size; ++bj) {
+                      output[(i * block_size) + bi][(j * block_size) + bj] = c_blocks[i][j][bi][bj];
+                    }
+                  }
+                });
+}
+
 }  // namespace remizov_k_dense_matrix_multiplication_cannon_algorithm
