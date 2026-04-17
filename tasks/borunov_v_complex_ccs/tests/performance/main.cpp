@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "borunov_v_complex_ccs/common/include/common.hpp"
+#include "borunov_v_complex_ccs/omp/include/ops_omp.hpp"
 #include "borunov_v_complex_ccs/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -60,8 +61,8 @@ TEST_P(BorunovVRunPerfTestThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, BorunovVComplexCcsSEQ>(PPC_SETTINGS_borunov_v_complex_ccs);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, BorunovVComplexCcsOMP, BorunovVComplexCcsSEQ>(
+    PPC_SETTINGS_borunov_v_complex_ccs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
