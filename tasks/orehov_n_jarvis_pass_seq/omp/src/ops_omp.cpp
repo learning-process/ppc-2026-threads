@@ -16,12 +16,12 @@ OrehovNJarvisPassOMP::OrehovNJarvisPassOMP(const InType &in) {
 }
 
 bool OrehovNJarvisPassOMP::ValidationImpl() {
+  input_ = GetInput();
   return (!GetInput().empty());
 }
 
 bool OrehovNJarvisPassOMP::PreProcessingImpl() {
-  std::set<Point> tmp(GetInput().begin(), GetInput().end());
-  input_.assign(tmp.begin(), tmp.end());
+  input_ = GetInput();
   return true;
 }
 
@@ -48,20 +48,19 @@ bool OrehovNJarvisPassOMP::RunImpl() {
 }
 
 Point OrehovNJarvisPassOMP::FindNext(Point current) const {
-  Point next = (current == input_[0]) ? input_[1] : input_[0];
-  Point global_next = next;
+  const auto &input_ref = input_;
+  const int n = static_cast<int>(input_ref.size());
 
-  const size_t n = input_.size();
-  const auto &input = input_;
+  Point initial_candidate = (current == input_ref[0]) ? input_ref[1] : input_ref[0];
+  Point global_next = initial_candidate;
 
-#pragma omp parallel default(none) shared(input, n, current, global_next, next)
+#pragma omp parallel default(none) shared(input_ref, n, current, global_next) firstprivate(initial_candidate)
   {
-    Point local_next = next;
+    Point local_next = initial_candidate;
 
-    const int n_int = static_cast<int>(n);
 #pragma omp for
-    for (int i = 0; i < n_int; ++i) {
-      const Point &point = input[i];
+    for (int i = 0; i < n; ++i) {
+      const Point &point = input_ref[i];
       if (current == point) {
         continue;
       }
@@ -70,7 +69,7 @@ Point OrehovNJarvisPassOMP::FindNext(Point current) const {
 
       if (orient > 0) {
         local_next = point;
-      } else if (orient == 0) {
+      } else if (std::abs(orient) < 1e-9) {
         if (Distance(current, point) > Distance(current, local_next)) {
           local_next = point;
         }
@@ -82,7 +81,7 @@ Point OrehovNJarvisPassOMP::FindNext(Point current) const {
       double global_orient = CheckLeft(current, global_next, local_next);
       if (global_orient > 0) {
         global_next = local_next;
-      } else if (global_orient == 0) {
+      } else if (std::abs(global_orient) < 1e-9) {
         if (Distance(current, local_next) > Distance(current, global_next)) {
           global_next = local_next;
         }
