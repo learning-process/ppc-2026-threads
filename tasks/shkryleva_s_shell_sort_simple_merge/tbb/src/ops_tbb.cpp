@@ -11,109 +11,119 @@
 
 namespace shkryleva_s_shell_sort_simple_merge {
 
-bool ShkrylevaSShellMergeTBB::PreProcessingImpl() {
-  const std::size_t sz = task_data->inputs_count[0];
-  auto *ptr = reinterpret_cast<int *>(task_data->inputs[0]);
-
-  input_.assign(ptr, ptr + sz);
-  output_ = input_;
-  return true;
+ShkrylevaSShellMergeTBB::ShkrylevaSShellMergeTBB(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = {};
 }
 
 bool ShkrylevaSShellMergeTBB::ValidationImpl() {
-  return task_data->inputs_count[0] == task_data->outputs_count[0];
+  return true;
 }
 
-bool ShkrylevaSShellMergeTBB::RunImpl() {
-  const int n = static_cast<int>(input_.size());
-  if (n < 2) {
-    return true;
-  }
-
-  const int max_threads = ppc::util::GetPPCNumThreads();
-  int threads = std::min(max_threads, n);
-  const int seg_size = (n + threads - 1) / threads;
-
-  std::vector<std::pair<int, int>> segs;
-  segs.reserve(threads);
-  for (int idx = 0; idx < threads; ++idx) {
-    const int l = idx * seg_size;
-    const int r = std::min(n - 1, l + seg_size - 1);
-    segs.emplace_back(l, r);
-  }
-
-  tbb::task_arena arena(threads);
-  arena.execute([&] {
-    tbb::task_group tg;
-    for (const auto &seg : segs) {
-      const int l = seg.first;
-      const int r = seg.second;
-      tg.run([this, l, r] { ShellSort(l, r, input_); });
-    }
-    tg.wait();
-  });
-
-  std::vector<int> buf;
-  int end = segs.front().second;
-  for (std::size_t i = 1; i < segs.size(); ++i) {
-    const int r = segs[i].second;
-    Merge(0, end, r, input_, buf);
-    end = r;
-  }
-
-  output_ = input_;
+bool ShkrylevaSShellMergeTBB::PreProcessingImpl() {
+  input_data_ = GetInput();
+  output_data_.clear();
   return true;
 }
 
 void ShkrylevaSShellMergeTBB::ShellSort(int left, int right, std::vector<int> &arr) {
+  int sub_array_size = right - left + 1;
   int gap = 1;
-  const int size = right - left + 1;
-  while (gap <= size / 3) {
-    gap = gap * 3 + 1;
+
+  while (gap <= sub_array_size / 3) {
+    gap = (gap * 3) + 1;
   }
 
   for (; gap > 0; gap /= 3) {
-    for (int k = left + gap; k <= right; ++k) {
-      const int val = arr[k];
-      int j = k;
-      while (j >= left + gap && arr[j - gap] > val) {
+    for (int i = left + gap; i <= right; ++i) {
+      int temp = arr[i];
+      int j = i;
+
+      while (j >= left + gap && arr[j - gap] > temp) {
         arr[j] = arr[j - gap];
         j -= gap;
       }
-      arr[j] = val;
+
+      arr[j] = temp;
     }
   }
 }
 
 void ShkrylevaSShellMergeTBB::Merge(int left, int mid, int right, std::vector<int> &arr, std::vector<int> &buffer) {
-  const int merge_size = right - left + 1;
-  if (buffer.size() < static_cast<std::size_t>(merge_size)) {
-    buffer.resize(static_cast<std::size_t>(merge_size));
-  }
-
   int i = left;
   int j = mid + 1;
   int k = 0;
 
-  while (i <= mid && j <= right) {
-    buffer[k++] = (arr[i] <= arr[j]) ? arr[i++] : arr[j++];
-  }
-  while (i <= mid) {
-    buffer[k++] = arr[i++];
-  }
-  while (j <= right) {
-    buffer[k++] = arr[j++];
+  int merge_size = right - left + 1;
+
+  if (static_cast<std::size_t>(merge_size) > buffer.size()) {
+    buffer.resize(static_cast<std::size_t>(merge_size));
   }
 
-  for (int idx = 0; idx < merge_size; ++idx) {
+  while (i <= mid || j <= right) {
+    if (i > mid) {
+      buffer[k++] = arr[j++];
+    } else if (j > right) {
+      buffer[k++] = arr[i++];
+    } else {
+      buffer[k++] = (arr[i] <= arr[j]) ? arr[i++] : arr[j++];
+    }
+  }
+
+  for (int idx = 0; idx < k; ++idx) {
     arr[left + idx] = buffer[idx];
   }
 }
 
-bool ShkrylevaSShellMergeTBB::PostProcessingImpl() {
-  for (std::size_t idx = 0; idx < output_.size(); ++idx) {
-    reinterpret_cast<int *>(task_data->outputs[0])[idx] = output_[idx];
+bool ShkrylevaSShellMergeTBB::RunImpl() {
+  if (input_data_.empty()) {
+    output_data_.clear();
+    return true;
   }
+
+  std::vector<int> arr = input_data_;
+  const int array_size = static_cast<int>(arr.size());
+
+  const int max_threads = ppc::util::GetPPCNumThreads();
+  int threads = std::min(max_threads, array_size);
+  const int sub_arr_size = (array_size + threads - 1) / threads;
+
+  std::vector<std::pair<int, int>> segments;
+  segments.reserve(threads);
+  for (int idx = 0; idx < threads; ++idx) {
+    int left = idx * sub_arr_size;
+    int right = std::min(left + sub_arr_size - 1, array_size - 1);
+    segments.emplace_back(left, right);
+  }
+
+  // Параллельная сортировка каждого сегмента
+  tbb::task_arena arena(threads);
+  arena.execute([&] {
+    tbb::task_group tg;
+    for (const auto &seg : segments) {
+      int l = seg.first;
+      int r = seg.second;
+      tg.run([&arr, l, r] { ShellSort(l, r, arr); });
+    }
+    tg.wait();
+  });
+
+  // Последовательное слияние отсортированных сегментов
+  std::vector<int> buffer;
+  int current_end = segments.front().second;
+  for (std::size_t i = 1; i < segments.size(); ++i) {
+    int next_end = segments[i].second;
+    Merge(0, current_end, next_end, arr, buffer);
+    current_end = next_end;
+  }
+
+  output_data_ = arr;
+  return true;
+}
+
+bool ShkrylevaSShellMergeTBB::PostProcessingImpl() {
+  GetOutput() = output_data_;
   return true;
 }
 

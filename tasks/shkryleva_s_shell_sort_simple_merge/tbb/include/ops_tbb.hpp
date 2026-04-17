@@ -1,27 +1,31 @@
 #pragma once
 
-#include <utility>
 #include <vector>
 
-#include "core/task/include/task.hpp"
+#include "shkryleva_s_shell_sort_simple_merge/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace shkryleva_s_shell_sort_simple_merge {
 
-class ShkrylevaSShellMergeTBB : public ppc::core::Task {
+class ShkrylevaSShellMergeTBB : public BaseTask {
  public:
-  explicit ShkrylevaSShellMergeTBB(ppc::core::TaskDataPtr task_data) : Task(std::move(task_data)) {}
+  explicit ShkrylevaSShellMergeTBB(const InType &in);
 
   bool PreProcessingImpl() override;
   bool ValidationImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kTBB;
+  }
+
  private:
   static void ShellSort(int left, int right, std::vector<int> &arr);
   static void Merge(int left, int mid, int right, std::vector<int> &arr, std::vector<int> &buffer);
 
-  std::vector<int> input_;
-  std::vector<int> output_;
+  InType input_data_;
+  OutType output_data_;
 };
 
 }  // namespace shkryleva_s_shell_sort_simple_merge
