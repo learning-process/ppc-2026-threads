@@ -54,7 +54,7 @@ Point OrehovNJarvisPassOMP::FindNext(Point current) const {
   const size_t n = input_.size();
   const auto &input = input_;
 
-#pragma omp parallel num_threads(2) default(none) shared(input, n, current, global_next, next)
+#pragma omp parallel default(none) shared(input, n, current, global_next, next)
   {
     Point local_next = next;
 
