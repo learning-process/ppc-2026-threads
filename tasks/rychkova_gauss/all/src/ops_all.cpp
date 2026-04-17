@@ -81,20 +81,19 @@ bool RychkovaGaussALL::RunImpl() {
     counts[i] = static_cast<int>((end - start) * 3 * width);
     displs[i] = static_cast<int>(start * 3 * width);
   }
-  size_t start = counts[idx];
+  size_t start = displs[idx];
   size_t end = start + counts[idx];
 #pragma omp parallel for shared(width, height, image, start, end) default(none) num_threads(ppc::util::GetNumThreads())
   for (std::size_t j = start; j < end; j++) {
-    for (std::size_t i = 0; i < width; i++) {
-      auto id = ((j * width) + 1) * 3;
-      auto px = ComputePixel(image, i, j, width, height);
-      loutput_[id] = px.R;
-      loutput_[id + 1] = px.G;
-      loutput_[id + 2] = px.B;
-    }
+    size_t x = (j / 3) % width;
+    size_t y = (j / 3) / width;
+    auto px = ComputePixel(image, x, y, width, height);
+    loutput_[j] = px.R;
+    loutput_[j + 1] = px.G;
+    loutput_[j + 2] = px.B;
   }
-  MPI_Gatherv(loutput_.data(), static_cast<int>(width * height) * 3, MPI_UINT8_T, loutput_.data(), counts.data(),
-              displs.data(), MPI_UINT8_T, 0, MPI_COMM_WORLD);
+  MPI_Gatherv(loutput_.data(), counts[idx], MPI_UINT8_T, loutput_.data(), counts.data(), displs.data(), MPI_UINT8_T, 0,
+              MPI_COMM_WORLD);
   return true;
 }
 
