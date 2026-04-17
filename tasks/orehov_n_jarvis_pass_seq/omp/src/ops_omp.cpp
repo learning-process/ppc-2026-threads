@@ -48,9 +48,9 @@ bool OrehovNJarvisPassOMP::RunImpl() {
 }
 
 Point OrehovNJarvisPassOMP::FindNext(Point current) const {
-  const auto& input_ref = input_;
+  const auto &input_ref = input_;
   const size_t n = input_ref.size();
-  
+
   Point initial_candidate = (current == input_ref[0]) ? input_ref[1] : input_ref[0];
 
   int max_threads = omp_get_max_threads();
@@ -59,15 +59,17 @@ Point OrehovNJarvisPassOMP::FindNext(Point current) const {
 
   const int n_int = static_cast<int>(n);
 
-  #pragma omp parallel default(none) shared(input_ref, n_int, current, local_bests)
+#pragma omp parallel default(none) shared(input_ref, n_int, current, local_bests)
   {
     int tid = omp_get_thread_num();
     Point thread_local_best = local_bests[tid];
 
-    #pragma omp for
+#pragma omp for
     for (int i = 0; i < n_int; ++i) {
-      const Point& point = input_ref[i];
-      if (current == point) continue;
+      const Point &point = input_ref[i];
+      if (current == point) {
+        continue;
+      }
 
       double orient = CheckLeft(current, thread_local_best, point);
 
