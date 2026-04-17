@@ -7,6 +7,8 @@
 #include <vector>
 
 #include "orehov_n_jarvis_pass_seq/common/include/common.hpp"
+#include "orehov_n_jarvis_pass_seq/tbb/include/ops_tbb.hpp"
+#include "orehov_n_jarvis_pass_seq/omp/include/ops_omp.hpp"
 #include "orehov_n_jarvis_pass_seq/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -69,8 +71,10 @@ TEST_P(OrehovNJarvisPassSEQFuncTests, MatmulFromPic) {
 
 const std::array<TestType, 3> kTestParam = {1, 2, 3};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<OrehovNJarvisPassSEQ, InType>(kTestParam, PPC_SETTINGS_example_threads));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<OrehovNJarvisPassSEQ, InType>(kTestParam, PPC_SETTINGS_orehov_n_jarvis_pass_seq),
+    ppc::util::AddFuncTask<OrehovNJarvisPassOMP, InType>(kTestParam, PPC_SETTINGS_orehov_n_jarvis_pass_seq),
+    ppc::util::AddFuncTask<OrehovNJarvisPassTBB, InType>(kTestParam, PPC_SETTINGS_orehov_n_jarvis_pass_seq));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
