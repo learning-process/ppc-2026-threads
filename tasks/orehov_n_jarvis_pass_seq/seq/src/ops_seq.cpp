@@ -88,6 +88,6 @@ bool OrehovNJarvisPassSEQ::PostProcessingImpl() {
   return true;
 }
 
-//experiment for leak memory
+// experiment for leak memory
 
 }  // namespace orehov_n_jarvis_pass_seq
