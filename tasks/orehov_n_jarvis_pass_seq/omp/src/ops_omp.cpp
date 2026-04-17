@@ -1,8 +1,9 @@
 #include "orehov_n_jarvis_pass_seq/omp/include/ops_omp.hpp"
 
+#include <omp.h>
+
 #include <cmath>
 #include <cstddef>
-#include <set>
 #include <vector>
 
 #include "orehov_n_jarvis_pass_seq/common/include/common.hpp"
@@ -16,57 +17,53 @@ OrehovNJarvisPassOMP::OrehovNJarvisPassOMP(const InType &in) {
 }
 
 bool OrehovNJarvisPassOMP::ValidationImpl() {
-  input_ = GetInput();
-  return (!GetInput().empty());
+  return !GetInput().empty();
 }
 
 bool OrehovNJarvisPassOMP::PreProcessingImpl() {
-  input_ = GetInput();
   return true;
 }
 
 bool OrehovNJarvisPassOMP::RunImpl() {
-  if (input_.size() == 1 || input_.size() == 2) {
-    res_ = input_;
+  const auto &input = GetInput();
+
+  if (input.size() == 1 || input.size() == 2) {
+    GetOutput() = input;
     return true;
   }
 
-  Point current = FindFirstElem();
-  res_.push_back(current);
+  Point current = FindFirstElem(input);
+  GetOutput().push_back(current);
 
   while (true) {
-    Point next = FindNext(current);
-    if (next == res_[0]) {
+    Point next = FindNext(current, input);
+    if (next == GetOutput()[0]) {
       break;
     }
 
     current = next;
-    res_.push_back(next);
+    GetOutput().push_back(next);
   }
 
   return true;
 }
 
-Point OrehovNJarvisPassOMP::FindNext(Point current) const {
-  const auto &input_ref = input_;
-  const size_t n = input_ref.size();
-
-  Point initial_candidate = (current == input_ref[0]) ? input_ref[1] : input_ref[0];
+Point OrehovNJarvisPassOMP::FindNext(Point current, const std::vector<Point> &input) const {
+  const size_t n = input.size();
+  Point initial_candidate = (current == input[0]) ? input[1] : input[0];
 
   int max_threads = omp_get_max_threads();
-
   std::vector<Point> local_bests(max_threads, initial_candidate);
-
   const int n_int = static_cast<int>(n);
 
-#pragma omp parallel default(none) shared(input_ref, n_int, current, local_bests)
+#pragma omp parallel default(none) shared(input, n_int, current, local_bests)
   {
     int tid = omp_get_thread_num();
     Point thread_local_best = local_bests[tid];
 
-#pragma omp for
+#pragma omp for nowait
     for (int i = 0; i < n_int; ++i) {
-      const Point &point = input_ref[i];
+      const Point &point = input[i];
       if (current == point) {
         continue;
       }
@@ -76,7 +73,7 @@ Point OrehovNJarvisPassOMP::FindNext(Point current) const {
       if (orient > 0) {
         thread_local_best = point;
       } else if (std::abs(orient) < 1e-9) {
-        if (Distance(current, point) > Distance(current, thread_local_best)) {
+        if (DistanceSquared(current, point) > DistanceSquared(current, thread_local_best)) {
           thread_local_best = point;
         }
       }
@@ -90,7 +87,7 @@ Point OrehovNJarvisPassOMP::FindNext(Point current) const {
     if (orient > 0) {
       global_next = local_bests[i];
     } else if (std::abs(orient) < 1e-9) {
-      if (Distance(current, local_bests[i]) > Distance(current, global_next)) {
+      if (DistanceSquared(current, local_bests[i]) > DistanceSquared(current, global_next)) {
         global_next = local_bests[i];
       }
     }
@@ -103,9 +100,9 @@ double OrehovNJarvisPassOMP::CheckLeft(Point a, Point b, Point c) {
   return ((b.x - a.x) * (c.y - a.y)) - ((b.y - a.y) * (c.x - a.x));
 }
 
-Point OrehovNJarvisPassOMP::FindFirstElem() const {
-  Point current = input_[0];
-  for (auto f : input_) {
+Point OrehovNJarvisPassOMP::FindFirstElem(const std::vector<Point> &input) const {
+  Point current = input[0];
+  for (const auto &f : input) {
     if (f.x < current.x || (f.y < current.y && f.x == current.x)) {
       current = f;
     }
@@ -113,12 +110,13 @@ Point OrehovNJarvisPassOMP::FindFirstElem() const {
   return current;
 }
 
-double OrehovNJarvisPassOMP::Distance(Point a, Point b) {
-  return std::sqrt(pow(a.y - b.y, 2) + pow(a.x - b.x, 2));
+double OrehovNJarvisPassOMP::DistanceSquared(Point a, Point b) {
+  double dx = a.x - b.x;
+  double dy = a.y - b.y;
+  return dx * dx + dy * dy;
 }
 
 bool OrehovNJarvisPassOMP::PostProcessingImpl() {
-  GetOutput() = res_;
   return true;
 }
 

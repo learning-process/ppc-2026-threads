@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <vector>
 
 #include "orehov_n_jarvis_pass_seq/common/include/common.hpp"
@@ -7,26 +8,24 @@
 
 namespace orehov_n_jarvis_pass_seq {
 
-class OrehovNJarvisPassOMP : public BaseTask {
+class OrehovNJarvisPassOMP : public ppc::task::Task<std::vector<Point>, std::vector<Point>> {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kOMP;
   }
-  explicit OrehovNJarvisPassOMP(const InType &in);
+  explicit OrehovNJarvisPassOMP(const std::vector<Point> &in);
 
  private:
+  static double CheckLeft(Point a, Point b, Point c);
+  static double DistanceSquared(Point a, Point b);
+
+  Point FindFirstElem(const std::vector<Point> &input) const;
+  Point FindNext(Point current, const std::vector<Point> &input) const;
+
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
-  [[nodiscard]] static double CheckLeft(Point a, Point b, Point c);
-  [[nodiscard]] Point FindFirstElem() const;
-  [[nodiscard]] static double Distance(Point a, Point b);
-  [[nodiscard]] Point FindNext(Point current) const;
-
-  std::vector<Point> res_;
-  std::vector<Point> input_;
 };
 
 }  // namespace orehov_n_jarvis_pass_seq

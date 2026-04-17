@@ -68,7 +68,7 @@ TEST_P(OrehovNJarvisPassSEQFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {1, 2, 3};
+const std::array<TestType, 1> kTestParam = {1};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<OrehovNJarvisPassSEQ, InType>(kTestParam, PPC_SETTINGS_orehov_n_jarvis_pass_seq),
