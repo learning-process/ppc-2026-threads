@@ -48,43 +48,48 @@ bool OrehovNJarvisPassOMP::RunImpl() {
 }
 
 Point OrehovNJarvisPassOMP::FindNext(Point current) const {
-  const auto &input_ref = input_;
-  const int n = static_cast<int>(input_ref.size());
-
+  const auto& input_ref = input_;
+  const size_t n = input_ref.size();
+  
   Point initial_candidate = (current == input_ref[0]) ? input_ref[1] : input_ref[0];
-  Point global_next = initial_candidate;
 
-#pragma omp parallel default(none) shared(input_ref, n, current, global_next) firstprivate(initial_candidate)
+  int max_threads = omp_get_max_threads();
+
+  std::vector<Point> local_bests(max_threads, initial_candidate);
+
+  const int n_int = static_cast<int>(n);
+
+  #pragma omp parallel default(none) shared(input_ref, n_int, current, local_bests)
   {
-    Point local_next = initial_candidate;
+    int tid = omp_get_thread_num();
+    Point thread_local_best = local_bests[tid];
 
-#pragma omp for
-    for (int i = 0; i < n; ++i) {
-      const Point &point = input_ref[i];
-      if (current == point) {
-        continue;
-      }
+    #pragma omp for
+    for (int i = 0; i < n_int; ++i) {
+      const Point& point = input_ref[i];
+      if (current == point) continue;
 
-      double orient = CheckLeft(current, local_next, point);
+      double orient = CheckLeft(current, thread_local_best, point);
 
       if (orient > 0) {
-        local_next = point;
+        thread_local_best = point;
       } else if (std::abs(orient) < 1e-9) {
-        if (Distance(current, point) > Distance(current, local_next)) {
-          local_next = point;
+        if (Distance(current, point) > Distance(current, thread_local_best)) {
+          thread_local_best = point;
         }
       }
     }
+    local_bests[tid] = thread_local_best;
+  }
 
-#pragma omp critical
-    {
-      double global_orient = CheckLeft(current, global_next, local_next);
-      if (global_orient > 0) {
-        global_next = local_next;
-      } else if (std::abs(global_orient) < 1e-9) {
-        if (Distance(current, local_next) > Distance(current, global_next)) {
-          global_next = local_next;
-        }
+  Point global_next = local_bests[0];
+  for (int i = 1; i < max_threads; ++i) {
+    double orient = CheckLeft(current, global_next, local_bests[i]);
+    if (orient > 0) {
+      global_next = local_bests[i];
+    } else if (std::abs(orient) < 1e-9) {
+      if (Distance(current, local_bests[i]) > Distance(current, global_next)) {
+        global_next = local_bests[i];
       }
     }
   }
