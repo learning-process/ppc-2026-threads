@@ -216,15 +216,14 @@ void ExchangeAndMergeRow(int width, int neighbor_rank, int send_tag, int recv_ta
     FillRowLabels(width, row_index, local_labels, send_row);
   }
 
-  MPI_Sendrecv(send_row.data(), width, MPI_INT, neighbor_rank, send_tag, recv_row.data(), width, MPI_INT,
-               neighbor_rank, recv_tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  MPI_Sendrecv(send_row.data(), width, MPI_INT, neighbor_rank, send_tag, recv_row.data(), width, MPI_INT, neighbor_rank,
+               recv_tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   MergeBoundaryLabels(width, send_row, recv_row, parent, rnk);
 }
 
 void MergeMPIBoundaries(int width, int rank, int world_size, int local_row_start, int local_row_end,
-                        const std::vector<int> &local_labels, std::vector<int> &parent,
-                        std::vector<int> &rnk) {
+                        const std::vector<int> &local_labels, std::vector<int> &parent, std::vector<int> &rnk) {
   const bool has_rows = local_row_start < local_row_end;
   const int first_row = local_row_start;
   const int last_row = has_rows ? (local_row_end - 1) : local_row_start;
