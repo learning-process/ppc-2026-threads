@@ -7,8 +7,8 @@
 #include <vector>
 
 #include "orehov_n_jarvis_pass/common/include/common.hpp"
-#include "orehov_n_jarvis_pass/seq/include/ops_seq.hpp"
 #include "orehov_n_jarvis_pass/omp/include/ops_omp.hpp"
+#include "orehov_n_jarvis_pass/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 

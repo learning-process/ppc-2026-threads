@@ -18,9 +18,9 @@ class OrehovNJarvisPassOMP : public ppc::task::Task<std::vector<Point>, std::vec
  private:
   static double CheckLeft(Point a, Point b, Point c);
   static double DistanceSquared(Point a, Point b);
-  
-  Point FindFirstElem(const std::vector<Point>& input) const;
-  Point FindNext(Point current, const std::vector<Point>& input) const;
+
+  Point FindFirstElem(const std::vector<Point> &input) const;
+  Point FindNext(Point current, const std::vector<Point> &input) const;
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;

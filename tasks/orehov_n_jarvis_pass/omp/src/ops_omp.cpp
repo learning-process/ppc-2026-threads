@@ -1,6 +1,7 @@
 #include "orehov_n_jarvis_pass/omp/include/ops_omp.hpp"
 
 #include <omp.h>
+
 #include <cmath>
 #include <cstddef>
 #include <vector>
@@ -24,8 +25,8 @@ bool OrehovNJarvisPassOMP::PreProcessingImpl() {
 }
 
 bool OrehovNJarvisPassOMP::RunImpl() {
-  const auto& input = GetInput();
-  
+  const auto &input = GetInput();
+
   if (input.size() == 1 || input.size() == 2) {
     GetOutput() = input;
     return true;
@@ -47,10 +48,10 @@ bool OrehovNJarvisPassOMP::RunImpl() {
   return true;
 }
 
-Point OrehovNJarvisPassOMP::FindNext(Point current, const std::vector<Point>& input) const {
+Point OrehovNJarvisPassOMP::FindNext(Point current, const std::vector<Point> &input) const {
   const size_t n = input.size();
   Point initial_candidate = (current == input[0]) ? input[1] : input[0];
-  
+
   int max_threads = omp_get_max_threads();
   std::vector<Point> local_bests(max_threads, initial_candidate);
   const int n_int = static_cast<int>(n);
@@ -99,9 +100,9 @@ double OrehovNJarvisPassOMP::CheckLeft(Point a, Point b, Point c) {
   return ((b.x - a.x) * (c.y - a.y)) - ((b.y - a.y) * (c.x - a.x));
 }
 
-Point OrehovNJarvisPassOMP::FindFirstElem(const std::vector<Point>& input) const {
+Point OrehovNJarvisPassOMP::FindFirstElem(const std::vector<Point> &input) const {
   Point current = input[0];
-  for (const auto& f : input) {
+  for (const auto &f : input) {
     if (f.x < current.x || (f.y < current.y && f.x == current.x)) {
       current = f;
     }
