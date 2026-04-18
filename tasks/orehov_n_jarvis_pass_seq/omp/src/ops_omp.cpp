@@ -1,4 +1,3 @@
-// ops_omp.cpp
 #include "orehov_n_jarvis_pass_seq/omp/include/ops_omp.hpp"
 
 #include <cmath>
@@ -54,13 +53,12 @@ bool OrehovNJarvisPassOMP::RunImpl() {
 Point OrehovNJarvisPassOMP::FindNextOMP(Point current) const {
   Point next = current == input_[0] ? input_[1] : input_[0];
 
-#pragma omp parallel
+#pragma omp parallel default(none) shared(current, input_, next)
   {
     Point local_next = next;
 
 #pragma omp for nowait
-    for (int i = 0; i < static_cast<int>(input_.size()); ++i) {
-      const Point &p = input_[i];
+    for (const auto &p : input_) {
       if (current == p || local_next == p) {
         continue;
       }
@@ -98,13 +96,12 @@ double OrehovNJarvisPassOMP::CheckLeft(Point a, Point b, Point c) {
 Point OrehovNJarvisPassOMP::FindFirstElem() const {
   Point current = input_[0];
 
-#pragma omp parallel
+#pragma omp parallel default(none) shared(input_, current)
   {
     Point local_min = current;
 
 #pragma omp for nowait
-    for (int i = 0; i < static_cast<int>(input_.size()); ++i) {
-      const Point &f = input_[i];
+    for (const auto &f : input_) {
       if (f.x < local_min.x || (f.y < local_min.y && f.x == local_min.x)) {
         local_min = f;
       }

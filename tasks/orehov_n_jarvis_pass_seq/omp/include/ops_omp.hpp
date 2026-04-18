@@ -1,4 +1,3 @@
-// ops_omp.hpp
 #pragma once
 
 #include <vector>
