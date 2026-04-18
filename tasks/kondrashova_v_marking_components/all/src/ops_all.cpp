@@ -38,7 +38,7 @@ bool KondrashovaVTaskALL::PreProcessingImpl() {
 
   int has_valid_input = 0;
   if (rank_ == 0) {
-    has_valid_input = width_ > 0 && height_ > 0 && static_cast<int>(image_.size()) == (width_ * height_);
+    has_valid_input = (width_ > 0 && height_ > 0 && static_cast<int>(image_.size()) == (width_ * height_)) ? 1 : 0;
   }
   MPI_Bcast(&has_valid_input, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -54,7 +54,7 @@ bool KondrashovaVTaskALL::PreProcessingImpl() {
     image_.resize(static_cast<size_t>(width_) * static_cast<size_t>(height_));
   }
 
-  MPI_Bcast(image_.data(), width_ * height_, MPI_UINT8_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(image_.data(), width_ * height_, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
   labels_1d_.assign(static_cast<size_t>(width_) * static_cast<size_t>(height_), 0);
 
@@ -158,7 +158,7 @@ void MergeBoundaries(int row_start, int row_end, int width, int num_threads, con
                      std::vector<int> &parent, std::vector<int> &rnk) {
   const int rows = row_end - row_start;
   for (int tid = 1; tid < num_threads; ++tid) {
-    const int boundary_row = row_start + (tid * rows) / num_threads;
+    const int boundary_row = row_start + ((tid * rows) / num_threads);
     if (boundary_row <= row_start || boundary_row >= row_end) {
       continue;
     }
@@ -190,7 +190,8 @@ int Relabel(int total, const std::vector<int> &local_labels, std::vector<int> &p
 }
 
 void MergeMPIBoundaries(int width, int rank, int world_size, int local_row_start, int local_row_end,
-                        const std::vector<int> &local_labels, std::vector<int> &parent, std::vector<int> &rnk) {
+                        const std::vector<int> &local_labels, std::vector<int> &parent,
+                        std::vector<int> &rnk) {  // NOLINT(readability-function-cognitive-complexity)
   if (rank > 0) {
     std::vector<int> send_row(static_cast<size_t>(width), 0);
     std::vector<int> recv_row(static_cast<size_t>(width));
@@ -198,7 +199,7 @@ void MergeMPIBoundaries(int width, int rank, int world_size, int local_row_start
     if (local_row_start < local_row_end) {
       for (int jj = 0; jj < width; ++jj) {
         send_row[static_cast<size_t>(jj)] =
-            local_labels[static_cast<size_t>(local_row_start) * static_cast<size_t>(width) + static_cast<size_t>(jj)];
+            local_labels[(static_cast<size_t>(local_row_start) * static_cast<size_t>(width)) + static_cast<size_t>(jj)];
       }
     }
 
@@ -222,7 +223,7 @@ void MergeMPIBoundaries(int width, int rank, int world_size, int local_row_start
       const int last_row = local_row_end - 1;
       for (int jj = 0; jj < width; ++jj) {
         send_row[static_cast<size_t>(jj)] =
-            local_labels[static_cast<size_t>(last_row) * static_cast<size_t>(width) + static_cast<size_t>(jj)];
+            local_labels[(static_cast<size_t>(last_row) * static_cast<size_t>(width)) + static_cast<size_t>(jj)];
       }
     }
 
@@ -266,8 +267,8 @@ bool KondrashovaVTaskALL::RunImpl() {
     firstprivate(mpi_row_start, mpi_rows, max_labels_per_thread)
   {
     const int tid = omp_get_thread_num();
-    const int omp_row_start = mpi_row_start + (tid * mpi_rows) / num_threads;
-    const int omp_row_end = mpi_row_start + ((tid + 1) * mpi_rows) / num_threads;
+    const int omp_row_start = mpi_row_start + ((tid * mpi_rows) / num_threads);
+    const int omp_row_end = mpi_row_start + (((tid + 1) * mpi_rows) / num_threads);
     const int label_offset = (rank_ * num_threads * max_labels_per_thread) + (tid * max_labels_per_thread);
     ScanStripe(omp_row_start, omp_row_end, width, label_offset, image, local_labels);
   }
