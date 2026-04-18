@@ -6,9 +6,9 @@
 #include <tuple>
 #include <vector>
 
+#include "kondrashova_v_marking_components/all/include/ops_all.hpp"
 #include "kondrashova_v_marking_components/common/include/common.hpp"
 #include "kondrashova_v_marking_components/omp/include/ops_omp.hpp"
-#include "kondrashova_v_marking_components/all/include/ops_all.hpp"
 #include "kondrashova_v_marking_components/seq/include/ops_seq.hpp"
 #include "kondrashova_v_marking_components/stl/include/ops_stl.hpp"
 #include "kondrashova_v_marking_components/tbb/include/ops_tbb.hpp"
@@ -101,13 +101,13 @@ InType MakeLargeComplexTestImage() {
   }
 
   for (int i = 10; i < 20; ++i) {
-    image.data[(i * kSize) + 5] = 0; 
+    image.data[(i * kSize) + 5] = 0;
   }
   for (int i = 10; i < 20; ++i) {
-    image.data[(i * kSize) + 10] = 0; 
+    image.data[(i * kSize) + 10] = 0;
   }
   for (int j = 5; j <= 10; ++j) {
-    image.data[(19 * kSize) + j] = 0; 
+    image.data[(19 * kSize) + j] = 0;
   }
 
   return image;
