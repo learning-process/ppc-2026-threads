@@ -3,6 +3,7 @@
 #include <omp.h>
 
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 #include "orehov_n_jarvis_pass/common/include/common.hpp"
