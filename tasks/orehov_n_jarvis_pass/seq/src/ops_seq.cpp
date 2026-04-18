@@ -1,12 +1,12 @@
-#include "orehov_n_jarvis_pass_seq/seq/include/ops_seq.hpp"
+#include "orehov_n_jarvis_pass/seq/include/ops_seq.hpp"
 
 #include <cmath>
 #include <set>
 #include <vector>
 
-#include "orehov_n_jarvis_pass_seq/common/include/common.hpp"
+#include "orehov_n_jarvis_pass/common/include/common.hpp"
 
-namespace orehov_n_jarvis_pass_seq {
+namespace orehov_n_jarvis_pass {
 
 OrehovNJarvisPassSEQ::OrehovNJarvisPassSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -88,4 +88,4 @@ bool OrehovNJarvisPassSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace orehov_n_jarvis_pass_seq
+}  // namespace orehov_n_jarvis_pass
