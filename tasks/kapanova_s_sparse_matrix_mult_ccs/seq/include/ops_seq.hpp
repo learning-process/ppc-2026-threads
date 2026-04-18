@@ -1,9 +1,9 @@
 #pragma once
 
-#include "kapanova_s_sparse_matrix_mult_ccs_seq/common/include/common.hpp"
+#include "kapanova_s_sparse_matrix_mult_ccs/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace kapanova_s_sparse_matrix_mult_ccs_seq {
+namespace kapanova_s_sparse_matrix_mult_ccs {
 
 class KapanovaSSparseMatrixMultCCSSeq : public BaseTask {
  public:
@@ -19,4 +19,4 @@ class KapanovaSSparseMatrixMultCCSSeq : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace kapanova_s_sparse_matrix_mult_ccs_seq
+}  // namespace kapanova_s_sparse_matrix_mult_ccs

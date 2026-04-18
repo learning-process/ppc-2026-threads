@@ -9,12 +9,12 @@
 #include <utility>
 #include <vector>
 
-#include "kapanova_s_sparse_matrix_mult_ccs_seq/common/include/common.hpp"
-#include "kapanova_s_sparse_matrix_mult_ccs_seq/seq/include/ops_seq.hpp"
+#include "kapanova_s_sparse_matrix_mult_ccs/common/include/common.hpp"
+#include "kapanova_s_sparse_matrix_mult_ccs/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace kapanova_s_sparse_matrix_mult_ccs_seq {
+namespace kapanova_s_sparse_matrix_mult_ccs {
 
 class KapanovaSMatrixMultiplyTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -209,7 +209,7 @@ const std::array<TestType, 5> kFixedTestParams = {std::make_tuple(1, ""), std::m
                                                   std::make_tuple(5, "")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KapanovaSSparseMatrixMultCCSSeq, InType>(
-    kFixedTestParams, PPC_SETTINGS_kapanova_s_sparse_matrix_mult_ccs_seq));
+    kFixedTestParams, PPC_SETTINGS_kapanova_s_sparse_matrix_mult_ccs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -219,4 +219,4 @@ INSTANTIATE_TEST_SUITE_P(FixedMatrixTests, KapanovaSMatrixMultiplyTest, kGtestVa
 
 }  // namespace
 
-}  // namespace kapanova_s_sparse_matrix_mult_ccs_seq
+}  // namespace kapanova_s_sparse_matrix_mult_ccs

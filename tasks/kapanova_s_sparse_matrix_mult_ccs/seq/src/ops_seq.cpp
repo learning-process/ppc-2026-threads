@@ -1,12 +1,12 @@
-#include "kapanova_s_sparse_matrix_mult_ccs_seq/seq/include/ops_seq.hpp"
+#include "kapanova_s_sparse_matrix_mult_ccs/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <cstddef>
 #include <vector>
 
-#include "kapanova_s_sparse_matrix_mult_ccs_seq/common/include/common.hpp"
+#include "kapanova_s_sparse_matrix_mult_ccs/common/include/common.hpp"
 
-namespace kapanova_s_sparse_matrix_mult_ccs_seq {
+namespace kapanova_s_sparse_matrix_mult_ccs {
 
 KapanovaSSparseMatrixMultCCSSeq::KapanovaSSparseMatrixMultCCSSeq(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -109,4 +109,4 @@ bool KapanovaSSparseMatrixMultCCSSeq::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace kapanova_s_sparse_matrix_mult_ccs_seq
+}  // namespace kapanova_s_sparse_matrix_mult_ccs

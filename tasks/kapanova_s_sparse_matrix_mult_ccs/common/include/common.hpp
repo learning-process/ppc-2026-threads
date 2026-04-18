@@ -8,7 +8,7 @@
 
 #include "task/include/task.hpp"
 
-namespace kapanova_s_sparse_matrix_mult_ccs_seq {
+namespace kapanova_s_sparse_matrix_mult_ccs {
 
 struct CCSMatrix {
   std::vector<double> values;
@@ -24,4 +24,4 @@ using OutType = CCSMatrix;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace kapanova_s_sparse_matrix_mult_ccs_seq
+}  // namespace kapanova_s_sparse_matrix_mult_ccs
