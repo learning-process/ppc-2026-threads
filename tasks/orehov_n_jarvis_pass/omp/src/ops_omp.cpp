@@ -10,6 +10,7 @@
 
 namespace orehov_n_jarvis_pass {
 
+//
 OrehovNJarvisPassOMP::OrehovNJarvisPassOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
