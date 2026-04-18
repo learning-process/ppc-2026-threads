@@ -5,7 +5,7 @@
 #include <vector>
 
 #ifdef _OPENMP
-#  include <omp.h>
+#include <omp.h>
 #endif
 
 #include "orehov_n_jarvis_pass_seq/common/include/common.hpp"
@@ -52,17 +52,18 @@ bool OrehovNJarvisPassOMP::RunImpl() {
 
 Point OrehovNJarvisPassOMP::FindNextOMP(Point current) const {
   Point next = current == input_[0] ? input_[1] : input_[0];
-
-#pragma omp parallel default(none) shared(current, input_, next)
+  std::vector<Point> input_copy = input_;
+  
+  #pragma omp parallel default(none) shared(current, input_copy, next)
   {
     Point local_next = next;
-
-#pragma omp for nowait
-    for (const auto &p : input_) {
+    
+    #pragma omp for nowait
+    for (const auto &p : input_copy) {
       if (current == p || local_next == p) {
         continue;
       }
-
+      
       double orient = CheckLeft(current, local_next, p);
       if (orient > 0) {
         local_next = p;
@@ -72,8 +73,8 @@ Point OrehovNJarvisPassOMP::FindNextOMP(Point current) const {
         }
       }
     }
-
-#pragma omp critical
+    
+    #pragma omp critical
     {
       double orient = CheckLeft(current, next, local_next);
       if (orient > 0) {
@@ -85,7 +86,7 @@ Point OrehovNJarvisPassOMP::FindNextOMP(Point current) const {
       }
     }
   }
-
+  
   return next;
 }
 
@@ -95,26 +96,27 @@ double OrehovNJarvisPassOMP::CheckLeft(Point a, Point b, Point c) {
 
 Point OrehovNJarvisPassOMP::FindFirstElem() const {
   Point current = input_[0];
-
-#pragma omp parallel default(none) shared(input_, current)
+  std::vector<Point> input_copy = input_;
+  
+  #pragma omp parallel default(none) shared(input_copy, current)
   {
     Point local_min = current;
-
-#pragma omp for nowait
-    for (const auto &f : input_) {
+    
+    #pragma omp for nowait
+    for (const auto &f : input_copy) {
       if (f.x < local_min.x || (f.y < local_min.y && f.x == local_min.x)) {
         local_min = f;
       }
     }
-
-#pragma omp critical
+    
+    #pragma omp critical
     {
       if (local_min.x < current.x || (local_min.y < current.y && local_min.x == current.x)) {
         current = local_min;
       }
     }
   }
-
+  
   return current;
 }
 
