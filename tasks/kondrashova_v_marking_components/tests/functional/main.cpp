@@ -8,6 +8,7 @@
 
 #include "kondrashova_v_marking_components/common/include/common.hpp"
 #include "kondrashova_v_marking_components/omp/include/ops_omp.hpp"
+#include "kondrashova_v_marking_components/all/include/ops_all.hpp"
 #include "kondrashova_v_marking_components/seq/include/ops_seq.hpp"
 #include "kondrashova_v_marking_components/stl/include/ops_stl.hpp"
 #include "kondrashova_v_marking_components/tbb/include/ops_tbb.hpp"
@@ -78,7 +79,6 @@ bool CheckLabelsValues(const OutType &output_data, const InType &image) {
   return true;
 }
 
-// 4 components to defeat GCC -O3 unrolling (kept out of GetTestInputData for clang-tidy complexity).
 InType MakeLargeComplexTestImage() {
   constexpr int kSize = 30;
   InType image{};
@@ -101,13 +101,13 @@ InType MakeLargeComplexTestImage() {
   }
 
   for (int i = 10; i < 20; ++i) {
-    image.data[(i * kSize) + 5] = 0;  // left arm
+    image.data[(i * kSize) + 5] = 0; 
   }
   for (int i = 10; i < 20; ++i) {
-    image.data[(i * kSize) + 10] = 0;  // right arm
+    image.data[(i * kSize) + 10] = 0; 
   }
   for (int j = 5; j <= 10; ++j) {
-    image.data[(19 * kSize) + j] = 0;  // bottom connection
+    image.data[(19 * kSize) + j] = 0; 
   }
 
   return image;
@@ -169,7 +169,6 @@ class MarkingComponentsFuncTest : public ppc::util::BaseRunFuncTests<InType, Out
       image.width = 3;
       image.height = 3;
     } else if (type == "complex") {
-      // 2 components
       image.data = {0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1};
       image.width = 5;
       image.height = 5;
@@ -215,7 +214,8 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KondrashovaVTaskSEQ, InType>(kTestParam, PPC_SETTINGS_kondrashova_v_marking_components),
     ppc::util::AddFuncTask<KondrashovaVTaskOMP, InType>(kTestParam, PPC_SETTINGS_kondrashova_v_marking_components),
     ppc::util::AddFuncTask<KondrashovaVTaskSTL, InType>(kTestParam, PPC_SETTINGS_kondrashova_v_marking_components),
-    ppc::util::AddFuncTask<KondrashovaVTaskTBB, InType>(kTestParam, PPC_SETTINGS_kondrashova_v_marking_components));
+    ppc::util::AddFuncTask<KondrashovaVTaskTBB, InType>(kTestParam, PPC_SETTINGS_kondrashova_v_marking_components),
+    ppc::util::AddFuncTask<KondrashovaVTaskALL, InType>(kTestParam, PPC_SETTINGS_kondrashova_v_marking_components));
 
 INSTANTIATE_TEST_SUITE_P(KondrashovaVMarkingComponentsFunctionalTests, MarkingComponentsFuncTest,
                          ppc::util::ExpandToValues(kTestTasksList),
