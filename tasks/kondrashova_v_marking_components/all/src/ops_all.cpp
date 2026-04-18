@@ -38,7 +38,7 @@ bool KondrashovaVTaskALL::PreProcessingImpl() {
 
   int has_valid_input = 0;
   if (rank_ == 0) {
-    has_valid_input = width_ > 0 && height_ > 0 && static_cast<int>(image_.size()) == (width_ * height_);
+    has_valid_input = (width_ > 0 && height_ > 0 && static_cast<int>(image_.size()) == (width_ * height_)) ? 1 : 0;
   }
   MPI_Bcast(&has_valid_input, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -54,7 +54,7 @@ bool KondrashovaVTaskALL::PreProcessingImpl() {
     image_.resize(static_cast<size_t>(width_) * static_cast<size_t>(height_));
   }
 
-  MPI_Bcast(image_.data(), width_ * height_, MPI_UINT8_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(image_.data(), width_ * height_, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
   labels_1d_.assign(static_cast<size_t>(width_) * static_cast<size_t>(height_), 0);
 
@@ -158,7 +158,7 @@ void MergeBoundaries(int row_start, int row_end, int width, int num_threads, con
                      std::vector<int> &parent, std::vector<int> &rnk) {
   const int rows = row_end - row_start;
   for (int tid = 1; tid < num_threads; ++tid) {
-    const int boundary_row = row_start + (tid * rows) / num_threads;
+    const int boundary_row = row_start + ((tid * rows) / num_threads);
     if (boundary_row <= row_start || boundary_row >= row_end) {
       continue;
     }
@@ -189,53 +189,51 @@ int Relabel(int total, const std::vector<int> &local_labels, std::vector<int> &p
   return count;
 }
 
+void FillRowLabels(int width, int row, const std::vector<int> &local_labels, std::vector<int> &row_labels) {
+  for (int jj = 0; jj < width; ++jj) {
+    row_labels[static_cast<size_t>(jj)] =
+        local_labels[(static_cast<size_t>(row) * static_cast<size_t>(width)) + static_cast<size_t>(jj)];
+  }
+}
+
+void MergeBoundaryLabels(int width, const std::vector<int> &send_row, const std::vector<int> &recv_row,
+                         std::vector<int> &parent, std::vector<int> &rnk) {
+  for (int jj = 0; jj < width; ++jj) {
+    const int label_cur = send_row[static_cast<size_t>(jj)];
+    const int label_neighbor = recv_row[static_cast<size_t>(jj)];
+    if (label_cur != 0 && label_neighbor != 0 && label_cur != label_neighbor) {
+      Unite(parent, rnk, label_cur, label_neighbor);
+    }
+  }
+}
+
+void ExchangeAndMergeRow(int width, int neighbor_rank, int send_tag, int recv_tag, bool has_rows, int row_index,
+                         const std::vector<int> &local_labels, std::vector<int> &parent, std::vector<int> &rnk) {
+  std::vector<int> send_row(static_cast<size_t>(width), 0);
+  std::vector<int> recv_row(static_cast<size_t>(width));
+
+  if (has_rows) {
+    FillRowLabels(width, row_index, local_labels, send_row);
+  }
+
+  MPI_Sendrecv(send_row.data(), width, MPI_INT, neighbor_rank, send_tag, recv_row.data(), width, MPI_INT, neighbor_rank,
+               recv_tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  MergeBoundaryLabels(width, send_row, recv_row, parent, rnk);
+}
+
 void MergeMPIBoundaries(int width, int rank, int world_size, int local_row_start, int local_row_end,
                         const std::vector<int> &local_labels, std::vector<int> &parent, std::vector<int> &rnk) {
+  const bool has_rows = local_row_start < local_row_end;
+  const int first_row = local_row_start;
+  const int last_row = has_rows ? (local_row_end - 1) : local_row_start;
+
   if (rank > 0) {
-    std::vector<int> send_row(static_cast<size_t>(width), 0);
-    std::vector<int> recv_row(static_cast<size_t>(width));
-
-    if (local_row_start < local_row_end) {
-      for (int jj = 0; jj < width; ++jj) {
-        send_row[static_cast<size_t>(jj)] =
-            local_labels[static_cast<size_t>(local_row_start) * static_cast<size_t>(width) + static_cast<size_t>(jj)];
-      }
-    }
-
-    MPI_Sendrecv(send_row.data(), width, MPI_INT, rank - 1, 0, recv_row.data(), width, MPI_INT, rank - 1, 1,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-    for (int jj = 0; jj < width; ++jj) {
-      int label_cur = send_row[static_cast<size_t>(jj)];
-      int label_prev = recv_row[static_cast<size_t>(jj)];
-      if (label_cur != 0 && label_prev != 0 && label_cur != label_prev) {
-        Unite(parent, rnk, label_cur, label_prev);
-      }
-    }
+    ExchangeAndMergeRow(width, rank - 1, 0, 1, has_rows, first_row, local_labels, parent, rnk);
   }
 
   if (rank < world_size - 1) {
-    std::vector<int> send_row(static_cast<size_t>(width), 0);
-    std::vector<int> recv_row(static_cast<size_t>(width));
-
-    if (local_row_start < local_row_end) {
-      const int last_row = local_row_end - 1;
-      for (int jj = 0; jj < width; ++jj) {
-        send_row[static_cast<size_t>(jj)] =
-            local_labels[static_cast<size_t>(last_row) * static_cast<size_t>(width) + static_cast<size_t>(jj)];
-      }
-    }
-
-    MPI_Sendrecv(send_row.data(), width, MPI_INT, rank + 1, 1, recv_row.data(), width, MPI_INT, rank + 1, 0,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-    for (int jj = 0; jj < width; ++jj) {
-      int label_cur = send_row[static_cast<size_t>(jj)];
-      int label_next = recv_row[static_cast<size_t>(jj)];
-      if (label_cur != 0 && label_next != 0 && label_cur != label_next) {
-        Unite(parent, rnk, label_cur, label_next);
-      }
-    }
+    ExchangeAndMergeRow(width, rank + 1, 1, 0, has_rows, last_row, local_labels, parent, rnk);
   }
 }
 
@@ -266,8 +264,8 @@ bool KondrashovaVTaskALL::RunImpl() {
     firstprivate(mpi_row_start, mpi_rows, max_labels_per_thread)
   {
     const int tid = omp_get_thread_num();
-    const int omp_row_start = mpi_row_start + (tid * mpi_rows) / num_threads;
-    const int omp_row_end = mpi_row_start + ((tid + 1) * mpi_rows) / num_threads;
+    const int omp_row_start = mpi_row_start + ((tid * mpi_rows) / num_threads);
+    const int omp_row_end = mpi_row_start + (((tid + 1) * mpi_rows) / num_threads);
     const int label_offset = (rank_ * num_threads * max_labels_per_thread) + (tid * max_labels_per_thread);
     ScanStripe(omp_row_start, omp_row_end, width, label_offset, image, local_labels);
   }
