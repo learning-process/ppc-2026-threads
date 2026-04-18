@@ -3,7 +3,6 @@
 #include <omp.h>
 
 #include <cmath>
-#include <cstddef>
 #include <vector>
 
 #include "orehov_n_jarvis_pass/common/include/common.hpp"
@@ -48,7 +47,17 @@ bool OrehovNJarvisPassOMP::RunImpl() {
   return true;
 }
 
-Point OrehovNJarvisPassOMP::FindNext(Point current, const std::vector<Point> &input) const {
+void OrehovNJarvisPassOMP::UpdateBestCandidate(Point current, const Point &candidate, Point &best, double orient) {
+  if (orient > 0) {
+    best = candidate;
+  } else if (std::abs(orient) < 1e-9) {
+    if (DistanceSquared(current, candidate) > DistanceSquared(current, best)) {
+      best = candidate;
+    }
+  }
+}
+
+Point OrehovNJarvisPassOMP::FindNext(Point current, const std::vector<Point> &input) {
   const size_t n = input.size();
   Point initial_candidate = (current == input[0]) ? input[1] : input[0];
 
@@ -69,14 +78,7 @@ Point OrehovNJarvisPassOMP::FindNext(Point current, const std::vector<Point> &in
       }
 
       double orient = CheckLeft(current, thread_local_best, point);
-
-      if (orient > 0) {
-        thread_local_best = point;
-      } else if (std::abs(orient) < 1e-9) {
-        if (DistanceSquared(current, point) > DistanceSquared(current, thread_local_best)) {
-          thread_local_best = point;
-        }
-      }
+      UpdateBestCandidate(current, point, thread_local_best, orient);
     }
     local_bests[tid] = thread_local_best;
   }
@@ -84,13 +86,7 @@ Point OrehovNJarvisPassOMP::FindNext(Point current, const std::vector<Point> &in
   Point global_next = local_bests[0];
   for (int i = 1; i < max_threads; ++i) {
     double orient = CheckLeft(current, global_next, local_bests[i]);
-    if (orient > 0) {
-      global_next = local_bests[i];
-    } else if (std::abs(orient) < 1e-9) {
-      if (DistanceSquared(current, local_bests[i]) > DistanceSquared(current, global_next)) {
-        global_next = local_bests[i];
-      }
-    }
+    UpdateBestCandidate(current, local_bests[i], global_next, orient);
   }
 
   return global_next;
@@ -100,7 +96,7 @@ double OrehovNJarvisPassOMP::CheckLeft(Point a, Point b, Point c) {
   return ((b.x - a.x) * (c.y - a.y)) - ((b.y - a.y) * (c.x - a.x));
 }
 
-Point OrehovNJarvisPassOMP::FindFirstElem(const std::vector<Point> &input) const {
+Point OrehovNJarvisPassOMP::FindFirstElem(const std::vector<Point> &input) {
   Point current = input[0];
   for (const auto &f : input) {
     if (f.x < current.x || (f.y < current.y && f.x == current.x)) {
@@ -113,7 +109,7 @@ Point OrehovNJarvisPassOMP::FindFirstElem(const std::vector<Point> &input) const
 double OrehovNJarvisPassOMP::DistanceSquared(Point a, Point b) {
   double dx = a.x - b.x;
   double dy = a.y - b.y;
-  return dx * dx + dy * dy;
+  return (dx * dx) + (dy * dy);
 }
 
 bool OrehovNJarvisPassOMP::PostProcessingImpl() {

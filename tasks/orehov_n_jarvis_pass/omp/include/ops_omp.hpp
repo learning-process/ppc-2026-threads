@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstddef>
 #include <vector>
 
 #include "orehov_n_jarvis_pass/common/include/common.hpp"
@@ -18,9 +17,9 @@ class OrehovNJarvisPassOMP : public ppc::task::Task<std::vector<Point>, std::vec
  private:
   static double CheckLeft(Point a, Point b, Point c);
   static double DistanceSquared(Point a, Point b);
-
-  Point FindFirstElem(const std::vector<Point> &input) const;
-  Point FindNext(Point current, const std::vector<Point> &input) const;
+  [[nodiscard]] static Point FindFirstElem(const std::vector<Point> &input);
+  [[nodiscard]] static Point FindNext(Point current, const std::vector<Point> &input);
+  static void UpdateBestCandidate(Point current, const Point &candidate, Point &best, double orient);
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
