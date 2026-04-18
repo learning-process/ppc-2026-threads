@@ -2,17 +2,17 @@
 
 #include <vector>
 
-#include "orehov_n_jarvis_pass_seq/common/include/common.hpp"
+#include "orehov_n_jarvis_pass/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace orehov_n_jarvis_pass_seq {
+namespace orehov_n_jarvis_pass {
 
-class OrehovNJarvisPassOMP : public BaseTask {
+class OrehovNJarvisPassSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kOMP;
+    return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit OrehovNJarvisPassOMP(const InType &in);
+  explicit OrehovNJarvisPassSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -23,10 +23,10 @@ class OrehovNJarvisPassOMP : public BaseTask {
   [[nodiscard]] static double CheckLeft(Point a, Point b, Point c);
   [[nodiscard]] Point FindFirstElem() const;
   [[nodiscard]] static double Distance(Point a, Point b);
-  [[nodiscard]] Point FindNextOMP(Point current) const;
+  [[nodiscard]] Point FindNext(Point current) const;
 
   std::vector<Point> res_;
   std::vector<Point> input_;
 };
 
-}  // namespace orehov_n_jarvis_pass_seq
+}  // namespace orehov_n_jarvis_pass
