@@ -23,7 +23,7 @@ stores only non-zero elements, along with their column indices and row pointers,
 significantly reducing memory requirements and enabling efficient matrix
 operations.
 
-### 1.3 MPI + OpenMP Hybrid Parallelism
+### 1.3 MPI + OpenMP Parallelism
 
 Message Passing Interface (MPI) is a standardized and portable message-passing
 system designed for distributed-memory parallel computing. It allows multiple
