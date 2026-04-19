@@ -32,7 +32,7 @@ class KulikARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutT
     a.col_ind.assign(a.n + 1, 0);
     b.col_ind.assign(b.n + 1, 0);
     for (size_t j = 0; j < a.n; ++j) {
-      size_t left = (j > 50) ? (j - 50) : 0;      
+      size_t left = (j > 50) ? (j - 50) : 0;
       size_t right = std::min(a.n, j + 50);
       a.col_ind[j + 1] = a.col_ind[j] + right - left;
       for (size_t k = left; k < right; ++k) {
