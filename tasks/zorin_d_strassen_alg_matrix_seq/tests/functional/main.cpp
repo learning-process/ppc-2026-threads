@@ -11,6 +11,7 @@
 #include "zorin_d_strassen_alg_matrix_seq/common/include/common.hpp"
 #include "zorin_d_strassen_alg_matrix_seq/omp/include/ops_omp.hpp"
 #include "zorin_d_strassen_alg_matrix_seq/seq/include/ops_seq.hpp"
+#include "zorin_d_strassen_alg_matrix_seq/stl/include/ops_stl.hpp"
 #include "zorin_d_strassen_alg_matrix_seq/tbb/include/ops_tbb.hpp"
 
 namespace zorin_d_strassen_alg_matrix_seq {
@@ -104,6 +105,7 @@ const std::array<TestType, 7> kParams = {
 const auto kTasks = std::tuple_cat(
     ppc::util::AddFuncTask<ZorinDStrassenAlgMatrixSEQ, InType>(kParams, PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq),
     ppc::util::AddFuncTask<ZorinDStrassenAlgMatrixOMP, InType>(kParams, PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq),
+    ppc::util::AddFuncTask<ZorinDStrassenAlgMatrixSTL, InType>(kParams, PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq),
     ppc::util::AddFuncTask<ZorinDStrassenAlgMatrixTBB, InType>(kParams, PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq));
 
 const auto kValues = ppc::util::ExpandToValues(kTasks);
