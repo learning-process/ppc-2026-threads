@@ -116,7 +116,7 @@ class SparseMatrix {
     return rows_;
   }
 
-  [[nodiscard]] std::vector<double> GetVal() {
+  [[nodiscard]] std::vector<double> GetVal() const {
     return value_;
   }
 
@@ -143,7 +143,7 @@ class SparseMatrix {
     }
     return 0.0;
   }
-  void Sparse(std::vector<double> matrix) {
+  void Sparse(const std::vector<double>& matrix) {
     col_index_.push_back(0);
     bool flag = false;
     for (unsigned j = 0; j < cols_; j++) {
@@ -201,6 +201,9 @@ class SparseMatrix {
     if (!file) {
       throw std::runtime_error("Cannot open file with sparsed matrix");
     }
+    value_.clear();
+    row_.clear();
+    col_index_.clear();
     unsigned n = 0;
     file >> n >> rows_ >> cols_;
 
