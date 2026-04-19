@@ -10,7 +10,7 @@
 
 #include "task/include/task.hpp"
 
-namespace luzan_e_double_sparse_matrix_mult_seq {
+namespace luzan_e_double_sparse_matrix_mult {
 
 const double kEPS = 1e-8;
 
@@ -116,7 +116,7 @@ class SparseMatrix {
     return rows_;
   }
 
-  std::vector<double> GetVal() {
+  [[nodiscard]] std::vector<double> GetVal() {
     return value_;
   }
 
@@ -244,4 +244,4 @@ using OutType = SparseMatrix;
 using TestType = std::tuple<std::string, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace luzan_e_double_sparse_matrix_mult_seq
+}  // namespace luzan_e_double_sparse_matrix_mult
