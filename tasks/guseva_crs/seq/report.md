@@ -53,7 +53,7 @@ Before performing the multiplication, matrix B is transposed. Transposition conv
 5. Fill the values and column indices of `Bᵀ` by iterating through the original matrix `B` and placing each element in its new position
 
 ### 3.2 Multiplication Algorithm
-Once B is transposed, the multiplication proceeds row by row:
+Once `B` is transposed, the multiplication proceeds row by row:
 For each row i of matrix A:
 
 1. Initialize a temporary array or marker to track which columns of `A` have non-zero elements in this row
