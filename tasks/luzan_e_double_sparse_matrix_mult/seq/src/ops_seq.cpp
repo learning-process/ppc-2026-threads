@@ -1,9 +1,9 @@
-#include "luzan_e_double_sparse_matrix_mult_seq/seq/include/ops_seq.hpp"
+#include "luzan_e_double_sparse_matrix_mult/seq/include/ops_seq.hpp"
 
-#include "luzan_e_double_sparse_matrix_mult_seq/common/include/common.hpp"
+#include "luzan_e_double_sparse_matrix_mult/common/include/common.hpp"
 // #include "util/include/util.hpp"
 
-namespace luzan_e_double_sparse_matrix_mult_seq {
+namespace luzan_e_double_sparse_matrix_mult {
 
 LuzanEDoubleSparseMatrixMultSeq::LuzanEDoubleSparseMatrixMultSeq(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -33,4 +33,4 @@ bool LuzanEDoubleSparseMatrixMultSeq::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace luzan_e_double_sparse_matrix_mult_seq
+}  // namespace luzan_e_double_sparse_matrix_mult

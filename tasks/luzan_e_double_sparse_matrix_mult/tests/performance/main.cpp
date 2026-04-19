@@ -3,11 +3,11 @@
 #include <tuple>
 #include <vector>
 
-#include "luzan_e_double_sparse_matrix_mult_seq/common/include/common.hpp"
-#include "luzan_e_double_sparse_matrix_mult_seq/seq/include/ops_seq.hpp"
+#include "luzan_e_double_sparse_matrix_mult/common/include/common.hpp"
+#include "luzan_e_double_sparse_matrix_mult/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace luzan_e_double_sparse_matrix_mult_seq {
+namespace luzan_e_double_sparse_matrix_mult {
 
 class LuzanEDoubleSparseMatrixMultSeqPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 2500;
@@ -46,7 +46,7 @@ TEST_P(LuzanEDoubleSparseMatrixMultSeqPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LuzanEDoubleSparseMatrixMultSeq>(
-    PPC_SETTINGS_luzan_e_double_sparse_matrix_mult_seq);
+    PPC_SETTINGS_luzan_e_double_sparse_matrix_mult);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -56,4 +56,4 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, LuzanEDoubleSparseMatrixMultSeqPerfTestTh
 
 }  // namespace
 
-}  // namespace luzan_e_double_sparse_matrix_mult_seq
+}  // namespace luzan_e_double_sparse_matrix_mult
