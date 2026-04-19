@@ -14,7 +14,7 @@ namespace luzan_e_double_sparse_matrix_mult {
 
 const double kEPS = 1e-8;
 
-class SparseMatrix {
+struct SparseMatrix {
   std::vector<double> value_;
   std::vector<unsigned> row_;
   std::vector<unsigned> col_index_;
@@ -22,7 +22,6 @@ class SparseMatrix {
   unsigned cols_;
   unsigned rows_;
 
- public:
   SparseMatrix(unsigned rows, unsigned cols) : cols_(cols), rows_(rows) {
     col_index_.clear();
     row_.clear();
