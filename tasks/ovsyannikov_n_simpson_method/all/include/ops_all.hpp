@@ -1,8 +1,5 @@
 #pragma once
 
-#include <string>
-#include <vector>
-
 #include "ovsyannikov_n_simpson_method/common/include/common.hpp"
 #include "task/include/task.hpp"
 

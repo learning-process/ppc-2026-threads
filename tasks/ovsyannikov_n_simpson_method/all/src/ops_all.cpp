@@ -7,7 +7,6 @@
 #include <atomic>
 #include <cmath>
 #include <functional>
-#include <numeric>
 #include <thread>
 #include <vector>
 
@@ -78,7 +77,7 @@ bool OvsyannikovNSimpsonMethodALL::RunImpl() {
   MPI_Reduce(&total_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
-    int world_size;
+    int world_size = 0;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     res_ = (hx * hy / 9.0) * (global_sum / world_size);
   }
