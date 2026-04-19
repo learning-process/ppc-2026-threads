@@ -19,6 +19,7 @@ namespace ovsyannikov_n_simpson_method {
 double OvsyannikovNSimpsonMethodALL::Function(double x, double y) {
   return x + y;
 }
+
 double OvsyannikovNSimpsonMethodALL::GetCoeff(int i, int n) {
   if (i == 0 || i == n) {
     return 1.0;
@@ -87,6 +88,8 @@ bool OvsyannikovNSimpsonMethodALL::RunImpl() {
   if (rank == 0) {
     res_ = (hx * hy / 9.0) * total_sum;
   }
+
+  MPI_Bcast(&res_, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   std::atomic<int> counter(0);
   std::thread t([&]() { counter++; });
