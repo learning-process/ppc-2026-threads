@@ -84,9 +84,12 @@ void NaiveMulBlockedOmp(const double *a, std::size_t a_stride, const double *b, 
                         std::size_t c_stride, std::size_t n) {
   ZeroMatrix(c, c_stride, n);
 
-#pragma omp parallel for default(none) shared(a, b, c, a_stride, b_stride, c_stride, n) schedule(static) \
-    num_threads(ppc::util::GetNumThreads())
-  for (int ii = 0; ii < static_cast<int>(n); ii += static_cast<int>(kBlockSize)) {
+  const auto n_signed = static_cast<std::ptrdiff_t>(n);
+  const auto block_size_signed = static_cast<std::ptrdiff_t>(kBlockSize);
+
+#pragma omp parallel for default(none) shared(a, b, c, a_stride, b_stride, c_stride, n, n_signed, block_size_signed) \
+    schedule(static) num_threads(ppc::util::GetNumThreads())
+  for (std::ptrdiff_t ii = 0; ii < n_signed; ii += block_size_signed) {
     const auto i_begin = static_cast<std::size_t>(ii);
     const std::size_t i_end = std::min(i_begin + kBlockSize, n);
     MulKBlocks(a, a_stride, b, b_stride, c, c_stride, n, i_begin, i_end);
