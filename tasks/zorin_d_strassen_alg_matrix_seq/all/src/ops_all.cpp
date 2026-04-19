@@ -184,27 +184,24 @@ void StrassenTopAll(const double *a, std::size_t a_stride, const double *b, std:
   std::vector<double> m7;
 
   oneapi::tbb::parallel_invoke(
-      [&] { ComputeProduct(a11, a_stride, a22, a_stride, 1.0, b11, b_stride, b22, b_stride, 1.0, m1, half); },
-      [&] { ComputeProductSingleLeft(a21, a_stride, a22, a_stride, 1.0, b11, b_stride, m2, half); },
-      [&] { ComputeProductSingle(a11, a_stride, b12, b_stride, b22, b_stride, -1.0, m3, half); },
-      [&] {
-        auto f4 = std::async(std::launch::async, [&] {
-          ComputeProductSingle(a22, a_stride, b21, b_stride, b11, b_stride, -1.0, m4, half);
-        });
-        auto f5 = std::async(std::launch::async, [&] {
-          ComputeProductSingleLeft(a11, a_stride, a12, a_stride, 1.0, b22, b_stride, m5, half);
-        });
-        auto f6 = std::async(std::launch::async, [&] {
-          ComputeProduct(a21, a_stride, a11, a_stride, -1.0, b11, b_stride, b12, b_stride, 1.0, m6, half);
-        });
-        auto f7 = std::async(std::launch::async, [&] {
-          ComputeProduct(a12, a_stride, a22, a_stride, -1.0, b21, b_stride, b22, b_stride, 1.0, m7, half);
-        });
-        f4.get();
-        f5.get();
-        f6.get();
-        f7.get();
-      });
+      [&] { ComputeProduct(a11, a_stride, a22, a_stride, 1.0, b11, b_stride, b22, b_stride, 1.0, m1, half); }, [&] {
+    ComputeProductSingleLeft(a21, a_stride, a22, a_stride, 1.0, b11, b_stride, m2, half);
+  }, [&] { ComputeProductSingle(a11, a_stride, b12, b_stride, b22, b_stride, -1.0, m3, half); }, [&] {
+    auto f4 = std::async(std::launch::async,
+                         [&] { ComputeProductSingle(a22, a_stride, b21, b_stride, b11, b_stride, -1.0, m4, half); });
+    auto f5 = std::async(std::launch::async,
+                         [&] { ComputeProductSingleLeft(a11, a_stride, a12, a_stride, 1.0, b22, b_stride, m5, half); });
+    auto f6 = std::async(std::launch::async, [&] {
+      ComputeProduct(a21, a_stride, a11, a_stride, -1.0, b11, b_stride, b12, b_stride, 1.0, m6, half);
+    });
+    auto f7 = std::async(std::launch::async, [&] {
+      ComputeProduct(a12, a_stride, a22, a_stride, -1.0, b21, b_stride, b22, b_stride, 1.0, m7, half);
+    });
+    f4.get();
+    f5.get();
+    f6.get();
+    f7.get();
+  });
 
   CombineQuadrants(m1, m2, m3, m4, m5, m6, m7, c, c_stride, half);
 }
