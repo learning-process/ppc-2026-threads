@@ -8,49 +8,49 @@
 
 namespace luzan_e_double_sparse_matrix_mult {
 SparseMatrix LuzanEDoubleSparseMatrixMultOMP::CalcProdOMP(const SparseMatrix &a, const SparseMatrix &b) {
-  SparseMatrix c(a.rows_, b.cols_);
+  SparseMatrix c(a.rows, b.cols);
 
   /// tmp storage
-  std::vector<std::vector<double>> values_per_col(b.cols_);
-  std::vector<std::vector<unsigned>> rows_per_col(b.cols_);
+  std::vector<std::vector<double>> values_per_col(b.cols);
+  std::vector<std::vector<unsigned>> rowsper_col(b.cols);
 
-#pragma omp parallel for shared(a, b, values_per_col, rows_per_col, kEPS) schedule(static) default(none)
-  for (unsigned b_col = 0; b_col < static_cast<unsigned>(b.cols_); b_col++) {
-    std::vector<double> tmp_col(a.rows_, 0.0);
+#pragma omp parallel for shared(a, b, values_per_col, rowsper_col, kEPS) schedule(static) default(none)
+  for (unsigned b_col = 0; b_col < static_cast<unsigned>(b.cols); b_col++) {
+    std::vector<double> tmp_col(a.rows, 0.0);
 
-    unsigned b_rows_start = b.col_index_[b_col];
-    unsigned b_rows_end = b.col_index_[b_col + 1];
+    unsigned b_rowsstart = b.col_index[b_col];
+    unsigned b_rowsend = b.col_index[b_col + 1];
 
-    for (unsigned b_pos = b_rows_start; b_pos < b_rows_end; b_pos++) {
-      double b_val = b.value_[b_pos];
-      unsigned b_row = b.row_[b_pos];
+    for (unsigned b_pos = b_rowsstart; b_pos < b_rowsend; b_pos++) {
+      double b_val = b.value[b_pos];
+      unsigned b_row = b.row[b_pos];
 
-      unsigned a_rows_start = a.col_index_[b_row];
-      unsigned a_rows_end = a.col_index_[b_row + 1];
+      unsigned a_rowsstart = a.col_index[b_row];
+      unsigned a_rowsend = a.col_index[b_row + 1];
 
-      for (unsigned a_pos = a_rows_start; a_pos < a_rows_end; a_pos++) {
-        double a_val = a.value_[a_pos];
-        unsigned a_row = a.row_[a_pos];
+      for (unsigned a_pos = a_rowsstart; a_pos < a_rowsend; a_pos++) {
+        double a_val = a.value[a_pos];
+        unsigned a_row = a.row[a_pos];
 
         tmp_col[a_row] += a_val * b_val;
       }
     }
 
-    for (unsigned i = 0; i < a.rows_; i++) {
+    for (unsigned i = 0; i < a.rows; i++) {
       if (fabs(tmp_col[i]) > kEPS) {
         values_per_col[b_col].push_back(tmp_col[i]);
-        rows_per_col[b_col].push_back(i);
+        rowsper_col[b_col].push_back(i);
       }
     }
   }
 
-  c.col_index_.push_back(0);
-  for (unsigned j = 0; j < b.cols_; j++) {
+  c.col_index.push_back(0);
+  for (unsigned j = 0; j < b.cols; j++) {
     for (size_t k = 0; k < values_per_col[j].size(); k++) {
-      c.value_.push_back(values_per_col[j][k]);
-      c.row_.push_back(rows_per_col[j][k]);
+      c.value.push_back(values_per_col[j][k]);
+      c.row.push_back(rowsper_col[j][k]);
     }
-    c.col_index_.push_back(c.value_.size());
+    c.col_index.push_back(c.value.size());
   }
 
   return c;
