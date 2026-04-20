@@ -11,7 +11,7 @@ class LuzanEDoubleSparseMatrixMultOMP : public BaseTask {
   }
   explicit LuzanEDoubleSparseMatrixMultOMP(const InType &in);
 
-  SparseMatrix CalcProdOMP(const SparseMatrix &a, const SparseMatrix &b);
+  static SparseMatrix CalcProdOMP(const SparseMatrix &a, const SparseMatrix &b);
 
  private:
   bool ValidationImpl() override;
