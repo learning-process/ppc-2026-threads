@@ -1,6 +1,6 @@
 # Поразрядная сортировка чисел (тип double) с четно-нечетным слиянием Бэтчера
 
-- **Student**: Dorofeev Ivan, group <ТВОЯ_ГРУППА>
+- **Student**: Дорофеев Иван, group 3823Б1ФИ1
 - **Technology**: ALL (OMP, TBB, STL)
 - **Variant**: 20
 
