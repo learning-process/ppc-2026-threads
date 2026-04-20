@@ -3,6 +3,7 @@
 #include "tsarkov_k_jarvis_convex_hull/common/include/common.hpp"
 #include "tsarkov_k_jarvis_convex_hull/omp/include/ops_omp.hpp"
 #include "tsarkov_k_jarvis_convex_hull/seq/include/ops_seq.hpp"
+#include "tsarkov_k_jarvis_convex_hull/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace tsarkov_k_jarvis_convex_hull {
@@ -50,9 +51,8 @@ TEST_P(TsarkovKRunPerfTestSEQ, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, TsarkovKJarvisConvexHullOMP, TsarkovKJarvisConvexHullSEQ>(
-        PPC_SETTINGS_tsarkov_k_jarvis_convex_hull);
-
+    ppc::util::MakeAllPerfTasks<InType, TsarkovKJarvisConvexHullOMP, TsarkovKJarvisConvexHullTBB,
+                                TsarkovKJarvisConvexHullSEQ>(PPC_SETTINGS_tsarkov_k_jarvis_convex_hull);
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = TsarkovKRunPerfTestSEQ::CustomPerfTestName;

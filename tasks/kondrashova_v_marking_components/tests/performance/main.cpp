@@ -8,6 +8,7 @@
 #include "kondrashova_v_marking_components/common/include/common.hpp"
 #include "kondrashova_v_marking_components/omp/include/ops_omp.hpp"
 #include "kondrashova_v_marking_components/seq/include/ops_seq.hpp"
+#include "kondrashova_v_marking_components/stl/include/ops_stl.hpp"
 #include "kondrashova_v_marking_components/tbb/include/ops_tbb.hpp"
 #include "performance/include/performance.hpp"
 #include "util/include/perf_test_util.hpp"
@@ -214,8 +215,8 @@ TEST_P(BlocksPerfTest, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KondrashovaVTaskSEQ, KondrashovaVTaskOMP, KondrashovaVTaskTBB>(
-        PPC_SETTINGS_kondrashova_v_marking_components);
+    ppc::util::MakeAllPerfTasks<InType, KondrashovaVTaskSEQ, KondrashovaVTaskOMP, KondrashovaVTaskSTL,
+                                KondrashovaVTaskTBB>(PPC_SETTINGS_kondrashova_v_marking_components);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

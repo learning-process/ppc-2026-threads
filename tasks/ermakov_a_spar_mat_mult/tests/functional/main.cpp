@@ -4,6 +4,7 @@
 #include <cmath>
 #include <complex>
 #include <cstddef>
+#include <cstdint>
 #include <random>
 #include <string>
 #include <tuple>
@@ -101,6 +102,17 @@ void FillRandom(DenseMatrix &a, DenseMatrix &b, int n, double density, std::mt19
   }
 }
 
+std::uint32_t MakeSeed(int n, const std::string &desc) {
+  std::uint32_t seed = 2166136261U;
+  for (unsigned char ch : desc) {
+    seed ^= ch;
+    seed *= 16777619U;
+  }
+  seed ^= static_cast<std::uint32_t>(n);
+  seed *= 16777619U;
+  return seed;
+}
+
 MatrixCRS DenseToCRS(const DenseMatrix &m, double eps = 1e-12) {
   MatrixCRS r;
 
@@ -179,7 +191,7 @@ class ErmakovARunFuncTestSparMatMult : public ppc::util::BaseRunFuncTests<InType
       }
       FillFixed(a, b);
     } else {
-      std::mt19937 gen(std::random_device{}());
+      std::mt19937 gen(MakeSeed(n, desc));
       const double density = ResolveDensity(desc);
       FillRandom(a, b, n, density, gen);
     }
