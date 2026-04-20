@@ -7,12 +7,12 @@
 
 namespace chaschin_v_linear_image_filtration_seq {
 
-class ChaschinVLinearFiltrationSEQ : public BaseTask {
+class ChaschinVLinearFiltrationSEQ : public chaschin_v_linear_image_filtration::BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit ChaschinVLinearFiltrationSEQ(const InType &in);
+  explicit ChaschinVLinearFiltrationSEQ(const chaschin_v_linear_image_filtration::InType &in);
 
  private:
   bool ValidationImpl() override;
