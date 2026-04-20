@@ -24,7 +24,8 @@ SparseMatrix LuzanEDoubleSparseMatrixMultTBB::CalcProdTBB(const SparseMatrix &a,
       // std::vector<double> tmp_col(a.rows, 0.0);
 
       auto &tmp_col = tls_tmp.local();
-      std::fill(tmp_col.begin(), tmp_col.end(), 0.0);
+      // std::fill(tmp_col.begin(), tmp_col.end(), 0.0);
+      std::ranges::fill(tmp_col.begin(), tmp_col.end(), 0.0);
 
       unsigned b_start = b.col_index[b_col];
       unsigned b_end = b.col_index[b_col + 1];
