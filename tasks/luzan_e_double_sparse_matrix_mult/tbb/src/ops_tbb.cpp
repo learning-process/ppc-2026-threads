@@ -1,5 +1,6 @@
 #include "luzan_e_double_sparse_matrix_mult/tbb/include/ops_tbb.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <vector>

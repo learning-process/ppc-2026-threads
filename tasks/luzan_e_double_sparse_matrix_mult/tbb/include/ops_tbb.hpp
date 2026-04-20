@@ -11,13 +11,13 @@ class LuzanEDoubleSparseMatrixMultTBB : public BaseTask {
   }
   explicit LuzanEDoubleSparseMatrixMultTBB(const InType &in);
 
-  SparseMatrix CalcProdTBB(const SparseMatrix &a, const SparseMatrix &b);
+  static SparseMatrix CalcProdTBB(const SparseMatrix &a, const SparseMatrix &b);
 
-  void MultiplyColumn(const SparseMatrix &a, const SparseMatrix &b, unsigned b_col, std::vector<double> &tmp_col);
+  static void MultiplyColumn(const SparseMatrix &a, const SparseMatrix &b, unsigned b_col, std::vector<double> &tmp_col);
 
-  void CompressColumn(const std::vector<double> &tmp_col, std::vector<double> &values, std::vector<unsigned> &rows);
+  static void CompressColumn(const std::vector<double> &tmp_col, std::vector<double> &values, std::vector<unsigned> &rows);
 
-  void BuildResult(SparseMatrix &c, const std::vector<std::vector<double>> &values_per_col,
+  static void BuildResult(SparseMatrix &c, const std::vector<std::vector<double>> &values_per_col,
                    const std::vector<std::vector<unsigned>> &rows_per_col);
 
  private:
