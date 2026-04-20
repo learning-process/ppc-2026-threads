@@ -16,35 +16,24 @@ namespace {
 
 bool ValidateBorders(const std::vector<std::pair<double, double>> &borders) {
   return std::ranges::all_of(borders, [](const auto &border) {
-    return std::isfinite(border.first) && 
-           std::isfinite(border.second) && 
-           border.first < border.second;
+    return std::isfinite(border.first) && std::isfinite(border.second) && border.first < border.second;
   });
 }
 
-void ProcessRange(
-    size_t start,
-    size_t end,
-    const std::function<double(const std::vector<double>&)>& func,
-    const std::vector<std::pair<double, double>>& borders,
-    const std::vector<double>& h,
-    int dim,
-    int n,
-    std::atomic<bool>& error_flag,
-    double& result) {
-  
+void ProcessRange(size_t start, size_t end, const std::function<double(const std::vector<double> &)> &func,
+                  const std::vector<std::pair<double, double>> &borders, const std::vector<double> &h, int dim, int n,
+                  std::atomic<bool> &error_flag, double &result) {
   double local_sum = 0.0;
   for (size_t linear_idx = start; linear_idx < end && !error_flag.load(); ++linear_idx) {
     size_t tmp = linear_idx;
     std::vector<double> point(dim);
-    
+
     for (int dimension = dim - 1; dimension >= 0; --dimension) {
       int idx_val = static_cast<int>(tmp % static_cast<size_t>(n));
       tmp /= static_cast<size_t>(n);
-      point[dimension] = borders[dimension].first + 
-                        ((static_cast<double>(idx_val) + 0.5) * h[dimension]);
+      point[dimension] = borders[dimension].first + ((static_cast<double>(idx_val) + 0.5) * h[dimension]);
     }
-    
+
     double f_val = func(point);
     if (!std::isfinite(f_val)) {
       error_flag.store(true);
@@ -122,8 +111,8 @@ bool DergynovSIntegralsMultistepRectangleSTL::RunImpl() {
     size_t start = thread_idx * chunk_size;
     size_t end = (thread_idx == num_threads - 1) ? total_points : start + chunk_size;
 
-    threads.emplace_back(ProcessRange, start, end, func, borders, h, dim, n,
-                         std::ref(error_flag), std::ref(partial_sums[thread_idx]));
+    threads.emplace_back(ProcessRange, start, end, func, borders, h, dim, n, std::ref(error_flag),
+                         std::ref(partial_sums[thread_idx]));
   }
 
   for (auto &thread : threads) {
