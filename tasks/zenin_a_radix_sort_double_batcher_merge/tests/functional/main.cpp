@@ -11,7 +11,7 @@
 // #include <utility>
 // #include <vector>
 
-// #include "zenin_a_radix_sort_double_batcher_merge/all/include/ops_all.hpp"
+#include "zenin_a_radix_sort_double_batcher_merge/all/include/ops_all.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 #include "zenin_a_radix_sort_double_batcher_merge/common/include/common.hpp"
@@ -85,6 +85,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ZeninARadixSor
                                            ppc::util::AddFuncTask<ZeninARadixSortDoubleBatcherMergeTBB, InType>(
                                                kTestParam, PPC_SETTINGS_zenin_a_radix_sort_double_batcher_merge),
                                            ppc::util::AddFuncTask<ZeninARadixSortDoubleBatcherMergeSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_zenin_a_radix_sort_double_batcher_merge), 
+                                           ppc::util::AddFuncTask<ZeninARadixSortDoubleBatcherMergeALL, InType>(
                                                kTestParam, PPC_SETTINGS_zenin_a_radix_sort_double_batcher_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
