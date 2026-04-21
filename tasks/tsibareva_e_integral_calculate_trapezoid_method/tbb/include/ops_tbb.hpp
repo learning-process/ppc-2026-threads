@@ -1,9 +1,12 @@
 // ops_tbb.hpp
 #pragma once
 
-#include "tsibareva_e_integral_calculate_trapezoid_method/common/include/common.hpp"
-#include "task/include/task.hpp"
 #include <tbb/tbb.h>
+
+#include <vector>
+
+#include "task/include/task.hpp"
+#include "tsibareva_e_integral_calculate_trapezoid_method/common/include/common.hpp"
 
 namespace tsibareva_e_integral_calculate_trapezoid_method {
 
@@ -20,11 +23,8 @@ class TsibarevaEIntegralCalculateTrapezoidMethodTBB : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static double ComputeRangeSum(const tbb::blocked_range<int>& range,
-                                double init,
-                                const Integral& input,
-                                const std::vector<double>& h,
-                                const std::vector<int>& sizes);
+  static double ComputeSumNode(const tbb::blocked_range<int> &range, double init, const Integral &input,
+                                const std::vector<double> &h, const std::vector<int> &sizes);
 };
 
 }  // namespace tsibareva_e_integral_calculate_trapezoid_method
