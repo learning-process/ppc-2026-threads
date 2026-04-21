@@ -77,14 +77,14 @@ bool PikhotskiyRVerticalGaussFilterOMP::RunImpl() {
   const int stripe_count = (width_ + stripe_width_ - 1) / stripe_width_;
   omp_set_num_threads(num_threads);
 
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for default(none) schedule(static) shared(stripe_count)
   for (int stripe_index = 0; stripe_index < stripe_count; ++stripe_index) {
     const int x_begin = stripe_index * stripe_width_;
     const int x_end = std::min(width_, x_begin + stripe_width_);
     RunVerticalPassForStripe(x_begin, x_end);
   }
 
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for default(none) schedule(static) shared(stripe_count)
   for (int stripe_index = 0; stripe_index < stripe_count; ++stripe_index) {
     const int x_begin = stripe_index * stripe_width_;
     const int x_end = std::min(width_, x_begin + stripe_width_);
