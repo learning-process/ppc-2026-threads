@@ -10,11 +10,12 @@
 #include <vector>
 
 #include "borunov_v_complex_ccs/common/include/common.hpp"
+#include "borunov_v_complex_ccs/omp/include/ops_omp.hpp"
 #include "borunov_v_complex_ccs/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace borunov_v_complex_ccs_seq {
+namespace borunov_v_complex_ccs {
 
 namespace {
 
@@ -170,6 +171,7 @@ const std::array<TestType, 3> kTestParam = {
 };
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<BorunovVComplexCcsOMP, InType>(kTestParam, PPC_SETTINGS_borunov_v_complex_ccs),
     ppc::util::AddFuncTask<BorunovVComplexCcsSEQ, InType>(kTestParam, PPC_SETTINGS_borunov_v_complex_ccs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
@@ -180,4 +182,4 @@ INSTANTIATE_TEST_SUITE_P(SparseMatrixTests, BorunovVRunFuncTestsThreads, kGtestV
 
 }  // namespace
 
-}  // namespace borunov_v_complex_ccs_seq
+}  // namespace borunov_v_complex_ccs

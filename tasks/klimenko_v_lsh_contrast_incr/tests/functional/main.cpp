@@ -4,9 +4,13 @@
 #include <array>
 #include <cstddef>
 #include <string>
+#include <tuple>
 
 #include "klimenko_v_lsh_contrast_incr/common/include/common.hpp"
+#include "klimenko_v_lsh_contrast_incr/omp/include/ops_omp.hpp"
 #include "klimenko_v_lsh_contrast_incr/seq/include/ops_seq.hpp"
+#include "klimenko_v_lsh_contrast_incr/stl/include/ops_stl.hpp"
+#include "klimenko_v_lsh_contrast_incr/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -48,7 +52,6 @@ class KlimenkoVFuncTestsLSH : public ppc::util::BaseRunFuncTests<InType, OutType
         return false;
       }
     }
-
     return true;
   }
 
@@ -68,8 +71,11 @@ TEST_P(KlimenkoVFuncTestsLSH, ContrastStretching) {
 
 const std::array<TestType, 3> kTestParam = {16, 256, 1024};
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<KlimenkoVLSHContrastIncrSEQ, InType>(kTestParam, PPC_SETTINGS_klimenko_v_lsh_contrast_incr);
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<KlimenkoVLSHContrastIncrOMP, InType>(kTestParam, PPC_SETTINGS_klimenko_v_lsh_contrast_incr),
+    ppc::util::AddFuncTask<KlimenkoVLSHContrastIncrSEQ, InType>(kTestParam, PPC_SETTINGS_klimenko_v_lsh_contrast_incr),
+    ppc::util::AddFuncTask<KlimenkoVLSHContrastIncrSTL, InType>(kTestParam, PPC_SETTINGS_klimenko_v_lsh_contrast_incr),
+    ppc::util::AddFuncTask<KlimenkoVLSHContrastIncrTBB, InType>(kTestParam, PPC_SETTINGS_klimenko_v_lsh_contrast_incr));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

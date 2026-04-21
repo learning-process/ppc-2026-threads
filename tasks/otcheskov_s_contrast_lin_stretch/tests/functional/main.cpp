@@ -15,12 +15,13 @@
 #include "otcheskov_s_contrast_lin_stretch/common/include/common.hpp"
 #include "otcheskov_s_contrast_lin_stretch/omp/include/ops_omp.hpp"
 #include "otcheskov_s_contrast_lin_stretch/seq/include/ops_seq.hpp"
+#include "otcheskov_s_contrast_lin_stretch/stl/include/ops_stl.hpp"
 #include "otcheskov_s_contrast_lin_stretch/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
 namespace otcheskov_s_contrast_lin_stretch {
-namespace {
+namespace {  // utils functions
 
 std::vector<uint8_t> CreateLowContrastImage(size_t size, uint8_t low = 100, uint8_t range = 50) {
   std::vector<uint8_t> image(size * size);
@@ -49,6 +50,7 @@ std::vector<uint8_t> LoadGrayscaleImage(const std::string &img_path) {
 
 }  // namespace
 
+// Validation tests
 class OtcheskovSContrastLinStretchValidationTestsThreads
     : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -101,6 +103,7 @@ class OtcheskovSContrastLinStretchValidationTestsThreads
   ppc::task::TaskPtr<InType, OutType> task_;
 };
 
+// Functional tests
 class OtcheskovSContrastLinStretchFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
@@ -127,6 +130,7 @@ class OtcheskovSContrastLinStretchFuncTestsThreads : public ppc::util::BaseRunFu
   InType input_img_;
 };
 
+// Test with uniform image
 class OtcheskovSContrastLinStretchUnifImgTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
@@ -152,6 +156,7 @@ class OtcheskovSContrastLinStretchUnifImgTestsThreads : public ppc::util::BaseRu
   InType input_img_;
 };
 
+// Test with image file
 class OtcheskovSContrastLinStretchRealTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
@@ -204,6 +209,8 @@ const auto kTestValidTasksList = std::tuple_cat(ppc::util::AddFuncTask<Otcheskov
                                                 ppc::util::AddFuncTask<OtcheskovSContrastLinStretchOMP, InType>(
                                                     kTestValidParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch),
                                                 ppc::util::AddFuncTask<OtcheskovSContrastLinStretchTBB, InType>(
+                                                    kTestValidParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch),
+                                                ppc::util::AddFuncTask<OtcheskovSContrastLinStretchSTL, InType>(
                                                     kTestValidParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch));
 
 const auto kTestFuncTasksList = std::tuple_cat(ppc::util::AddFuncTask<OtcheskovSContrastLinStretchSEQ, InType>(
@@ -211,6 +218,8 @@ const auto kTestFuncTasksList = std::tuple_cat(ppc::util::AddFuncTask<OtcheskovS
                                                ppc::util::AddFuncTask<OtcheskovSContrastLinStretchOMP, InType>(
                                                    kTestFuncParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch),
                                                ppc::util::AddFuncTask<OtcheskovSContrastLinStretchTBB, InType>(
+                                                   kTestFuncParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch),
+                                               ppc::util::AddFuncTask<OtcheskovSContrastLinStretchSTL, InType>(
                                                    kTestFuncParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch));
 
 const auto kTestUnifImgTasksList =
@@ -219,6 +228,8 @@ const auto kTestUnifImgTasksList =
                    ppc::util::AddFuncTask<OtcheskovSContrastLinStretchOMP, InType>(
                        kTestUnifImgParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch),
                    ppc::util::AddFuncTask<OtcheskovSContrastLinStretchTBB, InType>(
+                       kTestUnifImgParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch),
+                   ppc::util::AddFuncTask<OtcheskovSContrastLinStretchSTL, InType>(
                        kTestUnifImgParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch));
 
 const auto kTestRealTasksList = std::tuple_cat(ppc::util::AddFuncTask<OtcheskovSContrastLinStretchSEQ, InType>(
@@ -226,6 +237,8 @@ const auto kTestRealTasksList = std::tuple_cat(ppc::util::AddFuncTask<OtcheskovS
                                                ppc::util::AddFuncTask<OtcheskovSContrastLinStretchOMP, InType>(
                                                    kTestRealParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch),
                                                ppc::util::AddFuncTask<OtcheskovSContrastLinStretchTBB, InType>(
+                                                   kTestRealParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch),
+                                               ppc::util::AddFuncTask<OtcheskovSContrastLinStretchSTL, InType>(
                                                    kTestRealParam, PPC_SETTINGS_otcheskov_s_contrast_lin_stretch));
 
 const auto kGtestValidValues = ppc::util::ExpandToValues(kTestValidTasksList);

@@ -6,6 +6,7 @@
 #include "../../common/include/common.hpp"
 #include "../../omp/include/rect_method_omp.hpp"
 #include "../../seq/include/rect_method_seq.hpp"
+#include "../../stl/include/rect_method_stl.hpp"
 #include "../../tbb/include/rect_method_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -45,8 +46,9 @@ TEST_P(RectMethodPerfTests, PerfTest) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, RectMethodSequential, RectMethodOMP, RectMethodTBB>(
-    PPC_SETTINGS_kutergin_v_multidimensional_integration_rect_method);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, RectMethodSequential, RectMethodOMP, RectMethodTBB, RectMethodSTL>(
+        PPC_SETTINGS_kutergin_v_multidimensional_integration_rect_method);
 
 INSTANTIATE_TEST_SUITE_P(MultidimensionalIntegrationPerf, RectMethodPerfTests,
                          ppc::util::TupleToGTestValues(kAllPerfTasks), RectMethodPerfTests::CustomPerfTestName);

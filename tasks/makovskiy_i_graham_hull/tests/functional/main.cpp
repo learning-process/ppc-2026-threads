@@ -8,6 +8,8 @@
 #include "makovskiy_i_graham_hull/common/include/common.hpp"
 #include "makovskiy_i_graham_hull/omp/include/ops_omp.hpp"
 #include "makovskiy_i_graham_hull/seq/include/ops_seq.hpp"
+#include "makovskiy_i_graham_hull/stl/include/ops_stl.hpp"
+#include "makovskiy_i_graham_hull/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -111,7 +113,9 @@ const std::array<TestType, 9> kTestParam = {std::make_tuple(1, "square_with_inte
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ConvexHullGrahamSEQ, InType>(kTestParam, PPC_SETTINGS_makovskiy_i_graham_hull),
-    ppc::util::AddFuncTask<ConvexHullGrahamOMP, InType>(kTestParam, PPC_SETTINGS_makovskiy_i_graham_hull));
+    ppc::util::AddFuncTask<ConvexHullGrahamOMP, InType>(kTestParam, PPC_SETTINGS_makovskiy_i_graham_hull),
+    ppc::util::AddFuncTask<ConvexHullGrahamTBB, InType>(kTestParam, PPC_SETTINGS_makovskiy_i_graham_hull),
+    ppc::util::AddFuncTask<ConvexHullGrahamSTL, InType>(kTestParam, PPC_SETTINGS_makovskiy_i_graham_hull));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

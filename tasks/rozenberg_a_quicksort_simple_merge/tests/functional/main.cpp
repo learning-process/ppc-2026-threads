@@ -9,6 +9,7 @@
 #include "rozenberg_a_quicksort_simple_merge/common/include/common.hpp"
 #include "rozenberg_a_quicksort_simple_merge/omp/include/ops_omp.hpp"
 #include "rozenberg_a_quicksort_simple_merge/seq/include/ops_seq.hpp"
+#include "rozenberg_a_quicksort_simple_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -73,6 +74,8 @@ const std::array<TestType, 9> kTestParam = {"basic_test",       "duplicate_test"
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<RozenbergAQuicksortSimpleMergeSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_rozenberg_a_quicksort_simple_merge),
                                            ppc::util::AddFuncTask<RozenbergAQuicksortSimpleMergeOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_rozenberg_a_quicksort_simple_merge),
+                                           ppc::util::AddFuncTask<RozenbergAQuicksortSimpleMergeTBB, InType>(
                                                kTestParam, PPC_SETTINGS_rozenberg_a_quicksort_simple_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

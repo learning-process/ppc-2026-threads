@@ -11,6 +11,7 @@
 #include "../../common/include/common.hpp"
 #include "../../omp/include/rect_method_omp.hpp"
 #include "../../seq/include/rect_method_seq.hpp"
+#include "../../stl/include/rect_method_stl.hpp"
 #include "../../tbb/include/rect_method_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -86,6 +87,8 @@ const auto kTestTasksList =
                    ppc::util::AddFuncTask<RectMethodOMP, InType>(
                        kTestCases, PPC_SETTINGS_kutergin_v_multidimensional_integration_rect_method),
                    ppc::util::AddFuncTask<RectMethodTBB, InType>(
+                       kTestCases, PPC_SETTINGS_kutergin_v_multidimensional_integration_rect_method),
+                   ppc::util::AddFuncTask<RectMethodSTL, InType>(
                        kTestCases, PPC_SETTINGS_kutergin_v_multidimensional_integration_rect_method));
 
 const auto kGTestValues = ppc::util::ExpandToValues(kTestTasksList);

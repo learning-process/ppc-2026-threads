@@ -3,17 +3,18 @@
 #include <cmath>
 #include <cstddef>
 #include <random>
-#include <tuple>
 #include <vector>
 
 #include "terekhov_d_gauss_vert/common/include/common.hpp"
 #include "terekhov_d_gauss_vert/omp/include/ops_omp.hpp"
 #include "terekhov_d_gauss_vert/seq/include/ops_seq.hpp"
+#include "terekhov_d_gauss_vert/stl/include/ops_stl.hpp"
+#include "terekhov_d_gauss_vert/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace terekhov_d_gauss_vert {
 
-class TerekhovDiGaussVertPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class TerekhovDGaussVertPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   void SetUp() override {
     const size_t total_pixels = 10000000;
@@ -37,25 +38,25 @@ class TerekhovDiGaussVertPerfTests : public ppc::util::BaseRunPerfTests<InType, 
   InType GetTestInputData() final {
     return input_data_;
   }
-  // 123344
+
  private:
   InType input_data_;
 };
 
-TEST_P(TerekhovDiGaussVertPerfTests, RunPerfModes) {
+TEST_P(TerekhovDGaussVertPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
 const auto kAllPerfTasks =
-    std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, TerekhovDGaussVertSEQ>(PPC_SETTINGS_terekhov_d_gauss_vert),
-                   ppc::util::MakeAllPerfTasks<InType, TerekhovDGaussVertOMP>(PPC_SETTINGS_terekhov_d_gauss_vert));
+    ppc::util::MakeAllPerfTasks<InType, TerekhovDGaussVertSEQ, TerekhovDGaussVertOMP, TerekhovDGaussVertTBB,
+                                TerekhovDGaussVertSTL>(PPC_SETTINGS_terekhov_d_gauss_vert);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-const auto kPerfTestName = TerekhovDiGaussVertPerfTests::CustomPerfTestName;
+const auto kPerfTestName = TerekhovDGaussVertPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(PerfTests, TerekhovDiGaussVertPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(GaussFilterPerfTests, TerekhovDGaussVertPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 

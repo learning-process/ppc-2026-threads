@@ -12,6 +12,7 @@
 #include "gutyansky_a_img_contrast_incr/common/include/common.hpp"
 #include "gutyansky_a_img_contrast_incr/omp/include/ops_omp.hpp"
 #include "gutyansky_a_img_contrast_incr/seq/include/ops_seq.hpp"
+#include "gutyansky_a_img_contrast_incr/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -79,6 +80,8 @@ const std::array<TestType, 10> kTestParam = {"test_1", "test_2", "test_3", "test
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<GutyanskyAImgContrastIncrSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_gutyansky_a_img_contrast_incr),
                                            ppc::util::AddFuncTask<GutyanskyAImgContrastIncrOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_gutyansky_a_img_contrast_incr),
+                                           ppc::util::AddFuncTask<GutyanskyAImgContrastIncrTBB, InType>(
                                                kTestParam, PPC_SETTINGS_gutyansky_a_img_contrast_incr));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

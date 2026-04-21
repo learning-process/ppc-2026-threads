@@ -8,12 +8,13 @@
 #include "smyshlaev_a_sle_cg_seq/common/include/common.hpp"
 #include "smyshlaev_a_sle_cg_seq/omp/include/ops_omp.hpp"
 #include "smyshlaev_a_sle_cg_seq/seq/include/ops_seq.hpp"
+#include "smyshlaev_a_sle_cg_seq/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace smyshlaev_a_sle_cg_seq {
 
 class SmyshlaevASleCgPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr int kSystemSize = 512;
+  static constexpr int kSystemSize = 3000;
   InType input_data_{};
   OutType expected_x_;
 
@@ -78,8 +79,9 @@ TEST_P(SmyshlaevASleCgPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SmyshlaevASleCgTaskSEQ, SmyshlaevASleCgTaskOMP>(
-    PPC_SETTINGS_smyshlaev_a_sle_cg_seq);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, SmyshlaevASleCgTaskSEQ, SmyshlaevASleCgTaskOMP, SmyshlaevASleCgTaskTBB>(
+        PPC_SETTINGS_smyshlaev_a_sle_cg_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

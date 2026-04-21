@@ -10,6 +10,7 @@
 #include "krykov_e_sobel_op/common/include/common.hpp"
 #include "krykov_e_sobel_op/omp/include/ops_omp.hpp"
 #include "krykov_e_sobel_op/seq/include/ops_seq.hpp"
+#include "krykov_e_sobel_op/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -110,7 +111,8 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(0, "ConstantImage"),
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<KrykovESobelOpSEQ, InType>(kTestParam, PPC_SETTINGS_krykov_e_sobel_op),
 
-                   ppc::util::AddFuncTask<KrykovESobelOpOMP, InType>(kTestParam, PPC_SETTINGS_krykov_e_sobel_op));
+                   ppc::util::AddFuncTask<KrykovESobelOpOMP, InType>(kTestParam, PPC_SETTINGS_krykov_e_sobel_op),
+                   ppc::util::AddFuncTask<KrykovESobelOpTBB, InType>(kTestParam, PPC_SETTINGS_krykov_e_sobel_op));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
