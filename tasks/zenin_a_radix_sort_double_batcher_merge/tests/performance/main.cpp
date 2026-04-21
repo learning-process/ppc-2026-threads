@@ -4,8 +4,8 @@
 #include <cstddef>
 #include <random>
 
-#include "zenin_a_radix_sort_double_batcher_merge/all/include/ops_all.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "zenin_a_radix_sort_double_batcher_merge/all/include/ops_all.hpp"
 #include "zenin_a_radix_sort_double_batcher_merge/common/include/common.hpp"
 #include "zenin_a_radix_sort_double_batcher_merge/omp/include/ops_omp.hpp"
 #include "zenin_a_radix_sort_double_batcher_merge/seq/include/ops_seq.hpp"
@@ -56,7 +56,7 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ZeninARadixSortDoubleBatcherMergeOMP, ZeninARadixSortDoubleBatcherMergeSeqseq,
-                                ZeninARadixSortDoubleBatcherMergeTBB, ZeninARadixSortDoubleBatcherMergeSTL, 
+                                ZeninARadixSortDoubleBatcherMergeTBB, ZeninARadixSortDoubleBatcherMergeSTL,
                                 ZeninARadixSortDoubleBatcherMergeALL>(
         PPC_SETTINGS_zenin_a_radix_sort_double_batcher_merge);
 
