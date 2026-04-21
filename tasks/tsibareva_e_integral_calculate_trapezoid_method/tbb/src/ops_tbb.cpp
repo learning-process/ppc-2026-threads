@@ -42,7 +42,7 @@ bool TsibarevaEIntegralCalculateTrapezoidMethodTBB::RunImpl() {
   }
 
   double res_sum = tbb::parallel_reduce(tbb::blocked_range<int>(0, total_nodes), 0.0,
-                                          [&](const tbb::blocked_range<int> &r, double local_sum) {
+                                        [&](const tbb::blocked_range<int> &r, double local_sum) {
     return local_sum + ComputeSumNode(r, 0.0, inputI, h, sizes);
   }, std::plus<>());
 
@@ -59,9 +59,9 @@ bool TsibarevaEIntegralCalculateTrapezoidMethodTBB::PostProcessingImpl() {
 }
 
 double TsibarevaEIntegralCalculateTrapezoidMethodTBB::ComputeSumNode(const tbb::blocked_range<int> &range, double init,
-                                                                      const Integral &inputI,
-                                                                      const std::vector<double> &h,
-                                                                      const std::vector<int> &sizes) {
+                                                                     const Integral &inputI,
+                                                                     const std::vector<double> &h,
+                                                                     const std::vector<int> &sizes) {
   double sum = init;
   int dim = inputI.dim;
 
