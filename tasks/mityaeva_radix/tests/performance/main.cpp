@@ -38,7 +38,7 @@ TEST_P(MityaevaRadixPerf, RadixSortPerf) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, MityaevaRadixSeq, MityaevaRadixOmp, MityaevaRadixTbb, MityaevaRadixStl>(
+    ppc::util::MakeAllPerfTasks<InType, MityaevaRadixSeq, MityaevaRadixOmp, MityaevaRadixTbb, MityaevaRadixStl, MityaevaRadixAll>(
         PPC_SETTINGS_mityaeva_radix);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
