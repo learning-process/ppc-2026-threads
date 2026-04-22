@@ -10,41 +10,68 @@ namespace trofimov_n_hoar_sort_batcher {
 
 namespace {
 
-int HoarePartition(std::vector<int> &arr, int left, int right) {
-  const int pivot = arr[left + ((right - left) / 2)];
-  int i = left - 1;
-  int j = right + 1;
+unsigned int GetThreadsCount(std::size_t size) {
+  unsigned int threads_count = std::thread::hardware_concurrency();
+  if (threads_count == 0) {
+    threads_count = 2;
+  }
+  return std::min<unsigned int>(threads_count, static_cast<unsigned int>(size));
+}
 
-  while (true) {
-    while (arr[++i] < pivot) {
-    }
+std::vector<std::pair<std::size_t, std::size_t>> BuildRanges(std::size_t size, unsigned int threads_count) {
+  const std::size_t chunk_size = (size + threads_count - 1) / static_cast<std::size_t>(threads_count);
+  std::vector<std::pair<std::size_t, std::size_t>> ranges;
+  ranges.reserve(threads_count);
 
-    while (arr[--j] > pivot) {
-    }
+  for (std::size_t begin = 0; begin < size; begin += chunk_size) {
+    const std::size_t end = std::min(begin + chunk_size, size);
+    ranges.emplace_back(begin, end);
+  }
+  return ranges;
+}
 
-    if (i >= j) {
-      return j;
-    }
-
-    std::swap(arr[i], arr[j]);
+void SortRangesInParallel(std::vector<int> &arr, const std::vector<std::pair<std::size_t, std::size_t>> &ranges) {
+  std::vector<std::thread> workers;
+  workers.reserve(ranges.size());
+  for (const auto &[begin, end] : ranges) {
+    workers.emplace_back([&arr, begin, end]() { std::sort(arr.begin() + begin, arr.begin() + end); });
+  }
+  for (auto &worker : workers) {
+    worker.join();
   }
 }
 
-void QuickSortStlTask(std::vector<int> &arr, int left, int right, int depth_limit) {
-  if (left >= right) {
+void MergeSortedRanges(std::vector<int> &arr, std::vector<std::pair<std::size_t, std::size_t>> &ranges) {
+  while (ranges.size() > 1) {
+    std::vector<std::pair<std::size_t, std::size_t>> merged_ranges;
+    merged_ranges.reserve((ranges.size() + 1) / 2);
+
+    for (std::size_t i = 0; i < ranges.size(); i += 2) {
+      if (i + 1 >= ranges.size()) {
+        merged_ranges.push_back(ranges[i]);
+        continue;
+      }
+
+      const auto [left_begin, left_end] = ranges[i];
+      const auto [right_begin, right_end] = ranges[i + 1];
+      std::inplace_merge(arr.begin() + left_begin, arr.begin() + left_end, arr.begin() + right_end);
+      merged_ranges.emplace_back(left_begin, right_end);
+    }
+
+    ranges.swap(merged_ranges);
+  }
+}
+
+void ParallelSortByChunks(std::vector<int> &arr) {
+  const std::size_t size = arr.size();
+  if (size <= 1) {
     return;
   }
 
-  constexpr int kSequentialThreshold = 1024;
-  if ((right - left) < kSequentialThreshold || depth_limit <= 0) {
-    std::sort(arr.begin() + left, arr.begin() + right + 1);
-    return;
-  }
-
-  const int split = HoarePartition(arr, left, right);
-  std::thread left_thread([&arr, left, split, depth_limit]() { QuickSortStlTask(arr, left, split, depth_limit - 1); });
-  QuickSortStlTask(arr, split + 1, right, depth_limit - 1);
-  left_thread.join();
+  const unsigned int threads_count = GetThreadsCount(size);
+  auto ranges = BuildRanges(size, threads_count);
+  SortRangesInParallel(arr, ranges);
+  MergeSortedRanges(arr, ranges);
 }
 
 }  // namespace
@@ -65,11 +92,7 @@ bool TrofimovNHoarSortBatcherSTL::PreProcessingImpl() {
 
 bool TrofimovNHoarSortBatcherSTL::RunImpl() {
   auto &data = GetOutput();
-
-  if (data.size() > 1) {
-    QuickSortStlTask(data, 0, static_cast<int>(data.size()) - 1, 4);
-  }
-
+  ParallelSortByChunks(data);
   return true;
 }
 
