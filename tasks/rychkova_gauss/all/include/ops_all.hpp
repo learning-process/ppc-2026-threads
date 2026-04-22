@@ -20,7 +20,8 @@ class RychkovaGaussALL : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  std::vector<std::uint8_t> loutput_;  // результаты лок. вычислений
+  std::vector<std::uint8_t> loutput_;
+  std::vector<std::uint8_t> goutput_;
 };
 
 }  // namespace rychkova_gauss

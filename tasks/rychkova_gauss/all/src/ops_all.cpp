@@ -40,10 +40,10 @@ Pixel ComputePixel(const Image &image, std::size_t x, std::size_t y, std::size_t
 }
 }  // namespace
 
-RychkovaGaussALL::RychkovaGaussALL(const InType &in) : loutput_({}) {
+RychkovaGaussALL::RychkovaGaussALL(const InType &in) : loutput_({}), goutput_({}) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = {};  // cписок инициализации - пустой вектор - каждый вложенный вектор и пиксели внутри по умолчанию
+  GetOutput() = {};
 }
 
 bool RychkovaGaussALL::ValidationImpl() {
@@ -55,60 +55,77 @@ bool RychkovaGaussALL::ValidationImpl() {
 }
 
 bool RychkovaGaussALL::PreProcessingImpl() {
-  const auto &image = GetInput();  // сохран.изоб.
+  const auto &image = GetInput();
   const auto width = image[0].size();
   const auto height = image.size();
   loutput_.resize(width * height * 3, 0);
+  goutput_.resize(width * height * 3, 0);
   return true;
 }
 
 bool RychkovaGaussALL::RunImpl() {
-  const auto &image = GetInput();  // сохран.изоб.
+  const auto &image = GetInput();
   const auto width = image[0].size();
-  const auto height = image.size();  // сайз от имаге хранит количествo строк
+  const auto height = image.size();
   GetOutput() = Image(height, std::vector<Pixel>(width, Pixel(0, 0, 0)));
+
   int n = 0;
   int idx = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &n);
   MPI_Comm_rank(MPI_COMM_WORLD, &idx);
-  size_t row_per_thread = height / n;
-  size_t remainder = height % n;
-  std::vector<int> counts(n, 0);
-  std::vector<int> displs(n, 0);
+
+  size_t row_per_proc = height / n;
+  size_t remainder_rows = height % n;
+  size_t start = (idx * row_per_proc) + std::min(static_cast<size_t>(idx), remainder_rows);
+  size_t end = ((idx + 1) * row_per_proc) + std::min(static_cast<size_t>(idx + 1), remainder_rows);
+
+  size_t local_rows = end - start;
+
+  std::vector<uint8_t> local_output(local_rows * width * 3);
+
+  std::vector<int> counts(n);
+  std::vector<int> displs(n);
   for (int i = 0; i < n; i++) {
-    size_t start = (i * row_per_thread) + std::min(static_cast<int>(remainder), i);
-    size_t end = ((i + 1) * row_per_thread) + std::min(static_cast<int>(remainder), i + 1);
-    counts[i] = static_cast<int>((end - start) * 3 * width);
-    displs[i] = static_cast<int>(start * 3 * width);
+    size_t rows_i = row_per_proc + (static_cast<size_t>(i) < remainder_rows ? 1 : 0);
+    counts[i] = static_cast<int>(rows_i * width * 3);
+    displs[i] = (i == 0) ? 0 : displs[i - 1] + counts[i - 1];
   }
-  size_t start = displs[idx];
-  size_t end = start + counts[idx];
-#pragma omp parallel for shared(width, height, image, start, end) default(none) num_threads(ppc::util::GetNumThreads())
-  for (std::size_t j = start; j < end; j++) {
-    size_t x = (j / 3) % width;
-    size_t y = (j / 3) / width;
-    auto px = ComputePixel(image, x, y, width, height);
-    loutput_[j] = px.R;
-    loutput_[j + 1] = px.G;
-    loutput_[j + 2] = px.B;
+
+#pragma omp parallel for shared(local_output, image, width, height, start, local_rows) default(none) \
+    num_threads(ppc::util::GetNumThreads())
+  for (size_t local_j = 0; local_j < local_rows; local_j++) {
+    size_t global_j = start + local_j;
+    for (size_t i = 0; i < width; i++) {
+      auto px = ComputePixel(image, i, global_j, width, height);
+      size_t flat_idx = ((local_j * width) + i) * 3;
+      local_output[flat_idx] = px.R;
+      local_output[flat_idx + 1] = px.G;
+      local_output[flat_idx + 2] = px.B;
+    }
   }
-  MPI_Gatherv(loutput_.data(), counts[idx], MPI_UINT8_T, loutput_.data(), counts.data(), displs.data(), MPI_UINT8_T, 0,
-              MPI_COMM_WORLD);
+
+  MPI_Gatherv(local_output.data(), static_cast<int>(local_output.size()), MPI_UINT8_T, goutput_.data(), counts.data(),
+              displs.data(), MPI_UINT8_T, 0, MPI_COMM_WORLD);
+
+  MPI_Bcast(goutput_.data(), static_cast<int>(goutput_.size()), MPI_UINT8_T, 0, MPI_COMM_WORLD);
+
+  auto &output = GetOutput();
+
+#pragma omp parallel for collapse(2) shared(height, width, output) default(none) num_threads(ppc::util::GetNumThreads())
+  for (size_t j = 0; j < height; j++) {
+    for (size_t i = 0; i < width; i++) {
+      size_t flat_idx = ((j *
+
+                          width) +
+                         i) *
+                        3;
+      output[j][i] = Pixel(goutput_[flat_idx], goutput_[flat_idx + 1], goutput_[flat_idx + 2]);
+    }
+  }
   return true;
 }
 
 bool RychkovaGaussALL::PostProcessingImpl() {
-  const auto &image = GetInput();  // сохран.изоб.
-  const auto width = image[0].size();
-  const auto height = image.size();
-  auto &output = GetOutput();
-  for (std::size_t j = 0; j < height; j++) {
-    for (std::size_t i = 0; i < width; i++) {
-      Pixel px(loutput_[((j * width) + 1) * 3], loutput_[(((j * width) + 1) * 3) + 1],
-               loutput_[(((j * width) + 1) * 3) + 2]);
-      output[j][i] = px;
-    }
-  }
   return true;
 }
 
