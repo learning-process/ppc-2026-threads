@@ -3,6 +3,7 @@
 #include <cmath>
 #include <vector>
 
+#include "bortsova_a_integrals_rectangle/all/include/ops_all.hpp"
 #include "bortsova_a_integrals_rectangle/common/include/common.hpp"
 #include "bortsova_a_integrals_rectangle/omp/include/ops_omp.hpp"
 #include "bortsova_a_integrals_rectangle/seq/include/ops_seq.hpp"
@@ -40,9 +41,9 @@ TEST_P(BortsovaAIntegralsRectanglePerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, BortsovaAIntegralsRectangleOMP, BortsovaAIntegralsRectangleSEQ,
-                                BortsovaAIntegralsRectangleSTL, BortsovaAIntegralsRectangleTBB>(
-        PPC_SETTINGS_bortsova_a_integrals_rectangle);
+    ppc::util::MakeAllPerfTasks<InType, BortsovaAIntegralsRectangleALL, BortsovaAIntegralsRectangleOMP,
+                                BortsovaAIntegralsRectangleSEQ, BortsovaAIntegralsRectangleSTL,
+                                BortsovaAIntegralsRectangleTBB>(PPC_SETTINGS_bortsova_a_integrals_rectangle);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

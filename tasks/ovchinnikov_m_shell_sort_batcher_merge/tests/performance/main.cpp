@@ -4,6 +4,7 @@
 #include <cstddef>
 
 #include "ovchinnikov_m_shell_sort_batcher_merge/common/include/common.hpp"
+#include "ovchinnikov_m_shell_sort_batcher_merge/omp/include/ops_omp.hpp"
 #include "ovchinnikov_m_shell_sort_batcher_merge/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -37,8 +38,9 @@ TEST_P(OvchinnikovMRunPerfTestsThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, OvchinnikovMShellSortBatcherMergeSEQ>(
-    PPC_SETTINGS_ovchinnikov_m_shell_sort_batcher_merge);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, OvchinnikovMShellSortBatcherMergeSEQ, OvchinnikovMShellSortBatcherMergeOMP>(
+        PPC_SETTINGS_ovchinnikov_m_shell_sort_batcher_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
