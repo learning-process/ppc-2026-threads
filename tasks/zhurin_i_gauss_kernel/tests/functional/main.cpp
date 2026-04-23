@@ -10,10 +10,11 @@
 
 #include "task/include/task.hpp"
 #include "util/include/func_test_util.hpp"
-#include "zhurin_i_gauss_kernel_seq/common/include/common.hpp"
-#include "zhurin_i_gauss_kernel_seq/seq/include/ops_seq.hpp"
+#include "zhurin_i_gauss_kernel/common/include/common.hpp"
+#include "zhurin_i_gauss_kernel/omp/include/ops_omp.hpp"
+#include "zhurin_i_gauss_kernel/seq/include/ops_seq.hpp"
 
-namespace zhurin_i_gauss_kernel_seq {
+namespace zhurin_i_gauss_kernel {
 
 using TestCase = std::tuple<int, InType, OutType>;
 
@@ -78,8 +79,11 @@ const std::array<TestCase, 6> kTestCases = {
      {6, MakeInput(4, 4, 4, std::vector<std::vector<int>>(4, std::vector<int>(4, 0))),
       OutType(4, std::vector<int>(4, 0))}}};
 
-const auto kAllTasksList =
-    ppc::util::AddFuncTask<ZhurinIGaussKernelSEQ, InType>(kTestCases, PPC_SETTINGS_zhurin_i_gauss_kernel_seq);
+const auto kSeqTasks =
+    ppc::util::AddFuncTask<ZhurinIGaussKernelSEQ, InType>(kTestCases, PPC_SETTINGS_zhurin_i_gauss_kernel);
+const auto kOmpTasks =
+    ppc::util::AddFuncTask<ZhurinIGaussKernelOMP, InType>(kTestCases, PPC_SETTINGS_zhurin_i_gauss_kernel);
+const auto kAllTasksList = std::tuple_cat(kSeqTasks, kOmpTasks);
 
 inline const auto kGtestValues = ppc::util::ExpandToValues(kAllTasksList);
 
@@ -152,4 +156,4 @@ TEST(ZhurinIGaussKernelNegativeTest, ImageColsMismatch) {
 
 }  // namespace
 
-}  // namespace zhurin_i_gauss_kernel_seq
+}  // namespace zhurin_i_gauss_kernel

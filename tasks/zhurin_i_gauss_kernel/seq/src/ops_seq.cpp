@@ -1,12 +1,12 @@
-#include "zhurin_i_gauss_kernel_seq/seq/include/ops_seq.hpp"
+#include "zhurin_i_gauss_kernel/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <utility>
 #include <vector>
 
-#include "zhurin_i_gauss_kernel_seq/common/include/common.hpp"
+#include "zhurin_i_gauss_kernel/common/include/common.hpp"
 
-namespace zhurin_i_gauss_kernel_seq {
+namespace zhurin_i_gauss_kernel {
 
 ZhurinIGaussKernelSEQ::ZhurinIGaussKernelSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -91,4 +91,4 @@ bool ZhurinIGaussKernelSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace zhurin_i_gauss_kernel_seq
+}  // namespace zhurin_i_gauss_kernel

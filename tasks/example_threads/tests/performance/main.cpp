@@ -34,7 +34,7 @@ TEST_P(ExampleRunPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NesterovATestTaskALL, NesterovATestTaskOMP, NesterovATestTaskSEQ,
+    ppc::util::MakeAllPerfTasks<InType, NesterovATestTaskALL, ZhurinIGaussKernelOMP, NesterovATestTaskSEQ,
                                 NesterovATestTaskSTL, NesterovATestTaskTBB>(PPC_SETTINGS_example_threads);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
