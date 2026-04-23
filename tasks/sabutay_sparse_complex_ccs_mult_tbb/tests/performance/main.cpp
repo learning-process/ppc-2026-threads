@@ -4,44 +4,59 @@
 
 #include "sabutay_sparse_complex_ccs_mult_tbb/common/include/common.hpp"
 #include "sabutay_sparse_complex_ccs_mult_tbb/tbb/include/ops_tbb.hpp"
+#include "task/include/task.hpp"
 
 namespace sabutay_sparse_complex_ccs_mult_tbb {
 
 namespace {
+
+struct TaskExecutionResult {
+  ppc::task::TypeOfTask type = ppc::task::TypeOfTask::kTBB;
+  bool validation = false;
+  bool preprocessing = false;
+  bool run = false;
+  bool postprocessing = false;
+  OutType output;
+};
+
+[[nodiscard]] TaskExecutionResult ExecuteTask(const InType &input) {
+  SabutayASparseComplexCcsMultTBB task(input);
+
+  TaskExecutionResult result;
+  result.type = task.GetDynamicTypeOfTask();
+  result.validation = task.Validation();
+  result.preprocessing = task.PreProcessing();
+  result.run = task.Run();
+  result.postprocessing = task.PostProcessing();
+  result.output = task.GetOutput();
+  return result;
+}
+
+[[nodiscard]] bool HasSuccessfulExecution(const TaskExecutionResult &result) {
+  return result.type == ppc::task::TypeOfTask::kTBB && result.validation && result.preprocessing && result.run &&
+         result.postprocessing && IsValidCcs(result.output);
+}
 
 TEST(SabutayASparseComplexCcsMultTBBPerformance, MatchesReferenceOnDeterministicLargeCase) {
   const SparseMatrixCCS lhs = BuildDeterministicMatrix(160, 120, 6, 2);
   const SparseMatrixCCS rhs = BuildDeterministicMatrix(120, 140, 5, 9);
   const SparseMatrixCCS expected = MultiplyCcsReference(lhs, rhs);
 
-  SabutayASparseComplexCcsMultTBB task(std::make_tuple(lhs, rhs));
-
-  ASSERT_TRUE(task.Validation());
-  ASSERT_TRUE(task.PreProcessing());
-  ASSERT_TRUE(task.Run());
-  ASSERT_TRUE(task.PostProcessing());
-  ASSERT_TRUE(IsValidCcs(task.GetOutput()));
-  EXPECT_TRUE(AreMatricesEqual(task.GetOutput(), expected));
+  const TaskExecutionResult result = ExecuteTask(std::make_tuple(lhs, rhs));
+  ASSERT_TRUE(HasSuccessfulExecution(result));
+  EXPECT_TRUE(AreMatricesEqual(result.output, expected));
 }
 
 TEST(SabutayASparseComplexCcsMultTBBPerformance, ProducesStableResultAcrossRepeatedRuns) {
   const SparseMatrixCCS lhs = BuildDeterministicMatrix(96, 96, 4, 4);
   const SparseMatrixCCS rhs = BuildDeterministicMatrix(96, 96, 4, 11);
 
-  SabutayASparseComplexCcsMultTBB first_task(std::make_tuple(lhs, rhs));
-  SabutayASparseComplexCcsMultTBB second_task(std::make_tuple(lhs, rhs));
+  const TaskExecutionResult first_result = ExecuteTask(std::make_tuple(lhs, rhs));
+  const TaskExecutionResult second_result = ExecuteTask(std::make_tuple(lhs, rhs));
 
-  ASSERT_TRUE(first_task.Validation());
-  ASSERT_TRUE(first_task.PreProcessing());
-  ASSERT_TRUE(first_task.Run());
-  ASSERT_TRUE(first_task.PostProcessing());
-
-  ASSERT_TRUE(second_task.Validation());
-  ASSERT_TRUE(second_task.PreProcessing());
-  ASSERT_TRUE(second_task.Run());
-  ASSERT_TRUE(second_task.PostProcessing());
-
-  EXPECT_TRUE(AreMatricesEqual(first_task.GetOutput(), second_task.GetOutput()));
+  ASSERT_TRUE(HasSuccessfulExecution(first_result));
+  ASSERT_TRUE(HasSuccessfulExecution(second_result));
+  EXPECT_TRUE(AreMatricesEqual(first_result.output, second_result.output));
 }
 
 }  // namespace

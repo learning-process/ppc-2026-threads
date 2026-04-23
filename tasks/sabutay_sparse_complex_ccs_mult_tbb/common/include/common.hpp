@@ -4,6 +4,7 @@
 #include <cmath>
 #include <complex>
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -14,6 +15,7 @@
 namespace sabutay_sparse_complex_ccs_mult_tbb {
 
 using Complex = std::complex<double>;
+using MatrixEntry = std::pair<int, Complex>;
 
 struct SparseMatrixCCS {
   int rows = 0;
@@ -41,44 +43,82 @@ inline constexpr double kComplexEps = 1e-12;
   return matrix;
 }
 
-[[nodiscard]] inline bool IsValidCcs(const SparseMatrixCCS &matrix) {
-  if (matrix.rows < 0 || matrix.cols < 0) {
-    return false;
-  }
+[[nodiscard]] inline bool HasValidCcsShape(const SparseMatrixCCS &matrix) {
+  return matrix.rows >= 0 && matrix.cols >= 0 &&
+         matrix.col_ptr.size() == (static_cast<std::size_t>(matrix.cols) + 1U) &&
+         matrix.row_ind.size() == matrix.values.size() && !matrix.col_ptr.empty() && matrix.col_ptr.front() == 0;
+}
 
-  if (matrix.col_ptr.size() != static_cast<std::size_t>(matrix.cols) + 1U) {
-    return false;
-  }
-
-  if (matrix.row_ind.size() != matrix.values.size()) {
-    return false;
-  }
-
-  if (matrix.col_ptr.empty() || matrix.col_ptr.front() != 0) {
-    return false;
-  }
-
-  const auto nnz = static_cast<int>(matrix.row_ind.size());
+[[nodiscard]] inline bool HasValidColumnPointers(const SparseMatrixCCS &matrix, int nnz) {
   if (matrix.col_ptr.back() != nnz) {
     return false;
   }
 
-  for (std::size_t col = 0; col + 1 < matrix.col_ptr.size(); ++col) {
-    if (matrix.col_ptr[col] > matrix.col_ptr[col + 1]) {
-      return false;
-    }
-    if (matrix.col_ptr[col] < 0 || matrix.col_ptr[col + 1] > nnz) {
-      return false;
-    }
-  }
-
-  for (const int row : matrix.row_ind) {
-    if (row < 0 || row >= matrix.rows) {
+  for (std::size_t col = 0; (col + 1U) < matrix.col_ptr.size(); ++col) {
+    const int begin = matrix.col_ptr[col];
+    const int end = matrix.col_ptr[col + 1U];
+    if (begin > end || begin < 0 || end > nnz) {
       return false;
     }
   }
 
   return true;
+}
+
+[[nodiscard]] inline bool HasValidRowIndices(const SparseMatrixCCS &matrix) {
+  return std::ranges::all_of(matrix.row_ind, [&matrix](const int row) { return row >= 0 && row < matrix.rows; });
+}
+
+[[nodiscard]] inline bool IsValidCcs(const SparseMatrixCCS &matrix) {
+  if (!HasValidCcsShape(matrix)) {
+    return false;
+  }
+
+  const auto nnz = static_cast<int>(matrix.row_ind.size());
+  return HasValidColumnPointers(matrix, nnz) && HasValidRowIndices(matrix);
+}
+
+inline void SortEntriesByRow(std::vector<MatrixEntry> &entries) {
+  std::ranges::sort(entries, {}, &MatrixEntry::first);
+}
+
+inline void FlushPendingEntry(std::optional<MatrixEntry> &pending, std::vector<int> &row_ind,
+                              std::vector<Complex> &values, double eps) {
+  if (pending.has_value() && !IsNearZero(pending->second, eps)) {
+    row_ind.push_back(pending->first);
+    values.push_back(pending->second);
+  }
+}
+
+inline void AppendCompressedEntries(const std::vector<MatrixEntry> &entries, std::vector<int> &row_ind,
+                                    std::vector<Complex> &values, double eps) {
+  std::optional<MatrixEntry> pending;
+
+  for (const auto &[row, value] : entries) {
+    if (pending.has_value() && pending->first == row) {
+      pending->second += value;
+      continue;
+    }
+
+    FlushPendingEntry(pending, row_ind, values, eps);
+    pending = MatrixEntry{row, value};
+  }
+
+  FlushPendingEntry(pending, row_ind, values, eps);
+}
+
+[[nodiscard]] inline std::vector<MatrixEntry> GetColumnEntries(const SparseMatrixCCS &matrix, int col) {
+  const int begin = matrix.col_ptr[static_cast<std::size_t>(col)];
+  const int end = matrix.col_ptr[static_cast<std::size_t>(col) + 1U];
+  std::vector<MatrixEntry> entries;
+  entries.reserve(static_cast<std::size_t>(end - begin));
+
+  for (int idx = begin; idx < end; ++idx) {
+    entries.emplace_back(matrix.row_ind[static_cast<std::size_t>(idx)], matrix.values[static_cast<std::size_t>(idx)]);
+  }
+
+  SortEntriesByRow(entries);
+  return entries;
 }
 
 [[nodiscard]] inline SparseMatrixCCS NormalizeCcs(const SparseMatrixCCS &matrix, double eps = kComplexEps) {
@@ -91,40 +131,8 @@ inline constexpr double kComplexEps = 1e-12;
   normalized.row_ind.reserve(matrix.row_ind.size());
 
   for (int col = 0; col < matrix.cols; ++col) {
-    std::vector<std::pair<int, Complex>> entries;
-    const int begin = matrix.col_ptr[static_cast<std::size_t>(col)];
-    const int end = matrix.col_ptr[static_cast<std::size_t>(col) + 1U];
-    entries.reserve(static_cast<std::size_t>(end - begin));
-
-    for (int idx = begin; idx < end; ++idx) {
-      entries.emplace_back(matrix.row_ind[static_cast<std::size_t>(idx)], matrix.values[static_cast<std::size_t>(idx)]);
-    }
-
-    std::sort(entries.begin(), entries.end(), [](const auto &lhs, const auto &rhs) { return lhs.first < rhs.first; });
-
-    bool has_pending = false;
-    int current_row = -1;
-    Complex current_value{};
-
-    for (const auto &[row, value] : entries) {
-      if (!has_pending || row != current_row) {
-        if (has_pending && !IsNearZero(current_value, eps)) {
-          normalized.row_ind.push_back(current_row);
-          normalized.values.push_back(current_value);
-        }
-        current_row = row;
-        current_value = value;
-        has_pending = true;
-      } else {
-        current_value += value;
-      }
-    }
-
-    if (has_pending && !IsNearZero(current_value, eps)) {
-      normalized.row_ind.push_back(current_row);
-      normalized.values.push_back(current_value);
-    }
-
+    const auto entries = GetColumnEntries(matrix, col);
+    AppendCompressedEntries(entries, normalized.row_ind, normalized.values, eps);
     normalized.col_ptr[static_cast<std::size_t>(col) + 1U] = static_cast<int>(normalized.row_ind.size());
   }
 
@@ -158,7 +166,7 @@ inline constexpr double kComplexEps = 1e-12;
   const int cols = rows == 0 ? 0 : static_cast<int>(dense.front().size());
 
   for (const auto &row : dense) {
-    if (static_cast<int>(row.size()) != cols) {
+    if (std::cmp_not_equal(row.size(), static_cast<std::size_t>(cols))) {
       return {};
     }
   }
@@ -179,6 +187,42 @@ inline constexpr double kComplexEps = 1e-12;
   return matrix;
 }
 
+inline void AccumulateProductRows(const SparseMatrixCCS &lhs, const SparseMatrixCCS &rhs, int col,
+                                  std::vector<Complex> &accumulator, std::vector<int> &marker,
+                                  std::vector<int> &touched_rows) {
+  for (int rhs_idx = rhs.col_ptr[static_cast<std::size_t>(col)];
+       rhs_idx < rhs.col_ptr[static_cast<std::size_t>(col) + 1U]; ++rhs_idx) {
+    const int lhs_col = rhs.row_ind[static_cast<std::size_t>(rhs_idx)];
+    const Complex rhs_value = rhs.values[static_cast<std::size_t>(rhs_idx)];
+
+    for (int lhs_idx = lhs.col_ptr[static_cast<std::size_t>(lhs_col)];
+         lhs_idx < lhs.col_ptr[static_cast<std::size_t>(lhs_col) + 1U]; ++lhs_idx) {
+      const int row = lhs.row_ind[static_cast<std::size_t>(lhs_idx)];
+
+      if (marker[static_cast<std::size_t>(row)] != col) {
+        marker[static_cast<std::size_t>(row)] = col;
+        accumulator[static_cast<std::size_t>(row)] = Complex{};
+        touched_rows.push_back(row);
+      }
+
+      accumulator[static_cast<std::size_t>(row)] += lhs.values[static_cast<std::size_t>(lhs_idx)] * rhs_value;
+    }
+  }
+}
+
+inline void AppendAccumulatedRows(const std::vector<Complex> &accumulator, std::vector<int> &touched_rows, double eps,
+                                  SparseMatrixCCS &result) {
+  std::ranges::sort(touched_rows);
+
+  for (const int row : touched_rows) {
+    const Complex value = accumulator[static_cast<std::size_t>(row)];
+    if (!IsNearZero(value, eps)) {
+      result.row_ind.push_back(row);
+      result.values.push_back(value);
+    }
+  }
+}
+
 [[nodiscard]] inline SparseMatrixCCS MultiplyCcsReference(const SparseMatrixCCS &lhs, const SparseMatrixCCS &rhs,
                                                           double eps = kComplexEps) {
   if (!IsValidCcs(lhs) || !IsValidCcs(rhs) || lhs.cols != rhs.rows) {
@@ -195,36 +239,8 @@ inline constexpr double kComplexEps = 1e-12;
 
   for (int col = 0; col < right.cols; ++col) {
     touched_rows.clear();
-
-    for (int rhs_idx = right.col_ptr[static_cast<std::size_t>(col)];
-         rhs_idx < right.col_ptr[static_cast<std::size_t>(col) + 1U]; ++rhs_idx) {
-      const int left_col = right.row_ind[static_cast<std::size_t>(rhs_idx)];
-      const Complex rhs_value = right.values[static_cast<std::size_t>(rhs_idx)];
-
-      for (int lhs_idx = left.col_ptr[static_cast<std::size_t>(left_col)];
-           lhs_idx < left.col_ptr[static_cast<std::size_t>(left_col) + 1U]; ++lhs_idx) {
-        const int row = left.row_ind[static_cast<std::size_t>(lhs_idx)];
-
-        if (marker[static_cast<std::size_t>(row)] != col) {
-          marker[static_cast<std::size_t>(row)] = col;
-          accumulator[static_cast<std::size_t>(row)] = Complex{};
-          touched_rows.push_back(row);
-        }
-
-        accumulator[static_cast<std::size_t>(row)] += left.values[static_cast<std::size_t>(lhs_idx)] * rhs_value;
-      }
-    }
-
-    std::sort(touched_rows.begin(), touched_rows.end());
-
-    for (const int row : touched_rows) {
-      const Complex value = accumulator[static_cast<std::size_t>(row)];
-      if (!IsNearZero(value, eps)) {
-        result.row_ind.push_back(row);
-        result.values.push_back(value);
-      }
-    }
-
+    AccumulateProductRows(left, right, col, accumulator, marker, touched_rows);
+    AppendAccumulatedRows(accumulator, touched_rows, eps, result);
     result.col_ptr[static_cast<std::size_t>(col) + 1U] = static_cast<int>(result.row_ind.size());
   }
 
@@ -273,42 +289,19 @@ inline constexpr double kComplexEps = 1e-12;
   }
 
   for (int col = 0; col < cols; ++col) {
-    std::vector<std::pair<int, Complex>> entries;
     const int count = std::min(rows, non_zero_per_col);
+    std::vector<MatrixEntry> entries;
     entries.reserve(static_cast<std::size_t>(count));
 
     for (int idx = 0; idx < count; ++idx) {
       const int row = (offset + (col * 7) + (idx * 11)) % rows;
-      const double real = static_cast<double>((((col + 1) * (idx + 2 + offset)) % 17) - 8);
-      const double imag = static_cast<double>((((col + 3 + offset) * (idx + 1)) % 13) - 6);
+      const auto real = static_cast<double>((((col + 1) * (idx + 2 + offset)) % 17) - 8);
+      const auto imag = static_cast<double>((((col + 3 + offset) * (idx + 1)) % 13) - 6);
       entries.emplace_back(row, Complex(real, imag));
     }
 
-    std::sort(entries.begin(), entries.end(), [](const auto &lhs, const auto &rhs) { return lhs.first < rhs.first; });
-
-    bool has_pending = false;
-    int current_row = -1;
-    Complex current_value{};
-
-    for (const auto &[row, value] : entries) {
-      if (!has_pending || row != current_row) {
-        if (has_pending && !IsNearZero(current_value)) {
-          matrix.row_ind.push_back(current_row);
-          matrix.values.push_back(current_value);
-        }
-        current_row = row;
-        current_value = value;
-        has_pending = true;
-      } else {
-        current_value += value;
-      }
-    }
-
-    if (has_pending && !IsNearZero(current_value)) {
-      matrix.row_ind.push_back(current_row);
-      matrix.values.push_back(current_value);
-    }
-
+    SortEntriesByRow(entries);
+    AppendCompressedEntries(entries, matrix.row_ind, matrix.values, kComplexEps);
     matrix.col_ptr[static_cast<std::size_t>(col) + 1U] = static_cast<int>(matrix.row_ind.size());
   }
 
