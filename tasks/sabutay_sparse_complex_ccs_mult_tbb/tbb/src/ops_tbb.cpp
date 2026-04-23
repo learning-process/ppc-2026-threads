@@ -27,30 +27,7 @@ struct ThreadWorkspace {
   std::vector<int> touched_rows;
 };
 
-void AccumulateColumn(const SparseMatrixCCS &lhs, const SparseMatrixCCS &rhs, int col, ThreadWorkspace &workspace) {
-  workspace.touched_rows.clear();
-
-  for (int rhs_idx = rhs.col_ptr[static_cast<std::size_t>(col)];
-       rhs_idx < rhs.col_ptr[static_cast<std::size_t>(col) + 1U]; ++rhs_idx) {
-    const int lhs_col = rhs.row_ind[static_cast<std::size_t>(rhs_idx)];
-    const Complex rhs_value = rhs.values[static_cast<std::size_t>(rhs_idx)];
-
-    for (int lhs_idx = lhs.col_ptr[static_cast<std::size_t>(lhs_col)];
-         lhs_idx < lhs.col_ptr[static_cast<std::size_t>(lhs_col) + 1U]; ++lhs_idx) {
-      const int row = lhs.row_ind[static_cast<std::size_t>(lhs_idx)];
-
-      if (workspace.marker[static_cast<std::size_t>(row)] != col) {
-        workspace.marker[static_cast<std::size_t>(row)] = col;
-        workspace.accumulator[static_cast<std::size_t>(row)] = Complex{};
-        workspace.touched_rows.push_back(row);
-      }
-
-      workspace.accumulator[static_cast<std::size_t>(row)] += lhs.values[static_cast<std::size_t>(lhs_idx)] * rhs_value;
-    }
-  }
-}
-
-[[nodiscard]] ColumnData CollectColumnData(ThreadWorkspace &workspace) {
+[[nodiscard]] ColumnData BuildColumnData(ThreadWorkspace &workspace) {
   std::ranges::sort(workspace.touched_rows);
 
   ColumnData column_data;
@@ -68,7 +45,7 @@ void AccumulateColumn(const SparseMatrixCCS &lhs, const SparseMatrixCCS &rhs, in
   return column_data;
 }
 
-void FinalizeResultColumns(const std::vector<ColumnData> &columns, SparseMatrixCCS &result) {
+void FillResultFromColumns(const std::vector<ColumnData> &columns, SparseMatrixCCS &result) {
   int nnz = 0;
   for (std::size_t col = 0; col < columns.size(); ++col) {
     result.col_ptr[col] = nnz;
@@ -108,12 +85,13 @@ SparseMatrixCCS SabutayASparseComplexCcsMultTBB::MultiplyTbb(const SparseMatrixC
     ThreadWorkspace &workspace = workspaces.local();
 
     for (int col = range.begin(); col < range.end(); ++col) {
-      AccumulateColumn(lhs, rhs, col, workspace);
-      columns[static_cast<std::size_t>(col)] = CollectColumnData(workspace);
+      workspace.touched_rows.clear();
+      AccumulateProductRows(lhs, rhs, col, workspace.accumulator, workspace.marker, workspace.touched_rows);
+      columns[static_cast<std::size_t>(col)] = BuildColumnData(workspace);
     }
   });
 
-  FinalizeResultColumns(columns, result);
+  FillResultFromColumns(columns, result);
   return result;
 }
 

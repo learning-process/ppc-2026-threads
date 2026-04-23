@@ -4,7 +4,6 @@
 #include <cmath>
 #include <complex>
 #include <cstddef>
-#include <optional>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -43,13 +42,17 @@ inline constexpr double kComplexEps = 1e-12;
   return matrix;
 }
 
-[[nodiscard]] inline bool HasValidCcsShape(const SparseMatrixCCS &matrix) {
-  return matrix.rows >= 0 && matrix.cols >= 0 &&
-         matrix.col_ptr.size() == (static_cast<std::size_t>(matrix.cols) + 1U) &&
-         matrix.row_ind.size() == matrix.values.size() && !matrix.col_ptr.empty() && matrix.col_ptr.front() == 0;
-}
+[[nodiscard]] inline bool IsValidCcs(const SparseMatrixCCS &matrix) {
+  if (matrix.rows < 0 || matrix.cols < 0) {
+    return false;
+  }
 
-[[nodiscard]] inline bool HasValidColumnPointers(const SparseMatrixCCS &matrix, int nnz) {
+  if (matrix.col_ptr.size() != (static_cast<std::size_t>(matrix.cols) + 1U) ||
+      matrix.row_ind.size() != matrix.values.size() || matrix.col_ptr.empty() || matrix.col_ptr.front() != 0) {
+    return false;
+  }
+
+  const auto nnz = static_cast<int>(matrix.row_ind.size());
   if (matrix.col_ptr.back() != nnz) {
     return false;
   }
@@ -62,63 +65,40 @@ inline constexpr double kComplexEps = 1e-12;
     }
   }
 
-  return true;
-}
-
-[[nodiscard]] inline bool HasValidRowIndices(const SparseMatrixCCS &matrix) {
   return std::ranges::all_of(matrix.row_ind, [&matrix](const int row) { return row >= 0 && row < matrix.rows; });
 }
 
-[[nodiscard]] inline bool IsValidCcs(const SparseMatrixCCS &matrix) {
-  if (!HasValidCcsShape(matrix)) {
-    return false;
+inline void AppendMergedEntries(std::vector<MatrixEntry> entries, std::vector<int> &row_ind,
+                                std::vector<Complex> &values, double eps) {
+  if (entries.empty()) {
+    return;
   }
 
-  const auto nnz = static_cast<int>(matrix.row_ind.size());
-  return HasValidColumnPointers(matrix, nnz) && HasValidRowIndices(matrix);
-}
-
-inline void SortEntriesByRow(std::vector<MatrixEntry> &entries) {
   std::ranges::sort(entries, {}, &MatrixEntry::first);
-}
 
-inline void FlushPendingEntry(std::optional<MatrixEntry> &pending, std::vector<int> &row_ind,
-                              std::vector<Complex> &values, double eps) {
-  if (pending.has_value() && !IsNearZero(pending->second, eps)) {
-    row_ind.push_back(pending->first);
-    values.push_back(pending->second);
-  }
-}
+  int current_row = entries.front().first;
+  Complex current_value = entries.front().second;
 
-inline void AppendCompressedEntries(const std::vector<MatrixEntry> &entries, std::vector<int> &row_ind,
-                                    std::vector<Complex> &values, double eps) {
-  std::optional<MatrixEntry> pending;
-
-  for (const auto &[row, value] : entries) {
-    if (pending.has_value() && pending->first == row) {
-      pending->second += value;
+  for (std::size_t idx = 1; idx < entries.size(); ++idx) {
+    const auto &[row, value] = entries[idx];
+    if (row == current_row) {
+      current_value += value;
       continue;
     }
 
-    FlushPendingEntry(pending, row_ind, values, eps);
-    pending = MatrixEntry{row, value};
+    if (!IsNearZero(current_value, eps)) {
+      row_ind.push_back(current_row);
+      values.push_back(current_value);
+    }
+
+    current_row = row;
+    current_value = value;
   }
 
-  FlushPendingEntry(pending, row_ind, values, eps);
-}
-
-[[nodiscard]] inline std::vector<MatrixEntry> GetColumnEntries(const SparseMatrixCCS &matrix, int col) {
-  const int begin = matrix.col_ptr[static_cast<std::size_t>(col)];
-  const int end = matrix.col_ptr[static_cast<std::size_t>(col) + 1U];
-  std::vector<MatrixEntry> entries;
-  entries.reserve(static_cast<std::size_t>(end - begin));
-
-  for (int idx = begin; idx < end; ++idx) {
-    entries.emplace_back(matrix.row_ind[static_cast<std::size_t>(idx)], matrix.values[static_cast<std::size_t>(idx)]);
+  if (!IsNearZero(current_value, eps)) {
+    row_ind.push_back(current_row);
+    values.push_back(current_value);
   }
-
-  SortEntriesByRow(entries);
-  return entries;
 }
 
 [[nodiscard]] inline SparseMatrixCCS NormalizeCcs(const SparseMatrixCCS &matrix, double eps = kComplexEps) {
@@ -131,8 +111,16 @@ inline void AppendCompressedEntries(const std::vector<MatrixEntry> &entries, std
   normalized.row_ind.reserve(matrix.row_ind.size());
 
   for (int col = 0; col < matrix.cols; ++col) {
-    const auto entries = GetColumnEntries(matrix, col);
-    AppendCompressedEntries(entries, normalized.row_ind, normalized.values, eps);
+    const int begin = matrix.col_ptr[static_cast<std::size_t>(col)];
+    const int end = matrix.col_ptr[static_cast<std::size_t>(col) + 1U];
+    std::vector<MatrixEntry> entries;
+    entries.reserve(static_cast<std::size_t>(end - begin));
+
+    for (int idx = begin; idx < end; ++idx) {
+      entries.emplace_back(matrix.row_ind[static_cast<std::size_t>(idx)], matrix.values[static_cast<std::size_t>(idx)]);
+    }
+
+    AppendMergedEntries(std::move(entries), normalized.row_ind, normalized.values, eps);
     normalized.col_ptr[static_cast<std::size_t>(col) + 1U] = static_cast<int>(normalized.row_ind.size());
   }
 
@@ -300,8 +288,7 @@ inline void AppendAccumulatedRows(const std::vector<Complex> &accumulator, std::
       entries.emplace_back(row, Complex(real, imag));
     }
 
-    SortEntriesByRow(entries);
-    AppendCompressedEntries(entries, matrix.row_ind, matrix.values, kComplexEps);
+    AppendMergedEntries(std::move(entries), matrix.row_ind, matrix.values, kComplexEps);
     matrix.col_ptr[static_cast<std::size_t>(col) + 1U] = static_cast<int>(matrix.row_ind.size());
   }
 
