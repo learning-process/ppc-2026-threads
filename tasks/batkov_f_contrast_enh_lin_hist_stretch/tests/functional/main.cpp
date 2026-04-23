@@ -9,6 +9,7 @@
 #include <string>
 #include <tuple>
 
+#include "batkov_f_contrast_enh_lin_hist_stretch/all/include/ops_all.hpp"
 #include "batkov_f_contrast_enh_lin_hist_stretch/common/include/common.hpp"
 #include "batkov_f_contrast_enh_lin_hist_stretch/omp/include/ops_omp.hpp"
 #include "batkov_f_contrast_enh_lin_hist_stretch/seq/include/ops_seq.hpp"
@@ -84,6 +85,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<BatkovFContras
                                            ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchTBB, InType>(
                                                kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch),
                                            ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch),
+                                           ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchALL, InType>(
                                                kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
