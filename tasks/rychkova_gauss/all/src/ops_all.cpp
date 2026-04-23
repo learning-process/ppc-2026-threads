@@ -86,7 +86,7 @@ bool RychkovaGaussALL::RunImpl() {
   std::vector<int> counts(n);
   std::vector<int> displs(n);
   for (int i = 0; i < n; i++) {
-    size_t rows_i = row_per_proc + (static_cast<size_t>(i) < remainder_rows ? 1 : 0);
+    size_t rows_i = row_per_proc + (std::cmp_less(i, remainder_rows) ? 1 : 0);
     counts[i] = static_cast<int>(rows_i * width * 3);
     displs[i] = (i == 0) ? 0 : displs[i - 1] + counts[i - 1];
   }
@@ -107,18 +107,14 @@ bool RychkovaGaussALL::RunImpl() {
   MPI_Gatherv(local_output.data(), static_cast<int>(local_output.size()), MPI_UINT8_T, goutput_.data(), counts.data(),
               displs.data(), MPI_UINT8_T, 0, MPI_COMM_WORLD);
 
-  MPI_Bcast(goutput_.data(), static_cast<int>(goutput_.size()), MPI_UINT8_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(goutput_.data(), static_cast<int>(goutput_.size()), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
   auto &output = GetOutput();
 
 #pragma omp parallel for collapse(2) shared(height, width, output) default(none) num_threads(ppc::util::GetNumThreads())
   for (size_t j = 0; j < height; j++) {
     for (size_t i = 0; i < width; i++) {
-      size_t flat_idx = ((j *
-
-                          width) +
-                         i) *
-                        3;
+      size_t flat_idx = ((j * width) + i) * 3;
       output[j][i] = Pixel(goutput_[flat_idx], goutput_[flat_idx + 1], goutput_[flat_idx + 2]);
     }
   }
