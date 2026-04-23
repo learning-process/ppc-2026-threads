@@ -1,4 +1,8 @@
-#include "badanov_a_select_edge_sobel_seq/seq/include/ops_seq.hpp"
+#include "badanov_a_select_edge_sobel/tbb/include/ops_tbb.hpp"
+
+#include <tbb/blocked_range.h>
+#include <tbb/parallel_for.h>
+#include <tbb/parallel_reduce.h>
 
 #include <algorithm>
 #include <cmath>
@@ -6,22 +10,22 @@
 #include <cstdint>
 #include <vector>
 
-#include "badanov_a_select_edge_sobel_seq/common/include/common.hpp"
+#include "badanov_a_select_edge_sobel/common/include/common.hpp"
 
-namespace badanov_a_select_edge_sobel_seq {
+namespace badanov_a_select_edge_sobel {
 
-BadanovASelectEdgeSobelSEQ::BadanovASelectEdgeSobelSEQ(const InType &in) {
+BadanovASelectEdgeSobelTBB::BadanovASelectEdgeSobelTBB(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<uint8_t>();
 }
 
-bool BadanovASelectEdgeSobelSEQ::ValidationImpl() {
+bool BadanovASelectEdgeSobelTBB::ValidationImpl() {
   const auto &input = GetInput();
   return !input.empty();
 }
 
-bool BadanovASelectEdgeSobelSEQ::PreProcessingImpl() {
+bool BadanovASelectEdgeSobelTBB::PreProcessingImpl() {
   const auto &input = GetInput();
 
   width_ = static_cast<int>(std::sqrt(input.size()));
@@ -37,27 +41,34 @@ bool BadanovASelectEdgeSobelSEQ::PreProcessingImpl() {
   return true;
 }
 
-void BadanovASelectEdgeSobelSEQ::ApplySobelOperator(const std::vector<uint8_t> &input, std::vector<float> &magnitude,
+void BadanovASelectEdgeSobelTBB::ApplySobelOperator(const std::vector<uint8_t> &input, std::vector<float> &magnitude,
                                                     float &max_magnitude) {
-  max_magnitude = 0.0F;
+  const int height = height_;
+  const int width = width_;
 
-  for (int row = 1; row < height_ - 1; ++row) {
-    for (int col = 1; col < width_ - 1; ++col) {
-      float gradient_x = 0.0F;
-      float gradient_y = 0.0F;
+  using Range = tbb::blocked_range<int>;
 
-      ComputeGradientAtPixel(input, row, col, gradient_x, gradient_y);
+  max_magnitude = tbb::parallel_reduce(Range(1, height - 1), 0.0F, [&](const Range &r, float init) -> float {
+    float local_max = init;
+    for (int row = r.begin(); row < r.end(); ++row) {
+      for (int col = 1; col < width - 1; ++col) {
+        float gradient_x = 0.0F;
+        float gradient_y = 0.0F;
 
-      const float magnitude_value = std::sqrt((gradient_x * gradient_x) + (gradient_y * gradient_y));
-      const size_t idx = (static_cast<size_t>(row) * static_cast<size_t>(width_)) + static_cast<size_t>(col);
-      magnitude[idx] = magnitude_value;
+        ComputeGradientAtPixel(input, row, col, gradient_x, gradient_y);
 
-      max_magnitude = std::max(magnitude_value, max_magnitude);
+        const float magnitude_value = std::sqrt((gradient_x * gradient_x) + (gradient_y * gradient_y));
+        const size_t idx = (static_cast<size_t>(row) * static_cast<size_t>(width)) + static_cast<size_t>(col);
+        magnitude[idx] = magnitude_value;
+
+        local_max = std::max(magnitude_value, local_max);
+      }
     }
-  }
+    return local_max;
+  }, [](float a, float b) -> float { return std::max(a, b); });
 }
 
-void BadanovASelectEdgeSobelSEQ::ComputeGradientAtPixel(const std::vector<uint8_t> &input, int row, int col,
+void BadanovASelectEdgeSobelTBB::ComputeGradientAtPixel(const std::vector<uint8_t> &input, int row, int col,
                                                         float &gradient_x, float &gradient_y) const {
   gradient_x = 0.0F;
   gradient_y = 0.0F;
@@ -79,19 +90,24 @@ void BadanovASelectEdgeSobelSEQ::ComputeGradientAtPixel(const std::vector<uint8_
   }
 }
 
-void BadanovASelectEdgeSobelSEQ::ApplyThreshold(const std::vector<float> &magnitude, float max_magnitude,
+void BadanovASelectEdgeSobelTBB::ApplyThreshold(const std::vector<float> &magnitude, float max_magnitude,
                                                 std::vector<uint8_t> &output) const {
   if (max_magnitude > 0.0F) {
     const float scale = 255.0F / max_magnitude;
-    for (size_t i = 0; i < magnitude.size(); ++i) {
-      output[i] = (magnitude[i] * scale > static_cast<float>(threshold_)) ? 255 : 0;
-    }
+    const size_t size = magnitude.size();
+    const int threshold = threshold_;
+
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, size), [&](const tbb::blocked_range<size_t> &r) {
+      for (size_t i = r.begin(); i < r.end(); ++i) {
+        output[i] = (magnitude[i] * scale > static_cast<float>(threshold)) ? 255 : 0;
+      }
+    });
   } else {
     std::ranges::fill(output, 0);
   }
 }
 
-bool BadanovASelectEdgeSobelSEQ::RunImpl() {
+bool BadanovASelectEdgeSobelTBB::RunImpl() {
   const auto &input = GetInput();
   auto &output = GetOutput();
 
@@ -109,8 +125,8 @@ bool BadanovASelectEdgeSobelSEQ::RunImpl() {
   return true;
 }
 
-bool BadanovASelectEdgeSobelSEQ::PostProcessingImpl() {
+bool BadanovASelectEdgeSobelTBB::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace badanov_a_select_edge_sobel_seq
+}  // namespace badanov_a_select_edge_sobel
