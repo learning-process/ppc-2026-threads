@@ -1,65 +1,45 @@
-#include "sabutay_sparse_complex_ccs_mult_tbb/tbb/include/ops_tbb.hpp"
+#include "../include/ops_tbb.hpp"
 
-#include <algorithm>
+#include <cmath>
+#include <complex>
 #include <cstddef>
 #include <vector>
 
+#include "../../common/include/common.hpp"
 #include "oneapi/tbb/blocked_range.h"
-#include "oneapi/tbb/enumerable_thread_specific.h"
 #include "oneapi/tbb/parallel_for.h"
-#include "sabutay_sparse_complex_ccs_mult_tbb/common/include/common.hpp"
 
 namespace sabutay_sparse_complex_ccs_mult_tbb {
 
 namespace {
 
-struct ColumnData {
-  std::vector<int> row_ind;
-  std::vector<Complex> values;
-};
-
-struct ThreadWorkspace {
-  explicit ThreadWorkspace(int rows)
-      : accumulator(static_cast<std::size_t>(rows), Complex{}), marker(static_cast<std::size_t>(rows), -1) {}
-
-  std::vector<Complex> accumulator;
-  std::vector<int> marker;
-  std::vector<int> touched_rows;
-};
-
-[[nodiscard]] ColumnData BuildColumnData(ThreadWorkspace &workspace) {
-  std::ranges::sort(workspace.touched_rows);
-
-  ColumnData column_data;
-  column_data.row_ind.reserve(workspace.touched_rows.size());
-  column_data.values.reserve(workspace.touched_rows.size());
-
-  for (const int row : workspace.touched_rows) {
-    const Complex value = workspace.accumulator[static_cast<std::size_t>(row)];
-    if (!IsNearZero(value)) {
-      column_data.row_ind.push_back(row);
-      column_data.values.push_back(value);
+bool IsValidCCS(const CCS &matrix) {
+  if (matrix.m < 0 || matrix.n < 0) {
+    return false;
+  }
+  if (matrix.col_ptr.size() != static_cast<std::size_t>(matrix.n + 1)) {
+    return false;
+  }
+  if (matrix.row_ind.size() != matrix.values.size()) {
+    return false;
+  }
+  if (matrix.col_ptr.empty() || matrix.col_ptr[0] != 0) {
+    return false;
+  }
+  if (matrix.col_ptr.back() != static_cast<int>(matrix.row_ind.size())) {
+    return false;
+  }
+  for (int j = 0; j < matrix.n; ++j) {
+    if (matrix.col_ptr[j] > matrix.col_ptr[j + 1]) {
+      return false;
     }
   }
-
-  return column_data;
-}
-
-void FillResultFromColumns(const std::vector<ColumnData> &columns, SparseMatrixCCS &result) {
-  int nnz = 0;
-  for (std::size_t col = 0; col < columns.size(); ++col) {
-    result.col_ptr[col] = nnz;
-    nnz += static_cast<int>(columns[col].values.size());
+  for (int row : matrix.row_ind) {
+    if (row < 0 || row >= matrix.m) {
+      return false;
+    }
   }
-  result.col_ptr[columns.size()] = nnz;
-
-  result.row_ind.reserve(static_cast<std::size_t>(nnz));
-  result.values.reserve(static_cast<std::size_t>(nnz));
-
-  for (const auto &column_data : columns) {
-    result.row_ind.insert(result.row_ind.end(), column_data.row_ind.begin(), column_data.row_ind.end());
-    result.values.insert(result.values.end(), column_data.values.begin(), column_data.values.end());
-  }
+  return true;
 }
 
 }  // namespace
@@ -67,68 +47,96 @@ void FillResultFromColumns(const std::vector<ColumnData> &columns, SparseMatrixC
 SabutayASparseComplexCcsMultTBB::SabutayASparseComplexCcsMultTBB(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = SparseMatrixCCS{};
+  GetOutput() = CCS();
 }
 
-SparseMatrixCCS SabutayASparseComplexCcsMultTBB::MultiplyTbb(const SparseMatrixCCS &lhs, const SparseMatrixCCS &rhs) {
-  if (!IsValidCcs(lhs) || !IsValidCcs(rhs) || lhs.cols != rhs.rows) {
-    return {};
-  }
+void SabutayASparseComplexCcsMultTBB::SpMM(const CCS &a, const CCS &b, CCS &c) {
+  c.m = a.m;
+  c.n = b.n;
+  c.col_ptr.assign(b.n + 1, 0);
+  c.row_ind.clear();
+  c.values.clear();
 
-  SparseMatrixCCS result = MakeZeroMatrix(lhs.rows, rhs.cols);
-  std::vector<ColumnData> columns(static_cast<std::size_t>(rhs.cols));
+  std::vector<std::vector<int>> local_row_ind(b.n);
+  std::vector<std::vector<std::complex<double>>> local_values(b.n);
+  std::vector<int> local_sizes(b.n, 0);
+  const double eps = 1e-14;
 
-  oneapi::tbb::enumerable_thread_specific<ThreadWorkspace> workspaces([&lhs]() { return ThreadWorkspace(lhs.rows); });
+  oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<int>(0, b.n), [&](const oneapi::tbb::blocked_range<int> &range) {
+    std::complex<double> zero(0.0, 0.0);
+    std::vector<int> rows;
+    std::vector<int> marker(a.m, -1);
+    std::vector<std::complex<double>> acc(a.m);
 
-  oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<int>(0, rhs.cols),
-                            [&](const oneapi::tbb::blocked_range<int> &range) {
-    ThreadWorkspace &workspace = workspaces.local();
+    for (int j = range.begin(); j < range.end(); ++j) {
+      rows.clear();
+      local_row_ind[j].clear();
+      local_values[j].clear();
 
-    for (int col = range.begin(); col < range.end(); ++col) {
-      workspace.touched_rows.clear();
-      AccumulateProductRows(lhs, rhs, col, workspace.accumulator, workspace.marker, workspace.touched_rows);
-      columns[static_cast<std::size_t>(col)] = BuildColumnData(workspace);
+      for (int k = b.col_ptr[j]; k < b.col_ptr[j + 1]; ++k) {
+        std::complex<double> tmpval = b.values[k];
+        int btmpind = b.row_ind[k];
+
+        for (int zp = a.col_ptr[btmpind]; zp < a.col_ptr[btmpind + 1]; ++zp) {
+          int atmpind = a.row_ind[zp];
+          acc[atmpind] += tmpval * a.values[zp];
+          if (marker[atmpind] == -1) {
+            rows.push_back(atmpind);
+            marker[atmpind] = 1;
+          }
+        }
+      }
+
+      local_row_ind[j].reserve(rows.size());
+      local_values[j].reserve(rows.size());
+
+      for (int tmpind : rows) {
+        if (std::abs(acc[tmpind]) > eps) {
+          local_values[j].push_back(acc[tmpind]);
+          local_row_ind[j].push_back(tmpind);
+        }
+        acc[tmpind] = zero;
+        marker[tmpind] = -1;
+      }
+
+      local_sizes[j] = static_cast<int>(local_values[j].size());
     }
   });
 
-  FillResultFromColumns(columns, result);
-  return result;
+  for (int j = 0; j < b.n; ++j) {
+    c.col_ptr[j + 1] = c.col_ptr[j] + local_sizes[j];
+  }
+
+  c.row_ind.reserve(c.col_ptr.back());
+  c.values.reserve(c.col_ptr.back());
+
+  for (int j = 0; j < b.n; ++j) {
+    c.row_ind.insert(c.row_ind.end(), local_row_ind[j].begin(), local_row_ind[j].end());
+    c.values.insert(c.values.end(), local_values[j].begin(), local_values[j].end());
+  }
 }
 
 bool SabutayASparseComplexCcsMultTBB::ValidationImpl() {
-  const auto &[lhs, rhs] = GetInput();
-  is_input_valid_ = IsValidCcs(lhs) && IsValidCcs(rhs) && lhs.cols == rhs.rows;
-  return is_input_valid_;
+  const CCS &a = std::get<0>(GetInput());
+  const CCS &b = std::get<1>(GetInput());
+  return IsValidCCS(a) && IsValidCCS(b) && a.n == b.m;
 }
 
 bool SabutayASparseComplexCcsMultTBB::PreProcessingImpl() {
-  if (!is_input_valid_) {
-    lhs_ = SparseMatrixCCS{};
-    rhs_ = SparseMatrixCCS{};
-    result_ = SparseMatrixCCS{};
-    GetOutput() = result_;
-    return true;
-  }
-
-  const auto &[lhs, rhs] = GetInput();
-  lhs_ = NormalizeCcs(lhs);
-  rhs_ = NormalizeCcs(rhs);
-  result_ = MakeZeroMatrix(lhs_.rows, rhs_.cols);
-  GetOutput() = result_;
   return true;
 }
 
 bool SabutayASparseComplexCcsMultTBB::RunImpl() {
-  if (!is_input_valid_) {
-    return true;
-  }
+  const CCS &a = std::get<0>(GetInput());
+  const CCS &b = std::get<1>(GetInput());
+  CCS &c = GetOutput();
 
-  result_ = MultiplyTbb(lhs_, rhs_);
-  return IsValidCcs(result_);
+  SpMM(a, b, c);
+
+  return true;
 }
 
 bool SabutayASparseComplexCcsMultTBB::PostProcessingImpl() {
-  GetOutput() = result_;
   return true;
 }
 

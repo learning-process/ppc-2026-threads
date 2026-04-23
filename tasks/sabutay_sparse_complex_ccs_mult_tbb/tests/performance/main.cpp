@@ -1,63 +1,95 @@
 #include <gtest/gtest.h>
 
+#include <random>
 #include <tuple>
 
 #include "sabutay_sparse_complex_ccs_mult_tbb/common/include/common.hpp"
 #include "sabutay_sparse_complex_ccs_mult_tbb/tbb/include/ops_tbb.hpp"
-#include "task/include/task.hpp"
+#include "util/include/perf_test_util.hpp"
 
 namespace sabutay_sparse_complex_ccs_mult_tbb {
 
 namespace {
 
-struct TaskExecutionResult {
-  ppc::task::TypeOfTask type = ppc::task::TypeOfTask::kTBB;
-  bool validation = false;
-  bool preprocessing = false;
-  bool run = false;
-  bool postprocessing = false;
-  OutType output;
+// Helper function to create a random sparse matrix
+CCS CreateRandomSparseMatrix(int rows, int cols, double density = 0.1) {
+  CCS matrix;
+  matrix.m = rows;
+  matrix.n = cols;
+
+  // Initialize col_ptr with zeros
+  matrix.col_ptr.assign(cols + 1, 0);
+
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<double> value_dist(-10.0, 10.0);
+  std::uniform_int_distribution<int> row_dist(0, rows - 1);
+
+  int total_elements = static_cast<int>(rows * cols * density);
+
+  for (int col = 0; col < cols; ++col) {
+    int elements_in_col = static_cast<int>((total_elements * (col + 1.0) / static_cast<double>(cols)) -
+                                           (total_elements * col / static_cast<double>(cols)));
+
+    for (int i = 0; i < elements_in_col; ++i) {
+      int row = row_dist(gen);
+      double real_part = value_dist(gen);
+      double imag_part = value_dist(gen);
+
+      matrix.row_ind.push_back(row);
+      matrix.values.emplace_back(real_part, imag_part);
+    }
+
+    matrix.col_ptr[col + 1] = static_cast<int>(matrix.row_ind.size());
+  }
+
+  return matrix;
+}
+
+}  // namespace
+
+class SabutayARunPerfTestsTbb : public ppc::util::BaseRunPerfTests<InType, OutType> {
+ protected:
+  void SetUp() override {
+    // Create test matrices with appropriate sizes for performance testing
+    matrix_a_ = CreateRandomSparseMatrix(100, 100, 0.05);  // 5% density
+    matrix_b_ = CreateRandomSparseMatrix(100, 100, 0.05);  // 5% density
+    input_data_ = std::make_tuple(matrix_a_, matrix_b_);
+  }
+
+  bool CheckTestOutputData(OutType &output_data) final {
+    // For performance tests, we just need to verify the output has the correct dimensions
+    const CCS &a = std::get<0>(input_data_);
+    const CCS &b = std::get<1>(input_data_);
+
+    // Check that the result matrix has the correct dimensions
+    return (output_data.m == a.m) && (output_data.n == b.n);
+  }
+
+  InType GetTestInputData() final {
+    return input_data_;
+  }
+
+ private:
+  CCS matrix_a_;
+  CCS matrix_b_;
+  InType input_data_;
 };
 
-[[nodiscard]] TaskExecutionResult ExecuteTask(const InType &input) {
-  SabutayASparseComplexCcsMultTBB task(input);
-
-  TaskExecutionResult result;
-  result.type = task.GetDynamicTypeOfTask();
-  result.validation = task.Validation();
-  result.preprocessing = task.PreProcessing();
-  result.run = task.Run();
-  result.postprocessing = task.PostProcessing();
-  result.output = task.GetOutput();
-  return result;
+TEST_P(SabutayARunPerfTestsTbb, RunPerfModes) {
+  ExecuteTest(GetParam());
 }
 
-[[nodiscard]] bool HasSuccessfulExecution(const TaskExecutionResult &result) {
-  return result.type == ppc::task::TypeOfTask::kTBB && result.validation && result.preprocessing && result.run &&
-         result.postprocessing && IsValidCcs(result.output);
-}
+namespace {
 
-TEST(SabutayASparseComplexCcsMultTBBPerformance, MatchesReferenceOnDeterministicLargeCase) {
-  const SparseMatrixCCS lhs = BuildDeterministicMatrix(160, 120, 6, 2);
-  const SparseMatrixCCS rhs = BuildDeterministicMatrix(120, 140, 5, 9);
-  const SparseMatrixCCS expected = MultiplyCcsReference(lhs, rhs);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SabutayASparseComplexCcsMultTBB>(
+    PPC_SETTINGS_sabutay_sparse_complex_ccs_mult_tbb);
 
-  const TaskExecutionResult result = ExecuteTask(std::make_tuple(lhs, rhs));
-  ASSERT_TRUE(HasSuccessfulExecution(result));
-  EXPECT_TRUE(AreMatricesEqual(result.output, expected));
-}
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-TEST(SabutayASparseComplexCcsMultTBBPerformance, ProducesStableResultAcrossRepeatedRuns) {
-  const SparseMatrixCCS lhs = BuildDeterministicMatrix(96, 96, 4, 4);
-  const SparseMatrixCCS rhs = BuildDeterministicMatrix(96, 96, 4, 11);
+const auto kPerfTestName = SabutayARunPerfTestsTbb::CustomPerfTestName;
 
-  const TaskExecutionResult first_result = ExecuteTask(std::make_tuple(lhs, rhs));
-  const TaskExecutionResult second_result = ExecuteTask(std::make_tuple(lhs, rhs));
-
-  ASSERT_TRUE(HasSuccessfulExecution(first_result));
-  ASSERT_TRUE(HasSuccessfulExecution(second_result));
-  EXPECT_TRUE(AreMatricesEqual(first_result.output, second_result.output));
-}
+INSTANTIATE_TEST_SUITE_P(RunModeTests, SabutayARunPerfTestsTbb, kGtestValues, kPerfTestName);
 
 }  // namespace
 

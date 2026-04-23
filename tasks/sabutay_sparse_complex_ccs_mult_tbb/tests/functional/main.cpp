@@ -256,7 +256,7 @@ const std::array<TestType, 3> kTestParam = {SabutayARunFuncTestsTbb::MakeTestPar
                                             SabutayARunFuncTestsTbb::MakeTestParam(1),
                                             SabutayARunFuncTestsTbb::MakeTestParam(2)};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<SabutaySparseComplexCcsMultTBB, InType>(
+const auto kTestTasksList = ppc::util::AddFuncTask<SabutayASparseComplexCcsMultTBB, InType>(
     kTestParam, PPC_SETTINGS_sabutay_sparse_complex_ccs_mult_tbb);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
