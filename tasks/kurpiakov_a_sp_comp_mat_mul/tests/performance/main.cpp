@@ -3,8 +3,12 @@
 #include <utility>
 #include <vector>
 
+#include "kurpiakov_a_sp_comp_mat_mul/all/include/ops_all.hpp"
 #include "kurpiakov_a_sp_comp_mat_mul/common/include/common.hpp"
+#include "kurpiakov_a_sp_comp_mat_mul/omp/include/ops_omp.hpp"
 #include "kurpiakov_a_sp_comp_mat_mul/seq/include/ops_seq.hpp"
+#include "kurpiakov_a_sp_comp_mat_mul/stl/include/ops_stl.hpp"
+#include "kurpiakov_a_sp_comp_mat_mul/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace kurpiakov_a_sp_comp_mat_mul {
@@ -65,7 +69,9 @@ TEST_P(KurpiakovRunPerfTests, SparseMatMulPerf) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KurpiskovACRSMatMulSEQ>(PPC_SETTINGS_kurpiakov_a_sp_comp_mat_mul);
+    ppc::util::MakeAllPerfTasks<InType, KurpiskovACRSMatMulSEQ, KurpiakovACRSMatMulOMP, KurpiakovACRSMatMulTBB,
+                                KurpiakovACRSMatMulSTL, KurpiakovACRSMatMulALL>(
+        PPC_SETTINGS_kurpiakov_a_sp_comp_mat_mul);
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = KurpiakovRunPerfTests::CustomPerfTestName;
 
