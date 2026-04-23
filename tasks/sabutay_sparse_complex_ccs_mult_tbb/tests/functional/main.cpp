@@ -9,9 +9,9 @@
 #include <utility>
 #include <vector>
 
-#include "../../../common/include/common.hpp"
-#include "../../../modules/util/include/func_test_util.hpp"
-#include "../../../tbb/include/ops_tbb.hpp"
+#include "../../common/include/common.hpp"
+#include "../../tbb/include/ops_tbb.hpp"
+#include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
 namespace sabutay_sparse_complex_ccs_mult_tbb {
