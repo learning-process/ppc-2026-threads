@@ -17,12 +17,14 @@ using Complex = std::complex<double>;
 using MatrixEntry = std::pair<int, Complex>;
 
 struct SparseMatrixCCS {
-  int rows = 0;
-  int cols = 0;
+  int m = 0;
+  int n = 0;
   std::vector<int> col_ptr = {0};
   std::vector<int> row_ind;
   std::vector<Complex> values;
 };
+
+using CCS = SparseMatrixCCS;
 
 inline constexpr double kComplexEps = 1e-12;
 
@@ -36,18 +38,18 @@ inline constexpr double kComplexEps = 1e-12;
   }
 
   SparseMatrixCCS matrix;
-  matrix.rows = rows;
-  matrix.cols = cols;
+  matrix.m = rows;
+  matrix.n = cols;
   matrix.col_ptr.assign(static_cast<std::size_t>(cols) + 1, 0);
   return matrix;
 }
 
 [[nodiscard]] inline bool IsValidCcs(const SparseMatrixCCS &matrix) {
-  if (matrix.rows < 0 || matrix.cols < 0) {
+  if (matrix.m < 0 || matrix.n < 0) {
     return false;
   }
 
-  if (matrix.col_ptr.size() != (static_cast<std::size_t>(matrix.cols) + 1U) ||
+  if (matrix.col_ptr.size() != (static_cast<std::size_t>(matrix.n) + 1U) ||
       matrix.row_ind.size() != matrix.values.size() || matrix.col_ptr.empty() || matrix.col_ptr.front() != 0) {
     return false;
   }
@@ -65,7 +67,7 @@ inline constexpr double kComplexEps = 1e-12;
     }
   }
 
-  return std::ranges::all_of(matrix.row_ind, [&matrix](const int row) { return row >= 0 && row < matrix.rows; });
+  return std::ranges::all_of(matrix.row_ind, [&matrix](const int row) { return row >= 0 && row < matrix.m; });
 }
 
 inline void AppendMergedEntries(std::vector<MatrixEntry> entries, std::vector<int> &row_ind,
@@ -106,11 +108,11 @@ inline void AppendMergedEntries(std::vector<MatrixEntry> entries, std::vector<in
     return {};
   }
 
-  SparseMatrixCCS normalized = MakeZeroMatrix(matrix.rows, matrix.cols);
+  SparseMatrixCCS normalized = MakeZeroMatrix(matrix.m, matrix.n);
   normalized.values.reserve(matrix.values.size());
   normalized.row_ind.reserve(matrix.row_ind.size());
 
-  for (int col = 0; col < matrix.cols; ++col) {
+  for (int col = 0; col < matrix.n; ++col) {
     const int begin = matrix.col_ptr[static_cast<std::size_t>(col)];
     const int end = matrix.col_ptr[static_cast<std::size_t>(col) + 1U];
     std::vector<MatrixEntry> entries;
@@ -132,10 +134,10 @@ inline void AppendMergedEntries(std::vector<MatrixEntry> entries, std::vector<in
     return {};
   }
 
-  std::vector<std::vector<Complex>> dense(static_cast<std::size_t>(matrix.rows),
-                                          std::vector<Complex>(static_cast<std::size_t>(matrix.cols), Complex{}));
+  std::vector<std::vector<Complex>> dense(static_cast<std::size_t>(matrix.m),
+                                          std::vector<Complex>(static_cast<std::size_t>(matrix.n), Complex{}));
 
-  for (int col = 0; col < matrix.cols; ++col) {
+  for (int col = 0; col < matrix.n; ++col) {
     const int begin = matrix.col_ptr[static_cast<std::size_t>(col)];
     const int end = matrix.col_ptr[static_cast<std::size_t>(col) + 1U];
 
@@ -213,19 +215,19 @@ inline void AppendAccumulatedRows(const std::vector<Complex> &accumulator, std::
 
 [[nodiscard]] inline SparseMatrixCCS MultiplyCcsReference(const SparseMatrixCCS &lhs, const SparseMatrixCCS &rhs,
                                                           double eps = kComplexEps) {
-  if (!IsValidCcs(lhs) || !IsValidCcs(rhs) || lhs.cols != rhs.rows) {
+  if (!IsValidCcs(lhs) || !IsValidCcs(rhs) || lhs.n != rhs.m) {
     return {};
   }
 
   const SparseMatrixCCS left = NormalizeCcs(lhs, eps);
   const SparseMatrixCCS right = NormalizeCcs(rhs, eps);
-  SparseMatrixCCS result = MakeZeroMatrix(left.rows, right.cols);
+  SparseMatrixCCS result = MakeZeroMatrix(left.m, right.n);
 
-  std::vector<Complex> accumulator(static_cast<std::size_t>(left.rows), Complex{});
-  std::vector<int> marker(static_cast<std::size_t>(left.rows), -1);
+  std::vector<Complex> accumulator(static_cast<std::size_t>(left.m), Complex{});
+  std::vector<int> marker(static_cast<std::size_t>(left.m), -1);
   std::vector<int> touched_rows;
 
-  for (int col = 0; col < right.cols; ++col) {
+  for (int col = 0; col < right.n; ++col) {
     touched_rows.clear();
     AccumulateProductRows(left, right, col, accumulator, marker, touched_rows);
     AppendAccumulatedRows(accumulator, touched_rows, eps, result);
@@ -244,7 +246,7 @@ inline void AppendAccumulatedRows(const std::vector<Complex> &accumulator, std::
   const SparseMatrixCCS left = NormalizeCcs(lhs, eps);
   const SparseMatrixCCS right = NormalizeCcs(rhs, eps);
 
-  if (left.rows != right.rows || left.cols != right.cols) {
+  if (left.m != right.m || left.n != right.n) {
     return false;
   }
 
