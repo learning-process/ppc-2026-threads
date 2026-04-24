@@ -39,6 +39,8 @@ bool BatkovFContrastEnhLinHistStretchSEQ::RunImpl() {
       double new_pixel = (a * static_cast<double>(input[i])) + b;
       output[i] = static_cast<uint8_t>(std::clamp(new_pixel, 0.0, 255.0));
     }
+  } else {
+    std::ranges::copy(input, output.begin());
   }
 
   return true;
