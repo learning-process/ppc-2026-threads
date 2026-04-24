@@ -4,7 +4,6 @@
 #include <chrono>
 #include <cstddef>
 #include <random>
-#include <ranges>
 #include <vector>
 
 #include "dorogin_v_bin_img_conv_hull_TBB/common/include/common.hpp"
