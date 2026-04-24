@@ -71,6 +71,7 @@ bool RychkovaGaussALL::RunImpl() {
 
   int n = 0;
   int idx = 0;
+
   MPI_Comm_size(MPI_COMM_WORLD, &n);
   MPI_Comm_rank(MPI_COMM_WORLD, &idx);
 
