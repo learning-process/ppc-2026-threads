@@ -1,5 +1,6 @@
 #include "tsyplakov_k_mul_double_crs_matrix/stl/include/ops_stl.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <thread>
 #include <unordered_map>
@@ -69,9 +70,9 @@ bool TsyplakovKTestTaskSTL::RunImpl() {
 
   const int chunk = (rows + num_threads - 1) / num_threads;
 
-  for (int t = 0; t < num_threads; ++t) {
-    threads[t] = std::thread([&, t]() {
-      const int start = t * chunk;
+  for (int tt = 0; tt < num_threads; ++tt) {
+    threads[tt] = std::thread([&, tt]() {
+      const int start = tt * chunk;
       const int end = std::min(start + chunk, rows);
 
       for (int i = start; i < end; ++i) {
