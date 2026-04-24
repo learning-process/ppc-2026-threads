@@ -7,9 +7,12 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <ranges>
 #include <stack>
 #include <utility>
 #include <vector>
+
+#include "dorogin_v_bin_img_conv_hull_TBB/common/include/common.hpp"
 
 namespace dorogin_v_bin_img_conv_hull_tbb {
 namespace {
@@ -100,9 +103,9 @@ std::vector<PixelPoint> DoroginVImgConvHullTBB::ComputeConvexHull(const std::vec
     }
     return a.col < b.col;
   });
-  ordered.erase(std::unique(ordered.begin(), ordered.end(),
-                            [](const PixelPoint &a, const PixelPoint &b) { return a.row == b.row && a.col == b.col; }),
-                ordered.end());
+  const auto unique_end = std::ranges::unique(
+      ordered, [](const PixelPoint &a, const PixelPoint &b) { return a.row == b.row && a.col == b.col; });
+  ordered.erase(unique_end.begin(), unique_end.end());
   if (ordered.size() <= 2) {
     return ordered;
   }
@@ -116,11 +119,11 @@ std::vector<PixelPoint> DoroginVImgConvHullTBB::ComputeConvexHull(const std::vec
   }
 
   std::vector<PixelPoint> upper;
-  for (auto it = ordered.rbegin(); it != ordered.rend(); ++it) {
-    while (upper.size() >= 2 && Cross(upper[upper.size() - 2], upper.back(), *it) <= 0) {
+  for (const auto &point : std::ranges::reverse_view(ordered)) {
+    while (upper.size() >= 2 && Cross(upper[upper.size() - 2], upper.back(), point) <= 0) {
       upper.pop_back();
     }
-    upper.push_back(*it);
+    upper.push_back(point);
   }
 
   lower.pop_back();
@@ -134,15 +137,15 @@ void DoroginVImgConvHullTBB::ExtractComponentsAndHulls() {
   std::vector<bool> visited(total, false);
   auto &hulls = GetOutput();
 
-  for (int r = 0; r < image_.rows; ++r) {
-    for (int c = 0; c < image_.cols; ++c) {
-      const size_t idx = PixelIndex(r, c, image_.cols);
+  for (int row_idx = 0; row_idx < image_.rows; ++row_idx) {
+    for (int col_idx = 0; col_idx < image_.cols; ++col_idx) {
+      const size_t idx = PixelIndex(row_idx, col_idx, image_.cols);
       if (image_.pixels[idx] != 255 || visited[idx]) {
         continue;
       }
 
       std::vector<PixelPoint> component;
-      FloodFillComponent(r, c, &visited, &component);
+      FloodFillComponent(row_idx, col_idx, &visited, &component);
       if (!component.empty()) {
         hulls.push_back(ComputeConvexHull(component));
       }

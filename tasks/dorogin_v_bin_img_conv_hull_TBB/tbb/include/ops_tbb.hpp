@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "dorogin_v_bin_img_conv_hull_TBB/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace dorogin_v_bin_img_conv_hull_tbb {
 

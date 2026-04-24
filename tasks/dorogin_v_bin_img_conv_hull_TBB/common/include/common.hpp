@@ -12,7 +12,7 @@ struct PixelPoint {
   int col{0};
 
   PixelPoint() = default;
-  PixelPoint(int row_, int col_) : row(row_), col(col_) {}
+  PixelPoint(int row, int col) : row(row), col(col) {}
 
   bool operator==(const PixelPoint &other) const {
     return row == other.row && col == other.col;

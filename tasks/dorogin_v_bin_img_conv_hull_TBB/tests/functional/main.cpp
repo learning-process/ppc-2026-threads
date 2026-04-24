@@ -4,6 +4,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <ranges>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -11,6 +12,7 @@
 #include "dorogin_v_bin_img_conv_hull_TBB/common/include/common.hpp"
 #include "dorogin_v_bin_img_conv_hull_TBB/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace dorogin_v_bin_img_conv_hull_tbb {
 using TestCase = std::tuple<GrayImage, std::vector<std::vector<PixelPoint>>, std::string>;
@@ -32,9 +34,9 @@ void SetPixel(GrayImage &image, int row, int col, uint8_t value = 255) {
 }
 
 void FillRectangle(GrayImage &image, int row0, int col0, int row1, int col1) {
-  for (int r = row0; r <= row1; ++r) {
-    for (int c = col0; c <= col1; ++c) {
-      SetPixel(image, r, c, 255);
+  for (int row_idx = row0; row_idx <= row1; ++row_idx) {
+    for (int col_idx = col0; col_idx <= col1; ++col_idx) {
+      SetPixel(image, row_idx, col_idx, 255);
     }
   }
 }
@@ -58,14 +60,14 @@ bool HullLess(const std::vector<PixelPoint> &a, const std::vector<PixelPoint> &b
 }
 
 void SortHull(std::vector<PixelPoint> *hull) {
-  std::sort(hull->begin(), hull->end(), PointLess);
+  std::ranges::sort(*hull, PointLess);
 }
 
 void Normalize(std::vector<std::vector<PixelPoint>> *hulls) {
   for (auto &hull : *hulls) {
     SortHull(&hull);
   }
-  std::sort(hulls->begin(), hulls->end(), HullLess);
+  std::ranges::sort(*hulls, HullLess);
 }
 }  // namespace
 
@@ -121,16 +123,16 @@ const std::array<TestCase, 8> kCases = {
     std::make_tuple(
         [] {
   auto image = CreateImage(7, 7);
-  for (int r = 1; r <= 5; ++r) {
-    SetPixel(image, r, 3);
+  for (int row_idx = 1; row_idx <= 5; ++row_idx) {
+    SetPixel(image, row_idx, 3);
   }
   return image;
 }(), std::vector<std::vector<PixelPoint>>{{{1, 3}, {5, 3}}}, "vertical_line"),
     std::make_tuple(
         [] {
   auto image = CreateImage(7, 7);
-  for (int c = 1; c <= 5; ++c) {
-    SetPixel(image, 3, c);
+  for (int col_idx = 1; col_idx <= 5; ++col_idx) {
+    SetPixel(image, 3, col_idx);
   }
   return image;
 }(), std::vector<std::vector<PixelPoint>>{{{3, 1}, {3, 5}}}, "horizontal_line"),
@@ -167,7 +169,7 @@ const auto kName = DoroginVImgConvHullTBBFuncTest::PrintFuncTestName<DoroginVImg
 
 INSTANTIATE_TEST_SUITE_P(DoroginVBinImgConvHullTBBFunctional, DoroginVImgConvHullTBBFuncTest, kValues, kName);
 
-TEST_P(DoroginVImgConvHullTBBFuncTest, DoroginV_Func_BinaryImageConvexHull_TBB) {
+TEST_P(DoroginVImgConvHullTBBFuncTest, DoroginVFuncBinaryImageConvexHullTBB) {
   ExecuteTest(GetParam());
 }
 }  // namespace

@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cstddef>
 #include <random>
+#include <ranges>
 #include <vector>
 
 #include "dorogin_v_bin_img_conv_hull_TBB/common/include/common.hpp"
@@ -28,9 +29,11 @@ class DoroginVImgConvHullTBBPerformanceTest : public ppc::util::BaseRunPerfTests
       const int y0 = dist(rng) % (kImageSize - 35);
       const int x1 = x0 + 20 + (dist(rng) % 15);
       const int y1 = y0 + 20 + (dist(rng) % 15);
-      for (int r = y0; r <= y1; ++r) {
-        for (int c = x0; c <= x1; ++c) {
-          input_.pixels[(static_cast<size_t>(r) * static_cast<size_t>(kImageSize)) + static_cast<size_t>(c)] = 255;
+      for (int row_idx = y0; row_idx <= y1; ++row_idx) {
+        for (int col_idx = x0; col_idx <= x1; ++col_idx) {
+          input_
+              .pixels[(static_cast<size_t>(row_idx) * static_cast<size_t>(kImageSize)) + static_cast<size_t>(col_idx)] =
+              255;
         }
       }
     }
@@ -44,7 +47,7 @@ class DoroginVImgConvHullTBBPerformanceTest : public ppc::util::BaseRunPerfTests
     if (output.empty()) {
       return false;
     }
-    return std::all_of(output.begin(), output.end(), [](const auto &hull) { return !hull.empty(); });
+    return std::ranges::all_of(output, [](const auto &hull) { return !hull.empty(); });
   }
 
   InputType GetTestInputData() final {
@@ -54,7 +57,7 @@ class DoroginVImgConvHullTBBPerformanceTest : public ppc::util::BaseRunPerfTests
   InputType input_;
 };
 
-TEST_P(DoroginVImgConvHullTBBPerformanceTest, DoroginV_Perf_BinaryImageConvexHull_TBB) {
+TEST_P(DoroginVImgConvHullTBBPerformanceTest, DoroginVPerfBinaryImageConvexHullTBB) {
   ExecuteTest(GetParam());
 }
 
