@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <future>
 #include <utility>
@@ -47,11 +48,9 @@ void VotincevDRadixMergeSortSTL::LocalRadixSort(uint32_t *begin, uint32_t *end) 
       count.at(static_cast<size_t>(i)) += count.at(static_cast<size_t>(i - 1));
     }
     for (int32_t i = n - 1; i >= 0; --i) {
-      size_t digit = static_cast<size_t>((src[i] / exp) % 10);
-
+      auto digit = static_cast<size_t>((src[i] / exp) % 10);
       size_t target_idx = static_cast<size_t>(count.at(digit)) - 1;
       dst[target_idx] = src[i];
-
       count.at(digit)--;
     }
     std::swap(src, dst);
@@ -62,7 +61,6 @@ void VotincevDRadixMergeSortSTL::LocalRadixSort(uint32_t *begin, uint32_t *end) 
   }
 }
 
-// слияние двух отсортированных участков
 void VotincevDRadixMergeSortSTL::Merge(const uint32_t *src, uint32_t *dst, int32_t left, int32_t mid, int32_t right) {
   int32_t i = left;
   int32_t j = mid;
@@ -78,52 +76,81 @@ void VotincevDRadixMergeSortSTL::Merge(const uint32_t *src, uint32_t *dst, int32
   }
 }
 
-// параллельная сортировка слиянием через std::async
-void VotincevDRadixMergeSortSTL::ParallelRadixMergeSort(uint32_t *data, int32_t left, int32_t right, uint32_t *temp) {
-  const int32_t grain_size = 4096;  // порог для перехода на последовательную сортировку
-
-  if (right - left <= grain_size) {
-    LocalRadixSort(data + left, data + right);
+void VotincevDRadixMergeSortSTL::ParallelRadixMergeSort(uint32_t *data, int32_t n, uint32_t *temp) {
+  const int32_t grain_size = 4096;
+  if (n <= grain_size) {
+    LocalRadixSort(data, data + n);
     return;
   }
 
-  int32_t mid = left + ((right - left) / 2);
+  std::vector<std::future<void>> futures;
 
-  // запускаем левую часть в отдельном потоке (аналог tbb::parallel_invoke)
-  auto future = std::async(std::launch::async, [&] { ParallelRadixMergeSort(data, left, mid, temp); });
+  int32_t num_blocks = (n + grain_size - 1) / grain_size;
+  futures.reserve(static_cast<size_t>(num_blocks));
 
-  // правую часть выполняем в текущем потоке
-  ParallelRadixMergeSort(data, mid, right, temp);
+  for (int32_t i = 0; i < num_blocks; ++i) {
+    int32_t left = i * grain_size;
+    int32_t right = std::min(left + grain_size, n);
 
-  // ждем завершения левой части
-  future.get();
+    futures.push_back(std::async(std::launch::async, [data, left, right] {
+      VotincevDRadixMergeSortSTL::LocalRadixSort(data + left, data + right);
+    }));
+  }
+  for (auto &f : futures) {
+    f.get();
+  }
+  futures.clear();
 
-  // слияние результатов
-  Merge(data, temp, left, mid, right);
+  uint32_t *src = data;
+  uint32_t *dst = temp;
 
-  // копируем в основной массив
-  std::copy(temp + left, temp + right, data + left);
+  for (int32_t width = grain_size; width < n; width *= 2) {
+    int32_t num_merges = (n + (2 * width) - 1) / (2 * width);
+
+    for (int32_t i = 0; i < num_merges; ++i) {
+      int32_t left = i * 2 * width;
+      int32_t mid = std::min(left + width, n);
+      int32_t right = std::min(left + 2 * width, n);
+
+      if (mid < right) {
+        futures.push_back(std::async(std::launch::async, [src, dst, left, mid, right] {
+          VotincevDRadixMergeSortSTL::Merge(src, dst, left, mid, right);
+        }));
+      } else if (left < n) {
+        std::copy(src + left, src + mid, dst + left);
+      }
+    }
+    for (auto &f : futures) {
+      f.get();
+    }
+    futures.clear();
+
+    std::swap(src, dst);
+  }
+
+  if (src != data) {
+    std::copy(src, src + n, data);
+  }
 }
 
 bool VotincevDRadixMergeSortSTL::RunImpl() {
   const auto &input = GetInput();
   auto n = static_cast<int32_t>(input.size());
+  if (n == 0) {
+    return true;
+  }
 
-  // поиск минимума
-  int32_t min_val = *std::ranges::min_element(input);
+  int32_t min_val = *std::min_element(input.begin(), input.end());
 
-  // uint32_t чтобы избежать проблем с отрицательными числами
   std::vector<uint32_t> working_array(static_cast<size_t>(n));
   for (int32_t i = 0; i < n; ++i) {
     working_array[static_cast<size_t>(i)] =
         static_cast<uint32_t>(input[static_cast<size_t>(i)]) - static_cast<uint32_t>(min_val);
   }
 
-  // параллельная сортировка
   std::vector<uint32_t> temp_buffer(static_cast<size_t>(n));
-  ParallelRadixMergeSort(working_array.data(), 0, n, temp_buffer.data());
+  ParallelRadixMergeSort(working_array.data(), n, temp_buffer.data());
 
-  // восстановление исходных значений
   std::vector<int32_t> result(static_cast<size_t>(n));
   for (int32_t i = 0; i < n; ++i) {
     result[static_cast<size_t>(i)] =
