@@ -8,6 +8,7 @@
 #include "nikitin_a_monte_carlo/common/include/common.hpp"
 #include "nikitin_a_monte_carlo/omp/include/ops_omp.hpp"
 #include "nikitin_a_monte_carlo/seq/include/ops_seq.hpp"
+#include "nikitin_a_monte_carlo/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace nikitin_a_monte_carlo {
@@ -84,7 +85,8 @@ TEST_P(NikitinAMonteCarloConstant3DPerfTests, RunPerfModesConstant3D) {
 
 const auto kConstant3DPerfTasks =
     std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, NikitinAMonteCarloSEQ>(PPC_SETTINGS_nikitin_a_monte_carlo),
-                   ppc::util::MakeAllPerfTasks<InType, NikitinAMonteCarloOMP>(PPC_SETTINGS_nikitin_a_monte_carlo));
+                   ppc::util::MakeAllPerfTasks<InType, NikitinAMonteCarloOMP>(PPC_SETTINGS_nikitin_a_monte_carlo),
+                   ppc::util::MakeAllPerfTasks<InType, NikitinAMonteCarloTBB>(PPC_SETTINGS_nikitin_a_monte_carlo));
 const auto kConstant3DGtestValues = ppc::util::TupleToGTestValues(kConstant3DPerfTasks);
 
 const auto kConstant3DPerfTestName = NikitinAMonteCarloConstant3DPerfTests::CustomPerfTestName;
@@ -99,7 +101,8 @@ TEST_P(NikitinAMonteCarloLinear4DPerfTests, RunPerfModesLinear4D) {
 
 const auto kLinear4DPerfTasks =
     std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, NikitinAMonteCarloSEQ>(PPC_SETTINGS_nikitin_a_monte_carlo),
-                   ppc::util::MakeAllPerfTasks<InType, NikitinAMonteCarloOMP>(PPC_SETTINGS_nikitin_a_monte_carlo));
+                   ppc::util::MakeAllPerfTasks<InType, NikitinAMonteCarloOMP>(PPC_SETTINGS_nikitin_a_monte_carlo),
+                   ppc::util::MakeAllPerfTasks<InType, NikitinAMonteCarloTBB>(PPC_SETTINGS_nikitin_a_monte_carlo));
 const auto kLinear4DGtestValues = ppc::util::TupleToGTestValues(kLinear4DPerfTasks);
 
 const auto kLinear4DPerfTestName = NikitinAMonteCarloLinear4DPerfTests::CustomPerfTestName;

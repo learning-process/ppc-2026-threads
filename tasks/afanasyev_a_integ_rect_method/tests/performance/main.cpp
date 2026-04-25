@@ -5,6 +5,8 @@
 #include "afanasyev_a_integ_rect_method/common/include/common.hpp"
 #include "afanasyev_a_integ_rect_method/omp/include/ops_omp.hpp"
 #include "afanasyev_a_integ_rect_method/seq/include/ops_seq.hpp"
+#include "afanasyev_a_integ_rect_method/stl/include/ops_stl.hpp"
+#include "afanasyev_a_integ_rect_method/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace afanasyev_a_integ_rect_method {
@@ -41,7 +43,8 @@ TEST_P(AfanasyevAIntegRectMethodPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, AfanasyevAIntegRectMethodSEQ, AfanasyevAIntegRectMethodOMP>(
+    ppc::util::MakeAllPerfTasks<InType, AfanasyevAIntegRectMethodSEQ, AfanasyevAIntegRectMethodOMP,
+                                AfanasyevAIntegRectMethodSTL, AfanasyevAIntegRectMethodTBB>(
         PPC_SETTINGS_afanasyev_a_integ_rect_method);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

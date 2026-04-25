@@ -13,6 +13,7 @@
 #include "kulik_a_mat_mul_double_ccs/common/include/common.hpp"
 #include "kulik_a_mat_mul_double_ccs/omp/include/ops_omp.hpp"
 #include "kulik_a_mat_mul_double_ccs/seq/include/ops_seq.hpp"
+#include "kulik_a_mat_mul_double_ccs/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -101,7 +102,8 @@ const std::array<TestType, 1> kTestParam = {std::make_tuple(std::string("matrix_
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KulikAMatMulDoubleCcsSEQ, InType>(kTestParam, PPC_SETTINGS_kulik_a_mat_mul_double_ccs),
-    ppc::util::AddFuncTask<KulikAMatMulDoubleCcsOMP, InType>(kTestParam, PPC_SETTINGS_kulik_a_mat_mul_double_ccs));
+    ppc::util::AddFuncTask<KulikAMatMulDoubleCcsOMP, InType>(kTestParam, PPC_SETTINGS_kulik_a_mat_mul_double_ccs),
+    ppc::util::AddFuncTask<KulikAMatMulDoubleCcsTBB, InType>(kTestParam, PPC_SETTINGS_kulik_a_mat_mul_double_ccs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

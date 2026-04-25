@@ -10,6 +10,7 @@
 #include "melnik_i_radix_sort_int/common/include/common.hpp"
 #include "melnik_i_radix_sort_int/omp/include/ops_omp.hpp"
 #include "melnik_i_radix_sort_int/seq/include/ops_seq.hpp"
+#include "melnik_i_radix_sort_int/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -59,7 +60,8 @@ const std::array<TestType, 7> kTestParam = {
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<MelnikIRadixSortIntSEQ, InType>(kTestParam, PPC_SETTINGS_melnik_i_radix_sort_int),
-    ppc::util::AddFuncTask<MelnikIRadixSortIntOMP, InType>(kTestParam, PPC_SETTINGS_melnik_i_radix_sort_int));
+    ppc::util::AddFuncTask<MelnikIRadixSortIntOMP, InType>(kTestParam, PPC_SETTINGS_melnik_i_radix_sort_int),
+    ppc::util::AddFuncTask<MelnikIRadixSortIntTBB, InType>(kTestParam, PPC_SETTINGS_melnik_i_radix_sort_int));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

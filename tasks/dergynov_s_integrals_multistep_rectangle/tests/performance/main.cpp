@@ -8,6 +8,8 @@
 #include "dergynov_s_integrals_multistep_rectangle/common/include/common.hpp"
 #include "dergynov_s_integrals_multistep_rectangle/omp/include/ops_omp.hpp"
 #include "dergynov_s_integrals_multistep_rectangle/seq/include/ops_seq.hpp"
+#include "dergynov_s_integrals_multistep_rectangle/stl/include/ops_stl.hpp"
+#include "dergynov_s_integrals_multistep_rectangle/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace dergynov_s_integrals_multistep_rectangle {
@@ -44,9 +46,11 @@ TEST_P(DergynovSIntegralsRectanglePerfTest, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, DergynovSIntegralsMultistepRectangleSEQ,
-                                                       DergynovSIntegralsMultistepRectangleOMP>(
-    PPC_SETTINGS_dergynov_s_integrals_multistep_rectangle);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, DergynovSIntegralsMultistepRectangleSEQ,
+                                DergynovSIntegralsMultistepRectangleOMP, DergynovSIntegralsMultistepRectangleTBB,
+                                DergynovSIntegralsMultistepRectangleSTL>(
+        PPC_SETTINGS_dergynov_s_integrals_multistep_rectangle);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

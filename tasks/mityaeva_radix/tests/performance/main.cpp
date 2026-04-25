@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 
+#include "mityaeva_radix/all/include/ops_all.hpp"
 #include "mityaeva_radix/common/include/common.hpp"
 #include "mityaeva_radix/common/include/test_generator.hpp"
 #include "mityaeva_radix/omp/include/ops_omp.hpp"
@@ -35,8 +36,9 @@ TEST_P(MityaevaRadixPerf, RadixSortPerf) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, MityaevaRadixSeq, MityaevaRadixTbb, MityaevaRadixOmp>(
-    PPC_SETTINGS_mityaeva_radix);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, MityaevaRadixSeq, MityaevaRadixOmp, MityaevaRadixTbb, MityaevaRadixAll>(
+        PPC_SETTINGS_mityaeva_radix);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

@@ -5,6 +5,7 @@
 #include <string>
 #include <tuple>
 
+#include "gasenin_l_djstra/all/include/ops_all.hpp"
 #include "gasenin_l_djstra/common/include/common.hpp"
 #include "gasenin_l_djstra/omp/include/ops_omp.hpp"
 #include "gasenin_l_djstra/seq/include/ops_seq.hpp"
@@ -53,7 +54,8 @@ const auto kSeqTasks = ppc::util::AddFuncTask<GaseninLDjstraSEQ, InType>(kTestPa
 const auto kOmpTasks = ppc::util::AddFuncTask<GaseninLDjstraOMP, InType>(kTestParam, PPC_SETTINGS_gasenin_l_djstra);
 const auto kStlTasks = ppc::util::AddFuncTask<GaseninLDjstraSTL, InType>(kTestParam, PPC_SETTINGS_gasenin_l_djstra);
 const auto kTbbTasks = ppc::util::AddFuncTask<GaseninLDjstraTBB, InType>(kTestParam, PPC_SETTINGS_gasenin_l_djstra);
-const auto kTestTasksList = std::tuple_cat(kSeqTasks, kOmpTasks, kStlTasks, kTbbTasks);
+const auto kAllTasks = ppc::util::AddFuncTask<GaseninLDjstraALL, InType>(kTestParam, PPC_SETTINGS_gasenin_l_djstra);
+const auto kTestTasksList = std::tuple_cat(kSeqTasks, kOmpTasks, kStlTasks, kTbbTasks, kAllTasks);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = GaseninLRunFuncTestsThreads::PrintFuncTestName<GaseninLRunFuncTestsThreads>;

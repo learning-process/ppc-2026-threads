@@ -8,6 +8,7 @@
 #include "tsarkov_k_jarvis_convex_hull/common/include/common.hpp"
 #include "tsarkov_k_jarvis_convex_hull/omp/include/ops_omp.hpp"
 #include "tsarkov_k_jarvis_convex_hull/seq/include/ops_seq.hpp"
+#include "tsarkov_k_jarvis_convex_hull/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -79,6 +80,7 @@ const std::array<TestType, 7> kTestParam = {
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<TsarkovKJarvisConvexHullOMP, InType>(kTestParam, PPC_SETTINGS_tsarkov_k_jarvis_convex_hull),
+    ppc::util::AddFuncTask<TsarkovKJarvisConvexHullTBB, InType>(kTestParam, PPC_SETTINGS_tsarkov_k_jarvis_convex_hull),
     ppc::util::AddFuncTask<TsarkovKJarvisConvexHullSEQ, InType>(kTestParam, PPC_SETTINGS_tsarkov_k_jarvis_convex_hull));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

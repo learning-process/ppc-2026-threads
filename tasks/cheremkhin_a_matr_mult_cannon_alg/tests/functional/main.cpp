@@ -10,6 +10,7 @@
 #include "cheremkhin_a_matr_mult_cannon_alg/common/include/common.hpp"
 #include "cheremkhin_a_matr_mult_cannon_alg/omp/include/ops_omp.hpp"
 #include "cheremkhin_a_matr_mult_cannon_alg/seq/include/ops_seq.hpp"
+#include "cheremkhin_a_matr_mult_cannon_alg/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -94,6 +95,8 @@ const std::array<TestType, 7> kTestParams = {
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<CheremkhinAMatrMultCannonAlgSEQ, InType>(
                                                kTestParams, PPC_SETTINGS_cheremkhin_a_matr_mult_cannon_alg),
                                            ppc::util::AddFuncTask<CheremkhinAMatrMultCannonAlgOMP, InType>(
+                                               kTestParams, PPC_SETTINGS_cheremkhin_a_matr_mult_cannon_alg),
+                                           ppc::util::AddFuncTask<CheremkhinAMatrMultCannonAlgTBB, InType>(
                                                kTestParams, PPC_SETTINGS_cheremkhin_a_matr_mult_cannon_alg));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

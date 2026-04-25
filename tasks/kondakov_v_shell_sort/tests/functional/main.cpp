@@ -10,6 +10,7 @@
 #include "kondakov_v_shell_sort/common/include/common.hpp"
 #include "kondakov_v_shell_sort/omp/include/ops_omp.hpp"
 #include "kondakov_v_shell_sort/seq/include/ops_seq.hpp"
+#include "kondakov_v_shell_sort/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -80,7 +81,8 @@ const std::array<TestType, 12> kTestParam = []() {
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KondakovVShellSortOMP, InType>(kTestParam, PPC_SETTINGS_kondakov_v_shell_sort),
-    ppc::util::AddFuncTask<KondakovVShellSortSEQ, InType>(kTestParam, PPC_SETTINGS_kondakov_v_shell_sort));
+    ppc::util::AddFuncTask<KondakovVShellSortSEQ, InType>(kTestParam, PPC_SETTINGS_kondakov_v_shell_sort),
+    ppc::util::AddFuncTask<KondakovVShellSortTBB, InType>(kTestParam, PPC_SETTINGS_kondakov_v_shell_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
