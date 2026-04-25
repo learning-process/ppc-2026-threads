@@ -154,7 +154,7 @@ TEST_P(SabutayARunFuncTestsTbb, FuncCCSTest) {
 
 const std::array<TestType, 3> kTestParam = {0, 1, 2};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<SabutaySparseComplexCcsMultTBB, InType>(
+const auto kTestTasksList = ppc::util::AddFuncTask<SabutayASparseComplexCcsMultTBB, InType>(
     kTestParam, PPC_SETTINGS_sabutay_sparse_complex_ccs_mult_tbb);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
