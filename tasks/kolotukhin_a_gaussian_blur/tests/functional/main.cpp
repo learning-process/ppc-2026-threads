@@ -10,6 +10,8 @@
 #include "kolotukhin_a_gaussian_blur/common/include/common.hpp"
 #include "kolotukhin_a_gaussian_blur/omp/include/ops_omp.hpp"
 #include "kolotukhin_a_gaussian_blur/seq/include/ops_seq.hpp"
+#include "kolotukhin_a_gaussian_blur/stl/include/ops_stl.hpp"
+#include "kolotukhin_a_gaussian_blur/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -69,7 +71,9 @@ const std::array<TestType, 4> kTestParam = {std::make_tuple(InType{test_1, 3, 3}
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KolotukhinAGaussinBlureSEQ, InType>(kTestParam, PPC_SETTINGS_kolotukhin_a_gaussian_blur),
-    ppc::util::AddFuncTask<KolotukhinAGaussinBlureOMP, InType>(kTestParam, PPC_SETTINGS_kolotukhin_a_gaussian_blur));
+    ppc::util::AddFuncTask<KolotukhinAGaussinBlureOMP, InType>(kTestParam, PPC_SETTINGS_kolotukhin_a_gaussian_blur),
+    ppc::util::AddFuncTask<KolotukhinAGaussinBlureTBB, InType>(kTestParam, PPC_SETTINGS_kolotukhin_a_gaussian_blur),
+    ppc::util::AddFuncTask<KolotukhinAGaussinBlureSTL, InType>(kTestParam, PPC_SETTINGS_kolotukhin_a_gaussian_blur));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
