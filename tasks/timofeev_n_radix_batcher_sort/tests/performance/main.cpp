@@ -1,9 +1,13 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <utility>
 
 #include "timofeev_n_radix_batcher_sort/common/include/common.hpp"
+#include "timofeev_n_radix_batcher_sort/omp/include/ops_omp.hpp"
 #include "timofeev_n_radix_batcher_sort/seq/include/ops_seq.hpp"
+#include "timofeev_n_radix_batcher_sort/stl/include/ops_stl.hpp"
+#include "timofeev_n_radix_batcher_sort/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace timofeev_n_radix_batcher_sort_threads {
@@ -20,12 +24,13 @@ class TimofeevRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Ou
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    for (int i = 0; std::cmp_less(i, static_cast<int>(output_data.size() - 1)); i++) {
+    bool is_true = true;
+    for (size_t i = 0; i < output_data.size() - 1; i++) {
       if (output_data[i] > output_data[i + 1]) {
-        return false;
+        is_true = false;
       }
     }
-    return true;
+    return is_true;
   }
 
   InType GetTestInputData() final {
@@ -40,7 +45,8 @@ TEST_P(TimofeevRunPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, TimofeevNRadixBatcherSEQ>(PPC_SETTINGS_timofeev_n_radix_batcher_sort);
+    ppc::util::MakeAllPerfTasks<InType, TimofeevNRadixBatcherSEQ, TimofeevNRadixBatcherTBB, TimofeevNRadixBatcherOMP,
+                                TimofeevNRadixBatcherSTL>(PPC_SETTINGS_timofeev_n_radix_batcher_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
