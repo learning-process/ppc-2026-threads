@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "dilshodov_a_spmm_double_css/common/include/common.hpp"
+#include "dilshodov_a_spmm_double_css/omp/include/ops_omp.hpp"
 #include "dilshodov_a_spmm_double_css/seq/include/ops_seq.hpp"
 #include "performance/include/performance.hpp"
 #include "util/include/perf_test_util.hpp"
@@ -107,8 +108,8 @@ TEST_P(DilshodovASpmmDoubleCssExamplePerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, DilshodovASpmmDoubleCssSeq>(PPC_SETTINGS_dilshodov_a_spmm_double_css);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, DilshodovASpmmDoubleCssSeq, DilshodovASpmmDoubleCssOmp>(
+    PPC_SETTINGS_dilshodov_a_spmm_double_css);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
