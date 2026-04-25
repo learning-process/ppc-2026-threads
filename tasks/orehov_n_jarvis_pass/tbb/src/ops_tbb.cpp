@@ -10,67 +10,6 @@
 
 namespace orehov_n_jarvis_pass {
 
-namespace {
-
-double CheckLeft(Point a, Point b, Point c) {
-  return ((b.x - a.x) * (c.y - a.y)) - ((b.y - a.y) * (c.x - a.x));
-}
-
-double Distance(Point a, Point b) {
-  return std::sqrt(std::pow(a.y - b.y, 2) + std::pow(a.x - b.x, 2));
-}
-
-struct ConvexHullBody {
-  Point current_val;
-  const std::vector<Point> *input_ptr;
-  Point best_point;
-
-  ConvexHullBody(Point c, const std::vector<Point> *in)
-      : current_val(c), input_ptr(in), best_point((current_val == (*in)[0]) ? (*in)[1] : (*in)[0]) {}
-
-  ConvexHullBody(ConvexHullBody &other, tbb::split /*unused*/)
-      : current_val(other.current_val), input_ptr(other.input_ptr), best_point(other.best_point) {}
-
-  void operator()(const tbb::blocked_range<size_t> &range) {
-    const auto &input = *input_ptr;
-    for (size_t i = range.begin(); i != range.end(); ++i) {
-      const Point &point = input[i];
-      if (current_val == point) {
-        continue;
-      }
-
-      ProcessPoint(point);
-    }
-  }
-
-  void Join(const ConvexHullBody &other) {
-    ProcessBestPoint(other.best_point);
-  }
-
- private:
-  void ProcessPoint(const Point &point) {
-    double orient = CheckLeft(current_val, best_point, point);
-    UpdateBestPoint(point, orient);
-  }
-
-  void ProcessBestPoint(const Point &other_best) {
-    double global_orient = CheckLeft(current_val, best_point, other_best);
-    UpdateBestPoint(other_best, global_orient);
-  }
-
-  void UpdateBestPoint(const Point &candidate, double orient) {
-    if (orient > 0) {
-      best_point = candidate;
-    } else if (orient == 0) {
-      if (Distance(current_val, candidate) > Distance(current_val, best_point)) {
-        best_point = candidate;
-      }
-    }
-  }
-};
-
-}  // namespace
-
 OrehovNJarvisPassTBB::OrehovNJarvisPassTBB(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -111,8 +50,49 @@ bool OrehovNJarvisPassTBB::RunImpl() {
 
 Point OrehovNJarvisPassTBB::FindNext(Point current) const {
   const size_t n = input_.size();
-  ConvexHullBody body(current, &input_);
+
+  struct Body {
+    Point current_val;
+    const std::vector<Point> *input_ptr;
+    Point best_point;
+
+    Body(Point c, const std::vector<Point> *in)
+        : current_val(c), input_ptr(in), best_point((current_val == (*in)[0]) ? (*in)[1] : (*in)[0]) {}
+
+    Body(Body &other, tbb::split /*unused*/)
+        : current_val(other.current_val), input_ptr(other.input_ptr), best_point(other.best_point) {}
+
+    void operator()(const tbb::blocked_range<size_t> &range) {
+      const auto &input = *input_ptr;
+      for (size_t i = range.begin(); i != range.end(); ++i) {
+        const Point &point = input[i];
+        if (current_val == point) {
+          continue;
+        }
+
+        double orient = CheckLeft(current_val, best_point, point);
+
+        if (orient > 0) {
+          best_point = point;
+        } else if (orient == 0 && Distance(current_val, point) > Distance(current_val, best_point)) {
+          best_point = point;
+        }
+      }
+    }
+
+    void Join(const Body &other) {
+      double global_orient = CheckLeft(current_val, best_point, other.best_point);
+      if (global_orient > 0) {
+        best_point = other.best_point;
+      } else if (global_orient == 0 && Distance(current_val, other.best_point) > Distance(current_val, best_point)) {
+        best_point = other.best_point;
+      }
+    }
+  };
+
+  Body body(current, &input_);
   tbb::parallel_reduce(tbb::blocked_range<size_t>(0, n), body);
+
   return body.best_point;
 }
 
