@@ -25,15 +25,38 @@ bool IsBetterPoint(Point current, Point candidate, Point best) {
   if (orient == 0.0) {
     double dx_c = candidate.x - current.x;
     double dy_c = candidate.y - current.y;
-    double dist_c = dx_c * dx_c + dy_c * dy_c;
+    double dist_c = (dx_c * dx_c) + (dy_c * dy_c);
 
     double dx_b = best.x - current.x;
     double dy_b = best.y - current.y;
-    double dist_b = dx_b * dx_b + dy_b * dy_b;
+    double dist_b = (dx_b * dx_b) + (dy_b * dy_b);
 
     return dist_c > dist_b;
   }
   return false;
+}
+
+BestState FindInitialBestState(const std::vector<Point> &input, Point current) {
+  BestState init;
+  for (size_t i = 0; i < input.size(); ++i) {
+    if (!(input[i] == current)) {
+      init.point = input[i];
+      init.valid = true;
+      break;
+    }
+  }
+  return init;
+}
+
+BestState ReduceBestStates(const BestState &a, const BestState &b, Point current) {
+  if (!a.valid) {
+    return b;
+  }
+  if (!b.valid) {
+    return a;
+  }
+
+  return BestState{.point = IsBetterPoint(current, b.point, a.point) ? b.point : a.point, .valid = true};
 }
 
 }  // namespace
@@ -79,14 +102,7 @@ bool OrehovNJarvisPassTBB::RunImpl() {
 Point OrehovNJarvisPassTBB::FindNext(Point current) const {
   const size_t n = input_.size();
 
-  BestState init;
-  for (size_t i = 0; i < n; ++i) {
-    if (!(input_[i] == current)) {
-      init.point = input_[i];
-      init.valid = true;
-      break;
-    }
-  }
+  BestState init = FindInitialBestState(input_, current);
   if (!init.valid) {
     return current;
   }
@@ -105,15 +121,7 @@ Point OrehovNJarvisPassTBB::FindNext(Point current) const {
     return local;
   };
 
-  auto reduce = [&](const BestState &a, const BestState &b) -> BestState {
-    if (!a.valid) {
-      return b;
-    }
-    if (!b.valid) {
-      return a;
-    }
-    return BestState{IsBetterPoint(current, b.point, a.point) ? b.point : a.point, true};
-  };
+  auto reduce = [&](const BestState &a, const BestState &b) -> BestState { return ReduceBestStates(a, b, current); };
 
   BestState result = tbb::parallel_reduce(tbb::blocked_range<size_t>(0, n), init, body, reduce);
   return result.point;
