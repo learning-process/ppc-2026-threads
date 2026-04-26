@@ -38,9 +38,9 @@ bool IsBetterPoint(Point current, Point candidate, Point best) {
 
 BestState FindInitialBestState(const std::vector<Point> &input, Point current) {
   BestState init;
-  for (size_t i = 0; i < input.size(); ++i) {
-    if (!(input[i] == current)) {
-      init.point = input[i];
+  for (const auto &p : input) {
+    if (!(p == current)) {
+      init.point = p;
       init.valid = true;
       break;
     }
@@ -55,7 +55,6 @@ BestState ReduceBestStates(const BestState &a, const BestState &b, Point current
   if (!b.valid) {
     return a;
   }
-
   return BestState{.point = IsBetterPoint(current, b.point, a.point) ? b.point : a.point, .valid = true};
 }
 
