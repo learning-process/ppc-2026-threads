@@ -57,10 +57,17 @@ Point OrehovNJarvisPassTBB::FindNext(Point current) const {
     Point best_point;
 
     Body(Point c, const std::vector<Point> *in)
-        : current_val(c), input_ptr(in), best_point((current_val == (*in)[0]) ? (*in)[1] : (*in)[0]) {}
+        : current_val(c), input_ptr(in), best_point(GetInitialBestPoint(c, in)) {}
 
     Body(Body &other, tbb::split /*unused*/)
         : current_val(other.current_val), input_ptr(other.input_ptr), best_point(other.best_point) {}
+
+    static Point GetInitialBestPoint(Point current, const std::vector<Point> *in) {
+      if (current == (*in)[0]) {
+        return (*in)[1];
+      }
+      return (*in)[0];
+    }
 
     static bool IsBetter(Point current, Point candidate, Point current_best) {
       double orient = CheckLeft(current, current_best, candidate);
