@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cmath>
-#include <cstddef>  // для size_t
+#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
