@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "kapanova_s_sparse_matrix_mult_ccs/common/include/common.hpp"
+#include "kapanova_s_sparse_matrix_mult_ccs/omp/include/ops_omp.hpp"
 #include "kapanova_s_sparse_matrix_mult_ccs/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -209,7 +210,9 @@ const std::array<TestType, 5> kFixedTestParams = {std::make_tuple(1, ""), std::m
                                                   std::make_tuple(5, "")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KapanovaSSparseMatrixMultCCSSeq, InType>(
-    kFixedTestParams, PPC_SETTINGS_kapanova_s_sparse_matrix_mult_ccs));
+                                               kFixedTestParams, PPC_SETTINGS_kapanova_s_sparse_matrix_mult_ccs),
+                                           ppc::util::AddFuncTask<KapanovaSSparseMatrixMultCCSOMP, InType>(
+                                               kFixedTestParams, PPC_SETTINGS_kapanova_s_sparse_matrix_mult_ccs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
