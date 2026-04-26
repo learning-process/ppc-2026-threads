@@ -9,6 +9,7 @@
 
 #include "../../common/include/common.hpp"
 #include "../../omp/include/ops_omp.hpp"
+#include "../../tbb/include/ops_tbb.hpp"
 #include "omp.h"
 #include "shvetsova_k_mult_matrix_complex_col/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
@@ -172,6 +173,8 @@ const std::array<TestType, 5> kTestParam = {std::make_tuple(0, "0"), std::make_t
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ShvetsovaKMultMatrixComplexSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_shvetsova_k_mult_matrix_complex_col),
                                            ppc::util::AddFuncTask<ShvetsovaKMultMatrixComplexOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_shvetsova_k_mult_matrix_complex_col),
+                                           ppc::util::AddFuncTask<ShvetsovaKMultMatrixComplexTBB, InType>(
                                                kTestParam, PPC_SETTINGS_shvetsova_k_mult_matrix_complex_col));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
