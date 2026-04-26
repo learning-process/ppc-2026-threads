@@ -1,5 +1,6 @@
 #include "nikitin_a_monte_carlo/stl/include/ops_stl.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
