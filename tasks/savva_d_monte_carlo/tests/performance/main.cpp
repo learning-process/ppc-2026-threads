@@ -23,8 +23,8 @@ class SavvaDRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutT
     uint64_t num_points = 5000000;
     auto f = [](const std::vector<double> &x) {
       double res = 0.0;
-      for (size_t i = 0; i < x.size(); ++i) {
-        res += std::sin(x[i]) * std::cos(x[i]) + std::exp(-std::abs(x[i]));
+      for (double val : x) {
+        res += (std::sin(val) * std::cos(val)) + std::exp(-std::abs(val));
       }
       return res;
     };
