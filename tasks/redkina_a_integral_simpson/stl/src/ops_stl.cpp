@@ -11,70 +11,84 @@
 #include "redkina_a_integral_simpson/common/include/common.hpp"
 
 namespace redkina_a_integral_simpson {
-
 namespace {
 
-double ComputeNodeContribution(size_t linear_idx, const std::vector<double> &a, const std::vector<double> &h,
-                               const std::vector<int> &n, const std::vector<size_t> &strides,
-                               const std::function<double(const std::vector<double> &)> &func) {
-  if (!func) {
-    return 0.0;
-  }
-
-  size_t dim = a.size();
-  std::vector<double> point(dim);
-  size_t remainder = linear_idx;
-  std::vector<int> indices(dim);
-
+std::vector<std::vector<double>> PrecomputeWeights(const std::vector<int> &n) {
+  const size_t dim = n.size();
+  std::vector<std::vector<double>> weights(dim);
   for (size_t i = 0; i < dim; ++i) {
-    indices[i] = static_cast<int>(remainder / strides[i]);
-    remainder %= strides[i];
-  }
-
-  double w_prod = 1.0;
-  for (size_t i = 0; i < dim; ++i) {
-    int idx = indices[i];
-    point[i] = a[i] + (static_cast<double>(idx) * h[i]);
-
-    int w = 0;
-    if (idx == 0 || idx == n[i]) {
-      w = 1;
-    } else if (idx % 2 == 1) {
-      w = 4;
-    } else {
-      w = 2;
+    const int ni = n[i];
+    weights[i].resize(ni + 1);
+    for (int idx = 0; idx <= ni; ++idx) {
+      if (idx == 0 || idx == ni) {
+        weights[i][idx] = 1.0;
+      } else if (idx % 2 == 1) {
+        weights[i][idx] = 4.0;
+      } else {
+        weights[i][idx] = 2.0;
+      }
     }
-    w_prod *= static_cast<double>(w);
   }
-  return w_prod * func(point);
+  return weights;
 }
 
-double ParallelSum(const std::vector<double> &a, const std::vector<double> &h, const std::vector<int> &n,
-                   const std::vector<size_t> &strides, const std::function<double(const std::vector<double> &)> &func,
-                   size_t total_points) {
+std::vector<size_t> ComputeStrides(const std::vector<int> &n) {
+  const size_t dim = n.size();
+  std::vector<size_t> strides(dim);
+  if (dim == 0) {
+    return strides;
+  }
+  strides[dim - 1] = 1;
+  for (size_t i = dim - 1; i > 0; --i) {
+    strides[i - 1] = strides[i] * static_cast<size_t>(n[i] + 1);
+  }
+  return strides;
+}
+
+double ComputeRangeSum(size_t start, size_t end, const std::vector<double> &a, const std::vector<double> &h,
+                       const std::vector<std::vector<double>> &weights, const std::vector<size_t> &strides,
+                       const std::function<double(const std::vector<double> &)> &func, size_t dim) {
+  std::vector<int> indices(dim);
+  std::vector<double> point(dim);
+  double local_sum = 0.0;
+  for (size_t idx = start; idx < end; ++idx) {
+    size_t remainder = idx;
+    for (size_t dim_idx = 0; dim_idx < dim; ++dim_idx) {
+      indices[dim_idx] = static_cast<int>(remainder / strides[dim_idx]);
+      remainder %= strides[dim_idx];
+    }
+    double w_prod = 1.0;
+    for (size_t dim_idx = 0; dim_idx < dim; ++dim_idx) {
+      const int i_idx = indices[dim_idx];
+      point[dim_idx] = a[dim_idx] + (static_cast<double>(i_idx) * h[dim_idx]);
+      w_prod *= weights[dim_idx][i_idx];
+    }
+    local_sum += w_prod * func(point);
+  }
+  return local_sum;
+}
+
+// Вспомогательная функция для создания асинхронных задач
+void LaunchTasks(std::vector<std::future<double>> &futures, const std::vector<double> &a, const std::vector<double> &h,
+                 const std::vector<std::vector<double>> &weights, const std::vector<size_t> &strides,
+                 const std::function<double(const std::vector<double> &)> &func, size_t dim, size_t total_points) {
   unsigned int num_threads = std::thread::hardware_concurrency();
   if (num_threads == 0) {
     num_threads = 2;
   }
 
-  size_t block_size = total_points / num_threads;
-  size_t remainder = total_points % num_threads;
+  const size_t block_size = total_points / num_threads;
+  const size_t rem = total_points % num_threads;
 
-  std::vector<std::future<double>> futures;
   size_t start = 0;
-
   for (unsigned int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
-    size_t end = std::min(start + block_size + (thread_idx < remainder ? 1 : 0), total_points);
+    const size_t end = std::min(start + block_size + (thread_idx < rem ? 1 : 0), total_points);
     if (start >= end) {
       break;
     }
 
-    futures.push_back(std::async(std::launch::async, [=, &a, &h, &n, &strides, &func]() {
-      double local_sum = 0.0;
-      for (size_t idx = start; idx < end; ++idx) {
-        local_sum += ComputeNodeContribution(idx, a, h, n, strides, func);
-      }
-      return local_sum;
+    futures.push_back(std::async(std::launch::async, [=, &a, &h, &weights, &strides, &func]() {
+      return ComputeRangeSum(start, end, a, h, weights, strides, func, dim);
     }));
 
     start = end;
@@ -82,6 +96,13 @@ double ParallelSum(const std::vector<double> &a, const std::vector<double> &h, c
       break;
     }
   }
+}
+
+double ParallelSum(const std::vector<double> &a, const std::vector<double> &h,
+                   const std::vector<std::vector<double>> &weights, const std::vector<size_t> &strides,
+                   size_t total_points, const std::function<double(const std::vector<double> &)> &func, size_t dim) {
+  std::vector<std::future<double>> futures;
+  LaunchTasks(futures, a, h, weights, strides, func, dim, total_points);
 
   double total = 0.0;
   for (auto &f : futures) {
@@ -104,7 +125,6 @@ bool RedkinaAIntegralSimpsonSTL::ValidationImpl() {
   if (dim == 0 || in.b.size() != dim || in.n.size() != dim) {
     return false;
   }
-
   for (size_t i = 0; i < dim; ++i) {
     if (in.a[i] >= in.b[i]) {
       return false;
@@ -113,7 +133,6 @@ bool RedkinaAIntegralSimpsonSTL::ValidationImpl() {
       return false;
     }
   }
-
   return static_cast<bool>(in.func);
 }
 
@@ -131,35 +150,27 @@ bool RedkinaAIntegralSimpsonSTL::RunImpl() {
   if (!func_) {
     return false;
   }
-  size_t dim = a_.size();
+  const size_t dim = a_.size();
   if (dim == 0) {
     return false;
   }
 
   std::vector<double> h(dim);
-  for (size_t i = 0; i < dim; ++i) {
-    h[i] = (b_[i] - a_[i]) / static_cast<double>(n_[i]);
-  }
-
   double h_prod = 1.0;
   for (size_t i = 0; i < dim; ++i) {
+    h[i] = (b_[i] - a_[i]) / static_cast<double>(n_[i]);
     h_prod *= h[i];
   }
 
-  std::vector<int> dim_sizes(dim);
-  size_t total_points = 1;
-  for (size_t i = 0; i < dim; ++i) {
-    dim_sizes[i] = n_[i] + 1;
-    total_points *= static_cast<size_t>(dim_sizes[i]);
+  const auto weights = PrecomputeWeights(n_);
+  const auto strides = ComputeStrides(n_);
+  if (strides.empty()) {
+    return false;
   }
 
-  std::vector<size_t> strides(dim);
-  strides[dim - 1] = 1;
-  for (size_t i = dim - 1; i > 0; --i) {
-    strides[i - 1] = strides[i] * static_cast<size_t>(dim_sizes[i]);
-  }
+  const size_t total_points = strides[0] * static_cast<size_t>(n_[0] + 1);
 
-  double sum = ParallelSum(a_, h, n_, strides, func_, total_points);
+  const double sum = ParallelSum(a_, h, weights, strides, total_points, func_, dim);
 
   double denominator = 1.0;
   for (size_t i = 0; i < dim; ++i) {
