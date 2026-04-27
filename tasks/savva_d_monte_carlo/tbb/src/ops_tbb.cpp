@@ -1,3 +1,5 @@
+#include "savva_d_monte_carlo/tbb/include/ops_tbb.hpp"
+
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_reduce.h>
 
@@ -66,32 +68,26 @@ bool SavvaDMonteCarloTBB::RunImpl() {
     dists.emplace_back(lb[i], ub[i]);
   }
 
-  double sum = tbb::parallel_reduce(
-      tbb::blocked_range<int64_t>(0, n),
-      0.0,
+  double sum = tbb::parallel_reduce(tbb::blocked_range<int64_t>(0, n), 0.0,
 
-      [&](const tbb::blocked_range<int64_t> &r, double local_sum) {
+                                    [&](const tbb::blocked_range<int64_t> &r, double local_sum) {
+    std::minstd_rand gen(static_cast<uint32_t>(r.begin()) ^ 0x9e3779b9u);
 
-        std::minstd_rand gen(static_cast<uint32_t>(r.begin()) ^ 0x9e3779b9u);
+    std::vector<double> point(dim);
 
-        std::vector<double> point(dim);
+    for (int64_t i = r.begin(); i < r.end(); ++i) {
+      // генерация точки
+      for (size_t j = 0; j < dim; ++j) {
+        point[j] = dists[j](gen);
+      }
 
-        for (int64_t i = r.begin(); i < r.end(); ++i) {
+      local_sum += func(point);
+    }
 
-          // генерация точки
-          for (size_t j = 0; j < dim; ++j) {
-            point[j] = dists[j](gen);
-          }
+    return local_sum;
+  },
 
-          local_sum += func(point);
-        }
-
-        return local_sum;
-      },
-
-      [](double a, double b) {
-        return a + b;
-      });
+                                    [](double a, double b) { return a + b; });
 
   result = vol * sum / static_cast<double>(n);
   return true;

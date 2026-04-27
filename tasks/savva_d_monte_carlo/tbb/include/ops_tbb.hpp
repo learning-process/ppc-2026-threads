@@ -8,7 +8,7 @@ namespace savva_d_monte_carlo {
 class SavvaDMonteCarloTBB : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kSEQ;
+    return ppc::task::TypeOfTask::kTBB;
   }
   explicit SavvaDMonteCarloTBB(const InType &in);
 

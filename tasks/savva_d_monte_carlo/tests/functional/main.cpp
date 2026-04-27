@@ -12,7 +12,9 @@
 #include <vector>
 
 #include "savva_d_monte_carlo/common/include/common.hpp"
+#include "savva_d_monte_carlo/omp/include/ops_omp.hpp"
 #include "savva_d_monte_carlo/seq/include/ops_seq.hpp"
+#include "savva_d_monte_carlo/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -103,7 +105,7 @@ class SavvaDRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
       case 6: {  // sin_cos_2d - f(x,y) = sin(x)*cos(y)
         lower_bounds = {0.0, 0.0};
         upper_bounds = {std::acos(-1.0), std::acos(-1.0) / 2.0};
-        num_points = 500000;
+        num_points = 100000;
         f = [](const std::vector<double> &x) { return std::sin(x[0]) * std::cos(x[1]); };
         expected = 2.0;
         abs_tolerance_ = 0.1;
@@ -264,13 +266,13 @@ const std::array<TestType, 17> kTestParam = {
     std::make_tuple(12, "sum_4d_unit"),     std::make_tuple(13, "small_points"),   std::make_tuple(14, "zero_volume"),
     std::make_tuple(15, "negative_region"), std::make_tuple(16, "large_range")};
 
-const auto kTestTaskList =
-    std::tuple_cat(  // ppc::util::AddFuncTask<SavvaDMonteCarloALL, InType>(kTestParam,
-                     // PPC_SETTINGS_savva_d_monte_carlo), ppc::util::AddFuncTask<SavvaDMonteCarloOMP,
-                     // InType>(kTestParam, PPC_SETTINGS_savva_d_monte_carlo),
-        ppc::util::AddFuncTask<SavvaDMonteCarloSEQ, InType>(kTestParam, PPC_SETTINGS_savva_d_monte_carlo));
-// ppc::util::AddFuncTask<SavvaDMonteCarloSTL, InType>(kTestParam, PPC_SETTINGS_savva_d_monte_carlo),
-// ppc::util::AddFuncTask<SavvaDMonteCarloTBB, InType>(kTestParam, PPC_SETTINGS_savva_d_monte_carlo)
+const auto kTestTaskList = std::tuple_cat(  // ppc::util::AddFuncTask<SavvaDMonteCarloALL, InType>(kTestParam,
+                                            //  PPC_SETTINGS_savva_d_monte_carlo),
+    ppc::util::AddFuncTask<SavvaDMonteCarloOMP, InType>(kTestParam, PPC_SETTINGS_savva_d_monte_carlo),
+    ppc::util::AddFuncTask<SavvaDMonteCarloSEQ, InType>(kTestParam, PPC_SETTINGS_savva_d_monte_carlo),
+    ppc::util::AddFuncTask<SavvaDMonteCarloTBB, InType>(kTestParam, PPC_SETTINGS_savva_d_monte_carlo));
+
+// ppc::util::AddFuncTask<SavvaDMonteCarloSTL, InType>(kTestParam, PPC_SETTINGS_savva_d_monte_carlo)
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTaskList);
 
