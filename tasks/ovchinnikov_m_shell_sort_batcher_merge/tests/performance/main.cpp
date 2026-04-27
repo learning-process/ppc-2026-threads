@@ -41,7 +41,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, OvchinnikovMShellSortBatcherMergeSEQ, OvchinnikovMShellSortBatcherMergeOMP,
-                                OvchinnikovMShellSortBatcherMergeTBB>(PPC_SETTINGS_ovchinnikov_m_shell_sort_batcher_merge);
+                                OvchinnikovMShellSortBatcherMergeTBB>(
+        PPC_SETTINGS_ovchinnikov_m_shell_sort_batcher_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
