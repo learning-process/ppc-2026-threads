@@ -1,4 +1,6 @@
-#include "redkina_a_integral_simpson/stl/include/ops_stl.hpp"
+#include "redkina_a_integral_simpson/all/include/ops_all.hpp"
+
+#include <mpi.h>
 
 #include <algorithm>
 #include <cmath>
@@ -48,9 +50,9 @@ std::vector<size_t> ComputeStrides(const std::vector<int> &n) {
 double ComputeRangeSum(size_t start, size_t end, const std::vector<double> &a, const std::vector<double> &h,
                        const std::vector<std::vector<double>> &weights, const std::vector<size_t> &strides,
                        const std::function<double(const std::vector<double> &)> &func, size_t dim) {
+  double sum = 0.0;
   std::vector<int> indices(dim);
   std::vector<double> point(dim);
-  double local_sum = 0.0;
   for (size_t idx = start; idx < end; ++idx) {
     size_t remainder = idx;
     for (size_t dim_idx = 0; dim_idx < dim; ++dim_idx) {
@@ -63,46 +65,43 @@ double ComputeRangeSum(size_t start, size_t end, const std::vector<double> &a, c
       point[dim_idx] = a[dim_idx] + (static_cast<double>(i_idx) * h[dim_idx]);
       w_prod *= weights[dim_idx][i_idx];
     }
-    local_sum += w_prod * func(point);
+    sum += w_prod * func(point);
   }
-  return local_sum;
+  return sum;
 }
 
-// Вспомогательная функция для создания асинхронных задач
-void LaunchTasks(std::vector<std::future<double>> &futures, const std::vector<double> &a, const std::vector<double> &h,
-                 const std::vector<std::vector<double>> &weights, const std::vector<size_t> &strides,
-                 const std::function<double(const std::vector<double> &)> &func, size_t dim, size_t total_points) {
-  unsigned int num_threads = std::thread::hardware_concurrency();
-  if (num_threads == 0) {
-    num_threads = 2;
+double ComputeLocalSumMPI(size_t local_start, size_t local_end, const std::vector<double> &a,
+                          const std::vector<double> &h, const std::vector<std::vector<double>> &weights,
+                          const std::vector<size_t> &strides,
+                          const std::function<double(const std::vector<double> &)> &func, size_t dim) {
+  const size_t local_size = local_end - local_start;
+  if (local_size == 0) {
+    return 0.0;
   }
 
-  const size_t block_size = total_points / num_threads;
-  const size_t rem = total_points % num_threads;
-
-  size_t start = 0;
-  for (unsigned int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
-    const size_t end = std::min(start + block_size + (thread_idx < rem ? 1 : 0), total_points);
-    if (start >= end) {
-      break;
-    }
-
-    futures.push_back(std::async(std::launch::async, [=, &a, &h, &weights, &strides, &func]() {
-      return ComputeRangeSum(start, end, a, h, weights, strides, func, dim);
-    }));
-
-    start = end;
-    if (start >= total_points) {
-      break;
-    }
+  unsigned int hardware_threads = std::thread::hardware_concurrency();
+  if (hardware_threads == 0) {
+    hardware_threads = 2;
   }
-}
+  unsigned int num_threads = std::min(hardware_threads, static_cast<unsigned int>(local_size));
 
-double ParallelSum(const std::vector<double> &a, const std::vector<double> &h,
-                   const std::vector<std::vector<double>> &weights, const std::vector<size_t> &strides,
-                   size_t total_points, const std::function<double(const std::vector<double> &)> &func, size_t dim) {
+  if (num_threads == 1) {
+    return ComputeRangeSum(local_start, local_end, a, h, weights, strides, func, dim);
+  }
+
   std::vector<std::future<double>> futures;
-  LaunchTasks(futures, a, h, weights, strides, func, dim, total_points);
+  const size_t block_size = local_size / num_threads;
+  const size_t rem_blocks = local_size % num_threads;
+  size_t current_start = local_start;
+
+  for (unsigned int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+    const size_t block_end = current_start + block_size + (thread_idx < rem_blocks ? 1 : 0);
+    futures.push_back(
+        std::async(std::launch::async, [&a, &h, &weights, &strides, &func, dim, current_start, block_end]() {
+      return ComputeRangeSum(current_start, block_end, a, h, weights, strides, func, dim);
+    }));
+    current_start = block_end;
+  }
 
   double total = 0.0;
   for (auto &f : futures) {
@@ -113,14 +112,14 @@ double ParallelSum(const std::vector<double> &a, const std::vector<double> &h,
 
 }  // namespace
 
-RedkinaAIntegralSimpsonSTL::RedkinaAIntegralSimpsonSTL(const InType &in) {
+RedkinaAIntegralSimpsonALL::RedkinaAIntegralSimpsonALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
-bool RedkinaAIntegralSimpsonSTL::ValidationImpl() {
+bool RedkinaAIntegralSimpsonALL::ValidationImpl() {
   const auto &in = GetInput();
-  size_t dim = in.a.size();
+  const size_t dim = in.a.size();
 
   if (dim == 0 || in.b.size() != dim || in.n.size() != dim) {
     return false;
@@ -136,7 +135,7 @@ bool RedkinaAIntegralSimpsonSTL::ValidationImpl() {
   return static_cast<bool>(in.func);
 }
 
-bool RedkinaAIntegralSimpsonSTL::PreProcessingImpl() {
+bool RedkinaAIntegralSimpsonALL::PreProcessingImpl() {
   const auto &in = GetInput();
   func_ = in.func;
   a_ = in.a;
@@ -146,7 +145,7 @@ bool RedkinaAIntegralSimpsonSTL::PreProcessingImpl() {
   return true;
 }
 
-bool RedkinaAIntegralSimpsonSTL::RunImpl() {
+bool RedkinaAIntegralSimpsonALL::RunImpl() {
   if (!func_) {
     return false;
   }
@@ -170,18 +169,32 @@ bool RedkinaAIntegralSimpsonSTL::RunImpl() {
 
   const size_t total_points = strides[0] * static_cast<size_t>(n_[0] + 1);
 
-  const double sum = ParallelSum(a_, h, weights, strides, total_points, func_, dim);
+  int rank = 0;
+  int world_size = 1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
+  const auto rank_u = static_cast<size_t>(rank);
+  const auto size_u = static_cast<size_t>(world_size);
+  const size_t base = total_points / size_u;
+  const size_t rem = total_points % size_u;
+  const size_t local_start = (rank_u * base) + std::min(rank_u, rem);
+  const size_t local_end = local_start + base + (rank_u < rem ? 1 : 0);
+
+  const double local_sum = ComputeLocalSumMPI(local_start, local_end, a_, h, weights, strides, func_, dim);
+
+  double global_sum = 0.0;
+  MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
   double denominator = 1.0;
   for (size_t i = 0; i < dim; ++i) {
     denominator *= 3.0;
   }
-
-  result_ = (h_prod / denominator) * sum;
+  result_ = (h_prod / denominator) * global_sum;
   return true;
 }
 
-bool RedkinaAIntegralSimpsonSTL::PostProcessingImpl() {
+bool RedkinaAIntegralSimpsonALL::PostProcessingImpl() {
   GetOutput() = result_;
   return true;
 }
