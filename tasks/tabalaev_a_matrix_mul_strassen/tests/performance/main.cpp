@@ -2,10 +2,13 @@
 
 #include <cmath>
 #include <cstddef>
+#include <tuple>
 #include <vector>
 
 #include "tabalaev_a_matrix_mul_strassen/common/include/common.hpp"
+#include "tabalaev_a_matrix_mul_strassen/omp/include/ops_omp.hpp"
 #include "tabalaev_a_matrix_mul_strassen/seq/include/ops_seq.hpp"
+#include "tabalaev_a_matrix_mul_strassen/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace tabalaev_a_matrix_mul_strassen {
@@ -67,8 +70,10 @@ TEST_P(TabalaevAMatrixMulStrassenPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, TabalaevAMatrixMulStrassenSEQ>(PPC_SETTINGS_tabalaev_a_matrix_mul_strassen);
+const auto kAllPerfTasks = std::tuple_cat(
+    ppc::util::MakeAllPerfTasks<InType, TabalaevAMatrixMulStrassenSEQ>(PPC_SETTINGS_tabalaev_a_matrix_mul_strassen),
+    ppc::util::MakeAllPerfTasks<InType, TabalaevAMatrixMulStrassenOMP>(PPC_SETTINGS_tabalaev_a_matrix_mul_strassen),
+    ppc::util::MakeAllPerfTasks<InType, TabalaevAMatrixMulStrassenTBB>(PPC_SETTINGS_tabalaev_a_matrix_mul_strassen));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

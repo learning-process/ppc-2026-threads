@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "krasnopevtseva_v_hoare_batcher_sort/common/include/common.hpp"
+#include "krasnopevtseva_v_hoare_batcher_sort/omp/include/ops_omp.hpp"
 #include "krasnopevtseva_v_hoare_batcher_sort/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -76,8 +77,10 @@ const std::array<TestType, 6> kTestParam = {
                                      1843,  1000, 10,   9,    8,    7,    6,    5,    4,    3,    2,    1},
                     "end_to_begin_array")};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<KrasnopevtsevaVHoareBatcherSortSEQ, InType>(
-    kTestParam, PPC_SETTINGS_krasnopevtseva_v_hoare_batcher_sort);
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KrasnopevtsevaVHoareBatcherSortSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_krasnopevtseva_v_hoare_batcher_sort),
+                                           ppc::util::AddFuncTask<KrasnopevtsevaVHoareBatcherSortOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_krasnopevtseva_v_hoare_batcher_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "rysev_m_linear_filter_gauss_kernel/common/include/common.hpp"
+#include "rysev_m_linear_filter_gauss_kernel/omp/include/ops_omp.hpp"
 #include "rysev_m_linear_filter_gauss_kernel/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -29,11 +30,10 @@ TEST_P(RysevMPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, RysevMGaussFilterSEQ>(PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, RysevMGaussFilterSEQ, RysevMGaussFilterOMP>(
+    PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-
 const auto kPerfTestName = RysevMPerfTests::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(RunModeTests, RysevMPerfTests, kGtestValues, kPerfTestName);

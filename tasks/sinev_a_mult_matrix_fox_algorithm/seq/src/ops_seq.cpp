@@ -5,7 +5,7 @@
 
 #include "sinev_a_mult_matrix_fox_algorithm/common/include/common.hpp"
 
-namespace sinev_a_mult_matrix_fox_algorithm_seq {
+namespace sinev_a_mult_matrix_fox_algorithm {
 
 SinevAMultMatrixFoxAlgorithmSEQ::SinevAMultMatrixFoxAlgorithmSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -53,4 +53,4 @@ bool SinevAMultMatrixFoxAlgorithmSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace sinev_a_mult_matrix_fox_algorithm_seq
+}  // namespace sinev_a_mult_matrix_fox_algorithm

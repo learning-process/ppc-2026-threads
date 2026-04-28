@@ -6,13 +6,15 @@
 #include <tuple>
 
 #include "popova_e_radix_sort_for_double_with_simple_merge/common/include/common.hpp"
+#include "popova_e_radix_sort_for_double_with_simple_merge/omp/include/ops_omp.hpp"
 #include "popova_e_radix_sort_for_double_with_simple_merge/seq/include/ops_seq.hpp"
+#include "popova_e_radix_sort_for_double_with_simple_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
 namespace popova_e_radix_sort_for_double_with_simple_merge_threads {
 
-class PopovaERunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class PopovaERunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -38,7 +40,7 @@ class PopovaERunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutTyp
 
 namespace {
 
-TEST_P(PopovaERunFuncTestsSEQ, RadixSortSEQ) {
+TEST_P(PopovaERunFuncTests, RadixSortTests) {
   ExecuteTest(GetParam());
 }
 
@@ -48,14 +50,24 @@ const std::array<TestType, 12> kTestParam = {
     std::make_tuple(10, "10_3"), std::make_tuple(17, "17"),     std::make_tuple(50, "50"),
     std::make_tuple(100, "100"), std::make_tuple(1000, "1000"), std::make_tuple(5000, "5000")};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<PopovaERadixSorForDoubleWithSimpleMergeSEQ, InType>(
+const auto kTasksSEQ = ppc::util::AddFuncTask<PopovaERadixSorForDoubleWithSimpleMergeSEQ, InType>(
     kTestParam, PPC_SETTINGS_popova_e_radix_sort_for_double_with_simple_merge);
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+const auto kTasksOMP = ppc::util::AddFuncTask<PopovaERadixSorForDoubleWithSimpleMergeOMP, InType>(
+    kTestParam, PPC_SETTINGS_popova_e_radix_sort_for_double_with_simple_merge);
 
-const auto kPerfTestName = PopovaERunFuncTestsSEQ::PrintFuncTestName<PopovaERunFuncTestsSEQ>;
+const auto kTasksTBB = ppc::util::AddFuncTask<PopovaERadixSorForDoubleWithSimpleMergeTBB, InType>(
+    kTestParam, PPC_SETTINGS_popova_e_radix_sort_for_double_with_simple_merge);
 
-INSTANTIATE_TEST_SUITE_P(RadixSortSEQTests, PopovaERunFuncTestsSEQ, kGtestValues, kPerfTestName);
+const auto kValuesSEQ = ppc::util::ExpandToValues(kTasksSEQ);
+const auto kValuesOMP = ppc::util::ExpandToValues(kTasksOMP);
+const auto kValuesTBB = ppc::util::ExpandToValues(kTasksTBB);
+
+const auto kTestName = PopovaERunFuncTests::PrintFuncTestName<PopovaERunFuncTests>;
+
+INSTANTIATE_TEST_SUITE_P(RadixSortSEQ, PopovaERunFuncTests, kValuesSEQ, kTestName);
+INSTANTIATE_TEST_SUITE_P(RadixSortOMP, PopovaERunFuncTests, kValuesOMP, kTestName);
+INSTANTIATE_TEST_SUITE_P(RadixSortTBB, PopovaERunFuncTests, kValuesTBB, kTestName);
 
 }  // namespace
 }  // namespace popova_e_radix_sort_for_double_with_simple_merge_threads

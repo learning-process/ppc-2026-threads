@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <omp.h>
 #include <stb/stb_image.h>
 
 #include <array>
@@ -10,7 +11,9 @@
 #include <tuple>
 
 #include "kiselev_i_trapezoidal_method_for_multidimensional_integrals/common/include/common.hpp"
+#include "kiselev_i_trapezoidal_method_for_multidimensional_integrals/omp/include/ops_omp.hpp"
 #include "kiselev_i_trapezoidal_method_for_multidimensional_integrals/seq/include/ops_seq.hpp"
+#include "kiselev_i_trapezoidal_method_for_multidimensional_integrals/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -21,7 +24,7 @@ constexpr double kPi = std::numbers::pi;
 class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::get<1>(test_param);
+    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
   }
   double expected_value = 0.0;
 
@@ -152,6 +155,49 @@ class KiselevIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
         expected_value = 0.0;
         break;
 
+      case 15:
+        input_data_.left_bounds = {0, 0};
+        input_data_.right_bounds = {kPi, kPi / 2};
+        input_data_.step_n_size = {200, 200};
+        input_data_.type_function = 1;
+        expected_value = 2.0;
+        break;
+
+      case 16:
+        input_data_.left_bounds = {0};
+        input_data_.right_bounds = {1, 1};
+        input_data_.step_n_size = {100, 100};
+        input_data_.type_function = 0;
+        input_data_.epsilon = 1e-2;
+        expected_value = 0.0;
+        break;
+
+      case 17:
+        input_data_.left_bounds = {0, 0};
+        input_data_.right_bounds = {1, 1};
+        input_data_.step_n_size = {100};
+        input_data_.type_function = 0;
+        input_data_.epsilon = 1e-2;
+        expected_value = 0.0;
+        break;
+
+      case 18:
+        input_data_.left_bounds = {0, 0};
+        input_data_.right_bounds = {kPi / 2, kPi / 2};
+        input_data_.step_n_size = {300, 300};
+        input_data_.type_function = 2;
+        input_data_.epsilon = -1.0;
+        expected_value = ((kPi / 2) * 1) + ((kPi / 2) * 1);
+        break;
+
+      case 19:
+        input_data_.left_bounds = {0, 0};
+        input_data_.right_bounds = {1};
+        input_data_.step_n_size = {100, 100};
+        input_data_.type_function = 0;
+        input_data_.epsilon = 1e-2;
+        expected_value = 0.0;
+        break;
       default:
         throw std::runtime_error("Unknown test id");
     }
@@ -174,14 +220,22 @@ TEST_P(KiselevIRunFuncTestsThreads, IntegralCorrectness) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 15> kTestParam = {
-    std::make_tuple(0, "sq1"),   std::make_tuple(1, "sq2"),   std::make_tuple(2, "sq3"),   std::make_tuple(3, "sq4"),
-    std::make_tuple(4, "sq5"),   std::make_tuple(5, "lin1"),  std::make_tuple(6, "lin2"),  std::make_tuple(7, "lin3"),
-    std::make_tuple(8, "lin4"),  std::make_tuple(9, "cos1"),  std::make_tuple(10, "cos2"), std::make_tuple(11, "cos3"),
-    std::make_tuple(12, "exp1"), std::make_tuple(13, "exp2"), std::make_tuple(14, "exp3")};
+const std::array<TestType, 20> kTestParam = {
+    std::make_tuple(0, "sq1"),         std::make_tuple(1, "sq2"),           std::make_tuple(2, "sq3"),
+    std::make_tuple(3, "sq4"),         std::make_tuple(4, "sq5"),           std::make_tuple(5, "lin1"),
+    std::make_tuple(6, "lin2"),        std::make_tuple(7, "lin3"),          std::make_tuple(8, "lin4"),
+    std::make_tuple(9, "cos1"),        std::make_tuple(10, "cos2"),         std::make_tuple(11, "cos3"),
+    std::make_tuple(12, "exp1"),       std::make_tuple(13, "exp2"),         std::make_tuple(14, "exp3"),
+    std::make_tuple(15, "sincosmul"),  std::make_tuple(16, "invaliddata1"), std::make_tuple(17, "invaliddata2"),
+    std::make_tuple(18, "badepsilon"), std::make_tuple(19, "invaliddata3")};
 
 const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<KiselevITestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_example_threads));
+    std::tuple_cat(ppc::util::AddFuncTask<KiselevITestTaskSEQ, InType>(
+                       kTestParam, PPC_SETTINGS_kiselev_i_trapezoidal_method_for_multidimensional_integrals),
+                   ppc::util::AddFuncTask<KiselevITestTaskOMP, InType>(
+                       kTestParam, PPC_SETTINGS_kiselev_i_trapezoidal_method_for_multidimensional_integrals),
+                   ppc::util::AddFuncTask<KiselevITestTaskTBB, InType>(
+                       kTestParam, PPC_SETTINGS_kiselev_i_trapezoidal_method_for_multidimensional_integrals));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

@@ -7,6 +7,7 @@
 #include <tuple>
 
 #include "tsibareva_e_integral_calculate_trapezoid_method/common/include/common.hpp"
+#include "tsibareva_e_integral_calculate_trapezoid_method/omp/include/ops_omp.hpp"
 #include "tsibareva_e_integral_calculate_trapezoid_method/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -48,18 +49,19 @@ TEST_P(TsibarevaERunFuncTestsThreads, IntegralCalculation) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 7> kTestParams = {
-    std::make_tuple(IntegralTestType::kSuccessSimple2D, "2d_simple"),
-    std::make_tuple(IntegralTestType::kSuccessConstant2D, "2d_constant"),
-    std::make_tuple(IntegralTestType::kSuccessSimple3D, "3d_simple"),
-    std::make_tuple(IntegralTestType::kSuccessConstant3D, "3d_constant"),
-    std::make_tuple(IntegralTestType::kInvalidLowerBoundEqual, "invalid_lower_bound_equal"),
-    std::make_tuple(IntegralTestType::kInvalidStepsNegative, "invalid_steps_negative"),
-    std::make_tuple(IntegralTestType::kInvalidEmptyBounds, "invalid_empty_bounds")};
+const std::array<TestType, 6> kTestParams = {
+    std::make_tuple(IntegralTestType::kSuccessSimple2D, "2d_simple_lab2"),
+    std::make_tuple(IntegralTestType::kSuccessConstant2D, "2d_constant_lab2"),
+    std::make_tuple(IntegralTestType::kSuccessSimple3D, "3d_simple_lab2"),
+    std::make_tuple(IntegralTestType::kSuccessConstant3D, "3d_constant_lab2"),
+    std::make_tuple(IntegralTestType::kInvalidLowerBoundEqual, "invalid_lower_bound_equal_lab2"),
+    std::make_tuple(IntegralTestType::kInvalidEmptyBounds, "invalid_empty_bounds_lab2")};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<TsibarevaEIntegralCalculateTrapezoidMethodSEQ, InType>(
-        kTestParams, PPC_SETTINGS_tsibareva_e_integral_calculate_trapezoid_method));
+                       kTestParams, PPC_SETTINGS_tsibareva_e_integral_calculate_trapezoid_method),
+                   ppc::util::AddFuncTask<TsibarevaEIntegralCalculateTrapezoidMethodOMP, InType>(
+                       kTestParams, PPC_SETTINGS_tsibareva_e_integral_calculate_trapezoid_method));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

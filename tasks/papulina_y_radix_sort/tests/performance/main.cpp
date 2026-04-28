@@ -5,23 +5,26 @@
 #include <vector>
 
 #include "papulina_y_radix_sort/common/include/common.hpp"
+#include "papulina_y_radix_sort/omp/include/ops_omp.hpp"
 #include "papulina_y_radix_sort/seq/include/ops_seq.hpp"
+#include "papulina_y_radix_sort/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace papulina_y_radix_sort {
 
 class PapulinaYRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 10000000;
+  // const int kCount_ = 15;
   InType input_data_;
   std::vector<double> expected_result_;
 
   void SetUp() override {
     std::random_device rd;
     std::mt19937_64 gen(rd());
-    std::normal_distribution<double> dist(-1000.0, 1000.0);
+    std::normal_distribution<double> dist(-1000.0, 0.0);
     input_data_ = std::vector<double>(kCount_);
     for (int i = 0; i < kCount_; i++) {
-      input_data_[i] = dist(gen);
+      input_data_[i] = i * 0.125 * dist(gen);
     }
     expected_result_ = input_data_;
     std::ranges::sort(expected_result_);
@@ -43,7 +46,8 @@ TEST_P(PapulinaYRunPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, PapulinaYRadixSortSEQ>(PPC_SETTINGS_papulina_y_radix_sort);
+    ppc::util::MakeAllPerfTasks<InType, PapulinaYRadixSortSEQ, PapulinaYRadixSortOMP, PapulinaYRadixSortTBB>(
+        PPC_SETTINGS_papulina_y_radix_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

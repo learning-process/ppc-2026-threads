@@ -1,5 +1,6 @@
 {
   "tasks": {
+    "omp": "enabled",
     "seq": "enabled"
   },
   "tasks_type": "threads"

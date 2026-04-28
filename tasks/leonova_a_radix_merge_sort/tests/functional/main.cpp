@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "leonova_a_radix_merge_sort/common/include/common.hpp"
+#include "leonova_a_radix_merge_sort/omp/include/ops_omp.hpp"
 #include "leonova_a_radix_merge_sort/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -145,7 +146,7 @@ TEST_P(LeonovaARadixMergeSortRunFuncTests, RadixMergeSort) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 24> kTestParam = {
+const std::array<TestType, 32> kTestParam = {
     // 1 элемент
     std::make_tuple(std::vector<int64_t>{42}, 
                     std::vector<int64_t>{42}),
@@ -338,10 +339,80 @@ const std::array<TestType, 24> kTestParam = {
     
     // Граничные значения
     std::make_tuple(std::vector<int64_t>{INT64_MAX, INT64_MIN, 0, INT64_MAX - 1, INT64_MIN + 1}, 
-                    std::vector<int64_t>{INT64_MIN, INT64_MIN + 1, 0, INT64_MAX - 1, INT64_MAX})
+                    std::vector<int64_t>{INT64_MIN, INT64_MIN + 1, 0, INT64_MAX - 1, INT64_MAX}),
+
+    std::make_tuple(
+    []() {
+        std::vector<int64_t> v(131072);
+        for (size_t i = 0; i < v.size(); ++i) {
+            v[i] = static_cast<int64_t>(v.size() - i);
+        }
+        return v;
+    }(),
+    []() {
+        std::vector<int64_t> v(131072);
+        for (size_t i = 0; i < v.size(); ++i) {
+            v[i] = static_cast<int64_t>(i + 1);
+        }
+        return v;
+    }()
+),
+
+
+std::make_tuple(
+    []() {
+        std::vector<int64_t> v(131073);
+        for (size_t i = 0; i < v.size(); ++i) {
+            v[i] = static_cast<int64_t>(v.size() - i);
+        }
+        return v;
+    }(),
+    []() {
+        std::vector<int64_t> v(131073);
+        for (size_t i = 0; i < v.size(); ++i) {
+            v[i] = static_cast<int64_t>(i + 1);
+        }
+        return v;
+    }()
+),
+// Один элемент
+std::make_tuple(
+    std::vector<int64_t>{1},
+    std::vector<int64_t>{1}
+),
+// Почти отсортированный
+std::make_tuple(
+    std::vector<int64_t>{1, 2, 3, 5, 4, 6, 7},
+    std::vector<int64_t>{1, 2, 3, 4, 5, 6, 7}
+),
+
+// Один выброс
+std::make_tuple(
+    std::vector<int64_t>{1, 1, 1, 1, 1000000, 1, 1},
+    std::vector<int64_t>{1, 1, 1, 1, 1, 1, 1000000}
+),
+
+// Все нули
+std::make_tuple(
+    std::vector<int64_t>(50, 0),
+    std::vector<int64_t>(50, 0)
+),
+
+// Маленький с отрицательными
+std::make_tuple(
+    std::vector<int64_t>{0, -1},
+    std::vector<int64_t>{-1, 0}
+),
+
+// Смешанные экстремумы
+std::make_tuple(
+    std::vector<int64_t>{INT64_MIN, -100, -1, 0, 1, 100, INT64_MAX},
+    std::vector<int64_t>{INT64_MIN, -100, -1, 0, 1, 100, INT64_MAX}
+)
 };
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<LeonovaARadixMergeSortOMP, InType>(kTestParam, PPC_SETTINGS_leonova_a_radix_merge_sort),
     ppc::util::AddFuncTask<LeonovaARadixMergeSortSEQ, InType>(kTestParam, PPC_SETTINGS_leonova_a_radix_merge_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
