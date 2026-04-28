@@ -10,7 +10,10 @@
 #include <vector>
 
 #include "samoylenko_i_integral_trapezoid/common/include/common.hpp"
+#include "samoylenko_i_integral_trapezoid/omp/include/ops_omp.hpp"
 #include "samoylenko_i_integral_trapezoid/seq/include/ops_seq.hpp"
+#include "samoylenko_i_integral_trapezoid/stl/include/ops_stl.hpp"
+#include "samoylenko_i_integral_trapezoid/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -57,7 +60,13 @@ const std::array<TestType, 5> kTestParam = {
     std::make_pair(InType{{0.0}, {std::numbers::pi}, {1000}, 3}, 2.0)};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SamoylenkoIIntegralTrapezoidSEQ, InType>(
-    kTestParam, PPC_SETTINGS_samoylenko_i_integral_trapezoid));
+                                               kTestParam, PPC_SETTINGS_samoylenko_i_integral_trapezoid),
+                                           ppc::util::AddFuncTask<SamoylenkoIIntegralTrapezoidOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_samoylenko_i_integral_trapezoid),
+                                           ppc::util::AddFuncTask<SamoylenkoIIntegralTrapezoidTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_samoylenko_i_integral_trapezoid),
+                                           ppc::util::AddFuncTask<SamoylenkoIIntegralTrapezoidSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_samoylenko_i_integral_trapezoid));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

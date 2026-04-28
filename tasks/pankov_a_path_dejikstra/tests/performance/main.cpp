@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "pankov_a_path_dejikstra/common/include/common.hpp"
+#include "pankov_a_path_dejikstra/omp/include/ops_omp.hpp"
 #include "pankov_a_path_dejikstra/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -55,8 +56,8 @@ TEST_P(PankovAPathDejikstraRunPerfTestThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, PankovAPathDejikstraSEQ>(PPC_SETTINGS_pankov_a_path_dejikstra);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, PankovAPathDejikstraSEQ, PankovAPathDejikstraOMP>(
+    PPC_SETTINGS_pankov_a_path_dejikstra);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

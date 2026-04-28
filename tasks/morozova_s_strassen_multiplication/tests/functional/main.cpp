@@ -8,12 +8,14 @@
 #include <tuple>
 
 #include "morozova_s_strassen_multiplication/common/include/common.hpp"
+#include "morozova_s_strassen_multiplication/omp/include/ops_omp.hpp"
 #include "morozova_s_strassen_multiplication/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
 namespace morozova_s_strassen_multiplication {
 
+template <typename TaskType>
 class MorozovaSStrassenMultiplicationFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
@@ -62,6 +64,18 @@ class MorozovaSStrassenMultiplicationFuncTests : public ppc::util::BaseRunFuncTe
       case 7:
         SetupTest7();
         break;
+      case 8:
+        SetupTest8();
+        break;
+      case 9:
+        SetupTest9();
+        break;
+      case 10:
+        SetupTest10();
+        break;
+      case 11:
+        SetupTest11();
+        break;
       default:
         SetupDefaultTest();
         break;
@@ -80,7 +94,7 @@ class MorozovaSStrassenMultiplicationFuncTests : public ppc::util::BaseRunFuncTe
 
   void SetupTest3() {
     input_data_ = {8.0};
-    AddWeightedMatrix(8, [](int i, int j) { return static_cast<double>(i + 1) * (j + 1) * 0.5; });
+    AddWeightedMatrix(8, [](int i, int j) { return static_cast<double>((i + 1) * (j + 1) * 0.5); });
     AddWeightedMatrix(8, [](int i, int j) { return static_cast<double>(i + j + 1) * 0.3; });
   }
 
@@ -102,6 +116,30 @@ class MorozovaSStrassenMultiplicationFuncTests : public ppc::util::BaseRunFuncTe
 
   void SetupTest7() {
     input_data_ = {0.0, 1.0, 2.0, 3.0, 4.0};
+  }
+
+  void SetupTest8() {
+    input_data_ = {3.0};
+    AddWeightedMatrix(3, [](int i, int j) { return static_cast<double>(i + j + 1); });
+    AddWeightedMatrix(3, [](int i, int j) { return static_cast<double>((i + 1) * (j + 1)); });
+  }
+
+  void SetupTest9() {
+    input_data_ = {1.0};
+    AddWeightedMatrix(1, [](int, int) { return 2.0; });
+    AddWeightedMatrix(1, [](int, int) { return 3.0; });
+  }
+
+  void SetupTest10() {
+    input_data_ = {64.0};
+    AddWeightedMatrix(64, [](int i, int j) { return static_cast<double>((i * 64) + j + 1); });
+    AddWeightedMatrix(64, [](int i, int j) { return static_cast<double>(((i + j) * 2) + 1); });
+  }
+
+  void SetupTest11() {
+    input_data_ = {128.0};
+    AddWeightedMatrix(128, [](int i, int j) { return static_cast<double>((i * 128) + j + 1); });
+    AddWeightedMatrix(128, [](int i, int j) { return static_cast<double>(((i + j) * 2) + 1); });
   }
 
   void SetupDefaultTest() {
@@ -215,27 +253,54 @@ class MorozovaSStrassenMultiplicationFuncTests : public ppc::util::BaseRunFuncTe
   int test_number_{0};
 };
 
-namespace {
+}  // namespace morozova_s_strassen_multiplication
 
-TEST_P(MorozovaSStrassenMultiplicationFuncTests, MatrixMultiplication) {
+using morozova_s_strassen_multiplication::InType;
+using morozova_s_strassen_multiplication::MorozovaSStrassenMultiplicationFuncTests;
+using morozova_s_strassen_multiplication::MorozovaSStrassenMultiplicationOMP;
+using morozova_s_strassen_multiplication::MorozovaSStrassenMultiplicationSEQ;
+using morozova_s_strassen_multiplication::TestType;
+
+using MorozovaSStrassenMultiplicationSEQFuncTests =
+    MorozovaSStrassenMultiplicationFuncTests<MorozovaSStrassenMultiplicationSEQ>;
+
+TEST_P(MorozovaSStrassenMultiplicationSEQFuncTests, MatrixMultiplication) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 7> kTestParam = {std::make_tuple(1, "2x2"),         std::make_tuple(2, "4x4"),
-                                            std::make_tuple(3, "8x8"),         std::make_tuple(4, "16x16"),
-                                            std::make_tuple(5, "32x32"),       std::make_tuple(6, "empty"),
-                                            std::make_tuple(7, "invalid_size")};
+const std::array<TestType, 11> kTestParam = {
+    std::make_tuple(1, "2x2"),          std::make_tuple(2, "4x4"),     std::make_tuple(3, "8x8"),
+    std::make_tuple(4, "16x16"),        std::make_tuple(5, "32x32"),   std::make_tuple(6, "empty"),
+    std::make_tuple(7, "invalid_size"), std::make_tuple(8, "3x3_odd"), std::make_tuple(9, "1x1"),
+    std::make_tuple(10, "64x64"),       std::make_tuple(11, "128x128")};
 
 const auto kTestTasksSEQ = ppc::util::AddFuncTask<MorozovaSStrassenMultiplicationSEQ, InType>(
     kTestParam, PPC_SETTINGS_morozova_s_strassen_multiplication);
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksSEQ);
-const auto kPerfTestName =
-    MorozovaSStrassenMultiplicationFuncTests::PrintFuncTestName<MorozovaSStrassenMultiplicationFuncTests>;
+const auto kGtestValuesSEQ = ppc::util::ExpandToValues(kTestTasksSEQ);
+const auto kPerfTestNameSEQ =
+    MorozovaSStrassenMultiplicationSEQFuncTests::PrintFuncTestName<MorozovaSStrassenMultiplicationSEQFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(StrassenMultiplicationTests, MorozovaSStrassenMultiplicationFuncTests, kGtestValues,
-                         kPerfTestName);
-
+namespace {
+INSTANTIATE_TEST_SUITE_P(StrassenMultiplicationSEQTests, MorozovaSStrassenMultiplicationSEQFuncTests, kGtestValuesSEQ,
+                         kPerfTestNameSEQ);
 }  // namespace
 
-}  // namespace morozova_s_strassen_multiplication
+using MorozovaSStrassenMultiplicationOMPFuncTests =
+    MorozovaSStrassenMultiplicationFuncTests<MorozovaSStrassenMultiplicationOMP>;
+
+TEST_P(MorozovaSStrassenMultiplicationOMPFuncTests, MatrixMultiplication) {
+  ExecuteTest(GetParam());
+}
+
+const auto kTestTasksOMP = ppc::util::AddFuncTask<MorozovaSStrassenMultiplicationOMP, InType>(
+    kTestParam, PPC_SETTINGS_morozova_s_strassen_multiplication);
+
+const auto kGtestValuesOMP = ppc::util::ExpandToValues(kTestTasksOMP);
+const auto kPerfTestNameOMP =
+    MorozovaSStrassenMultiplicationOMPFuncTests::PrintFuncTestName<MorozovaSStrassenMultiplicationOMPFuncTests>;
+
+namespace {
+INSTANTIATE_TEST_SUITE_P(StrassenMultiplicationOMPTests, MorozovaSStrassenMultiplicationOMPFuncTests, kGtestValuesOMP,
+                         kPerfTestNameOMP);
+}  // namespace

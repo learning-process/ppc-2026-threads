@@ -3,7 +3,7 @@
 #include "borunov_v_complex_ccs/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace borunov_v_complex_ccs_seq {
+namespace borunov_v_complex_ccs {
 
 class BorunovVComplexCcsSEQ : public BaseTask {
  public:
@@ -19,4 +19,4 @@ class BorunovVComplexCcsSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace borunov_v_complex_ccs_seq
+}  // namespace borunov_v_complex_ccs

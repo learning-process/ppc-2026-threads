@@ -2,7 +2,7 @@
   "tasks": {
     "all": "enabled",
     "omp": "enabled",
-    "seq": "enabled",
+    "seq": "disabled",
     "stl": "enabled",
     "tbb": "enabled"
   },

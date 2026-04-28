@@ -6,10 +6,10 @@
 
 // #include "korolev_k_matrix_mult/all/include/ops_all.hpp"
 #include "korolev_k_matrix_mult/common/include/common.hpp"
-// #include "korolev_k_matrix_mult/omp/include/ops_omp.hpp"
+#include "korolev_k_matrix_mult/omp/include/ops_omp.hpp"
 #include "korolev_k_matrix_mult/seq/include/ops_seq.hpp"
 // #include "korolev_k_matrix_mult/stl/include/ops_stl.hpp"
-// #include "korolev_k_matrix_mult/tbb/include/ops_tbb.hpp"
+#include "korolev_k_matrix_mult/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace korolev_k_matrix_mult {
@@ -68,11 +68,10 @@ TEST_P(KorolevKMatrixMultRunPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KorolevKMatrixMultSEQ>(PPC_SETTINGS_korolev_k_matrix_mult);
+    ppc::util::MakeAllPerfTasks<InType, KorolevKMatrixMultSEQ, KorolevKMatrixMultOMP, KorolevKMatrixMultTBB>(
+        PPC_SETTINGS_korolev_k_matrix_mult);
 // KorolevKMatrixMultALL,
-// KorolevKMatrixMultOMP,
 // KorolevKMatrixMultSTL,
-// KorolevKMatrixMultTBB
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

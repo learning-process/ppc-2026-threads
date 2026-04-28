@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "potashnik_m_matrix_mult_complex/common/include/common.hpp"
+#include "potashnik_m_matrix_mult_complex/omp/include/ops_omp.hpp"
 #include "potashnik_m_matrix_mult_complex/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -121,7 +122,9 @@ const std::array<TestType, 10> kTestParam = {
     std::make_tuple(9, 9, 9), std::make_tuple(10, 10, 10)};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<PotashnikMMatrixMultComplexSEQ, InType>(
-    kTestParam, PPC_SETTINGS_potashnik_m_matrix_mult_complex));
+                                               kTestParam, PPC_SETTINGS_potashnik_m_matrix_mult_complex),
+                                           ppc::util::AddFuncTask<PotashnikMMatrixMultComplexOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_potashnik_m_matrix_mult_complex));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

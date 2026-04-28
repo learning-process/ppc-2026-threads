@@ -8,7 +8,7 @@
 
 #include "borunov_v_complex_ccs/common/include/common.hpp"
 
-namespace borunov_v_complex_ccs_seq {
+namespace borunov_v_complex_ccs {
 
 BorunovVComplexCcsSEQ::BorunovVComplexCcsSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -17,11 +17,8 @@ BorunovVComplexCcsSEQ::BorunovVComplexCcsSEQ(const InType &in) {
 }
 
 bool BorunovVComplexCcsSEQ::ValidationImpl() {
-  if (GetInput().size() != 2) {
-    return false;
-  }
-  const auto &a = GetInput()[0];
-  const auto &b = GetInput()[1];
+  const auto &a = GetInput().first;
+  const auto &b = GetInput().second;
   if (a.num_cols != b.num_rows) {
     return false;
   }
@@ -33,8 +30,8 @@ bool BorunovVComplexCcsSEQ::ValidationImpl() {
 }
 
 bool BorunovVComplexCcsSEQ::PreProcessingImpl() {
-  const auto &a = GetInput()[0];
-  const auto &b = GetInput()[1];
+  const auto &a = GetInput().first;
+  const auto &b = GetInput().second;
   auto &c = GetOutput()[0];
 
   c.num_rows = a.num_rows;
@@ -47,8 +44,8 @@ bool BorunovVComplexCcsSEQ::PreProcessingImpl() {
 }
 
 bool BorunovVComplexCcsSEQ::RunImpl() {
-  const auto &a = GetInput()[0];
-  const auto &b = GetInput()[1];
+  const auto &a = GetInput().first;
+  const auto &b = GetInput().second;
   auto &c = GetOutput()[0];
 
   std::vector<std::complex<double>> col_accumulator(a.num_rows, {0.0, 0.0});
@@ -94,4 +91,4 @@ bool BorunovVComplexCcsSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace borunov_v_complex_ccs_seq
+}  // namespace borunov_v_complex_ccs

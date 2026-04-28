@@ -9,6 +9,8 @@
 #include "kotelnikova_a_double_matr_mult/common/include/common.hpp"
 #include "kotelnikova_a_double_matr_mult/omp/include/ops_omp.hpp"
 #include "kotelnikova_a_double_matr_mult/seq/include/ops_seq.hpp"
+#include "kotelnikova_a_double_matr_mult/stl/include/ops_stl.hpp"
+#include "kotelnikova_a_double_matr_mult/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace kotelnikova_a_double_matr_mult {
@@ -78,7 +80,7 @@ std::vector<std::vector<double>> SparseToDense(const SparseMatrixCCS &matrix) {
 }  // namespace
 
 class KotelnikovaARunPerfTestSEQ : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr int kMatrixSize = 450;
+  static constexpr int kMatrixSize = 700;
   static constexpr double kDensity = 0.1;
   InType input_data_;
   std::vector<std::vector<double>> expected_dense_result_;
@@ -123,8 +125,9 @@ TEST_P(KotelnikovaARunPerfTestSEQ, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KotelnikovaATaskSEQ, KotelnikovaATaskOMP>(
-    PPC_SETTINGS_kotelnikova_a_double_matr_mult);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, KotelnikovaATaskSEQ, KotelnikovaATaskOMP, KotelnikovaATaskTBB,
+                                KotelnikovaATaskSTL>(PPC_SETTINGS_kotelnikova_a_double_matr_mult);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
