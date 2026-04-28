@@ -6,9 +6,9 @@
 #include <cstdint>
 #include <random>
 #include <vector>
-
+#include <cstddef>
 #include "savva_d_monte_carlo/common/include/common.hpp"
-#include "task/include/task.hpp"
+
 
 namespace savva_d_monte_carlo {
 
@@ -56,7 +56,7 @@ bool SavvaDMonteCarloTBB::RunImpl() {
 
   const size_t dim = input.Dimension();
   const double vol = input.Volume();
-  const int64_t n = static_cast<int64_t>(input.count_points);
+  const auto n = static_cast<int64_t>(input.count_points);
   const auto &func = input.f;
 
   const auto &lb = input.lower_bounds;
@@ -71,7 +71,7 @@ bool SavvaDMonteCarloTBB::RunImpl() {
   double sum = tbb::parallel_reduce(tbb::blocked_range<int64_t>(0, n), 0.0,
 
                                     [&](const tbb::blocked_range<int64_t> &r, double local_sum) {
-    std::minstd_rand gen(static_cast<uint32_t>(r.begin()) ^ 0x9e3779b9u);
+    std::minstd_rand gen(static_cast<uint32_t>(r.begin()) ^ 0x9e3779b9U);
 
     std::vector<double> point(dim);
 
