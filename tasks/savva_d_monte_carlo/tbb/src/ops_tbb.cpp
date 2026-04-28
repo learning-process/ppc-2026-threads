@@ -3,12 +3,12 @@
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_reduce.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <random>
 #include <vector>
-#include <cstddef>
-#include "savva_d_monte_carlo/common/include/common.hpp"
 
+#include "savva_d_monte_carlo/common/include/common.hpp"
 
 namespace savva_d_monte_carlo {
 
