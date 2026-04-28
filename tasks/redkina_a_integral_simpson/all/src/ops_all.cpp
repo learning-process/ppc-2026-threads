@@ -67,6 +67,7 @@ double ComputeRangeSum(size_t start, size_t end, const std::vector<double> &a, c
     }
     sum += w_prod * func(point);
   }
+  
   return sum;
 }
 
