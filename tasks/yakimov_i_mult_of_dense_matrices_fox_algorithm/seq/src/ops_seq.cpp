@@ -1,7 +1,5 @@
 #include "yakimov_i_mult_of_dense_matrices_fox_algorithm/seq/include/ops_seq.hpp"
 
-#include <algorithm>
-#include <cmath>
 #include <cstddef>
 #include <fstream>
 #include <string>
@@ -150,9 +148,7 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmSEQ::PreProcessingImpl() {
   while (this->block_size_ * 2 <= n && this->block_size_ < 256) {
     this->block_size_ *= 2;
   }
-  if (this->block_size_ > n) {
-    this->block_size_ = n;
-  }
+  this->block_size_ = std::min(this->block_size_, n);
 
   return this->block_size_ > 0;
 }
