@@ -14,7 +14,9 @@ namespace akhmetov_daniil_strassen_dense_double_omp {
 
 class AkhmetovDaniilRunFuncTestsOMP : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType& test_param) { return std::to_string(test_param); }
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::to_string(test_param);
+  }
 
  protected:
   void SetUp() override {
@@ -33,7 +35,7 @@ class AkhmetovDaniilRunFuncTestsOMP : public ppc::util::BaseRunFuncTests<InType,
     }
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     const InType input = GetTestInputData();
 
     const size_t n = format::GetN(input);
@@ -60,7 +62,9 @@ class AkhmetovDaniilRunFuncTestsOMP : public ppc::util::BaseRunFuncTests<InType,
     return true;
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
  private:
   InType input_data_;
@@ -84,4 +88,3 @@ INSTANTIATE_TEST_SUITE_P(RunStrassenFuncTestsOMP, AkhmetovDaniilRunFuncTestsOMP,
 
 }  // namespace
 }  // namespace akhmetov_daniil_strassen_dense_double_omp
-

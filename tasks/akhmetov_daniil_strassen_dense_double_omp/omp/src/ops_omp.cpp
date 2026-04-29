@@ -8,13 +8,13 @@
 
 namespace akhmetov_daniil_strassen_dense_double_omp {
 
-AkhmetovDStrassenDenseDoubleOMP::AkhmetovDStrassenDenseDoubleOMP(const InType& in) {
+AkhmetovDStrassenDenseDoubleOMP::AkhmetovDStrassenDenseDoubleOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
 bool AkhmetovDStrassenDenseDoubleOMP::ValidationImpl() {
-  const auto& input = GetInput();
+  const auto &input = GetInput();
   if (input.empty()) {
     return false;
   }
@@ -27,7 +27,7 @@ bool AkhmetovDStrassenDenseDoubleOMP::ValidationImpl() {
 }
 
 bool AkhmetovDStrassenDenseDoubleOMP::PreProcessingImpl() {
-  const auto& input = GetInput();
+  const auto &input = GetInput();
   const size_t n = format::GetN(input);
   GetOutput().assign(n * n, 0.0);
   return true;
@@ -46,7 +46,7 @@ inline size_t NextPow2(size_t n) {
   return p;
 }
 
-Matrix StandardMultiply(const Matrix& a, const Matrix& b, size_t size) {
+Matrix StandardMultiply(const Matrix &a, const Matrix &b, size_t size) {
   Matrix c(size * size, 0.0);
 #pragma omp parallel for default(none) shared(a, b, c, size) schedule(static) if (size >= kParallelThreshold)
   for (ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(size); ++i) {
@@ -62,7 +62,7 @@ Matrix StandardMultiply(const Matrix& a, const Matrix& b, size_t size) {
   return c;
 }
 
-void Split(const Matrix& src, Matrix& a11, Matrix& a12, Matrix& a21, Matrix& a22, size_t size) {
+void Split(const Matrix &src, Matrix &a11, Matrix &a12, Matrix &a21, Matrix &a22, size_t size) {
   const size_t half = size / 2;
   const size_t block = half * half;
   a11.assign(block, 0.0);
@@ -70,7 +70,8 @@ void Split(const Matrix& src, Matrix& a11, Matrix& a12, Matrix& a21, Matrix& a22
   a21.assign(block, 0.0);
   a22.assign(block, 0.0);
 
-#pragma omp parallel for default(none) shared(src, a11, a12, a21, a22, size, half) schedule(static) if (size >= kParallelThreshold)
+#pragma omp parallel for default(none) shared(src, a11, a12, a21, a22, size, half) \
+    schedule(static) if (size >= kParallelThreshold)
   for (ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(half); ++i) {
     const size_t is = static_cast<size_t>(i) * size;
     const size_t ih = static_cast<size_t>(i) * half;
@@ -84,9 +85,10 @@ void Split(const Matrix& src, Matrix& a11, Matrix& a12, Matrix& a21, Matrix& a22
   }
 }
 
-void Merge(Matrix& dst, const Matrix& c11, const Matrix& c12, const Matrix& c21, const Matrix& c22, size_t size) {
+void Merge(Matrix &dst, const Matrix &c11, const Matrix &c12, const Matrix &c21, const Matrix &c22, size_t size) {
   const size_t half = size / 2;
-#pragma omp parallel for default(none) shared(dst, c11, c12, c21, c22, size, half) schedule(static) if (size >= kParallelThreshold)
+#pragma omp parallel for default(none) shared(dst, c11, c12, c21, c22, size, half) \
+    schedule(static) if (size >= kParallelThreshold)
   for (ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(half); ++i) {
     const size_t is = static_cast<size_t>(i) * size;
     const size_t ih = static_cast<size_t>(i) * half;
@@ -100,18 +102,20 @@ void Merge(Matrix& dst, const Matrix& c11, const Matrix& c12, const Matrix& c21,
   }
 }
 
-inline void AddInto(const Matrix& a, const Matrix& b, Matrix& c) {
+inline void AddInto(const Matrix &a, const Matrix &b, Matrix &c) {
   const size_t n = a.size();
-#pragma omp parallel for default(none) shared(a, b, c, n) schedule(static) if (n >= (kParallelThreshold * kParallelThreshold))
+#pragma omp parallel for default(none) shared(a, b, c, n) \
+    schedule(static) if (n >= (kParallelThreshold * kParallelThreshold))
   for (ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(n); ++i) {
     const size_t idx = static_cast<size_t>(i);
     c[idx] = a[idx] + b[idx];
   }
 }
 
-inline void SubInto(const Matrix& a, const Matrix& b, Matrix& c) {
+inline void SubInto(const Matrix &a, const Matrix &b, Matrix &c) {
   const size_t n = a.size();
-#pragma omp parallel for default(none) shared(a, b, c, n) schedule(static) if (n >= (kParallelThreshold * kParallelThreshold))
+#pragma omp parallel for default(none) shared(a, b, c, n) \
+    schedule(static) if (n >= (kParallelThreshold * kParallelThreshold))
   for (ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(n); ++i) {
     const size_t idx = static_cast<size_t>(i);
     c[idx] = a[idx] - b[idx];
@@ -148,13 +152,13 @@ struct Frame {
   Frame(Matrix aa, Matrix bb, size_t s) : a(std::move(aa)), b(std::move(bb)), size(s) {}
 };
 
-void ProcessTopFrame(std::vector<Frame>& stack, Matrix& final_result) {
+void ProcessTopFrame(std::vector<Frame> &stack, Matrix &final_result) {
   if (stack.empty()) {
     return;
   }
 
   const size_t current_index = stack.size() - 1;
-  Frame& frame = stack[current_index];
+  Frame &frame = stack[current_index];
 
   if (frame.size <= kThreshold) {
     Matrix base = StandardMultiply(frame.a, frame.b, frame.size);
@@ -262,8 +266,8 @@ void ProcessTopFrame(std::vector<Frame>& stack, Matrix& final_result) {
       Matrix c21(block_size);
       Matrix c22(block_size);
 
-#pragma omp parallel for default(none) shared(c11, c12, c21, c22, frame, block_size) schedule(static) \
-    if (block_size >= (kParallelThreshold * kParallelThreshold))
+#pragma omp parallel for default(none) shared(c11, c12, c21, c22, frame, block_size) \
+    schedule(static) if (block_size >= (kParallelThreshold * kParallelThreshold))
       for (ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(block_size); ++i) {
         const size_t idx = static_cast<size_t>(i);
         c11[idx] = frame.m1[idx] + frame.m4[idx] - frame.m5[idx] + frame.m7[idx];
@@ -289,7 +293,7 @@ void ProcessTopFrame(std::vector<Frame>& stack, Matrix& final_result) {
   }
 }
 
-Matrix StrassenMultiply(const Matrix& a_init, const Matrix& b_init, size_t size_init) {
+Matrix StrassenMultiply(const Matrix &a_init, const Matrix &b_init, size_t size_init) {
   std::vector<Frame> stack;
   stack.emplace_back(a_init, b_init, size_init);
 
@@ -300,7 +304,7 @@ Matrix StrassenMultiply(const Matrix& a_init, const Matrix& b_init, size_t size_
   return result;
 }
 
-Matrix PadTo(const Matrix& src, size_t n, size_t new_n) {
+Matrix PadTo(const Matrix &src, size_t n, size_t new_n) {
   if (new_n == n) {
     return src;
   }
@@ -319,8 +323,8 @@ Matrix PadTo(const Matrix& src, size_t n, size_t new_n) {
 }  // namespace
 
 bool AkhmetovDStrassenDenseDoubleOMP::RunImpl() {
-  const auto& input = GetInput();
-  auto& output = GetOutput();
+  const auto &input = GetInput();
+  auto &output = GetOutput();
 
   const size_t n = format::GetN(input);
   const Matrix a = format::GetA(input);
@@ -338,7 +342,8 @@ bool AkhmetovDStrassenDenseDoubleOMP::RunImpl() {
   const Matrix result_padded = StrassenMultiply(a_padded, b_padded, new_n);
 
   output.assign(n * n, 0.0);
-#pragma omp parallel for default(none) shared(output, result_padded, n, new_n) schedule(static) if (n >= kParallelThreshold)
+#pragma omp parallel for default(none) shared(output, result_padded, n, new_n) \
+    schedule(static) if (n >= kParallelThreshold)
   for (ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(n); ++i) {
     const size_t is = static_cast<size_t>(i) * new_n;
     const size_t id = static_cast<size_t>(i) * n;
@@ -351,10 +356,9 @@ bool AkhmetovDStrassenDenseDoubleOMP::RunImpl() {
 }
 
 bool AkhmetovDStrassenDenseDoubleOMP::PostProcessingImpl() {
-  const auto& input = GetInput();
+  const auto &input = GetInput();
   const size_t n = format::GetN(input);
   return GetOutput().size() == n * n;
 }
 
 }  // namespace akhmetov_daniil_strassen_dense_double_omp
-

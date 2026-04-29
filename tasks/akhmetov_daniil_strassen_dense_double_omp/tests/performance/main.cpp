@@ -26,7 +26,7 @@ class AkhmetovDaniilRunPerfTestsOMP : public ppc::util::BaseRunPerfTests<InType,
     }
   }
 
-  bool CheckTestOutputData(OutType& output_data) override {
+  bool CheckTestOutputData(OutType &output_data) override {
     if (output_data.empty()) {
       return false;
     }
@@ -35,7 +35,9 @@ class AkhmetovDaniilRunPerfTestsOMP : public ppc::util::BaseRunPerfTests<InType,
     return output_data.size() == n * n;
   }
 
-  InType GetTestInputData() override { return input_data_; }
+  InType GetTestInputData() override {
+    return input_data_;
+  }
 
  private:
   InType input_data_;
@@ -57,4 +59,3 @@ INSTANTIATE_TEST_SUITE_P(RunStrassenPerfTestsOMP, AkhmetovDaniilRunPerfTestsOMP,
 
 }  // namespace
 }  // namespace akhmetov_daniil_strassen_dense_double_omp
-

@@ -7,8 +7,10 @@ namespace akhmetov_daniil_strassen_dense_double_omp {
 
 class AkhmetovDStrassenDenseDoubleOMP : public BaseTask {
  public:
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() { return ppc::task::TypeOfTask::kOMP; }
-  explicit AkhmetovDStrassenDenseDoubleOMP(const InType& in);
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kOMP;
+  }
+  explicit AkhmetovDStrassenDenseDoubleOMP(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -18,4 +20,3 @@ class AkhmetovDStrassenDenseDoubleOMP : public BaseTask {
 };
 
 }  // namespace akhmetov_daniil_strassen_dense_double_omp
-
