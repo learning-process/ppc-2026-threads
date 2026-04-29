@@ -1,4 +1,4 @@
-#include "yakimov_i_mult_of_dense_matrices_fox_algorithm_seq/omp/include/ops_omp.hpp"
+#include "yakimov_i_mult_of_dense_matrices_fox_algorithm/omp/include/ops_omp.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -12,44 +12,30 @@
 #endif
 
 #include "util/include/util.hpp"
-#include "yakimov_i_mult_of_dense_matrices_fox_algorithm_seq/common/include/common.hpp"
+#include "yakimov_i_mult_of_dense_matrices_fox_algorithm/common/include/common.hpp"
 
-namespace yakimov_i_mult_of_dense_matrices_fox_algorithm_seq {
+namespace yakimov_i_mult_of_dense_matrices_fox_algorithm {
 
 namespace {
 
 bool ReadDimensions(std::ifstream &file, DenseMatrix &matrix) {
-  bool success = true;
-
   file >> matrix.rows;
   file >> matrix.cols;
-
-  if (matrix.rows <= 0 || matrix.cols <= 0) {
-    success = false;
-  }
-
-  return success;
+  return matrix.rows > 0 && matrix.cols > 0;
 }
 
 bool ReadMatrixData(std::ifstream &file, DenseMatrix &matrix) {
-  bool success = true;
-
   auto total_elements = static_cast<std::size_t>(matrix.rows) * static_cast<std::size_t>(matrix.cols);
   matrix.data.resize(total_elements, 0.0);
 
   for (int i = 0; i < matrix.rows; ++i) {
     for (int j = 0; j < matrix.cols; ++j) {
       if (!(file >> matrix(i, j))) {
-        success = false;
-        break;
+        return false;
       }
     }
-    if (!success) {
-      break;
-    }
   }
-
-  return success;
+  return true;
 }
 
 bool ReadMatrixFromFileImpl(const std::string &filename, DenseMatrix &matrix) {
@@ -58,24 +44,40 @@ bool ReadMatrixFromFileImpl(const std::string &filename, DenseMatrix &matrix) {
     return false;
   }
 
-  bool success = ReadDimensions(file, matrix);
-  if (success) {
-    success = ReadMatrixData(file, matrix);
+  if (!ReadDimensions(file, matrix)) {
+    return false;
+  }
+  if (!ReadMatrixData(file, matrix)) {
+    return false;
   }
 
   file.close();
-  return success;
+  return true;
 }
 
-void MultiplyBlockAtomic(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int row_start, int col_start,
-                         int block_size, int a_row_offset, int b_col_offset) {
+void SimpleMultiply(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result) {
+  result.rows = a.rows;
+  result.cols = b.cols;
+  result.data.assign(static_cast<std::size_t>(result.rows) * result.cols, 0.0);
+
+  for (int i = 0; i < a.rows; ++i) {
+    for (int j = 0; j < b.cols; ++j) {
+      double sum = 0.0;
+      for (int k = 0; k < a.cols; ++k) {
+        sum += a(i, k) * b(k, j);
+      }
+      result(i, j) = sum;
+    }
+  }
+}
+
+void MultiplyBlock(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int row_start, int col_start,
+                   int block_size, int a_row_offset, int b_col_offset) {
   for (int i = 0; i < block_size; ++i) {
     for (int j = 0; j < block_size; ++j) {
       double sum = 0.0;
       for (int k = 0; k < block_size; ++k) {
-        double a_val = a(row_start + i, a_row_offset + k);
-        double b_val = b(b_col_offset + k, col_start + j);
-        sum += a_val * b_val;
+        sum += a(row_start + i, a_row_offset + k) * b(b_col_offset + k, col_start + j);
       }
 #pragma omp atomic
       result(row_start + i, col_start + j) += sum;
@@ -84,32 +86,31 @@ void MultiplyBlockAtomic(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix
 }
 
 void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int block_size) {
-  if (block_size <= 0 || a.rows < block_size || a.cols < block_size || b.rows < block_size || b.cols < block_size) {
+  // Проверка: алгоритм Фокса работает только для квадратных матриц
+  if (a.rows != a.cols || b.rows != b.cols || a.rows != b.rows) {
+    SimpleMultiply(a, b, result);
     return;
   }
 
-  int num_blocks = a.rows / block_size;
+  // Проверка: матрица должна делиться на блоки
+  if (a.rows % block_size != 0) {
+    SimpleMultiply(a, b, result);
+    return;
+  }
 
-  result.rows = a.rows;
-  result.cols = b.cols;
+  int n = a.rows;
+  int num_blocks = n / block_size;
+  result.rows = n;
+  result.cols = n;
+  result.data.assign(static_cast<std::size_t>(n) * n, 0.0);
 
-  auto total_elements = static_cast<std::size_t>(result.rows) * static_cast<std::size_t>(result.cols);
-  result.data.assign(total_elements, 0.0);
-
-  const auto &a_local = a;
-  const auto &b_local = b;
-  auto &result_local = result;
-  int num_blocks_local = num_blocks;
-  int block_size_local = block_size;
-
-#pragma omp parallel for collapse(2) default(none) \
-    shared(a_local, b_local, result_local, num_blocks_local, block_size_local)
-  for (int stage = 0; stage < num_blocks_local; ++stage) {
-    for (int i = 0; i < num_blocks_local; ++i) {
-      int broadcast_block = (i + stage) % num_blocks_local;
-      for (int j = 0; j < num_blocks_local; ++j) {
-        MultiplyBlockAtomic(a_local, b_local, result_local, i * block_size_local, j * block_size_local,
-                            block_size_local, broadcast_block * block_size_local, j * block_size_local);
+#pragma omp parallel for collapse(2) default(none) shared(a, b, result, num_blocks, block_size)
+  for (int stage = 0; stage < num_blocks; ++stage) {
+    for (int i = 0; i < num_blocks; ++i) {
+      int broadcast_block = (i + stage) % num_blocks;
+      for (int j = 0; j < num_blocks; ++j) {
+        MultiplyBlock(a, b, result, i * block_size, j * block_size, block_size, broadcast_block * block_size,
+                      j * block_size);
       }
     }
   }
@@ -119,64 +120,42 @@ void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &r
 
 YakimovIMultOfDenseMatricesFoxAlgorithmOMP::YakimovIMultOfDenseMatricesFoxAlgorithmOMP(const InType &in) {
   this->SetTypeOfTask(YakimovIMultOfDenseMatricesFoxAlgorithmOMP::GetStaticTypeOfTask());
-
   this->GetInput() = in;
   this->GetOutput() = 0.0;
 
-  std::string task_name = "yakimov_i_mult_of_dense_matrices_fox_algorithm_seq";
-
-  this->matrix_a_filename_ =
-      ppc::util::GetAbsoluteTaskPath(task_name, "A_" + std::to_string(this->GetInput()) + ".txt");
-
-  this->matrix_b_filename_ =
-      ppc::util::GetAbsoluteTaskPath(task_name, "B_" + std::to_string(this->GetInput()) + ".txt");
-
-#ifdef _OPENMP
-  // Инициализация OpenMP
-  omp_set_num_threads(omp_get_max_threads());
-#endif
-}
-
-YakimovIMultOfDenseMatricesFoxAlgorithmOMP::~YakimovIMultOfDenseMatricesFoxAlgorithmOMP() {
-#ifdef _OPENMP
-// Синхронизация всех потоков перед завершением
-#  pragma omp parallel
-  {
-#  pragma omp single
-    {
-      // Пустая директива для синхронизации
-    }
-  }
-#endif
+  std::string task_name = "yakimov_i_mult_of_dense_matrices_fox_algorithm";
+  this->matrix_a_filename_ = ppc::util::GetAbsoluteTaskPath(task_name, "A_" + std::to_string(in) + ".txt");
+  this->matrix_b_filename_ = ppc::util::GetAbsoluteTaskPath(task_name, "B_" + std::to_string(in) + ".txt");
 }
 
 bool YakimovIMultOfDenseMatricesFoxAlgorithmOMP::ValidationImpl() {
-  bool input_valid = (this->GetInput() > 0);
-  bool output_valid = (this->GetOutput() == 0.0);
-  return input_valid && output_valid;
+  return (this->GetInput() > 0) && (this->GetOutput() == 0.0);
 }
 
 bool YakimovIMultOfDenseMatricesFoxAlgorithmOMP::PreProcessingImpl() {
-  bool success = true;
-
-  success = success && ReadMatrixFromFileImpl(this->matrix_a_filename_, this->matrix_a_);
-  success = success && ReadMatrixFromFileImpl(this->matrix_b_filename_, this->matrix_b_);
-
-  if (!success) {
+  if (!ReadMatrixFromFileImpl(this->matrix_a_filename_, this->matrix_a_)) {
     return false;
   }
-
+  if (!ReadMatrixFromFileImpl(this->matrix_b_filename_, this->matrix_b_)) {
+    return false;
+  }
   if (this->matrix_a_.cols != this->matrix_b_.rows) {
     return false;
   }
 
-  int min_dimension = std::min(this->matrix_a_.rows, this->matrix_a_.cols);
-  min_dimension = std::min(min_dimension, this->matrix_b_.rows);
-  min_dimension = std::min(min_dimension, this->matrix_b_.cols);
+  if (this->matrix_a_.rows != this->matrix_a_.cols || this->matrix_b_.rows != this->matrix_b_.cols ||
+      this->matrix_a_.rows != this->matrix_b_.rows) {
+    this->block_size_ = 0;
+    return true;
+  }
 
+  int n = this->matrix_a_.rows;
   this->block_size_ = 64;
-  while (this->block_size_ * 2 <= min_dimension && this->block_size_ < 256) {
+  while (this->block_size_ * 2 <= n && this->block_size_ < 256) {
     this->block_size_ *= 2;
+  }
+  if (this->block_size_ > n) {
+    this->block_size_ = n;
   }
 
   return this->block_size_ > 0;
@@ -189,21 +168,11 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmOMP::RunImpl() {
 
 bool YakimovIMultOfDenseMatricesFoxAlgorithmOMP::PostProcessingImpl() {
   double sum = 0.0;
-
   for (double val : this->result_matrix_.data) {
     sum += val;
   }
-
   this->GetOutput() = sum;
-
-  this->matrix_a_.data.clear();
-  this->matrix_a_.data.shrink_to_fit();
-  this->matrix_b_.data.clear();
-  this->matrix_b_.data.shrink_to_fit();
-  this->result_matrix_.data.clear();
-  this->result_matrix_.data.shrink_to_fit();
-
   return true;
 }
 
-}  // namespace yakimov_i_mult_of_dense_matrices_fox_algorithm_seq
+}  // namespace yakimov_i_mult_of_dense_matrices_fox_algorithm
