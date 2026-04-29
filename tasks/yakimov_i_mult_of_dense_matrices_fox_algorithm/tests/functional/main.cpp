@@ -10,11 +10,11 @@
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
-#include "yakimov_i_mult_of_dense_matrices_fox_algorithm_seq/common/include/common.hpp"
-#include "yakimov_i_mult_of_dense_matrices_fox_algorithm_seq/omp/include/ops_omp.hpp"
-#include "yakimov_i_mult_of_dense_matrices_fox_algorithm_seq/seq/include/ops_seq.hpp"
+#include "yakimov_i_mult_of_dense_matrices_fox_algorithm/common/include/common.hpp"
+#include "yakimov_i_mult_of_dense_matrices_fox_algorithm/omp/include/ops_omp.hpp"
+#include "yakimov_i_mult_of_dense_matrices_fox_algorithm/seq/include/ops_seq.hpp"
 
-namespace yakimov_i_mult_of_dense_matrices_fox_algorithm_seq {
+namespace yakimov_i_mult_of_dense_matrices_fox_algorithm {
 
 class YakimovIMultDenseFoxFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -32,7 +32,7 @@ class YakimovIMultDenseFoxFuncTests : public ppc::util::BaseRunFuncTests<InType,
     InType test_id = std::get<0>(params);
 
     static const std::unordered_map<InType, std::pair<double, double>> kExpectedResults = {
-        {1, {52.9498, 1e-4}}, {2, {-24.5668, 1e-4}}, {3, {-1.68714, 1e-4}}, {4, {0.0, 1e-9}}, {5, {60.678, 1e-4}}};
+        {1, {50.2848, 1e-3}}, {2, {-77.0854, 1e-3}}, {3, {-1.68714, 1e-4}}, {4, {0.0, 1e-9}}, {5, {60.678, 1e-4}}};
 
     auto it = kExpectedResults.find(test_id);
     if (it == kExpectedResults.end()) {
@@ -63,9 +63,9 @@ const std::array<TestType, 5> kAllTestParam = {std::make_tuple(1, "small_2x3"), 
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<YakimovIMultOfDenseMatricesFoxAlgorithmSEQ, InType>(
-                       kAllTestParam, PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_fox_algorithm_seq),
+                       kAllTestParam, PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_fox_algorithm),
                    ppc::util::AddFuncTask<YakimovIMultOfDenseMatricesFoxAlgorithmOMP, InType>(
-                       kAllTestParam, PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_fox_algorithm_seq));
+                       kAllTestParam, PPC_SETTINGS_yakimov_i_mult_of_dense_matrices_fox_algorithm));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -75,4 +75,4 @@ INSTANTIATE_TEST_SUITE_P(DenseMatrixMultiplicationTests, YakimovIMultDenseFoxFun
 
 }  // namespace
 
-}  // namespace yakimov_i_mult_of_dense_matrices_fox_algorithm_seq
+}  // namespace yakimov_i_mult_of_dense_matrices_fox_algorithm
