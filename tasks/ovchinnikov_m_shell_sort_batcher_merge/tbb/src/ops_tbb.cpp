@@ -11,7 +11,7 @@
 
 #include "ovchinnikov_m_shell_sort_batcher_merge/common/include/common.hpp"
 #include "util/include/util.hpp"
-
+// nothing
 namespace ovchinnikov_m_shell_sort_batcher_merge {
 
 namespace {
