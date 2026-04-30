@@ -9,20 +9,22 @@
 
 namespace akhmetov_daniil_strassen_dense_double_omp {
 
+namespace {
+
 class AkhmetovDaniilRunPerfTestsOMP : public ppc::util::BaseRunPerfTests<InType, OutType> {
- public:
+ protected:
   void SetUp() override {
     const TestType n = 1024;
 
     input_data_.resize(1 + (2 * n * n));
-    input_data_[0] = static_cast<double>(n);
+    input_data_.at(0) = static_cast<double>(n);
 
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<double> dist(-10.0, 10.0);
 
     for (size_t i = 1; i < input_data_.size(); ++i) {
-      input_data_[i] = dist(gen);
+      input_data_.at(i) = dist(gen);
     }
   }
 
@@ -42,8 +44,6 @@ class AkhmetovDaniilRunPerfTestsOMP : public ppc::util::BaseRunPerfTests<InType,
  private:
   InType input_data_;
 };
-
-namespace {
 
 TEST_P(AkhmetovDaniilRunPerfTestsOMP, StrassenTestPerf) {
   ExecuteTest(GetParam());

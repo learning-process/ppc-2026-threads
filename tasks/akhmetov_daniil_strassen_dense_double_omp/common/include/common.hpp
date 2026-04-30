@@ -16,7 +16,7 @@ using BaseTask = ppc::task::Task<InType, OutType>;
 namespace format {
 
 inline size_t GetN(const InType &input) {
-  return static_cast<size_t>(input[0]);
+  return static_cast<size_t>(input.at(0));
 }
 
 inline size_t MatrixSize(const InType &input) {
