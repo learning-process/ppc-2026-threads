@@ -1,5 +1,6 @@
 #include "yakimov_i_mult_of_dense_matrices_fox_algorithm/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <fstream>
 #include <string>
@@ -49,7 +50,6 @@ bool ReadMatrixFromFileImpl(const std::string &filename, DenseMatrix &matrix) {
   return true;
 }
 
-// Обычное умножение для неквадратных матриц
 void SimpleMultiply(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result) {
   result.rows = a.rows;
   result.cols = b.cols;
@@ -80,13 +80,11 @@ void MultiplyBlock(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &resu
 }
 
 void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int block_size) {
-  // Проверка: алгоритм Фокса работает только для квадратных матриц
   if (a.rows != a.cols || b.rows != b.cols || a.rows != b.rows) {
     SimpleMultiply(a, b, result);
     return;
   }
 
-  // Проверка: матрица должна делиться на блоки
   if (a.rows % block_size != 0) {
     SimpleMultiply(a, b, result);
     return;
@@ -136,7 +134,6 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmSEQ::PreProcessingImpl() {
     return false;
   }
 
-  // Для неквадратных матриц block_size не нужен
   if (this->matrix_a_.rows != this->matrix_a_.cols || this->matrix_b_.rows != this->matrix_b_.cols ||
       this->matrix_a_.rows != this->matrix_b_.rows) {
     this->block_size_ = 0;

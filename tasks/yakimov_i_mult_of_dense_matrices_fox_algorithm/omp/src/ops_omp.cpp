@@ -1,5 +1,6 @@
 #include "yakimov_i_mult_of_dense_matrices_fox_algorithm/omp/include/ops_omp.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <fstream>
 #include <string>
