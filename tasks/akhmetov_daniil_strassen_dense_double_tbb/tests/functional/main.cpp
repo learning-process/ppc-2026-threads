@@ -86,19 +86,19 @@ const auto kTestName = AkhmetovDaniilRunFuncTestsTBB::PrintFuncTestName<Akhmetov
 
 INSTANTIATE_TEST_SUITE_P(RunStrassenFuncTestsTBB, AkhmetovDaniilRunFuncTestsTBB, kGtestValues, kTestName);
 
-TEST(AkhmetovDStrassenDenseDoubleTBB_Validation, RejectsEmptyInput) {
+TEST(AkhmetovDStrassenDenseDoubleTBBValidation, RejectsEmptyInput) {
   InType in;
   AkhmetovDStrassenDenseDoubleTBB task(in);
   EXPECT_FALSE(task.Validation());
 }
 
-TEST(AkhmetovDStrassenDenseDoubleTBB_Validation, RejectsZeroSize) {
+TEST(AkhmetovDStrassenDenseDoubleTBBValidation, RejectsZeroSize) {
   InType in = {0.0};
   AkhmetovDStrassenDenseDoubleTBB task(in);
   EXPECT_FALSE(task.Validation());
 }
 
-TEST(AkhmetovDStrassenDenseDoubleTBB_Validation, RejectsWrongInputSize) {
+TEST(AkhmetovDStrassenDenseDoubleTBBValidation, RejectsWrongInputSize) {
   constexpr int kN = 4;
   InType in(1 + (2 * kN * kN) - 1, 1.0);
   in.at(0) = static_cast<double>(kN);
