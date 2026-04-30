@@ -3,7 +3,6 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <random>
 #include <string>
 
 #include "akhmetov_daniil_strassen_dense_double_stl/common/include/common.hpp"
@@ -28,12 +27,10 @@ class AkhmetovDaniilRunFuncTestsSTL : public ppc::util::BaseRunFuncTests<InType,
     input_data_.resize(1 + (2 * n * n));
     input_data_.at(0) = static_cast<double>(n);
 
-    // Deterministic seed to avoid flaky CI failures due to random data.
-    std::mt19937 gen(static_cast<std::mt19937::result_type>(0xC0FFEEU + static_cast<unsigned>(n)));
-    std::uniform_real_distribution<double> dist(-10.0, 10.0);
-
-    for (size_t i = 1; i < input_data_.size(); ++i) {
-      input_data_.at(i) = dist(gen);
+    const size_t nn = static_cast<size_t>(n) * static_cast<size_t>(n);
+    for (size_t idx = 0; idx < nn; ++idx) {
+      input_data_.at(1 + idx) = static_cast<double>((idx % 7U) + 1U);
+      input_data_.at(1 + nn + idx) = static_cast<double>((((idx * 3U) + 5U) % 11U) + 1U);
     }
   }
 
