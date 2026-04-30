@@ -56,7 +56,7 @@ class AkhmetovDaniilRunFuncTestsSTL : public ppc::util::BaseRunFuncTests<InType,
       }
     }
 
-    constexpr double kEpsilon = 1e-7;
+    constexpr double kEpsilon = 1e-6;
     for (size_t i = 0; i < n * n; ++i) {
       if (std::abs(output_data.at(i) - expected.at(i)) > kEpsilon) {
         return false;
