@@ -1,7 +1,7 @@
 # Sparse Matrix Multiplication. Double Precision Elements. CRS Format
 
 - _Student_: Гусева Алёна Сергеевна, group 3823Б1ФИ2
-- _Technology_: SEQ, OMP, TBB, STL, MPI+OMP
+- _Technology_: `SEQ, OMP, TBB, STL, MPI+OMP`
 - _Variant_: 4
 
 ## 1. Introduction
