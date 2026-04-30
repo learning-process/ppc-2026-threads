@@ -85,13 +85,11 @@ void MultiplyBlock(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &resu
 }
 
 void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int block_size) {
-  // Проверка: алгоритм Фокса работает только для квадратных матриц
   if (a.rows != a.cols || b.rows != b.cols || a.rows != b.rows) {
     SimpleMultiply(a, b, result);
     return;
   }
 
-  // Проверка: матрица должна делиться на блоки
   if (a.rows % block_size != 0) {
     SimpleMultiply(a, b, result);
     return;
