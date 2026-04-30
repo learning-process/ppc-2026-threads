@@ -29,7 +29,7 @@ class AkhmetovDaniilRunFuncTestsSTL : public ppc::util::BaseRunFuncTests<InType,
     input_data_.at(0) = static_cast<double>(n);
 
     // Deterministic seed to avoid flaky CI failures due to random data.
-    std::mt19937 gen(static_cast<std::mt19937::result_type>(0xC0FFEEu + static_cast<unsigned>(n)));
+    std::mt19937 gen(static_cast<std::mt19937::result_type>(0xC0FFEEU + static_cast<unsigned>(n)));
     std::uniform_real_distribution<double> dist(-10.0, 10.0);
 
     for (size_t i = 1; i < input_data_.size(); ++i) {
