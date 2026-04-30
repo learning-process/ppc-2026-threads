@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <vector>
+#include <utility>
 
 #include "rychkova_gauss/common/include/common.hpp"
 #include "util/include/util.hpp"
