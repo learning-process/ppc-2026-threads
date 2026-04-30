@@ -1,5 +1,4 @@
-# Sparse Matrix Multiplication. Double Precision Elements.
-# Compressed Row Storage (CRS) Format
+# Sparse Matrix Multiplication. Double Precision Elements. CRS Format
 
 - _Student_: Гусева Алёна Сергеевна, group 3823Б1ФИ2
 - _Technology_: SEQ, OMP, TBB, STL, MPI+OMP
