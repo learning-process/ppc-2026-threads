@@ -45,7 +45,7 @@ MatrixCRS MakeRandomCRS(int n, double density, std::uint32_t seed) {
 
 class ErmakovARunPerfTestSparMatMult : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  const int k_count = 10000;
+  const int k_count = 15000;
   InType input_data{};
 
   void SetUp() override {
