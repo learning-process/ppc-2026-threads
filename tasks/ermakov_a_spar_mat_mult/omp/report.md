@@ -1,9 +1,9 @@
-# Умножение разреженных комплексных матриц в формате CRS — OMP
+# Умножение разреженных матриц. Элементы комплексного типа. Формат хранения матрицы – строковый (CRS)
 
 - Студент: Ермаков Алексей Викторович
 - Группа: 3823Б1ПР3
 - Технология: OMP
-- Вариант: 1
+- Вариант: 6
 
 ---
 
@@ -28,15 +28,15 @@ OpenMP-версия распараллеливает вычисление стр
 
 В `RunImpl` создаются два массива построчных результатов:
 
-- `row_values` — ненулевые значения для каждой строки;
-- `row_cols` — соответствующие индексы столбцов.
+- `row_values` - ненулевые значения для каждой строки;
+- `row_cols` - соответствующие индексы столбцов.
 
 Далее выполняется `#pragma omp parallel`, внутри которого каждый поток создает
 свои локальные рабочие структуры:
 
-- `row_vals` — массив частичных сумм по столбцам;
-- `row_mark` — массив меток использованных столбцов;
-- `used_cols` — список затронутых столбцов.
+- `row_vals` - массив частичных сумм по столбцам;
+- `row_mark` - массив меток использованных столбцов;
+- `used_cols` - список затронутых столбцов.
 
 Цикл по строкам распараллеливается директивой `#pragma omp for`.
 Каждая строка обрабатывается независимо.
@@ -47,9 +47,9 @@ OpenMP-версия распараллеливает вычисление стр
 
 Для вычисления строки используются вспомогательные функции:
 
-- `AccumulateRowProducts` — накапливает произведения `A[i,j] * B[j,k]`;
-- `SortUsedCols` — сортирует список использованных столбцов;
-- `CollectRowValues` — переносит точные ненулевые значения строки
+- `AccumulateRowProducts` - накапливает произведения `A[i,j] * B[j,k]`;
+- `SortUsedCols` - сортирует список использованных столбцов;
+- `CollectRowValues` - переносит точные ненулевые значения строки
   в контейнеры `cols` и `vals`.
 
 В отличие от последовательной версии, здесь результат строки не записывается
@@ -101,8 +101,28 @@ OMP-реализация представляет собой прямое рас
   for (int i = 0; i < m; ++i) {
     AccumulateRowProducts(i, row_vals, row_mark, used_cols);
     SortUsedCols(used_cols);
-    CollectRowValues(row_vals, used_cols, row_cols[static_cast<std::size_t>(i)],
-                     row_values[static_cast<std::size_t>(i)]);
+
+    const auto row_i = static_cast<std::size_t>(i);
+
+    CollectRowValues(row_vals, used_cols, row_cols[row_i], row_values[row_i]);
   }
+}
+
+int nnz = 0;
+
+for (int i = 0; i < m; ++i) {
+  const auto row_i = static_cast<std::size_t>(i);
+  c_.row_ptr[row_i] = nnz;
+  nnz += static_cast<int>(row_values[row_i].size());
+}
+
+c_.row_ptr[static_cast<std::size_t>(m)] = nnz;
+c_.values.reserve(static_cast<std::size_t>(nnz));
+c_.col_index.reserve(static_cast<std::size_t>(nnz));
+
+for (int i = 0; i < m; ++i) {
+  const auto row_i = static_cast<std::size_t>(i);
+  CollectRowValues(row_vals, used_cols, row_cols[static_cast<std::size_t>(i)],
+                   row_values[static_cast<std::size_t>(i)]);
 }
 ```

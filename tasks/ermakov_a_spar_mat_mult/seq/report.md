@@ -1,9 +1,9 @@
-# Умножение разреженных комплексных матриц в формате CRS — SEQ
+# Умножение разреженных матриц. Элементы комплексного типа. Формат хранения матрицы – строковый (CRS)
 
 - Студент: Ермаков Алексей Викторович
 - Группа: 3823Б1ПР3
 - Технология: SEQ
-- Вариант: 1
+- Вариант: 6
 
 ---
 
@@ -41,9 +41,9 @@
 
 Для накопления используются три временные структуры:
 
-- `row_vals` — массив комплексных частичных сумм по столбцам;
-- `row_mark` — массив меток, показывающий, встречался ли столбец в текущей строке;
-- `used_cols` — список реально затронутых столбцов.
+- `row_vals` - массив комплексных частичных сумм по столбцам;
+- `row_mark` - массив меток, показывающий, встречался ли столбец в текущей строке;
+- `used_cols` - список реально затронутых столбцов.
 
 Если столбец `k` встречается в строке впервые, в `row_mark[k]` записывается номер
 строки, значение помещается в `row_vals[k]`, а индекс `k` добавляется в `used_cols`.
@@ -60,12 +60,12 @@
 
 Основные функции:
 
-- `ValidationImpl` — проверка входных матриц;
-- `PreProcessingImpl` — копирование `A` и `B` во внутренние поля `a_` и `b_`,
+- `ValidationImpl` - проверка входных матриц;
+- `PreProcessingImpl` - копирование `A` и `B` во внутренние поля `a_` и `b_`,
   инициализация `c_`;
-- `ProcessRow` — вычисление одной строки результата;
-- `RunImpl` — последовательный проход по всем строкам матрицы `A`;
-- `PostProcessingImpl` — передача результата наружу.
+- `ProcessRow` - вычисление одной строки результата;
+- `RunImpl` - последовательный проход по всем строкам матрицы `A`;
+- `PostProcessingImpl` - передача результата наружу.
 
 В `RunImpl` временные массивы `row_vals`, `row_mark` и `used_cols`
 создаются один раз и переиспользуются для всех строк.
@@ -93,24 +93,45 @@ SEQ-реализация является опорной версией зада
 ## Приложение (фрагмент кода)
 
 ```cpp
-for (int ak = a_start; ak < a_end; ++ak) {
-  const int j = a_.col_index[ak];
-  const auto a_ij = a_.values[ak];
+void ErmakovASparMatMultSEQ::ProcessRow(
+    int i, std::vector<std::complex<double>> &row_vals, std::vector<int> &row_mark,
+    std::vector<int> &used_cols, int &nnz_so_far) {
+  const int a_start = a_.row_ptr[i];
+  const int a_end = a_.row_ptr[i + 1];
 
-  const int b_start = b_.row_ptr[j];
-  const int b_end = b_.row_ptr[j + 1];
+  for (int ak = a_start; ak < a_end; ++ak) {
+    const int j = a_.col_index[ak];
+    const auto a_ij = a_.values[ak];
 
-  for (int bk = b_start; bk < b_end; ++bk) {
-    const int k = b_.col_index[bk];
-    const auto b_jk = b_.values[bk];
+    const int b_start = b_.row_ptr[j];
+    const int b_end = b_.row_ptr[j + 1];
 
-    if (row_mark[k] != i) {
-      row_mark[k] = i;
-      row_vals[k] = a_ij * b_jk;
-      used_cols.push_back(k);
-    } else {
-      row_vals[k] += a_ij * b_jk;
+    for (int bk = b_start; bk < b_end; ++bk) {
+      const int k = b_.col_index[bk];
+      const auto b_jk = b_.values[bk];
+
+      if (row_mark[k] != i) {
+        row_mark[k] = i;
+        row_vals[k] = a_ij * b_jk;
+        used_cols.push_back(k);
+      } else {
+        row_vals[k] += a_ij * b_jk;
+      }
     }
+  }
+
+  c_.row_ptr[i] = nnz_so_far;
+  std::ranges::sort(used_cols);
+
+  for (int k : used_cols) {
+    const auto v = row_vals[k];
+    if (v == std::complex<double>(0.0, 0.0)) {
+      continue;
+    }
+
+    c_.col_index.push_back(k);
+    c_.values.push_back(v);
+    ++nnz_so_far;
   }
 }
 ```
