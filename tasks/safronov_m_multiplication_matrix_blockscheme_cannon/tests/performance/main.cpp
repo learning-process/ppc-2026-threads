@@ -6,7 +6,9 @@
 #include <vector>
 
 #include "safronov_m_multiplication_matrix_blockscheme_cannon/common/include/common.hpp"
+#include "safronov_m_multiplication_matrix_blockscheme_cannon/omp/include/ops_omp.hpp"
 #include "safronov_m_multiplication_matrix_blockscheme_cannon/seq/include/ops_seq.hpp"
+#include "safronov_m_multiplication_matrix_blockscheme_cannon/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 namespace safronov_m_multiplication_matrix_blocksscheme_cannon {
 
@@ -49,7 +51,9 @@ TEST_P(SafronovMMultiplicationMatrixBlockSchemeCannonPerfTests, MultiplicationMa
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SafronovMMultiplicationMatrixBlockSchemeCannon>(
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SafronovMMultiplicationMatrixBlockSchemeCannon,
+                                                       SafronovMMultiplicationMatrixBlockSchemeCannonOMP,
+                                                       SafronovMMultiplicationMatrixBlockSchemeCannonTBB>(
     PPC_SETTINGS_safronov_m_multiplication_matrix_blockscheme_cannon);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

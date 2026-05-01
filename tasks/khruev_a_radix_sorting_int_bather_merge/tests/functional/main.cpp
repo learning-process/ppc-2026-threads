@@ -4,9 +4,10 @@
 #include <array>
 #include <cstddef>
 #include <string>
-// #include <tuple>
+#include <tuple>
 
 #include "khruev_a_radix_sorting_int_bather_merge/common/include/common.hpp"
+#include "khruev_a_radix_sorting_int_bather_merge/omp/include/ops_omp.hpp"
 #include "khruev_a_radix_sorting_int_bather_merge/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -68,8 +69,10 @@ const std::array<TestType, 8> kTestParam = {
 
 };
 
-const auto kTestTasksList = ppc::util::AddFuncTask<KhruevARadixSortingIntBatherMergeSEQ, InType>(
-    kTestParam, PPC_SETTINGS_khruev_a_radix_sorting_int_bather_merge);
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KhruevARadixSortingIntBatherMergeSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_khruev_a_radix_sorting_int_bather_merge),
+                                           ppc::util::AddFuncTask<KhruevARadixSortingIntBatherMergeOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_khruev_a_radix_sorting_int_bather_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

@@ -6,7 +6,9 @@
 #include <tuple>
 
 #include "maslova_u_mult_matr_crs/common/include/common.hpp"
+#include "maslova_u_mult_matr_crs/omp/include/ops_omp.hpp"
 #include "maslova_u_mult_matr_crs/seq/include/ops_seq.hpp"
+#include "maslova_u_mult_matr_crs/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace maslova_u_mult_matr_crs {
@@ -50,7 +52,7 @@ class MaslovaUMultMatrRunPerfTestThreads : public ppc::util::BaseRunPerfTests<In
  protected:
   void SetUp() override {
     int size = 1000;
-    double density = 0.01;
+    double density = 0.05;
     CRSMatrix a = CreateUniqueRandomCRS(size, size, density);
     CRSMatrix b = CreateUniqueRandomCRS(size, size, density);
     input_data_ = std::make_tuple(a, b);
@@ -78,7 +80,8 @@ TEST_P(MaslovaUMultMatrRunPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, MaslovaUMultMatrSEQ>(PPC_SETTINGS_maslova_u_mult_matr_crs);
+    ppc::util::MakeAllPerfTasks<InType, MaslovaUMultMatrSEQ, MaslovaUMultMatrOMP, MaslovaUMultMatrTBB>(
+        PPC_SETTINGS_maslova_u_mult_matr_crs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

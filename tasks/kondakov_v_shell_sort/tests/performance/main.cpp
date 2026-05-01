@@ -5,13 +5,15 @@
 #include <random>
 
 #include "kondakov_v_shell_sort/common/include/common.hpp"
+#include "kondakov_v_shell_sort/omp/include/ops_omp.hpp"
 #include "kondakov_v_shell_sort/seq/include/ops_seq.hpp"
+#include "kondakov_v_shell_sort/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace kondakov_v_shell_sort {
 
 class KondakovVRunPerfTestsShellSort : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr size_t kCount = 5000000;
+  static constexpr size_t kCount = 100000;
   InType input_data_;
 
   void SetUp() override {
@@ -44,7 +46,8 @@ TEST_P(KondakovVRunPerfTestsShellSort, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KondakovVShellSortSEQ>(PPC_SETTINGS_kondakov_v_shell_sort);
+    ppc::util::MakeAllPerfTasks<InType, KondakovVShellSortOMP, KondakovVShellSortSEQ, KondakovVShellSortTBB>(
+        PPC_SETTINGS_kondakov_v_shell_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

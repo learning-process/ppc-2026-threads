@@ -11,6 +11,8 @@
 #include "kotelnikova_a_double_matr_mult/common/include/common.hpp"
 #include "kotelnikova_a_double_matr_mult/omp/include/ops_omp.hpp"
 #include "kotelnikova_a_double_matr_mult/seq/include/ops_seq.hpp"
+#include "kotelnikova_a_double_matr_mult/stl/include/ops_stl.hpp"
+#include "kotelnikova_a_double_matr_mult/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -145,7 +147,9 @@ const std::array<TestType, 5> kTestParam = {
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KotelnikovaATaskSEQ, InType>(kTestParam, PPC_SETTINGS_kotelnikova_a_double_matr_mult),
-    ppc::util::AddFuncTask<KotelnikovaATaskOMP, InType>(kTestParam, PPC_SETTINGS_kotelnikova_a_double_matr_mult));
+    ppc::util::AddFuncTask<KotelnikovaATaskOMP, InType>(kTestParam, PPC_SETTINGS_kotelnikova_a_double_matr_mult),
+    ppc::util::AddFuncTask<KotelnikovaATaskTBB, InType>(kTestParam, PPC_SETTINGS_kotelnikova_a_double_matr_mult),
+    ppc::util::AddFuncTask<KotelnikovaATaskSTL, InType>(kTestParam, PPC_SETTINGS_kotelnikova_a_double_matr_mult));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

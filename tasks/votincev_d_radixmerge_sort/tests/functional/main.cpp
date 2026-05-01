@@ -12,11 +12,12 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 #include "votincev_d_radixmerge_sort/common/include/common.hpp"
+#include "votincev_d_radixmerge_sort/omp/include/ops_omp.hpp"
 #include "votincev_d_radixmerge_sort/seq/include/ops_seq.hpp"
 
 namespace votincev_d_radixmerge_sort {
 
-class VotincevDRadixMergeSortRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class VotincevDRadixMergeSortRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return test_param;
@@ -68,7 +69,7 @@ class VotincevDRadixMergeSortRunFuncTestsProcesses : public ppc::util::BaseRunFu
 
 namespace {
 
-TEST_P(VotincevDRadixMergeSortRunFuncTestsProcesses, RadixMergeSortTests) {
+TEST_P(VotincevDRadixMergeSortRunFuncTestsThreads, RadixMergeSortTests) {
   ExecuteTest(GetParam());
 }
 
@@ -76,14 +77,15 @@ const std::array<TestType, 10> kTestParam = {"test1", "test2", "test3", "test4",
                                              "test6", "test7", "test8", "test9", "test10"};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<VotincevDRadixMergeSortSEQ, InType>(kTestParam, PPC_SETTINGS_votincev_d_radixmerge_sort));
+    ppc::util::AddFuncTask<VotincevDRadixMergeSortSEQ, InType>(kTestParam, PPC_SETTINGS_votincev_d_radixmerge_sort),
+    ppc::util::AddFuncTask<VotincevDRadixMergeSortOMP, InType>(kTestParam, PPC_SETTINGS_votincev_d_radixmerge_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName =
-    VotincevDRadixMergeSortRunFuncTestsProcesses::PrintFuncTestName<VotincevDRadixMergeSortRunFuncTestsProcesses>;
+    VotincevDRadixMergeSortRunFuncTestsThreads::PrintFuncTestName<VotincevDRadixMergeSortRunFuncTestsThreads>;
 
-INSTANTIATE_TEST_SUITE_P(RadixSortTests, VotincevDRadixMergeSortRunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RadixSortTests, VotincevDRadixMergeSortRunFuncTestsThreads, kGtestValues, kPerfTestName);
 
 }  // namespace
 

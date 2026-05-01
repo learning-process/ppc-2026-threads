@@ -9,9 +9,12 @@
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
+#include "zagryadskov_m_complex_spmm_ccs/all/include/ops_all.hpp"
 #include "zagryadskov_m_complex_spmm_ccs/common/include/common.hpp"
 #include "zagryadskov_m_complex_spmm_ccs/omp/include/ops_omp.hpp"
 #include "zagryadskov_m_complex_spmm_ccs/seq/include/ops_seq.hpp"
+#include "zagryadskov_m_complex_spmm_ccs/stl/include/ops_stl.hpp"
+#include "zagryadskov_m_complex_spmm_ccs/tbb/include/ops_tbb.hpp"
 
 namespace zagryadskov_m_complex_spmm_ccs {
 
@@ -20,7 +23,7 @@ class ZagryadskovMRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType
   OutType test_result_;
 
   void SetUp() override {
-    int dim = 20000;
+    int dim = 40000;
     int seed = 0;
     CCS &a = std::get<0>(input_data_);
     CCS &b = std::get<1>(input_data_);
@@ -28,25 +31,19 @@ class ZagryadskovMRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType
 
     std::mt19937 rng(seed);
     std::uniform_real_distribution<double> val_gen(1.0, 2.0);
-    std::uniform_int_distribution<int> size_gen(0, 100);
-    std::vector<int> indices(dim);
-    for (size_t i = 0; i < indices.size(); ++i) {
-      indices[i] = static_cast<int>(i);
-    }
 
     a.m = dim;
     a.n = dim;
     a.col_ptr.assign(a.n + 1, 0);
     for (int j = 0; j < a.n; ++j) {
-      int size = size_gen(rng);
-      a.col_ptr[j + 1] = a.col_ptr[j] + size;
-      std::shuffle(indices.begin(), indices.end(), rng);
-      for (int k = 0; k < size; ++k) {
-        int ind = indices[k];
+      int left = std::max(j - 50, 0);
+      int right = std::min(a.n, j + 50);
+      a.col_ptr[j + 1] = a.col_ptr[j] + right - left;
+      for (int k = left; k < right; ++k) {
         double av = val_gen(rng);
         double bv = val_gen(rng);
         std::complex<double> z(av, bv);
-        a.row_ind.push_back(ind);
+        a.row_ind.push_back(k);
         a.values.push_back(z);
       }
     }
@@ -55,15 +52,14 @@ class ZagryadskovMRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType
     b.n = dim;
     b.col_ptr.assign(b.n + 1, 0);
     for (int j = 0; j < b.n; ++j) {
-      int size = size_gen(rng);
-      b.col_ptr[j + 1] = b.col_ptr[j] + size;
-      std::shuffle(indices.begin(), indices.end(), rng);
-      for (int k = 0; k < size; ++k) {
-        int ind = indices[k];
+      int left = std::max(j - 50, 0);
+      int right = std::min(b.n, j + 50);
+      b.col_ptr[j + 1] = b.col_ptr[j] + right - left;
+      for (int k = left; k < right; ++k) {
         double av = val_gen(rng);
         double bv = val_gen(rng);
         std::complex<double> z(av, bv);
-        b.row_ind.push_back(ind);
+        b.row_ind.push_back(k);
         b.values.push_back(z);
       }
     }
@@ -124,8 +120,9 @@ TEST_P(ZagryadskovMRunPerfTestThreads, PerfCCSTest) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZagryadskovMComplexSpMMCCSSEQ, ZagryadskovMComplexSpMMCCSOMP>(
-        PPC_SETTINGS_zagryadskov_m_complex_spmm_ccs);
+    ppc::util::MakeAllPerfTasks<InType, ZagryadskovMComplexSpMMCCSSEQ, ZagryadskovMComplexSpMMCCSOMP,
+                                ZagryadskovMComplexSpMMCCSTBB, ZagryadskovMComplexSpMMCCSSTL,
+                                ZagryadskovMComplexSpMMCCSALL>(PPC_SETTINGS_zagryadskov_m_complex_spmm_ccs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

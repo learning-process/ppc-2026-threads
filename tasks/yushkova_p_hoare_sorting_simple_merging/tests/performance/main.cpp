@@ -6,6 +6,7 @@
 
 #include "util/include/perf_test_util.hpp"
 #include "yushkova_p_hoare_sorting_simple_merging/common/include/common.hpp"
+#include "yushkova_p_hoare_sorting_simple_merging/omp/include/ops_omp.hpp"
 #include "yushkova_p_hoare_sorting_simple_merging/seq/include/ops_seq.hpp"
 
 namespace yushkova_p_hoare_sorting_simple_merging {
@@ -41,8 +42,9 @@ TEST_P(YushkovaPRunPerfTestsThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, YushkovaPHoareSortingSimpleMergingSEQ>(
-    PPC_SETTINGS_yushkova_p_hoare_sorting_simple_merging);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, YushkovaPHoareSortingSimpleMergingSEQ, YushkovaPHoareSortingSimpleMergingOMP>(
+        PPC_SETTINGS_yushkova_p_hoare_sorting_simple_merging);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
