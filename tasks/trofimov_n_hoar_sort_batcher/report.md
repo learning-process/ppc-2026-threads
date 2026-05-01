@@ -5,6 +5,7 @@
 - Variant: 14
 
 ## 1. Introduction
+
 Цель работы — реализовать и сравнить версии сортировки Хоара/Batcher
 для нескольких технологий параллельного программирования:
 SEQ, OMP, TBB, STL и гибридную ALL.
@@ -12,6 +13,7 @@ SEQ, OMP, TBB, STL и гибридную ALL.
 и ускорение относительно последовательной версии на больших входах.
 
 ## 2. Problem Statement
+
 Дано: одномерный массив `std::vector<int>` произвольной длины
 (в тестах до 300000 элементов, значения в диапазоне примерно `[-10^6, 10^6]`).
 Требуется: вернуть отсортированный по неубыванию массив.
@@ -25,6 +27,7 @@ SEQ, OMP, TBB, STL и гибридную ALL.
     для всех MPI рангов.
 
 ## 3. Baseline Algorithm (Sequential)
+
 Базой является quicksort-подход с разбиением Хоара:
 
 1. Выбирается опорный элемент (середина диапазона).
@@ -39,7 +42,9 @@ SEQ, OMP, TBB, STL и гибридную ALL.
 - ограничение глубины распараллеливания.
 
 ## 4. Parallelization Scheme
+
 ### MPI (межпроцессный уровень)
+
 - На rank 0 исходный массив делится на чанки (`counts`, `displs`).
 - `MPI_Scatterv` распределяет чанки по процессам.
 - После локальной сортировки выполняется `MPI_Gatherv` на rank 0.
@@ -47,15 +52,18 @@ SEQ, OMP, TBB, STL и гибридную ALL.
 - Финальный массив рассылается всем рангам через `MPI_Bcast`.
 
 ### OpenMP + TBB (внутрипроцессный уровень)
+
 - OpenMP tasks используются для рекурсивного
   распараллеливания quicksort по подзадачам.
 - На листовых диапазонах выполняется `oneapi::tbb::parallel_sort`.
 
 ### STL
+
 - Используются `std::vector`, `std::swap`, `std::inplace_merge`
   и др. базовые алгоритмы/контейнеры.
 
 ## 5. Implementation Details
+
 - Основные файлы:
   - `seq/src/ops_seq.cpp` — последовательная версия;
   - `omp/src/ops_omp.cpp` — OpenMP версия;
@@ -75,6 +83,7 @@ SEQ, OMP, TBB, STL и гибридную ALL.
     в корневом процессе.
 
 ## 6. Experimental Setup
+
 - Hardware/OS: не зафиксировано в предоставленных логах
   (зависит от стенда запуска).
 - Toolchain: C++ (gtest-пайплайн проекта),
@@ -90,6 +99,7 @@ SEQ, OMP, TBB, STL и гибридную ALL.
 ## 7. Results and Discussion
 
 ### 7.1 Correctness
+
 Корректность проверялась через функциональные
 и perf-тесты gtest:
 
@@ -100,9 +110,11 @@ SEQ, OMP, TBB, STL и гибридную ALL.
   с отрицательными числами и т.д.
 
 ### 7.2 Performance
+
 Ниже результаты по предоставленным логам.
 
 #### Task run
+
 (база speedup — `seq task_run = 0.0156188965 s`)
 
 | Mode | Count | Time, s  | Speedup | Efficiency |
@@ -114,6 +126,7 @@ SEQ, OMP, TBB, STL и гибридную ALL.
 | all  |     1 | 0.002739 |    5.70 |     570.2% |
 
 #### Pipeline
+
 (база speedup — `seq pipeline = 0.0420564175 s`)
 
 | Mode | Count | Time, s  | Speedup | Efficiency |
@@ -125,6 +138,7 @@ SEQ, OMP, TBB, STL и гибридную ALL.
 | all  |     1 | 0.010874 |    3.87 |     386.8% |
 
 Обсуждение:
+
 - Лучшее время в этих измерениях показывает STL-режим.
 - ALL имеет накладные расходы MPI-схемы (scatter/gather/bcast),
   что на данном размере входа может ограничивать итоговое ускорение
@@ -133,6 +147,7 @@ SEQ, OMP, TBB, STL и гибридную ALL.
   ALL может масштабироваться лучше.
 
 ## 8. Conclusions
+
 Реализованы и протестированы версии для SEQ/OMP/TBB/STL/ALL.
 Гибридный ALL-режим использует все требуемые технологии
 (MPI + OMP + TBB + STL) и обеспечивает корректную
@@ -143,9 +158,10 @@ SEQ, OMP, TBB, STL и гибридную ALL.
 и параметров окружения.
 
 ## 9. References
-1. OpenMP API Specification: https://www.openmp.org/specifications/
-2. oneTBB documentation: https://oneapi-src.github.io/oneTBB/
-3. MPI standard (overview): https://www.mpi-forum.org/docs/
+
+1. OpenMP API Specification: <https://www.openmp.org/specifications/>
+2. oneTBB documentation: <https://oneapi-src.github.io/oneTBB/>
+3. MPI standard (overview): <https://www.mpi-forum.org/docs/>
 4. cppreference (`std::sort`, `std::inplace_merge`):
-   https://en.cppreference.com/
+   <https://en.cppreference.com/>
 5. Лекции А.В Сысоева
