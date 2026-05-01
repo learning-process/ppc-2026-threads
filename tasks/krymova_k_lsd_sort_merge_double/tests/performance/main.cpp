@@ -6,6 +6,7 @@
 #include "krymova_k_lsd_sort_merge_double/common/include/common.hpp"
 #include "krymova_k_lsd_sort_merge_double/omp/include/ops_omp.hpp"
 #include "krymova_k_lsd_sort_merge_double/seq/include/ops_seq.hpp"
+#include "krymova_k_lsd_sort_merge_double/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace krymova_k_lsd_sort_merge_double {
@@ -45,9 +46,10 @@ TEST_P(KrymovaKPerfTests, MeasurePerformance) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KrymovaKLsdSortMergeDoubleOMP, KrymovaKLsdSortMergeDoubleSEQ>(
-        PPC_SETTINGS_krymova_k_lsd_sort_merge_double);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType,
+                                                       KrymovaKLsdSortMergeDoubleTBB,  // TBB первым!
+                                                       KrymovaKLsdSortMergeDoubleSEQ, KrymovaKLsdSortMergeDoubleOMP>(
+    PPC_SETTINGS_krymova_k_lsd_sort_merge_double);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
