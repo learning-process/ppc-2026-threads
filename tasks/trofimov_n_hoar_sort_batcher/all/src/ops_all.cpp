@@ -4,6 +4,7 @@
 #include <omp.h>
 
 #include <algorithm>
+#include <utility>
 #include <vector>
 
 #include "oneapi/tbb/parallel_sort.h"
