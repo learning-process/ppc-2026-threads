@@ -4,13 +4,15 @@
 #include <vector>
 
 #include "shkenev_i_constra_hull_for_binary_image/common/include/common.hpp"
+#include "shkenev_i_constra_hull_for_binary_image/omp/include/ops_omp.hpp"
 #include "shkenev_i_constra_hull_for_binary_image/seq/include/ops_seq.hpp"
+#include "shkenev_i_constra_hull_for_binary_image/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace shkenev_i_constra_hull_for_binary_image {
 
 class ShkenevIConstrHullPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr size_t kSize = 512;
+  static constexpr size_t kSize = 8000;
 
  protected:
   void SetUp() override {
@@ -45,7 +47,8 @@ TEST_P(ShkenevIConstrHullPerfTests, RunPerf) {
 namespace {
 
 const auto kPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ShkenevIConstrHullSeq>(PPC_SETTINGS_shkenev_i_constra_hull_for_binary_image);
+    ppc::util::MakeAllPerfTasks<InType, ShkenevIConstrHullSeq, ShkenevIConstrHullOMP, ShkenevIConstrHullTBB>(
+        PPC_SETTINGS_shkenev_i_constra_hull_for_binary_image);
 
 const auto kValues = ppc::util::TupleToGTestValues(kPerfTasks);
 

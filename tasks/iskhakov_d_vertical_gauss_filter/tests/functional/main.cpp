@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "iskhakov_d_vertical_gauss_filter/common/include/common.hpp"
+#include "iskhakov_d_vertical_gauss_filter/omp/include/ops_omp.hpp"
 #include "iskhakov_d_vertical_gauss_filter/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -88,6 +89,10 @@ std::vector<ParamType> CreateTestParams() {
     params.emplace_back([](const InType &in) -> std::shared_ptr<BaseTask> {
       return std::make_shared<IskhakovDVerticalGaussFilterSEQ>(in);
     }, "seq", test_case);
+
+    params.emplace_back([](const InType &in) -> std::shared_ptr<BaseTask> {
+      return std::make_shared<IskhakovDVerticalGaussFilterOMP>(in);
+    }, "omp", test_case);
   }
   return params;
 }
@@ -101,6 +106,7 @@ INSTANTIATE_TEST_SUITE_P(PicMatrixTests, IskhakovDVerticalGaussFilterFuncTests, 
 
 }  // namespace
 
+/*****SEQ*****/
 TEST(IskhakovDVerticalGaussFilterInvalidInputTest, ZeroSizes) {
   Matrix input;
   input.width = 0;
@@ -152,6 +158,61 @@ TEST(IskhakovDVerticalGaussFilterInvalidInputTest, NegativeHeight) {
   input.height = -1;
   input.data.resize(5);
   auto task = std::make_shared<IskhakovDVerticalGaussFilterSEQ>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+/*****OMP*****/
+TEST(IskhakovDVerticalGaussFilterInvalidInputTestOMP, ZeroSizes) {
+  Matrix input;
+  input.width = 0;
+  input.height = 0;
+  input.data = {};
+  auto task = std::make_shared<IskhakovDVerticalGaussFilterOMP>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(IskhakovDVerticalGaussFilterInvalidInputTestOMP, ZeroWidthPositiveHeight) {
+  Matrix input;
+  input.width = 0;
+  input.height = 5;
+  input.data.resize(5);
+  auto task = std::make_shared<IskhakovDVerticalGaussFilterOMP>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(IskhakovDVerticalGaussFilterInvalidInputTestOMP, ZeroHeightPositiveWidth) {
+  Matrix input;
+  input.width = 5;
+  input.height = 0;
+  input.data.resize(5);
+  auto task = std::make_shared<IskhakovDVerticalGaussFilterOMP>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(IskhakovDVerticalGaussFilterInvalidInputTestOMP, DataSizeMismatch) {
+  Matrix input;
+  input.width = 3;
+  input.height = 3;
+  input.data = {1, 2, 3};
+  auto task = std::make_shared<IskhakovDVerticalGaussFilterOMP>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(IskhakovDVerticalGaussFilterInvalidInputTestOMP, NegativeWidth) {
+  Matrix input;
+  input.width = -1;
+  input.height = 5;
+  input.data.resize(5);
+  auto task = std::make_shared<IskhakovDVerticalGaussFilterOMP>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(IskhakovDVerticalGaussFilterInvalidInputTestOMP, NegativeHeight) {
+  Matrix input;
+  input.width = 5;
+  input.height = -1;
+  input.data.resize(5);
+  auto task = std::make_shared<IskhakovDVerticalGaussFilterOMP>(input);
   EXPECT_FALSE(task->Validation());
 }
 

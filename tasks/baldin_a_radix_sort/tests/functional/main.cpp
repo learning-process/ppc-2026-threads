@@ -11,6 +11,8 @@
 #include "baldin_a_radix_sort/common/include/common.hpp"
 #include "baldin_a_radix_sort/omp/include/ops_omp.hpp"
 #include "baldin_a_radix_sort/seq/include/ops_seq.hpp"
+#include "baldin_a_radix_sort/stl/include/ops_stl.hpp"
+#include "baldin_a_radix_sort/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -83,7 +85,9 @@ const std::array<TestType, 13> kTestParam = {
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<BaldinARadixSortSEQ, InType>(kTestParam, PPC_SETTINGS_baldin_a_radix_sort),
-                   ppc::util::AddFuncTask<BaldinARadixSortOMP, InType>(kTestParam, PPC_SETTINGS_baldin_a_radix_sort));
+                   ppc::util::AddFuncTask<BaldinARadixSortOMP, InType>(kTestParam, PPC_SETTINGS_baldin_a_radix_sort),
+                   ppc::util::AddFuncTask<BaldinARadixSortTBB, InType>(kTestParam, PPC_SETTINGS_baldin_a_radix_sort),
+                   ppc::util::AddFuncTask<BaldinARadixSortSTL, InType>(kTestParam, PPC_SETTINGS_baldin_a_radix_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

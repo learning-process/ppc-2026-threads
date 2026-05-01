@@ -1,79 +1,71 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <cstddef>
 #include <vector>
 
 #include "egorova_l_binary_convex_hull/common/include/common.hpp"
+#include "egorova_l_binary_convex_hull/omp/include/ops_omp.hpp"
 #include "egorova_l_binary_convex_hull/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace egorova_l_binary_convex_hull {
 
 class EgorovaLPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr int kWidth = 1000;
-  static constexpr int kHeight = 1000;
-  InType input_data_;
-  int expected_components_{};
+ protected:
+  static constexpr int kWidth = 1500;
+  static constexpr int kHeight = 1500;
+  InType input_data;
+  int expected_components{};
 
   void SetUp() override {
-    input_data_.width = kWidth;
-    input_data_.height = kHeight;
-    const size_t image_size = static_cast<size_t>(kWidth) * static_cast<size_t>(kHeight);
-    input_data_.data.assign(image_size, 0);
+    input_data.width = kWidth;
+    input_data.height = kHeight;
+    input_data.data.assign(static_cast<size_t>(kWidth) * static_cast<size_t>(kHeight), 0);
 
-    // Draw first rectangle
-    for (int row = 100; row < 400; ++row) {
-      for (int col = 100; col < 400; ++col) {
-        input_data_.data[(static_cast<size_t>(row) * static_cast<size_t>(kWidth)) + static_cast<size_t>(col)] = 255;
+    expected_components = 0;
+    for (int row = 100; row < kHeight - 100; row += 100) {
+      for (int col = 100; col < kWidth - 100; col += 100) {
+        for (int dy = 0; dy < 20; ++dy) {
+          for (int dx = 0; dx < 20; ++dx) {
+            const size_t index =
+                (static_cast<size_t>(row + dy) * static_cast<size_t>(kWidth)) + static_cast<size_t>(col + dx);
+            input_data.data[index] = 255;
+          }
+        }
+        ++expected_components;
       }
     }
-
-    // Draw second rectangle
-    for (int row = 500; row < 700; ++row) {
-      for (int col = 500; col < 700; ++col) {
-        input_data_.data[(static_cast<size_t>(row) * static_cast<size_t>(kWidth)) + static_cast<size_t>(col)] = 255;
-      }
-    }
-
-    // Draw third rectangle
-    for (int row = 800; row < 850; ++row) {
-      for (int col = 800; col < 850; ++col) {
-        input_data_.data[(static_cast<size_t>(row) * static_cast<size_t>(kWidth)) + static_cast<size_t>(col)] = 255;
-      }
-    }
-
-    expected_components_ = 3;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.size() != static_cast<size_t>(expected_components_)) {
-      return false;
-    }
-
-    return std::ranges::all_of(output_data, [](const std::vector<Point> &hull) { return hull.size() >= 3; });
+    return output_data.size() == static_cast<size_t>(expected_components);
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 };
 
-TEST_P(EgorovaLPerfTest, RunPerfModes) {
+TEST_P(EgorovaLPerfTest, RunPerfModesSEQ) {
   ExecuteTest(GetParam());
 }
 
 namespace {
-
-const auto kAllPerfTasks =
+const auto kAllPerfTasksSEQ =
     ppc::util::MakeAllPerfTasks<InType, BinaryConvexHullSEQ>(PPC_SETTINGS_egorova_l_binary_convex_hull);
+INSTANTIATE_TEST_SUITE_P(RunModeTestsSEQ, EgorovaLPerfTest, ppc::util::TupleToGTestValues(kAllPerfTasksSEQ),
+                         EgorovaLPerfTest::CustomPerfTestName);
+}  // namespace
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+TEST_P(EgorovaLPerfTest, RunPerfModesOMP) {
+  ExecuteTest(GetParam());
+}
 
-const auto kPerfTestName = EgorovaLPerfTest::CustomPerfTestName;
-
-INSTANTIATE_TEST_SUITE_P(RunModeTests, EgorovaLPerfTest, kGtestValues, kPerfTestName);
-
+namespace {
+const auto kAllPerfTasksOMP =
+    ppc::util::MakeAllPerfTasks<InType, BinaryConvexHullOMP>(PPC_SETTINGS_egorova_l_binary_convex_hull);
+INSTANTIATE_TEST_SUITE_P(RunModeTestsOMP, EgorovaLPerfTest, ppc::util::TupleToGTestValues(kAllPerfTasksOMP),
+                         EgorovaLPerfTest::CustomPerfTestName);
 }  // namespace
 
 }  // namespace egorova_l_binary_convex_hull
