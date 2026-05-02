@@ -1,11 +1,11 @@
-#include "lifanov_k_simple_hoar_seq/seq/include/ops_seq.hpp"
+#include "lifanov_k_sim_hoar_seq/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <vector>
 
-#include "lifanov_k_simple_hoar_seq/common/include/common.hpp"
+#include "lifanov_k_sim_hoar_seq/common/include/common.hpp"
 
-namespace lifanov_k_simple_hoar_seq {
+namespace lifanov_k_sim_hoar_seq {
 
 LifanovKSimpleHoarSEQ::LifanovKSimpleHoarSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -90,4 +90,4 @@ bool LifanovKSimpleHoarSEQ::PostProcessingImpl() {
   return std::is_sorted(GetOutput().begin(), GetOutput().end());
 }
 
-}  // namespace lifanov_k_simple_hoar_seq
+}  // namespace lifanov_k_sim_hoar_seq

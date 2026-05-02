@@ -2,10 +2,10 @@
 
 #include <vector>
 
-#include "lifanov_k_simple_hoar_seq/common/include/common.hpp"
+#include "lifanov_k_sim_hoar_seq/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace lifanov_k_simple_hoar_seq {
+namespace lifanov_k_sim_hoar_seq {
 
 class LifanovKSimpleHoarSEQ : public BaseTask {
  public:
@@ -27,4 +27,4 @@ class LifanovKSimpleHoarSEQ : public BaseTask {
   std::vector<int> data_;
 };
 
-}  // namespace lifanov_k_simple_hoar_seq
+}  // namespace lifanov_k_sim_hoar_seq

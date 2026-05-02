@@ -4,12 +4,12 @@
 #include <random>
 #include <vector>
 
-#include "lifanov_k_simple_hoar_seq/common/include/common.hpp"
-#include "lifanov_k_simple_hoar_seq/seq/include/ops_seq.hpp"
+#include "lifanov_k_sim_hoar_seq/common/include/common.hpp"
+#include "lifanov_k_sim_hoar_seq/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace lifanov_k_simple_hoar_seq {
+namespace lifanov_k_sim_hoar_seq {
 
 class LifanovKRunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -67,7 +67,7 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(v1, GetSortedVector(
                                             std::make_tuple(v3, GetSortedVector(v3), "reverse_5")};
 
 const auto kTestTasksList =
-    ppc::util::AddFuncTask<LifanovKSimpleHoarSEQ, InType>(kTestParam, "lifanov_k_simple_hoar_seq");
+    ppc::util::AddFuncTask<LifanovKSimpleHoarSEQ, InType>(kTestParam, "lifanov_k_sim_hoar_seq");
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -76,4 +76,4 @@ const auto kTestName = LifanovKRunFuncTestsSEQ::PrintFuncTestName<LifanovKRunFun
 INSTANTIATE_TEST_SUITE_P(HoarSortTests, LifanovKRunFuncTestsSEQ, kGtestValues, kTestName);
 
 }  // namespace
-}  // namespace lifanov_k_simple_hoar_seq
+}  // namespace lifanov_k_sim_hoar_seq
