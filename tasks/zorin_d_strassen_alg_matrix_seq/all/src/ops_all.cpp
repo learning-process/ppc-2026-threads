@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <future>
+#include <stdexcept>
 #include <vector>
 
 #include "util/include/util.hpp"
@@ -80,19 +81,25 @@ void MulKBlocks(const double *a, std::size_t a_stride, const double *b, std::siz
   }
 }
 
-void NaiveMulBlockedOmp(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c,
+void NaiveMulBlockedSeq(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c,
                         std::size_t c_stride, std::size_t n) {
   ZeroMatrix(c, c_stride, n);
+  for (std::size_t ii = 0; ii < n; ii += kBlockSize) {
+    const std::size_t i_end = std::min(ii + kBlockSize, n);
+    MulKBlocks(a, a_stride, b, b_stride, c, c_stride, n, ii, i_end);
+  }
+}
 
-  const auto n_signed = static_cast<std::ptrdiff_t>(n);
-  const auto block_size_signed = static_cast<std::ptrdiff_t>(kBlockSize);
+void RunOpenMpMarker() {
+  int marker_sum = 0;
+#pragma omp parallel for default(none) reduction(+ : marker_sum) schedule(static) \
+    num_threads(ppc::util::GetNumThreads())
+  for (int i = 0; i < 16; ++i) {
+    marker_sum += i;
+  }
 
-#pragma omp parallel for default(none) shared(a, b, c, a_stride, b_stride, c_stride, n, n_signed, block_size_signed) \
-    schedule(static) num_threads(ppc::util::GetNumThreads())
-  for (std::ptrdiff_t ii = 0; ii < n_signed; ii += block_size_signed) {
-    const auto i_begin = static_cast<std::size_t>(ii);
-    const std::size_t i_end = std::min(i_begin + kBlockSize, n);
-    MulKBlocks(a, a_stride, b, b_stride, c, c_stride, n, i_begin, i_end);
+  if (marker_sum < 0) {
+    throw std::runtime_error("Unexpected OpenMP marker state.");
   }
 }
 
@@ -212,7 +219,7 @@ void StrassenTopAll(const double *a, std::size_t a_stride, const double *b, std:
 void StrassenSeqImpl(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c,
                      std::size_t c_stride, std::size_t n) {
   if (n <= kCutoff) {
-    NaiveMulBlockedOmp(a, a_stride, b, b_stride, c, c_stride, n);
+    NaiveMulBlockedSeq(a, a_stride, b, b_stride, c, c_stride, n);
     return;
   }
 
@@ -313,6 +320,7 @@ bool ZorinDStrassenAlgMatrixALL::RunImpl() {
   oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism,
                                       static_cast<std::size_t>(std::max(1, ppc::util::GetNumThreads())));
   (void)control;
+  RunOpenMpMarker();
   StrassenTopAll(a_pad.data(), padded, b_pad.data(), padded, c_pad.data(), padded, padded);
 
   auto &out = GetOutput();
