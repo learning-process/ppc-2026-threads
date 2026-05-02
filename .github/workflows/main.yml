@@ -19,6 +19,7 @@ permissions:
   contents: read
   issues: write
   pull-requests: write
+  packages: read
 
 jobs:
   pre-commit:
