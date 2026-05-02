@@ -6,13 +6,13 @@
 
 #include "artyushkina_markirovka/common/include/common.hpp"
 #include "artyushkina_markirovka/seq/include/ops_seq.hpp"
+#include "artyushkina_markirovka/stl/include/ops_stl.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace artyushkina_markirovka {
 
-class ArtyushkinaMarkirovkaPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_;
-
+class ArtyushkinaMarkirovkaPerfTestsBase : public ppc::util::BaseRunPerfTests<InType, OutType> {
+ protected:
   void SetUp() override {
     const int k_size = 1000;
     input_data_.resize((static_cast<std::size_t>(k_size) * static_cast<std::size_t>(k_size)) + 2);
@@ -58,23 +58,47 @@ class ArtyushkinaMarkirovkaPerfTests : public ppc::util::BaseRunPerfTests<InType
   InType GetTestInputData() final {
     return input_data_;
   }
+
+ private:
+  InType input_data_;
 };
 
-TEST_P(ArtyushkinaMarkirovkaPerfTests, RunPerfModes) {
+class ArtyushkinaMarkirovkaSEQPerfTests : public ArtyushkinaMarkirovkaPerfTestsBase {};
+
+TEST_P(ArtyushkinaMarkirovkaSEQPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-namespace {
+namespace seq {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, MarkingComponentsSEQ>(PPC_SETTINGS_artyushkina_markirovka);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = ArtyushkinaMarkirovkaPerfTests::CustomPerfTestName;
+const auto kPerfTestName = ArtyushkinaMarkirovkaSEQPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ArtyushkinaMarkirovkaPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(SEQRunModeTests, ArtyushkinaMarkirovkaSEQPerfTests, kGtestValues, kPerfTestName);
 
-}  // namespace
+}  // namespace seq
+
+class ArtyushkinaMarkirovkaSTLPerfTests : public ArtyushkinaMarkirovkaPerfTestsBase {};
+
+TEST_P(ArtyushkinaMarkirovkaSTLPerfTests, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
+
+namespace stl {
+
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, MarkingComponentsSTL>(PPC_SETTINGS_artyushkina_markirovka);
+
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+
+const auto kPerfTestName = ArtyushkinaMarkirovkaSTLPerfTests::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(STLRunModeTests, ArtyushkinaMarkirovkaSTLPerfTests, kGtestValues, kPerfTestName);
+
+}  // namespace stl
 
 }  // namespace artyushkina_markirovka

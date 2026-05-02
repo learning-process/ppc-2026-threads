@@ -8,6 +8,7 @@
 
 #include "artyushkina_markirovka/common/include/common.hpp"
 #include "artyushkina_markirovka/seq/include/ops_seq.hpp"
+#include "artyushkina_markirovka/stl/include/ops_stl.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -82,15 +83,18 @@ class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType
   OutType expected_;
 };
 
-namespace {
+namespace seq_tests {
 
-TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponents) {
+TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponentsSEQ) {
   ExecuteTest(GetParam());
 }
 
 const std::array<TestType, 5> kTestParam = {
-    std::make_tuple(0, "L_shaped_component_8connectivity"), std::make_tuple(1, "diagonal_connected_components"),
-    std::make_tuple(2, "all_background"), std::make_tuple(3, "all_objects"), std::make_tuple(4, "two_horizontal_bars")};
+    std::make_tuple(0, "L_shaped_component_8connectivity"), 
+    std::make_tuple(1, "diagonal_connected_components"),
+    std::make_tuple(2, "all_background"), 
+    std::make_tuple(3, "all_objects"), 
+    std::make_tuple(4, "two_horizontal_bars")};
 
 const auto kTestTasksList =
     ppc::util::AddFuncTask<MarkingComponentsSEQ, InType>(kTestParam, PPC_SETTINGS_artyushkina_markirovka);
@@ -99,8 +103,32 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = ArtyushkinaMarkirovkaFuncTests::PrintFuncTestName<ArtyushkinaMarkirovkaFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(ComponentLabeling, ArtyushkinaMarkirovkaFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(ComponentLabelingSEQ, ArtyushkinaMarkirovkaFuncTests, kGtestValues, kPerfTestName);
 
-}  // namespace
+}  // namespace seq_tests
+
+namespace stl_tests {
+
+TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponentsSTL) {
+  ExecuteTest(GetParam());
+}
+
+const std::array<TestType, 5> kTestParam = {
+    std::make_tuple(0, "L_shaped_component_8connectivity"), 
+    std::make_tuple(1, "diagonal_connected_components"),
+    std::make_tuple(2, "all_background"), 
+    std::make_tuple(3, "all_objects"), 
+    std::make_tuple(4, "two_horizontal_bars")};
+
+const auto kTestTasksList =
+    ppc::util::AddFuncTask<MarkingComponentsSTL, InType>(kTestParam, PPC_SETTINGS_artyushkina_markirovka);
+
+const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+
+const auto kPerfTestName = ArtyushkinaMarkirovkaFuncTests::PrintFuncTestName<ArtyushkinaMarkirovkaFuncTests>;
+
+INSTANTIATE_TEST_SUITE_P(ComponentLabelingSTL, ArtyushkinaMarkirovkaFuncTests, kGtestValues, kPerfTestName);
+
+}  // namespace stl_tests
 
 }  // namespace artyushkina_markirovka
