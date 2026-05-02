@@ -8,7 +8,9 @@
 #include <vector>
 
 #include "tabalaev_a_matrix_mul_strassen/common/include/common.hpp"
+#include "tabalaev_a_matrix_mul_strassen/omp/include/ops_omp.hpp"
 #include "tabalaev_a_matrix_mul_strassen/seq/include/ops_seq.hpp"
+#include "tabalaev_a_matrix_mul_strassen/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -83,12 +85,16 @@ TEST_P(TabalaevAMatrixMulStrassenFuncTests, MatrixMultiply) {
 }
 
 const std::array<TestType, 6> kTestParam = {
-    std::make_tuple(3, 3, 3, 50, "SmallPadded"),     std::make_tuple(4, 4, 4, 50, "SmallPowerOfTwo_4x4"),
-    std::make_tuple(15, 5, 15, 150, "MediumPadded"), std::make_tuple(16, 16, 16, 150, "MediumPowerOfTwo_16x16"),
-    std::make_tuple(63, 63, 63, 300, "LargePadded"), std::make_tuple(64, 64, 64, 300, "LargePowerOfTwo_64x64")};
+    std::make_tuple(3, 3, 3, 50, "SmallPadded"),        std::make_tuple(4, 4, 4, 50, "SmallPowerOfTwo_4x4"),
+    std::make_tuple(15, 5, 15, 150, "MediumPadded"),    std::make_tuple(16, 16, 16, 150, "MediumPowerOfTwo_16x16"),
+    std::make_tuple(255, 255, 255, 300, "LargePadded"), std::make_tuple(256, 256, 256, 300, "LargePowerOfTwo_256x256")};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<TabalaevAMatrixMulStrassenSEQ, InType>(
-    kTestParam, PPC_SETTINGS_tabalaev_a_matrix_mul_strassen);
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<TabalaevAMatrixMulStrassenSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_tabalaev_a_matrix_mul_strassen),
+                                           ppc::util::AddFuncTask<TabalaevAMatrixMulStrassenOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_tabalaev_a_matrix_mul_strassen),
+                                           ppc::util::AddFuncTask<TabalaevAMatrixMulStrassenTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_tabalaev_a_matrix_mul_strassen));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

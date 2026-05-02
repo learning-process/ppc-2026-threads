@@ -3,11 +3,13 @@
 #include <cstddef>
 
 #include "morozova_s_strassen_multiplication/common/include/common.hpp"
+#include "morozova_s_strassen_multiplication/omp/include/ops_omp.hpp"
 #include "morozova_s_strassen_multiplication/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace morozova_s_strassen_multiplication {
 
+template <typename TaskType>
 class MorozovaSStrassenMultiplicationPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
 
@@ -48,21 +50,45 @@ class MorozovaSStrassenMultiplicationPerfTest : public ppc::util::BaseRunPerfTes
   }
 };
 
-TEST_P(MorozovaSStrassenMultiplicationPerfTest, RunPerfModes) {
+}  // namespace morozova_s_strassen_multiplication
+
+using morozova_s_strassen_multiplication::InType;
+using morozova_s_strassen_multiplication::MorozovaSStrassenMultiplicationOMP;
+using morozova_s_strassen_multiplication::MorozovaSStrassenMultiplicationPerfTest;
+using morozova_s_strassen_multiplication::MorozovaSStrassenMultiplicationSEQ;
+
+using MorozovaSStrassenMultiplicationSEQPerfTest =
+    MorozovaSStrassenMultiplicationPerfTest<MorozovaSStrassenMultiplicationSEQ>;
+
+TEST_P(MorozovaSStrassenMultiplicationSEQPerfTest, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-namespace {
-
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, MorozovaSStrassenMultiplicationSEQ>(
+const auto kAllPerfTasksSEQ = ppc::util::MakeAllPerfTasks<InType, MorozovaSStrassenMultiplicationSEQ>(
     PPC_SETTINGS_morozova_s_strassen_multiplication);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-const auto kPerfTestName = MorozovaSStrassenMultiplicationPerfTest::CustomPerfTestName;
+const auto kGtestValuesSEQ = ppc::util::TupleToGTestValues(kAllPerfTasksSEQ);
+const auto kPerfTestNameSEQ = MorozovaSStrassenMultiplicationSEQPerfTest::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(StrassenMultiplicationPerfTests, MorozovaSStrassenMultiplicationPerfTest, kGtestValues,
-                         kPerfTestName);
-
+namespace {
+INSTANTIATE_TEST_SUITE_P(StrassenMultiplicationSEQPerfTests, MorozovaSStrassenMultiplicationSEQPerfTest,
+                         kGtestValuesSEQ, kPerfTestNameSEQ);
 }  // namespace
 
-}  // namespace morozova_s_strassen_multiplication
+using MorozovaSStrassenMultiplicationOMPPerfTest =
+    MorozovaSStrassenMultiplicationPerfTest<MorozovaSStrassenMultiplicationOMP>;
+
+TEST_P(MorozovaSStrassenMultiplicationOMPPerfTest, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
+
+const auto kAllPerfTasksOMP = ppc::util::MakeAllPerfTasks<InType, MorozovaSStrassenMultiplicationOMP>(
+    PPC_SETTINGS_morozova_s_strassen_multiplication);
+
+const auto kGtestValuesOMP = ppc::util::TupleToGTestValues(kAllPerfTasksOMP);
+const auto kPerfTestNameOMP = MorozovaSStrassenMultiplicationOMPPerfTest::CustomPerfTestName;
+
+namespace {
+INSTANTIATE_TEST_SUITE_P(StrassenMultiplicationOMPPerfTests, MorozovaSStrassenMultiplicationOMPPerfTest,
+                         kGtestValuesOMP, kPerfTestNameOMP);
+}  // namespace

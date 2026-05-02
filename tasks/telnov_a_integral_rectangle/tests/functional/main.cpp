@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
 #include <array>
 #include <cmath>
@@ -11,6 +10,8 @@
 #include "telnov_a_integral_rectangle/common/include/common.hpp"
 #include "telnov_a_integral_rectangle/omp/include/ops_omp.hpp"
 #include "telnov_a_integral_rectangle/seq/include/ops_seq.hpp"
+#include "telnov_a_integral_rectangle/stl/include/ops_stl.hpp"
+#include "telnov_a_integral_rectangle/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -50,7 +51,7 @@ class TelnovAIntegralRectangleFuncTests : public ppc::util::BaseRunFuncTests<InT
 
 namespace {
 
-TEST_P(TelnovAIntegralRectangleFuncTests, MatmulFromPic) {
+TEST_P(TelnovAIntegralRectangleFuncTests, IntegralRectangleCorrectness) {
   ExecuteTest(GetParam());
 }
 
@@ -62,13 +63,15 @@ const std::array<TestType, 8> kTestParam = {
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<TelnovAIntegralRectangleSEQ, InType>(kTestParam, PPC_SETTINGS_telnov_a_integral_rectangle),
-    ppc::util::AddFuncTask<TelnovAIntegralRectangleOMP, InType>(kTestParam, PPC_SETTINGS_telnov_a_integral_rectangle));
+    ppc::util::AddFuncTask<TelnovAIntegralRectangleOMP, InType>(kTestParam, PPC_SETTINGS_telnov_a_integral_rectangle),
+    ppc::util::AddFuncTask<TelnovAIntegralRectangleTBB, InType>(kTestParam, PPC_SETTINGS_telnov_a_integral_rectangle),
+    ppc::util::AddFuncTask<TelnovAIntegralRectangleSTL, InType>(kTestParam, PPC_SETTINGS_telnov_a_integral_rectangle));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = TelnovAIntegralRectangleFuncTests::PrintFuncTestName<TelnovAIntegralRectangleFuncTests>;
+const auto kFuncTestName = TelnovAIntegralRectangleFuncTests::PrintFuncTestName<TelnovAIntegralRectangleFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, TelnovAIntegralRectangleFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(IntegralRectangleFuncTests, TelnovAIntegralRectangleFuncTests, kGtestValues, kFuncTestName);
 
 }  // namespace
 
