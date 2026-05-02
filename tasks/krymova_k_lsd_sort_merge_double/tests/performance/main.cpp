@@ -46,10 +46,9 @@ TEST_P(KrymovaKPerfTests, MeasurePerformance) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType,
-                                                       KrymovaKLsdSortMergeDoubleTBB,  
-                                                       KrymovaKLsdSortMergeDoubleSEQ, KrymovaKLsdSortMergeDoubleOMP>(
-    PPC_SETTINGS_krymova_k_lsd_sort_merge_double);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, KrymovaKLsdSortMergeDoubleTBB, KrymovaKLsdSortMergeDoubleSEQ,
+                                KrymovaKLsdSortMergeDoubleOMP>(PPC_SETTINGS_krymova_k_lsd_sort_merge_double);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
