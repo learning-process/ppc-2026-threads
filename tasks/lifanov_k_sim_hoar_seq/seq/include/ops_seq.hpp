@@ -8,13 +8,13 @@
 namespace lifanov_k_simple_hoar_seq {
 
 class LifanovKSimpleHoarSEQ : public BaseTask {
-public:
+ public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
   explicit LifanovKSimpleHoarSEQ(const InType &in);
 
-private:
+ private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
@@ -22,10 +22,9 @@ private:
 
   static void QuickSortHoare(std::vector<int> &arr, int low, int high);
   static int Partition(std::vector<int> &arr, int low, int high);
-  static std::vector<int> Merge(const std::vector<int> &left,
-                                const std::vector<int> &right);
+  static std::vector<int> Merge(const std::vector<int> &left, const std::vector<int> &right);
 
   std::vector<int> data_;
 };
 
-} // namespace lifanov_k_simple_hoar_seq
+}  // namespace lifanov_k_simple_hoar_seq

@@ -1,5 +1,6 @@
-#include <algorithm>
 #include <gtest/gtest.h>
+
+#include <algorithm>
 #include <random>
 #include <vector>
 
@@ -7,12 +8,10 @@
 #include "lifanov_k_simple_hoar_seq/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-
 namespace lifanov_k_simple_hoar_seq {
 
-class LifanovKRunPerfTestSEQ
-    : public ppc::util::BaseRunPerfTests<InType, OutType> {
-protected:
+class LifanovKRunPerfTestSEQ : public ppc::util::BaseRunPerfTests<InType, OutType> {
+ protected:
   void SetUp() override {
     const size_t kCount = 100000;
     input_data_.resize(kCount);
@@ -27,26 +26,27 @@ protected:
     return std::is_sorted(output_data.begin(), output_data.end());
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
-private:
+ private:
   InType input_data_;
 };
 
-TEST_P(LifanovKRunPerfTestSEQ, SortPerfMode) { ExecuteTest(GetParam()); }
+TEST_P(LifanovKRunPerfTestSEQ, SortPerfMode) {
+  ExecuteTest(GetParam());
+}
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, LifanovKSimpleHoarSEQ>(
-        "lifanov_k_simple_hoar_seq");
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LifanovKSimpleHoarSEQ>("lifanov_k_simple_hoar_seq");
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = LifanovKRunPerfTestSEQ::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(HoarSortPerf, LifanovKRunPerfTestSEQ, kGtestValues,
-                         kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(HoarSortPerf, LifanovKRunPerfTestSEQ, kGtestValues, kPerfTestName);
 
-} // namespace
-} // namespace lifanov_k_simple_hoar_seq 
+}  // namespace
+}  // namespace lifanov_k_simple_hoar_seq
