@@ -40,7 +40,8 @@ TEST_P(LifanovKRunPerfTestSEQ, SortPerfMode) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LifanovKSimpleHoarSEQ>("lifanov_k_sim_hoar_seq");
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, LifanovKSimpleHoarSEQ>(PPC_SETTINGS_lifanov_k_sim_hoar_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
