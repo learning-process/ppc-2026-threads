@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "alekseev_a_mult_matrix_crs/common/include/common.hpp"
+#include "alekseev_a_mult_matrix_crs/omp/include/ops_omp.hpp"
 #include "alekseev_a_mult_matrix_crs/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -117,7 +118,8 @@ const std::array<TestType, 6> kTestParams = {
 };
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<AlekseevAMultMatrixCRSSEQ, InType>(kTestParams, PPC_SETTINGS_alekseev_a_mult_matrix_crs));
+    ppc::util::AddFuncTask<AlekseevAMultMatrixCRSSEQ, InType>(kTestParams, PPC_SETTINGS_alekseev_a_mult_matrix_crs),
+    ppc::util::AddFuncTask<AlekseevAMultMatrixCRSOMP, InType>(kTestParams, PPC_SETTINGS_alekseev_a_mult_matrix_crs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

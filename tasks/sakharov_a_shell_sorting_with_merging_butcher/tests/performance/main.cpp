@@ -8,6 +8,7 @@
 #include "sakharov_a_shell_sorting_with_merging_butcher/common/include/common.hpp"
 #include "sakharov_a_shell_sorting_with_merging_butcher/omp/include/ops_omp.hpp"
 #include "sakharov_a_shell_sorting_with_merging_butcher/seq/include/ops_seq.hpp"
+#include "sakharov_a_shell_sorting_with_merging_butcher/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -57,8 +58,9 @@ TEST_P(SakharovAShellButcherPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SakharovAShellButcherSEQ, SakharovAShellButcherOMP>(
-    PPC_SETTINGS_sakharov_a_shell_sorting_with_merging_butcher);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, SakharovAShellButcherSEQ, SakharovAShellButcherOMP, SakharovAShellButcherTBB>(
+        PPC_SETTINGS_sakharov_a_shell_sorting_with_merging_butcher);
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = SakharovAShellButcherPerfTests::CustomPerfTestName;
 

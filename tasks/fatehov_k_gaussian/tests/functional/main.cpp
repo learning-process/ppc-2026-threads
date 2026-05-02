@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "fatehov_k_gaussian/common/include/common.hpp"
+#include "fatehov_k_gaussian/omp/include/ops_omp.hpp"
 #include "fatehov_k_gaussian/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -54,7 +55,8 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(10, "10"), std::make
                                             std::make_tuple(20, "20")};
 
 const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<FatehovKGaussianSEQ, InType>(kTestParam, PPC_SETTINGS_fatehov_k_gaussian));
+    std::tuple_cat(ppc::util::AddFuncTask<FatehovKGaussianSEQ, InType>(kTestParam, PPC_SETTINGS_fatehov_k_gaussian),
+                   ppc::util::AddFuncTask<FatehovKGaussianOMP, InType>(kTestParam, PPC_SETTINGS_fatehov_k_gaussian));
 
 INSTANTIATE_TEST_SUITE_P(FatehovKTests, FatehovKGaussianFuncTests, ppc::util::ExpandToValues(kTestTasksList),
                          FatehovKGaussianFuncTests::PrintFuncTestName<FatehovKGaussianFuncTests>);

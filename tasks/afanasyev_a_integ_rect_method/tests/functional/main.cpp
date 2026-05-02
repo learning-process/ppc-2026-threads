@@ -7,7 +7,10 @@
 #include <tuple>
 
 #include "afanasyev_a_integ_rect_method/common/include/common.hpp"
+#include "afanasyev_a_integ_rect_method/omp/include/ops_omp.hpp"
 #include "afanasyev_a_integ_rect_method/seq/include/ops_seq.hpp"
+#include "afanasyev_a_integ_rect_method/stl/include/ops_stl.hpp"
+#include "afanasyev_a_integ_rect_method/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -60,7 +63,13 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(10, "n10"), std::mak
                                             std::make_tuple(80, "n80")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<AfanasyevAIntegRectMethodSEQ, InType>(
-    kTestParam, PPC_SETTINGS_afanasyev_a_integ_rect_method));
+                                               kTestParam, PPC_SETTINGS_afanasyev_a_integ_rect_method),
+                                           ppc::util::AddFuncTask<AfanasyevAIntegRectMethodOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_afanasyev_a_integ_rect_method),
+                                           ppc::util::AddFuncTask<AfanasyevAIntegRectMethodSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_afanasyev_a_integ_rect_method),
+                                           ppc::util::AddFuncTask<AfanasyevAIntegRectMethodTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_afanasyev_a_integ_rect_method));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

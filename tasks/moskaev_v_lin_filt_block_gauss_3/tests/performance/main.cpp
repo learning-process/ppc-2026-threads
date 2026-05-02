@@ -6,12 +6,13 @@
 #include <vector>
 
 #include "moskaev_v_lin_filt_block_gauss_3/common/include/common.hpp"
+#include "moskaev_v_lin_filt_block_gauss_3/omp/include/ops_omp.hpp"
 #include "moskaev_v_lin_filt_block_gauss_3/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace moskaev_v_lin_filt_block_gauss_3 {
 
-class MoskaevVLinFiltBlockGauss3SEQPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class MoskaevVLinFiltBlockGauss3PerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   void SetUp() override {
     int width = 2048;
     int height = 2048;
@@ -47,20 +48,21 @@ class MoskaevVLinFiltBlockGauss3SEQPerfTests : public ppc::util::BaseRunPerfTest
   InType input_data_;
 };
 
-TEST_P(MoskaevVLinFiltBlockGauss3SEQPerfTests, RunPerfModes) {
+TEST_P(MoskaevVLinFiltBlockGauss3PerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, MoskaevVLinFiltBlockGauss3SEQ>(PPC_SETTINGS_moskaev_v_lin_filt_block_gauss_3);
+const auto kAllPerfTasks = std::tuple_cat(
+    ppc::util::MakeAllPerfTasks<InType, MoskaevVLinFiltBlockGauss3SEQ>(PPC_SETTINGS_moskaev_v_lin_filt_block_gauss_3),
+    ppc::util::MakeAllPerfTasks<InType, MoskaevVLinFiltBlockGauss3OMP>(PPC_SETTINGS_moskaev_v_lin_filt_block_gauss_3));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = MoskaevVLinFiltBlockGauss3SEQPerfTests::CustomPerfTestName;
+const auto kPerfTestName = MoskaevVLinFiltBlockGauss3PerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(PerformanceTests, MoskaevVLinFiltBlockGauss3SEQPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PerformanceTests, MoskaevVLinFiltBlockGauss3PerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 

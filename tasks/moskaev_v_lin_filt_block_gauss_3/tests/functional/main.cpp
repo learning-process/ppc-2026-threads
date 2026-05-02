@@ -8,13 +8,14 @@
 #include <vector>
 
 #include "moskaev_v_lin_filt_block_gauss_3/common/include/common.hpp"
+#include "moskaev_v_lin_filt_block_gauss_3/omp/include/ops_omp.hpp"
 #include "moskaev_v_lin_filt_block_gauss_3/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
 namespace moskaev_v_lin_filt_block_gauss_3 {
 
-class MoskaevVLinFiltBlockGauss3SEQFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class MoskaevVLinFiltBlockGauss3FuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<6>(test_param);
@@ -43,7 +44,7 @@ class MoskaevVLinFiltBlockGauss3SEQFuncTests : public ppc::util::BaseRunFuncTest
 
 namespace {
 
-TEST_P(MoskaevVLinFiltBlockGauss3SEQFuncTests, GaussFilter) {
+TEST_P(MoskaevVLinFiltBlockGauss3FuncTests, GaussFilter) {
   ExecuteTest(GetParam());
 }
 
@@ -60,14 +61,15 @@ const std::array<TestType, 4> kTestParam = {
     std::make_tuple(1, 1, 1, 64, std::vector<uint8_t>{255}, std::vector<uint8_t>{255}, std::string("test4_1x1"))};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<MoskaevVLinFiltBlockGauss3SEQ, InType>(
-    kTestParam, PPC_SETTINGS_moskaev_v_lin_filt_block_gauss_3));
+                                               kTestParam, PPC_SETTINGS_moskaev_v_lin_filt_block_gauss_3),
+                                           ppc::util::AddFuncTask<MoskaevVLinFiltBlockGauss3OMP, InType>(
+                                               kTestParam, PPC_SETTINGS_moskaev_v_lin_filt_block_gauss_3));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kTestName =
-    MoskaevVLinFiltBlockGauss3SEQFuncTests::PrintFuncTestName<MoskaevVLinFiltBlockGauss3SEQFuncTests>;
+const auto kTestName = MoskaevVLinFiltBlockGauss3FuncTests::PrintFuncTestName<MoskaevVLinFiltBlockGauss3FuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(GaussFilter, MoskaevVLinFiltBlockGauss3SEQFuncTests, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(GaussFilter, MoskaevVLinFiltBlockGauss3FuncTests, kGtestValues, kTestName);
 
 }  // namespace
 

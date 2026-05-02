@@ -7,6 +7,7 @@
 
 #include "util/include/perf_test_util.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/common/include/common.hpp"
+#include "zyazeva_s_matrix_mult_cannon_alg/omp/include/ops_omp.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/seq/include/ops_seq.hpp"
 
 namespace zyazeva_s_matrix_mult_cannon_alg {
@@ -14,7 +15,7 @@ namespace zyazeva_s_matrix_mult_cannon_alg {
 class ZyazevaSPerformanceTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    size_t sz = 640;
+    size_t sz = 810;
 
     size_t size = sz * sz;
 
@@ -77,10 +78,10 @@ TEST_P(ZyazevaSPerformanceTest, RunPerformanceTest) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZyazevaSMatrixMultCannonAlgSEQ>(PPC_SETTINGS_zyazeva_s_matrix_mult_cannon_alg);
+    ppc::util::MakeAllPerfTasks<InType, ZyazevaSMatrixMultCannonAlgSEQ, ZyazevaSMatrixMultCannonAlgOMP>(
+        PPC_SETTINGS_zyazeva_s_matrix_mult_cannon_alg);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-
 const auto kPerfTestName = ZyazevaSPerformanceTest::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(SequentialPerformanceTests, ZyazevaSPerformanceTest, kGtestValues, kPerfTestName);
