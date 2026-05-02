@@ -20,6 +20,8 @@ permissions:
   issues: write
   pull-requests: write
   packages: read
+  pages: write
+  id-token: write
 
 jobs:
   pre-commit:
