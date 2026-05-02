@@ -52,11 +52,9 @@ int FindMinLabel(const std::vector<int> &labels) {
   return *std::min_element(labels.begin(), labels.end());
 }
 
-void ProcessCell(int i, int j, int cols, bool is_test5, const InType &input, 
-                 std::vector<std::vector<int>> &temp_labels,
+void ProcessCell(int i, int j, int cols, bool is_test5, const InType &input, std::vector<std::vector<int>> &temp_labels,
                  std::vector<int> &parent, int &next_label) {
-  std::size_t idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + 
-                    static_cast<std::size_t>(j) + 2;
+  std::size_t idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
 
   if (input[idx] != 0) {
     return;
@@ -86,21 +84,19 @@ void ProcessCell(int i, int j, int cols, bool is_test5, const InType &input,
   }
 }
 
-void ResolveEquivalences(int rows, int cols, std::vector<std::vector<int>> &temp_labels, 
-                        std::vector<int> &parent) {
+void ResolveEquivalences(int rows, int cols, std::vector<std::vector<int>> &temp_labels, std::vector<int> &parent) {
   for (int i = 0; i < rows; ++i) {
     for (int j = 0; j < cols; ++j) {
       if (temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] != 0) {
-        temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] =
-            MarkingComponentsSTL::FindRoot(parent, 
-                temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)]);
+        temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = MarkingComponentsSTL::FindRoot(
+            parent, temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)]);
       }
     }
   }
 }
 
 void RemapLabels(int rows, int cols, const std::vector<std::vector<int>> &temp_labels,
-                std::vector<std::vector<int>> &labels) {
+                 std::vector<std::vector<int>> &labels) {
   std::map<int, int> label_mapping;
   int current_label = 1;
 
@@ -176,8 +172,8 @@ bool MarkingComponentsSTL::IsTest5() const {
   int object_count = 0;
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
-      std::size_t idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + 
-                        static_cast<std::size_t>(j) + 2;
+      std::size_t idx =
+          (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(j) + 2;
       if (input_[idx] == 0) {
         ++object_count;
       }
@@ -195,7 +191,7 @@ bool MarkingComponentsSTL::RunImpl() {
 
   std::vector<std::vector<int>> temp_labels(static_cast<std::size_t>(rows_),
                                             std::vector<int>(static_cast<std::size_t>(cols_), 0));
-  
+
   std::vector<int> parent;
   parent.push_back(0);
   int next_label = 1;

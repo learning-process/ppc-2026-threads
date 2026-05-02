@@ -90,11 +90,8 @@ TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponentsSEQ) {
 }
 
 const std::array<TestType, 5> kTestParam = {
-    std::make_tuple(0, "L_shaped_component_8connectivity"), 
-    std::make_tuple(1, "diagonal_connected_components"),
-    std::make_tuple(2, "all_background"), 
-    std::make_tuple(3, "all_objects"), 
-    std::make_tuple(4, "two_horizontal_bars")};
+    std::make_tuple(0, "L_shaped_component_8connectivity"), std::make_tuple(1, "diagonal_connected_components"),
+    std::make_tuple(2, "all_background"), std::make_tuple(3, "all_objects"), std::make_tuple(4, "two_horizontal_bars")};
 
 const auto kTestTasksList =
     ppc::util::AddFuncTask<MarkingComponentsSEQ, InType>(kTestParam, PPC_SETTINGS_artyushkina_markirovka);
@@ -114,11 +111,8 @@ TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponentsSTL) {
 }
 
 const std::array<TestType, 5> kTestParam = {
-    std::make_tuple(0, "L_shaped_component_8connectivity"), 
-    std::make_tuple(1, "diagonal_connected_components"),
-    std::make_tuple(2, "all_background"), 
-    std::make_tuple(3, "all_objects"), 
-    std::make_tuple(4, "two_horizontal_bars")};
+    std::make_tuple(0, "L_shaped_component_8connectivity"), std::make_tuple(1, "diagonal_connected_components"),
+    std::make_tuple(2, "all_background"), std::make_tuple(3, "all_objects"), std::make_tuple(4, "two_horizontal_bars")};
 
 const auto kTestTasksList =
     ppc::util::AddFuncTask<MarkingComponentsSTL, InType>(kTestParam, PPC_SETTINGS_artyushkina_markirovka);
