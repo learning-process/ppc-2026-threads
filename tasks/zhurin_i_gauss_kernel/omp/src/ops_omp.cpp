@@ -6,17 +6,7 @@
 
 #include "zhurin_i_gauss_kernel/common/include/common.hpp"
 
-#ifdef _OPENMP
-#  include <omp.h>
-#endif
-
 namespace zhurin_i_gauss_kernel {
-
-ZhurinIGaussKernelOMP::ZhurinIGaussKernelOMP(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput() = OutType{};
-}
 
 bool ZhurinIGaussKernelOMP::ValidationImpl() {
   const auto &in = GetInput();
@@ -44,37 +34,56 @@ bool ZhurinIGaussKernelOMP::PreProcessingImpl() {
   width_ = std::get<0>(in);
   height_ = std::get<1>(in);
   num_parts_ = std::get<2>(in);
-  image_ = std::get<3>(in);
 
   padded_.assign(height_ + 2, std::vector<int>(width_ + 2, 0));
+  const auto &img = std::get<3>(in);
   for (int i = 0; i < height_; ++i) {
-    std::copy(image_[i].begin(), image_[i].end(), padded_[i + 1].begin() + 1);
+    std::copy(img[i].begin(), img[i].end(), padded_[i + 1].begin() + 1);
   }
 
   result_.assign(height_, std::vector<int>(width_, 0));
-  output_written_ = false;
   return true;
 }
 
+ZhurinIGaussKernelOMP::ZhurinIGaussKernelOMP(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = OutType{};
+}
+
 bool ZhurinIGaussKernelOMP::RunImpl() {
-#pragma omp parallel for schedule(static)
-  for (int i = 0; i < height_; ++i) {
-    for (int j = 0; j < width_; ++j) {
-      int sum = 0;
-      for (int ki = 0; ki < 3; ++ki) {
-        for (int kj = 0; kj < 3; ++kj) {
-          sum += padded_[i + ki][j + kj] * kKernel[ki][kj];
-        }
+  int w = width_;
+  int h = height_;
+  int np = num_parts_;
+  int base_width = w / np;
+  int remainder = w % np;
+
+  auto &local_padded = padded_;
+  auto &local_result = result_;
+
+#pragma omp parallel for schedule(static) default(none) \
+    shared(w, h, base_width, remainder, np, local_padded, local_result)
+  for (int part = 0; part < np; ++part) {
+    int part_width = base_width + (part < remainder ? 1 : 0);
+    int x_start = (part * base_width) + std::min(part, remainder);
+    int x_end = x_start + part_width;
+
+    for (int i = 1; i <= h; ++i) {
+      for (int j = x_start + 1; j <= x_end; ++j) {
+        int sum = (local_padded[i - 1][j - 1] * kKernel[0][0]) + (local_padded[i - 1][j] * kKernel[0][1]) +
+                  (local_padded[i - 1][j + 1] * kKernel[0][2]) + (local_padded[i][j - 1] * kKernel[1][0]) +
+                  (local_padded[i][j] * kKernel[1][1]) + (local_padded[i][j + 1] * kKernel[1][2]) +
+                  (local_padded[i + 1][j - 1] * kKernel[2][0]) + (local_padded[i + 1][j] * kKernel[2][1]) +
+                  (local_padded[i + 1][j + 1] * kKernel[2][2]);
+        local_result[i - 1][j - 1] = sum >> kShift;
       }
-      result_[i][j] = sum >> kShift;
     }
   }
   return true;
 }
 
 bool ZhurinIGaussKernelOMP::PostProcessingImpl() {
-  GetOutput() = std::move(result_);
-  output_written_ = true;
+  GetOutput() = result_;
   return true;
 }
 

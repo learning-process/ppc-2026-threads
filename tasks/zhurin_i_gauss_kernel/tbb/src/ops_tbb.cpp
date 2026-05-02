@@ -67,17 +67,16 @@ bool ZhurinIGaussKernelTBB::RunImpl() {
   tbb::parallel_for(tbb::blocked_range<int>(0, np), [&](const tbb::blocked_range<int> &range) {
     for (int part = range.begin(); part < range.end(); ++part) {
       int part_width = base_width + (part < remainder ? 1 : 0);
-      int x_start = part * base_width + (part < remainder ? part : remainder);
+      int x_start = (part * base_width) + (part < remainder ? part : remainder);
       int x_end = x_start + part_width;
 
       for (int i = 1; i <= h; ++i) {
         for (int j = x_start + 1; j <= x_end; ++j) {
-          // Развёрнутая свёртка
-          int sum = local_padded[i - 1][j - 1] * kKernel[0][0] + local_padded[i - 1][j] * kKernel[0][1] +
-                    local_padded[i - 1][j + 1] * kKernel[0][2] + local_padded[i][j - 1] * kKernel[1][0] +
-                    local_padded[i][j] * kKernel[1][1] + local_padded[i][j + 1] * kKernel[1][2] +
-                    local_padded[i + 1][j - 1] * kKernel[2][0] + local_padded[i + 1][j] * kKernel[2][1] +
-                    local_padded[i + 1][j + 1] * kKernel[2][2];
+          int sum = (local_padded[i - 1][j - 1] * kKernel[0][0]) + (local_padded[i - 1][j] * kKernel[0][1]) +
+                    (local_padded[i - 1][j + 1] * kKernel[0][2]) + (local_padded[i][j - 1] * kKernel[1][0]) +
+                    (local_padded[i][j] * kKernel[1][1]) + (local_padded[i][j + 1] * kKernel[1][2]) +
+                    (local_padded[i + 1][j - 1] * kKernel[2][0]) + (local_padded[i + 1][j] * kKernel[2][1]) +
+                    (local_padded[i + 1][j + 1] * kKernel[2][2]);
           local_result[i - 1][j - 1] = sum >> kShift;
         }
       }
