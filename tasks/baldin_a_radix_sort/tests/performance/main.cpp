@@ -6,6 +6,7 @@
 #include "baldin_a_radix_sort/common/include/common.hpp"
 #include "baldin_a_radix_sort/omp/include/ops_omp.hpp"
 #include "baldin_a_radix_sort/seq/include/ops_seq.hpp"
+#include "baldin_a_radix_sort/stl/include/ops_stl.hpp"
 #include "baldin_a_radix_sort/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -45,8 +46,8 @@ TEST_P(BaldinARadixSortPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, BaldinARadixSortSEQ, BaldinARadixSortOMP, BaldinARadixSortTBB>(
-        PPC_SETTINGS_baldin_a_radix_sort);
+    ppc::util::MakeAllPerfTasks<InType, BaldinARadixSortSEQ, BaldinARadixSortOMP, BaldinARadixSortTBB,
+                                BaldinARadixSortSTL>(PPC_SETTINGS_baldin_a_radix_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

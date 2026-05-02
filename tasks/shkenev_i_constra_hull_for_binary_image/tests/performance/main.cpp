@@ -6,6 +6,7 @@
 #include "shkenev_i_constra_hull_for_binary_image/common/include/common.hpp"
 #include "shkenev_i_constra_hull_for_binary_image/omp/include/ops_omp.hpp"
 #include "shkenev_i_constra_hull_for_binary_image/seq/include/ops_seq.hpp"
+#include "shkenev_i_constra_hull_for_binary_image/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace shkenev_i_constra_hull_for_binary_image {
@@ -45,8 +46,9 @@ TEST_P(ShkenevIConstrHullPerfTests, RunPerf) {
 
 namespace {
 
-const auto kPerfTasks = ppc::util::MakeAllPerfTasks<InType, ShkenevIConstrHullSeq, ShkenevIConstrHullOMP>(
-    PPC_SETTINGS_shkenev_i_constra_hull_for_binary_image);
+const auto kPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, ShkenevIConstrHullSeq, ShkenevIConstrHullOMP, ShkenevIConstrHullTBB>(
+        PPC_SETTINGS_shkenev_i_constra_hull_for_binary_image);
 
 const auto kValues = ppc::util::TupleToGTestValues(kPerfTasks);
 

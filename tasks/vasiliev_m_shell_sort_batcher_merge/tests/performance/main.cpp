@@ -11,6 +11,7 @@
 #include "vasiliev_m_shell_sort_batcher_merge/common/include/common.hpp"
 #include "vasiliev_m_shell_sort_batcher_merge/omp/include/ops_omp.hpp"
 #include "vasiliev_m_shell_sort_batcher_merge/seq/include/ops_seq.hpp"
+#include "vasiliev_m_shell_sort_batcher_merge/stl/include/ops_stl.hpp"
 #include "vasiliev_m_shell_sort_batcher_merge/tbb/include/ops_tbb.hpp"
 
 namespace vasiliev_m_shell_sort_batcher_merge {
@@ -62,7 +63,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, VasilievMShellSortBatcherMergeSEQ, VasilievMShellSortBatcherMergeOMP,
-                                VasilievMShellSortBatcherMergeTBB>(PPC_SETTINGS_vasiliev_m_shell_sort_batcher_merge);
+                                VasilievMShellSortBatcherMergeTBB, VasilievMShellSortBatcherMergeSTL>(
+        PPC_SETTINGS_vasiliev_m_shell_sort_batcher_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

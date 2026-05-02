@@ -9,12 +9,13 @@
 #include "potashnik_m_matrix_mult_complex/common/include/common.hpp"
 #include "potashnik_m_matrix_mult_complex/omp/include/ops_omp.hpp"
 #include "potashnik_m_matrix_mult_complex/seq/include/ops_seq.hpp"
+#include "potashnik_m_matrix_mult_complex/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace potashnik_m_matrix_mult_complex {
 
 class PotashnikMMatrixMultComplexPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr size_t kCount = 10000;
+  static constexpr size_t kCount = 14000;
   InType input_data_;
 
   void SetUp() override {
@@ -91,8 +92,8 @@ TEST_P(PotashnikMMatrixMultComplexPerfTest, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, PotashnikMMatrixMultComplexSEQ, PotashnikMMatrixMultComplexOMP>(
-        PPC_SETTINGS_potashnik_m_matrix_mult_complex);
+    ppc::util::MakeAllPerfTasks<InType, PotashnikMMatrixMultComplexSEQ, PotashnikMMatrixMultComplexOMP,
+                                PotashnikMMatrixMultComplexTBB>(PPC_SETTINGS_potashnik_m_matrix_mult_complex);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
