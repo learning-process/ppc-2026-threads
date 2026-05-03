@@ -50,10 +50,25 @@ int LifanovKSimpleHoarSEQ::Partition(std::vector<int> &arr, int low, int high) {
 }
 
 void LifanovKSimpleHoarSEQ::QuickSortHoare(std::vector<int> &arr, int low, int high) {
-  if (low < high) {
-    int p = Partition(arr, low, high);
-    QuickSortHoare(arr, low, p);
-    QuickSortHoare(arr, p + 1, high);
+  std::vector<std::pair<int, int>> stack;
+  stack.push_back({low, high});
+
+  while (!stack.empty()) {
+    auto [l, r] = stack.back();
+    stack.pop_back();
+
+    if (l >= r) {
+      continue;
+    }
+
+    int p = Partition(arr, l, r);
+
+    if (l < p) {
+      stack.push_back({l, p});
+    }
+    if (p + 1 < r) {
+      stack.push_back({p + 1, r});
+    }
   }
 }
 
