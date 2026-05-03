@@ -49,7 +49,6 @@ int LifanovKSimpleHoarSEQ::Partition(std::vector<int> &arr, int low, int high) {
   }
 }
 
-// NOLINTNEXTLINE(misc-no-recursion)
 void LifanovKSimpleHoarSEQ::QuickSortHoare(std::vector<int> &arr, int low, int high) {
   if (low < high) {
     int p = Partition(arr, low, high);
