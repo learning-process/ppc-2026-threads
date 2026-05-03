@@ -10,6 +10,7 @@
 #include "remizov_k_dense_matrix_multiplication_cannon_algorithm/seq/include/ops_seq.hpp"
 #include "remizov_k_dense_matrix_multiplication_cannon_algorithm/stl/include/ops_stl.hpp"
 #include "remizov_k_dense_matrix_multiplication_cannon_algorithm/tbb/include/ops_tbb.hpp"
+#include "remizov_k_dense_matrix_multiplication_cannon_algorithm/all/include/ops_all.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace remizov_k_dense_matrix_multiplication_cannon_algorithm {
@@ -110,6 +111,18 @@ const auto kAllPerfTasksStl = ppc::util::MakeAllPerfTasks<InType, RemizovKDenseM
 const auto kGtestValuesStl = ppc::util::TupleToGTestValues(kAllPerfTasksStl);
 
 INSTANTIATE_TEST_SUITE_P(PerfTestsStl, RemizovKDenseMatrixMultiplicationCannonAlgorithmPerfTests, kGtestValuesStl,
+                         kPerfTestName);
+
+}  // namespace
+
+namespace {
+
+const auto kAllPerfTasksAll = ppc::util::MakeAllPerfTasks<InType, RemizovKDenseMatrixMultiplicationCannonAlgorithmAll>(
+    PPC_SETTINGS_remizov_k_dense_matrix_multiplication_cannon_algorithm);
+
+const auto kGtestValuesAll = ppc::util::TupleToGTestValues(kAllPerfTasksAll);
+
+INSTANTIATE_TEST_SUITE_P(PerfTestsAll, RemizovKDenseMatrixMultiplicationCannonAlgorithmPerfTests, kGtestValuesAll,
                          kPerfTestName);
 
 }  // namespace
