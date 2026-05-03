@@ -4,7 +4,7 @@
 #include <tbb/parallel_for.h>
 
 #ifdef _OPENMP
-#include <omp.h>
+#  include <omp.h>
 #endif
 
 #include <cstddef>
@@ -29,12 +29,20 @@ bool RemizovKDenseMatrixMultiplicationCannonAlgorithmAll::ValidationImpl() {
   const auto &mat_a = std::get<1>(input_data);
   const auto &mat_b = std::get<2>(input_data);
 
-  if (block_dim <= 0) return false;
-  if (mat_a.empty() || mat_b.empty()) return false;
+  if (block_dim <= 0) {
+    return false;
+  }
+  if (mat_a.empty() || mat_b.empty()) {
+    return false;
+  }
 
   size_t n = mat_a.size();
-  if (n != mat_a[0].size()) return false;
-  if (n != mat_b.size() || n != mat_b[0].size()) return false;
+  if (n != mat_a[0].size()) {
+    return false;
+  }
+  if (n != mat_b.size() || n != mat_b[0].size()) {
+    return false;
+  }
 
   return (n % static_cast<size_t>(block_dim) == 0);
 }
@@ -44,13 +52,12 @@ bool RemizovKDenseMatrixMultiplicationCannonAlgorithmAll::PreProcessingImpl() {
   return true;
 }
 
-void RemizovKDenseMatrixMultiplicationCannonAlgorithmAll::MultiplyBlock(
-    const std::vector<std::vector<double>> &a,
-    const std::vector<std::vector<double>> &b,
-    std::vector<std::vector<double>> &c,
-    int block_size) {
+void RemizovKDenseMatrixMultiplicationCannonAlgorithmAll::MultiplyBlock(const std::vector<std::vector<double>> &a,
+                                                                        const std::vector<std::vector<double>> &b,
+                                                                        std::vector<std::vector<double>> &c,
+                                                                        int block_size) {
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static)
+#  pragma omp parallel for collapse(2) schedule(static)
 #endif
   for (int i = 0; i < block_size; ++i) {
     for (int j = 0; j < block_size; ++j) {
@@ -64,8 +71,7 @@ void RemizovKDenseMatrixMultiplicationCannonAlgorithmAll::MultiplyBlock(
 }
 
 void RemizovKDenseMatrixMultiplicationCannonAlgorithmAll::ShiftBlocksLeft(
-    std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks,
-    int block_count) {
+    std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks, int block_count) {
   unsigned int num_threads = std::max(1u, std::thread::hardware_concurrency());
   std::vector<std::thread> threads;
   threads.reserve(num_threads);
@@ -74,7 +80,9 @@ void RemizovKDenseMatrixMultiplicationCannonAlgorithmAll::ShiftBlocksLeft(
   for (unsigned int t = 0; t < num_threads; ++t) {
     int start = t * rows_per_thread;
     int end = std::min(start + rows_per_thread, block_count);
-    if (start >= end) break;
+    if (start >= end) {
+      break;
+    }
     threads.emplace_back([&matrix_blocks, block_count, start, end]() {
       for (int i = start; i < end; ++i) {
         auto first = std::move(matrix_blocks[i][0]);
@@ -85,12 +93,13 @@ void RemizovKDenseMatrixMultiplicationCannonAlgorithmAll::ShiftBlocksLeft(
       }
     });
   }
-  for (auto &th : threads) th.join();
+  for (auto &th : threads) {
+    th.join();
+  }
 }
 
 void RemizovKDenseMatrixMultiplicationCannonAlgorithmAll::ShiftBlocksUp(
-    std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks,
-    int block_count) {
+    std::vector<std::vector<std::vector<std::vector<double>>>> &matrix_blocks, int block_count) {
   unsigned int num_threads = std::max(1u, std::thread::hardware_concurrency());
   std::vector<std::thread> threads;
   threads.reserve(num_threads);
@@ -99,7 +108,9 @@ void RemizovKDenseMatrixMultiplicationCannonAlgorithmAll::ShiftBlocksUp(
   for (unsigned int t = 0; t < num_threads; ++t) {
     int start = t * cols_per_thread;
     int end = std::min(start + cols_per_thread, block_count);
-    if (start >= end) break;
+    if (start >= end) {
+      break;
+    }
     threads.emplace_back([&matrix_blocks, block_count, start, end]() {
       for (int j = start; j < end; ++j) {
         auto first = std::move(matrix_blocks[0][j]);
@@ -110,24 +121,24 @@ void RemizovKDenseMatrixMultiplicationCannonAlgorithmAll::ShiftBlocksUp(
       }
     });
   }
-  for (auto &th : threads) th.join();
+  for (auto &th : threads) {
+    th.join();
+  }
 }
 
 void RemizovKDenseMatrixMultiplicationCannonAlgorithmAll::RunCannonCycle(
     std::vector<std::vector<std::vector<std::vector<double>>>> &a_blocks,
     std::vector<std::vector<std::vector<std::vector<double>>>> &b_blocks,
-    std::vector<std::vector<std::vector<std::vector<double>>>> &c_blocks,
-    int block_size, int block_count) {
+    std::vector<std::vector<std::vector<std::vector<double>>>> &c_blocks, int block_size, int block_count) {
   for (int step = 0; step < block_count; ++step) {
-    tbb::parallel_for(
-        tbb::blocked_range2d<int>(0, block_count, 0, block_count),
-        [&](const tbb::blocked_range2d<int> &r) {
-          for (int i = r.rows().begin(); i != r.rows().end(); ++i) {
-            for (int j = r.cols().begin(); j != r.cols().end(); ++j) {
-              MultiplyBlock(a_blocks[i][j], b_blocks[i][j], c_blocks[i][j], block_size);
-            }
-          }
-        });
+    tbb::parallel_for(tbb::blocked_range2d<int>(0, block_count, 0, block_count),
+                      [&](const tbb::blocked_range2d<int> &r) {
+      for (int i = r.rows().begin(); i != r.rows().end(); ++i) {
+        for (int j = r.cols().begin(); j != r.cols().end(); ++j) {
+          MultiplyBlock(a_blocks[i][j], b_blocks[i][j], c_blocks[i][j], block_size);
+        }
+      }
+    });
 
     if (step < block_count - 1) {
       ShiftBlocksLeft(a_blocks, block_count);
@@ -137,48 +148,38 @@ void RemizovKDenseMatrixMultiplicationCannonAlgorithmAll::RunCannonCycle(
 }
 
 void RemizovKDenseMatrixMultiplicationCannonAlgorithmAll::InitializeBlocks(
-    const std::vector<std::vector<double>> &matrix_a,
-    const std::vector<std::vector<double>> &matrix_b,
+    const std::vector<std::vector<double>> &matrix_a, const std::vector<std::vector<double>> &matrix_b,
     std::vector<std::vector<std::vector<std::vector<double>>>> &a_blocks,
-    std::vector<std::vector<std::vector<std::vector<double>>>> &b_blocks,
-    int block_size, int block_count) {
-  tbb::parallel_for(
-      tbb::blocked_range2d<int>(0, block_count, 0, block_count),
-      [&](const tbb::blocked_range2d<int> &r) {
-        for (int i = r.rows().begin(); i != r.rows().end(); ++i) {
-          for (int j = r.cols().begin(); j != r.cols().end(); ++j) {
-            int shift = (i + j) % block_count;
-            for (int bi = 0; bi < block_size; ++bi) {
-              for (int bj = 0; bj < block_size; ++bj) {
-                a_blocks[i][j][bi][bj] =
-                    matrix_a[(i * block_size) + bi][(shift * block_size) + bj];
-                b_blocks[i][j][bi][bj] =
-                    matrix_b[(shift * block_size) + bi][(j * block_size) + bj];
-              }
-            }
+    std::vector<std::vector<std::vector<std::vector<double>>>> &b_blocks, int block_size, int block_count) {
+  tbb::parallel_for(tbb::blocked_range2d<int>(0, block_count, 0, block_count), [&](const tbb::blocked_range2d<int> &r) {
+    for (int i = r.rows().begin(); i != r.rows().end(); ++i) {
+      for (int j = r.cols().begin(); j != r.cols().end(); ++j) {
+        int shift = (i + j) % block_count;
+        for (int bi = 0; bi < block_size; ++bi) {
+          for (int bj = 0; bj < block_size; ++bj) {
+            a_blocks[i][j][bi][bj] = matrix_a[(i * block_size) + bi][(shift * block_size) + bj];
+            b_blocks[i][j][bi][bj] = matrix_b[(shift * block_size) + bi][(j * block_size) + bj];
           }
         }
-      });
+      }
+    }
+  });
 }
 
 void RemizovKDenseMatrixMultiplicationCannonAlgorithmAll::AssembleOutput(
-    std::vector<std::vector<std::vector<std::vector<double>>>> &c_blocks,
-    std::vector<std::vector<double>> &output,
+    std::vector<std::vector<std::vector<std::vector<double>>>> &c_blocks, std::vector<std::vector<double>> &output,
     int block_size, int block_count) {
-  tbb::parallel_for(
-      tbb::blocked_range2d<int>(0, block_count, 0, block_count),
-      [&](const tbb::blocked_range2d<int> &r) {
-        for (int i = r.rows().begin(); i != r.rows().end(); ++i) {
-          for (int j = r.cols().begin(); j != r.cols().end(); ++j) {
-            for (int bi = 0; bi < block_size; ++bi) {
-              for (int bj = 0; bj < block_size; ++bj) {
-                output[(i * block_size) + bi][(j * block_size) + bj] =
-                    c_blocks[i][j][bi][bj];
-              }
-            }
+  tbb::parallel_for(tbb::blocked_range2d<int>(0, block_count, 0, block_count), [&](const tbb::blocked_range2d<int> &r) {
+    for (int i = r.rows().begin(); i != r.rows().end(); ++i) {
+      for (int j = r.cols().begin(); j != r.cols().end(); ++j) {
+        for (int bi = 0; bi < block_size; ++bi) {
+          for (int bj = 0; bj < block_size; ++bj) {
+            output[(i * block_size) + bi][(j * block_size) + bj] = c_blocks[i][j][bi][bj];
           }
         }
-      });
+      }
+    }
+  });
 }
 
 bool RemizovKDenseMatrixMultiplicationCannonAlgorithmAll::RunImpl() {
@@ -192,11 +193,9 @@ bool RemizovKDenseMatrixMultiplicationCannonAlgorithmAll::RunImpl() {
   int blocks_per_dim = matrix_size / block_dim;
 
   using Block4D = std::vector<std::vector<std::vector<std::vector<double>>>>;
-  Block4D blocks_a(
-      blocks_per_dim,
-      std::vector<std::vector<std::vector<double>>>(
-          blocks_per_dim,
-          std::vector<std::vector<double>>(block_dim, std::vector<double>(block_dim, 0.0))));
+  Block4D blocks_a(blocks_per_dim, std::vector<std::vector<std::vector<double>>>(
+                                       blocks_per_dim, std::vector<std::vector<double>>(
+                                                           block_dim, std::vector<double>(block_dim, 0.0))));
   Block4D blocks_b = blocks_a;
   Block4D blocks_c = blocks_a;
 
