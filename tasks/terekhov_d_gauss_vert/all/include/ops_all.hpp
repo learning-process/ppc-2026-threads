@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "task/include/task.hpp"
 #include "terekhov_d_gauss_vert/common/include/common.hpp"
 
