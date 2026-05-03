@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ARTYUSHKINA_MARKIROVKA_STL_INCLUDE_OPS_STL_HPP_
+#define ARTYUSHKINA_MARKIROVKA_STL_INCLUDE_OPS_STL_HPP_
 
 #include <vector>
 
@@ -12,10 +13,10 @@ class MarkingComponentsSTL : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSTL;
   }
-  explicit MarkingComponentsSTL(const InType &in);
+  explicit MarkingComponentsSTL(const InType& in);
 
-  static int FindRoot(std::vector<int> &parent, int label);
-  static void UnionLabels(std::vector<int> &parent, int label1, int label2);
+  static int FindRoot(std::vector<int>& parent, int label);
+  static void UnionLabels(std::vector<int>& parent, int label1, int label2);
 
  private:
   bool ValidationImpl() override;
@@ -32,3 +33,5 @@ class MarkingComponentsSTL : public BaseTask {
 };
 
 }  // namespace artyushkina_markirovka
+
+#endif  // ARTYUSHKINA_MARKIROVKA_STL_INCLUDE_OPS_STL_HPP_

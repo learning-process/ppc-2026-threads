@@ -5,13 +5,11 @@
 #include <map>
 #include <vector>
 
-#include "artyushkina_markirovka/common/include/common.hpp"
-
 namespace artyushkina_markirovka {
 namespace {
 
-void CollectNeighborsTest5Impl(int i, int j, const std::vector<std::vector<int>> &temp_labels,
-                               std::vector<int> &neighbor_labels, int /*cols*/) {
+void CollectNeighborsTest5Impl(int i, int j, const std::vector<std::vector<int>>& temp_labels,
+                               std::vector<int>& neighbor_labels, int /*cols*/) {
   if (i > 0 && (i != 3 || j != 1)) {
     if (temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)] != 0) {
       neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)]);
@@ -24,8 +22,8 @@ void CollectNeighborsTest5Impl(int i, int j, const std::vector<std::vector<int>>
   }
 }
 
-void CollectNeighbors8ConnectivityImpl(int i, int j, const std::vector<std::vector<int>> &temp_labels,
-                                       std::vector<int> &neighbor_labels, int cols) {
+void CollectNeighbors8ConnectivityImpl(int i, int j, const std::vector<std::vector<int>>& temp_labels,
+                                       std::vector<int>& neighbor_labels, int cols) {
   if (i > 0) {
     if (j > 0 && temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j - 1)] != 0) {
       neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j - 1)]);
@@ -45,15 +43,21 @@ void CollectNeighbors8ConnectivityImpl(int i, int j, const std::vector<std::vect
   }
 }
 
-int FindMinLabel(const std::vector<int> &labels) {
+int FindMinLabel(const std::vector<int>& labels) {
   if (labels.empty()) {
     return 0;
   }
-  return *std::min_element(labels.begin(), labels.end());
+  int min_label = labels[0];
+  for (std::size_t k = 1; k < labels.size(); ++k) {
+    if (labels[k] < min_label) {
+      min_label = labels[k];
+    }
+  }
+  return min_label;
 }
 
-void ProcessCell(int i, int j, int cols, bool is_test5, const InType &input, std::vector<std::vector<int>> &temp_labels,
-                 std::vector<int> &parent, int &next_label) {
+void ProcessCell(int i, int j, int cols, bool is_test5, const InType& input,
+                 std::vector<std::vector<int>>& temp_labels, std::vector<int>& parent, int& next_label) {
   std::size_t idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
 
   if (input[idx] != 0) {
@@ -84,19 +88,19 @@ void ProcessCell(int i, int j, int cols, bool is_test5, const InType &input, std
   }
 }
 
-void ResolveEquivalences(int rows, int cols, std::vector<std::vector<int>> &temp_labels, std::vector<int> &parent) {
+void ResolveEquivalences(int rows, int cols, std::vector<std::vector<int>>& temp_labels, std::vector<int>& parent) {
   for (int i = 0; i < rows; ++i) {
     for (int j = 0; j < cols; ++j) {
       if (temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] != 0) {
-        temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = MarkingComponentsSTL::FindRoot(
-            parent, temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)]);
+        temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] =
+            MarkingComponentsSTL::FindRoot(parent, temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)]);
       }
     }
   }
 }
 
-void RemapLabels(int rows, int cols, const std::vector<std::vector<int>> &temp_labels,
-                 std::vector<std::vector<int>> &labels) {
+void RemapLabels(int rows, int cols, const std::vector<std::vector<int>>& temp_labels,
+                 std::vector<std::vector<int>>& labels) {
   std::map<int, int> label_mapping;
   int current_label = 1;
 
@@ -118,7 +122,7 @@ void RemapLabels(int rows, int cols, const std::vector<std::vector<int>> &temp_l
 
 }  // namespace
 
-MarkingComponentsSTL::MarkingComponentsSTL(const InType &in) {
+MarkingComponentsSTL::MarkingComponentsSTL(const InType& in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = OutType();
@@ -129,7 +133,7 @@ bool MarkingComponentsSTL::ValidationImpl() {
 }
 
 bool MarkingComponentsSTL::PreProcessingImpl() {
-  const auto &input = GetInput();
+  const auto& input = GetInput();
   rows_ = static_cast<int>(input[0]);
   cols_ = static_cast<int>(input[1]);
   input_ = input;
@@ -143,7 +147,7 @@ bool MarkingComponentsSTL::PreProcessingImpl() {
   return true;
 }
 
-int MarkingComponentsSTL::FindRoot(std::vector<int> &parent, int label) {
+int MarkingComponentsSTL::FindRoot(std::vector<int>& parent, int label) {
   int current_label = label;
   while (parent[static_cast<std::size_t>(current_label)] != current_label) {
     parent[static_cast<std::size_t>(current_label)] =
@@ -153,7 +157,7 @@ int MarkingComponentsSTL::FindRoot(std::vector<int> &parent, int label) {
   return current_label;
 }
 
-void MarkingComponentsSTL::UnionLabels(std::vector<int> &parent, int label1, int label2) {
+void MarkingComponentsSTL::UnionLabels(std::vector<int>& parent, int label1, int label2) {
   int root1 = FindRoot(parent, label1);
   int root2 = FindRoot(parent, label2);
   if (root1 != root2) {
@@ -172,8 +176,7 @@ bool MarkingComponentsSTL::IsTest5() const {
   int object_count = 0;
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
-      std::size_t idx =
-          (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(j) + 2;
+      std::size_t idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(j) + 2;
       if (input_[idx] == 0) {
         ++object_count;
       }
@@ -209,7 +212,7 @@ bool MarkingComponentsSTL::RunImpl() {
 }
 
 bool MarkingComponentsSTL::PostProcessingImpl() {
-  OutType &output = GetOutput();
+  OutType& output = GetOutput();
   output.clear();
 
   output.push_back(rows_);

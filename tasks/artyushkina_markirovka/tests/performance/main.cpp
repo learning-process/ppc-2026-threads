@@ -10,6 +10,7 @@
 #include "util/include/perf_test_util.hpp"
 
 namespace artyushkina_markirovka {
+namespace {
 
 class ArtyushkinaMarkirovkaPerfTestsBase : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
@@ -69,18 +70,14 @@ TEST_P(ArtyushkinaMarkirovkaSEQPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-namespace seq {
-
-const auto kAllPerfTasks =
+const auto kAllPerfTasksSeq =
     ppc::util::MakeAllPerfTasks<InType, MarkingComponentsSEQ>(PPC_SETTINGS_artyushkina_markirovka);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kGtestValuesSeq = ppc::util::TupleToGTestValues(kAllPerfTasksSeq);
 
-const auto kPerfTestName = ArtyushkinaMarkirovkaSEQPerfTests::CustomPerfTestName;
+const auto kPerfTestNameSeq = ArtyushkinaMarkirovkaSEQPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(SEQRunModeTests, ArtyushkinaMarkirovkaSEQPerfTests, kGtestValues, kPerfTestName);
-
-}  // namespace seq
+INSTANTIATE_TEST_SUITE_P(SEQRunModeTests, ArtyushkinaMarkirovkaSEQPerfTests, kGtestValuesSeq, kPerfTestNameSeq);
 
 class ArtyushkinaMarkirovkaSTLPerfTests : public ArtyushkinaMarkirovkaPerfTestsBase {};
 
@@ -88,17 +85,14 @@ TEST_P(ArtyushkinaMarkirovkaSTLPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-namespace stl {
-
-const auto kAllPerfTasks =
+const auto kAllPerfTasksStl =
     ppc::util::MakeAllPerfTasks<InType, MarkingComponentsSTL>(PPC_SETTINGS_artyushkina_markirovka);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kGtestValuesStl = ppc::util::TupleToGTestValues(kAllPerfTasksStl);
 
-const auto kPerfTestName = ArtyushkinaMarkirovkaSTLPerfTests::CustomPerfTestName;
+const auto kPerfTestNameStl = ArtyushkinaMarkirovkaSTLPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(STLRunModeTests, ArtyushkinaMarkirovkaSTLPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(STLRunModeTests, ArtyushkinaMarkirovkaSTLPerfTests, kGtestValuesStl, kPerfTestNameStl);
 
-}  // namespace stl
-
+}  // namespace
 }  // namespace artyushkina_markirovka
