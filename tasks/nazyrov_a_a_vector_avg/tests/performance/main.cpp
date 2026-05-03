@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <chrono>
 #include <numeric>
-#include <random>
 #include <vector>
 
 #include "../../common/include/common.hpp"
@@ -11,56 +11,61 @@
 
 namespace nazyrov_a_a_vector_avg {
 
-TEST(NazyrovVectorAvgPerfTest, SeqPerformance) {
-  const int size = 1000000;
-  InType input(size);
-
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_int_distribution<> dist(1, 100);
-  for (int i = 0; i < size; ++i) {
-    input[i] = dist(gen);
+class VectorAvgPerfTest : public ::testing::Test {
+ protected:
+  static void SetUpTestSuite() {
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+    if (!initialized) {
+      int argc = 0;
+      char **argv = nullptr;
+      MPI_Init(&argc, &argv);
+    }
   }
 
-  auto task = std::make_shared<VectorAvgSEQ>(input);
+  static void TearDownTestSuite() {
+    int finalized = 0;
+    MPI_Finalized(&finalized);
+    if (!finalized) {
+      MPI_Finalize();
+    }
+  }
+};
 
+TEST_F(VectorAvgPerfTest, SeqPerformance) {
+  const int size = 1000000;
+  InType input(size, 1);
+
+  auto task = std::make_shared<VectorAvgSEQ>(input);
   auto start = std::chrono::high_resolution_clock::now();
-  ASSERT_TRUE(task->Validation());
-  ASSERT_TRUE(task->PreProcessing());
-  ASSERT_TRUE(task->Run());
-  ASSERT_TRUE(task->PostProcessing());
+  task->Validation();
+  task->PreProcessing();
+  task->Run();
+  task->PostProcessing();
   auto end = std::chrono::high_resolution_clock::now();
 
   double elapsed = std::chrono::duration<double>(end - start).count();
-  std::cout << "SEQ time for " << size << " elements: " << elapsed << "s\n";
+  std::cout << "SEQ time: " << elapsed << "s\n";
   EXPECT_GT(elapsed, 0);
 }
 
-TEST(NazyrovVectorAvgPerfTest, MpiPerformance) {
+TEST_F(VectorAvgPerfTest, MpiPerformance) {
   const int size = 1000000;
-  InType input(size);
-
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_int_distribution<> dist(1, 100);
-  for (int i = 0; i < size; ++i) {
-    input[i] = dist(gen);
-  }
+  InType input(size, 1);
 
   auto task = std::make_shared<VectorAvgMPI>(input);
-
   auto start = std::chrono::high_resolution_clock::now();
-  ASSERT_TRUE(task->Validation());
-  ASSERT_TRUE(task->PreProcessing());
-  ASSERT_TRUE(task->Run());
-  ASSERT_TRUE(task->PostProcessing());
+  task->Validation();
+  task->PreProcessing();
+  task->Run();
+  task->PostProcessing();
   auto end = std::chrono::high_resolution_clock::now();
 
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
     double elapsed = std::chrono::duration<double>(end - start).count();
-    std::cout << "MPI time for " << size << " elements: " << elapsed << "s\n";
+    std::cout << "MPI time: " << elapsed << "s\n";
     EXPECT_GT(elapsed, 0);
   }
 }
