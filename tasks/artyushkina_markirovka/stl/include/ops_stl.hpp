@@ -13,10 +13,10 @@ class MarkingComponentsSTL : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSTL;
   }
-  explicit MarkingComponentsSTL(const InType& in);
+  explicit MarkingComponentsSTL(const InType &in);
 
-  static int FindRoot(std::vector<int>& parent, int label);
-  static void UnionLabels(std::vector<int>& parent, int label1, int label2);
+  static int FindRoot(std::vector<int> &parent, int label);
+  static void UnionLabels(std::vector<int> &parent, int label1, int label2);
 
  private:
   bool ValidationImpl() override;
