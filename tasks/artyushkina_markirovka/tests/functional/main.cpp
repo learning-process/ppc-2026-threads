@@ -8,6 +8,7 @@
 
 #include "artyushkina_markirovka/common/include/common.hpp"
 #include "artyushkina_markirovka/seq/include/ops_seq.hpp"
+#include "artyushkina_markirovka/tbb/include/ops_tbb.hpp"  // Добавлено для TBB
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -82,6 +83,7 @@ class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType
   OutType expected_;
 };
 
+// Существующие тесты для SEQ (не трогаем)
 namespace {
 
 TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponents) {
@@ -102,5 +104,33 @@ const auto kPerfTestName = ArtyushkinaMarkirovkaFuncTests::PrintFuncTestName<Art
 INSTANTIATE_TEST_SUITE_P(ComponentLabeling, ArtyushkinaMarkirovkaFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
+
+// НОВЫЕ тесты для TBB (добавляем ниже)
+namespace tbb_tests {
+
+TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponentsTBB) {
+  ExecuteTest(GetParam());
+}
+
+// Используем те же самые тестовые параметры
+const std::array<TestType, 5> kTestParam = {
+    std::make_tuple(0, "L_shaped_component_8connectivity"), 
+    std::make_tuple(1, "diagonal_connected_components"),
+    std::make_tuple(2, "all_background"), 
+    std::make_tuple(3, "all_objects"), 
+    std::make_tuple(4, "two_horizontal_bars")};
+
+// Добавляем TBB задачи
+const auto kTestTasksList =
+    ppc::util::AddFuncTask<MarkingComponentsTBB, InType>(kTestParam, PPC_SETTINGS_artyushkina_markirovka);
+
+const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+
+const auto kPerfTestName = ArtyushkinaMarkirovkaFuncTests::PrintFuncTestName<ArtyushkinaMarkirovkaFuncTests>;
+
+// Используем другое имя test suite для TBB
+INSTANTIATE_TEST_SUITE_P(ComponentLabelingTBB, ArtyushkinaMarkirovkaFuncTests, kGtestValues, kPerfTestName);
+
+}  // namespace tbb_tests
 
 }  // namespace artyushkina_markirovka
