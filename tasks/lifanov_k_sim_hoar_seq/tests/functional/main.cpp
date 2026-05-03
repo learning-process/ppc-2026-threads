@@ -1,7 +1,11 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <array>
+#include <cstddef>
 #include <random>
+#include <string>
+#include <tuple>
 #include <vector>
 
 #include "lifanov_k_sim_hoar_seq/common/include/common.hpp"
@@ -43,28 +47,30 @@ TEST_P(LifanovKRunFuncTestsSEQ, SortTest) {
   ExecuteTest(GetParam());
 }
 
-static std::vector<int> GetRandomVector(size_t size) {
+std::vector<int> GetRandomVector(std::size_t size) {
   std::vector<int> vec(size);
   std::random_device rd;
   std::mt19937 gen(rd());
-  for (size_t i = 0; i < size; ++i) {
+
+  for (std::size_t i = 0; i < size; ++i) {
     vec[i] = static_cast<int>(gen() % 1000);
   }
+
   return vec;
 }
 
-static std::vector<int> GetSortedVector(std::vector<int> vec) {
-  std::sort(vec.begin(), vec.end());
+std::vector<int> GetSortedVector(std::vector<int> vec) {
+  std::ranges::sort(vec);
   return vec;
 }
 
-const std::vector<int> v1 = GetRandomVector(10);
-const std::vector<int> v2 = GetRandomVector(100);
-const std::vector<int> v3 = {5, 4, 3, 2, 1};
+const std::vector<int> kV1 = GetRandomVector(10);
+const std::vector<int> kV2 = GetRandomVector(100);
+const std::vector<int> kV3 = {5, 4, 3, 2, 1};
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(v1, GetSortedVector(v1), "size_10"),
-                                            std::make_tuple(v2, GetSortedVector(v2), "size_100"),
-                                            std::make_tuple(v3, GetSortedVector(v3), "reverse_5")};
+const std::array<TestType, 3> kTestParam = {std::make_tuple(kV1, GetSortedVector(kV1), "size_10"),
+                                            std::make_tuple(kV2, GetSortedVector(kV2), "size_100"),
+                                            std::make_tuple(kV3, GetSortedVector(kV3), "reverse_5")};
 
 const auto kTestTasksList =
     ppc::util::AddFuncTask<LifanovKSimpleHoarSEQ, InType>(kTestParam, PPC_SETTINGS_lifanov_k_sim_hoar_seq);

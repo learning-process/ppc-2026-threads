@@ -1,6 +1,7 @@
 #include "lifanov_k_sim_hoar_seq/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <vector>
 
 #include "lifanov_k_sim_hoar_seq/common/include/common.hpp"
@@ -23,23 +24,32 @@ bool LifanovKSimpleHoarSEQ::PreProcessingImpl() {
 }
 
 int LifanovKSimpleHoarSEQ::Partition(std::vector<int> &arr, int low, int high) {
-  int pivot = arr[low + (high - low) / 2];
+  int mid = low + ((high - low) / 2);
+  int pivot = arr[mid];
+
   int i = low - 1;
   int j = high + 1;
+
   while (true) {
-    do {
+    i++;
+    while (arr[i] < pivot) {
       i++;
-    } while (arr[i] < pivot);
-    do {
+    }
+
+    j--;
+    while (arr[j] > pivot) {
       j--;
-    } while (arr[j] > pivot);
+    }
+
     if (i >= j) {
       return j;
     }
+
     std::swap(arr[i], arr[j]);
   }
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 void LifanovKSimpleHoarSEQ::QuickSortHoare(std::vector<int> &arr, int low, int high) {
   if (low < high) {
     int p = Partition(arr, low, high);
@@ -51,20 +61,30 @@ void LifanovKSimpleHoarSEQ::QuickSortHoare(std::vector<int> &arr, int low, int h
 std::vector<int> LifanovKSimpleHoarSEQ::Merge(const std::vector<int> &left, const std::vector<int> &right) {
   std::vector<int> res;
   res.reserve(left.size() + right.size());
-  size_t i = 0, j = 0;
+
+  size_t i = 0;
+  size_t j = 0;
+
   while (i < left.size() && j < right.size()) {
     if (left[i] <= right[j]) {
-      res.push_back(left[i++]);
+      res.push_back(left[i]);
+      i++;
     } else {
-      res.push_back(right[j++]);
+      res.push_back(right[j]);
+      j++;
     }
   }
+
   while (i < left.size()) {
-    res.push_back(left[i++]);
+    res.push_back(left[i]);
+    i++;
   }
+
   while (j < right.size()) {
-    res.push_back(right[j++]);
+    res.push_back(right[j]);
+    j++;
   }
+
   return res;
 }
 
@@ -74,8 +94,10 @@ bool LifanovKSimpleHoarSEQ::RunImpl() {
   }
 
   size_t mid = data_.size() / 2;
-  std::vector<int> left_part(data_.begin(), data_.begin() + mid);
-  std::vector<int> right_part(data_.begin() + mid, data_.end());
+  auto mid_it = data_.begin() + static_cast<std::ptrdiff_t>(mid);
+
+  std::vector<int> left_part(data_.begin(), mid_it);
+  std::vector<int> right_part(mid_it, data_.end());
 
   QuickSortHoare(left_part, 0, static_cast<int>(left_part.size() - 1));
   QuickSortHoare(right_part, 0, static_cast<int>(right_part.size() - 1));
