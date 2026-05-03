@@ -20,10 +20,7 @@ class TerekhovDGaussVertALL : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  int width_ = 0;
-  int height_ = 0;
-  std::vector<int> padded_image_;
-  std::vector<int> local_result_;
+  OutType local_out_;
 };
 
 }  // namespace terekhov_d_gauss_vert
