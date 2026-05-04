@@ -27,7 +27,7 @@ MorozovNSobelsFilterTBB::MorozovNSobelsFilterTBB(const InType &in) {
 bool MorozovNSobelsFilterTBB::ValidationImpl() {
   const Image &input = GetInput();
   return (input.height == result_image_.height) && (input.width == result_image_.width) &&
-         (input.pixels.size() == result_image_.pixels.size());
+         (input.pixels.size() == result_image_.pixels.size()) && (ppc::util::GetNumThreads() >= 1);
 }
 
 bool MorozovNSobelsFilterTBB::PreProcessingImpl() {
