@@ -4,6 +4,7 @@
 #include <omp.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <utility>
 #include <vector>
 
@@ -45,11 +46,11 @@ bool ZhurinIGaussKernelALL::ValidationImpl() {
   if (w <= 0 || h <= 0 || parts <= 0 || parts > w) {
     return false;
   }
-  if (std::cmp_not_equal(img.size(), static_cast<size_t>(h))) {
+  if (std::cmp_not_equal(img.size(), static_cast<std::size_t>(h))) {
     return false;
   }
   for (int i = 0; i < h; ++i) {
-    if (std::cmp_not_equal(img[i].size(), static_cast<size_t>(w))) {
+    if (std::cmp_not_equal(img[i].size(), static_cast<std::size_t>(w))) {
       return false;
     }
   }
@@ -85,25 +86,35 @@ bool ZhurinIGaussKernelALL::RunImpl() {
   const int end = start + base + ((rank < rem) ? 1 : 0);
   const int local_rows = end - start;
 
-  std::vector<int> flat_result(static_cast<size_t>(h) * static_cast<size_t>(w), 0);
-  std::vector<int> local_flat(static_cast<size_t>(local_rows) * static_cast<size_t>(w), 0);
+  std::vector<int> flat_result(static_cast<std::size_t>(h) * static_cast<std::size_t>(w), 0);
+  std::vector<int> local_flat(static_cast<std::size_t>(local_rows) * static_cast<std::size_t>(w), 0);
 
 #pragma omp parallel for default(none) shared(local_flat, w, start, end, img, h)
   for (int i = start; i < end; ++i) {
     const int row_idx = i - start;
     for (int j = 0; j < w; ++j) {
-      int sum = 0;
-      for (int ki = -1; ki <= 1; ++ki) {
-        for (int kj = -1; kj <= 1; ++kj) {
-          sum += GetPixelMirror(img, i + ki, j + kj, w, h) * kKernel[ki + 1][kj + 1];
-        }
-      }
-      local_flat[static_cast<size_t>(row_idx) * static_cast<size_t>(w) + static_cast<size_t>(j)] = sum >> kShift;
+      const int p00 = GetPixelMirror(img, i - 1, j - 1, w, h);
+      const int p01 = GetPixelMirror(img, i - 1, j, w, h);
+      const int p02 = GetPixelMirror(img, i - 1, j + 1, w, h);
+      const int p10 = GetPixelMirror(img, i, j - 1, w, h);
+      const int p11 = GetPixelMirror(img, i, j, w, h);
+      const int p12 = GetPixelMirror(img, i, j + 1, w, h);
+      const int p20 = GetPixelMirror(img, i + 1, j - 1, w, h);
+      const int p21 = GetPixelMirror(img, i + 1, j, w, h);
+      const int p22 = GetPixelMirror(img, i + 1, j + 1, w, h);
+
+      int sum = (p00 * kKernel[0][0]) + (p01 * kKernel[0][1]) + (p02 * kKernel[0][2]) + (p10 * kKernel[1][0]) +
+                (p11 * kKernel[1][1]) + (p12 * kKernel[1][2]) + (p20 * kKernel[2][0]) + (p21 * kKernel[2][1]) +
+                (p22 * kKernel[2][2]);
+
+      const std::size_t idx =
+          static_cast<std::size_t>(row_idx) * static_cast<std::size_t>(w) + static_cast<std::size_t>(j);
+      local_flat[idx] = sum >> kShift;
     }
   }
 
-  std::vector<int> recv_counts(static_cast<size_t>(size), 0);
-  std::vector<int> displs(static_cast<size_t>(size), 0);
+  std::vector<int> recv_counts(static_cast<std::size_t>(size), 0);
+  std::vector<int> displs(static_cast<std::size_t>(size), 0);
   MPI_Allgather(&local_rows, 1, MPI_INT, recv_counts.data(), 1, MPI_INT, MPI_COMM_WORLD);
   int total = 0;
   for (int i = 0; i < size; ++i) {
@@ -114,8 +125,8 @@ bool ZhurinIGaussKernelALL::RunImpl() {
                  MPI_INT, MPI_COMM_WORLD);
 
   for (int i = 0; i < h; ++i) {
-    auto offset = static_cast<size_t>(i) * static_cast<size_t>(w);
-    std::copy(flat_result.begin() + offset, flat_result.begin() + offset + static_cast<size_t>(w), result_[i].begin());
+    const std::ptrdiff_t offset = static_cast<std::ptrdiff_t>(i) * static_cast<std::ptrdiff_t>(w);
+    std::copy_n(flat_result.data() + offset, static_cast<std::ptrdiff_t>(w), result_[i].begin());
   }
 
   return true;
