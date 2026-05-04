@@ -14,16 +14,9 @@ namespace zhurin_i_gauss_kernel {
 
 namespace {
 
-int GetPixelMirror(const std::vector<std::vector<int>> &img, int row, int col, int width, int height) {
-  if (row < 0) {
-    row = -row - 1;
-  } else if (row >= height) {
-    row = (2 * height) - row - 1;
-  }
-  if (col < 0) {
-    col = -col - 1;
-  } else if (col >= width) {
-    col = (2 * width) - col - 1;
+int GetPixelZero(const std::vector<std::vector<int>> &img, int row, int col, int width, int height) {
+  if (row < 0 || row >= height || col < 0 || col >= width) {
+    return 0;
   }
   return img[row][col];
 }
@@ -93,15 +86,15 @@ bool ZhurinIGaussKernelALL::RunImpl() {
   for (int i = start; i < end; ++i) {
     const int row_idx = i - start;
     for (int j = 0; j < w; ++j) {
-      const int p00 = GetPixelMirror(img, i - 1, j - 1, w, h);
-      const int p01 = GetPixelMirror(img, i - 1, j, w, h);
-      const int p02 = GetPixelMirror(img, i - 1, j + 1, w, h);
-      const int p10 = GetPixelMirror(img, i, j - 1, w, h);
-      const int p11 = GetPixelMirror(img, i, j, w, h);
-      const int p12 = GetPixelMirror(img, i, j + 1, w, h);
-      const int p20 = GetPixelMirror(img, i + 1, j - 1, w, h);
-      const int p21 = GetPixelMirror(img, i + 1, j, w, h);
-      const int p22 = GetPixelMirror(img, i + 1, j + 1, w, h);
+      const int p00 = GetPixelZero(img, i - 1, j - 1, w, h);
+      const int p01 = GetPixelZero(img, i - 1, j, w, h);
+      const int p02 = GetPixelZero(img, i - 1, j + 1, w, h);
+      const int p10 = GetPixelZero(img, i, j - 1, w, h);
+      const int p11 = GetPixelZero(img, i, j, w, h);
+      const int p12 = GetPixelZero(img, i, j + 1, w, h);
+      const int p20 = GetPixelZero(img, i + 1, j - 1, w, h);
+      const int p21 = GetPixelZero(img, i + 1, j, w, h);
+      const int p22 = GetPixelZero(img, i + 1, j + 1, w, h);
 
       int sum = (p00 * kKernel[0][0]) + (p01 * kKernel[0][1]) + (p02 * kKernel[0][2]) + (p10 * kKernel[1][0]) +
                 (p11 * kKernel[1][1]) + (p12 * kKernel[1][2]) + (p20 * kKernel[2][0]) + (p21 * kKernel[2][1]) +
@@ -113,16 +106,20 @@ bool ZhurinIGaussKernelALL::RunImpl() {
     }
   }
 
-  std::vector<int> recv_counts(static_cast<std::size_t>(size), 0);
-  std::vector<int> displs(static_cast<std::size_t>(size), 0);
-  MPI_Allgather(&local_rows, 1, MPI_INT, recv_counts.data(), 1, MPI_INT, MPI_COMM_WORLD);
-  int total = 0;
-  for (int i = 0; i < size; ++i) {
-    displs[i] = total;
-    total += recv_counts[i];
+  if (size == 1) {
+    std::copy_n(local_flat.data(), static_cast<std::ptrdiff_t>(local_flat.size()), flat_result.data());
+  } else {
+    std::vector<int> recv_counts(static_cast<std::size_t>(size), 0);
+    std::vector<int> displs(static_cast<std::size_t>(size), 0);
+    MPI_Allgather(&local_rows, 1, MPI_INT, recv_counts.data(), 1, MPI_INT, MPI_COMM_WORLD);
+    int total = 0;
+    for (int i = 0; i < size; ++i) {
+      displs[i] = total;
+      total += recv_counts[i];
+    }
+    MPI_Allgatherv(local_flat.data(), local_rows * w, MPI_INT, flat_result.data(), recv_counts.data(), displs.data(),
+                   MPI_INT, MPI_COMM_WORLD);
   }
-  MPI_Allgatherv(local_flat.data(), local_rows * w, MPI_INT, flat_result.data(), recv_counts.data(), displs.data(),
-                 MPI_INT, MPI_COMM_WORLD);
 
   for (int i = 0; i < h; ++i) {
     const std::ptrdiff_t offset = static_cast<std::ptrdiff_t>(i) * static_cast<std::ptrdiff_t>(w);
