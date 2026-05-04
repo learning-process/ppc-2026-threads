@@ -60,7 +60,6 @@ bool ZhurinIGaussKernelTBB::RunImpl() {
   int base_width = w / np;
   int remainder = w % np;
 
-  // Локальные ссылки для захвата в лямбду
   auto &local_padded = padded_;
   auto &local_result = result_;
 
