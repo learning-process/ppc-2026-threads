@@ -109,11 +109,14 @@ bool ZhurinIGaussKernelALL::RunImpl() {
   if (size == 1) {
     std::copy_n(local_flat.data(), static_cast<std::ptrdiff_t>(local_flat.size()), flat_result.data());
   } else {
+    std::vector<int> recv_counts_rows(static_cast<std::size_t>(size), 0);
+    MPI_Allgather(&local_rows, 1, MPI_INT, recv_counts_rows.data(), 1, MPI_INT, MPI_COMM_WORLD);
+
     std::vector<int> recv_counts(static_cast<std::size_t>(size), 0);
     std::vector<int> displs(static_cast<std::size_t>(size), 0);
-    MPI_Allgather(&local_rows, 1, MPI_INT, recv_counts.data(), 1, MPI_INT, MPI_COMM_WORLD);
     int total = 0;
     for (int i = 0; i < size; ++i) {
+      recv_counts[i] = recv_counts_rows[i] * w;
       displs[i] = total;
       total += recv_counts[i];
     }
