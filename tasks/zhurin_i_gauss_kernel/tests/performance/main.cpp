@@ -7,8 +7,6 @@
 
 #include "util/include/perf_test_util.hpp"
 #include "zhurin_i_gauss_kernel/common/include/common.hpp"
-#include "zhurin_i_gauss_kernel/omp/include/ops_omp.hpp"
-#include "zhurin_i_gauss_kernel/seq/include/ops_seq.hpp"
 #include "zhurin_i_gauss_kernel/tbb/include/ops_tbb.hpp"
 
 namespace zhurin_i_gauss_kernel {
@@ -50,13 +48,9 @@ TEST_P(ZhurinIGaussKernelPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kSeqPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZhurinIGaussKernelSEQ>(PPC_SETTINGS_zhurin_i_gauss_kernel);
-const auto kOmpPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZhurinIGaussKernelOMP>(PPC_SETTINGS_zhurin_i_gauss_kernel);
 const auto kTbbPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ZhurinIGaussKernelTBB>(PPC_SETTINGS_zhurin_i_gauss_kernel);
-const auto kAllPerfTasks = std::tuple_cat(kSeqPerfTasks, kOmpPerfTasks, kTbbPerfTasks);
+const auto kAllPerfTasks = std::tuple_cat(kTbbPerfTasks);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
