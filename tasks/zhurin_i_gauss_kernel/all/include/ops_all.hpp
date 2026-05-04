@@ -22,11 +22,7 @@ class ZhurinIGaussKernelALL : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static constexpr std::array<std::array<int, 3>, 3> kKernel = {{
-      {1, 2, 1},
-      {2, 4, 2},
-      {1, 2, 1}
-  }};
+  static constexpr std::array<std::array<int, 3>, 3> kKernel = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
   static constexpr int kShift = 4;
 
   int width_ = 0;

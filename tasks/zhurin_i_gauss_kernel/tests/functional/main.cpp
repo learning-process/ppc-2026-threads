@@ -109,7 +109,7 @@ TEST(ZhurinIGaussKernelNegativeTest, InvalidWidth) {
   int parts = 1;
   std::vector<std::vector<int>> img(height, std::vector<int>(3, 0));
   InType in = std::make_tuple(width, height, parts, img);
-  auto task = std::make_shared<ZhurinIGaussKernelSEQ>(in);
+  auto task = std::make_shared<ZhurinIGaussKernelALL>(in);
   EXPECT_FALSE(task->Validation());
 }
 
@@ -119,7 +119,7 @@ TEST(ZhurinIGaussKernelNegativeTest, InvalidHeight) {
   int parts = 1;
   std::vector<std::vector<int>> img(1, std::vector<int>(3, 0));
   InType in = std::make_tuple(width, height, parts, img);
-  auto task = std::make_shared<ZhurinIGaussKernelSEQ>(in);
+  auto task = std::make_shared<ZhurinIGaussKernelALL>(in);
   EXPECT_FALSE(task->Validation());
 }
 
@@ -129,7 +129,7 @@ TEST(ZhurinIGaussKernelNegativeTest, InvalidPartsZero) {
   int parts = 0;
   std::vector<std::vector<int>> img(height, std::vector<int>(width, 0));
   InType in = std::make_tuple(width, height, parts, img);
-  auto task = std::make_shared<ZhurinIGaussKernelSEQ>(in);
+  auto task = std::make_shared<ZhurinIGaussKernelALL>(in);
   EXPECT_FALSE(task->Validation());
 }
 
@@ -139,7 +139,7 @@ TEST(ZhurinIGaussKernelNegativeTest, InvalidPartsTooLarge) {
   int parts = 5;
   std::vector<std::vector<int>> img(height, std::vector<int>(width, 0));
   InType in = std::make_tuple(width, height, parts, img);
-  auto task = std::make_shared<ZhurinIGaussKernelSEQ>(in);
+  auto task = std::make_shared<ZhurinIGaussKernelALL>(in);
   EXPECT_FALSE(task->Validation());
 }
 
@@ -149,7 +149,7 @@ TEST(ZhurinIGaussKernelNegativeTest, ImageRowsMismatch) {
   int parts = 1;
   std::vector<std::vector<int>> img(2, std::vector<int>(width, 0));
   InType in = std::make_tuple(width, height, parts, img);
-  auto task = std::make_shared<ZhurinIGaussKernelSEQ>(in);
+  auto task = std::make_shared<ZhurinIGaussKernelALL>(in);
   EXPECT_FALSE(task->Validation());
 }
 
@@ -159,7 +159,7 @@ TEST(ZhurinIGaussKernelNegativeTest, ImageColsMismatch) {
   int parts = 1;
   std::vector<std::vector<int>> img(height, std::vector<int>(2, 0));
   InType in = std::make_tuple(width, height, parts, img);
-  auto task = std::make_shared<ZhurinIGaussKernelSEQ>(in);
+  auto task = std::make_shared<ZhurinIGaussKernelALL>(in);
   EXPECT_FALSE(task->Validation());
 }
 

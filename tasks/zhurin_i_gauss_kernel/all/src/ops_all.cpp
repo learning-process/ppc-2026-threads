@@ -1,20 +1,26 @@
 #include "zhurin_i_gauss_kernel/all/include/ops_all.hpp"
 
-#include <algorithm>
-#include <vector>
-
 #include <mpi.h>
 #include <omp.h>
+
+#include <algorithm>
+#include <vector>
 
 #include "zhurin_i_gauss_kernel/common/include/common.hpp"
 
 namespace zhurin_i_gauss_kernel {
 
 static int GetPixelMirror(const std::vector<std::vector<int>> &img, int row, int col, int width, int height) {
-  if (row < 0) row = -row - 1;
-  else if (row >= height) row = 2 * height - row - 1;
-  if (col < 0) col = -col - 1;
-  else if (col >= width) col = 2 * width - col - 1;
+  if (row < 0) {
+    row = -row - 1;
+  } else if (row >= height) {
+    row = 2 * height - row - 1;
+  }
+  if (col < 0) {
+    col = -col - 1;
+  } else if (col >= width) {
+    col = 2 * width - col - 1;
+  }
   return img[row][col];
 }
 
@@ -31,13 +37,23 @@ bool ZhurinIGaussKernelALL::ValidationImpl() {
   int parts = std::get<2>(in);
   const auto &img = std::get<3>(in);
 
-  if (w <= 0 || h <= 0 || parts <= 0 || parts > w) return false;
-  if (std::cmp_not_equal(img.size(), h)) return false;
-  for (int i = 0; i < h; ++i) if (std::cmp_not_equal(img[i].size(), w)) return false;
+  if (w <= 0 || h <= 0 || parts <= 0 || parts > w) {
+    return false;
+  }
+  if (std::cmp_not_equal(img.size(), h)) {
+    return false;
+  }
+  for (int i = 0; i < h; ++i) {
+    if (std::cmp_not_equal(img[i].size(), w)) {
+      return false;
+    }
+  }
 
   int initialized = 0;
   MPI_Initialized(&initialized);
-  if (!initialized) return false;
+  if (!initialized) {
+    return false;
+  }
 
   return true;
 }
@@ -92,13 +108,11 @@ bool ZhurinIGaussKernelALL::RunImpl() {
     displs[i] = total;
     total += recv_counts[i];
   }
-  MPI_Allgatherv(local_flat.data(), local_rows * w, MPI_INT,
-                 flat_result.data(), recv_counts.data(), displs.data(), MPI_INT,
-                 MPI_COMM_WORLD);
+  MPI_Allgatherv(local_flat.data(), local_rows * w, MPI_INT, flat_result.data(), recv_counts.data(), displs.data(),
+                 MPI_INT, MPI_COMM_WORLD);
 
   for (int i = 0; i < h; ++i) {
-    std::copy(flat_result.begin() + i * w, flat_result.begin() + (i + 1) * w,
-              result_[i].begin());
+    std::copy(flat_result.begin() + i * w, flat_result.begin() + (i + 1) * w, result_[i].begin());
   }
 
   return true;
