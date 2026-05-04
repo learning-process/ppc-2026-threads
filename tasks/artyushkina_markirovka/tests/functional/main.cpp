@@ -83,7 +83,7 @@ class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType
   OutType expected_;
 };
 
-namespace seq_tests {
+namespace {
 
 TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponentsSEQ) {
   ExecuteTest(GetParam());
@@ -93,36 +93,26 @@ const std::array<TestType, 5> kTestParam = {
     std::make_tuple(0, "L_shaped_component_8connectivity"), std::make_tuple(1, "diagonal_connected_components"),
     std::make_tuple(2, "all_background"), std::make_tuple(3, "all_objects"), std::make_tuple(4, "two_horizontal_bars")};
 
-const auto kTestTasksList =
+const auto kTestTasksListSeq =
     ppc::util::AddFuncTask<MarkingComponentsSEQ, InType>(kTestParam, PPC_SETTINGS_artyushkina_markirovka);
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+const auto kGtestValuesSeq = ppc::util::ExpandToValues(kTestTasksListSeq);
 
 const auto kPerfTestName = ArtyushkinaMarkirovkaFuncTests::PrintFuncTestName<ArtyushkinaMarkirovkaFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(ComponentLabelingSEQ, ArtyushkinaMarkirovkaFuncTests, kGtestValues, kPerfTestName);
-
-}  // namespace seq_tests
-
-namespace stl_tests {
+INSTANTIATE_TEST_SUITE_P(ComponentLabelingSEQ, ArtyushkinaMarkirovkaFuncTests, kGtestValuesSeq, kPerfTestName);
 
 TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponentsSTL) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {
-    std::make_tuple(0, "L_shaped_component_8connectivity"), std::make_tuple(1, "diagonal_connected_components"),
-    std::make_tuple(2, "all_background"), std::make_tuple(3, "all_objects"), std::make_tuple(4, "two_horizontal_bars")};
-
-const auto kTestTasksList =
+const auto kTestTasksListStl =
     ppc::util::AddFuncTask<MarkingComponentsSTL, InType>(kTestParam, PPC_SETTINGS_artyushkina_markirovka);
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+const auto kGtestValuesStl = ppc::util::ExpandToValues(kTestTasksListStl);
 
-const auto kPerfTestName = ArtyushkinaMarkirovkaFuncTests::PrintFuncTestName<ArtyushkinaMarkirovkaFuncTests>;
+INSTANTIATE_TEST_SUITE_P(ComponentLabelingSTL, ArtyushkinaMarkirovkaFuncTests, kGtestValuesStl, kPerfTestName);
 
-INSTANTIATE_TEST_SUITE_P(ComponentLabelingSTL, ArtyushkinaMarkirovkaFuncTests, kGtestValues, kPerfTestName);
-
-}  // namespace stl_tests
+}  // namespace
 
 }  // namespace artyushkina_markirovka
