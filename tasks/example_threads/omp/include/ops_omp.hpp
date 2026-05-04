@@ -5,12 +5,12 @@
 
 namespace nesterov_a_test_task_threads {
 
-class ZhurinIGaussKernelOMP : public BaseTask {
+class NesterovATestTaskOMP : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kOMP;
   }
-  explicit ZhurinIGaussKernelOMP(const InType &in);
+  explicit NesterovATestTaskOMP(const InType &in);
 
  private:
   bool ValidationImpl() override;

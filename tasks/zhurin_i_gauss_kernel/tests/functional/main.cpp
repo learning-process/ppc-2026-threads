@@ -10,9 +10,12 @@
 
 #include "task/include/task.hpp"
 #include "util/include/func_test_util.hpp"
+#include "zhurin_i_gauss_kernel/all/include/ops_all.hpp"
 #include "zhurin_i_gauss_kernel/common/include/common.hpp"
 #include "zhurin_i_gauss_kernel/omp/include/ops_omp.hpp"
 #include "zhurin_i_gauss_kernel/seq/include/ops_seq.hpp"
+#include "zhurin_i_gauss_kernel/stl/include/ops_stl.hpp"
+#include "zhurin_i_gauss_kernel/tbb/include/ops_tbb.hpp"
 
 namespace zhurin_i_gauss_kernel {
 
@@ -83,7 +86,13 @@ const auto kSeqTasks =
     ppc::util::AddFuncTask<ZhurinIGaussKernelSEQ, InType>(kTestCases, PPC_SETTINGS_zhurin_i_gauss_kernel);
 const auto kOmpTasks =
     ppc::util::AddFuncTask<ZhurinIGaussKernelOMP, InType>(kTestCases, PPC_SETTINGS_zhurin_i_gauss_kernel);
-const auto kAllTasksList = std::tuple_cat(kSeqTasks, kOmpTasks);
+const auto kTbbTasks =
+    ppc::util::AddFuncTask<ZhurinIGaussKernelTBB, InType>(kTestCases, PPC_SETTINGS_zhurin_i_gauss_kernel);
+const auto kStlTasks =
+    ppc::util::AddFuncTask<ZhurinIGaussKernelSTL, InType>(kTestCases, PPC_SETTINGS_zhurin_i_gauss_kernel);
+const auto kAllTasks =
+    ppc::util::AddFuncTask<ZhurinIGaussKernelALL, InType>(kTestCases, PPC_SETTINGS_zhurin_i_gauss_kernel);
+const auto kAllTasksList = std::tuple_cat(kSeqTasks, kOmpTasks, kTbbTasks, kStlTasks, kAllTasks);
 
 inline const auto kGtestValues = ppc::util::ExpandToValues(kAllTasksList);
 

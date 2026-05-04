@@ -8,13 +8,13 @@
 
 namespace zhurin_i_gauss_kernel {
 
-class ZhurinIGaussKernelOMP : public BaseTask {
+class ZhurinIGaussKernelTBB : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kOMP;
+    return ppc::task::TypeOfTask::kTBB;
   }
 
-  explicit ZhurinIGaussKernelOMP(const InType &in);
+  explicit ZhurinIGaussKernelTBB(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -28,8 +28,8 @@ class ZhurinIGaussKernelOMP : public BaseTask {
   int width_ = 0;
   int height_ = 0;
   int num_parts_ = 1;
+
   std::vector<std::vector<int>> padded_;
-  std::vector<std::vector<int>> image_;
   std::vector<std::vector<int>> result_;
 };
 
