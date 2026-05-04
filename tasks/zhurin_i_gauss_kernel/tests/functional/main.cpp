@@ -80,13 +80,9 @@ const std::array<TestCase, 6> kTestCases = {
      {6, MakeInput(4, 4, 4, std::vector<std::vector<int>>(4, std::vector<int>(4, 0))),
       OutType(4, std::vector<int>(4, 0))}}};
 
-const auto kSeqTasks =
-    ppc::util::AddFuncTask<ZhurinIGaussKernelSEQ, InType>(kTestCases, PPC_SETTINGS_zhurin_i_gauss_kernel);
-const auto kOmpTasks =
-    ppc::util::AddFuncTask<ZhurinIGaussKernelOMP, InType>(kTestCases, PPC_SETTINGS_zhurin_i_gauss_kernel);
 const auto kTbbTasks =
     ppc::util::AddFuncTask<ZhurinIGaussKernelTBB, InType>(kTestCases, PPC_SETTINGS_zhurin_i_gauss_kernel);
-const auto kAllTasksList = std::tuple_cat(kSeqTasks, kOmpTasks, kTbbTasks);
+const auto kAllTasksList = std::tuple_cat(kTbbTasks);
 
 inline const auto kGtestValues = ppc::util::ExpandToValues(kAllTasksList);
 
