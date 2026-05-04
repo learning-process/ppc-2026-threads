@@ -7,7 +7,7 @@
 
 #include "util/include/perf_test_util.hpp"
 #include "zhurin_i_gauss_kernel/common/include/common.hpp"
-#include "zhurin_i_gauss_kernel/tbb/include/ops_tbb.hpp"
+#include "zhurin_i_gauss_kernel/stl/include/ops_stl.hpp"
 
 namespace zhurin_i_gauss_kernel {
 
