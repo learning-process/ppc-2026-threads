@@ -11,8 +11,6 @@
 #include "task/include/task.hpp"
 #include "util/include/func_test_util.hpp"
 #include "zhurin_i_gauss_kernel/common/include/common.hpp"
-#include "zhurin_i_gauss_kernel/omp/include/ops_omp.hpp"
-#include "zhurin_i_gauss_kernel/seq/include/ops_seq.hpp"
 #include "zhurin_i_gauss_kernel/tbb/include/ops_tbb.hpp"
 
 namespace zhurin_i_gauss_kernel {
