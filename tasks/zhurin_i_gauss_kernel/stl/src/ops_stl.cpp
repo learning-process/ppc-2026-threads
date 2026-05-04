@@ -59,7 +59,6 @@ bool ZhurinIGaussKernelSTL::RunImpl() {
   int base_width = w / np;
   int remainder = w % np;
 
-  // Лямбда для обработки одной части
   auto process_part = [&](int part) {
     int part_width = base_width + (part < remainder ? 1 : 0);
     int x_start = (part * base_width) + (part < remainder ? part : remainder);
@@ -77,7 +76,6 @@ bool ZhurinIGaussKernelSTL::RunImpl() {
     }
   };
 
-  // Распараллеливание с помощью std::thread
   std::vector<std::thread> threads;
   threads.reserve(np);
   for (int part = 0; part < np; ++part) {
