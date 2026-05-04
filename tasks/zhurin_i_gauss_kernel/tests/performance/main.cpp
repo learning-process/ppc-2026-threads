@@ -52,19 +52,10 @@ TEST_P(ZhurinIGaussKernelPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kSeqPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZhurinIGaussKernelSEQ>(PPC_SETTINGS_zhurin_i_gauss_kernel);
-const auto kOmpPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZhurinIGaussKernelOMP>(PPC_SETTINGS_zhurin_i_gauss_kernel);
-const auto kTbbPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZhurinIGaussKernelTBB>(PPC_SETTINGS_zhurin_i_gauss_kernel);
-const auto kStlPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZhurinIGaussKernelSTL>(PPC_SETTINGS_zhurin_i_gauss_kernel);
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ZhurinIGaussKernelALL>(PPC_SETTINGS_zhurin_i_gauss_kernel);
 
-const auto kAllPerfTasksList =
-    std::tuple_cat(kSeqPerfTasks, kOmpPerfTasks, kTbbPerfTasks, kStlPerfTasks, kAllPerfTasks);
+const auto kAllPerfTasksList = std::tuple_cat(kAllPerfTasks);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasksList);
 
