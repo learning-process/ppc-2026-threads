@@ -116,7 +116,7 @@ inline OutType SolveALL(const InType &in) {
   GatherResults(output.data, local_result, size);
 
   return output;
-}
+}  // 1111
 
 }  // namespace
 
