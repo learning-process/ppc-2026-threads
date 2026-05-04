@@ -114,11 +114,8 @@ TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponentsTBB) {
 
 // Используем те же самые тестовые параметры
 const std::array<TestType, 5> kTestParam = {
-    std::make_tuple(0, "L_shaped_component_8connectivity"), 
-    std::make_tuple(1, "diagonal_connected_components"),
-    std::make_tuple(2, "all_background"), 
-    std::make_tuple(3, "all_objects"), 
-    std::make_tuple(4, "two_horizontal_bars")};
+    std::make_tuple(0, "L_shaped_component_8connectivity"), std::make_tuple(1, "diagonal_connected_components"),
+    std::make_tuple(2, "all_background"), std::make_tuple(3, "all_objects"), std::make_tuple(4, "two_horizontal_bars")};
 
 // Добавляем TBB задачи
 const auto kTestTasksList =

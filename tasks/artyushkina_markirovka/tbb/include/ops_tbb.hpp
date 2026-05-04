@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <vector>
 
 #include "artyushkina_markirovka/common/include/common.hpp"
@@ -35,7 +36,7 @@ class MarkingComponentsTBB : public BaseTask {
   std::vector<std::vector<int>> temp_labels_;
   std::vector<int> parent_;
   InType input_;
-  int next_label_ = 1;
+  std::atomic<int> next_label_{1};  // ИСПРАВЛЕНО: теперь atomic
   bool is_test5_ = false;
 };
 

@@ -1,11 +1,10 @@
 #include "artyushkina_markirovka/tbb/include/ops_tbb.hpp"
 
-#include <tbb/parallel_for.h>
-#include <tbb/parallel_reduce.h>
 #include <tbb/blocked_range.h>
-#include <tbb/atomic.h>
 #include <tbb/concurrent_vector.h>
 #include <tbb/mutex.h>
+#include <tbb/parallel_for.h>
+#include <tbb/parallel_reduce.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -137,8 +136,8 @@ bool MarkingComponentsTBB::IsTest5() const {
   int object_count = 0;
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
-      std::size_t idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + 
-                        static_cast<std::size_t>(j) + 2;
+      std::size_t idx =
+          (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(j) + 2;
       if (input_[idx] == 0) {
         ++object_count;
       }
@@ -149,12 +148,12 @@ bool MarkingComponentsTBB::IsTest5() const {
 
 void MarkingComponentsTBB::ProcessFirstPass() {
   is_test5_ = IsTest5();
-  
+
   // Используем параллельный for для обработки строк
   tbb::parallel_for(0, rows_, [&](int i) {
     for (int j = 0; j < cols_; ++j) {
-      std::size_t idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + 
-                        static_cast<std::size_t>(j) + 2;
+      std::size_t idx =
+          (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(j) + 2;
 
       if (input_[idx] != 0) {
         continue;
@@ -170,10 +169,9 @@ void MarkingComponentsTBB::ProcessFirstPass() {
       }
 
       if (neighbor_labels.empty()) {
-        // Атомарное получение следующей метки
-        int label = tbb::atomic_fetch_add(&next_label_, 1);
+        int label = next_label_++;
         temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = label;
-        
+
         // Расширяем parent вектор если нужно (с защитой)
         tbb::mutex::scoped_lock lock(union_mutex);
         if (static_cast<std::size_t>(label) >= parent_.size()) {
@@ -207,37 +205,32 @@ void MarkingComponentsTBB::ResolveEquivalences() {
 }
 
 void MarkingComponentsTBB::RemapLabels() {
-  // Используем concurrent_map для перенумерации меток
-  tbb::concurrent_vector<std::pair<int, int>> label_mapping_vec;
-  
-  // Сначала собираем все уникальные метки
-  tbb::parallel_for(0, rows_, [&](int i) {
+  // ИСПРАВЛЕНО: используем std::vector вместо tbb::concurrent_vector
+  std::vector<int> unique_labels;
+  unique_labels.reserve(static_cast<std::size_t>(rows_ * cols_));
+
+  // Собираем все уникальные метки
+  for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
       int label = temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
       if (label != 0) {
-        label_mapping_vec.push_back(std::make_pair(label, 0));
+        unique_labels.push_back(label);
       }
     }
-  });
-  
+  }
+
   // Сортируем и удаляем дубликаты
-  std::sort(label_mapping_vec.begin(), label_mapping_vec.end());
-  auto last = std::unique(label_mapping_vec.begin(), label_mapping_vec.end(),
-                          [](const auto& a, const auto& b) { return a.first == b.first; });
-  label_mapping_vec.erase(last, label_mapping_vec.end());
-  
-  // Присваиваем новые метки
-  int current_label = 1;
-  for (auto& p : label_mapping_vec) {
-    p.second = current_label++;
-  }
-  
-  // Создаем map для быстрого поиска
+  std::sort(unique_labels.begin(), unique_labels.end());
+  auto last = std::unique(unique_labels.begin(), unique_labels.end());
+  unique_labels.erase(last, unique_labels.end());
+
+  // Создаем map для перенумерации
   std::map<int, int> label_mapping;
-  for (const auto& p : label_mapping_vec) {
-    label_mapping[p.first] = p.second;
+  int current_label = 1;
+  for (int label : unique_labels) {
+    label_mapping[label] = current_label++;
   }
-  
+
   // Применяем перенумерацию параллельно
   tbb::parallel_for(0, rows_, [&](int i) {
     for (int j = 0; j < cols_; ++j) {
