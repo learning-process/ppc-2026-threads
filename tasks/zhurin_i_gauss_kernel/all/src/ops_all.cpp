@@ -101,7 +101,7 @@ bool ZhurinIGaussKernelALL::RunImpl() {
                 (p22 * kKernel[2][2]);
 
       const std::size_t idx =
-          static_cast<std::size_t>(row_idx) * static_cast<std::size_t>(w) + static_cast<std::size_t>(j);
+          (static_cast<std::size_t>(row_idx) * static_cast<std::size_t>(w)) + static_cast<std::size_t>(j);
       local_flat[idx] = sum >> kShift;
     }
   }
