@@ -59,7 +59,6 @@ bool ZhurinIGaussKernelALL::PreProcessingImpl() {
   height_ = std::get<1>(in);
   num_parts_ = std::get<2>(in);
   image_ = std::get<3>(in);
-  // Выделяем память для результата безопасным способом
   result_.clear();
   result_.reserve(height_);
   for (int i = 0; i < height_; ++i) {
