@@ -5,7 +5,9 @@
 #include <random>
 
 #include "morozov_n_sobels_filter/common/include/common.hpp"
+#include "morozov_n_sobels_filter/omp/include/ops_omp.hpp"
 #include "morozov_n_sobels_filter/seq/include/ops_seq.hpp"
+#include "morozov_n_sobels_filter/stl/include/ops_stl.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace morozov_n_sobels_filter {
@@ -15,8 +17,8 @@ class MorozovNRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
   OutType correct_image_;
 
   void SetUp() override {
-    std::size_t height = 5000;
-    std::size_t width = 5000;
+    std::size_t height = 8000;
+    std::size_t width = 8000;
     int seed = 777;
 
     GenerateImage(height, width, seed);
@@ -52,7 +54,8 @@ TEST_P(MorozovNRunPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, MorozovNSobelsFilterSEQ>(PPC_SETTINGS_morozov_n_sobels_filter);
+    ppc::util::MakeAllPerfTasks<InType, MorozovNSobelsFilterSEQ, MorozovNSobelsFilterOMP, MorozovNSobelsFilterSTL>(
+        PPC_SETTINGS_morozov_n_sobels_filter);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
