@@ -29,7 +29,7 @@ bool KuterginAMultidimTrapezoidOMP::ValidationImpl() {
     return false;
   }
 
-  return std::ranges::all_of(borders, [](const std::pair<double, double> &p) {
+  return std::all_of(borders.begin(), borders.end(), [](const std::pair<double, double> &p) {
     return std::isfinite(p.first) && std::isfinite(p.second) && p.first < p.second;
   });
 }
@@ -56,6 +56,12 @@ bool KuterginAMultidimTrapezoidOMP::RunImpl() {
   for (int i = 0; i < dim; ++i) {
     total_points *= (n + 1);
   }
+
+  int prev_threads = omp_get_max_threads();
+  int prev_dynamic = omp_get_dynamic();
+
+  omp_set_dynamic(0);
+  omp_set_num_threads(prev_threads);
 
   double global_sum = 0.0;
 
@@ -87,6 +93,9 @@ bool KuterginAMultidimTrapezoidOMP::RunImpl() {
       }
     }
   }
+
+  omp_set_num_threads(prev_threads);
+  omp_set_dynamic(prev_dynamic);
 
   double volume = 1.0;
   for (int i = 0; i < dim; ++i) {
