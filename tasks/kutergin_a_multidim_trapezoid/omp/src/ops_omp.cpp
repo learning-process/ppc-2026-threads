@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <ranges>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -29,7 +30,7 @@ bool KuterginAMultidimTrapezoidOMP::ValidationImpl() {
     return false;
   }
 
-  return std::all_of(borders.begin(), borders.end(), [](const std::pair<double, double> &p) {
+  return std::ranges::all_of(borders, [](const std::pair<double, double> &p) {
     return std::isfinite(p.first) && std::isfinite(p.second) && p.first < p.second;
   });
 }
