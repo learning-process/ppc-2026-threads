@@ -12,6 +12,7 @@
 #include "shkenev_i_constra_hull_for_binary_image/common/include/common.hpp"
 #include "shkenev_i_constra_hull_for_binary_image/omp/include/ops_omp.hpp"
 #include "shkenev_i_constra_hull_for_binary_image/seq/include/ops_seq.hpp"
+#include "shkenev_i_constra_hull_for_binary_image/stl/include/ops_stl.hpp"
 #include "shkenev_i_constra_hull_for_binary_image/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 
@@ -159,6 +160,8 @@ const auto kTasks = std::tuple_cat(ppc::util::AddFuncTask<ShkenevIConstrHullSeq,
                                    ppc::util::AddFuncTask<ShkenevIConstrHullOMP, InType>(
                                        kParams, PPC_SETTINGS_shkenev_i_constra_hull_for_binary_image),
                                    ppc::util::AddFuncTask<ShkenevIConstrHullTBB, InType>(
+                                       kParams, PPC_SETTINGS_shkenev_i_constra_hull_for_binary_image),
+                                   ppc::util::AddFuncTask<ShkenevIConstrHullSTL, InType>(
                                        kParams, PPC_SETTINGS_shkenev_i_constra_hull_for_binary_image));
 
 const auto kValues = ppc::util::ExpandToValues(kTasks);

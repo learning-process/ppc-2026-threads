@@ -8,9 +8,11 @@
 #include <string>
 #include <tuple>
 
+#include "lukin_i_ench_contr_lin_hist/all/include/ops_all.hpp"
 #include "lukin_i_ench_contr_lin_hist/common/include/common.hpp"
 #include "lukin_i_ench_contr_lin_hist/omp/include/ops_omp.hpp"
 #include "lukin_i_ench_contr_lin_hist/seq/include/ops_seq.hpp"
+#include "lukin_i_ench_contr_lin_hist/stl/include/ops_stl.hpp"
 #include "lukin_i_ench_contr_lin_hist/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -84,7 +86,9 @@ const std::array<TestType, 4> kTestParam = {128, 256, 512, 32};  // размер
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<LukinITestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_lukin_i_ench_contr_lin_hist),
     ppc::util::AddFuncTask<LukinITestTaskOMP, InType>(kTestParam, PPC_SETTINGS_lukin_i_ench_contr_lin_hist),
-    ppc::util::AddFuncTask<LukinITestTaskTBB, InType>(kTestParam, PPC_SETTINGS_lukin_i_ench_contr_lin_hist));
+    ppc::util::AddFuncTask<LukinITestTaskTBB, InType>(kTestParam, PPC_SETTINGS_lukin_i_ench_contr_lin_hist),
+    ppc::util::AddFuncTask<LukinITestTaskSTL, InType>(kTestParam, PPC_SETTINGS_lukin_i_ench_contr_lin_hist),
+    ppc::util::AddFuncTask<LukinITestTaskALL, InType>(kTestParam, PPC_SETTINGS_lukin_i_ench_contr_lin_hist));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

@@ -47,8 +47,8 @@ bool KolotukhinAGaussinBlureTBB::RunImpl() {
 
   tbb::parallel_for(tbb::blocked_range2d<int>(0, img_height, 0, img_width),
                     [&](const tbb::blocked_range2d<int> &range) {
-    for (int row = range.rows().begin(); row < range.rows().end(); ++row) {
-      for (int col = range.cols().begin(); col < range.cols().end(); ++col) {
+    for (int row = range.rows().begin(); row < range.rows().end(); row++) {
+      for (int col = range.cols().begin(); col < range.cols().end(); col++) {
         int acc = 0;
         for (int dy = -1; dy <= 1; dy++) {
           for (int dx = -1; dx <= 1; dx++) {
