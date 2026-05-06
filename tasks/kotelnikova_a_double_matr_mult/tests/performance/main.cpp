@@ -9,6 +9,7 @@
 #include "kotelnikova_a_double_matr_mult/common/include/common.hpp"
 #include "kotelnikova_a_double_matr_mult/omp/include/ops_omp.hpp"
 #include "kotelnikova_a_double_matr_mult/seq/include/ops_seq.hpp"
+#include "kotelnikova_a_double_matr_mult/stl/include/ops_stl.hpp"
 #include "kotelnikova_a_double_matr_mult/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -125,8 +126,8 @@ TEST_P(KotelnikovaARunPerfTestSEQ, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KotelnikovaATaskSEQ, KotelnikovaATaskOMP, KotelnikovaATaskTBB>(
-        PPC_SETTINGS_kotelnikova_a_double_matr_mult);
+    ppc::util::MakeAllPerfTasks<InType, KotelnikovaATaskSEQ, KotelnikovaATaskOMP, KotelnikovaATaskTBB,
+                                KotelnikovaATaskSTL>(PPC_SETTINGS_kotelnikova_a_double_matr_mult);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

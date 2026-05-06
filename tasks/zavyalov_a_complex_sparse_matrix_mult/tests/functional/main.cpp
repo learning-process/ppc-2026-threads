@@ -13,6 +13,7 @@
 #include "zavyalov_a_complex_sparse_matrix_mult/common/include/common.hpp"
 #include "zavyalov_a_complex_sparse_matrix_mult/omp/include/ops_omp.hpp"
 #include "zavyalov_a_complex_sparse_matrix_mult/seq/include/ops_seq.hpp"
+#include "zavyalov_a_complex_sparse_matrix_mult/stl/include/ops_stl.hpp"
 #include "zavyalov_a_complex_sparse_matrix_mult/tbb/include/ops_tbb.hpp"
 
 namespace zavyalov_a_compl_sparse_matr_mult {
@@ -147,6 +148,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ZavyalovACompl
                                            ppc::util::AddFuncTask<ZavyalovAComplSparseMatrMultOMP, InType>(
                                                kTestParam, PPC_SETTINGS_zavyalov_a_complex_sparse_matrix_mult),
                                            ppc::util::AddFuncTask<ZavyalovAComplSparseMatrMultTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_zavyalov_a_complex_sparse_matrix_mult),
+                                           ppc::util::AddFuncTask<ZavyalovAComplSparseMatrMultSTL, InType>(
                                                kTestParam, PPC_SETTINGS_zavyalov_a_complex_sparse_matrix_mult));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

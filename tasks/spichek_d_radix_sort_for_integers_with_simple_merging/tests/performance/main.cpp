@@ -6,6 +6,8 @@
 #include "spichek_d_radix_sort_for_integers_with_simple_merging/common/include/common.hpp"
 #include "spichek_d_radix_sort_for_integers_with_simple_merging/omp/include/ops_omp.hpp"
 #include "spichek_d_radix_sort_for_integers_with_simple_merging/seq/include/ops_seq.hpp"
+#include "spichek_d_radix_sort_for_integers_with_simple_merging/stl/include/ops_stl.hpp"
+#include "spichek_d_radix_sort_for_integers_with_simple_merging/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace spichek_d_radix_sort_for_integers_with_simple_merging {
@@ -42,7 +44,8 @@ TEST_P(SpichekDRadixSortPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SpichekDRadixSortSEQ, SpichekDRadixSortOMP>(
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SpichekDRadixSortSEQ, SpichekDRadixSortOMP,
+                                                       SpichekDRadixSortTBB, SpichekDRadixSortSTL>(
     PPC_SETTINGS_spichek_d_radix_sort_for_integers_with_simple_merging);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

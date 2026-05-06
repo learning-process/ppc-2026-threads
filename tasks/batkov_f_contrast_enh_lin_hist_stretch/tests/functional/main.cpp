@@ -12,6 +12,7 @@
 #include "batkov_f_contrast_enh_lin_hist_stretch/common/include/common.hpp"
 #include "batkov_f_contrast_enh_lin_hist_stretch/omp/include/ops_omp.hpp"
 #include "batkov_f_contrast_enh_lin_hist_stretch/seq/include/ops_seq.hpp"
+#include "batkov_f_contrast_enh_lin_hist_stretch/stl/include/ops_stl.hpp"
 #include "batkov_f_contrast_enh_lin_hist_stretch/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -81,6 +82,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<BatkovFContras
                                            ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchOMP, InType>(
                                                kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch),
                                            ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch),
+                                           ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchSTL, InType>(
                                                kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

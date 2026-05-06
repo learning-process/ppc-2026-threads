@@ -12,6 +12,7 @@
 #include "sannikov_i_integrals_rectangle_method/common/include/common.hpp"
 #include "sannikov_i_integrals_rectangle_method/omp/include/ops_omp.hpp"
 #include "sannikov_i_integrals_rectangle_method/seq/include/ops_seq.hpp"
+#include "sannikov_i_integrals_rectangle_method/stl/include/ops_stl.hpp"
 #include "sannikov_i_integrals_rectangle_method/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -114,6 +115,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SannikovIInteg
                                            ppc::util::AddFuncTask<SannikovIIntegralsRectangleMethodOMP, InType>(
                                                kTestParam, PPC_SETTINGS_sannikov_i_integrals_rectangle_method),
                                            ppc::util::AddFuncTask<SannikovIIntegralsRectangleMethodTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_sannikov_i_integrals_rectangle_method),
+                                           ppc::util::AddFuncTask<SannikovIIntegralsRectangleMethodSTL, InType>(
                                                kTestParam, PPC_SETTINGS_sannikov_i_integrals_rectangle_method));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

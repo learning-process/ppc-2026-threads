@@ -7,6 +7,8 @@
 #include "marin_l_mark_components/common/include/common.hpp"
 #include "marin_l_mark_components/omp/include/ops_omp.hpp"
 #include "marin_l_mark_components/seq/include/ops_seq.hpp"
+#include "marin_l_mark_components/stl/include/ops_stl.hpp"
+#include "marin_l_mark_components/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace marin_l_mark_components {
@@ -33,8 +35,8 @@ Image MakeRandomBinaryImage(int height, int width, double fill_probability) {
 
 class MarinLRunPerfTestComponents : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  const int k_width_pixels = 1024;
-  const int k_height_pixels = 1024;
+  const int k_width_pixels = 8192;
+  const int k_height_pixels = 8192;
   InType input_data{};
 
   void SetUp() override {
@@ -78,8 +80,9 @@ TEST_P(MarinLRunPerfTestComponents, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, MarinLMarkComponentsSEQ, MarinLMarkComponentsOMP>(
-    PPC_SETTINGS_marin_l_mark_components);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, MarinLMarkComponentsSEQ, MarinLMarkComponentsOMP, MarinLMarkComponentsSTL,
+                                MarinLMarkComponentsTBB>(PPC_SETTINGS_marin_l_mark_components);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

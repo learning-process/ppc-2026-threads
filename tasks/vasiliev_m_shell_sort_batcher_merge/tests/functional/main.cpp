@@ -16,6 +16,8 @@
 #include "vasiliev_m_shell_sort_batcher_merge/common/include/common.hpp"
 #include "vasiliev_m_shell_sort_batcher_merge/omp/include/ops_omp.hpp"
 #include "vasiliev_m_shell_sort_batcher_merge/seq/include/ops_seq.hpp"
+#include "vasiliev_m_shell_sort_batcher_merge/stl/include/ops_stl.hpp"
+#include "vasiliev_m_shell_sort_batcher_merge/tbb/include/ops_tbb.hpp"
 
 namespace vasiliev_m_shell_sort_batcher_merge {
 
@@ -97,6 +99,10 @@ const std::array<TestType, 6> kTestParam = {std::make_tuple(0, "test_vec_1.txt")
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<VasilievMShellSortBatcherMergeSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_vasiliev_m_shell_sort_batcher_merge),
                                            ppc::util::AddFuncTask<VasilievMShellSortBatcherMergeOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_vasiliev_m_shell_sort_batcher_merge),
+                                           ppc::util::AddFuncTask<VasilievMShellSortBatcherMergeTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_vasiliev_m_shell_sort_batcher_merge),
+                                           ppc::util::AddFuncTask<VasilievMShellSortBatcherMergeSTL, InType>(
                                                kTestParam, PPC_SETTINGS_vasiliev_m_shell_sort_batcher_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
