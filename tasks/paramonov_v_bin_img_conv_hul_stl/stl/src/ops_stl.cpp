@@ -151,11 +151,39 @@ std::vector<PixelPoint> ConvexHullSTL::ComputeConvexHull(const std::vector<Pixel
     return orient > 0;
   });
 
+  // Удаляем промежуточные коллинеарные точки, оставляя только самую дальнюю
+  std::vector<PixelPoint> unique_points;
+  unique_points.reserve(sorted_points.size());
+  for (size_t i = 0; i < sorted_points.size(); ++i) {
+    if (i == sorted_points.size() - 1 || Orientation(lowest_point, sorted_points[i], sorted_points[i + 1]) != 0) {
+      unique_points.push_back(sorted_points[i]);
+    }
+  }
+
+  // Если все точки коллинеарны, возвращаем две крайние точки
+  if (unique_points.size() <= 1) {
+    std::vector<PixelPoint> collinear_hull;
+    collinear_hull.push_back(lowest_point);
+    if (!unique_points.empty()) {
+      collinear_hull.push_back(unique_points.back());
+    }
+    // Сортируем для консистентности вывода
+    if (collinear_hull.size() == 2) {
+      if (collinear_hull[0].row > collinear_hull[1].row ||
+          (collinear_hull[0].row == collinear_hull[1].row && collinear_hull[0].col > collinear_hull[1].col)) {
+        std::swap(collinear_hull[0], collinear_hull[1]);
+      }
+    }
+    return collinear_hull;
+  }
+
   std::vector<PixelPoint> hull;
   hull.reserve(points.size());
   hull.push_back(lowest_point);
+  hull.push_back(unique_points[0]);
 
-  for (const auto &p : sorted_points) {
+  for (size_t i = 1; i < unique_points.size(); ++i) {
+    const auto &p = unique_points[i];
     while (hull.size() >= 2) {
       const auto &a = hull[hull.size() - 2];
       const auto &b = hull.back();
