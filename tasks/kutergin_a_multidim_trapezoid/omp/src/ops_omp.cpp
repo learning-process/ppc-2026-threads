@@ -59,7 +59,7 @@ bool KuterginAMultidimTrapezoidOMP::RunImpl() {
 
   double global_sum = 0.0;
 
-#pragma omp parallel reduction(+ : global_sum) firstprivate(dim, n)
+#pragma omp parallel default(none) reduction(+ : global_sum) firstprivate(dim, n) shared(h, borders, func)
   {
     std::vector<double> point(dim);
     std::vector<int> idx(dim);
