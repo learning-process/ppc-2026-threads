@@ -7,7 +7,9 @@
 #include <vector>
 
 #include "alekseev_a_mult_matrix_crs/common/include/common.hpp"
+#include "alekseev_a_mult_matrix_crs/omp/include/ops_omp.hpp"
 #include "alekseev_a_mult_matrix_crs/seq/include/ops_seq.hpp"
+#include "alekseev_a_mult_matrix_crs/tbb/include/ops_tbb.hpp"
 #include "performance/include/performance.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -38,7 +40,7 @@ CRSMatrix GenerateBandMatrix(std::size_t n, std::size_t bandwidth, double value)
 
 class AlekseevAMultMatrixCRSPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  static constexpr std::size_t kSize = 40000;
+  static constexpr std::size_t kSize = 10000;
   static constexpr std::size_t kBandwidth = 30;
 
   void SetPerfAttributes(ppc::performance::PerfAttr &perf_attrs) override {
@@ -74,7 +76,8 @@ TEST_P(AlekseevAMultMatrixCRSPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, AlekseevAMultMatrixCRSSEQ>(PPC_SETTINGS_alekseev_a_mult_matrix_crs);
+    ppc::util::MakeAllPerfTasks<InType, AlekseevAMultMatrixCRSSEQ, AlekseevAMultMatrixCRSOMP,
+                                AlekseevAMultMatrixCRSTBB>(PPC_SETTINGS_alekseev_a_mult_matrix_crs);
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = AlekseevAMultMatrixCRSPerfTests::CustomPerfTestName;
 

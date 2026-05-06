@@ -6,10 +6,12 @@
 #include <string>
 #include <tuple>
 
+#include "guseva_crs/all/include/ops_all.hpp"
 #include "guseva_crs/common/include/common.hpp"
 #include "guseva_crs/common/include/test_reader.hpp"
 #include "guseva_crs/omp/include/ops_omp.hpp"
 #include "guseva_crs/seq/include/ops_seq.hpp"
+#include "guseva_crs/stl/include/ops_stl.hpp"
 #include "guseva_crs/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -57,7 +59,9 @@ const std::array<TestType, 6> kTestParam = {"sparse_dense",   "dense_sparse",   
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<GusevaCRSMatMulSeq, InType>(kTestParam, PPC_SETTINGS_guseva_crs),
                    ppc::util::AddFuncTask<GusevaCRSMatMulOmp, InType>(kTestParam, PPC_SETTINGS_guseva_crs),
-                   ppc::util::AddFuncTask<GusevaCRSMatMulTbb, InType>(kTestParam, PPC_SETTINGS_guseva_crs));
+                   ppc::util::AddFuncTask<GusevaCRSMatMulTbb, InType>(kTestParam, PPC_SETTINGS_guseva_crs),
+                   ppc::util::AddFuncTask<GusevaCRSMatMulStl, InType>(kTestParam, PPC_SETTINGS_guseva_crs),
+                   ppc::util::AddFuncTask<GusevaCRSMatMulAll, InType>(kTestParam, PPC_SETTINGS_guseva_crs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
