@@ -36,7 +36,7 @@ class MarkingComponentsTBB : public BaseTask {
   std::vector<std::vector<int>> temp_labels_;
   std::vector<int> parent_;
   InType input_;
-  std::atomic<int> next_label_{1};  // ИСПРАВЛЕНО: теперь atomic
+  std::atomic<int> next_label_{1};
   bool is_test5_ = false;
 };
 

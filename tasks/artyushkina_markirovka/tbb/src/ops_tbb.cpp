@@ -112,7 +112,6 @@ void MarkingComponentsTBB::UnionLabels(std::vector<int> &parent, int label1, int
   int root2 = FindRoot(parent, label2);
   if (root1 != root2) {
     tbb::mutex::scoped_lock lock(union_mutex);
-    // Повторно проверяем после получения блокировки
     if (parent[static_cast<std::size_t>(root1)] != root1) {
       root1 = FindRoot(parent, root1);
     }
@@ -149,7 +148,6 @@ bool MarkingComponentsTBB::IsTest5() const {
 void MarkingComponentsTBB::ProcessFirstPass() {
   is_test5_ = IsTest5();
 
-  // Используем параллельный for для обработки строк
   tbb::parallel_for(0, rows_, [&](int i) {
     for (int j = 0; j < cols_; ++j) {
       std::size_t idx =
@@ -172,7 +170,6 @@ void MarkingComponentsTBB::ProcessFirstPass() {
         int label = next_label_++;
         temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = label;
 
-        // Расширяем parent вектор если нужно (с защитой)
         tbb::mutex::scoped_lock lock(union_mutex);
         if (static_cast<std::size_t>(label) >= parent_.size()) {
           parent_.resize(static_cast<std::size_t>(label) + 1);
@@ -193,7 +190,6 @@ void MarkingComponentsTBB::ProcessFirstPass() {
 }
 
 void MarkingComponentsTBB::ResolveEquivalences() {
-  // Параллельное разрешение эквивалентностей
   tbb::parallel_for(0, rows_, [&](int i) {
     for (int j = 0; j < cols_; ++j) {
       if (temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] != 0) {
@@ -205,11 +201,9 @@ void MarkingComponentsTBB::ResolveEquivalences() {
 }
 
 void MarkingComponentsTBB::RemapLabels() {
-  // ИСПРАВЛЕНО: используем std::vector вместо tbb::concurrent_vector
   std::vector<int> unique_labels;
   unique_labels.reserve(static_cast<std::size_t>(rows_ * cols_));
 
-  // Собираем все уникальные метки
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
       int label = temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
@@ -219,19 +213,16 @@ void MarkingComponentsTBB::RemapLabels() {
     }
   }
 
-  // Сортируем и удаляем дубликаты
   std::sort(unique_labels.begin(), unique_labels.end());
   auto last = std::unique(unique_labels.begin(), unique_labels.end());
   unique_labels.erase(last, unique_labels.end());
 
-  // Создаем map для перенумерации
   std::map<int, int> label_mapping;
   int current_label = 1;
   for (int label : unique_labels) {
     label_mapping[label] = current_label++;
   }
 
-  // Применяем перенумерацию параллельно
   tbb::parallel_for(0, rows_, [&](int i) {
     for (int j = 0; j < cols_; ++j) {
       int label = temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
@@ -249,13 +240,8 @@ bool MarkingComponentsTBB::RunImpl() {
     return false;
   }
 
-  // Первый проход: присвоение временных меток (параллельно)
   ProcessFirstPass();
-
-  // Второй проход: разрешение эквивалентностей (параллельно)
   ResolveEquivalences();
-
-  // Третий проход: перенумерация меток (параллельно)
   RemapLabels();
 
   return true;

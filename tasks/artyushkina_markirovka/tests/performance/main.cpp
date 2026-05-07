@@ -6,12 +6,11 @@
 
 #include "artyushkina_markirovka/common/include/common.hpp"
 #include "artyushkina_markirovka/seq/include/ops_seq.hpp"
-#include "artyushkina_markirovka/tbb/include/ops_tbb.hpp"  // Добавлено для TBB
+#include "artyushkina_markirovka/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace artyushkina_markirovka {
 
-// Существующий класс для SEQ (не трогаем)
 class ArtyushkinaMarkirovkaPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
 
@@ -62,11 +61,11 @@ class ArtyushkinaMarkirovkaPerfTests : public ppc::util::BaseRunPerfTests<InType
   }
 };
 
-// Существующие тесты для SEQ (не трогаем)
 TEST_P(ArtyushkinaMarkirovkaPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
+// namespace
 namespace {
 
 const auto kAllPerfTasks =
@@ -80,7 +79,6 @@ INSTANTIATE_TEST_SUITE_P(SEQRunModeTests, ArtyushkinaMarkirovkaPerfTests, kGtest
 
 }  // namespace
 
-// НОВЫЕ тесты для TBB (добавляем ниже)
 class ArtyushkinaMarkirovkaTBBPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
 
@@ -135,6 +133,7 @@ TEST_P(ArtyushkinaMarkirovkaTBBPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
+// namespace tbb
 namespace tbb {
 
 const auto kAllPerfTasks =
