@@ -54,53 +54,47 @@ double SortableIntToDouble(uint64_t bits) {
   return result;
 }
 
-void RadixSortDouble(std::vector<double> &data) {
-  if (data.empty()) {
+void RadixSortDouble(std::vector<double> &data, size_t begin, size_t end) {
+  if (end <= begin + 1) {
     return;
   }
 
-  std::vector<uint64_t> keys(data.size());
-  // Преобразуем в сортируемые целые числа
-  oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<size_t>(0, data.size()),
-                            [&](const oneapi::tbb::blocked_range<size_t> &r) {
-    for (size_t i = r.begin(); i < r.end(); ++i) {
-      keys[i] = DoubleToSortableInt(data[i]);
-    }
-  });
+  size_t size = end - begin;
 
-  const int radix = 256;  // 8 бит за проход
-  std::vector<uint64_t> temp_keys(data.size());
+  std::vector<uint64_t> keys(size);
 
-  // 8 проходов для 64-битных чисел (8 байт)
+  for (size_t i = 0; i < size; ++i) {
+    keys[i] = DoubleToSortableInt(data[begin + i]);
+  }
+
+  constexpr int radix = 256;
+
+  std::vector<uint64_t> temp_keys(size);
+
   for (int pass = 0; pass < 8; ++pass) {
     std::vector<size_t> count(radix, 0);
+
     int shift = pass * 8;
-    // Подсчет
+
     for (uint64_t key : keys) {
-      uint8_t byte = (key >> shift) & 0xFF;
-      count[byte]++;
+      count[(key >> shift) & 0xFF]++;
     }
 
-    // Накопление
     for (int i = 1; i < radix; ++i) {
       count[i] += count[i - 1];
     }
 
-    // Распределение
-    for (int i = static_cast<int>(keys.size()) - 1; i >= 0; --i) {
+    for (int i = static_cast<int>(size) - 1; i >= 0; --i) {
       uint8_t byte = (keys[i] >> shift) & 0xFF;
       temp_keys[--count[byte]] = keys[i];
     }
+
     keys.swap(temp_keys);
   }
 
-  // Преобразуем обратно
-  oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<size_t>(0, data.size()),
-                            [&](const oneapi::tbb::blocked_range<size_t> &r) {
-    for (size_t i = r.begin(); i < r.end(); ++i) {
-      data[i] = SortableIntToDouble(keys[i]);
-    }
-  });
+  for (size_t i = 0; i < size; ++i) {
+    data[begin + i] = SortableIntToDouble(keys[i]);
+  }
 }
 
 void MergingHalves(std::vector<double> &arr, size_t i, size_t len) {  // слияние половинок
@@ -113,22 +107,6 @@ void MergingHalves(std::vector<double> &arr, size_t i, size_t len) {  // сли�
         std::swap(arr[j], arr[j + step]);
       }
     }
-  }
-}
-
-void BatcherOddEvenMergeIterative(std::vector<double> &arr, size_t n) {
-  if (n <= 1) {
-    return;
-  }
-  n = std::min(n, arr.size());
-  // Сначала сливаем блоки размером 1, потом 2, потом 4 и т.д.
-  for (size_t len = 2; len <= n; len *= 2) {
-    oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<size_t>(0, n, len),
-                              [&](const oneapi::tbb::blocked_range<size_t> &r) {
-      for (size_t i = r.begin(); i < r.end(); i += len) {
-        MergingHalves(arr, i, len);
-      }
-    });
   }
 }
 
@@ -149,23 +127,35 @@ void HybridSortDouble(std::vector<double> &data) {
   size_t original_size = data.size();
 
   size_t new_size = NextPowerOfTwo(original_size);
-  data.resize(new_size, std::numeric_limits<double>::max());
 
-  size_t mid = new_size / 2;
-  std::vector<double> left(data.begin(), data.begin() + static_cast<ptrdiff_t>(mid));
-  std::vector<double> right(data.begin() + static_cast<ptrdiff_t>(mid), data.end());
+  data.resize(new_size, std::numeric_limits<double>::infinity());
 
-  // Сортируем каждую половину поразрядно
-  oneapi::tbb::parallel_invoke([&]() { RadixSortDouble(left); }, [&]() { RadixSortDouble(right); });
+  size_t threads = oneapi::tbb::this_task_arena::max_concurrency();
 
-  // Собираем обратно в единый массив
-  std::ranges::copy(left, data.begin());
-  std::ranges::copy(right, data.begin() + static_cast<ptrdiff_t>(mid));
+  size_t block_size = (new_size + threads - 1) / threads;
 
-  // Используем слияние Бэтчера для слияния двух отсортированных массивов
-  BatcherOddEvenMergeIterative(data, new_size);
+  // parallel radix sort
+  oneapi::tbb::parallel_for(size_t(0), threads, [&](size_t t) {
+    size_t begin = t * block_size;
 
-  // Обрезаем до исходного размера
+    size_t end = std::min(begin + block_size, new_size);
+
+    if (begin < end) {
+      RadixSortDouble(data, begin, end);
+    }
+  });
+
+  // parallel batcher merge tree
+  for (size_t merge_size = block_size; merge_size < new_size; merge_size *= 2) {
+    oneapi::tbb::parallel_for(size_t(0), new_size, merge_size * 2,
+
+                              [&](size_t i) {
+      size_t end = std::min(i + merge_size * 2, new_size);
+
+      MergingHalves(data, i, end - i);
+    });
+  }
+
   data.resize(original_size);
 }
 
