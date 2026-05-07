@@ -6,10 +6,11 @@
 
 #include "oneapi/tbb/enumerable_thread_specific.h"
 #include "oneapi/tbb/parallel_for.h"
+// Добавлено для исправления misc-include-cleaner
+#include "viderman_a_sparse_matrix_mult_crs_complex/common/include/common.hpp"
 
 namespace viderman_a_sparse_matrix_mult_crs_complex {
 
-// Структура для локальных буферов каждого потока
 struct ThreadLocalBuffers {
   std::vector<Complex> accumulator;
   std::vector<int> marker;
@@ -18,10 +19,47 @@ struct ThreadLocalBuffers {
   explicit ThreadLocalBuffers(int size) : accumulator(size, Complex(0.0, 0.0)), marker(size, -1) {}
 };
 
+namespace {
+// Вспомогательная функция для снижения когнитивной сложности Multiply
+void ProcessSingleRow(int i, const CRSMatrix &a, const CRSMatrix &b, ThreadLocalBuffers &loc,
+                      std::vector<int> &row_cols, std::vector<Complex> &row_vals) {
+  auto &acc = loc.accumulator;
+  auto &mark = loc.marker;
+  auto &active = loc.active_indices;
+
+  active.clear();
+
+  for (int j = a.row_ptr[i]; j < a.row_ptr[i + 1]; ++j) {
+    int col_a = a.col_indices[j];
+    Complex val_a = a.values[j];
+
+    for (int k = b.row_ptr[col_a]; k < b.row_ptr[col_a + 1]; ++k) {
+      int col_b = b.col_indices[k];
+      acc[col_b] += val_a * b.values[k];
+
+      if (mark[col_b] != i) {
+        mark[col_b] = i;
+        active.push_back(col_b);
+      }
+    }
+  }
+
+  // Исправлено для modernize-use-ranges
+  std::ranges::sort(active);
+
+  for (int col : active) {
+    if (std::abs(acc[col]) > 1e-15) {
+      row_cols.push_back(col);
+      row_vals.push_back(acc[col]);
+    }
+    acc[col] = Complex(0.0, 0.0);
+  }
+}
+}  // namespace
+
 VidermanASparseMatrixMultCRSComplexTBB::VidermanASparseMatrixMultCRSComplexTBB(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  // Инициализируем выходную матрицу (OutType здесь это CRSMatrix)
   GetOutput() = CRSMatrix();
 }
 
@@ -40,7 +78,6 @@ bool VidermanASparseMatrixMultCRSComplexTBB::PreProcessingImpl() {
 }
 
 bool VidermanASparseMatrixMultCRSComplexTBB::RunImpl() {
-  // ИСПРАВЛЕНО: Передаем GetOutput() напрямую без std::get
   Multiply(*a_, *b_, GetOutput());
   return true;
 }
@@ -54,49 +91,14 @@ void VidermanASparseMatrixMultCRSComplexTBB::Multiply(const CRSMatrix &a, const 
   c.cols = b.cols;
   c.row_ptr.assign(a.rows + 1, 0);
 
-  // Временные контейнеры для строк
   std::vector<std::vector<int>> all_col_indices(a.rows);
   std::vector<std::vector<Complex>> all_values(a.rows);
 
-  // TLS для исключения Race Condition и лишних аллокаций
   oneapi::tbb::enumerable_thread_specific<ThreadLocalBuffers> tls([&]() { return ThreadLocalBuffers(b.cols); });
 
-  oneapi::tbb::parallel_for(0, a.rows, [&](int i) {
-    auto &loc = tls.local();
-    auto &acc = loc.accumulator;
-    auto &mark = loc.marker;
-    auto &active = loc.active_indices;
+  oneapi::tbb::parallel_for(0, a.rows,
+                            [&](int i) { ProcessSingleRow(i, a, b, tls.local(), all_col_indices[i], all_values[i]); });
 
-    active.clear();
-
-    for (int j = a.row_ptr[i]; j < a.row_ptr[i + 1]; ++j) {
-      int col_a = a.col_indices[j];
-      Complex val_a = a.values[j];
-
-      for (int k = b.row_ptr[col_a]; k < b.row_ptr[col_a + 1]; ++k) {
-        int col_b = b.col_indices[k];
-        acc[col_b] += val_a * b.values[k];
-
-        if (mark[col_b] != i) {
-          mark[col_b] = i;
-          active.push_back(col_b);
-        }
-      }
-    }
-
-    // Сортировка для CRS формата
-    std::sort(active.begin(), active.end());
-
-    for (int col : active) {
-      if (std::abs(acc[col]) > 1e-15) {  // Используем порог из ваших тестов
-        all_col_indices[i].push_back(col);
-        all_values[i].push_back(acc[col]);
-      }
-      acc[col] = Complex(0.0, 0.0);  // Очистка
-    }
-  });
-
-  // Сборка результирующей матрицы
   for (int i = 0; i < a.rows; ++i) {
     c.row_ptr[i + 1] = c.row_ptr[i] + static_cast<int>(all_col_indices[i].size());
   }
