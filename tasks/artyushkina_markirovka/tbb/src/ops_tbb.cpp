@@ -4,7 +4,6 @@
 #include <tbb/concurrent_vector.h>
 #include <tbb/mutex.h>
 #include <tbb/parallel_for.h>
-#include <tbb/parallel_reduce.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -18,9 +17,9 @@ namespace {
 
 tbb::mutex union_mutex;
 
-void CollectNeighborsTest5Impl(int i, int j, const std::vector<std::vector<int>> &temp_labels,
-                               std::vector<int> &neighbor_labels, int /*cols*/) {
-  if (i > 0 && (i != 3 || j != 1)) {
+void CollectNeighbors4ConnectivityImpl(int i, int j, const std::vector<std::vector<int>> &temp_labels,
+                                       std::vector<int> &neighbor_labels, int /*cols*/) {
+  if (i > 0) {
     if (temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)] != 0) {
       neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)]);
     }
@@ -32,31 +31,17 @@ void CollectNeighborsTest5Impl(int i, int j, const std::vector<std::vector<int>>
   }
 }
 
-void CollectNeighbors8ConnectivityImpl(int i, int j, const std::vector<std::vector<int>> &temp_labels,
-                                       std::vector<int> &neighbor_labels, int cols) {
-  if (i > 0) {
-    if (j > 0 && temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j - 1)] != 0) {
-      neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j - 1)]);
-    }
-    if (temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)] != 0) {
-      neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)]);
-    }
-    if (j + 1 < cols) {
-      if (temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j + 1)] != 0) {
-        neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j + 1)]);
-      }
-    }
-  }
-  if (j > 0 && temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j - 1)] != 0) {
-    neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j - 1)]);
-  }
-}
-
 int FindMinLabel(const std::vector<int> &labels) {
   if (labels.empty()) {
     return 0;
   }
-  return *std::min_element(labels.begin(), labels.end());
+  int min_label = labels[0];
+  for (std::size_t k = 1; k < labels.size(); ++k) {
+    if (labels[k] < min_label) {
+      min_label = labels[k];
+    }
+  }
+  return min_label;
 }
 
 }  // namespace
@@ -158,13 +143,9 @@ void MarkingComponentsTBB::ProcessFirstPass() {
       }
 
       std::vector<int> neighbor_labels;
-      neighbor_labels.reserve(4);
+      neighbor_labels.reserve(2);
 
-      if (is_test5_) {
-        CollectNeighborsTest5Impl(i, j, temp_labels_, neighbor_labels, cols_);
-      } else {
-        CollectNeighbors8ConnectivityImpl(i, j, temp_labels_, neighbor_labels, cols_);
-      }
+      CollectNeighbors4ConnectivityImpl(i, j, temp_labels_, neighbor_labels, cols_);
 
       if (neighbor_labels.empty()) {
         int label = next_label_++;
