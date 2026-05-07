@@ -15,7 +15,6 @@
 #include "viderman_a_sparse_matrix_mult_crs_complex/common/include/common.hpp"
 #include "viderman_a_sparse_matrix_mult_crs_complex/omp/include/ops_omp.hpp"
 #include "viderman_a_sparse_matrix_mult_crs_complex/seq/include/ops_seq.hpp"
-#include "viderman_a_sparse_matrix_mult_crs_complex/stl/include/ops_stl.hpp"
 #include "viderman_a_sparse_matrix_mult_crs_complex/tbb/include/ops_tbb.hpp"
 
 namespace viderman_a_sparse_matrix_mult_crs_complex {
@@ -658,8 +657,6 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<VidermanASpars
                                            ppc::util::AddFuncTask<VidermanASparseMatrixMultCRSComplexOMP, InType>(
                                                kTestParam, PPC_SETTINGS_viderman_a_sparse_matrix_mult_crs_complex),
                                            ppc::util::AddFuncTask<VidermanASparseMatrixMultCRSComplexTBB, InType>(
-                                               kTestParam, PPC_SETTINGS_viderman_a_sparse_matrix_mult_crs_complex),
-                                           ppc::util::AddFuncTask<VidermanASparseMatrixMultCRSComplexSTL, InType>(
                                                kTestParam, PPC_SETTINGS_viderman_a_sparse_matrix_mult_crs_complex));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
