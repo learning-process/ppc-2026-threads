@@ -1,12 +1,11 @@
-#include "yakimov_i_mult_of_dense_matrices_fox_algorithm/tbb/include/ops_tbb.hpp"
-
-#include <tbb/blocked_range2d.h>
-#include <tbb/parallel_for.h>
+#include "yakimov_i_mult_of_dense_matrices_fox_algorithm/stl/include/ops_stl.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <cstddef>
 #include <fstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "util/include/util.hpp"
@@ -82,6 +81,17 @@ void MultiplyBlock(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &resu
   }
 }
 
+void ProcessStage(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int stage, int num_blocks,
+                  int block_size) {
+  for (int i = 0; i < num_blocks; ++i) {
+    int broadcast_block = (i + stage) % num_blocks;
+    for (int j = 0; j < num_blocks; ++j) {
+      MultiplyBlock(a, b, result, i * block_size, j * block_size, block_size, broadcast_block * block_size,
+                    j * block_size);
+    }
+  }
+}
+
 void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int block_size) {
   if (a.rows != a.cols || b.rows != b.cols || a.rows != b.rows) {
     SimpleMultiply(a, b, result);
@@ -99,21 +109,45 @@ void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &r
   result.cols = n;
   result.data.assign(static_cast<std::size_t>(n) * n, 0.0);
 
-  tbb::parallel_for(0, num_blocks, [&](int stage) {
-    tbb::parallel_for(0, num_blocks, [&](int i) {
-      int broadcast_block = (i + stage) % num_blocks;
-      for (int j = 0; j < num_blocks; ++j) {
-        MultiplyBlock(a, b, result, i * block_size, j * block_size, block_size, broadcast_block * block_size,
-                      j * block_size);
+  unsigned int hardware_threads = std::thread::hardware_concurrency();
+  unsigned int num_threads = (hardware_threads == 0) ? 2u : hardware_threads;
+  num_threads = std::min(static_cast<unsigned int>(num_blocks), num_threads);
+
+  std::vector<std::thread> threads;
+  threads.reserve(num_threads);
+
+  int stages_per_thread = num_blocks / static_cast<int>(num_threads);
+  int remaining_stages = num_blocks % static_cast<int>(num_threads);
+
+  int stage_start = 0;
+  for (unsigned int t = 0; t < num_threads; ++t) {
+    int stages_for_this_thread = stages_per_thread + (static_cast<int>(t) < remaining_stages ? 1 : 0);
+    if (stages_for_this_thread == 0) {
+      continue;
+    }
+
+    int stage_end = stage_start + stages_for_this_thread;
+
+    threads.emplace_back([&a, &b, &result, stage_start, stage_end, num_blocks, block_size]() {
+      for (int stage = stage_start; stage < stage_end; ++stage) {
+        ProcessStage(a, b, result, stage, num_blocks, block_size);
       }
     });
-  });
+
+    stage_start = stage_end;
+  }
+
+  for (std::thread &t : threads) {
+    if (t.joinable()) {
+      t.join();
+    }
+  }
 }
 
 }  // namespace
 
-YakimovIMultOfDenseMatricesFoxAlgorithmTBB::YakimovIMultOfDenseMatricesFoxAlgorithmTBB(const InType &in) {
-  this->SetTypeOfTask(YakimovIMultOfDenseMatricesFoxAlgorithmTBB::GetStaticTypeOfTask());
+YakimovIMultOfDenseMatricesFoxAlgorithmSTL::YakimovIMultOfDenseMatricesFoxAlgorithmSTL(const InType &in) {
+  this->SetTypeOfTask(YakimovIMultOfDenseMatricesFoxAlgorithmSTL::GetStaticTypeOfTask());
   this->GetInput() = in;
   this->GetOutput() = 0.0;
 
@@ -122,11 +156,11 @@ YakimovIMultOfDenseMatricesFoxAlgorithmTBB::YakimovIMultOfDenseMatricesFoxAlgori
   this->matrix_b_filename_ = ppc::util::GetAbsoluteTaskPath(task_name, "B_" + std::to_string(in) + ".txt");
 }
 
-bool YakimovIMultOfDenseMatricesFoxAlgorithmTBB::ValidationImpl() {
+bool YakimovIMultOfDenseMatricesFoxAlgorithmSTL::ValidationImpl() {
   return (this->GetInput() > 0) && (this->GetOutput() == 0.0);
 }
 
-bool YakimovIMultOfDenseMatricesFoxAlgorithmTBB::PreProcessingImpl() {
+bool YakimovIMultOfDenseMatricesFoxAlgorithmSTL::PreProcessingImpl() {
   if (!ReadMatrixFromFileImpl(this->matrix_a_filename_, this->matrix_a_)) {
     return false;
   }
@@ -154,12 +188,12 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmTBB::PreProcessingImpl() {
   return this->block_size_ > 0;
 }
 
-bool YakimovIMultOfDenseMatricesFoxAlgorithmTBB::RunImpl() {
+bool YakimovIMultOfDenseMatricesFoxAlgorithmSTL::RunImpl() {
   FoxAlgorithmImpl(this->matrix_a_, this->matrix_b_, this->result_matrix_, this->block_size_);
   return true;
 }
 
-bool YakimovIMultOfDenseMatricesFoxAlgorithmTBB::PostProcessingImpl() {
+bool YakimovIMultOfDenseMatricesFoxAlgorithmSTL::PostProcessingImpl() {
   double sum = 0.0;
   for (double val : this->result_matrix_.data) {
     sum += val;
