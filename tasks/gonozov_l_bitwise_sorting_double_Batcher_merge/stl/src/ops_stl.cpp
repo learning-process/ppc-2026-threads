@@ -1,4 +1,4 @@
-#include "gonozov_l_bitwise_sorting_double_Batcher_merge/STL/include/ops_stl.hpp"
+#include "gonozov_l_bitwise_sorting_double_Batcher_merge/stl/include/ops_stl.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -51,9 +51,7 @@ double SortableIntToDouble(uint64_t bits) {
   return result;
 }
 
-void RadixSortDouble(std::vector<double>& data,
-                     size_t begin,
-                     size_t end) {
+void RadixSortDouble(std::vector<double> &data, size_t begin, size_t end) {
   if (end <= begin + 1) {
     return;
   }
@@ -71,7 +69,6 @@ void RadixSortDouble(std::vector<double>& data,
   std::vector<uint64_t> temp_keys(size);
 
   for (int pass = 0; pass < 8; ++pass) {
-
     std::array<size_t, radix> count{};
 
     int shift = pass * 8;
@@ -159,7 +156,7 @@ size_t NextPowerOfTwo(size_t n) {
   return power;
 }
 
-void HybridSortDouble(std::vector<double>& data) {
+void HybridSortDouble(std::vector<double> &data) {
   if (data.size() <= 1) {
     return;
   }
@@ -168,15 +165,11 @@ void HybridSortDouble(std::vector<double>& data) {
 
   size_t new_size = NextPowerOfTwo(original_size);
 
-  data.resize(
-      new_size,
-      std::numeric_limits<double>::infinity());
+  data.resize(new_size, std::numeric_limits<double>::infinity());
 
-  size_t threads =
-      std::thread::hardware_concurrency();
+  size_t threads = std::thread::hardware_concurrency();
 
-  size_t block_size =
-      (new_size + threads - 1) / threads;
+  size_t block_size = (new_size + threads - 1) / threads;
 
   // PARALLEL RADIX SORT
 
@@ -185,61 +178,37 @@ void HybridSortDouble(std::vector<double>& data) {
   futures.reserve(threads);
 
   for (size_t t = 0; t < threads; ++t) {
+    futures.push_back(std::async(std::launch::async, [&, t]() {
+      size_t begin = t * block_size;
 
-    futures.push_back(
-        std::async(std::launch::async,
-        [&, t]() {
+      size_t end = std::min(begin + block_size, new_size);
 
-          size_t begin = t * block_size;
-
-          size_t end =
-              std::min(begin + block_size,
-                       new_size);
-
-          if (begin < end) {
-            RadixSortDouble(data, begin, end);
-          }
-        }));
+      if (begin < end) {
+        RadixSortDouble(data, begin, end);
+      }
+    }));
   }
 
-  for (auto& f : futures) {
+  for (auto &f : futures) {
     f.get();
   }
 
   // PARALLEL BATCHER MERGE
 
-  for (size_t merge_size = block_size;
-       merge_size < new_size;
-       merge_size *= 2) {
-
-    size_t blocks_count =
-        (new_size + merge_size * 2 - 1) /
-        (merge_size * 2);
+  for (size_t merge_size = block_size; merge_size < new_size; merge_size *= 2) {
+    size_t blocks_count = (new_size + merge_size * 2 - 1) / (merge_size * 2);
 
     std::vector<size_t> indices(blocks_count);
 
-    std::iota(indices.begin(),
-              indices.end(),
-              0);
+    std::iota(indices.begin(), indices.end(), 0);
 
-    std::for_each(std::execution::par,
-                  indices.begin(),
-                  indices.end(),
-                  [&](size_t block_id) {
+    std::for_each(std::execution::par, indices.begin(), indices.end(), [&](size_t block_id) {
+      size_t begin = block_id * merge_size * 2;
 
-      size_t begin =
-          block_id * merge_size * 2;
-
-      size_t len =
-          std::min(
-              merge_size * 2,
-              new_size - begin);
+      size_t len = std::min(merge_size * 2, new_size - begin);
 
       if (begin < new_size) {
-        MergingHalves(
-            data,
-            begin,
-            len);
+        MergingHalves(data, begin, len);
       }
     });
   }
