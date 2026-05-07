@@ -73,7 +73,7 @@ bool LitvyakovDShellSortSTL::RunImpl() {
   for (std::size_t i = 0; i < parts_count; ++i) {
     const std::size_t l = bounds[i];
     const std::size_t r = bounds[i + 1];
-    thread_pool[i] = std::thread([&vec, l, r]() { BaseShellSort(vec.begin() + l, vec.begin() + r); });
+    thread_pool[i] = std::thread([&vec, l, r]() { BaseShellSort(vec.begin() + static_cast<std::ptrdiff_t>(l), vec.begin() + static_cast<std::ptrdiff_t>(r)); });
   }
 
   for (auto &t : thread_pool) {
