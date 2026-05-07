@@ -23,60 +23,70 @@ struct CRSMatrix {
   CRSMatrix() = default;
 
   CRSMatrix(int r, int c) : rows(r), cols(c) {
-    row_ptr.resize(r + 1, 0);
+    if (r >= 0) {
+      row_ptr.assign(r + 1, 0);
+    }
   }
 
-  [[nodiscard]] bool IsValid() const {
-    return HasValidShape() && HasValidRowPtrSize() && HasMatchingValueSizes() && HasMonotonicRowPtr() &&
-           HasValidColIndices() && HasSortedRows();
+  bool IsValid() const {
+    if (rows < 0 || cols < 0) {
+      return false;
+    }
+
+    if (static_cast<int>(row_ptr.size()) != rows + 1) {
+      return false;
+    }
+
+    if (row_ptr[0] != 0) {
+      return false;
+    }
+
+    if (col_indices.size() != values.size()) {
+      return false;
+    }
+
+    const int nnz = static_cast<int>(values.size());
+
+    if (row_ptr.back() != nnz) {
+      return false;
+    }
+
+    for (int i = 0; i < rows; ++i) {
+      if (row_ptr[i] > row_ptr[i + 1]) {
+        return false;
+      }
+
+      if (row_ptr[i] < 0 || row_ptr[i] > nnz) {
+        return false;
+      }
+    }
+
+    for (int i = 0; i < rows; ++i) {
+      for (int j = row_ptr[i]; j < row_ptr[i + 1]; ++j) {
+        int col = col_indices[j];
+
+        if (col < 0 || col >= cols) {
+          return false;
+        }
+
+        if (j + 1 < row_ptr[i + 1]) {
+          if (col_indices[j] >= col_indices[j + 1]) {
+            return false;
+          }
+        }
+      }
+    }
+
+    return true;
   }
 
   [[nodiscard]] std::size_t NonZeros() const {
     return values.size();
   }
-
- private:
-  [[nodiscard]] bool HasValidShape() const {
-    return rows >= 0 && cols >= 0;
-  }
-
-  [[nodiscard]] bool HasValidRowPtrSize() const {
-    const auto expected = static_cast<std::size_t>(rows) + 1;
-    return row_ptr.size() == expected;
-  }
-
-  [[nodiscard]] bool HasMatchingValueSizes() const {
-    return col_indices.size() == values.size();
-  }
-
-  [[nodiscard]] bool HasMonotonicRowPtr() const {
-    for (int i = 0; i < rows; ++i) {
-      if (row_ptr[i] > row_ptr[i + 1]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  [[nodiscard]] bool HasValidColIndices() const {
-    return std::ranges::all_of(col_indices, [this](int col) { return col >= 0 && col < cols; });
-  }
-
-  [[nodiscard]] bool HasSortedRows() const {
-    for (int i = 0; i < rows; ++i) {
-      for (int j = row_ptr[i]; j < row_ptr[i + 1] - 1; ++j) {
-        if (col_indices[j] >= col_indices[j + 1]) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
 };
 
 using InType = std::tuple<CRSMatrix, CRSMatrix>;
 using OutType = CRSMatrix;
-using TestType = std::tuple<int, int, int, int, int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 constexpr double kEpsilon = 1e-14;
