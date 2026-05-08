@@ -108,10 +108,10 @@ inline void Merge(std::vector<double> &a, size_t i, size_t len) {
   size_t half = len / 2;
   size_t end = std::min(i + len, a.size());
 
-  for (size_t s = half; s > 0; s >>= 1) {
-    for (size_t j = i; j + s < end; ++j) {
-      if (a[j] > a[j + s]) {
-        std::swap(a[j], a[j + s]);
+  for (size_t ks = half; ks > 0; ks >>= 1) {
+    for (size_t j = i; j + ks < end; ++j) {
+      if (a[j] > a[j + ks]) {
+        std::swap(a[j], a[j + ks]);
       }
     }
   }
