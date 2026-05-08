@@ -182,7 +182,7 @@ void ComputeChunkParams(size_t total_size, int mpi_size, std::vector<size_t> &ch
 }
 
 void ScatterData(const std::vector<int> &global_data, std::vector<int> &local_data,
-                 const std::vector<size_t> &chunk_sizes, const std::vector<size_t> &offsets, int mpi_rank) {
+                 const std::vector<size_t> &chunk_sizes, const std::vector<size_t> &offsets) {
   int mpi_size = static_cast<int>(chunk_sizes.size());
   std::vector<int> send_counts(mpi_size);
   std::vector<int> send_displs(mpi_size);
