@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <ranges>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -177,10 +176,9 @@ void ComputeChunkParams(size_t total_size, int mpi_size, std::vector<size_t> &ch
   offsets.assign(mpi_size, 0);
   size_t base = total_size / static_cast<size_t>(mpi_size);
   size_t remainder = total_size % static_cast<size_t>(mpi_size);
-  for (int i = 0; i < mpi_size; ++i) {
-    chunk_sizes[static_cast<size_t>(i)] = base + (static_cast<size_t>(i) < static_cast<size_t>(remainder) ? 1U : 0U);
-    offsets[static_cast<size_t>(i)] =
-        (i == 0) ? 0 : offsets[static_cast<size_t>(i - 1)] + chunk_sizes[static_cast<size_t>(i - 1)];
+  for (size_t i = 0; i < static_cast<size_t>(mpi_size); ++i) {
+    chunk_sizes[i] = base + (i < remainder ? 1U : 0U);
+    offsets[i] = (i == 0) ? 0 : offsets[i - 1] + chunk_sizes[i - 1];
   }
 }
 
