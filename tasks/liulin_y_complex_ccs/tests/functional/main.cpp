@@ -174,7 +174,7 @@ const auto kTestTasksListOmp =
     ppc::util::AddFuncTask<LiulinYComplexCcsOmp, InType>(kTestParam, PPC_SETTINGS_liulin_y_complex_ccs);
 const auto kTestTasksListTbb =
     ppc::util::AddFuncTask<LiulinYComplexCcsTbb, InType>(kTestParam, PPC_SETTINGS_liulin_y_complex_ccs);
-const auto kTestTasksList = std::tuple_cat(kTestTasksListSeq, kTestTasksListOmp, kAllPerfTasksTbb);
+const auto kTestTasksList = std::tuple_cat(kTestTasksListSeq, kTestTasksListOmp, kTestTasksListTbb);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kFuncTestName = LiulinYComplexCcsFuncTestsFromFile::PrintFuncTestName<LiulinYComplexCcsFuncTestsFromFile>;
