@@ -15,6 +15,7 @@
 #include "shkrebko_m_calc_of_integral_rect/seq/include/ops_seq.hpp"
 #include "shkrebko_m_calc_of_integral_rect/stl/include/ops_stl.hpp"
 #include "shkrebko_m_calc_of_integral_rect/tbb/include/ops_tbb.hpp"
+#include "shkrebko_m_calc_of_integral_rect/all/include/ops_all.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -85,6 +86,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ShkrebkoMCalcO
                                            ppc::util::AddFuncTask<ShkrebkoMCalcOfIntegralRectTBB, InType>(
                                                kTestCases, PPC_SETTINGS_shkrebko_m_calc_of_integral_rect),
                                            ppc::util::AddFuncTask<ShkrebkoMCalcOfIntegralRectSTL, InType>(
+                                               kTestCases, PPC_SETTINGS_shkrebko_m_calc_of_integral_rect),
+                                           ppc::util::AddFuncTask<ShkrebkoMCalcOfIntegralRectALL, InType>(
                                                kTestCases, PPC_SETTINGS_shkrebko_m_calc_of_integral_rect));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

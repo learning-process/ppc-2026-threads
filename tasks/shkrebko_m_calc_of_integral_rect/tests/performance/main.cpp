@@ -9,6 +9,7 @@
 #include "shkrebko_m_calc_of_integral_rect/seq/include/ops_seq.hpp"
 #include "shkrebko_m_calc_of_integral_rect/stl/include/ops_stl.hpp"
 #include "shkrebko_m_calc_of_integral_rect/tbb/include/ops_tbb.hpp"
+#include "shkrebko_m_calc_of_integral_rect/all/include/ops_all.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace shkrebko_m_calc_of_integral_rect {
@@ -50,7 +51,8 @@ const auto kAllPerfTasks = std::tuple_cat(
     ppc::util::MakeAllPerfTasks<InType, ShkrebkoMCalcOfIntegralRectSEQ>(PPC_SETTINGS_shkrebko_m_calc_of_integral_rect),
     ppc::util::MakeAllPerfTasks<InType, ShkrebkoMCalcOfIntegralRectOMP>(PPC_SETTINGS_shkrebko_m_calc_of_integral_rect),
     ppc::util::MakeAllPerfTasks<InType, ShkrebkoMCalcOfIntegralRectTBB>(PPC_SETTINGS_shkrebko_m_calc_of_integral_rect),
-    ppc::util::MakeAllPerfTasks<InType, ShkrebkoMCalcOfIntegralRectSTL>(PPC_SETTINGS_shkrebko_m_calc_of_integral_rect));
+    ppc::util::MakeAllPerfTasks<InType, ShkrebkoMCalcOfIntegralRectSTL>(PPC_SETTINGS_shkrebko_m_calc_of_integral_rect),
+    ppc::util::MakeAllPerfTasks<InType, ShkrebkoMCalcOfIntegralRectALL>(PPC_SETTINGS_shkrebko_m_calc_of_integral_rect));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
