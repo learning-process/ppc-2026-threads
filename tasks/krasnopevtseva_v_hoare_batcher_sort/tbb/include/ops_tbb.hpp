@@ -22,9 +22,8 @@ class KrasnopevtsevaVHoareBatcherSortTBB : public BaseTask {
   static int Partition(std::vector<int> &arr, int first, int last);
   static void QuickSort(std::vector<int> &arr, int first, int last);
   static void InsertionSort(std::vector<int> &arr, int first, int last);
-  static void BatcherMergeBlocksStep(int *left_pointer, int &left_size, 
-                                      int *right_pointer, int &right_size);
-  static void BatcherMerge(int thread_input_size, std::vector<int *> &pointers, 
-                           std::vector<int> &sizes, int par_if_greater);
+  static void BatcherMergeBlocksStep(int *left_pointer, int &left_size, int *right_pointer, int &right_size);
+  static void BatcherMerge(int thread_input_size, std::vector<int *> &pointers, std::vector<int> &sizes,
+                           int par_if_greater);
 };
 }  // namespace krasnopevtseva_v_hoare_batcher_sort
