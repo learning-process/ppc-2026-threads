@@ -7,7 +7,6 @@
 #include <thread>
 #include <vector>
 
-#include "core/util/include/util.hpp"
 #include "shkryleva_s_shell_sort_simple_merge/common/include/common.hpp"
 
 namespace shkryleva_s_shell_sort_simple_merge {
