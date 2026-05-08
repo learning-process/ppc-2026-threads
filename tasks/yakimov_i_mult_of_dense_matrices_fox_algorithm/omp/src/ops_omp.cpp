@@ -42,7 +42,6 @@ bool ReadMatrixFromFileImpl(const std::string &filename, DenseMatrix &matrix) {
   if (!file.is_open()) {
     return false;
   }
-
   if (!ReadDimensions(file, matrix)) {
     return false;
   }
