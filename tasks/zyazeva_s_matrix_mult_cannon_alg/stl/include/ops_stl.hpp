@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+
 #include "task/include/task.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/common/include/common.hpp"
 
@@ -20,9 +21,7 @@ class ZyazevaSMatrixMultCannonAlgSTL : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static void MultiplyBlocks(const std::vector<double> &a,
-                             const std::vector<double> &b,
-                             std::vector<double> &c,
+  static void MultiplyBlocks(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c,
                              int block_size);
 };
 
