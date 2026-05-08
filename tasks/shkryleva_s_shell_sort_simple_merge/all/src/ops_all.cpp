@@ -172,11 +172,12 @@ void BcastSortedVector(std::vector<int> &data, int mpi_rank) {
 
 void ComputeChunkParams(size_t total_size, int mpi_size, std::vector<size_t> &chunk_sizes,
                         std::vector<size_t> &offsets) {
-  chunk_sizes.assign(mpi_size, 0);
-  offsets.assign(mpi_size, 0);
-  size_t base = total_size / static_cast<size_t>(mpi_size);
-  size_t remainder = total_size % static_cast<size_t>(mpi_size);
-  for (size_t i = 0; i < static_cast<size_t>(mpi_size); ++i) {
+  const size_t mpi_size_usz = static_cast<size_t>(mpi_size);
+  chunk_sizes.assign(mpi_size_usz, 0);
+  offsets.assign(mpi_size_usz, 0);
+  const size_t base = total_size / mpi_size_usz;
+  const size_t remainder = total_size % mpi_size_usz;
+  for (size_t i = 0; i < mpi_size_usz; ++i) {
     chunk_sizes[i] = base + (i < remainder ? 1U : 0U);
     offsets[i] = (i == 0) ? 0 : offsets[i - 1] + chunk_sizes[i - 1];
   }
