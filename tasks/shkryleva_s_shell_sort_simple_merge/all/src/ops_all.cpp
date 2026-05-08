@@ -15,7 +15,7 @@ namespace shkryleva_s_shell_sort_simple_merge {
 namespace {
 
 // ========== Локальная параллельная сортировка (STL-версия) ==========
-void ShellSort(int left, int right, std::vector<int>& arr) {
+void ShellSort(int left, int right, std::vector<int> &arr) {
   int sub_array_size = right - left + 1;
   int gap = 1;
   while (gap <= sub_array_size / 3) {
@@ -34,7 +34,7 @@ void ShellSort(int left, int right, std::vector<int>& arr) {
   }
 }
 
-void Merge(int left, int mid, int right, std::vector<int>& arr, std::vector<int>& buffer) {
+void Merge(int left, int mid, int right, std::vector<int> &arr, std::vector<int> &buffer) {
   int i = left;
   int j = mid + 1;
   int k = 0;
@@ -56,7 +56,7 @@ void Merge(int left, int mid, int right, std::vector<int>& arr, std::vector<int>
   }
 }
 
-void SortSegments(std::vector<int>& arr, int num_threads, int sub_arr_size) {
+void SortSegments(std::vector<int> &arr, int num_threads, int sub_arr_size) {
   std::vector<std::thread> threads;
   for (int i = 0; i < num_threads; ++i) {
     int left = i * sub_arr_size;
@@ -65,12 +65,14 @@ void SortSegments(std::vector<int>& arr, int num_threads, int sub_arr_size) {
       threads.emplace_back([&arr, left, right] { ShellSort(left, right, arr); });
     }
   }
-  for (auto& t : threads) {
-    if (t.joinable()) t.join();
+  for (auto &t : threads) {
+    if (t.joinable()) {
+      t.join();
+    }
   }
 }
 
-void HierarchicalMerge(std::vector<int>& arr, int num_threads, int sub_arr_size) {
+void HierarchicalMerge(std::vector<int> &arr, int num_threads, int sub_arr_size) {
   while (num_threads > 1) {
     int new_num_threads = (num_threads + 1) / 2;
     std::vector<std::thread> threads;
@@ -85,16 +87,20 @@ void HierarchicalMerge(std::vector<int>& arr, int num_threads, int sub_arr_size)
         });
       }
     }
-    for (auto& t : threads) {
-      if (t.joinable()) t.join();
+    for (auto &t : threads) {
+      if (t.joinable()) {
+        t.join();
+      }
     }
     sub_arr_size *= 2;
     num_threads = new_num_threads;
   }
 }
 
-void SortVectorParallel(std::vector<int>& arr) {
-  if (arr.size() < 2) return;
+void SortVectorParallel(std::vector<int> &arr) {
+  if (arr.size() < 2) {
+    return;
+  }
 
   const int array_size = static_cast<int>(arr.size());
   unsigned int hardware_threads = std::thread::hardware_concurrency();
@@ -108,7 +114,7 @@ void SortVectorParallel(std::vector<int>& arr) {
 }
 
 // ========== MPI-вспомогательные функции ==========
-std::vector<int> MergeTwoSorted(const std::vector<int>& left, const std::vector<int>& right) {
+std::vector<int> MergeTwoSorted(const std::vector<int> &left, const std::vector<int> &right) {
   std::vector<int> result;
   result.reserve(left.size() + right.size());
   size_t i = 0, j = 0;
@@ -119,27 +125,29 @@ std::vector<int> MergeTwoSorted(const std::vector<int>& left, const std::vector<
       result.push_back(right[j++]);
     }
   }
-  while (i < left.size()) result.push_back(left[i++]);
-  while (j < right.size()) result.push_back(right[j++]);
+  while (i < left.size()) {
+    result.push_back(left[i++]);
+  }
+  while (j < right.size()) {
+    result.push_back(right[j++]);
+  }
   return result;
 }
 
-void ExchangeAndMerge(int partner, std::vector<int>& merged_data) {
+void ExchangeAndMerge(int partner, std::vector<int> &merged_data) {
   size_t my_size = merged_data.size();
   size_t partner_size = 0;
-  MPI_Sendrecv(&my_size, 1, MPI_UNSIGNED_LONG, partner, 0,
-               &partner_size, 1, MPI_UNSIGNED_LONG, partner, 0,
+  MPI_Sendrecv(&my_size, 1, MPI_UNSIGNED_LONG, partner, 0, &partner_size, 1, MPI_UNSIGNED_LONG, partner, 0,
                MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   std::vector<int> partner_data(partner_size);
-  MPI_Sendrecv(merged_data.data(), static_cast<int>(my_size), MPI_INT, partner, 1,
-               partner_data.data(), static_cast<int>(partner_size), MPI_INT, partner, 1,
-               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  MPI_Sendrecv(merged_data.data(), static_cast<int>(my_size), MPI_INT, partner, 1, partner_data.data(),
+               static_cast<int>(partner_size), MPI_INT, partner, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   merged_data = MergeTwoSorted(merged_data, partner_data);
 }
 
-void ParallelHypercubeMerge(std::vector<int>& merged_data, int mpi_rank, int mpi_size) {
+void ParallelHypercubeMerge(std::vector<int> &merged_data, int mpi_rank, int mpi_size) {
   int step = 1;
   while (step < mpi_size) {
     int partner = mpi_rank ^ step;
@@ -150,7 +158,7 @@ void ParallelHypercubeMerge(std::vector<int>& merged_data, int mpi_rank, int mpi
   }
 }
 
-void BcastSortedVector(std::vector<int>& data, int mpi_rank) {
+void BcastSortedVector(std::vector<int> &data, int mpi_rank) {
   size_t n = data.size();
   MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
   if (mpi_rank != 0) {
@@ -161,24 +169,21 @@ void BcastSortedVector(std::vector<int>& data, int mpi_rank) {
   }
 }
 
-void ComputeChunkParams(size_t total_size, int mpi_size,
-                        std::vector<size_t>& chunk_sizes,
-                        std::vector<size_t>& offsets) {
+void ComputeChunkParams(size_t total_size, int mpi_size, std::vector<size_t> &chunk_sizes,
+                        std::vector<size_t> &offsets) {
   chunk_sizes.assign(mpi_size, 0);
   offsets.assign(mpi_size, 0);
   size_t base = total_size / static_cast<size_t>(mpi_size);
   size_t remainder = total_size % static_cast<size_t>(mpi_size);
   for (int i = 0; i < mpi_size; ++i) {
     chunk_sizes[static_cast<size_t>(i)] = base + (static_cast<size_t>(i) < remainder ? 1U : 0U);
-    offsets[static_cast<size_t>(i)] = (i == 0) ? 0 : offsets[static_cast<size_t>(i - 1)] + chunk_sizes[static_cast<size_t>(i - 1)];
+    offsets[static_cast<size_t>(i)] =
+        (i == 0) ? 0 : offsets[static_cast<size_t>(i - 1)] + chunk_sizes[static_cast<size_t>(i - 1)];
   }
 }
 
-void ScatterData(const std::vector<int>& global_data,
-                 std::vector<int>& local_data,
-                 const std::vector<size_t>& chunk_sizes,
-                 const std::vector<size_t>& offsets,
-                 int mpi_rank) {
+void ScatterData(const std::vector<int> &global_data, std::vector<int> &local_data,
+                 const std::vector<size_t> &chunk_sizes, const std::vector<size_t> &offsets, int mpi_rank) {
   int mpi_size = static_cast<int>(chunk_sizes.size());
   std::vector<int> send_counts(mpi_size);
   std::vector<int> send_displs(mpi_size);
@@ -186,15 +191,14 @@ void ScatterData(const std::vector<int>& global_data,
     send_counts[i] = static_cast<int>(chunk_sizes[static_cast<size_t>(i)]);
     send_displs[i] = static_cast<int>(offsets[static_cast<size_t>(i)]);
   }
-  MPI_Scatterv(global_data.data(), send_counts.data(), send_displs.data(), MPI_INT,
-               local_data.data(), static_cast<int>(local_data.size()), MPI_INT,
-               0, MPI_COMM_WORLD);
+  MPI_Scatterv(global_data.data(), send_counts.data(), send_displs.data(), MPI_INT, local_data.data(),
+               static_cast<int>(local_data.size()), MPI_INT, 0, MPI_COMM_WORLD);
 }
 
 }  // namespace
 
 // ========== Реализация класса ShkrylevaSShellMergeALL ==========
-ShkrylevaSShellMergeALL::ShkrylevaSShellMergeALL(const InType& in) {
+ShkrylevaSShellMergeALL::ShkrylevaSShellMergeALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = in;
@@ -214,7 +218,7 @@ bool ShkrylevaSShellMergeALL::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
-  std::vector<int>& data = GetOutput();
+  std::vector<int> &data = GetOutput();
   const size_t total_size = data.size();
   if (total_size <= 1) {
     return true;

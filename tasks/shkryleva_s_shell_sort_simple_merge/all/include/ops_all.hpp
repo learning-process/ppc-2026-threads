@@ -10,7 +10,7 @@ class ShkrylevaSShellMergeALL : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kALL;
   }
-  explicit ShkrylevaSShellMergeALL(const InType& in);
+  explicit ShkrylevaSShellMergeALL(const InType &in);
 
  private:
   bool ValidationImpl() override;
