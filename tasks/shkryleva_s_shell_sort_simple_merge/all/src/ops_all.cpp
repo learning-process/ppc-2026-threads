@@ -4,7 +4,9 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <ranges>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "shkryleva_s_shell_sort_simple_merge/common/include/common.hpp"
@@ -18,7 +20,7 @@ void ShellSort(int left, int right, std::vector<int> &arr) {
   int sub_array_size = right - left + 1;
   int gap = 1;
   while (gap <= sub_array_size / 3) {
-    gap = gap * 3 + 1;
+    gap = (gap * 3) + 1;
   }
   for (; gap > 0; gap /= 3) {
     for (int i = left + gap; i <= right; ++i) {
@@ -116,7 +118,8 @@ void SortVectorParallel(std::vector<int> &arr) {
 std::vector<int> MergeTwoSorted(const std::vector<int> &left, const std::vector<int> &right) {
   std::vector<int> result;
   result.reserve(left.size() + right.size());
-  size_t i = 0, j = 0;
+  size_t i = 0;
+  size_t j = 0;
   while (i < left.size() && j < right.size()) {
     if (left[i] <= right[j]) {
       result.push_back(left[i++]);
@@ -175,7 +178,7 @@ void ComputeChunkParams(size_t total_size, int mpi_size, std::vector<size_t> &ch
   size_t base = total_size / static_cast<size_t>(mpi_size);
   size_t remainder = total_size % static_cast<size_t>(mpi_size);
   for (int i = 0; i < mpi_size; ++i) {
-    chunk_sizes[static_cast<size_t>(i)] = base + (static_cast<size_t>(i) < remainder ? 1U : 0U);
+    chunk_sizes[static_cast<size_t>(i)] = base + (static_cast<size_t>(i) < static_cast<size_t>(remainder) ? 1U : 0U);
     offsets[static_cast<size_t>(i)] =
         (i == 0) ? 0 : offsets[static_cast<size_t>(i - 1)] + chunk_sizes[static_cast<size_t>(i - 1)];
   }
@@ -213,7 +216,9 @@ bool ShkrylevaSShellMergeALL::PreProcessingImpl() {
 }
 
 bool ShkrylevaSShellMergeALL::RunImpl() {
-  int mpi_rank = 0, mpi_size = 1;
+  int mpi_rank = 0;
+  int mpi_size = 1;
+
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
@@ -223,22 +228,20 @@ bool ShkrylevaSShellMergeALL::RunImpl() {
     return true;
   }
 
-  // Разбиение данных на чанки для каждого MPI-процесса
-  std::vector<size_t> chunk_sizes, offsets;
+  std::vector<size_t> chunk_sizes;
+  std::vector<size_t> offsets;
   ComputeChunkParams(total_size, mpi_size, chunk_sizes, offsets);
 
   std::vector<int> local_data(chunk_sizes[static_cast<size_t>(mpi_rank)]);
   ScatterData(data, local_data, chunk_sizes, offsets);
 
-  // Локальная параллельная сортировка (STL-версия)
   SortVectorParallel(local_data);
 
   if (mpi_size == 1) {
     data = std::move(local_data);
-    return std::is_sorted(data.begin(), data.end());
+    return std::ranges::is_sorted(data);
   }
 
-  // Гиперкуб-слияние между процессами
   std::vector<int> merged_data = std::move(local_data);
   ParallelHypercubeMerge(merged_data, mpi_rank, mpi_size);
 
@@ -248,11 +251,10 @@ bool ShkrylevaSShellMergeALL::RunImpl() {
     data.clear();
   }
 
-  // Широковещательная рассылка результата всем процессам
   BcastSortedVector(data, mpi_rank);
 
   MPI_Barrier(MPI_COMM_WORLD);
-  return std::is_sorted(data.begin(), data.end());
+  return std::ranges::is_sorted(data);
 }
 
 bool ShkrylevaSShellMergeALL::PostProcessingImpl() {
