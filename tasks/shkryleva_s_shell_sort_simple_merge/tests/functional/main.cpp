@@ -3,6 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <string>
+#include <tuple>
 
 #include "shkryleva_s_shell_sort_simple_merge/all/include/ops_all.hpp"
 #include "shkryleva_s_shell_sort_simple_merge/common/include/common.hpp"
@@ -69,17 +70,18 @@ const std::array<TestType, 8> kTestParam = {
     TestType{InType{1, -2, 3, -5}, OutType{-5, -2, 1, 3}},
     TestType{InType{1, 22, 13, 51, 2, 1, 2, 2, 34, 41}, OutType{1, 1, 2, 2, 2, 13, 22, 34, 41, 51}}};
 
-// Правильный способ собрать все реализации в список (через фигурные скобки)
-const auto kTestTasksList = {ppc::util::AddFuncTask<ShkrylevaSShellMergeSEQ, InType>(
-                                 kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge),
-                             ppc::util::AddFuncTask<ShkrylevaSShellMergeOMP, InType>(
-                                 kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge),
-                             ppc::util::AddFuncTask<ShkrylevaSShellMergeSTL, InType>(
-                                 kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge),
-                             ppc::util::AddFuncTask<ShkrylevaSShellMergeTBB, InType>(
-                                 kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge),
-                             ppc::util::AddFuncTask<ShkrylevaSShellMergeALL, InType>(
-                                 kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge)};
+// ... остальные включения и код ...
+
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ShkrylevaSShellMergeSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge),
+                                           ppc::util::AddFuncTask<ShkrylevaSShellMergeOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge),
+                                           ppc::util::AddFuncTask<ShkrylevaSShellMergeSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge),
+                                           ppc::util::AddFuncTask<ShkrylevaSShellMergeTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge),
+                                           ppc::util::AddFuncTask<ShkrylevaSShellMergeALL, InType>(
+                                               kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = ShkrylevaSShellMergeFuncTests::PrintFuncTestName<ShkrylevaSShellMergeFuncTests>;
