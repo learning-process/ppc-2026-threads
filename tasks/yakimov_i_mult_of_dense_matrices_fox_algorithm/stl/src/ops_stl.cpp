@@ -1,7 +1,6 @@
 #include "yakimov_i_mult_of_dense_matrices_fox_algorithm/stl/include/ops_stl.hpp"
 
 #include <algorithm>
-#include <atomic>
 #include <cstddef>
 #include <fstream>
 #include <string>
@@ -110,7 +109,7 @@ void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &r
   result.data.assign(static_cast<std::size_t>(n) * n, 0.0);
 
   unsigned int hardware_threads = std::thread::hardware_concurrency();
-  unsigned int num_threads = (hardware_threads == 0) ? 2u : hardware_threads;
+  unsigned int num_threads = (hardware_threads == 0U) ? 2U : hardware_threads;
   num_threads = std::min(static_cast<unsigned int>(num_blocks), num_threads);
 
   std::vector<std::thread> threads;
@@ -120,8 +119,11 @@ void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &r
   int remaining_stages = num_blocks % static_cast<int>(num_threads);
 
   int stage_start = 0;
-  for (unsigned int t = 0; t < num_threads; ++t) {
-    int stages_for_this_thread = stages_per_thread + (static_cast<int>(t) < remaining_stages ? 1 : 0);
+  for (unsigned int thread_index = 0U; thread_index < num_threads; ++thread_index) {
+    int stages_for_this_thread = stages_per_thread;
+    if (static_cast<int>(thread_index) < remaining_stages) {
+      stages_for_this_thread = stages_for_this_thread + 1;
+    }
     if (stages_for_this_thread == 0) {
       continue;
     }
@@ -137,9 +139,9 @@ void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &r
     stage_start = stage_end;
   }
 
-  for (std::thread &t : threads) {
-    if (t.joinable()) {
-      t.join();
+  for (std::thread &thread : threads) {
+    if (thread.joinable()) {
+      thread.join();
     }
   }
 }

@@ -87,7 +87,7 @@ void SimpleMultiplyOMP(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &
   result.data.assign(static_cast<std::size_t>(result.rows) * result.cols, 0.0);
 
 #ifdef _OPENMP
-  #pragma omp parallel for collapse(2) schedule(static) default(none) shared(a, b, result)
+#  pragma omp parallel for collapse(2) schedule(static) default(none) shared(a, b, result)
 #endif
   for (int i = 0; i < a.rows; ++i) {
     for (int j = 0; j < b.cols; ++j) {
@@ -116,8 +116,8 @@ void SimpleMultiplyTBB(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &
   });
 }
 
-void MultiplyBlockUnrolled(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int row_start, int col_start,
-                           int block_size, int a_row_offset, int b_col_offset) {
+void MultiplyBlockUnrolled(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int row_start,
+                           int col_start, int block_size, int a_row_offset, int b_col_offset) {
   int block_size_aligned = (block_size / kUnrollFactor) * kUnrollFactor;
 
   for (int i = 0; i < block_size; ++i) {
@@ -144,7 +144,8 @@ void MultiplyBlockUnrolled(const DenseMatrix &a, const DenseMatrix &b, DenseMatr
 void ProcessStageOMP(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int stage, int num_blocks,
                      int block_size) {
 #ifdef _OPENMP
-  #pragma omp parallel for collapse(2) schedule(dynamic) default(none) shared(a, b, result, stage, num_blocks, block_size)
+#  pragma omp parallel for collapse(2) schedule(dynamic) default(none) \
+      shared(a, b, result, stage, num_blocks, block_size)
 #endif
   for (int i = 0; i < num_blocks; ++i) {
     for (int j = 0; j < num_blocks; ++j) {
@@ -166,30 +167,70 @@ void ProcessStageTBB(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &re
   }
 }
 
-void FoxAlgorithmAdaptive(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int block_size) {
-  if (a.rows != a.cols || b.rows != b.cols || a.rows != b.rows) {
-    int n = a.rows;
+void HandleNonSquareMatrices(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result) {
+  int n = a.rows;
 
-    if (n <= kSmallMatrixThreshold) {
-      SimpleMultiplySeq(a, b, result);
-    } else if (n <= kMediumMatrixThreshold) {
-      SimpleMultiplyOMP(a, b, result);
-    } else {
-      SimpleMultiplyTBB(a, b, result);
+  if (n <= kSmallMatrixThreshold) {
+    SimpleMultiplySeq(a, b, result);
+  } else if (n <= kMediumMatrixThreshold) {
+    SimpleMultiplyOMP(a, b, result);
+  } else {
+    SimpleMultiplyTBB(a, b, result);
+  }
+}
+
+void HandleSmallNumBlocks(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int num_blocks,
+                          int block_size) {
+  for (int stage = 0; stage < num_blocks; ++stage) {
+    ProcessStageOMP(a, b, result, stage, num_blocks, block_size);
+  }
+}
+
+void HandleMediumNumBlocks(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int num_blocks,
+                           int block_size) {
+  tbb::parallel_for(0, num_blocks, [&](int stage) { ProcessStageOMP(a, b, result, stage, num_blocks, block_size); });
+}
+
+void HandleLargeNumBlocks(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int num_blocks,
+                          int block_size) {
+  unsigned int hardware_threads = std::thread::hardware_concurrency();
+  int num_tasks = static_cast<int>(hardware_threads);
+  num_tasks = std::max(2, std::min(num_tasks, num_blocks));
+  int stages_per_task = num_blocks / num_tasks;
+  int remaining_stages = num_blocks % num_tasks;
+
+  tbb::task_group task_group;
+
+  int stage_start = 0;
+  for (int task_index = 0; task_index < num_tasks; ++task_index) {
+    int stages_for_this_task = stages_per_task;
+    if (task_index < remaining_stages) {
+      stages_for_this_task = stages_for_this_task + 1;
     }
-    return;
+    if (stages_for_this_task == 0) {
+      continue;
+    }
+
+    int stage_end = stage_start + stages_for_this_task;
+
+    task_group.run([&a, &b, &result, stage_start, stage_end, num_blocks, block_size]() {
+      for (int stage = stage_start; stage < stage_end; ++stage) {
+        ProcessStageTBB(a, b, result, stage, num_blocks, block_size);
+      }
+    });
+
+    stage_start = stage_end;
   }
 
-  if (a.rows % block_size != 0) {
-    int n = a.rows;
+  task_group.wait();
+}
 
-    if (n <= kSmallMatrixThreshold) {
-      SimpleMultiplySeq(a, b, result);
-    } else if (n <= kMediumMatrixThreshold) {
-      SimpleMultiplyOMP(a, b, result);
-    } else {
-      SimpleMultiplyTBB(a, b, result);
-    }
+void FoxAlgorithmAdaptive(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int block_size) {
+  bool is_not_square = (a.rows != a.cols) || (b.rows != b.cols) || (a.rows != b.rows);
+  bool is_not_divisible = (a.rows % block_size != 0);
+
+  if (is_not_square || is_not_divisible) {
+    HandleNonSquareMatrices(a, b, result);
     return;
   }
 
@@ -200,40 +241,11 @@ void FoxAlgorithmAdaptive(const DenseMatrix &a, const DenseMatrix &b, DenseMatri
   result.data.assign(static_cast<std::size_t>(n) * n, 0.0);
 
   if (num_blocks <= 8) {
-    for (int stage = 0; stage < num_blocks; ++stage) {
-      ProcessStageOMP(a, b, result, stage, num_blocks, block_size);
-    }
+    HandleSmallNumBlocks(a, b, result, num_blocks, block_size);
   } else if (num_blocks <= 32) {
-    tbb::parallel_for(0, num_blocks, [&](int stage) {
-      ProcessStageOMP(a, b, result, stage, num_blocks, block_size);
-    });
+    HandleMediumNumBlocks(a, b, result, num_blocks, block_size);
   } else {
-    int num_tasks = std::thread::hardware_concurrency();
-    num_tasks = std::max(2, std::min(num_tasks, num_blocks));
-    int stages_per_task = num_blocks / num_tasks;
-    int remaining_stages = num_blocks % num_tasks;
-
-    tbb::task_group task_group;
-
-    int stage_start = 0;
-    for (int t = 0; t < num_tasks; ++t) {
-      int stages_for_this_task = stages_per_task + (t < remaining_stages ? 1 : 0);
-      if (stages_for_this_task == 0) {
-        continue;
-      }
-
-      int stage_end = stage_start + stages_for_this_task;
-
-      task_group.run([&a, &b, &result, stage_start, stage_end, num_blocks, block_size]() {
-        for (int stage = stage_start; stage < stage_end; ++stage) {
-          ProcessStageTBB(a, b, result, stage, num_blocks, block_size);
-        }
-      });
-
-      stage_start = stage_end;
-    }
-
-    task_group.wait();
+    HandleLargeNumBlocks(a, b, result, num_blocks, block_size);
   }
 }
 
@@ -298,10 +310,10 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmAll::PostProcessingImpl() {
   double sum = 0.0;
 
 #ifdef _OPENMP
-  #pragma omp parallel for reduction(+:sum) default(none) shared(result_matrix_)
+#  pragma omp parallel for reduction(+ : sum) default(none) shared(result_matrix_)
 #endif
-  for (std::size_t idx = 0; idx < this->result_matrix_.data.size(); ++idx) {
-    sum += this->result_matrix_.data[idx];
+  for (double value : this->result_matrix_.data) {
+    sum += value;
   }
 
   this->GetOutput() = sum;
