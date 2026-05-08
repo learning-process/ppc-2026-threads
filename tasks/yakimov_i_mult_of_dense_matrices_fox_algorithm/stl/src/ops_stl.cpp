@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "util/include/util.hpp"
@@ -121,7 +122,7 @@ void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &r
   int stage_start = 0;
   for (unsigned int thread_index = 0U; thread_index < num_threads; ++thread_index) {
     int stages_for_this_thread = stages_per_thread;
-    if (thread_index < static_cast<unsigned int>(remaining_stages)) {
+    if (std::cmp_less(thread_index, remaining_stages)) {
       stages_for_this_thread = stages_for_this_thread + 1;
     }
     if (stages_for_this_thread == 0) {
