@@ -7,6 +7,7 @@
 
 #include "shkryleva_s_shell_sort_simple_merge/common/include/common.hpp"
 #include "shkryleva_s_shell_sort_simple_merge/seq/include/ops_seq.hpp"
+#include "shkryleva_s_shell_sort_simple_merge/all/include/ops_all.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace shkryleva_s_shell_sort_simple_merge {
@@ -59,8 +60,12 @@ TEST_P(ShkrylevaSShellMergePerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ShkrylevaSShellMergeSEQ>(PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
+const auto kTestTasksList = 
+    ppc::util::AddFuncTask<ShkrylevaSShellMergeSEQ, InType>(kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge),
+    ppc::util::AddFuncTask<ShkrylevaSShellMergeOMP, InType>(kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge),
+    ppc::util::AddFuncTask<ShkrylevaSShellMergeTBB, InType>(kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge),
+    ppc::util::AddFuncTask<ShkrylevaSShellMergeSTL, InType>(kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge),
+    ppc::util::AddFuncTask<ShkrylevaSShellMergeALL, InType>(kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
