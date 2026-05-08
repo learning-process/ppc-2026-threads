@@ -1,13 +1,11 @@
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/stl/include/ops_stl.hpp"
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <execution>
-#include <future>
 #include <limits>
 #include <numeric>
 #include <thread>
@@ -31,192 +29,129 @@ bool GonozovLBitSortBatcherMergeSTL::PreProcessingImpl() {
 }
 
 namespace {
-/// double -> uint64_t
-uint64_t DoubleToSortableInt(double d) {
-  uint64_t bits = 0;
-  std::memcpy(&bits, &d, sizeof(double));
-  if ((bits >> 63) != 0) {  // Отрицательное число
-    return ~bits;           // Инвертируем все биты
-  }  // Положительное число или ноль
-  return bits | 0x8000000000000000ULL;
+
+constexpr size_t kRadix = 256;
+constexpr size_t kCutoff = 1 << 18;
+
+inline uint64_t ToKey(double d) {
+  uint64_t x;
+  std::memcpy(&x, &d, sizeof(double));
+  return (x & (1ULL << 63)) ? ~x : (x | 0x8000000000000000ULL);
 }
 
-// uint64_t -> double
-double SortableIntToDouble(uint64_t bits) {
-  if ((bits >> 63) != 0) {           // Если старший бит установлен (было положительное)
-    bits &= ~0x8000000000000000ULL;  // Убираем старший бит
-  } else {                           // Если старший бит не установлен (было отрицательное число)
-    bits = ~bits;                    // Инвертируем все биты обратно
+inline double ToDouble(uint64_t x) {
+  x = (x & (1ULL << 63)) ? (x & ~0x8000000000000000ULL) : ~x;
+  double d;
+  std::memcpy(&d, &x, sizeof(double));
+  return d;
+}
+
+size_t NextPow2(size_t n) {
+  size_t p = 1;
+  while (p < n) {
+    p <<= 1;
   }
-
-  double result = 0.0;
-  std::memcpy(&result, &bits, sizeof(double));
-  return result;
+  return p;
 }
 
-void RadixSortDouble(std::vector<double> &data, size_t begin, size_t end) {
-  if (end <= begin + 1) {
+thread_local std::vector<uint64_t> tl_a;
+thread_local std::vector<uint64_t> tl_b;
+
+void Radix(std::vector<double> &a, size_t l, size_t r) {
+  size_t n = r - l;
+  if (n <= 1) {
     return;
   }
 
-  size_t size = end - begin;
+  tl_a.resize(n);
+  tl_b.resize(n);
 
-  std::vector<uint64_t> keys(size);
-
-  for (size_t i = 0; i < size; ++i) {
-    keys[i] = DoubleToSortableInt(data[begin + i]);
+  for (size_t i = 0; i < n; ++i) {
+    tl_a[i] = ToKey(a[l + i]);
   }
 
-  constexpr int kRadix = 256;
+  for (int p = 0; p < 8; ++p) {
+    size_t cnt[kRadix] = {};
+    int shift = p * 8;
 
-  std::vector<uint64_t> temp_keys(size);
-
-  for (int pass = 0; pass < 8; ++pass) {
-    std::array<size_t, kRadix> count{};
-
-    int shift = pass * 8;
-
-    for (uint64_t key : keys) {
-      count.at((key >> shift) & 0xFF)++;
+    for (size_t i = 0; i < n; ++i) {
+      cnt[(tl_a[i] >> shift) & 0xFF]++;
     }
 
-    for (int i = 1; i < kRadix; ++i) {
-      count.at(i) += count.at(i - 1);
+    for (size_t i = 1; i < kRadix; ++i) {
+      cnt[i] += cnt[i - 1];
     }
 
-    for (int i = static_cast<int>(size) - 1; i >= 0; --i) {
-      uint8_t byte = (keys[i] >> shift) & 0xFF;
-      temp_keys[--count.at(byte)] = keys[i];
+    for (int i = (int)n - 1; i >= 0; --i) {
+      uint8_t b = (tl_a[i] >> shift) & 0xFF;
+      tl_b[--cnt[b]] = tl_a[i];
     }
 
-    keys.swap(temp_keys);
+    tl_a.swap(tl_b);
   }
 
-  for (size_t i = 0; i < size; ++i) {
-    data[begin + i] = SortableIntToDouble(keys[i]);
+  for (size_t i = 0; i < n; ++i) {
+    a[l + i] = ToDouble(tl_a[i]);
   }
 }
 
-void MergingHalves(std::vector<double> &arr, size_t i, size_t len) {  // слияние половинок
+inline void Merge(std::vector<double> &a, size_t i, size_t len) {
   size_t half = len / 2;
-  size_t end = std::min(i + len, arr.size());
+  size_t end = std::min(i + len, a.size());
 
-  for (size_t step = half; step > 0; step /= 2) {
-    for (size_t j = i; j + step < end; ++j) {
-      if (arr[j] > arr[j + step]) {
-        std::swap(arr[j], arr[j + step]);
+  for (size_t s = half; s > 0; s >>= 1) {
+    for (size_t j = i; j + s < end; ++j) {
+      if (a[j] > a[j + s]) {
+        std::swap(a[j], a[j + s]);
       }
     }
   }
 }
 
-// void BatcherOddEvenMergeIterative(std::vector<double> &arr, size_t n) {
-//   if (n <= 1) {
-//     return;
-//   }
-//   n = std::min(n, arr.size());
-//   // Сначала сливаем блоки размером 1, потом 2, потом 4 и т.д.
-//   for (size_t len = 2; len <= n; len *= 2) {
-//     for (size_t i = 0; i < n; i += len) {
-//       MergingHalves(arr, i, len);
-//     }
-//   }
-// }
-// void BatcherOddEvenMergeIterative(std::vector<double>& arr, size_t n) {
-//   if (n <= 1) {
-//     return;
-//   }
-
-//   n = std::min(n, arr.size());
-
-//   // Слияние блоков: 2,4,8,16...
-//   for (size_t len = 2; len <= n; len *= 2) {
-
-//     // Индексы независимых блоков
-//     std::vector<size_t> blocks;
-//     blocks.reserve((n + len - 1) / len);
-
-//     for (size_t i = 0; i < n; i += len) {
-//       blocks.push_back(i);
-//     }
-
-//     // Параллельное выполнение merge блоков
-//     std::for_each(std::execution::par,
-//                   blocks.begin(),
-//                   blocks.end(),
-//                   [&](size_t i) {
-//                     MergingHalves(arr, i, len);
-//                   });
-//   }
-// }
-
-// Нахождение ближайшей степени двойки, большей или равной n
-size_t NextPowerOfTwo(size_t n) {
-  size_t power = 1;
-  while (power < n) {
-    power <<= 1;
+void Batcher(std::vector<double> &a, size_t n) {
+  for (size_t len = 2; len <= n; len <<= 1) {
+    for (size_t i = 0; i < n; i += len) {
+      Merge(a, i, len);
+    }
   }
-  return power;
 }
 
-void HybridSortDouble(std::vector<double> &data) {
-  if (data.size() <= 1) {
+void HybridSortDouble(std::vector<double> &a) {
+  if (a.size() <= 1) {
     return;
   }
 
-  size_t original_size = data.size();
+  size_t n0 = a.size();
+  size_t n = NextPow2(n0);
 
-  size_t new_size = NextPowerOfTwo(original_size);
+  a.resize(n, std::numeric_limits<double>::infinity());
 
-  data.resize(new_size, std::numeric_limits<double>::infinity());
-
-  size_t threads = std::thread::hardware_concurrency();
-
-  size_t block_size = (new_size + threads - 1) / threads;
-
-  // PARALLEL RADIX SORT
-
-  std::vector<std::future<void>> futures;
-
-  futures.reserve(threads);
-
-  for (size_t kt = 0; kt < threads; ++kt) {
-    futures.push_back(std::async(std::launch::async, [&, kt]() {
-      size_t begin = kt * block_size;
-
-      size_t end = std::min(begin + block_size, new_size);
-
-      if (begin < end) {
-        RadixSortDouble(data, begin, end);
-      }
-    }));
+  unsigned hw = std::thread::hardware_concurrency();
+  if (hw == 0) {
+    hw = 4;
   }
 
-  for (auto &f : futures) {
-    f.get();
+  size_t chunk = std::max(n / hw, kCutoff);
+
+  std::vector<std::thread> threads;
+
+  for (size_t t = 0; t < hw; ++t) {
+    size_t l = t * chunk;
+    if (l >= n) {
+      break;
+    }
+
+    size_t r = std::min(l + chunk, n);
+
+    threads.emplace_back([&, l, r] { Radix(a, l, r); });
   }
 
-  // PARALLEL BATCHER MERGE
-
-  for (size_t merge_size = block_size; merge_size < new_size; merge_size *= 2) {
-    size_t blocks_count = (new_size + merge_size * 2 - 1) / (merge_size * 2);
-
-    std::vector<size_t> indices(blocks_count);
-
-    std::ranges::iota(indices, 0);
-
-    std::for_each(std::execution::par, indices.begin(), indices.end(), [&](size_t block_id) {
-      size_t begin = block_id * merge_size * 2;
-
-      size_t len = std::min(merge_size * 2, new_size - begin);
-
-      if (begin < new_size) {
-        MergingHalves(data, begin, len);
-      }
-    });
+  for (auto &th : threads) {
+    th.join();
   }
 
-  data.resize(original_size);
+  Batcher(a, n);
+  a.resize(n0);
 }
 
 }  // namespace
