@@ -37,7 +37,7 @@ class RozenbergARunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType,
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (ppc::util::GetMPIRank() != 0) {
+    if (ppc::util::IsUnderMpirun() && ppc::util::GetMPIRank() != 0) {
       return true;
     }
     return (output_data_ == output_data);
