@@ -228,7 +228,7 @@ bool ShkrylevaSShellMergeALL::RunImpl() {
   ComputeChunkParams(total_size, mpi_size, chunk_sizes, offsets);
 
   std::vector<int> local_data(chunk_sizes[static_cast<size_t>(mpi_rank)]);
-  ScatterData(data, local_data, chunk_sizes, offsets, mpi_rank);
+  ScatterData(data, local_data, chunk_sizes, offsets);
 
   // Локальная параллельная сортировка (STL-версия)
   SortVectorParallel(local_data);
