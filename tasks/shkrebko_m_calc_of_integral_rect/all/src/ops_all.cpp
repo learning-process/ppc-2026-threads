@@ -109,7 +109,7 @@ bool ShkrebkoMCalcOfIntegralRectALL::RunImpl() {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
   }
 
-  std::size_t dims = (rank == 0) ? local_input_.limits.size() : 0;
+  std::size_t dims = local_input_.limits.size();
   BroadcastInputData(rank, dims);
 
   if (!local_input_.func) {
