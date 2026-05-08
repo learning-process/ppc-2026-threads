@@ -11,6 +11,8 @@
 #include "frolova_s_radix_sort_double/common/include/common.hpp"
 #include "frolova_s_radix_sort_double/omp/include/ops_omp.hpp"
 #include "frolova_s_radix_sort_double/seq/include/ops_seq.hpp"
+#include "frolova_s_radix_sort_double/stl/include/ops_stl.hpp"
+#include "frolova_s_radix_sort_double/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -70,7 +72,9 @@ const std::array<TestType, 10> kTestParam = {"test1", "test2", "test3", "test4",
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<FrolovaSRadixSortDoubleSEQ, InType>(kTestParam, PPC_SETTINGS_frolova_s_radix_sort_double),
-    ppc::util::AddFuncTask<FrolovaSRadixSortDoubleOMP, InType>(kTestParam, PPC_SETTINGS_frolova_s_radix_sort_double));
+    ppc::util::AddFuncTask<FrolovaSRadixSortDoubleOMP, InType>(kTestParam, PPC_SETTINGS_frolova_s_radix_sort_double),
+    ppc::util::AddFuncTask<FrolovaSRadixSortDoubleTBB, InType>(kTestParam, PPC_SETTINGS_frolova_s_radix_sort_double),
+    ppc::util::AddFuncTask<FrolovaSRadixSortDoubleSTL, InType>(kTestParam, PPC_SETTINGS_frolova_s_radix_sort_double));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
