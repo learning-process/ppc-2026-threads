@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <stack>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -38,7 +39,7 @@ bool KrasnopevtsevaVHoareBatcherSortTBB::RunImpl() {
     return true;
   }
 
-  int numthreads = std::thread::hardware_concurrency();
+  int numthreads = static_cast<int>(std::thread::hardware_concurrency());
   static tbb::global_control control(tbb::global_control::max_allowed_parallelism, numthreads);
 
   std::vector<int> res = input;
