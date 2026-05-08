@@ -33,7 +33,7 @@ constexpr size_t kRadix = 256;
 constexpr size_t kCutoff = 1 << 18;
 
 /// double -> uint64_t
-uint64_t toKey(double d) {
+uint64_t ToKey(double d) {
   uint64_t bits = 0;
   std::memcpy(&bits, &d, sizeof(double));
   if ((bits >> 63) != 0) {  // Отрицательное число
@@ -43,7 +43,7 @@ uint64_t toKey(double d) {
 }
 
 // uint64_t -> double
-double toDouble(uint64_t bits) {
+double ToDouble(uint64_t bits) {
   if ((bits >> 63) != 0) {           // Если старший бит установлен (было положительное)
     bits &= ~0x8000000000000000ULL;  // Убираем старший бит
   } else {                           // Если старший бит не установлен (было отрицательное число)
@@ -76,7 +76,7 @@ void Radix(std::vector<double> &a, size_t l, size_t r) {
   tl_b.resize(n);
 
   for (size_t i = 0; i < n; ++i) {
-    tl_a[i] = toKey(a[l + i]);
+    tl_a[i] = ToKey(a[l + i]);
   }
 
   for (int kp = 0; kp < 8; ++kp) {
@@ -100,7 +100,7 @@ void Radix(std::vector<double> &a, size_t l, size_t r) {
   }
 
   for (size_t i = 0; i < n; ++i) {
-    a[l + i] = toDouble(tl_a[i]);
+    a[l + i] = ToDouble(tl_a[i]);
   }
 }
 
