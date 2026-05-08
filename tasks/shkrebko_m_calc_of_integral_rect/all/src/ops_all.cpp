@@ -48,8 +48,17 @@ bool ShkrebkoMCalcOfIntegralRectALL::ValidationImpl() {
 }
 
 bool ShkrebkoMCalcOfIntegralRectALL::PreProcessingImpl() {
-  local_input_ = GetInput();
   res_ = 0.0;
+
+  int rank = 0;
+  if (ppc::util::IsUnderMpirun()) {
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  }
+
+  if (rank == 0) {
+    local_input_ = GetInput();
+  }
+
   return true;
 }
 
@@ -83,6 +92,8 @@ void ShkrebkoMCalcOfIntegralRectALL::BroadcastInputData(int rank, std::size_t &d
       local_input_.limits[i].first = flat_limits[2 * i];
       local_input_.limits[i].second = flat_limits[(2 * i) + 1];
     }
+
+    local_input_.func = saved_func_;
   }
 }
 
@@ -109,7 +120,7 @@ bool ShkrebkoMCalcOfIntegralRectALL::RunImpl() {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
   }
 
-  std::size_t dims = local_input_.limits.size();
+  std::size_t dims = (rank == 0) ? local_input_.limits.size() : 0;
   BroadcastInputData(rank, dims);
 
   if (!local_input_.func) {

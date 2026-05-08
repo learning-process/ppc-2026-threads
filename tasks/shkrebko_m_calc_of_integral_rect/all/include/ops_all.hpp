@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <vector>
 
 #include "shkrebko_m_calc_of_integral_rect/common/include/common.hpp"
@@ -14,7 +15,12 @@ class ShkrebkoMCalcOfIntegralRectALL : public BaseTask {
     return ppc::task::TypeOfTask::kALL;
   }
 
-  explicit ShkrebkoMCalcOfIntegralRectALL(const InType &in);
+  explicit ShkrebkoMCalcOfIntegralRectALL(const InType &in) {
+    SetTypeOfTask(GetStaticTypeOfTask());
+    GetInput() = in;
+    GetOutput() = 0.0;
+    saved_func_ = in.func;
+  }
 
  protected:
   bool ValidationImpl() override;
@@ -28,6 +34,8 @@ class ShkrebkoMCalcOfIntegralRectALL : public BaseTask {
 
   InType local_input_;
   double res_ = 0.0;
+
+  std::function<double(const std::vector<double> &)> saved_func_;
 };
 
 }  // namespace shkrebko_m_calc_of_integral_rect
