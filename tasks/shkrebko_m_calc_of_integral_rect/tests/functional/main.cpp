@@ -10,12 +10,12 @@
 #include <utility>
 #include <vector>
 
+#include "shkrebko_m_calc_of_integral_rect/all/include/ops_all.hpp"
 #include "shkrebko_m_calc_of_integral_rect/common/include/common.hpp"
 #include "shkrebko_m_calc_of_integral_rect/omp/include/ops_omp.hpp"
 #include "shkrebko_m_calc_of_integral_rect/seq/include/ops_seq.hpp"
 #include "shkrebko_m_calc_of_integral_rect/stl/include/ops_stl.hpp"
 #include "shkrebko_m_calc_of_integral_rect/tbb/include/ops_tbb.hpp"
-#include "shkrebko_m_calc_of_integral_rect/all/include/ops_all.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 

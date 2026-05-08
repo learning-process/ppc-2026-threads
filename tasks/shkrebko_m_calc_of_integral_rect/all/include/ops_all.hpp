@@ -9,20 +9,20 @@
 namespace shkrebko_m_calc_of_integral_rect {
 
 class ShkrebkoMCalcOfIntegralRectALL : public BaseTask {
-public:
+ public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kALL;
   }
 
   explicit ShkrebkoMCalcOfIntegralRectALL(const InType &in);
 
-protected:
+ protected:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-private:
+ private:
   void BroadcastInputData();
   [[nodiscard]] std::size_t SelectSplitDimension() const;
   [[nodiscard]] double ComputeSliceSum(std::size_t fixed_dim, std::size_t fixed_idx,
@@ -35,4 +35,4 @@ private:
   bool use_mpi_ = false;
 };
 
-} // namespace shkrebko_m_calc_of_integral_rect
+}  // namespace shkrebko_m_calc_of_integral_rect

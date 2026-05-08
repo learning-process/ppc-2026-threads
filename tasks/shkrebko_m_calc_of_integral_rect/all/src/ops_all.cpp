@@ -219,4 +219,4 @@ bool ShkrebkoMCalcOfIntegralRectALL::PostProcessingImpl() {
   return true;
 }
 
-} // namespace shkrebko_m_calc_of_integral_rect
+}  // namespace shkrebko_m_calc_of_integral_rect
