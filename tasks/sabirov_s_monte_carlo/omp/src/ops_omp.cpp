@@ -1,4 +1,4 @@
-#include "sabirov_s_monte_carlo/omp/include/ops_seq.hpp"
+#include "sabirov_s_monte_carlo/omp/include/ops_omp.hpp"
 
 #include <cmath>
 #include <cstddef>
