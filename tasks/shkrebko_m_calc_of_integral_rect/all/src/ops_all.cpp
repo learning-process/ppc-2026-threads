@@ -85,7 +85,7 @@ void ShkrebkoMCalcOfIntegralRectALL::BroadcastInputData() {
 }
 
 void ShkrebkoMCalcOfIntegralRectALL::FlatIndexToPoint(std::size_t flat_idx, const std::vector<double> &h,
-                                                       std::vector<double> &point) const {
+                                                      std::vector<double> &point) const {
   const std::size_t dims = local_input_.limits.size();
   std::size_t remainder = flat_idx;
   for (int d = static_cast<int>(dims) - 1; d >= 0; --d) {
@@ -128,8 +128,7 @@ bool ShkrebkoMCalcOfIntegralRectALL::RunImpl() {
   if (my_count > 0) {
     omp_set_num_threads(ppc::util::GetNumThreads());
 
-#pragma omp parallel default(none) shared(my_start, my_count, h, limits, n_steps, func, dims) \
-    reduction(+ : rank_sum)
+#pragma omp parallel default(none) shared(my_start, my_count, h, limits, n_steps, func, dims) reduction(+ : rank_sum)
     {
       std::vector<double> point(dims);
 
