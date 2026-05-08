@@ -1,8 +1,5 @@
 #pragma once
 
-#include <cstddef>
-#include <vector>
-
 #include "shkrebko_m_calc_of_integral_rect/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -24,9 +21,7 @@ class ShkrebkoMCalcOfIntegralRectALL : public BaseTask {
 
  private:
   void BroadcastInputData();
-  [[nodiscard]] std::size_t SelectSplitDimension() const;
-  [[nodiscard]] double ComputeSliceSum(std::size_t fixed_dim, std::size_t fixed_idx,
-                                       const std::vector<double> &h) const;
+  void FlatIndexToPoint(std::size_t flat_idx, const std::vector<double> &h, std::vector<double> &point) const;
 
   InType local_input_;
   double res_ = 0.0;
