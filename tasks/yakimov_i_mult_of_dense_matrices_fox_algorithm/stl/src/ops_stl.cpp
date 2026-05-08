@@ -121,7 +121,7 @@ void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &r
   int stage_start = 0;
   for (unsigned int thread_index = 0U; thread_index < num_threads; ++thread_index) {
     int stages_for_this_thread = stages_per_thread;
-    if (static_cast<int>(thread_index) < remaining_stages) {
+    if (thread_index < static_cast<unsigned int>(remaining_stages)) {
       stages_for_this_thread = stages_for_this_thread + 1;
     }
     if (stages_for_this_thread == 0) {
