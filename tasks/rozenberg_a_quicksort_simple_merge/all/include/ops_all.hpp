@@ -23,7 +23,7 @@ class RozenbergAQuicksortSimpleMergeALL : public BaseTask {
   static std::pair<int, int> Partition(InType &data, int left, int right);
   static void PushSubarrays(std::stack<std::pair<int, int>> &stack, int left, int right, int i, int j);
   static void Quicksort(InType &data, int low, int high);
-  static std::vector<int> Merge(const std::vector<int> &v1, const std::vector<int> &v2);
+  static InType Merge(const InType &v1, const InType &v2);
 };
 
 }  // namespace rozenberg_a_quicksort_simple_merge

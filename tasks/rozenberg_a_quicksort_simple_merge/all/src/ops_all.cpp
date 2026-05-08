@@ -94,10 +94,11 @@ void RozenbergAQuicksortSimpleMergeALL::Quicksort(InType &data, int low, int hig
   }
 }
 
-std::vector<int> RozenbergAQuicksortSimpleMergeALL::Merge(const std::vector<int> &v1, const std::vector<int> &v2) {
-  std::vector<int> res;
+InType RozenbergAQuicksortSimpleMergeALL::Merge(const InType &v1, const InType &v2) {
+  InType res;
   res.reserve(v1.size() + v2.size());
-  auto it1 = v1.begin(), it2 = v2.begin();
+  auto it1 = v1.begin();
+  auto it2 = v2.begin();
   while (it1 != v1.end() && it2 != v2.end()) {
     if (*it1 <= *it2) {
       res.push_back(*it1++);
@@ -122,7 +123,8 @@ bool RozenbergAQuicksortSimpleMergeALL::RunImpl() {
   }
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<int> send_counts(size), displs(size, 0);
+  std::vector<int> send_counts(size);
+  std::vector<int> displs(size, 0);
   int chunk = n / size;
   int rem = n % size;
   for (int i = 0; i < size; i++) {
@@ -136,7 +138,7 @@ bool RozenbergAQuicksortSimpleMergeALL::RunImpl() {
   MPI_Scatterv(rank == 0 ? GetInput().data() : nullptr, send_counts.data(), displs.data(), MPI_INT, local_data.data(),
                send_counts[rank], MPI_INT, 0, MPI_COMM_WORLD);
 
-#pragma omp parallel
+#pragma omp parallel default(none) shared(local_data)
   {
 #pragma omp single
     Quicksort(local_data, 0, static_cast<int>(local_data.size()) - 1);
@@ -145,12 +147,12 @@ bool RozenbergAQuicksortSimpleMergeALL::RunImpl() {
   if (rank != 0) {
     MPI_Send(local_data.data(), static_cast<int>(local_data.size()), MPI_INT, 0, 0, MPI_COMM_WORLD);
   } else {
-    std::vector<int> total_data = local_data;
+    InType total_data = local_data;
     for (int i = 1; i < size; ++i) {
-      std::vector<int> recv_buf(send_counts[i]);
+      InType recv_buf(send_counts[i]);
       MPI_Recv(recv_buf.data(), send_counts[i], MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-      std::vector<int> merged = Merge(total_data, recv_buf);
+      auto merged = Merge(total_data, recv_buf);
       ;
       total_data.swap(merged);
     }

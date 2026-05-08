@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <random>
-#include <string>
 
 #include "rozenberg_a_quicksort_simple_merge/all/include/ops_all.hpp"
 #include "rozenberg_a_quicksort_simple_merge/common/include/common.hpp"
@@ -30,7 +29,7 @@ class RozenbergARunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType,
     }
 
     OutType output_data = input_data;
-    std::sort(output_data.begin(), output_data.end());
+    std::ranges::sort(output_data);
 
     input_data_ = input_data;
     output_data_ = output_data;
