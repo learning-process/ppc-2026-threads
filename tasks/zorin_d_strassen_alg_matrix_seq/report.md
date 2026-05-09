@@ -136,7 +136,6 @@ Speedup = T_seq / T_backend
 Efficiency = Speedup / Workers * 100%
 ```
 
-
 ## 6. Интерпретация различий
 
 ### SEQ

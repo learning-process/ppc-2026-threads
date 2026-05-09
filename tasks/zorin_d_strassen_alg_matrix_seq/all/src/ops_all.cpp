@@ -19,7 +19,7 @@ constexpr std::size_t kCutoff = 128;
 constexpr std::size_t kBlockSize = 64;
 
 std::size_t NextPow2(std::size_t x) {
-  if (x <= 1) { 
+  if (x <= 1) {
     return 1;
   }
   std::size_t p = 1;
@@ -48,8 +48,8 @@ void AddToBuffer(const double *a, std::size_t a_stride, const double *b, std::si
 }
 
 void MulMicroBlock(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c,
-                   std::size_t c_stride, std::size_t i_begin, std::size_t i_end, std::size_t k_begin,
-                   std::size_t k_end, std::size_t j_begin, std::size_t j_end) {
+                   std::size_t c_stride, std::size_t i_begin, std::size_t i_end, std::size_t k_begin, std::size_t k_end,
+                   std::size_t j_begin, std::size_t j_end) {
   for (std::size_t i = i_begin; i < i_end; ++i) {
     double *c_row = c + (i * c_stride);
     const double *a_row = a + (i * a_stride);
