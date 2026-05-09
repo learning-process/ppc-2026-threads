@@ -4,17 +4,17 @@
 #include <vector>
 
 #include "task/include/task.hpp"
-#include "zhurin_i_gauss_kernel_seq/common/include/common.hpp"
+#include "zhurin_i_gauss_kernel/common/include/common.hpp"
 
-namespace zhurin_i_gauss_kernel_seq {
+namespace zhurin_i_gauss_kernel {
 
-class ZhurinIGaussKernelSEQ : public BaseTask {
+class ZhurinIGaussKernelALL : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kSEQ;
+    return ppc::task::TypeOfTask::kALL;
   }
 
-  explicit ZhurinIGaussKernelSEQ(const InType &in);
+  explicit ZhurinIGaussKernelALL(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -28,10 +28,9 @@ class ZhurinIGaussKernelSEQ : public BaseTask {
   int width_ = 0;
   int height_ = 0;
   int num_parts_ = 1;
-  std::vector<std::vector<int>> padded_;
+
   std::vector<std::vector<int>> image_;
   std::vector<std::vector<int>> result_;
-  bool output_written_ = false;
 };
 
-}  // namespace zhurin_i_gauss_kernel_seq
+}  // namespace zhurin_i_gauss_kernel
