@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <iterator>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -159,7 +158,8 @@ bool ShkrylevaSShellMergeALL::PreProcessingImpl() {
 }
 
 bool ShkrylevaSShellMergeALL::RunImpl() {
-  int mpi_rank = 0, mpi_size = 1;
+  int mpi_rank = 0;
+  int mpi_size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
@@ -170,7 +170,8 @@ bool ShkrylevaSShellMergeALL::RunImpl() {
   }
 
   // Разбиение на чанки
-  std::vector<size_t> chunk_sizes, offsets;
+  std::vector<size_t> chunk_sizes;
+  std::vector<size_t> offsets;
   ComputeChunkParams(total_size, mpi_size, chunk_sizes, offsets);
 
   std::vector<int> local_data(chunk_sizes[mpi_rank]);
@@ -200,7 +201,7 @@ bool ShkrylevaSShellMergeALL::RunImpl() {
 
   // На процессе 0 – финальная сортировка (можно std::sort)
   if (mpi_rank == 0) {
-    std::sort(all_data.begin(), all_data.end());
+    std::ranges::sort(all_data);
     data = std::move(all_data);
   }
 
