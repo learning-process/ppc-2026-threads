@@ -83,7 +83,7 @@ class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType
   OutType expected_;
 };
 
-// SEQ тесты (без изменений)
+// SEQ тесты
 namespace {
 
 TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponents) {
@@ -105,9 +105,9 @@ INSTANTIATE_TEST_SUITE_P(ComponentLabeling, ArtyushkinaMarkirovkaFuncTests, kGte
 
 }  // namespace
 
-// TBB тесты с анонимным namespace
+// TBB тесты с анонимным namespace для устранения предупреждений clang-tidy
 namespace tbb_tests {
-namespace {  // Добавлен анонимный namespace для устранения предупреждений clang-tidy
+namespace {
 
 TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponentsTBB) {
   ExecuteTest(GetParam());

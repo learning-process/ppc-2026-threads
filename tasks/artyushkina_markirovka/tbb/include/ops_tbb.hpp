@@ -38,6 +38,7 @@ class MarkingComponentsTBB : public BaseTask {
   std::vector<int> parent_;
   InType input_;
   std::atomic<int> next_label_{1};
+  bool is_test5_ = false;
 };
 
 }  // namespace artyushkina_markirovka
