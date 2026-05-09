@@ -6,10 +6,10 @@
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
-#include "zhurin_i_gauss_kernel_seq/common/include/common.hpp"
-#include "zhurin_i_gauss_kernel_seq/seq/include/ops_seq.hpp"
+#include "zhurin_i_gauss_kernel/common/include/common.hpp"
+#include "zhurin_i_gauss_kernel/stl/include/ops_stl.hpp"
 
-namespace zhurin_i_gauss_kernel_seq {
+namespace zhurin_i_gauss_kernel {
 
 class ZhurinIGaussKernelPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
@@ -48,8 +48,9 @@ TEST_P(ZhurinIGaussKernelPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZhurinIGaussKernelSEQ>(PPC_SETTINGS_zhurin_i_gauss_kernel_seq);
+const auto kStlPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, ZhurinIGaussKernelSTL>(PPC_SETTINGS_zhurin_i_gauss_kernel);
+const auto kAllPerfTasks = std::tuple_cat(kStlPerfTasks);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -59,4 +60,4 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, ZhurinIGaussKernelPerfTests, kGtestValues
 
 }  // namespace
 
-}  // namespace zhurin_i_gauss_kernel_seq
+}  // namespace zhurin_i_gauss_kernel
