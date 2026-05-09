@@ -10,7 +10,9 @@
 #include <vector>
 
 #include "dolov_v_crs_mat_mult/common/include/common.hpp"
+#include "dolov_v_crs_mat_mult/omp/include/ops_omp.hpp"
 #include "dolov_v_crs_mat_mult/seq/include/ops_seq.hpp"
+#include "dolov_v_crs_mat_mult/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -146,7 +148,9 @@ const std::array<TestType, 7> kTestParam = {std::make_tuple(1, "SmallSparse"),  
                                             std::make_tuple(7, "SingleElement")};
 
 const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<DolovVCrsMatMultSeq, InType>(kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult));
+    std::tuple_cat(ppc::util::AddFuncTask<DolovVCrsMatMultSeq, InType>(kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult),
+                   ppc::util::AddFuncTask<DolovVCrsMatMultOmp, InType>(kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult),
+                   ppc::util::AddFuncTask<DolovVCrsMatMultTbb, InType>(kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kFuncTestName = DolovVCrsMatMultRunFuncTestsThreads::PrintFuncTestName<DolovVCrsMatMultRunFuncTestsThreads>;

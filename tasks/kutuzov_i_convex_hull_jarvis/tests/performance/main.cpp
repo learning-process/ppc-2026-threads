@@ -5,12 +5,13 @@
 #include "kutuzov_i_convex_hull_jarvis/common/include/common.hpp"
 #include "kutuzov_i_convex_hull_jarvis/omp/include/ops_omp.hpp"
 #include "kutuzov_i_convex_hull_jarvis/seq/include/ops_seq.hpp"
+#include "kutuzov_i_convex_hull_jarvis/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace kutuzov_i_convex_hull_jarvis {
 
 class KutuzovIRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 500000;
+  const int kCount_ = 5000000;
   InType input_data_;
   OutType expected_output_;
 
@@ -44,8 +45,9 @@ TEST_P(KutuzovIRunPerfTestsThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KutuzovITestConvexHullSEQ, KutuzovITestConvexHullOMP>(
-    PPC_SETTINGS_kutuzov_i_convex_hull_jarvis);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, KutuzovITestConvexHullSEQ, KutuzovITestConvexHullOMP,
+                                KutuzovITestConvexHullTBB>(PPC_SETTINGS_kutuzov_i_convex_hull_jarvis);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
