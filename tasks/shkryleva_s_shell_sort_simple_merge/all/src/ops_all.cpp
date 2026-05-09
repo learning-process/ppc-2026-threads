@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <iterator>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -113,63 +114,6 @@ void SortVectorParallel(std::vector<int> &arr) {
   HierarchicalMerge(arr, num_threads, sub_arr_size);
 }
 
-// ========== MPI-вспомогательные функции ==========
-std::vector<int> MergeTwoSorted(const std::vector<int> &left, const std::vector<int> &right) {
-  std::vector<int> result;
-  result.reserve(left.size() + right.size());
-  size_t i = 0;
-  size_t j = 0;
-  while (i < left.size() && j < right.size()) {
-    if (left[i] <= right[j]) {
-      result.push_back(left[i++]);
-    } else {
-      result.push_back(right[j++]);
-    }
-  }
-  while (i < left.size()) {
-    result.push_back(left[i++]);
-  }
-  while (j < right.size()) {
-    result.push_back(right[j++]);
-  }
-  return result;
-}
-
-void ExchangeAndMerge(int partner, std::vector<int> &merged_data) {
-  size_t my_size = merged_data.size();
-  size_t partner_size = 0;
-  MPI_Sendrecv(&my_size, 1, MPI_UNSIGNED_LONG, partner, 0, &partner_size, 1, MPI_UNSIGNED_LONG, partner, 0,
-               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-  std::vector<int> partner_data(partner_size);
-  MPI_Sendrecv(merged_data.data(), static_cast<int>(my_size), MPI_INT, partner, 1, partner_data.data(),
-               static_cast<int>(partner_size), MPI_INT, partner, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-  merged_data = MergeTwoSorted(merged_data, partner_data);
-}
-
-void ParallelHypercubeMerge(std::vector<int> &merged_data, int mpi_rank, int mpi_size) {
-  int step = 1;
-  while (step < mpi_size) {
-    int partner = mpi_rank ^ step;
-    if (partner < mpi_size) {
-      ExchangeAndMerge(partner, merged_data);
-    }
-    step <<= 1;
-  }
-}
-
-void BcastSortedVector(std::vector<int> &data, int mpi_rank) {
-  size_t n = data.size();
-  MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
-  if (mpi_rank != 0) {
-    data.resize(n);
-  }
-  if (n > 0) {
-    MPI_Bcast(data.data(), static_cast<int>(n), MPI_INT, 0, MPI_COMM_WORLD);
-  }
-}
-
 void ComputeChunkParams(size_t total_size, int mpi_size, std::vector<size_t> &chunk_sizes,
                         std::vector<size_t> &offsets) {
   const auto mpi_size_usz = static_cast<size_t>(mpi_size);
@@ -215,9 +159,7 @@ bool ShkrylevaSShellMergeALL::PreProcessingImpl() {
 }
 
 bool ShkrylevaSShellMergeALL::RunImpl() {
-  int mpi_rank = 0;
-  int mpi_size = 1;
-
+  int mpi_rank = 0, mpi_size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
@@ -227,30 +169,52 @@ bool ShkrylevaSShellMergeALL::RunImpl() {
     return true;
   }
 
-  std::vector<size_t> chunk_sizes;
-  std::vector<size_t> offsets;
+  // Разбиение на чанки
+  std::vector<size_t> chunk_sizes, offsets;
   ComputeChunkParams(total_size, mpi_size, chunk_sizes, offsets);
 
-  std::vector<int> local_data(chunk_sizes[static_cast<size_t>(mpi_rank)]);
+  std::vector<int> local_data(chunk_sizes[mpi_rank]);
   ScatterData(data, local_data, chunk_sizes, offsets);
 
+  // Локальная параллельная сортировка (STL-потоки)
   SortVectorParallel(local_data);
 
-  if (mpi_size == 1) {
-    data = std::move(local_data);
-    return std::ranges::is_sorted(data);
-  }
-
-  std::vector<int> merged_data = std::move(local_data);
-  ParallelHypercubeMerge(merged_data, mpi_rank, mpi_size);
-
+  // Сбор всех отсортированных кусков на процессе 0
+  std::vector<int> all_data;
   if (mpi_rank == 0) {
-    data = std::move(merged_data);
+    all_data.resize(total_size);
+    std::vector<int> recv_counts(mpi_size);
+    for (int i = 0; i < mpi_size; ++i) {
+      recv_counts[i] = static_cast<int>(chunk_sizes[i]);
+    }
+    std::vector<int> displs(mpi_size, 0);
+    for (int i = 1; i < mpi_size; ++i) {
+      displs[i] = displs[i - 1] + recv_counts[i - 1];
+    }
+    MPI_Gatherv(local_data.data(), static_cast<int>(local_data.size()), MPI_INT, all_data.data(), recv_counts.data(),
+                displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
   } else {
-    data.clear();
+    MPI_Gatherv(local_data.data(), static_cast<int>(local_data.size()), MPI_INT, nullptr, nullptr, nullptr, MPI_INT, 0,
+                MPI_COMM_WORLD);
   }
 
-  BcastSortedVector(data, mpi_rank);
+  // На процессе 0 – финальная сортировка (можно std::sort)
+  if (mpi_rank == 0) {
+    std::sort(all_data.begin(), all_data.end());
+    data = std::move(all_data);
+  }
+
+  // Рассылка результата всем процессам
+  if (mpi_rank == 0) {
+    size_t sz = data.size();
+    MPI_Bcast(&sz, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+    MPI_Bcast(data.data(), static_cast<int>(sz), MPI_INT, 0, MPI_COMM_WORLD);
+  } else {
+    size_t sz = 0;
+    MPI_Bcast(&sz, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+    data.resize(sz);
+    MPI_Bcast(data.data(), static_cast<int>(sz), MPI_INT, 0, MPI_COMM_WORLD);
+  }
 
   MPI_Barrier(MPI_COMM_WORLD);
   return std::ranges::is_sorted(data);
