@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 #include "oneapi/tbb/enumerable_thread_specific.h"
@@ -9,59 +10,56 @@
 #include "viderman_a_sparse_matrix_mult_crs_complex/common/include/common.hpp"
 
 namespace viderman_a_sparse_matrix_mult_crs_complex {
-
-struct ThreadLocalBuffers {
-  std::vector<Complex> accumulator;
-  std::vector<int> marker;
-  std::vector<int> active_indices;
-
-  explicit ThreadLocalBuffers(int size) : accumulator(size, Complex(0.0, 0.0)), marker(size, -1) {}
-};
-
 namespace {
 
-void ProcessSingleRow(int i, const CRSMatrix &a, const CRSMatrix &b, ThreadLocalBuffers &loc,
-                      std::vector<int> &row_cols, std::vector<Complex> &row_vals) {
-  auto &acc = loc.accumulator;
-  auto &mark = loc.marker;
-  auto &active = loc.active_indices;
+void ProcessRow(const CRSMatrix &a, const CRSMatrix &b, int row, std::vector<Complex> &accumulator,
+                std::vector<int> &marker, std::vector<int> &current_row_indices, std::vector<int> &dst_cols,
+                std::vector<Complex> &dst_vals) {
+  current_row_indices.clear();
 
-  active.clear();
-
-  for (int j = a.row_ptr[i]; j < a.row_ptr[i + 1]; ++j) {
-    int col_a = a.col_indices[j];
-    Complex val_a = a.values[j];
+  for (int j = a.row_ptr[row]; j < a.row_ptr[row + 1]; ++j) {
+    const int col_a = a.col_indices[j];
+    const Complex val_a = a.values[j];
 
     for (int k = b.row_ptr[col_a]; k < b.row_ptr[col_a + 1]; ++k) {
-      int col_b = b.col_indices[k];
+      const int col_b = b.col_indices[k];
+      accumulator[col_b] += val_a * b.values[k];
 
-      if (mark[col_b] != i) {
-        mark[col_b] = i;
-        acc[col_b] = Complex(0.0, 0.0);
-        active.push_back(col_b);
+      if (marker[col_b] != row) {
+        current_row_indices.push_back(col_b);
+        marker[col_b] = row;
       }
-
-      acc[col_b] += val_a * b.values[k];
     }
   }
 
-  std::ranges::sort(active);
+  std::ranges::sort(current_row_indices);
 
-  for (int col : active) {
-    if (std::norm(acc[col]) > kEpsilon * kEpsilon) {
-      row_cols.push_back(col);
-      row_vals.push_back(acc[col]);
+  dst_cols.clear();
+  dst_vals.clear();
+  dst_cols.reserve(current_row_indices.size());
+  dst_vals.reserve(current_row_indices.size());
+
+  for (const int idx : current_row_indices) {
+    if (std::abs(accumulator[idx]) > kEpsilon) {
+      dst_cols.push_back(idx);
+      dst_vals.push_back(accumulator[idx]);
     }
-
-    acc[col] = Complex(0.0, 0.0);
+    accumulator[idx] = Complex(0.0, 0.0);
   }
 }
+
+struct ThreadBuffers {
+  std::vector<Complex> accumulator;
+  std::vector<int> marker;
+  std::vector<int> current_row_indices;
+};
 
 }  // namespace
 
 VidermanASparseMatrixMultCRSComplexTBB::VidermanASparseMatrixMultCRSComplexTBB(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
+  GetOutput() = CRSMatrix();
 }
 
 bool VidermanASparseMatrixMultCRSComplexTBB::ValidationImpl() {
@@ -69,7 +67,15 @@ bool VidermanASparseMatrixMultCRSComplexTBB::ValidationImpl() {
   const auto &a = std::get<0>(input);
   const auto &b = std::get<1>(input);
 
-  return a.IsValid() && b.IsValid() && (a.cols == b.rows);
+  if (!a.IsValid() || !b.IsValid()) {
+    return false;
+  }
+
+  if (a.cols != b.rows) {
+    return false;
+  }
+
+  return true;
 }
 
 bool VidermanASparseMatrixMultCRSComplexTBB::PreProcessingImpl() {
@@ -81,45 +87,54 @@ bool VidermanASparseMatrixMultCRSComplexTBB::PreProcessingImpl() {
   return true;
 }
 
-bool VidermanASparseMatrixMultCRSComplexTBB::RunImpl() {
-  Multiply(*a_, *b_, GetOutput());
-  return true;
-}
-
-bool VidermanASparseMatrixMultCRSComplexTBB::PostProcessingImpl() {
-  return GetOutput().IsValid();
-}
-
 void VidermanASparseMatrixMultCRSComplexTBB::Multiply(const CRSMatrix &a, const CRSMatrix &b, CRSMatrix &c) {
   c.rows = a.rows;
   c.cols = b.cols;
-
   c.row_ptr.assign(a.rows + 1, 0);
   c.col_indices.clear();
   c.values.clear();
 
-  std::vector<std::vector<int>> all_col_indices(a.rows);
-  std::vector<std::vector<Complex>> all_values(a.rows);
+  std::vector<std::vector<int>> row_cols(a.rows);
+  std::vector<std::vector<Complex>> row_vals(a.rows);
 
-  int b_cols = b.cols;
+  oneapi::tbb::enumerable_thread_specific<ThreadBuffers> tls([&b] {
+    ThreadBuffers buffers;
+    buffers.accumulator.assign(b.cols, Complex(0.0, 0.0));
+    buffers.marker.assign(b.cols, -1);
+    return buffers;
+  });
 
-  oneapi::tbb::enumerable_thread_specific<ThreadLocalBuffers> tls([b_cols]() { return ThreadLocalBuffers(b_cols); });
-
-  oneapi::tbb::parallel_for(0, a.rows,
-                            [&](int i) { ProcessSingleRow(i, a, b, tls.local(), all_col_indices[i], all_values[i]); });
-
-  for (int i = 0; i < a.rows; ++i) {
-    c.row_ptr[i + 1] = c.row_ptr[i] + static_cast<int>(all_col_indices[i].size());
-  }
-
-  c.col_indices.reserve(c.row_ptr[a.rows]);
-  c.values.reserve(c.row_ptr[a.rows]);
+  oneapi::tbb::parallel_for(0, a.rows, [&](int i) {
+    auto &buffers = tls.local();
+    ProcessRow(a, b, i, buffers.accumulator, buffers.marker, buffers.current_row_indices, row_cols[i], row_vals[i]);
+  });
 
   for (int i = 0; i < a.rows; ++i) {
-    c.col_indices.insert(c.col_indices.end(), all_col_indices[i].begin(), all_col_indices[i].end());
-
-    c.values.insert(c.values.end(), all_values[i].begin(), all_values[i].end());
+    c.row_ptr[i + 1] = c.row_ptr[i] + static_cast<int>(row_cols[i].size());
   }
+
+  c.col_indices.reserve(static_cast<std::size_t>(c.row_ptr[a.rows]));
+  c.values.reserve(static_cast<std::size_t>(c.row_ptr[a.rows]));
+  for (int i = 0; i < a.rows; ++i) {
+    c.col_indices.insert(c.col_indices.end(), row_cols[i].begin(), row_cols[i].end());
+    c.values.insert(c.values.end(), row_vals[i].begin(), row_vals[i].end());
+  }
+}
+
+bool VidermanASparseMatrixMultCRSComplexTBB::RunImpl() {
+  if (a_ == nullptr || b_ == nullptr) {
+    return false;
+  }
+
+  CRSMatrix &c = GetOutput();
+  Multiply(*a_, *b_, c);
+
+  return true;
+}
+
+bool VidermanASparseMatrixMultCRSComplexTBB::PostProcessingImpl() {
+  CRSMatrix &c = GetOutput();
+  return c.IsValid();
 }
 
 }  // namespace viderman_a_sparse_matrix_mult_crs_complex
