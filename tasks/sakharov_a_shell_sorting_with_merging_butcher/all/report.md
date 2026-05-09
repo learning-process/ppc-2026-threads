@@ -130,7 +130,8 @@ ALL-версия корректно объединяет MPI, OpenMP, oneTBB и 
 
 ## 12. Источники
 
-- MPI Standard Documentation.
-- OpenMP API Specification.
-- Intel oneTBB Documentation.
-- C++ Reference: `std::thread`, `std::sort`, `std::merge`.
+- Лекции Сысоева А. В. по курсу «Параллельное программирование для систем с общей памятью».
+- [MPI Standard Documentation](https://www.mpi-forum.org/docs/).
+- [OpenMP API Specification](https://www.openmp.org/specifications/).
+- [oneAPI Threading Building Blocks Documentation](https://uxlfoundation.github.io/oneTBB/).
+- cppreference: [`std::thread`](https://en.cppreference.com/w/cpp/thread/thread), [`std::sort`](https://en.cppreference.com/w/cpp/algorithm/sort), [`std::merge`](https://en.cppreference.com/w/cpp/algorithm/merge).

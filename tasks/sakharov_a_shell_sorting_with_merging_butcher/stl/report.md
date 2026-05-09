@@ -101,5 +101,6 @@ STL-версия ускоряет вычисления относительно 
 
 ## 11. Источники
 
-- C++ Reference: `std::thread`, `std::ref`, `std::cref`.
-- C++ Reference: `std::sort`, `std::merge`.
+- Лекции Сысоева А. В. по курсу «Параллельное программирование для систем с общей памятью».
+- cppreference: [`std::thread`](https://en.cppreference.com/w/cpp/thread/thread), [`std::ref`, `std::cref`](https://en.cppreference.com/w/cpp/utility/functional/ref).
+- cppreference: [`std::sort`](https://en.cppreference.com/w/cpp/algorithm/sort), [`std::merge`](https://en.cppreference.com/w/cpp/algorithm/merge).
