@@ -15,12 +15,7 @@ class ShkrebkoMCalcOfIntegralRectALL : public BaseTask {
     return ppc::task::TypeOfTask::kALL;
   }
 
-  explicit ShkrebkoMCalcOfIntegralRectALL(const InType &in) {
-    SetTypeOfTask(GetStaticTypeOfTask());
-    GetInput() = in;
-    GetOutput() = 0.0;
-    saved_func_ = in.func;
-  }
+  explicit ShkrebkoMCalcOfIntegralRectALL(const InType &in);
 
  protected:
   bool ValidationImpl() override;
@@ -34,7 +29,6 @@ class ShkrebkoMCalcOfIntegralRectALL : public BaseTask {
 
   InType local_input_;
   double res_ = 0.0;
-
   std::function<double(const std::vector<double> &)> saved_func_;
 };
 

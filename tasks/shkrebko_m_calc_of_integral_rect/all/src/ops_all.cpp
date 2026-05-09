@@ -17,6 +17,7 @@ ShkrebkoMCalcOfIntegralRectALL::ShkrebkoMCalcOfIntegralRectALL(const InType &in)
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
+  saved_func_ = in.func;
 }
 
 bool ShkrebkoMCalcOfIntegralRectALL::ValidationImpl() {
