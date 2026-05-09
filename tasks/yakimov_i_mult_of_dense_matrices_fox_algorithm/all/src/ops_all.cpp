@@ -87,7 +87,7 @@ void SimpleMultiplyOMP(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &
   result.data.assign(static_cast<std::size_t>(result.rows) * result.cols, 0.0);
 
 #ifdef _OPENMP
-#  pragma omp parallel for collapse(2) schedule(static) default(none) shared(a, b, result)
+#  pragma omp parallel for schedule(static) default(none) shared(a, b, result)
 #endif
   for (int i = 0; i < a.rows; ++i) {
     for (int j = 0; j < b.cols; ++j) {
@@ -144,15 +144,14 @@ void MultiplyBlockUnrolled(const DenseMatrix &a, const DenseMatrix &b, DenseMatr
 void ProcessStageOMP(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int stage, int num_blocks,
                      int block_size) {
 #ifdef _OPENMP
-#  pragma omp parallel for collapse(2) schedule(dynamic) default(none) \
-      shared(a, b, result, stage, num_blocks, block_size)
+#  pragma omp parallel for schedule(dynamic) default(none) shared(a, b, result, stage, num_blocks, block_size)
 #endif
-  for (int i = 0; i < num_blocks; ++i) {
-    for (int j = 0; j < num_blocks; ++j) {
-      int broadcast_block = (i + stage) % num_blocks;
-      MultiplyBlockUnrolled(a, b, result, i * block_size, j * block_size, block_size, broadcast_block * block_size,
-                            j * block_size);
-    }
+  for (int idx = 0; idx < num_blocks * num_blocks; ++idx) {
+    int i = idx / num_blocks;
+    int j = idx % num_blocks;
+    int broadcast_block = (i + stage) % num_blocks;
+    MultiplyBlockUnrolled(a, b, result, i * block_size, j * block_size, block_size, broadcast_block * block_size,
+                          j * block_size);
   }
 }
 
@@ -312,8 +311,8 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmAll::PostProcessingImpl() {
 #ifdef _OPENMP
 #  pragma omp parallel for reduction(+ : sum) default(none) shared(result_matrix_)
 #endif
-  for (double value : this->result_matrix_.data) {
-    sum += value;
+  for (std::size_t idx = 0; idx < this->result_matrix_.data.size(); ++idx) {
+    sum += this->result_matrix_.data[idx];
   }
 
   this->GetOutput() = sum;
