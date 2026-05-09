@@ -185,7 +185,6 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmSTL::PreProcessingImpl() {
   while (this->block_size_ * 2 <= n && this->block_size_ < 256) {
     this->block_size_ *= 2;
   }
-
   this->block_size_ = std::min(this->block_size_, n);
 
   return this->block_size_ > 0;
