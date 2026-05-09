@@ -8,6 +8,8 @@
 #include "levonychev_i_radix_batcher_sort/common/include/common.hpp"
 #include "levonychev_i_radix_batcher_sort/omp/include/ops_omp.hpp"
 #include "levonychev_i_radix_batcher_sort/seq/include/ops_seq.hpp"
+#include "levonychev_i_radix_batcher_sort/stl/include/ops_stl.hpp"
+#include "levonychev_i_radix_batcher_sort/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -63,6 +65,10 @@ const std::array<TestType, 4> kTestParam = {std::make_tuple(1, "one_element"), s
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LevonychevIRadixBatcherSortSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_levonychev_i_radix_batcher_sort),
                                            ppc::util::AddFuncTask<LevonychevIRadixBatcherSortOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_levonychev_i_radix_batcher_sort),
+                                           ppc::util::AddFuncTask<LevonychevIRadixBatcherSortTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_levonychev_i_radix_batcher_sort),
+                                           ppc::util::AddFuncTask<LevonychevIRadixBatcherSortSTL, InType>(
                                                kTestParam, PPC_SETTINGS_levonychev_i_radix_batcher_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

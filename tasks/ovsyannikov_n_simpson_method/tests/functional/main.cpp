@@ -6,6 +6,7 @@
 #include <string>
 #include <tuple>
 
+#include "ovsyannikov_n_simpson_method/all/include/ops_all.hpp"
 #include "ovsyannikov_n_simpson_method/common/include/common.hpp"
 #include "ovsyannikov_n_simpson_method/omp/include/ops_omp.hpp"
 #include "ovsyannikov_n_simpson_method/seq/include/ops_seq.hpp"
@@ -75,6 +76,11 @@ INSTANTIATE_TEST_SUITE_P(SimpsonTest_TBB, OvsyannikovNRunFuncTestsThreads, ppc::
 const auto kTestTasksSTL =
     ppc::util::AddFuncTask<OvsyannikovNSimpsonMethodSTL, InType>(kTestParam, PPC_SETTINGS_ovsyannikov_n_simpson_method);
 INSTANTIATE_TEST_SUITE_P(SimpsonTest_STL, OvsyannikovNRunFuncTestsThreads, ppc::util::ExpandToValues(kTestTasksSTL),
+                         OvsyannikovNRunFuncTestsThreads::PrintFuncTestName<OvsyannikovNRunFuncTestsThreads>);
+
+const auto kTestTasksALL =
+    ppc::util::AddFuncTask<OvsyannikovNSimpsonMethodALL, InType>(kTestParam, PPC_SETTINGS_ovsyannikov_n_simpson_method);
+INSTANTIATE_TEST_SUITE_P(SimpsonTest_ALL, OvsyannikovNRunFuncTestsThreads, ppc::util::ExpandToValues(kTestTasksALL),
                          OvsyannikovNRunFuncTestsThreads::PrintFuncTestName<OvsyannikovNRunFuncTestsThreads>);
 
 }  // namespace

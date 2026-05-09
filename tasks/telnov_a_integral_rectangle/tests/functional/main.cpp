@@ -7,6 +7,7 @@
 #include <tuple>
 #include <utility>
 
+#include "telnov_a_integral_rectangle/all/include/ops_all.hpp"
 #include "telnov_a_integral_rectangle/common/include/common.hpp"
 #include "telnov_a_integral_rectangle/omp/include/ops_omp.hpp"
 #include "telnov_a_integral_rectangle/seq/include/ops_seq.hpp"
@@ -65,7 +66,8 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<TelnovAIntegralRectangleSEQ, InType>(kTestParam, PPC_SETTINGS_telnov_a_integral_rectangle),
     ppc::util::AddFuncTask<TelnovAIntegralRectangleOMP, InType>(kTestParam, PPC_SETTINGS_telnov_a_integral_rectangle),
     ppc::util::AddFuncTask<TelnovAIntegralRectangleTBB, InType>(kTestParam, PPC_SETTINGS_telnov_a_integral_rectangle),
-    ppc::util::AddFuncTask<TelnovAIntegralRectangleSTL, InType>(kTestParam, PPC_SETTINGS_telnov_a_integral_rectangle));
+    ppc::util::AddFuncTask<TelnovAIntegralRectangleSTL, InType>(kTestParam, PPC_SETTINGS_telnov_a_integral_rectangle),
+    ppc::util::AddFuncTask<TelnovAIntegralRectangleALL, InType>(kTestParam, PPC_SETTINGS_telnov_a_integral_rectangle));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
