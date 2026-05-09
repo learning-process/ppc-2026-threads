@@ -25,11 +25,12 @@ class ShkrebkoMCalcOfIntegralRectALL : public BaseTask {
 
  private:
   void BroadcastInputData(int rank, std::size_t &dims);
-  void FlatIndexToPoint(std::size_t flat_idx, const std::vector<double> &h, std::vector<double> &point) const;
+  std::size_t SelectSplitDimension() const;
+  bool ComputeSliceSum(std::size_t fixed_dim, std::size_t fixed_idx, const std::vector<double> &h,
+                       double &slice_sum) const;
 
   InType local_input_;
   double res_ = 0.0;
-  std::function<double(const std::vector<double> &)> saved_func_;
 };
 
 }  // namespace shkrebko_m_calc_of_integral_rect
