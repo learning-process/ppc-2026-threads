@@ -307,15 +307,9 @@ bool YakimovIMultOfDenseMatricesFoxAlgorithmAll::RunImpl() {
 
 bool YakimovIMultOfDenseMatricesFoxAlgorithmAll::PostProcessingImpl() {
   double sum = 0.0;
-  const std::vector<double> &data = this->result_matrix_.data;
-
-#ifdef _OPENMP
-#  pragma omp parallel for reduction(+ : sum) default(none) shared(data)
-#endif
-  for (double value : data) {
-    sum += value;
+  for (double val : this->result_matrix_.data) {
+    sum += val;
   }
-
   this->GetOutput() = sum;
   return true;
 }
