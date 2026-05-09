@@ -4,8 +4,10 @@
 #include <omp.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
-#include <cstdint>
+#include <numeric>
+#include <thread>
 #include <vector>
 
 #include "shkrebko_m_calc_of_integral_rect/common/include/common.hpp"
