@@ -7,6 +7,7 @@
 #include "dolov_v_crs_mat_mult/common/include/common.hpp"
 #include "dolov_v_crs_mat_mult/omp/include/ops_omp.hpp"
 #include "dolov_v_crs_mat_mult/seq/include/ops_seq.hpp"
+#include "dolov_v_crs_mat_mult/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace dolov_v_crs_mat_mult {
@@ -64,7 +65,8 @@ namespace {
 
 const auto kAllPerfTasks =
     std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultSeq>(PPC_SETTINGS_dolov_v_crs_mat_mult),
-                   ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultOmp>(PPC_SETTINGS_dolov_v_crs_mat_mult));
+                   ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultOmp>(PPC_SETTINGS_dolov_v_crs_mat_mult),
+                   ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultTbb>(PPC_SETTINGS_dolov_v_crs_mat_mult));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = DolovVCrsMatMultRunPerfTestThreads::CustomPerfTestName;
