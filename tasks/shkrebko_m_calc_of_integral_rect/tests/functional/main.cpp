@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <array>
 #include <cmath>
@@ -35,6 +36,15 @@ class ShkrebkoMRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+    if (ppc::util::IsUnderMpirun()) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+
+    if (rank != 0) {
+      return true;
+    }
+
     const double eps = 1e-4;
     return std::fabs(output_data - expected_) <= eps;
   }

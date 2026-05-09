@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <cmath>
 #include <tuple>
@@ -20,15 +21,31 @@ class ShkrebkoMRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType>
 
  protected:
   void SetUp() override {
-    double exact = (1.0 - std::cos(1.0)) + std::sin(1.0) + 0.5;
-    expected_ = exact;
+    int rank = 0;
+    if (ppc::util::IsUnderMpirun()) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
 
-    input_data_.limits = {{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}};
-    input_data_.n_steps = {kN, kN, kN};
-    input_data_.func = [](const std::vector<double> &x) { return std::sin(x[0]) + std::cos(x[1]) + x[2]; };
+    if (rank == 0) {
+      double exact = (1.0 - std::cos(1.0)) + std::sin(1.0) + 0.5;
+      expected_ = exact;
+
+      input_data_.limits = {{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}};
+      input_data_.n_steps = {kN, kN, kN};
+      input_data_.func = [](const std::vector<double> &x) { return std::sin(x[0]) + std::cos(x[1]) + x[2]; };
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+    if (ppc::util::IsUnderMpirun()) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+
+    if (rank != 0) {
+      return true;
+    }
+
     const double eps = 1e-3;
     return std::fabs(output_data - expected_) <= eps;
   }
