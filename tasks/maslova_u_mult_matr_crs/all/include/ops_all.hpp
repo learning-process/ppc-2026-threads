@@ -19,13 +19,15 @@ class MaslovaUMultMatrALL : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  void BroadcastCRSMatrix(CRSMatrix &matrix, int root, int rows, int cols);
+  static void BroadcastCRSMatrix(CRSMatrix &matrix, int root, int rows, int cols);
 
-  void ComputeLocalPart(const CRSMatrix &a, const CRSMatrix &b, int start_row, int local_rows,
-                        std::vector<int> &local_nnz, std::vector<double> &flat_values, std::vector<int> &flat_cols);
+  static void ComputeLocalPart(const CRSMatrix &a, const CRSMatrix &b, int start_row, int local_rows,
+                               std::vector<int> &local_nnz, std::vector<double> &flat_values,
+                               std::vector<int> &flat_cols);
 
-  void GatherResults(int rank, int size, int a_rows, int b_cols, int local_rows, const std::vector<int> &local_nnz,
-                     const std::vector<double> &flat_values, const std::vector<int> &flat_cols);
+  static void GatherResults(int rank, int size, int a_rows, int b_cols, int local_rows, CRSMatrix &c,
+                            const std::vector<int> &local_nnz, const std::vector<double> &flat_values,
+                            const std::vector<int> &flat_cols);
 };
 
 }  // namespace maslova_u_mult_matr_crs

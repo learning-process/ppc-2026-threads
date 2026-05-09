@@ -4,17 +4,16 @@
 #include <omp.h>
 
 #include <algorithm>
-#include <cstddef>
+#include <array>
 #include <vector>
 
-#include "maslova_u_mult_matr_crs/common/include/common.hpp"
 #include "util/include/util.hpp"
 
 namespace maslova_u_mult_matr_crs {
 
 MaslovaUMultMatrALL::MaslovaUMultMatrALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  int rank = -1;
+  int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
     GetInput() = in;
@@ -22,12 +21,13 @@ MaslovaUMultMatrALL::MaslovaUMultMatrALL(const InType &in) {
 }
 
 bool MaslovaUMultMatrALL::ValidationImpl() {
-  int rank;
+  int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   int ok = 0;
   if (rank == 0) {
-    const auto &a = std::get<0>(GetInput());
-    const auto &b = std::get<1>(GetInput());
+    const auto &input = GetInput();
+    const auto &a = std::get<0>(input);
+    const auto &b = std::get<1>(input);
     if (a.cols == b.rows && a.rows > 0 && b.cols > 0) {
       ok = 1;
     }
@@ -41,14 +41,14 @@ bool MaslovaUMultMatrALL::PreProcessingImpl() {
 }
 
 void MaslovaUMultMatrALL::BroadcastCRSMatrix(CRSMatrix &m, int root, int r, int c) {
-  int rank;
+  int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  int counts[2];
+  std::array<int, 2> counts = {0, 0};
   if (rank == root) {
     counts[0] = static_cast<int>(m.row_ptr.size());
     counts[1] = static_cast<int>(m.values.size());
   }
-  MPI_Bcast(counts, 2, MPI_INT, root, MPI_COMM_WORLD);
+  MPI_Bcast(counts.data(), 2, MPI_INT, root, MPI_COMM_WORLD);
   if (rank != root) {
     m.row_ptr.resize(counts[0]);
     m.values.resize(counts[1]);
@@ -99,7 +99,7 @@ void MaslovaUMultMatrALL::ComputeLocalPart(const CRSMatrix &a, const CRSMatrix &
         }
       }
       local_nnz[i] = static_cast<int>(used.size());
-      std::sort(used.begin(), used.end());
+      std::ranges::sort(used);
       for (int col : used) {
         t_vals[i].push_back(acc[col]);
         t_cols[i].push_back(col);
@@ -113,19 +113,21 @@ void MaslovaUMultMatrALL::ComputeLocalPart(const CRSMatrix &a, const CRSMatrix &
   }
 }
 
-void MaslovaUMultMatrALL::GatherResults(int rank, int size, int a_rows, int b_cols, int local_rows,
+void MaslovaUMultMatrALL::GatherResults(int rank, int size, int a_rows, int b_cols, int local_rows, CRSMatrix &c,
                                         const std::vector<int> &local_nnz, const std::vector<double> &flat_values,
                                         const std::vector<int> &flat_cols) {
   int local_nnz_total = static_cast<int>(flat_values.size());
-  std::vector<int> all_nnz_counts(size), all_row_counts(size);
+  std::vector<int> all_nnz_counts(size);
+  std::vector<int> all_row_counts(size);
+
   MPI_Gather(&local_nnz_total, 1, MPI_INT, all_nnz_counts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Gather(&local_rows, 1, MPI_INT, all_row_counts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  auto &c = GetOutput();
   if (rank == 0) {
     c.rows = a_rows;
     c.cols = b_cols;
-    std::vector<int> nnz_displs(size, 0), row_offsets(size, 0);
+    std::vector<int> nnz_displs(size, 0);
+    std::vector<int> row_offsets(size, 0);
     int total_nnz = 0;
     for (int i = 0; i < size; ++i) {
       nnz_displs[i] = total_nnz;
@@ -136,7 +138,7 @@ void MaslovaUMultMatrALL::GatherResults(int rank, int size, int a_rows, int b_co
     }
     c.values.resize(total_nnz);
     c.col_ind.resize(total_nnz);
-    c.row_ptr.assign(a_rows + 1, 0);
+    c.row_ptr.assign(static_cast<size_t>(a_rows) + 1, 0);
 
     MPI_Gatherv(flat_values.data(), local_nnz_total, MPI_DOUBLE, c.values.data(), all_nnz_counts.data(),
                 nnz_displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -155,17 +157,16 @@ void MaslovaUMultMatrALL::GatherResults(int rank, int size, int a_rows, int b_co
     MPI_Gatherv(flat_cols.data(), local_nnz_total, MPI_INT, nullptr, nullptr, nullptr, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Gatherv(local_nnz.data(), local_rows, MPI_INT, nullptr, nullptr, nullptr, MPI_INT, 0, MPI_COMM_WORLD);
   }
-
-  // ВАЖНО: Рассылаем финальный результат всем, чтобы CheckTestOutputData прошел везде
   BroadcastCRSMatrix(c, 0, a_rows, b_cols);
 }
 
 bool MaslovaUMultMatrALL::RunImpl() {
-  int size, rank;
+  int size = 0;
+  int rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  int dims[3];
+  std::array<int, 3> dims = {0, 0, 0};
   if (rank == 0) {
     const auto &a_in = std::get<0>(GetInput());
     const auto &b_in = std::get<1>(GetInput());
@@ -173,9 +174,10 @@ bool MaslovaUMultMatrALL::RunImpl() {
     dims[1] = a_in.cols;
     dims[2] = b_in.cols;
   }
-  MPI_Bcast(dims, 3, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(dims.data(), 3, MPI_INT, 0, MPI_COMM_WORLD);
 
-  CRSMatrix a, b;
+  CRSMatrix a;
+  CRSMatrix b;
   if (rank == 0) {
     a = std::get<0>(GetInput());
     b = std::get<1>(GetInput());
@@ -185,7 +187,7 @@ bool MaslovaUMultMatrALL::RunImpl() {
 
   int part = dims[0] / size;
   int rem = dims[0] % size;
-  int start_row = rank * part + std::min(rank, rem);
+  int start_row = (rank * part) + std::min(rank, rem);
   int local_rows = part + (rank < rem ? 1 : 0);
 
   std::vector<int> local_nnz(local_rows);
@@ -193,7 +195,7 @@ bool MaslovaUMultMatrALL::RunImpl() {
   std::vector<int> flat_cols;
 
   ComputeLocalPart(a, b, start_row, local_rows, local_nnz, flat_values, flat_cols);
-  GatherResults(rank, size, dims[0], dims[2], local_rows, local_nnz, flat_values, flat_cols);
+  GatherResults(rank, size, dims[0], dims[2], local_rows, GetOutput(), local_nnz, flat_values, flat_cols);
 
   return true;
 }
