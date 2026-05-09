@@ -45,8 +45,8 @@ TEST_P(ZorinDRunPerfTests, ZorinDSEQStrassenRunPerfModes) {
 }
 
 const auto kPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZorinDStrassenAlgMatrixALL, ZorinDStrassenAlgMatrixSEQ,
-                                ZorinDStrassenAlgMatrixOMP, ZorinDStrassenAlgMatrixSTL, ZorinDStrassenAlgMatrixTBB>(
+    ppc::util::MakeAllPerfTasks<InType, ZorinDStrassenAlgMatrixSEQ, ZorinDStrassenAlgMatrixOMP,
+                                ZorinDStrassenAlgMatrixSTL, ZorinDStrassenAlgMatrixTBB, ZorinDStrassenAlgMatrixALL>(
         PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq);
 
 const auto kValues = ppc::util::TupleToGTestValues(kPerfTasks);
