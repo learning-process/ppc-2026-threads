@@ -24,6 +24,8 @@ class RozenbergAQuicksortSimpleMergeALL : public BaseTask {
   static void PushSubarrays(std::stack<std::pair<int, int>> &stack, int left, int right, int i, int j);
   static void Quicksort(InType &data, int low, int high);
   static InType Merge(const InType &v1, const InType &v2);
+  static void ThreadMerge(InType &data, int left, int mid, int right);
+  static void ThreadQuicksort(InType& local_data);
 };
 
 }  // namespace rozenberg_a_quicksort_simple_merge

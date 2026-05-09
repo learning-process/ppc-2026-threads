@@ -111,6 +111,58 @@ InType RozenbergAQuicksortSimpleMergeALL::Merge(const InType &v1, const InType &
   return res;
 }
 
+void RozenbergAQuicksortSimpleMergeALL::ThreadMerge(InType &data, int left, int mid, int right) {
+  std::vector<int> temp(right - left + 1);
+  int i = left;
+  int j = mid + 1;
+  int k = 0;
+
+  while (i <= mid && j <= right) {
+    if (data[i] <= data[j]) {
+      temp[k++] = data[i++];
+    } else {
+      temp[k++] = data[j++];
+    }
+  }
+
+  while (i <= mid) {
+    temp[k++] = data[i++];
+  }
+  while (j <= right) {
+    temp[k++] = data[j++];
+  }
+
+  for (int idx = 0; idx < k; ++idx) {
+    data[left + idx] = temp[idx];
+  }
+}
+
+void RozenbergAQuicksortSimpleMergeALL::ThreadQuicksort(InType& local_data) {
+  int num_threads = omp_get_max_threads();
+  int local_n = static_cast<int>(local_data.size());
+      
+  if (local_n > num_threads) {
+    std::vector<int> thr_borders(num_threads + 1);
+    int thr_chunk = local_n / num_threads;
+
+    for (int i = 0; i < num_threads; i++) {
+      thr_borders[i] = i * thr_chunk;
+    }
+    thr_borders[num_threads] = local_n;
+
+#pragma omp parallel for shared(local_data, thr_borders) num_threads(num_threads)
+    for (int i = 0; i < num_threads; i++) {
+      Quicksort(local_data, thr_borders[i], thr_borders[i + 1] - 1);
+    }
+
+    for (int i = 1; i < num_threads; i++) {
+      ThreadMerge(local_data, 0, thr_borders[i] - 1, thr_borders[i + 1] - 1);
+    }
+  } else {
+    Quicksort(local_data, 0, local_n - 1);
+  }
+}
+
 bool RozenbergAQuicksortSimpleMergeALL::RunImpl() {
   int rank = 0;
   int size = 0;
@@ -138,11 +190,7 @@ bool RozenbergAQuicksortSimpleMergeALL::RunImpl() {
   MPI_Scatterv(rank == 0 ? GetInput().data() : nullptr, send_counts.data(), displs.data(), MPI_INT, local_data.data(),
                send_counts[rank], MPI_INT, 0, MPI_COMM_WORLD);
 
-#pragma omp parallel default(none) shared(local_data)
-  {
-#pragma omp single
-    Quicksort(local_data, 0, static_cast<int>(local_data.size()) - 1);
-  }
+  ThreadQuicksort(local_data);
 
   if (rank != 0) {
     MPI_Send(local_data.data(), static_cast<int>(local_data.size()), MPI_INT, 0, 0, MPI_COMM_WORLD);
@@ -153,7 +201,6 @@ bool RozenbergAQuicksortSimpleMergeALL::RunImpl() {
       MPI_Recv(recv_buf.data(), send_counts[i], MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
       auto merged = Merge(total_data, recv_buf);
-      ;
       total_data.swap(merged);
     }
     GetOutput() = total_data;
