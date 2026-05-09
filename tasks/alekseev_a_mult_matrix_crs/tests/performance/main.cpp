@@ -9,6 +9,7 @@
 #include "alekseev_a_mult_matrix_crs/common/include/common.hpp"
 #include "alekseev_a_mult_matrix_crs/omp/include/ops_omp.hpp"
 #include "alekseev_a_mult_matrix_crs/seq/include/ops_seq.hpp"
+#include "alekseev_a_mult_matrix_crs/tbb/include/ops_tbb.hpp"
 #include "performance/include/performance.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -74,8 +75,9 @@ TEST_P(AlekseevAMultMatrixCRSPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, AlekseevAMultMatrixCRSSEQ, AlekseevAMultMatrixCRSOMP>(
-    PPC_SETTINGS_alekseev_a_mult_matrix_crs);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, AlekseevAMultMatrixCRSSEQ, AlekseevAMultMatrixCRSOMP,
+                                AlekseevAMultMatrixCRSTBB>(PPC_SETTINGS_alekseev_a_mult_matrix_crs);
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = AlekseevAMultMatrixCRSPerfTests::CustomPerfTestName;
 
