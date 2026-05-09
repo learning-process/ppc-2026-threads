@@ -1,8 +1,5 @@
 #pragma once
 
-#include <cstddef>
-#include <vector>
-
 #include "shkrebko_m_calc_of_integral_rect/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -23,20 +20,14 @@ class ShkrebkoMCalcOfIntegralRectALL : public BaseTask {
   bool PostProcessingImpl() override;
 
  private:
-  void BroadcastInputData(int rank, std::size_t &dims);
-  [[nodiscard]] std::size_t SelectSplitDimension() const;
-  bool ComputeSliceSum(std::size_t fixed_dim, std::size_t fixed_idx, const std::vector<double> &h,
-                       double &slice_sum) const;
-
-  // Новые вспомогательные методы для снижения когнитивной сложности RunImpl
-  [[nodiscard]] double ComputeCellVolume(const std::vector<double> &h) const;
-  [[nodiscard]] std::vector<std::size_t> DistributeSlices(int rank, int size, std::size_t split_steps) const;
-  [[nodiscard]] std::pair<double, bool> ComputeLocalSum(const std::vector<std::size_t> &local_slices,
-                                                        const std::vector<double> &h, std::size_t split_dim) const;
-  bool FinalizeResult(double local_sum, double cell_volume, bool local_ok, bool is_mpi, int rank);
+  void BroadcastInputData();
+  void FlatIndexToPoint(std::size_t flat_idx, const std::vector<double> &h, std::vector<double> &point) const;
 
   InType local_input_;
   double res_ = 0.0;
+  int rank_ = 0;
+  int world_size_ = 1;
+  bool use_mpi_ = false;
 };
 
 }  // namespace shkrebko_m_calc_of_integral_rect
