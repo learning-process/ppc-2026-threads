@@ -18,7 +18,6 @@
 #include "galkin_d_multidim_integrals_rectangles/omp/include/ops_omp.hpp"
 #include "galkin_d_multidim_integrals_rectangles/seq/include/ops_seq.hpp"
 #include "galkin_d_multidim_integrals_rectangles/stl/include/ops_stl.hpp"
-#include "galkin_d_multidim_integrals_rectangles/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -303,8 +302,6 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<GalkinDMultidi
                                            ppc::util::AddFuncTask<GalkinDMultidimIntegralsRectanglesSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_galkin_d_multidim_integrals_rectangles),
                                            ppc::util::AddFuncTask<GalkinDMultidimIntegralsRectanglesSTL, InType>(
-                                               kTestParam, PPC_SETTINGS_galkin_d_multidim_integrals_rectangles),
-                                           ppc::util::AddFuncTask<GalkinDMultidimIntegralsRectanglesTBB, InType>(
                                                kTestParam, PPC_SETTINGS_galkin_d_multidim_integrals_rectangles));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
