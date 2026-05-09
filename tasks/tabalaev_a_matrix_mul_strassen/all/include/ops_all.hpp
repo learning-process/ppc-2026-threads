@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstddef>
+#include <vector>
+
 #include "tabalaev_a_matrix_mul_strassen/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -26,6 +29,8 @@ class TabalaevAMatrixMulStrassenALL : public BaseTask {
   bool PostProcessingImpl() override;
 
   void RunMaster(int size);
+  void MasterBase(int size);
+  void MasterAll(int size);
   void RunWorker();
 
   static std::vector<double> StrassenMultiply(const std::vector<double> &mat_a, const std::vector<double> &mat_b,

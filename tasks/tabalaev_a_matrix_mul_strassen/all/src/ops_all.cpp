@@ -12,6 +12,8 @@
 #include <utility>
 #include <vector>
 
+#include "tabalaev_a_matrix_mul_strassen/common/include/common.hpp"
+
 namespace tabalaev_a_matrix_mul_strassen {
 
 static constexpr size_t kBaseCaseSize = 256;
@@ -135,85 +137,9 @@ bool TabalaevAMatrixMulStrassenALL::RunImpl() {
 
 void TabalaevAMatrixMulStrassenALL::RunMaster(int size) {
   if (size == 1 || padded_n_ <= kBaseCaseSize) {
-    result_c_ = StrassenMultiply(padded_a_, padded_b_, padded_n_);
-
-    uint64_t terminate_signal = 0;
-    for (int dest = 1; dest < size; ++dest) {
-      MPI_Send(&terminate_signal, 1, MPI_UINT64_T, dest, 0, MPI_COMM_WORLD);
-    }
+    MasterBase(size);
   } else {
-    size_t h = padded_n_ / 2;
-    std::vector<double> a11;
-    std::vector<double> a12;
-    std::vector<double> a21;
-    std::vector<double> a22;
-    std::vector<double> b11;
-    std::vector<double> b12;
-    std::vector<double> b21;
-    std::vector<double> b22;
-
-    SplitMatrix(padded_a_, padded_n_, a11, a12, a21, a22);
-    SplitMatrix(padded_b_, padded_n_, b11, b12, b21, b22);
-
-    std::vector<std::vector<double>> task_a = {Add(a11, a22),      Add(a21, a22),     a11, a22, Add(a11, a12),
-                                               Subtract(a21, a11), Subtract(a12, a22)};
-    std::vector<std::vector<double>> task_b = {Add(b11, b22), b11,           Subtract(b12, b22), Subtract(b21, b11),
-                                               b22,           Add(b11, b12), Add(b21, b22)};
-
-    std::vector<std::vector<double>> p(7, std::vector<double>(h * h));
-    int num_tasks = 7;
-    int tasks_sent = 0;
-    int tasks_completed = 0;
-
-    int h_squared = static_cast<int>(h * h);
-
-    for (int dest = 1; dest < size && tasks_sent < num_tasks; ++dest) {
-      auto h_msg = static_cast<uint64_t>(h);
-      MPI_Send(&h_msg, 1, MPI_UINT64_T, dest, 0, MPI_COMM_WORLD);
-      MPI_Send(&tasks_sent, 1, MPI_INT, dest, 1, MPI_COMM_WORLD);
-      MPI_Send(task_a[tasks_sent].data(), h_squared, MPI_DOUBLE, dest, 2, MPI_COMM_WORLD);
-      MPI_Send(task_b[tasks_sent].data(), h_squared, MPI_DOUBLE, dest, 3, MPI_COMM_WORLD);
-      tasks_sent++;
-    }
-
-    while (tasks_completed < num_tasks) {
-      MPI_Status status;
-      int task_id = 0;
-      MPI_Recv(&task_id, 1, MPI_INT, MPI_ANY_SOURCE, 4, MPI_COMM_WORLD, &status);
-
-      int worker = status.MPI_SOURCE;
-      MPI_Recv(p[task_id].data(), h_squared, MPI_DOUBLE, worker, 5, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      tasks_completed++;
-
-      if (tasks_sent < num_tasks) {
-        auto h_msg = static_cast<uint64_t>(h);
-        MPI_Send(&h_msg, 1, MPI_UINT64_T, worker, 0, MPI_COMM_WORLD);
-        MPI_Send(&tasks_sent, 1, MPI_INT, worker, 1, MPI_COMM_WORLD);
-        MPI_Send(task_a[tasks_sent].data(), h_squared, MPI_DOUBLE, worker, 2, MPI_COMM_WORLD);
-        MPI_Send(task_b[tasks_sent].data(), h_squared, MPI_DOUBLE, worker, 3, MPI_COMM_WORLD);
-        tasks_sent++;
-      }
-    }
-
-    uint64_t terminate_signal = 0;
-    for (int dest = 1; dest < size; ++dest) {
-      MPI_Send(&terminate_signal, 1, MPI_UINT64_T, dest, 0, MPI_COMM_WORLD);
-    }
-
-    std::vector<double> c11(h * h);
-    std::vector<double> c12(h * h);
-    std::vector<double> c21(h * h);
-    std::vector<double> c22(h * h);
-
-#pragma omp parallel for default(none) shared(p, c11, c12, c21, c22, h)
-    for (size_t i = 0; i < h * h; ++i) {
-      c11[i] = p[0][i] + p[3][i] - p[4][i] + p[6][i];
-      c12[i] = p[2][i] + p[4][i];
-      c21[i] = p[1][i] + p[3][i];
-      c22[i] = p[0][i] - p[1][i] + p[2][i] + p[5][i];
-    }
-
-    result_c_ = CombineMatrix(c11, c12, c21, c22, padded_n_);
+    MasterAll(size);
   }
 
   auto &out = GetOutput();
@@ -232,6 +158,90 @@ void TabalaevAMatrixMulStrassenALL::RunMaster(int size) {
   }
 }
 
+void TabalaevAMatrixMulStrassenALL::MasterBase(int size) {
+  result_c_ = StrassenMultiply(padded_a_, padded_b_, padded_n_);
+
+  uint64_t terminate_signal = 0;
+  for (int dest = 1; dest < size; ++dest) {
+    MPI_Send(&terminate_signal, 1, MPI_UINT64_T, dest, 0, MPI_COMM_WORLD);
+  }
+}
+
+void TabalaevAMatrixMulStrassenALL::MasterAll(int size) {
+  size_t h = padded_n_ / 2;
+  std::vector<double> a11;
+  std::vector<double> a12;
+  std::vector<double> a21;
+  std::vector<double> a22;
+  std::vector<double> b11;
+  std::vector<double> b12;
+  std::vector<double> b21;
+  std::vector<double> b22;
+
+  SplitMatrix(padded_a_, padded_n_, a11, a12, a21, a22);
+  SplitMatrix(padded_b_, padded_n_, b11, b12, b21, b22);
+
+  std::vector<std::vector<double>> task_a = {Add(a11, a22),      Add(a21, a22),     a11, a22, Add(a11, a12),
+                                             Subtract(a21, a11), Subtract(a12, a22)};
+  std::vector<std::vector<double>> task_b = {Add(b11, b22), b11,           Subtract(b12, b22), Subtract(b21, b11),
+                                             b22,           Add(b11, b12), Add(b21, b22)};
+
+  std::vector<std::vector<double>> p(7, std::vector<double>(h * h));
+  int num_tasks = 7;
+  int tasks_sent = 0;
+  int tasks_completed = 0;
+
+  int h_squared = static_cast<int>(h * h);
+
+  for (int dest = 1; dest < size && tasks_sent < num_tasks; ++dest) {
+    auto h_msg = static_cast<uint64_t>(h);
+    MPI_Send(&h_msg, 1, MPI_UINT64_T, dest, 0, MPI_COMM_WORLD);
+    MPI_Send(&tasks_sent, 1, MPI_INT, dest, 1, MPI_COMM_WORLD);
+    MPI_Send(task_a[tasks_sent].data(), h_squared, MPI_DOUBLE, dest, 2, MPI_COMM_WORLD);
+    MPI_Send(task_b[tasks_sent].data(), h_squared, MPI_DOUBLE, dest, 3, MPI_COMM_WORLD);
+    tasks_sent++;
+  }
+
+  while (tasks_completed < num_tasks) {
+    MPI_Status status;
+    int task_id = 0;
+    MPI_Recv(&task_id, 1, MPI_INT, MPI_ANY_SOURCE, 4, MPI_COMM_WORLD, &status);
+
+    int worker = status.MPI_SOURCE;
+    MPI_Recv(p[task_id].data(), h_squared, MPI_DOUBLE, worker, 5, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    tasks_completed++;
+
+    if (tasks_sent < num_tasks) {
+      auto h_msg = static_cast<uint64_t>(h);
+      MPI_Send(&h_msg, 1, MPI_UINT64_T, worker, 0, MPI_COMM_WORLD);
+      MPI_Send(&tasks_sent, 1, MPI_INT, worker, 1, MPI_COMM_WORLD);
+      MPI_Send(task_a[tasks_sent].data(), h_squared, MPI_DOUBLE, worker, 2, MPI_COMM_WORLD);
+      MPI_Send(task_b[tasks_sent].data(), h_squared, MPI_DOUBLE, worker, 3, MPI_COMM_WORLD);
+      tasks_sent++;
+    }
+  }
+
+  uint64_t terminate_signal = 0;
+  for (int dest = 1; dest < size; ++dest) {
+    MPI_Send(&terminate_signal, 1, MPI_UINT64_T, dest, 0, MPI_COMM_WORLD);
+  }
+
+  std::vector<double> c11(h * h);
+  std::vector<double> c12(h * h);
+  std::vector<double> c21(h * h);
+  std::vector<double> c22(h * h);
+
+#pragma omp parallel for default(none) shared(p, c11, c12, c21, c22, h)
+  for (size_t i = 0; i < h * h; ++i) {
+    c11[i] = p[0][i] + p[3][i] - p[4][i] + p[6][i];
+    c12[i] = p[2][i] + p[4][i];
+    c21[i] = p[1][i] + p[3][i];
+    c22[i] = p[0][i] - p[1][i] + p[2][i] + p[5][i];
+  }
+
+  result_c_ = CombineMatrix(c11, c12, c21, c22, padded_n_);
+}
+
 void TabalaevAMatrixMulStrassenALL::RunWorker() {
   while (true) {
     uint64_t h_msg = 0;
@@ -241,7 +251,7 @@ void TabalaevAMatrixMulStrassenALL::RunWorker() {
     if (h_msg == 0) {
       break;
     }
-    size_t h = static_cast<size_t>(h_msg);
+    auto h = static_cast<size_t>(h_msg);
     int h_squared = static_cast<int>(h * h);
 
     int task_id = 0;
