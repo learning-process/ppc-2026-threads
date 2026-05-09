@@ -12,6 +12,7 @@
 #include "shkrebko_m_calc_of_integral_rect/stl/include/ops_stl.hpp"
 #include "shkrebko_m_calc_of_integral_rect/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace shkrebko_m_calc_of_integral_rect {
 

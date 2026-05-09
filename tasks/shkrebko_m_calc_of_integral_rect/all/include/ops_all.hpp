@@ -28,6 +28,13 @@ class ShkrebkoMCalcOfIntegralRectALL : public BaseTask {
   bool ComputeSliceSum(std::size_t fixed_dim, std::size_t fixed_idx, const std::vector<double> &h,
                        double &slice_sum) const;
 
+  // Новые вспомогательные методы для снижения когнитивной сложности RunImpl
+  [[nodiscard]] double ComputeCellVolume(const std::vector<double> &h) const;
+  [[nodiscard]] std::vector<std::size_t> DistributeSlices(int rank, int size, std::size_t split_steps) const;
+  [[nodiscard]] std::pair<double, bool> ComputeLocalSum(const std::vector<std::size_t> &local_slices,
+                                                        const std::vector<double> &h, std::size_t split_dim) const;
+  bool FinalizeResult(double local_sum, double cell_volume, bool local_ok, bool is_mpi, int rank);
+
   InType local_input_;
   double res_ = 0.0;
 };
