@@ -1,11 +1,11 @@
 #include "shkrebko_m_calc_of_integral_rect/all/include/ops_all.hpp"
 
 #include <mpi.h>
-#include <omp.h>
 
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <iterator>
 #include <numeric>
 #include <thread>
 #include <vector>
@@ -93,7 +93,7 @@ void ShkrebkoMCalcOfIntegralRectALL::BroadcastInputData(int rank, std::size_t &d
 
 std::size_t ShkrebkoMCalcOfIntegralRectALL::SelectSplitDimension() const {
   const auto &n_steps = local_input_.n_steps;
-  const auto it = std::max_element(n_steps.begin(), n_steps.end());
+  const auto it = std::ranges::max_element(n_steps);
   return static_cast<std::size_t>(std::distance(n_steps.begin(), it));
 }
 
@@ -114,7 +114,7 @@ bool ShkrebkoMCalcOfIntegralRectALL::ComputeSliceSum(std::size_t fixed_dim, std:
   point[fixed_dim] = limits[fixed_dim].first + ((static_cast<double>(fixed_idx) + 0.5) * h[fixed_dim]);
 
   if (dim == 1) {
-    const double f_val = func(point);
+    double f_val = func(point);
     if (!std::isfinite(f_val)) {
       return false;
     }
@@ -130,21 +130,23 @@ bool ShkrebkoMCalcOfIntegralRectALL::ComputeSliceSum(std::size_t fixed_dim, std:
     }
   }
 
+  const auto free_count = static_cast<int>(free_dims.size());
   std::vector<int> idx(free_dims.size(), 0);
 
-  while (true) {
+  bool running = true;
+  while (running) {
     for (std::size_t j = 0; j < free_dims.size(); ++j) {
-      const std::size_t d = free_dims[j];
+      std::size_t d = free_dims[j];
       point[d] = limits[d].first + ((static_cast<double>(idx[j]) + 0.5) * h[d]);
     }
 
-    const double f_val = func(point);
+    double f_val = func(point);
     if (!std::isfinite(f_val)) {
       return false;
     }
     slice_sum += f_val;
 
-    int level = static_cast<int>(free_dims.size()) - 1;
+    int level = free_count - 1;
     while (level >= 0) {
       idx[level]++;
       if (idx[level] < n_steps[free_dims[static_cast<std::size_t>(level)]]) {
@@ -153,10 +155,7 @@ bool ShkrebkoMCalcOfIntegralRectALL::ComputeSliceSum(std::size_t fixed_dim, std:
       idx[level] = 0;
       level--;
     }
-
-    if (level < 0) {
-      break;
-    }
+    running = (level >= 0);
   }
 
   return true;
@@ -175,104 +174,71 @@ bool ShkrebkoMCalcOfIntegralRectALL::RunImpl() {
   std::size_t dims = (rank == 0) ? local_input_.limits.size() : 0;
   BroadcastInputData(rank, dims);
 
-  int root_has_func = 1;
-  if (is_mpi) {
-    if (rank == 0) {
-      root_has_func = static_cast<bool>(local_input_.func) ? 1 : 0;
-    }
-    MPI_Bcast(&root_has_func, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  } else {
-    root_has_func = static_cast<bool>(local_input_.func) ? 1 : 0;
-  }
-
-  if (root_has_func == 0) {
-    return false;
-  }
-
-  const std::size_t dim = local_input_.limits.size();
   const auto &limits = local_input_.limits;
   const auto &n_steps = local_input_.n_steps;
 
-  std::vector<double> h(dim);
+  std::vector<double> h(dims);
   double cell_volume = 1.0;
-  for (std::size_t i = 0; i < dim; ++i) {
+  for (std::size_t i = 0; i < dims; ++i) {
     h[i] = (limits[i].second - limits[i].first) / static_cast<double>(n_steps[i]);
     cell_volume *= h[i];
   }
 
-  const bool has_local_func = static_cast<bool>(local_input_.func);
-
-  int func_ready = has_local_func ? 1 : 0;
-  int func_ready_sum = func_ready;
-  if (is_mpi) {
-    MPI_Allreduce(&func_ready, &func_ready_sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-  }
-
-  const bool all_ranks_have_func = (!is_mpi) || (func_ready_sum == size);
   const std::size_t split_dim = SelectSplitDimension();
-  const std::size_t split_steps = static_cast<std::size_t>(n_steps[split_dim]);
+  const auto split_steps = static_cast<std::size_t>(n_steps[split_dim]);
 
+  // Collect slices for this rank (cyclic distribution)
   std::vector<std::size_t> local_slices;
-  if (all_ranks_have_func) {
-    for (std::size_t slice = static_cast<std::size_t>(rank); slice < split_steps;
-         slice += static_cast<std::size_t>(size)) {
-      local_slices.push_back(slice);
-    }
-  } else if (rank == 0) {
-    local_slices.resize(split_steps);
-    std::iota(local_slices.begin(), local_slices.end(), 0);
+  for (auto slice = static_cast<std::size_t>(rank); slice < split_steps; slice += static_cast<std::size_t>(size)) {
+    local_slices.push_back(slice);
   }
 
   double local_sum = 0.0;
   bool local_ok = true;
 
   if (!local_slices.empty()) {
-    const int requested_threads = std::max(1, ppc::util::GetNumThreads());
-    const std::size_t thread_count =
-        std::min<std::size_t>(static_cast<std::size_t>(requested_threads), local_slices.size());
+    const auto requested = static_cast<std::size_t>(std::max(1, ppc::util::GetNumThreads()));
+    const std::size_t thread_count = std::min(requested, local_slices.size());
 
     std::vector<std::thread> threads;
     threads.reserve(thread_count);
-
     std::vector<double> partial_sums(thread_count, 0.0);
-    std::vector<int> partial_ok(thread_count, 1);
+    std::vector<bool> partial_ok(thread_count, true);
 
     for (std::size_t tid = 0; tid < thread_count; ++tid) {
-      threads.emplace_back([&, tid]() {
+      threads.emplace_back([this, &local_slices, &h, &partial_sums, &partial_ok, tid, thread_count, split_dim]() {
         double thread_sum = 0.0;
-        bool thread_ok = true;
 
         for (std::size_t pos = tid; pos < local_slices.size(); pos += thread_count) {
           double slice_sum = 0.0;
           if (!ComputeSliceSum(split_dim, local_slices[pos], h, slice_sum)) {
-            thread_ok = false;
-            break;
+            partial_ok[tid] = false;
+            return;
           }
           thread_sum += slice_sum;
         }
 
         partial_sums[tid] = thread_sum;
-        partial_ok[tid] = thread_ok ? 1 : 0;
       });
     }
 
-    for (auto &thread : threads) {
-      if (thread.joinable()) {
-        thread.join();
+    for (auto &t : threads) {
+      if (t.joinable()) {
+        t.join();
       }
     }
 
     for (std::size_t i = 0; i < thread_count; ++i) {
       local_sum += partial_sums[i];
-      if (partial_ok[i] == 0) {
+      if (!partial_ok[i]) {
         local_ok = false;
       }
     }
   }
 
   if (is_mpi) {
-    int global_ok = 0;
     int local_ok_int = local_ok ? 1 : 0;
+    int global_ok = 0;
     MPI_Allreduce(&local_ok_int, &global_ok, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
 
     if (global_ok == 0) {
