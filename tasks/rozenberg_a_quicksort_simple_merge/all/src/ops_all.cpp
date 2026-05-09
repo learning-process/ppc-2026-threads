@@ -137,10 +137,10 @@ void RozenbergAQuicksortSimpleMergeALL::ThreadMerge(InType &data, int left, int 
   }
 }
 
-void RozenbergAQuicksortSimpleMergeALL::ThreadQuicksort(InType& local_data) {
+void RozenbergAQuicksortSimpleMergeALL::ThreadQuicksort(InType &local_data) {
   int num_threads = omp_get_max_threads();
   int local_n = static_cast<int>(local_data.size());
-      
+
   if (local_n > num_threads) {
     std::vector<int> thr_borders(num_threads + 1);
     int thr_chunk = local_n / num_threads;
@@ -150,7 +150,7 @@ void RozenbergAQuicksortSimpleMergeALL::ThreadQuicksort(InType& local_data) {
     }
     thr_borders[num_threads] = local_n;
 
-#pragma omp parallel for shared(local_data, thr_borders) num_threads(num_threads)
+#pragma omp parallel for default(none) shared(local_data, thr_borders) num_threads(num_threads)
     for (int i = 0; i < num_threads; i++) {
       Quicksort(local_data, thr_borders[i], thr_borders[i + 1] - 1);
     }
