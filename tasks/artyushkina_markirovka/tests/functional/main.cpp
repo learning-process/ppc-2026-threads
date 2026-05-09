@@ -83,7 +83,7 @@ class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType
   OutType expected_;
 };
 
-// namespace
+// SEQ тесты (без изменений)
 namespace {
 
 TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponents) {
@@ -105,8 +105,9 @@ INSTANTIATE_TEST_SUITE_P(ComponentLabeling, ArtyushkinaMarkirovkaFuncTests, kGte
 
 }  // namespace
 
-// namespace tbb_tests
+// TBB тесты с анонимным namespace
 namespace tbb_tests {
+namespace {  // Добавлен анонимный namespace для устранения предупреждений clang-tidy
 
 TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponentsTBB) {
   ExecuteTest(GetParam());
@@ -122,6 +123,8 @@ const auto kTestTasksList =
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = ArtyushkinaMarkirovkaFuncTests::PrintFuncTestName<ArtyushkinaMarkirovkaFuncTests>;
+
+}  // namespace
 
 INSTANTIATE_TEST_SUITE_P(ComponentLabelingTBB, ArtyushkinaMarkirovkaFuncTests, kGtestValues, kPerfTestName);
 

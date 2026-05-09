@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ARTYUSHKINA_MARKIROVKA_TBB_INCLUDE_OPS_TBB_HPP_
+#define ARTYUSHKINA_MARKIROVKA_TBB_INCLUDE_OPS_TBB_HPP_
 
 #include <atomic>
 #include <vector>
@@ -37,7 +38,8 @@ class MarkingComponentsTBB : public BaseTask {
   std::vector<int> parent_;
   InType input_;
   std::atomic<int> next_label_{1};
-  bool is_test5_ = false;
 };
 
 }  // namespace artyushkina_markirovka
+
+#endif  // ARTYUSHKINA_MARKIROVKA_TBB_INCLUDE_OPS_TBB_HPP_

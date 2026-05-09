@@ -1,7 +1,6 @@
 #include "artyushkina_markirovka/tbb/include/ops_tbb.hpp"
 
 #include <tbb/blocked_range.h>
-#include <tbb/concurrent_vector.h>
 #include <tbb/mutex.h>
 #include <tbb/parallel_for.h>
 
@@ -17,16 +16,21 @@ namespace {
 
 tbb::mutex union_mutex;
 
+// 4-связность: только соседи сверху и слева
 void CollectNeighbors4ConnectivityImpl(int i, int j, const std::vector<std::vector<int>> &temp_labels,
-                                       std::vector<int> &neighbor_labels, int /*cols*/) {
+                                       std::vector<int> &neighbor_labels) {
+  // Сосед сверху
   if (i > 0) {
-    if (temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)] != 0) {
-      neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)]);
+    int neighbor = temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)];
+    if (neighbor != 0) {
+      neighbor_labels.push_back(neighbor);
     }
   }
+  // Сосед слева
   if (j > 0) {
-    if (temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j - 1)] != 0) {
-      neighbor_labels.push_back(temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j - 1)]);
+    int neighbor = temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j - 1)];
+    if (neighbor != 0) {
+      neighbor_labels.push_back(neighbor);
     }
   }
 }
@@ -37,9 +41,7 @@ int FindMinLabel(const std::vector<int> &labels) {
   }
   int min_label = labels[0];
   for (std::size_t k = 1; k < labels.size(); ++k) {
-    if (labels[k] < min_label) {
-      min_label = labels[k];
-    }
+    min_label = std::min(labels[k], min_label);
   }
   return min_label;
 }
@@ -77,7 +79,6 @@ bool MarkingComponentsTBB::PreProcessingImpl() {
   parent_.clear();
   parent_.push_back(0);
   next_label_ = 1;
-  is_test5_ = false;
 
   return true;
 }
@@ -114,25 +115,11 @@ void MarkingComponentsTBB::UnionLabels(std::vector<int> &parent, int label1, int
 }
 
 bool MarkingComponentsTBB::IsTest5() const {
-  if (rows_ != 4 || cols_ != 4) {
-    return false;
-  }
-  int object_count = 0;
-  for (int i = 0; i < rows_; ++i) {
-    for (int j = 0; j < cols_; ++j) {
-      std::size_t idx =
-          (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(j) + 2;
-      if (input_[idx] == 0) {
-        ++object_count;
-      }
-    }
-  }
-  return object_count == 9;
+  // Для 4-связности test5 не нужен, всегда возвращаем false
+  return false;
 }
 
 void MarkingComponentsTBB::ProcessFirstPass() {
-  is_test5_ = IsTest5();
-
   tbb::parallel_for(0, rows_, [&](int i) {
     for (int j = 0; j < cols_; ++j) {
       std::size_t idx =
@@ -144,8 +131,7 @@ void MarkingComponentsTBB::ProcessFirstPass() {
 
       std::vector<int> neighbor_labels;
       neighbor_labels.reserve(2);
-
-      CollectNeighbors4ConnectivityImpl(i, j, temp_labels_, neighbor_labels, cols_);
+      CollectNeighbors4ConnectivityImpl(i, j, temp_labels_, neighbor_labels);
 
       if (neighbor_labels.empty()) {
         int label = next_label_++;
@@ -173,9 +159,9 @@ void MarkingComponentsTBB::ProcessFirstPass() {
 void MarkingComponentsTBB::ResolveEquivalences() {
   tbb::parallel_for(0, rows_, [&](int i) {
     for (int j = 0; j < cols_; ++j) {
-      if (temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] != 0) {
-        int root = FindRoot(parent_, temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)]);
-        temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = root;
+      int &label = temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
+      if (label != 0) {
+        label = FindRoot(parent_, label);
       }
     }
   });
@@ -183,7 +169,7 @@ void MarkingComponentsTBB::ResolveEquivalences() {
 
 void MarkingComponentsTBB::RemapLabels() {
   std::vector<int> unique_labels;
-  unique_labels.reserve(static_cast<std::size_t>(rows_ * cols_));
+  unique_labels.reserve(static_cast<std::size_t>(rows_) * static_cast<std::size_t>(cols_));
 
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
@@ -194,9 +180,9 @@ void MarkingComponentsTBB::RemapLabels() {
     }
   }
 
-  std::sort(unique_labels.begin(), unique_labels.end());
-  auto last = std::unique(unique_labels.begin(), unique_labels.end());
-  unique_labels.erase(last, unique_labels.end());
+  std::ranges::sort(unique_labels);
+  auto last = std::ranges::unique(unique_labels);
+  unique_labels.erase(last.begin(), last.end());
 
   std::map<int, int> label_mapping;
   int current_label = 1;
