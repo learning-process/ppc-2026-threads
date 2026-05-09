@@ -34,7 +34,7 @@ bool ZhurinIGaussKernelSEQ::ValidationImpl() {
   }
   return true;
 }
-
+//
 bool ZhurinIGaussKernelSEQ::PreProcessingImpl() {
   const auto &in = GetInput();
   width_ = std::get<0>(in);
