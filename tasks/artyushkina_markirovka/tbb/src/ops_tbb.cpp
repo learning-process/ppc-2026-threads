@@ -16,40 +16,36 @@ namespace {
 
 tbb::mutex union_mutex;
 
+// Вспомогательная функция для проверки и добавления соседа
+void AddNeighborIfValid(int neighbor_label, std::vector<int>& neighbor_labels) {
+  if (neighbor_label != 0) {
+    neighbor_labels.push_back(neighbor_label);
+  }
+}
+
 // 8-связность: сбор меток соседей (только для объектов)
-void CollectNeighborsLabels(int i, int j, const std::vector<std::vector<int>> &temp_labels,
-                            std::vector<int> &neighbor_labels, int /*rows*/, int cols) {
+void CollectNeighborsLabels(int i, int j, const std::vector<std::vector<int>>& temp_labels,
+                            std::vector<int>& neighbor_labels, int /*rows*/, int cols) {
   // Сосед сверху-слева (диагональ)
   if (i > 0 && j > 0) {
-    int neighbor = temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j - 1)];
-    if (neighbor != 0) {
-      neighbor_labels.push_back(neighbor);
-    }
+    AddNeighborIfValid(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j - 1)], neighbor_labels);
   }
   // Сосед сверху
   if (i > 0) {
-    int neighbor = temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)];
-    if (neighbor != 0) {
-      neighbor_labels.push_back(neighbor);
-    }
+    AddNeighborIfValid(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)], neighbor_labels);
   }
   // Сосед сверху-справа (диагональ)
   if (i > 0 && j + 1 < cols) {
     int neighbor = temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j + 1)];
-    if (neighbor != 0) {
-      neighbor_labels.push_back(neighbor);
-    }
+    AddNeighborIfValid(neighbor, neighbor_labels);
   }
   // Сосед слева
   if (j > 0) {
-    int neighbor = temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j - 1)];
-    if (neighbor != 0) {
-      neighbor_labels.push_back(neighbor);
-    }
+    AddNeighborIfValid(temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j - 1)], neighbor_labels);
   }
 }
 
-int FindMinLabel(const std::vector<int> &labels) {
+int FindMinLabel(const std::vector<int>& labels) {
   if (labels.empty()) {
     return 0;
   }
@@ -60,9 +56,51 @@ int FindMinLabel(const std::vector<int> &labels) {
   return min_label;
 }
 
+// Вынесем логику обработки пикселя в отдельную функцию для снижения когнитивной сложности
+void ProcessPixel(int i, int j, const InType& input, int cols, 
+                  std::vector<std::vector<int>>& temp_labels,
+                  std::vector<int>& parent, std::atomic<int>& next_label) {
+  std::size_t idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + 
+                    static_cast<std::size_t>(j) + 2;
+
+  // Проверка: 0 означает объект (черный), ненулевое - фон (белый)
+  if (input[idx] != 0) {
+    return;  // пропускаем фон
+  }
+
+  std::vector<int> neighbor_labels;
+  neighbor_labels.reserve(4);
+
+  // Собираем метки соседей с 8-связностью
+  CollectNeighborsLabels(i, j, temp_labels, neighbor_labels, 0, cols);
+
+  if (neighbor_labels.empty()) {
+    // Нет соседей - новый компонент
+    int label = next_label++;
+    temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = label;
+
+    tbb::mutex::scoped_lock lock(union_mutex);
+    if (static_cast<std::size_t>(label) >= parent.size()) {
+      parent.resize(static_cast<std::size_t>(label) + 1);
+    }
+    parent[static_cast<std::size_t>(label)] = label;
+  } else {
+    // Есть соседи - берем минимальную метку
+    int min_label = FindMinLabel(neighbor_labels);
+    temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = min_label;
+
+    // Объединяем все метки соседей
+    for (int label : neighbor_labels) {
+      if (label != min_label) {
+        MarkingComponentsTBB::UnionLabels(parent, min_label, label);
+      }
+    }
+  }
+}
+
 }  // namespace
 
-MarkingComponentsTBB::MarkingComponentsTBB(const InType &in) {
+MarkingComponentsTBB::MarkingComponentsTBB(const InType& in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = OutType();
@@ -73,7 +111,7 @@ bool MarkingComponentsTBB::ValidationImpl() {
 }
 
 bool MarkingComponentsTBB::PreProcessingImpl() {
-  const auto &input = GetInput();
+  const auto& input = GetInput();
   rows_ = static_cast<int>(input[0]);
   cols_ = static_cast<int>(input[1]);
   input_ = input;
@@ -97,7 +135,7 @@ bool MarkingComponentsTBB::PreProcessingImpl() {
   return true;
 }
 
-int MarkingComponentsTBB::FindRoot(std::vector<int> &parent, int label) {
+int MarkingComponentsTBB::FindRoot(std::vector<int>& parent, int label) {
   int current_label = label;
   while (parent[static_cast<std::size_t>(current_label)] != current_label) {
     parent[static_cast<std::size_t>(current_label)] =
@@ -107,7 +145,7 @@ int MarkingComponentsTBB::FindRoot(std::vector<int> &parent, int label) {
   return current_label;
 }
 
-void MarkingComponentsTBB::UnionLabels(std::vector<int> &parent, int label1, int label2) {
+void MarkingComponentsTBB::UnionLabels(std::vector<int>& parent, int label1, int label2) {
   if (label1 == label2) {
     return;
   }
@@ -128,42 +166,7 @@ void MarkingComponentsTBB::UnionLabels(std::vector<int> &parent, int label1, int
 void MarkingComponentsTBB::ProcessFirstPass() {
   tbb::parallel_for(0, rows_, [&](int i) {
     for (int j = 0; j < cols_; ++j) {
-      std::size_t idx =
-          (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(j) + 2;
-
-      // Проверка: 0 означает объект (черный), ненулевое - фон (белый)
-      if (input_[idx] != 0) {
-        continue;  // пропускаем фон
-      }
-
-      std::vector<int> neighbor_labels;
-      neighbor_labels.reserve(4);
-
-      // Собираем метки соседей с 8-связностью
-      CollectNeighborsLabels(i, j, temp_labels_, neighbor_labels, rows_, cols_);
-
-      if (neighbor_labels.empty()) {
-        // Нет соседей - новый компонент
-        int label = next_label_++;
-        temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = label;
-
-        tbb::mutex::scoped_lock lock(union_mutex);
-        if (static_cast<std::size_t>(label) >= parent_.size()) {
-          parent_.resize(static_cast<std::size_t>(label) + 1);
-        }
-        parent_[static_cast<std::size_t>(label)] = label;
-      } else {
-        // Есть соседи - берем минимальную метку
-        int min_label = FindMinLabel(neighbor_labels);
-        temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = min_label;
-
-        // Объединяем все метки соседей
-        for (int label : neighbor_labels) {
-          if (label != min_label) {
-            UnionLabels(parent_, min_label, label);
-          }
-        }
-      }
+      ProcessPixel(i, j, input_, cols_, temp_labels_, parent_, next_label_);
     }
   });
 }
@@ -171,7 +174,7 @@ void MarkingComponentsTBB::ProcessFirstPass() {
 void MarkingComponentsTBB::ResolveEquivalences() {
   tbb::parallel_for(0, rows_, [&](int i) {
     for (int j = 0; j < cols_; ++j) {
-      int &label = temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
+      int& label = temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
       if (label != 0) {
         label = FindRoot(parent_, label);
       }
@@ -230,7 +233,7 @@ bool MarkingComponentsTBB::RunImpl() {
 }
 
 bool MarkingComponentsTBB::PostProcessingImpl() {
-  OutType &output = GetOutput();
+  OutType& output = GetOutput();
   output.clear();
 
   output.push_back(rows_);
