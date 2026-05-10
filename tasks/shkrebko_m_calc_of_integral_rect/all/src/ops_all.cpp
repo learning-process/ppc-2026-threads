@@ -4,8 +4,10 @@
 #include <omp.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
-#include <cstdint>
+#include <functional>
+#include <utility>
 #include <vector>
 
 #include "shkrebko_m_calc_of_integral_rect/common/include/common.hpp"
@@ -34,127 +36,154 @@ bool ShkrebkoMCalcOfIntegralRectALL::ValidationImpl() {
   if (!std::ranges::all_of(input.limits, [](const auto &lim) { return lim.first < lim.second; })) {
     return false;
   }
-
   return true;
 }
 
 bool ShkrebkoMCalcOfIntegralRectALL::PreProcessingImpl() {
   local_input_ = GetInput();
   res_ = 0.0;
-
-  use_mpi_ = ppc::util::IsUnderMpirun();
-  if (use_mpi_) {
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size_);
-  } else {
-    rank_ = 0;
-    world_size_ = 1;
-  }
-
   return true;
 }
 
-void ShkrebkoMCalcOfIntegralRectALL::BroadcastInputData() {
-  int num_dims = (rank_ == 0) ? static_cast<int>(local_input_.limits.size()) : 0;
-  MPI_Bcast(&num_dims, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  if (rank_ != 0) {
-    local_input_.limits.resize(static_cast<std::size_t>(num_dims));
-    local_input_.n_steps.resize(static_cast<std::size_t>(num_dims));
+void ShkrebkoMCalcOfIntegralRectALL::DistributeData(int rank, size_t &dims) {
+  if (!ppc::util::IsUnderMpirun()) {
+    return;
   }
 
-  const auto udims = static_cast<std::size_t>(num_dims);
-  std::vector<double> flat_limits(udims * 2);
+  int dims_int = static_cast<int>(dims);
+  MPI_Bcast(&dims_int, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  dims = static_cast<size_t>(dims_int);
 
-  if (rank_ == 0) {
-    for (std::size_t i = 0; i < udims; ++i) {
-      flat_limits[(2 * i)] = local_input_.limits[i].first;
-      flat_limits[(2 * i) + 1] = local_input_.limits[i].second;
-    }
+  if (rank != 0) {
+    local_input_.limits.resize(dims);
+    local_input_.n_steps.resize(dims);
   }
 
-  MPI_Bcast(flat_limits.data(), 2 * num_dims, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(local_input_.n_steps.data(), num_dims, MPI_INT, 0, MPI_COMM_WORLD);
-
-  if (rank_ != 0) {
-    for (std::size_t i = 0; i < udims; ++i) {
-      local_input_.limits[i].first = flat_limits[(2 * i)];
-      local_input_.limits[i].second = flat_limits[(2 * i) + 1];
-    }
+  for (size_t i = 0; i < dims; ++i) {
+    MPI_Bcast(&local_input_.limits[i].first, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&local_input_.limits[i].second, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&local_input_.n_steps[i], 1, MPI_INT, 0, MPI_COMM_WORLD);
   }
 }
 
-bool ShkrebkoMCalcOfIntegralRectALL::RunImpl() {
-  if (use_mpi_) {
-    auto saved_func = local_input_.func;
-    BroadcastInputData();
-    if (!local_input_.func) {
-      local_input_.func = saved_func;
-    }
+double ShkrebkoMCalcOfIntegralRectALL::ComputeChunkSum(size_t start_idx, size_t end_idx, const std::vector<double> &h,
+                                                       const std::vector<std::pair<double, double>> &limits,
+                                                       const std::vector<int> &n_steps,
+                                                       const std::function<double(const std::vector<double> &)> &func) {
+  if (start_idx >= end_idx) {
+    return 0.0;
   }
 
-  const std::size_t dims = local_input_.limits.size();
-  const auto &limits = local_input_.limits;
-  const auto &n_steps = local_input_.n_steps;
-  const auto &func = local_input_.func;
+  const size_t dim = limits.size();
+  const size_t count = end_idx - start_idx;
+
+  std::vector<int> indices(dim);
+  std::vector<double> point(dim);
+
+  size_t tmp = start_idx;
+  for (int d = static_cast<int>(dim) - 1; d >= 0; --d) {
+    indices[d] = static_cast<int>(tmp % static_cast<size_t>(n_steps[d]));
+    tmp /= static_cast<size_t>(n_steps[d]);
+  }
+
+  double sum = 0.0;
+  for (size_t iter = 0; iter < count; ++iter) {
+    for (size_t d = 0; d < dim; ++d) {
+      point[d] = limits[d].first + (static_cast<double>(indices[d]) + 0.5) * h[d];
+    }
+    sum += func(point);
+
+    // move to next index
+    int d = static_cast<int>(dim) - 1;
+    while (d >= 0) {
+      indices[d]++;
+      if (indices[d] < n_steps[d]) {
+        break;
+      }
+      indices[d] = 0;
+      d--;
+    }
+  }
+  return sum;
+}
+
+bool ShkrebkoMCalcOfIntegralRectALL::RunImpl() {
+  int rank = 0;
+  int size = 1;
+  bool is_mpi = ppc::util::IsUnderMpirun();
+
+  if (is_mpi) {
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+  }
+
+  size_t dims = (rank == 0) ? local_input_.limits.size() : 0;
+  DistributeData(rank, dims);
 
   std::vector<double> h(dims);
   double cell_volume = 1.0;
-  std::int64_t total_points = 1;
+  size_t total_points = 1;
 
-  for (std::size_t i = 0; i < dims; ++i) {
-    h[i] = (limits[i].second - limits[i].first) / static_cast<double>(n_steps[i]);
+  for (size_t i = 0; i < dims; ++i) {
+    const double left = local_input_.limits[i].first;
+    const double right = local_input_.limits[i].second;
+    const int steps = local_input_.n_steps[i];
+    h[i] = (right - left) / static_cast<double>(steps);
     cell_volume *= h[i];
-    total_points *= static_cast<std::int64_t>(n_steps[i]);
+    total_points *= static_cast<size_t>(steps);
   }
 
-  const std::int64_t base_per_rank = total_points / world_size_;
-  const std::int64_t leftover = total_points % world_size_;
+  size_t proc_chunk = total_points / static_cast<size_t>(size);
+  size_t proc_remainder = total_points % static_cast<size_t>(size);
+  size_t my_start = static_cast<size_t>(rank) * proc_chunk + std::min(static_cast<size_t>(rank), proc_remainder);
+  size_t my_count = proc_chunk + (static_cast<size_t>(rank) < proc_remainder ? 1 : 0);
 
-  const std::int64_t my_start = (rank_ * base_per_rank) + std::min(static_cast<std::int64_t>(rank_), leftover);
-  const std::int64_t my_count = base_per_rank + (rank_ < static_cast<int>(leftover) ? 1 : 0);
-
-  double rank_sum = 0.0;
+  double local_sum = 0.0;
 
   if (my_count > 0) {
-    omp_set_num_threads(ppc::util::GetNumThreads());
+    int num_threads = ppc::util::GetNumThreads();
+    omp_set_num_threads(num_threads);
 
-#pragma omp parallel default(none) shared(my_start, my_count, h, limits, n_steps, func, dims) reduction(+ : rank_sum)
+    const auto &func = local_input_.func;
+    const auto &n_steps = local_input_.n_steps;
+    const auto &limits = local_input_.limits;
+
+#pragma omp parallel default(none) shared(h, dims, my_start, my_count, func, n_steps, limits) reduction(+ : local_sum)
     {
-      std::vector<double> point(dims);
+      int tid = omp_get_thread_num();
+      int t_count = omp_get_num_threads();
 
-#pragma omp for schedule(static)
-      for (std::int64_t idx = 0; idx < my_count; ++idx) {
-        auto global_idx = static_cast<std::size_t>(my_start + idx);
+      size_t thread_chunk = my_count / static_cast<size_t>(t_count);
+      size_t thread_remainder = my_count % static_cast<size_t>(t_count);
+      size_t thread_start =
+          my_start + static_cast<size_t>(tid) * thread_chunk + std::min(static_cast<size_t>(tid), thread_remainder);
+      size_t thread_count = thread_chunk + (static_cast<size_t>(tid) < thread_remainder ? 1 : 0);
 
-        std::size_t tmp = global_idx;
-        for (int dim = static_cast<int>(dims) - 1; dim >= 0; --dim) {
-          auto sc = static_cast<std::size_t>(n_steps[dim]);
-          const std::size_t ci = tmp % sc;
-          tmp /= sc;
-          point[dim] = limits[dim].first + ((static_cast<double>(ci) + 0.5) * h[dim]);
-        }
-
-        rank_sum += func(point);
+      if (thread_count > 0) {
+        local_sum += ComputeChunkSum(thread_start, thread_start + thread_count, h, limits, n_steps, func);
       }
     }
   }
 
-  if (use_mpi_) {
-    double aggregated_sum = 0.0;
-    MPI_Reduce(&rank_sum, &aggregated_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    if (rank_ == 0) {
-      res_ = aggregated_sum * cell_volume;
+  if (is_mpi) {
+    double global_sum = 0.0;
+    MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (rank == 0) {
+      res_ = global_sum * cell_volume;
     }
   } else {
-    res_ = rank_sum * cell_volume;
+    res_ = local_sum * cell_volume;
   }
 
   return true;
 }
 
 bool ShkrebkoMCalcOfIntegralRectALL::PostProcessingImpl() {
-  if (rank_ == 0) {
+  int rank = 0;
+  if (ppc::util::IsUnderMpirun()) {
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  }
+  if (rank == 0) {
     GetOutput() = res_;
   }
   return true;
