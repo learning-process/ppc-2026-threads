@@ -22,13 +22,12 @@ class ShkrebkoMRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType>
 
  protected:
   void SetUp() override {
+    input_data_.func = [](const std::vector<double> &x) { return std::sin(x[0]) + std::cos(x[1]) + x[2]; };
+
     int rank = 0;
     if (ppc::util::IsUnderMpirun()) {
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
-
-    input_data_.func = [](const std::vector<double> &x) { return std::sin(x[0]) + std::cos(x[1]) + x[2]; };
-
     if (rank == 0) {
       expected_ = (1.0 - std::cos(1.0)) + std::sin(1.0) + 0.5;
       input_data_.limits = {{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}};
