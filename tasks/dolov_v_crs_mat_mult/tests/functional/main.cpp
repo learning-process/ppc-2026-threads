@@ -113,7 +113,7 @@ class DolovVCrsMatMultRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<I
     int is_mpi_init = 0;
 
     MPI_Initialized(&is_mpi_init);
-    if (is_mpi_init) {
+    if (is_mpi_init != 0) {
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
 
