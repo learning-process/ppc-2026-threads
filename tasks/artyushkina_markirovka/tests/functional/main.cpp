@@ -105,13 +105,12 @@ INSTANTIATE_TEST_SUITE_P(ComponentLabeling, ArtyushkinaMarkirovkaFuncTests, kGte
 
 }  // namespace
 
-// TBB тесты
-namespace tbb_tests {
+}  // namespace artyushkina_markirovka
+
+// TBB тесты - отдельный анонимный namespace
 namespace {
 
-TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponentsTBB) {
-  ExecuteTest(GetParam());
-}
+using namespace artyushkina_markirovka;
 
 const std::array<TestType, 5> kTbbTestParam = {
     std::make_tuple(0, "L_shaped_component_8connectivity"), std::make_tuple(1, "diagonal_connected_components"),
@@ -124,10 +123,6 @@ const auto kTbbGtestValues = ppc::util::ExpandToValues(kTbbTestTasksList);
 
 const auto kTbbPerfTestName = ArtyushkinaMarkirovkaFuncTests::PrintFuncTestName<ArtyushkinaMarkirovkaFuncTests>;
 
-}  // namespace
-
 INSTANTIATE_TEST_SUITE_P(ComponentLabelingTBB, ArtyushkinaMarkirovkaFuncTests, kTbbGtestValues, kTbbPerfTestName);
 
-}  // namespace tbb_tests
-
-}  // namespace artyushkina_markirovka
+}  // namespace

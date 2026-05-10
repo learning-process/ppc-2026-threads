@@ -37,9 +37,8 @@ void CollectNeighborsLabels(int i, int j, const std::vector<std::vector<int>> &t
   }
   // Сосед сверху-справа (диагональ)
   if (i > 0 && j + 1 < cols) {
-    // Используем промежуточную переменную для индексов
-    std::size_t row_idx = static_cast<std::size_t>(i - 1);
-    std::size_t col_idx = static_cast<std::size_t>(j + 1);
+    auto row_idx = static_cast<std::size_t>(i - 1);
+    auto col_idx = static_cast<std::size_t>(j + 1);
     AddNeighborIfValid(temp_labels[row_idx][col_idx], neighbor_labels);
   }
   // Сосед слева
@@ -62,7 +61,7 @@ int FindMinLabel(const std::vector<int> &labels) {
 // Вынесем логику обработки пикселя в отдельную функцию для снижения когнитивной сложности
 void ProcessPixel(int i, int j, const InType &input, int cols, std::vector<std::vector<int>> &temp_labels,
                   std::vector<int> &parent, std::atomic<int> &next_label) {
-  std::size_t idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
+  auto idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
 
   // Проверка: 0 означает объект (черный), ненулевое - фон (белый)
   if (input[idx] != 0) {
@@ -197,16 +196,9 @@ void MarkingComponentsTBB::RemapLabels() {
     }
   }
 
-// Используем ranges::sort если доступно, иначе оставляем std::sort
-#if __cplusplus >= 202002L
-  std::ranges::sort(unique_labels);
-  auto last = std::ranges::unique(unique_labels);
-  unique_labels.erase(last.begin(), last.end());
-#else
   std::sort(unique_labels.begin(), unique_labels.end());
   auto last = std::unique(unique_labels.begin(), unique_labels.end());
   unique_labels.erase(last, unique_labels.end());
-#endif
 
   // Создаем отображение старых меток на новые (1, 2, 3, ...)
   std::map<int, int> label_mapping;
