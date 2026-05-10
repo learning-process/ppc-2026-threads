@@ -1,22 +1,27 @@
 #pragma once
 
-#include "example_threads/common/include/common.hpp"
+#include <vector>
+
+#include "ilin_a_algorithm_graham/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace nesterov_a_test_task_threads {
+namespace ilin_a_algorithm_graham {
 
-class NesterovATestTaskTBB : public BaseTask {
+class IlinAGrahamTBB : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kTBB;
   }
-  explicit NesterovATestTaskTBB(const InType &in);
+  explicit IlinAGrahamTBB(const InType &in);
 
  private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  std::vector<Point> points_;
+  std::vector<Point> hull_;
 };
 
-}  // namespace nesterov_a_test_task_threads
+}  // namespace ilin_a_algorithm_graham
