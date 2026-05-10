@@ -27,13 +27,12 @@ class ShkrebkoMRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType>
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
 
-    if (rank == 0) {
-      double exact = (1.0 - std::cos(1.0)) + std::sin(1.0) + 0.5;
-      expected_ = exact;
+    input_data_.func = [](const std::vector<double> &x) { return std::sin(x[0]) + std::cos(x[1]) + x[2]; };
 
+    if (rank == 0) {
+      expected_ = (1.0 - std::cos(1.0)) + std::sin(1.0) + 0.5;
       input_data_.limits = {{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}};
       input_data_.n_steps = {kN, kN, kN};
-      input_data_.func = [](const std::vector<double> &x) { return std::sin(x[0]) + std::cos(x[1]) + x[2]; };
     }
   }
 

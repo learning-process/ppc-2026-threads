@@ -98,7 +98,11 @@ void ShkrebkoMCalcOfIntegralRectALL::FlatIndexToPoint(std::size_t flat_idx, cons
 
 bool ShkrebkoMCalcOfIntegralRectALL::RunImpl() {
   if (use_mpi_) {
+    auto saved_func = local_input_.func;
     BroadcastInputData();
+    if (!local_input_.func) {
+      local_input_.func = saved_func;
+    }
   }
 
   const std::size_t dims = local_input_.limits.size();
