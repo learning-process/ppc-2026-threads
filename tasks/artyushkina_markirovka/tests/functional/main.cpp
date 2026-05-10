@@ -105,7 +105,7 @@ INSTANTIATE_TEST_SUITE_P(ComponentLabeling, ArtyushkinaMarkirovkaFuncTests, kGte
 
 }  // namespace
 
-// TBB тесты с анонимным namespace для устранения предупреждений clang-tidy
+// TBB тесты
 namespace tbb_tests {
 namespace {
 
@@ -113,20 +113,20 @@ TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponentsTBB) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {
+const std::array<TestType, 5> kTbbTestParam = {
     std::make_tuple(0, "L_shaped_component_8connectivity"), std::make_tuple(1, "diagonal_connected_components"),
     std::make_tuple(2, "all_background"), std::make_tuple(3, "all_objects"), std::make_tuple(4, "two_horizontal_bars")};
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<MarkingComponentsTBB, InType>(kTestParam, PPC_SETTINGS_artyushkina_markirovka);
+const auto kTbbTestTasksList =
+    ppc::util::AddFuncTask<MarkingComponentsTBB, InType>(kTbbTestParam, PPC_SETTINGS_artyushkina_markirovka);
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+const auto kTbbGtestValues = ppc::util::ExpandToValues(kTbbTestTasksList);
 
-const auto kPerfTestName = ArtyushkinaMarkirovkaFuncTests::PrintFuncTestName<ArtyushkinaMarkirovkaFuncTests>;
+const auto kTbbPerfTestName = ArtyushkinaMarkirovkaFuncTests::PrintFuncTestName<ArtyushkinaMarkirovkaFuncTests>;
 
 }  // namespace
 
-INSTANTIATE_TEST_SUITE_P(ComponentLabelingTBB, ArtyushkinaMarkirovkaFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(ComponentLabelingTBB, ArtyushkinaMarkirovkaFuncTests, kTbbGtestValues, kTbbPerfTestName);
 
 }  // namespace tbb_tests
 

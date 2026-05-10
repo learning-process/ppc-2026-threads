@@ -5,6 +5,7 @@
 #include <tbb/parallel_for.h>
 
 #include <algorithm>
+#include <atomic>
 #include <cstddef>
 #include <map>
 #include <vector>
@@ -36,8 +37,10 @@ void CollectNeighborsLabels(int i, int j, const std::vector<std::vector<int>> &t
   }
   // Сосед сверху-справа (диагональ)
   if (i > 0 && j + 1 < cols) {
-    int neighbor = temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j + 1)];
-    AddNeighborIfValid(neighbor, neighbor_labels);
+    // Используем промежуточную переменную для индексов
+    std::size_t row_idx = static_cast<std::size_t>(i - 1);
+    std::size_t col_idx = static_cast<std::size_t>(j + 1);
+    AddNeighborIfValid(temp_labels[row_idx][col_idx], neighbor_labels);
   }
   // Сосед слева
   if (j > 0) {
@@ -194,9 +197,16 @@ void MarkingComponentsTBB::RemapLabels() {
     }
   }
 
+// Используем ranges::sort если доступно, иначе оставляем std::sort
+#if __cplusplus >= 202002L
+  std::ranges::sort(unique_labels);
+  auto last = std::ranges::unique(unique_labels);
+  unique_labels.erase(last.begin(), last.end());
+#else
   std::sort(unique_labels.begin(), unique_labels.end());
   auto last = std::unique(unique_labels.begin(), unique_labels.end());
   unique_labels.erase(last, unique_labels.end());
+#endif
 
   // Создаем отображение старых меток на новые (1, 2, 3, ...)
   std::map<int, int> label_mapping;
