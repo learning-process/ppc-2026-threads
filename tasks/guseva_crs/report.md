@@ -1,282 +1,262 @@
-# Sparse Matrix Multiplication. Double Precision Elements. CRS Format
+# Умножение разреженных матриц. Элементы типа double. Формат хранения - CRS
 
-- _Student_: Гусева Алёна Сергеевна, group 3823Б1ФИ2
-- _Technology_: `SEQ, OMP, TBB, STL, MPI+OMP`
-- _Variant_: 4
+- Студент: Гусева Алёна Сергеевна, группа 3823Б1ФИ2
+- Вариант: 4
 
-## 1. Introduction
+## 1. Введение
 
-This report consolidates the results of five implementations of sparse
-matrix multiplication using the Compressed Row Storage (CRS) format.
-The implementations span sequential execution (SEQ) and four parallel
-programming models: OpenMP (shared-memory directives), C++ STL threads
-(native threading), Intel TBB (task-based parallelism), and a hybrid
-MPI+OpenMP approach (distributed + shared memory).
+Данный консолидированный отчёт представляет результаты пяти реализаций умножения
+разреженных матриц в формате CRS: последовательной (SEQ), с использованием
+OpenMP (OMP), Intel TBB (TBB), стандартных потоков C++ (STL) и гибридной
+MPI+OpenMP (ALL). Все реализации прошли одинаковые функциональные тесты и были
+измерены на идентичном оборудовании.
 
-All implementations read matrices from test files, perform
-multiplication, verify correctness against pre-computed references,
-and output the result matrix in CRS format. The zero threshold is
-10⁻⁵: elements with absolute value below this limit are not stored.
+Умножение разреженных матриц — фундаментальная операция в научных вычислениях,
+инженерных симуляциях и анализе данных. CRS (Compressed Row Storage) формат
+хранит только ненулевые элементы, что критически важно для памяти-эффективных
+вычислений на больших разреженных матрицах.
 
-## 2. Experimental Setup
+## 2. Единая постановка задачи
 
-- **Hardware/OS**:
-  - **Host**: Intel Core i7-14700k, 8+12 cores, 32 Gb DDR4,
-    Windows 10 (10.0.19045.6456)
-  - **Virtual**: Intel Core i7-14700k, 12 cores, 8 Gb,
-    WSL2 (2.6.1.0) + Ubuntu (24.04.3 LTS)
+- **Входные данные:** Две матрицы A и B в CRS формате с 0-индексацией.
+- **Выходные данные:** Матрица C = A × B в CRS формате.
+- **Ограничения:** A.ncols == B.nrows. Элементы с |value| < 10⁻⁵ считаются
+  нулевыми и не сохраняются.
 
-- **Toolchain**:
+### Формат CRS
 
-| Compiler | Version                 | Build Type | MPI Library   |
-| :------- | :---------------------- | :--------- | :------------ |
-| gcc      | 14.2.0 x86_64-linux-gnu | Release    | OpenMPI 5.0.3 |
+- `nz` — число ненулевых элементов
+- `nrows`, `ncols` — размерность
+- `values` — массив значений ненулевых элементов (размер nz)
+- `cols` — массив индексов столбцов (размер nz)
+- `row_ptrs` — указатели на начала строк (размер nrows + 1), row_ptrs[0] = 0,
+  row_ptrs[nrows] = nz
 
-- **Performance Test Data**: Diagonal matrices of size 10000 × 10000
-  with 1000 non-zero elements. All results are for 1000 consecutive
-  multiplications to amortize measurement overhead.
-- **Baseline Sequential Time**: 499.68 seconds (1000 iterations).
+## 3. Единая методика эксперимента
 
-## 3. Consolidated Performance Results
+### 3.1 Окружение
 
-The following table presents the performance achieved by each
-technology. SEQ is shown with 1 core. All parallel implementations
-are shown on 8 total cores. For MPI+OMP, multiple process/thread
-configurations are included to illustrate communication overhead.
+- **Host**: Intel Core i7-14700k, 8+12 ядер, 32 ГБ DDR4, Windows 10
+- **Virtual**: WSL2 (2.6.1.0) + Ubuntu 24.04.3 LTS, 12 ядер, 8 ГБ
+- **Компилятор**: GCC 14.2.0 x86_64-linux-gnu
+- **Тип сборки**: Release
+- **MPI**: OpenMPI 5.0.3 (для ALL)
+- **TBB**: Intel TBB (для TBB)
 
-| Technology | Config (P×T) | Total Cores | Time (s) | Speedup | Efficiency |
-| :--------- | :----------- | :---------- | :------- | :------ | :--------- |
-| SEQ        | 1 × 1        | 1           | 499.68   | 1.00    | 100%       |
-| OpenMP     | 1 × 8        | 8           | 259.24   | 1.93    | 24.1%      |
-| TBB        | 1 × 8        | 8           | 258.57   | 1.93    | 24.1%      |
-| STL        | 1 × 8        | 8           | 260.11   | 1.92    | 24.0%      |
-| MPI+OMP    | 2 × 4        | 8           | 260.82   | 1.92    | 24.0%      |
-| MPI+OMP    | 4 × 2        | 8           | 261.94   | 1.91    | 23.9%      |
-| MPI+OMP    | 8 × 1        | 8           | 263.11   | 1.90    | 23.8%      |
+### 3.2 Данные
 
-### 3.1 Performance Across Thread Counts (Including SEQ)
+- **Функциональные тесты**: 6 тестов (sparse×dense, dense×sparse,
+  4×sparse×sparse с плотностью 0.1–0.2)
+- **Тесты производительности**: Диагональные матрицы 10000×10000, 1000 ненулевых
+  элементов на матрицу. 1000 повторных умножений для амортизации накладных
+  расходов.
 
-The following table shows how each shared-memory implementation
-scales from 1 to 16 threads, with SEQ as the 1-thread baseline.
+### 3.3 Методика измерения
 
-| Threads | SEQ (s) | OpenMP (s) | TBB (s) | STL (s) |
+- **Базовая линия (baseline)**: SEQ на 1 потоке, 1000 итераций → 499.68 сек
+- **Количество потоков**: 4, 8, 16 (где применимо)
+- **Для MPI+OMP**: конфигурации (P×T): 1×4, 1×8, 2×4, 4×2, 8×1
+- **Метрики**: Время (сек), ускорение (Speedup = T_seq / T_par), эффективность
+  (Efficiency = Speedup / P_total)
+
+## 4. Сводка корректности
+
+Корректность всех реализаций подтверждена:
+
+1. **Сравнение с эталоном**: Результат на каждом тестовом файле сравнивался с
+   предвычисленным эталоном (матрица C) с помощью функции `Equal` (порог 10⁻⁵).
+
+2. **Инварианты CRS формата**:
+   - row_ptrs[0] = 0, row_ptrs[nrows] = nz
+   - Индексы столбцов в пределах [0, ncols)
+   - row_ptrs[i] ≤ row_ptrs[i+1]
+
+3. **Параллельно-специфичные проверки**:
+   - OMP/TBB/STL: отсутствие гонок (thread-local буферы, независимые диапазоны
+     строк)
+   - ALL: корректное распределение строк между MPI процессами и сборка
+     результата на root
+
+Все функциональные тесты пройдены. Результаты идентичны во всех реализациях с
+точностью до 10⁻⁵.
+
+## 5. Агрегированные результаты
+
+### 5.1 Сводная таблица (8 ядер, 1000 итераций)
+
+<!-- markdownlint-disable MD013 -->
+
+| Технология | Конфиг (P×T) | Всего ядер | Время (с) | Speedup vs SEQ | Эффективность |
+| :--------- | :----------- | :--------- | :-------- | :------------- | :------------ |
+| SEQ        | 1 × 1        | 1          | 499.68    | 1.00           | 100%          |
+| OpenMP     | 1 × 8        | 8          | 259.24    | 1.93           | 24.1%         |
+| TBB        | 1 × 8        | 8          | 258.57    | 1.93           | 24.1%         |
+| STL        | 1 × 8        | 8          | 260.11    | 1.92           | 24.0%         |
+| MPI+OMP    | 2 × 4        | 8          | 260.82    | 1.92           | 24.0%         |
+| MPI+OMP    | 4 × 2        | 8          | 261.94    | 1.91           | 23.9%         |
+| MPI+OMP    | 8 × 1        | 8          | 263.11    | 1.90           | 23.8%         |
+
+<!-- markdownlint-enable MD013 -->
+
+**Анализ:** Все параллельные реализации показывают практически идентичную
+производительность (разница в пределах 1.5%). TBB — лучший абсолютный результат
+(258.57 с), STL и OpenMP — в пределах погрешности.
+
+### 5.2 Масштабирование по числу потоков
+
+| Потоков | SEQ (с) | OpenMP (с) | TBB (с) | STL (с) |
 | :------ | :------ | :--------- | :------ | :------ |
 | 1       | 499.68  | 499.68     | 499.68  | 499.68  |
 | 4       | —       | 280.72     | 281.44  | 282.15  |
 | 8       | —       | 259.24     | 258.57  | 260.11  |
 | 16      | —       | 261.43     | 260.89  | 262.42  |
 
-Note: SEQ with 4, 8, 16 threads is not applicable as sequential
-code uses only 1 thread. The values for OpenMP, TBB, and STL at
-1 thread are identical to SEQ by definition.
+**Ускорение относительно SEQ:**
 
-### 3.2 Speedup Relative to SEQ
+| Потоков | OpenMP | TBB  | STL  |
+| :------ | :----- | :--- | :--- |
+| 1       | 1.00   | 1.00 | 1.00 |
+| 4       | 1.78   | 1.78 | 1.77 |
+| 8       | 1.93   | 1.93 | 1.92 |
+| 16      | 1.91   | 1.92 | 1.90 |
 
-| Threads | OpenMP Speedup | TBB Speedup | STL Speedup |
-| :------ | :------------- | :---------- | :---------- |
-| 1       | 1.00           | 1.00        | 1.00        |
-| 4       | 1.78           | 1.78        | 1.77        |
-| 8       | 1.93           | 1.93        | 1.92        |
-| 16      | 1.91           | 1.92        | 1.90        |
+### 5.3 MPI+OMP: влияние конфигурации на накладные расходы
 
-All shared-memory implementations perform within ±0.6% of each
-other at all thread counts. The difference is statistically
-negligible and within measurement tolerance.
+| Конфиг        | Время (с) | Speedup | Доп. overhead vs TBB |
+| :------------ | :-------- | :------ | :------------------- |
+| TBB (1×8)     | 258.57    | 1.93    | 0.0%                 |
+| MPI+OMP (2×4) | 260.82    | 1.92    | +0.9%                |
+| MPI+OMP (4×2) | 261.94    | 1.91    | +1.3%                |
+| MPI+OMP (8×1) | 263.11    | 1.90    | +1.8%                |
 
-### 3.3 Scaling from 4 to 8 Threads (vs SEQ baseline)
+## 6. Интерпретация различий
 
-| Technology | 4 threads (s) | 8 threads (s) | Improvement |
-| :--------- | :------------ | :------------ | :---------- |
-| OpenMP     | 280.72        | 259.24        | 1.08x       |
-| TBB        | 281.44        | 258.57        | 1.09x       |
-| STL        | 282.15        | 260.11        | 1.08x       |
+### 6.1 SEQ — базовая линия
 
-The improvement from 4 to 8 threads is consistent across all
-implementations (about 8–9% speedup), far from the ideal 2×,
-indicating memory bandwidth saturation and Amdahl's Law limitations.
+Последовательная версия обеспечивает эталон корректности. Время на 1000 итераций
+— 499.68 с. Основные узкие места:
 
-### 3.4 All MPI+OMP Configurations with SEQ Reference
+- Транспонирование матрицы B (O(nz(B))) выполняется последовательно
+- Инициализация временного массива для каждой строки A (размер ncols(A))
 
-| Technology | Config (P×T) | Total Cores | Time (s) | Speedup vs SEQ |
-| :--------- | :----------- | :---------- | :------- | :------------- |
-| SEQ        | 1 × 1        | 1           | 499.68   | 1.00           |
-| OpenMP     | 1 × 8        | 8           | 259.24   | 1.93           |
-| TBB        | 1 × 8        | 8           | 258.57   | 1.93           |
-| STL        | 1 × 8        | 8           | 260.11   | 1.92           |
-| MPI+OMP    | 1 × 4        | 4           | 280.72   | 1.78           |
-| MPI+OMP    | 1 × 8        | 8           | 259.24   | 1.93           |
-| MPI+OMP    | 2 × 4        | 8           | 260.82   | 1.92           |
-| MPI+OMP    | 4 × 2        | 8           | 261.94   | 1.91           |
-| MPI+OMP    | 8 × 1        | 8           | 263.11   | 1.90           |
+### 6.2 OpenMP — простота и эффективность
 
-Note: MPI+OMP with 1×4 and 1×8 is functionally identical to pure
-OpenMP (the MPI part uses only one process). These rows are shown
-for completeness.
+- **Схема распараллеливания**: `#pragma omp for` с распределением строк матрицы
+  A по потокам
+- **Переменные**: `shared(A, Bt, result)`, `private(i, j, k)`, `default(none)`
+- **Синхронизация**: неявный барьер в конце parallel region
+- **Ускорение**: 1.93× на 8 потоках (эффективность 24.1%)
 
-## 4. Correctness Verification
+Ограничение: статическое распределение строк может быть неоптимально для сильно
+разреженных матриц с неравномерной плотностью строк.
 
-All five implementations passed the same functional test suite:
+### 6.3 TBB — автоматическая балансировка
 
-- 1 test: sparse × dense (density 0.2)
-- 1 test: dense × sparse (density 0.2)
-- 4 tests: sparse × sparse (density 0.1, sizes 15, 13, 23, 31)
+- **Примитив**: `tbb::parallel_for` с `blocked_range<size_t>`
+- **Partitioner**: по умолчанию (auto_partitioner) — TBB адаптивно балансирует
+  нагрузку
+- **Преимущество**: чуть лучшая производительность (258.57 с) за счёт более
+  эффективного управления кэшем
+- **Минус**: требуется внешняя библиотека
 
-Verification used the `Equal` function with tolerance `kZERO = 10⁻⁵`.
-Structural invariants were checked:
+### 6.4 STL — портативность без потери производительности
 
-- Row pointers satisfy `row_ptrs[0] = 0` and `row_ptrs[nrows] = nz`
-- Column indices are within bounds
-- All stored values satisfy `|value| ≥ 10⁻⁵`
+- **Управление потоками**: ручное создание `std::thread`, статическое
+  распределение строк
+- **Join**: явный вызов `join()` после запуска всех потоков
+- **Порог последовательного выполнения**: для предотвращения overhead на малых
+  задачах
+- **Результат**: 260.11 с (всего на 0.6% хуже TBB)
 
-Parallel implementations additionally ensured:
+### 6.5 ALL (MPI+OpenMP) — распределённая память
 
-- No race conditions (thread-local arrays, disjoint row ranges)
-- Correct aggregation of results from multiple threads/processes
-- For MPI+OMP: correct row distribution and assembly at root
+- **Межпроцессная схема**: блоковое распределение строк матрицы A между MPI
+  процессами
+- **Внутрипроцессная схема**: OpenMP для параллельной обработки локальных строк
+- **MPI-вызовы**: `MPI_Send`/`MPI_Recv` для отправки локальных результатов на
+  root, `MPI_Bcast` для рассылки результата
+- **Накладные расходы**: 0.9–1.8% выше TBB за счёт сериализации и коммуникации
 
-All tests passed, confirming identical numerical results across all
-technologies within the specified tolerance.
+**Вывод по ALL**: Оптимальная конфигурация для одного узла — 2×4 (2 MPI процесса
+× 4 OpenMP потока). Для распределённых кластеров гибридный подход становится
+необходимым, когда данные не помещаются в памяти одного узла.
 
-## 5. Comparative Analysis of Technologies
+## 7. Репродуцируемость
 
-### 5.1 Performance Summary (8 cores, vs SEQ)
+### 7.1 Команды сборки
 
-| Technology | Config | Time (s) | Speedup | vs Best |
-| :--------- | :----- | :------- | :------ | :------ |
-| SEQ        | 1×1    | 499.68   | 1.00    | —       |
-| TBB        | 1×8    | 258.57   | 1.93    | 1.00x   |
-| OpenMP     | 1×8    | 259.24   | 1.93    | 1.00x   |
-| STL        | 1×8    | 260.11   | 1.92    | 0.99x   |
-| MPI+OMP    | 2×4    | 260.82   | 1.92    | 0.99x   |
-| MPI+OMP    | 8×1    | 263.11   | 1.90    | 0.98x   |
+```bash
+git submodule update --init --recursive --depth=1
+cmake -S . -B build -D USE_FUNC_TESTS=ON -D USE_PERF_TESTS=ON -D CMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
+```
 
-### 5.2 Shared-Memory Comparison (OpenMP vs TBB vs STL)
+### 7.2 Команды запуска тестов
 
-All three shared-memory technologies achieve nearly identical
-performance. The key differences are non-performance related.
+```bash
+# Функциональные тесты
+export PPC_NUM_THREADS=8
+scripts/run_tests.py --running-type=threads
 
-**OpenMP**:
+# Для MPI+OMP
+export PPC_NUM_PROC=2
+export PPC_NUM_THREADS=4
+scripts/run_tests.py --running-type=processes
 
-- Pros: Minimal code changes, widely supported, implicit thread pool
-- Cons: Compiler-dependent, static scheduling requires tuning
+# Тесты производительности
+scripts/run_tests.py --running-type=performance
+```
 
-**TBB**:
+### 7.3 Генерация тестовых данных
 
-- Pros: Task-based auto load balancing, clean lambda syntax
-- Cons: Requires external library, steeper learning curve
+Python-скрипт с использованием `numpy` и `scipy.sparse` (полный код в Приложении
+к отчёту SEQ).
 
-**STL (std::thread)**:
+## 8. Заключение
 
-- Pros: No external dependencies, maximum control, highly portable
-- Cons: Manual thread creation/joining, more boilerplate code
+### 8.1 Ключевые выводы
 
-**Recommendation for shared-memory**: TBB provides the best balance
-of performance and ease-of-use, but STL is preferred when library
-dependencies must be minimized.
+1. **Производительность всех параллельных технологий практически идентична**
+   (разница ≤1.5%). Выбор диктуется не скоростью, а портативностью и удобством.
 
-### 5.3 Hybrid MPI+OMP vs Pure Shared-Memory
+2. **Лучший абсолютный результат** — TBB (258.57 с), но STL (260.11 с) и OpenMP
+   (259.24 с) находятся в пределах погрешности.
 
-MPI+OMP shows small but measurable overhead compared to pure TBB,
-with SEQ as the baseline reference:
+3. **Ускорение на 8 ядрах — 1.93×** (эффективность ≈24%). Ограничение связано с
+   законом Амдала: транспонирование матрицы B (≈40–50% работы) выполняется
+   последовательно.
 
-| Configuration | Time (s) | Speedup | Overhead vs TBB |
-| :------------ | :------- | :------ | :-------------- |
-| SEQ (1×1)     | 499.68   | 1.00    | —               |
-| TBB (1×8)     | 258.57   | 1.93    | 0.0%            |
-| MPI+OMP (2×4) | 260.82   | 1.92    | +0.9%           |
-| MPI+OMP (4×2) | 261.94   | 1.91    | +1.3%           |
-| MPI+OMP (8×1) | 263.11   | 1.90    | +1.8%           |
+4. **Увеличение потоков до 16 даёт отрицательный эффект** из-за насыщения
+   пропускной способности памяти.
 
-**When MPI+OMP is beneficial**:
+5. **MPI+OMP добавляет 0.9–1.8% накладных расходов**, что приемлемо для
+   распределённых вычислений. Оптимальная конфигурация на одном узле — 2×4.
 
-- Problem size exceeds single-node memory
-- Running on true distributed-memory clusters
-- NUMA architectures: one process per NUMA node
+### 8.2 Рекомендации по выбору технологии
 
-**When MPI+OMP is not recommended**:
+<!-- markdownlint-disable MD013 -->
 
-- Problem fits in single-node memory
-- High communication latency between nodes
+| Сценарий                            | Рекомендация | Обоснование                                    |
+| :---------------------------------- | :----------- | :--------------------------------------------- |
+| Минимум зависимостей, портативность | **STL**      | Только C++17, производительность на уровне TBB |
+| Максимальная производительность     | **TBB**      | 258.57 с, автоматическая балансировка          |
+| Минимальные изменения кода          | **OpenMP**   | Достаточно добавить директивы                  |
+| Данные > памяти одного узла         | **MPI+OMP**  | 2–4 MPI процесса × 4–8 OpenMP потоков          |
 
-### 5.4 Diminishing Returns and Amdahl's Law
+<!-- markdownlint-enable MD013 -->
 
-All implementations exhibit the same bottleneck: the sequential
-transposition of matrix B. This step is O(nz(B)) and cannot be
-parallelized. The observed speedup of 1.93× on 8 cores (24%
-efficiency) is consistent with Amdahl's Law for a workload with
-approximately 50–60% parallelizable portion.
+### 8.3 Ограничения
 
-Beyond 8 cores, performance slightly degrades (16-thread times are
-worse than 8-thread times), indicating memory bandwidth saturation
-on the shared memory bus of a single node.
+- Закон Амдала: транспонирование B остаётся последовательным узким местом
+- Насыщение памяти: добавление потоков >8 не даёт выигрыша
+- Для MPI+OMP: репликация B на каждом процессе увеличивает потребление памяти
 
-## 6. Memory Usage Considerations
+## 9. Источники
 
-| Implementation    | Memory per node      | Notes                      |
-| :---------------- | :------------------- | :------------------------- |
-| SEQ               | O(nz(A)+nz(B)+nz(C)) | Baseline                   |
-| OpenMP/TBB/STL    | + P × ncols(A)       | Thread-local marker arrays |
-| MPI+OMP (P procs) | O(nz(A)/P + P×nz(B)) | Matrix B on each process   |
-
-For large-scale distributed execution, replicating matrix B on every
-process may become prohibitive. A possible improvement would be
-distributing B as well (2D block distribution), but that increases
-implementation complexity significantly.
-
-## 7. Conclusions
-
-This work successfully implemented and validated five versions of
-sparse matrix multiplication in CRS format: sequential (SEQ),
-OpenMP, STL threads, Intel TBB, and hybrid MPI+OpenMP. All produce
-identical results within the 10⁻⁵ tolerance.
-
-**Key findings**:
-
-1. **Performance parity across shared-memory technologies**:
-   OpenMP, TBB, and STL achieve nearly identical performance
-   (1.92–1.93× speedup on 8 cores vs SEQ). Choice should be
-   based on code complexity and portability, not performance.
-
-2. **TBB shows the best absolute performance (258.57 s)**,
-   marginally faster than OpenMP (259.24 s) and STL (260.11 s).
-   The difference (0.6%) is within measurement noise.
-
-3. **MPI+OMP hybrid introduces small overhead** (0.9–1.8%)
-   compared to pure TBB due to communication and serialization.
-   This is acceptable for distributed-memory clusters.
-
-4. **Diminishing returns beyond 8 cores**: Adding more cores
-   does not improve performance due to memory bandwidth
-   contention and Amdahl's Law. 16-thread times are worse than
-   8-thread times for all implementations.
-
-5. **Optimal for single-node**: 8 threads with any shared-memory
-   technology (TBB recommended for auto load balancing, STL for
-   zero dependencies).
-
-6. **Optimal for multi-node**: 2 MPI processes × 4 OpenMP threads
-   per node minimizes communication overhead.
-
-**Limitations common to all implementations**:
-
-- Sequential matrix transposition remains a bottleneck
-- Memory bandwidth saturation prevents linear scaling beyond 8 cores
-- Thread-local marker arrays increase memory footprint linearly
-- For MPI+OMP, replicating matrix B on every process limits scaling
-
-**Final recommendation**: For problems that fit within a single node,
-use TBB (performance + auto load balancing) or STL (portability + no
-dependencies). For distributed-memory clusters, use MPI+OMP with
-2 processes × 4 threads per node as a starting point. The sequential
-version (SEQ) serves as a correctness baseline but is not suitable
-for production workloads.
-
-## 8. References
-
-1. Разреженное матричное умножение, Мееров И. Б., Сысоев А. В.
-2. Sparse Matrix. Wikipedia
+1. [Разреженное матричное умножение, Мееров И. Б., Сысоев А. В.](http://www.hpcc.unn.ru/file.php?id=486)
+2. Sparse Matrix
 3. scipy.sparse documentation
 4. MPI: A Message-Passing Interface Standard
 5. OpenMP Application Programming Interface
 6. Intel TBB Documentation
-7. C++ Thread Support Library (cppreference)
+7. C++ Thread Support Library
