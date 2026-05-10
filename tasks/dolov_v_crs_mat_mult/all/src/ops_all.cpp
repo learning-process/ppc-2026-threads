@@ -216,11 +216,9 @@ bool DolovVCrsMatMultAll::RunImpl() {
   std::vector<std::vector<int>> temp_cols(local_rows);
   std::vector<int> local_nnz_per_row(local_rows, 0);
 
-  int threads = std::max(1, ppc::util::GetNumThreads());
-
-#pragma omp parallel for default(none)                                                                                 \
-    shared(local_a, local_b_t, temp_values, temp_cols, local_nnz_per_row, local_rows, local_start, sizes_vec, threads) \
-    num_threads(threads) schedule(dynamic)
+#pragma omp parallel for default(none)                                                                        \
+    shared(local_a, local_b_t, temp_values, temp_cols, local_nnz_per_row, local_rows, local_start, sizes_vec) \
+    num_threads(std::max(1, ppc::util::GetNumThreads())) schedule(dynamic)
   for (int i = 0; i < local_rows; ++i) {
     int global_row = local_start + i;
     for (int j = 0; j < sizes_vec[2]; ++j) {
