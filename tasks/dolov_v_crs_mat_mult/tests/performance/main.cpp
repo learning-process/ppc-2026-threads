@@ -1,10 +1,13 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <tuple>
 #include <vector>
 
 #include "dolov_v_crs_mat_mult/common/include/common.hpp"
+#include "dolov_v_crs_mat_mult/omp/include/ops_omp.hpp"
 #include "dolov_v_crs_mat_mult/seq/include/ops_seq.hpp"
+#include "dolov_v_crs_mat_mult/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace dolov_v_crs_mat_mult {
@@ -33,8 +36,8 @@ SparseMatrix CreateBandMatrix(int n, int band_width) {
 class DolovVCrsMatMultRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    const int n = 1000;
-    const int width = 10;
+    const int n = 2000;
+    const int width = 20;
 
     SparseMatrix matrix_a = CreateBandMatrix(n, width);
     SparseMatrix matrix_b = CreateBandMatrix(n, width);
@@ -43,7 +46,7 @@ class DolovVCrsMatMultRunPerfTestThreads : public ppc::util::BaseRunPerfTests<In
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data.num_rows == 1000 && !output_data.values.empty();
+    return output_data.num_rows == input_data_[0].num_rows && !output_data.values.empty();
   }
 
   InType GetTestInputData() final {
@@ -60,7 +63,10 @@ TEST_P(DolovVCrsMatMultRunPerfTestThreads, BandMatrixPerformance) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultSeq>(PPC_SETTINGS_dolov_v_crs_mat_mult);
+const auto kAllPerfTasks =
+    std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultSeq>(PPC_SETTINGS_dolov_v_crs_mat_mult),
+                   ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultOmp>(PPC_SETTINGS_dolov_v_crs_mat_mult),
+                   ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultTbb>(PPC_SETTINGS_dolov_v_crs_mat_mult));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = DolovVCrsMatMultRunPerfTestThreads::CustomPerfTestName;
