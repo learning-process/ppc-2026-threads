@@ -2,7 +2,6 @@
 
 #include <cstddef>
 #include <functional>
-#include <utility>
 #include <vector>
 
 #include "shkrebko_m_calc_of_integral_rect/common/include/common.hpp"
@@ -25,11 +24,11 @@ class ShkrebkoMCalcOfIntegralRectALL : public BaseTask {
   bool PostProcessingImpl() override;
 
  private:
-  void DistributeData(int rank, size_t &dims);
-
-  static double ComputeChunkSum(size_t start_idx, size_t end_idx, const std::vector<double> &h,
-                                const std::vector<std::pair<double, double>> &limits, const std::vector<int> &n_steps,
-                                const std::function<double(const std::vector<double> &)> &func);
+  void BroadcastCommonData(int rank);
+  void AssignMpiSlice(int rank, int size, double &local_left, double &local_right, int &local_steps, int &local_offset);
+  double ComputeSliceSum(double left, double right, int steps, const std::vector<double> &h_other,
+                         const std::vector<std::pair<double, double>> &limits_other,
+                         const std::vector<int> &n_steps_other) const;
 
   InType local_input_;
   double res_ = 0.0;
