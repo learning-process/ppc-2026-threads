@@ -169,10 +169,12 @@ void TabalaevAMatrixMulStrassenALL::MasterBase(int size) {
 
 void TabalaevAMatrixMulStrassenALL::MasterAll(int size) {
   size_t h = padded_n_ / 2;
+
   std::vector<double> a11;
   std::vector<double> a12;
   std::vector<double> a21;
   std::vector<double> a22;
+  
   std::vector<double> b11;
   std::vector<double> b12;
   std::vector<double> b21;
