@@ -16,7 +16,7 @@
 
 namespace tabalaev_a_matrix_mul_strassen {
 
-static constexpr size_t kBaseCaseSize = 256;
+static constexpr size_t kBaseCaseSize = 128;
 
 TabalaevAMatrixMulStrassenALL::TabalaevAMatrixMulStrassenALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
