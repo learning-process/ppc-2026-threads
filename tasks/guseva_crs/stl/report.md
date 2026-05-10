@@ -1,8 +1,8 @@
-# Sparse Matrix Multiplication. Double Precision Elements. Compressed Row Storage (CRS) Format
+# Умножение разреженных матриц. Элементы типа double. Формат хранения - CRS
 
-- _Student_: Гусева Алёна Сергеевна, group 3823Б1ФИ2
-- _Technology_: STL
-- _Variant_: 4
+- Студент: Гусева Алёна Сергеевна, группа 3823Б1ФИ2
+- Вариант: 4
+- Технология: STL
 
 ## 1. Introduction
 
@@ -117,16 +117,16 @@ For each row `i` of matrix `A` assigned to a thread:
    position
 
 3. For each row `j` of `Bᵀ` (which corresponds to column `j` of `B`):
-    - Initialize `sum = 0`
+   - Initialize `sum = 0`
 
-    - For each non-zero element in row `j` of `Bᵀ`:
-        - If the column index of this element (which corresponds to a row index
-          in original `B`) matches a recorded column from row `i` of `A`
+   - For each non-zero element in row `j` of `Bᵀ`:
+     - If the column index of this element (which corresponds to a row index in
+       original `B`) matches a recorded column from row `i` of `A`
 
-        - Multiply the corresponding values from `A` and `Bᵀ` and add to `sum`
+     - Multiply the corresponding values from `A` and `Bᵀ` and add to `sum`
 
-    - If `|sum| > 10⁻⁵`, add this element to the result matrix `C` at position
-      `(i, j)`
+   - If `|sum| > 10⁻⁵`, add this element to the result matrix `C` at position
+     `(i, j)`
 
 ### 3.3 STL Threads Parallelization Approach
 
@@ -176,6 +176,8 @@ row difference between the busiest and least busy threads.
 
 ### 4.1 Code Structure
 
+<!-- markdownlint-disable MD013 -->
+
 ```text
 └── guseva_crs/
     ├── common/
@@ -205,6 +207,8 @@ row difference between the busiest and least busy threads.
     ├── report.md . . . . . . . . . . . . . . . Report you are reading right now
     └── settings.json . . . . . . . . . . . . . Configuration of the current work
 ```
+
+<!-- markdownlint-enable MD013 -->
 
 ### 4.2 Key Classes And Functions
 
@@ -326,15 +330,15 @@ large sparse matrices.
 
 - **Hardware/OS**:
   - **Host**: Intel Core i7-14700k, 8+12 cores, 32 Gb DDR4, Windows 10
-      (10.0.19045.6456)
+    (10.0.19045.6456)
   - **Virtual**: Intel Core i7-14700k, 12 cores, 8 Gb, WSL2 (2.6.1.0) + Ubuntu
-      (24.04.3 LTS)
+    (24.04.3 LTS)
 - **Toolchain**:
 
-    | Compiler |          Version           | Build Type |
-    | :------: | :------------------------: | :--------: |
-    |   gcc    |  14.2.0 x86_64-linux-gnu   |  Release   |
-    |  clang   | 21.1.0 x86-64-pc-linus-gnu |  Release   |
+  | Compiler |          Version           | Build Type |
+  | :------: | :------------------------: | :--------: |
+  |   gcc    |  14.2.0 x86_64-linux-gnu   |  Release   |
+  |  clang   | 21.1.0 x86-64-pc-linus-gnu |  Release   |
 
 - **Environment**: STL thread parallel execution with configurable number of
   threads (default: uses value from `ppc::util::GetNumThreads()`)
@@ -483,19 +487,27 @@ the sequential version:
 
 #### Scaling relative to 4-thread configuration
 
+<!-- markdownlint-disable MD013 -->
+
 | Threads | Time (1000 iters), s | Speedup (vs 4 threads) | Additional Efficiency |
 | ------- | -------------------- | ---------------------- | --------------------- |
 | 4       | 282.1503             | 1.00                   | 100%                  |
 | 8       | 260.1148             | 1.08                   | 13.5%                 |
 | 16      | 262.4153             | 1.08                   | 6.8%                  |
 
+<!-- markdownlint-enable MD013 -->
+
 #### Comparison with OpenMP and TBB Implementations
+
+<!-- markdownlint-disable MD013 -->
 
 | Threads | OpenMP Time (1000 iters), s | TBB Time (1000 iters), s | STL Time (1000 iters), s | Max Diff vs OMP |
 | ------- | --------------------------- | ------------------------ | ------------------------ | --------------- |
 | 4       | 280.7209                    | 281.4351                 | 282.1503                 | +0.51%          |
 | 8       | 259.2370                    | 258.5729                 | 260.1148                 | +0.34%          |
 | 16      | 261.4287                    | 260.8931                 | 262.4153                 | +0.38%          |
+
+<!-- markdownlint-enable MD013 -->
 
 The STL thread implementation achieves performance nearly identical to OpenMP
 and TBB, with all differences well within the ±5% tolerance. This confirms that
@@ -599,6 +611,8 @@ threads. The key findings and conclusions are:
 All three implementations achieve nearly identical performance for this
 workload. Key differences include:
 
+<!-- markdownlint-disable MD013 -->
+
 | Aspect              | OpenMP                    | TBB                 | STL                       |
 | ------------------- | ------------------------- | ------------------- | ------------------------- |
 | Programming model   | Compiler directives       | Library-based tasks | Native threads            |
@@ -608,6 +622,8 @@ workload. Key differences include:
 | Code complexity     | Low                       | Medium              | High                      |
 | Portability         | Good                      | Good                | Excellent                 |
 | Control granularity | Medium                    | High                | Very high                 |
+
+<!-- markdownlint-enable MD013 -->
 
 For this specific application, all three approaches are viable. The choice
 depends on project constraints:
