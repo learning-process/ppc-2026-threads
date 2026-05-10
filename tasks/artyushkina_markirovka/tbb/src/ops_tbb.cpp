@@ -16,9 +16,9 @@ namespace {
 
 tbb::mutex union_mutex;
 
-// 8-связность: соседи сверху, слева и диагональные
-void CollectNeighbors8ConnectivityImpl(int i, int j, const std::vector<std::vector<int>> &temp_labels,
-                                       std::vector<int> &neighbor_labels, int cols) {
+// 8-связность: сбор меток соседей (только для объектов)
+void CollectNeighborsLabels(int i, int j, const std::vector<std::vector<int>> &temp_labels,
+                            std::vector<int> &neighbor_labels, int /*rows*/, int cols) {
   // Сосед сверху-слева (диагональ)
   if (i > 0 && j > 0) {
     int neighbor = temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j - 1)];
@@ -49,34 +49,13 @@ void CollectNeighbors8ConnectivityImpl(int i, int j, const std::vector<std::vect
   }
 }
 
-// Специальная обработка для теста 5 (4x4 с определенной конфигурацией)
-void CollectNeighborsTest5Impl(int i, int j, const std::vector<std::vector<int>> &temp_labels,
-                               std::vector<int> &neighbor_labels) {
-  // Сосед сверху (с исключением для позиции (3,1))
-  if (i > 0 && (i != 3 || j != 1)) {
-    int neighbor = temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)];
-    if (neighbor != 0) {
-      neighbor_labels.push_back(neighbor);
-    }
-  }
-  // Сосед слева
-  if (j > 0) {
-    int neighbor = temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j - 1)];
-    if (neighbor != 0) {
-      neighbor_labels.push_back(neighbor);
-    }
-  }
-}
-
 int FindMinLabel(const std::vector<int> &labels) {
   if (labels.empty()) {
     return 0;
   }
   int min_label = labels[0];
   for (std::size_t k = 1; k < labels.size(); ++k) {
-    if (labels[k] < min_label) {
-      min_label = labels[k];
-    }
+    min_label = std::min(min_label, labels[k]);
   }
   return min_label;
 }
@@ -114,7 +93,6 @@ bool MarkingComponentsTBB::PreProcessingImpl() {
   parent_.clear();
   parent_.push_back(0);
   next_label_ = 1;
-  is_test5_ = false;
 
   return true;
 }
@@ -130,65 +108,42 @@ int MarkingComponentsTBB::FindRoot(std::vector<int> &parent, int label) {
 }
 
 void MarkingComponentsTBB::UnionLabels(std::vector<int> &parent, int label1, int label2) {
+  if (label1 == label2) {
+    return;
+  }
+
+  tbb::mutex::scoped_lock lock(union_mutex);
   int root1 = FindRoot(parent, label1);
   int root2 = FindRoot(parent, label2);
-  if (root1 != root2) {
-    tbb::mutex::scoped_lock lock(union_mutex);
-    if (parent[static_cast<std::size_t>(root1)] != root1) {
-      root1 = FindRoot(parent, root1);
-    }
-    if (parent[static_cast<std::size_t>(root2)] != root2) {
-      root2 = FindRoot(parent, root2);
-    }
-    if (root1 != root2) {
-      if (root1 < root2) {
-        parent[static_cast<std::size_t>(root2)] = root1;
-      } else {
-        parent[static_cast<std::size_t>(root1)] = root2;
-      }
-    }
-  }
-}
 
-bool MarkingComponentsTBB::IsTest5() const {
-  if (rows_ != 4 || cols_ != 4) {
-    return false;
-  }
-  int object_count = 0;
-  for (int i = 0; i < rows_; ++i) {
-    for (int j = 0; j < cols_; ++j) {
-      std::size_t idx =
-          (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(j) + 2;
-      if (input_[idx] == 0) {
-        ++object_count;
-      }
+  if (root1 != root2) {
+    if (root1 < root2) {
+      parent[static_cast<std::size_t>(root2)] = root1;
+    } else {
+      parent[static_cast<std::size_t>(root1)] = root2;
     }
   }
-  return object_count == 9;
 }
 
 void MarkingComponentsTBB::ProcessFirstPass() {
-  is_test5_ = IsTest5();
-
   tbb::parallel_for(0, rows_, [&](int i) {
     for (int j = 0; j < cols_; ++j) {
       std::size_t idx =
           (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols_)) + static_cast<std::size_t>(j) + 2;
 
+      // Проверка: 0 означает объект (черный), ненулевое - фон (белый)
       if (input_[idx] != 0) {
-        continue;
+        continue;  // пропускаем фон
       }
 
       std::vector<int> neighbor_labels;
       neighbor_labels.reserve(4);
 
-      if (is_test5_) {
-        CollectNeighborsTest5Impl(i, j, temp_labels_, neighbor_labels);
-      } else {
-        CollectNeighbors8ConnectivityImpl(i, j, temp_labels_, neighbor_labels, cols_);
-      }
+      // Собираем метки соседей с 8-связностью
+      CollectNeighborsLabels(i, j, temp_labels_, neighbor_labels, rows_, cols_);
 
       if (neighbor_labels.empty()) {
+        // Нет соседей - новый компонент
         int label = next_label_++;
         temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = label;
 
@@ -198,9 +153,11 @@ void MarkingComponentsTBB::ProcessFirstPass() {
         }
         parent_[static_cast<std::size_t>(label)] = label;
       } else {
+        // Есть соседи - берем минимальную метку
         int min_label = FindMinLabel(neighbor_labels);
         temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = min_label;
 
+        // Объединяем все метки соседей
         for (int label : neighbor_labels) {
           if (label != min_label) {
             UnionLabels(parent_, min_label, label);
@@ -223,6 +180,7 @@ void MarkingComponentsTBB::ResolveEquivalences() {
 }
 
 void MarkingComponentsTBB::RemapLabels() {
+  // Собираем уникальные метки
   std::vector<int> unique_labels;
   unique_labels.reserve(static_cast<std::size_t>(rows_) * static_cast<std::size_t>(cols_));
 
@@ -239,12 +197,14 @@ void MarkingComponentsTBB::RemapLabels() {
   auto last = std::unique(unique_labels.begin(), unique_labels.end());
   unique_labels.erase(last, unique_labels.end());
 
+  // Создаем отображение старых меток на новые (1, 2, 3, ...)
   std::map<int, int> label_mapping;
   int current_label = 1;
   for (int label : unique_labels) {
     label_mapping[label] = current_label++;
   }
 
+  // Применяем отображение
   tbb::parallel_for(0, rows_, [&](int i) {
     for (int j = 0; j < cols_; ++j) {
       int label = temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
