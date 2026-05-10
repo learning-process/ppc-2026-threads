@@ -83,7 +83,6 @@ double ShkrebkoMCalcOfIntegralRectALL::ComputeSliceSum(double left0, double righ
                                                        const std::vector<int> &n_steps_other) const {
   const std::size_t other_dims = limits_other.size();
 
-  // Случай только одного измерения
   if (other_dims == 0) {
     const double h0 = (right0 - left0) / static_cast<double>(steps0);
     double sum = 0.0;
@@ -97,12 +96,11 @@ double ShkrebkoMCalcOfIntegralRectALL::ComputeSliceSum(double left0, double righ
   const double h0 = (right0 - left0) / static_cast<double>(steps0);
   double total = 0.0;
 
-#pragma omp parallel for default(none) shared(left0, h0, steps0, h_other, limits_other, n_steps_other) \
-    reduction(+ : total) schedule(static)
+#pragma omp parallel for shared(left0, h0, steps0, h_other, limits_other, n_steps_other) reduction(+ : total) \
+    schedule(static)
   for (int i = 0; i < steps0; ++i) {
     const double x0 = left0 + (static_cast<double>(i) + 0.5) * h0;
 
-    // Вычисляем интеграл по остальным измерениям (многомерный прямоугольник)
     std::vector<int> indices(other_dims, 0);
     double local_sum = 0.0;
 
