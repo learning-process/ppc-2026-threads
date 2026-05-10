@@ -154,7 +154,7 @@ void RozenbergAQuicksortSimpleMergeALL::ThreadQuicksort(InType &local_data) {
     for (int i = 0; i < num_threads; i++) {
       Quicksort(local_data, thr_borders[i], thr_borders[i + 1] - 1);
     }
-    
+
     for (int i = 1; i < num_threads; i++) {
       ThreadMerge(local_data, 0, thr_borders[i] - 1, thr_borders[i + 1] - 1);
     }
