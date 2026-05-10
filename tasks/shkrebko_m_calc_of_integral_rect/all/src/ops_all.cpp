@@ -93,7 +93,6 @@ double ShkrebkoMCalcOfIntegralRectALL::ComputeChunkSum(size_t start_idx, size_t 
     }
     sum += func(point);
 
-    // move to next index
     int d = static_cast<int>(dim) - 1;
     while (d >= 0) {
       indices[d]++;
@@ -119,6 +118,11 @@ bool ShkrebkoMCalcOfIntegralRectALL::RunImpl() {
 
   size_t dims = (rank == 0) ? local_input_.limits.size() : 0;
   DistributeData(rank, dims);
+
+  // защита от пустой функции
+  if (!local_input_.func) {
+    return false;
+  }
 
   std::vector<double> h(dims);
   double cell_volume = 1.0;
