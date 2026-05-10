@@ -43,7 +43,7 @@
 ## 4. Схема распараллеливания
 
 В отличие от OpenMP и TBB, где распределение работы автоматическое, в STL-версии используется статическое разбиение:
-```
+```cpp
 const unsigned int hardware_threads = std::thread::hardware_concurrency();
 const int num_threads = (hardware_threads > 0) ? static_cast<int>(hardware_threads) : 1;
 const int cols_per_thread = (b.cols + num_threads - 1) / num_threads;
@@ -105,7 +105,7 @@ const int cols_per_thread = (b.cols + num_threads - 1) / num_threads;
 - В каждом проходе создаются потоки, которые независимо обрабатывают свои диапазоны столбцов;
 - Первый проход: параллельное вычисление количества ненулевых элементов для каждого столбца;
 - Второй проход: параллельное заполнение результирующих массивов.
-```
+```cpp
 // File: kotelnikova_a_double_matr_mult/stl/src/ops_stl.cpp
 SparseMatrixCCS KotelnikovaATaskSTL::MultiplyMatrices(const SparseMatrixCCS &a, const SparseMatrixCCS &b) {
   SparseMatrixCCS result(a.rows, b.cols);

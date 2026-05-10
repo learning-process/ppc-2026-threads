@@ -63,7 +63,7 @@
 5. Завершение
 - Устанавливается финальный указатель `C.col_ptrs[B.cols]`
 
-```
+```cpp
 // File: kotelnikova_a_double_matr_mult/seq/src/ops_seq.cpp
 SparseMatrixCCS KotelnikovaATaskSEQ::MultiplyMatrices(const SparseMatrixCCS &a, const SparseMatrixCCS &b) {
   SparseMatrixCCS result(a.rows, b.cols);
@@ -117,7 +117,7 @@ SparseMatrixCCS KotelnikovaATaskSEQ::MultiplyMatrices(const SparseMatrixCCS &a, 
 - Так же разбит на вспомогательные функции для снижения когнитивной сложности: 
 `ProcessColumn()` - обрабатывает один столбец матрицы B.
 
-```
+```cpp
 // File: kotelnikova_a_double_matr_mult/seq/src/ops_seq.cpp
 void ProcessColumn(const SparseMatrixCCS &a, const SparseMatrixCCS &b, int j, std::vector<double> &temp) {
   for (int k = 0; k < a.cols; ++k) {
@@ -142,7 +142,7 @@ void ProcessColumn(const SparseMatrixCCS &a, const SparseMatrixCCS &b, int j, st
 
 `SaveColumnResults()` — сохраняет накопленные значения в результирующую матрицу.
 
-```
+```cpp
 // File: kotelnikova_a_double_matr_mult/seq/src/ops_seq.cpp
 void SaveColumnResults(int rows, std::vector<double> &temp, SparseMatrixCCS &result) {
   for (int i = 0; i < rows; ++i) {

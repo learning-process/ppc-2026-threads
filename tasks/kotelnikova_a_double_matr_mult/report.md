@@ -175,54 +175,54 @@ Efficiency (эффективность):
 ## 7. Репродуцируемость
 
 Команды запуска функциональных тестов
-```
-# SEQ
+```cpp
+// SEQ
 ./build/bin/ppc_func_tests.exe --gtest_filter="*kotelnikova*seq*"
 
-# OMP (2 потока)
+// OMP (2 потока)
 $env:OMP_NUM_THREADS=2
 ./build/bin/ppc_func_tests.exe --gtest_filter="*kotelnikova*omp*"
 
-# TBB (2 потока)
+// TBB (2 потока)
 $env:PPC_NUM_THREADS=2
 ./build/bin/ppc_func_tests.exe --gtest_filter="*kotelnikova*tbb*"
 
-# STL (2 потока)
+// STL (2 потока)
 $env:PPC_NUM_THREADS=2
 ./build/bin/ppc_func_tests.exe --gtest_filter="*kotelnikova*stl*"
 
-# ALL (2 процесса × 2 потока внутри)
+// ALL (2 процесса × 2 потока внутри)
 $env:OMP_NUM_THREADS=2
 mpiexec -np 2 ./build/bin/ppc_func_tests.exe --gtest_filter="*kotelnikova*all*"
 ```
 
 Команды запуска тестов производительности
-```
-# SEQ (baseline)
+```cpp
+// SEQ (baseline)
 ./build/bin/ppc_perf_tests.exe --gtest_filter="*kotelnikova*seq*"
 
-# OMP с 2 и 4 потоками
+// OMP с 2 и 4 потоками
 $env:OMP_NUM_THREADS=2
 ./build/bin/ppc_perf_tests.exe --gtest_filter="*kotelnikova*omp*"
 
 $env:OMP_NUM_THREADS=4
 ./build/bin/ppc_perf_tests.exe --gtest_filter="*kotelnikova*omp*"
 
-# TBB с 2 и 4 потоками
+// TBB с 2 и 4 потоками
 $env:PPC_NUM_THREADS=2
 ./build/bin/ppc_perf_tests.exe --gtest_filter="*kotelnikova*tbb*"
 
 $env:PPC_NUM_THREADS=4
 ./build/bin/ppc_perf_tests.exe --gtest_filter="*kotelnikova*tbb*"
 
-# STL с 2 и 4 потоками
+// STL с 2 и 4 потоками
 $env:PPC_NUM_THREADS=2
 ./build/bin/ppc_perf_tests.exe --gtest_filter="*kotelnikova*stl*"
 
 $env:PPC_NUM_THREADS=4
 ./build/bin/ppc_perf_tests.exe --gtest_filter="*kotelnikova*stl*"
 
-# ALL с 2 и 4 процессами (по 1 потоку внутри)
+// ALL с 2 и 4 процессами (по 1 потоку внутри)
 $env:OMP_NUM_THREADS=1
 mpiexec -np 2 ./build/bin/ppc_perf_tests.exe --gtest_filter="*kotelnikova*all*"
 mpiexec -np 4 ./build/bin/ppc_perf_tests.exe --gtest_filter="*kotelnikova*all*"

@@ -40,7 +40,7 @@
 ## 4. Схема распараллеливания
 
 В отличие от OpenMP, где используется `#pragma omp parallel for`, в TBB применяется `tbb::parallel_for`:
-```
+```cpp
 tbb::parallel_for(tbb::blocked_range<int>(0, b.cols, grain_size),
                   [&](const tbb::blocked_range<int> &range) {
     for (int j = range.begin(); j < range.end(); ++j) {
@@ -99,7 +99,7 @@ tbb::parallel_for(tbb::blocked_range<int>(0, b.cols, grain_size),
 - Использует `tbb::parallel_for` с `blocked_range` и `grain_size = 8`;
 - Первый проход: параллельное вычисление количества ненулевых элементов для каждого столбца;
 - Второй проход: параллельное заполнение результирующих массивов.
-```
+```cpp
 // File: kotelnikova_a_double_matr_mult/tbb/src/ops_tbb.cpp
 SparseMatrixCCS KotelnikovaATaskTBB::MultiplyMatrices(const SparseMatrixCCS &a, const SparseMatrixCCS &b) {
   SparseMatrixCCS result(a.rows, b.cols);

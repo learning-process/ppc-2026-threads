@@ -51,7 +51,7 @@
 
 ### Распределение данных
 Столбцы матрицы B (и результирующей матрицы) распределяются между процессами по блочной схеме:
-```
+```cpp
 int total_cols = b.cols;
 int cols_per_proc = total_cols / size;
 int remainder = total_cols % size;
@@ -74,7 +74,7 @@ int end_col = start_col + cols_per_proc + (rank < remainder ? 1 : 0);
 Внутри каждого MPI-процесса используется OpenMP для распараллеливания обработки назначенных столбцов.
 
 Работа внутри процесса (обработка столбцов от start_col до end_col) распределяется с использованием динамического планирования:
-```
+```cpp
 #pragma omp parallel for default(none) shared(a, b, start_col, end_col, temp_columns, nnz_counts, epsilon) \
     schedule(dynamic, 4)
 for (int j = start_col; j < end_col; ++j) {
@@ -140,7 +140,7 @@ for (int j = start_col; j < end_col; ++j) {
 ### Расположение OpenMP-директив
 
 В функции ComputeColumnBlock — первый проход:
-```
+```cpp
 #pragma omp parallel for default(none) shared(a, b, start_col, end_col, temp_columns, nnz_counts, epsilon) \
     schedule(dynamic, 4)
 for (int j = start_col; j < end_col; ++j) {
@@ -148,7 +148,7 @@ for (int j = start_col; j < end_col; ++j) {
 }
 ```
 В функции BuildLocalResult — второй проход:
-```
+```cpp
 #pragma omp parallel for default(none) shared(temp_columns, local_values, local_row_indices, \
                                               local_col_ptrs, epsilon, local_cols) schedule(dynamic, 4)
 for (int j = 0; j < local_cols; ++j) {
@@ -188,7 +188,7 @@ Toolchain:
 ## 9. Результаты
 
 Замер производительности проводился при размере входных данных:
-- матрицы 700×700 элементов;
+- матрицы 700на700 элементов;
 - плотность 10%;
 
 | Mode       | Count | Time, s      | Speedup | Efficiency |

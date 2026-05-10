@@ -96,7 +96,7 @@
 - Индексы строк в допустимом диапазоне.
 
 `ComputeColumn()` — вычисляет значения одного столбца результирующей матрицы:
-```
+```cpp
 // File: kotelnikova_a_double_matr_mult/omp/src/ops_omp.cpp
 std::vector<double> ComputeColumn(const SparseMatrixCCS &a, const SparseMatrixCCS &b, int col_idx) {
   std::vector<double> temp(a.rows, 0.0);
@@ -116,7 +116,7 @@ std::vector<double> ComputeColumn(const SparseMatrixCCS &a, const SparseMatrixCC
 ```
 
 `CountNonZero()` — подсчитывает количество ненулевых элементов в столбце с заданной погрешностью:
-```
+```cpp
 // File: kotelnikova_a_double_matr_mult/omp/src/ops_omp.cpp
 int CountNonZero(const std::vector<double> &column, double epsilon) {
   int count = 0;
@@ -130,7 +130,7 @@ int CountNonZero(const std::vector<double> &column, double epsilon) {
 ```
 
 `FillColumn()` — заполняет результирующие массивы значениями и индексами строк для одного столбца:
-```
+```cpp
 // File: kotelnikova_a_double_matr_mult/omp/src/ops_omp.cpp
 void FillColumn(const std::vector<double> &column, double epsilon, 
                 std::vector<int> &row_indices, std::vector<double> &values, int start_pos) {
@@ -150,7 +150,7 @@ void FillColumn(const std::vector<double> &column, double epsilon,
 - Использует schedule(dynamic, 8) для балансировки нагрузки;
 - Первый проход: параллельное вычисление количества ненулевых элементов для каждого столбца;
 - Второй проход: параллельное заполнение результирующих массивов.
-```
+```cpp
 // File: kotelnikova_a_double_matr_mult/omp/src/ops_omp.cpp
 SparseMatrixCCS KotelnikovaATaskOMP::MultiplyMatrices(const SparseMatrixCCS &a, const SparseMatrixCCS &b) {
   SparseMatrixCCS result(a.rows, b.cols);
