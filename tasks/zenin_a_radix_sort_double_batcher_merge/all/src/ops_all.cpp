@@ -4,11 +4,13 @@
 #include <tbb/parallel_invoke.h>
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <limits>
 #include <vector>
 
-#include "util/include/util.hpp"
+#include "zenin_a_radix_sort_double_batcher_merge/common/include/common.hpp"
 
 namespace zenin_a_radix_sort_double_batcher_merge {
 
@@ -122,6 +124,34 @@ void ZeninARadixSortDoubleBatcherMergeALL::BatcherOddEvenMerge(std::vector<doubl
   }
 }
 
+void ZeninARadixSortDoubleBatcherMergeALL::SortChunk(std::vector<double> &chunk, size_t chunk_size) const {
+  size_t half = chunk_size / 2;
+  if (half > 0) {
+    std::vector<double> left(chunk.begin(), chunk.begin() + static_cast<std::ptrdiff_t>(half));
+    std::vector<double> right(chunk.begin() + static_cast<std::ptrdiff_t>(half), chunk.end());
+    tbb::parallel_invoke([&]() { LSDRadixSort(left); }, [&]() { LSDRadixSort(right); });
+    std::ranges::copy(left, chunk.begin());
+    std::ranges::copy(right, chunk.begin() + static_cast<std::ptrdiff_t>(half));
+    BatcherOddEvenMerge(chunk, chunk_size);
+  } else {
+    LSDRadixSort(chunk);
+  }
+}
+
+void ZeninARadixSortDoubleBatcherMergeALL::FinalMerge(size_t chunk_size, size_t pow2, size_t original_size) {
+  for (size_t size = chunk_size; size < pow2; size *= 2) {
+    size_t merges_count = pow2 / (size * 2);
+    for (size_t i = 0; i < merges_count; ++i) {
+      size_t lo = i * 2 * size;
+      std::vector<double> block(local_data_.begin() + static_cast<std::ptrdiff_t>(lo),
+                                local_data_.begin() + static_cast<std::ptrdiff_t>(lo + (2 * size)));
+      BatcherOddEvenMerge(block, (2 * size));
+      std::ranges::copy(block, local_data_.begin() + static_cast<std::ptrdiff_t>(lo));
+    }
+  }
+  local_data_.resize(original_size);
+}
+
 bool ZeninARadixSortDoubleBatcherMergeALL::RunImpl() {
   int rank = 0;
   int num_procs = 1;
@@ -132,25 +162,37 @@ bool ZeninARadixSortDoubleBatcherMergeALL::RunImpl() {
   if (rank == 0) {
     original_size = local_data_.size();
   }
-
   MPI_Bcast(&original_size, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
 
   if (original_size == 0) {
     return true;
   }
 
-  size_t pow2 = 1;
-  if (rank == 0) {
-    while (pow2 < original_size) {
-      pow2 <<= 1;
+  bool procs_is_pow2 = (num_procs > 1) && ((num_procs & (num_procs - 1)) == 0);
+
+  if (!procs_is_pow2) {
+    if (rank == 0) {
+      LSDRadixSort(local_data_);
     }
-    while (pow2 % static_cast<size_t>(num_procs) != 0) {
-      pow2 <<= 1;
+    if (rank != 0) {
+      local_data_.resize(original_size);
     }
-    local_data_.resize(pow2, std::numeric_limits<double>::max());
+    MPI_Bcast(local_data_.data(), static_cast<int>(original_size), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    return true;
   }
 
+  size_t pow2 = 1;
+  while (pow2 < original_size) {
+    pow2 <<= 1;
+  }
+  while (pow2 % static_cast<size_t>(num_procs) != 0) {
+    pow2 <<= 1;
+  }
   MPI_Bcast(&pow2, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    local_data_.resize(pow2, std::numeric_limits<double>::max());
+  }
 
   size_t chunk_size = pow2 / static_cast<size_t>(num_procs);
   std::vector<double> chunk(chunk_size);
@@ -158,35 +200,13 @@ bool ZeninARadixSortDoubleBatcherMergeALL::RunImpl() {
   MPI_Scatter(local_data_.data(), static_cast<int>(chunk_size), MPI_DOUBLE, chunk.data(), static_cast<int>(chunk_size),
               MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  size_t half = chunk_size / 2;
-  if (half > 0) {
-    std::vector<double> left(chunk.begin(), chunk.begin() + static_cast<std::ptrdiff_t>(half));
-    std::vector<double> right(chunk.begin() + static_cast<std::ptrdiff_t>(half), chunk.end());
-
-    tbb::parallel_invoke([&]() { LSDRadixSort(left); }, [&]() { LSDRadixSort(right); });
-
-    std::ranges::copy(left, chunk.begin());
-    std::ranges::copy(right, chunk.begin() + static_cast<std::ptrdiff_t>(half));
-    BatcherOddEvenMerge(chunk, chunk_size);
-  } else {
-    LSDRadixSort(chunk);
-  }
+  SortChunk(chunk, chunk_size);
 
   MPI_Gather(chunk.data(), static_cast<int>(chunk_size), MPI_DOUBLE, local_data_.data(), static_cast<int>(chunk_size),
              MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
-    for (size_t size = chunk_size; size < pow2; size *= 2) {
-      size_t merges_count = pow2 / (size * 2);
-      for (size_t i = 0; i < merges_count; ++i) {
-        size_t lo = i * 2 * size;
-        std::vector<double> block(local_data_.begin() + static_cast<std::ptrdiff_t>(lo),
-                                  local_data_.begin() + static_cast<std::ptrdiff_t>(lo + 2 * size));
-        BatcherOddEvenMerge(block, 2 * size);
-        std::ranges::copy(block, local_data_.begin() + static_cast<std::ptrdiff_t>(lo));
-      }
-    }
-    local_data_.resize(original_size);  // после цикла
+    FinalMerge(chunk_size, pow2, original_size);
   }
 
   if (rank != 0) {
