@@ -1,9 +1,9 @@
 #pragma once
 
-#include "kamalagin_a_binary_image_convex_hull_omp/common/include/common.hpp"
+#include "kamalagin_a_binary_image_convex_hull/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace kamalagin_a_binary_image_convex_hull_omp {
+namespace kamalagin_a_binary_image_convex_hull {
 
 class KamalaginABinaryImageConvexHullOMP : public BaseTask {
  public:
@@ -19,4 +19,4 @@ class KamalaginABinaryImageConvexHullOMP : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace kamalagin_a_binary_image_convex_hull_omp
+}  // namespace kamalagin_a_binary_image_convex_hull
