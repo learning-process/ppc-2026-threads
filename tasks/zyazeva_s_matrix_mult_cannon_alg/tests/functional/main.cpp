@@ -20,7 +20,7 @@ namespace zyazeva_s_matrix_mult_cannon_alg {
 class ZyazevaARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::get<2>(test_param) + "_" + std::to_string(std::get<0>(test_param)) + "by" +
+    return std::get<2>(test_param) + "_" + std::to_string(std::get<0>(test_param)) + "_by_" +
            std::to_string(std::get<0>(test_param)) + "_" + std::to_string(std::get<1>(test_param));
   }
 
