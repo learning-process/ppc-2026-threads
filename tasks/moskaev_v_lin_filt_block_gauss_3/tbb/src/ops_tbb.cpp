@@ -29,6 +29,25 @@ bool MoskaevVLinFiltBlockGauss3TBB::PreProcessingImpl() {
   return true;
 }
 
+namespace {
+
+inline void ComputeFilteredPixel(const std::vector<uint8_t> &input_block, std::vector<uint8_t> &output_block,
+                                 int block_width, int inner_width, int channels, int row, int col, int channel) {
+  float sum = 0.0F;
+  for (int ky = -1; ky <= 1; ++ky) {
+    for (int kx = -1; kx <= 1; ++kx) {
+      int ny = row + 1 + ky;
+      int nx = col + 1 + kx;
+      int idx = (((ny * block_width) + nx) * channels) + channel;
+      sum += static_cast<float>(input_block[idx]) * kGaussianKernel[((ky + 1) * 3) + (kx + 1)];
+    }
+  }
+  int out_idx = (((row * inner_width) + col) * channels) + channel;
+  output_block[out_idx] = static_cast<uint8_t>(std::round(sum));
+}
+
+}  // namespace
+
 void MoskaevVLinFiltBlockGauss3TBB::ApplyGaussianFilterToBlock(const std::vector<uint8_t> &input_block,
                                                                std::vector<uint8_t> &output_block, int block_width,
                                                                int block_height, int channels) {
@@ -40,20 +59,7 @@ void MoskaevVLinFiltBlockGauss3TBB::ApplyGaussianFilterToBlock(const std::vector
     for (int row = range.pages().begin(); row < range.pages().end(); ++row) {
       for (int col = range.cols().begin(); col < range.cols().end(); ++col) {
         for (int channel = range.rows().begin(); channel < range.rows().end(); ++channel) {
-          float sum = 0.0F;
-
-          for (int ky = -1; ky <= 1; ++ky) {
-            for (int kx = -1; kx <= 1; ++kx) {
-              int ny = row + 1 + ky;
-              int nx = col + 1 + kx;
-
-              int idx = (((ny * block_width) + nx) * channels) + channel;
-              sum += static_cast<float>(input_block[idx]) * kGaussianKernel[((ky + 1) * 3) + (kx + 1)];
-            }
-          }
-
-          int out_idx = (((row * inner_width) + col) * channels) + channel;
-          output_block[out_idx] = static_cast<uint8_t>(std::round(sum));
+          ComputeFilteredPixel(input_block, output_block, block_width, inner_width, channels, row, col, channel);
         }
       }
     }
@@ -61,6 +67,7 @@ void MoskaevVLinFiltBlockGauss3TBB::ApplyGaussianFilterToBlock(const std::vector
 }
 
 namespace {
+
 void CopyBlockWithPadding(const std::vector<uint8_t> &source_image, std::vector<uint8_t> &padded_block, int width,
                           int height, int channels, int block_x, int block_y, int current_block_width,
                           int current_block_height, int block_with_padding_width) {
@@ -72,7 +79,6 @@ void CopyBlockWithPadding(const std::vector<uint8_t> &source_image, std::vector<
         int src_x = std::clamp(block_x + col, 0, width - 1);
         int dst_y = row + 1;
         int dst_x = col + 1;
-
         for (int channel = 0; channel < channels; ++channel) {
           int src_idx = (((src_y * width) + src_x) * channels) + channel;
           int dst_idx = (((dst_y * block_with_padding_width) + dst_x) * channels) + channel;
@@ -99,6 +105,7 @@ void CopyProcessedBlockToOutput(const std::vector<uint8_t> &processed_block, std
     }
   });
 }
+
 }  // namespace
 
 bool MoskaevVLinFiltBlockGauss3TBB::RunImpl() {
@@ -126,10 +133,8 @@ bool MoskaevVLinFiltBlockGauss3TBB::RunImpl() {
       for (int bx = range.cols().begin(); bx < range.cols().end(); ++bx) {
         int block_x = bx * block_size;
         int block_y = by * block_size;
-
         int current_block_width = std::min(block_size, width - block_x);
         int current_block_height = std::min(block_size, height - block_y);
-
         int block_with_padding_width = current_block_width + 2;
         int block_with_padding_height = current_block_height + 2;
 
@@ -137,17 +142,14 @@ bool MoskaevVLinFiltBlockGauss3TBB::RunImpl() {
                                              static_cast<size_t>(block_with_padding_height) *
                                              static_cast<size_t>(channels),
                                          0);
-
         std::vector<uint8_t> output_block(static_cast<size_t>(current_block_width) *
                                               static_cast<size_t>(current_block_height) * static_cast<size_t>(channels),
                                           0);
 
         CopyBlockWithPadding(image_data, input_block, width, height, channels, block_x, block_y, current_block_width,
                              current_block_height, block_with_padding_width);
-
         ApplyGaussianFilterToBlock(input_block, output_block, block_with_padding_width, block_with_padding_height,
                                    channels);
-
         CopyProcessedBlockToOutput(output_block, GetOutput(), width, channels, block_x, block_y, current_block_width,
                                    current_block_height);
       }
