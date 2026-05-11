@@ -1,3 +1,5 @@
+#include "kruglova_a_conjugate_gradient_sle/stl/include/ops_stl.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <future>
@@ -5,7 +7,6 @@
 #include <vector>
 
 #include "kruglova_a_conjugate_gradient_sle/common/include/common.hpp"
-#include "kruglova_a_conjugate_gradient_sle/stl/include/ops_stl.hpp"
 
 namespace kruglova_a_conjugate_gradient_sle {
 
