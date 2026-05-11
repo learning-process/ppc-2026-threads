@@ -53,7 +53,7 @@ bool MarkingComponentsALL::PreProcessingImpl() {
   return true;
 }
 
-int MarkingComponentsALL::FindRoot(std::vector<int>& parent, int label) {
+int MarkingComponentsALL::FindRoot(std::vector<int> &parent, int label) {
   while (parent[label] != label) {
     parent[label] = parent[parent[label]];
     label = parent[label];
@@ -61,10 +61,10 @@ int MarkingComponentsALL::FindRoot(std::vector<int>& parent, int label) {
   return label;
 }
 
-void MarkingComponentsALL::UnionLabels(std::vector<int>& parent, int label1, int label2) {
+void MarkingComponentsALL::UnionLabels(std::vector<int> &parent, int label1, int label2) {
   int root1 = FindRoot(parent, label1);
   int root2 = FindRoot(parent, label2);
-  
+
   if (root1 != root2) {
     if (root1 < root2) {
       parent[root2] = root1;
@@ -75,20 +75,30 @@ void MarkingComponentsALL::UnionLabels(std::vector<int>& parent, int label1, int
 }
 
 bool MarkingComponentsALL::IsValidNeighbor(int i, int j, const NeighborOffsetAll &offset) const {
-  if (offset.check_i_min == 1 && i <= 0) return false;
-  if (offset.check_i_max == 1 && i >= rows_ - 1) return false;
-  if (offset.check_j_min == 1 && j <= 0) return false;
-  if (offset.check_j_max == 1 && j >= cols_ - 1) return false;
+  if (offset.check_i_min == 1 && i <= 0) {
+    return false;
+  }
+  if (offset.check_i_max == 1 && i >= rows_ - 1) {
+    return false;
+  }
+  if (offset.check_j_min == 1 && j <= 0) {
+    return false;
+  }
+  if (offset.check_j_max == 1 && j >= cols_ - 1) {
+    return false;
+  }
   return true;
 }
 
 void MarkingComponentsALL::ProcessNeighborFirstPass(int i, int j, const NeighborOffsetAll &offset,
-                                                     std::vector<int>& neighbor_labels, int& min_label) {
-  if (!IsValidNeighbor(i, j, offset)) return;
-  
+                                                    std::vector<int> &neighbor_labels, int &min_label) {
+  if (!IsValidNeighbor(i, j, offset)) {
+    return;
+  }
+
   int ni = i + offset.di;
   int nj = j + offset.dj;
-  
+
   if (labels_[ni][nj] != 0) {
     int label = labels_[ni][nj];
     neighbor_labels.push_back(label);
@@ -102,19 +112,19 @@ void MarkingComponentsALL::FirstPass() {
   const auto &input = GetInput();
   int next_label = 1;
   std::vector<NeighborOffsetAll> first_pass_neighbors = GetFirstPassNeighbors();
-  
+
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
       size_t idx = (static_cast<size_t>(i) * static_cast<size_t>(cols_)) + static_cast<size_t>(j) + 2;
-      
+
       if (input[idx] == 0) {
         std::vector<int> neighbor_labels;
         int min_label = next_label;
-        
+
         for (size_t k = 0; k < first_pass_neighbors.size(); ++k) {
           ProcessNeighborFirstPass(i, j, first_pass_neighbors[k], neighbor_labels, min_label);
         }
-        
+
         if (neighbor_labels.empty()) {
           labels_[i][j] = next_label;
           equivalent_labels_.push_back(next_label);
@@ -135,7 +145,7 @@ void MarkingComponentsALL::FirstPass() {
 
 void MarkingComponentsALL::SecondPass() {
   int label_count = static_cast<int>(equivalent_labels_.size());
-  
+
   // Первый проход - поиск корней
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
@@ -144,7 +154,7 @@ void MarkingComponentsALL::SecondPass() {
       }
     }
   }
-  
+
   // Перемаппинг меток
   std::vector<int> remap(label_count, 0);
   int current_label = 1;
@@ -154,7 +164,7 @@ void MarkingComponentsALL::SecondPass() {
       current_label++;
     }
   }
-  
+
   // Применение перемаппинга
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
@@ -170,28 +180,28 @@ bool MarkingComponentsALL::RunImpl() {
   if (input.size() < 2 || rows_ == 0 || cols_ == 0) {
     return false;
   }
-  
+
   FirstPass();
   SecondPass();
-  
+
   return true;
 }
 
 bool MarkingComponentsALL::PostProcessingImpl() {
   OutType &output = GetOutput();
   output.clear();
-  
+
   output.reserve((static_cast<size_t>(rows_) * static_cast<size_t>(cols_)) + 2);
-  
+
   output.push_back(rows_);
   output.push_back(cols_);
-  
+
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
       output.push_back(labels_[i][j]);
     }
   }
-  
+
   return true;
 }
 

@@ -24,14 +24,14 @@ class MarkingComponentsALL : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static int FindRoot(std::vector<int>& parent, int label);
-  void UnionLabels(std::vector<int>& parent, int label1, int label2);
+  static int FindRoot(std::vector<int> &parent, int label);
+  void UnionLabels(std::vector<int> &parent, int label1, int label2);
   void FirstPass();
   void SecondPass();
-  
+
   [[nodiscard]] bool IsValidNeighbor(int i, int j, const NeighborOffsetAll &offset) const;
-  void ProcessNeighborFirstPass(int i, int j, const NeighborOffsetAll &offset, 
-                                 std::vector<int>& current_labels, int& min_label);
+  void ProcessNeighborFirstPass(int i, int j, const NeighborOffsetAll &offset, std::vector<int> &current_labels,
+                                int &min_label);
 
   int rows_ = 0;
   int cols_ = 0;
