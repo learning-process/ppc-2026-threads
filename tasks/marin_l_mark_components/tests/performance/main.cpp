@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
+#include <cstdint>
 #include <random>
 #include <vector>
 
@@ -15,11 +16,13 @@ namespace marin_l_mark_components {
 
 namespace {
 
+constexpr std::uint32_t kPerfSeed = 0x4D415249U;
+
 Image MakeRandomBinaryImage(int height, int width, double fill_probability) {
   Image image(static_cast<size_t>(height), std::vector<int>(static_cast<size_t>(width), 0));
 
-  std::random_device random_seed;
-  std::mt19937 generator(random_seed());
+  std::seed_seq seed_sequence{static_cast<std::uint32_t>(height), static_cast<std::uint32_t>(width), kPerfSeed};
+  std::mt19937 generator(seed_sequence);
   std::uniform_real_distribution<double> distribution(0.0, 1.0);
 
   for (int row_idx = 0; row_idx < height; ++row_idx) {
