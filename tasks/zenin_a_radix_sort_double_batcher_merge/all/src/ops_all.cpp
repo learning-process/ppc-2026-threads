@@ -124,7 +124,7 @@ void ZeninARadixSortDoubleBatcherMergeALL::BatcherOddEvenMerge(std::vector<doubl
   }
 }
 
-void ZeninARadixSortDoubleBatcherMergeALL::SortChunk(std::vector<double> &chunk, size_t chunk_size) const {
+void ZeninARadixSortDoubleBatcherMergeALL::SortChunk(std::vector<double> &chunk, size_t chunk_size) {
   size_t half = chunk_size / 2;
   if (half > 0) {
     std::vector<double> left(chunk.begin(), chunk.begin() + static_cast<std::ptrdiff_t>(half));

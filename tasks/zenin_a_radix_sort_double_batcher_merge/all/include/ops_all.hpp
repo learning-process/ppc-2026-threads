@@ -27,7 +27,7 @@ class ZeninARadixSortDoubleBatcherMergeALL : public BaseTask {
   static void LSDRadixSort(std::vector<double> &array);
   static void BlocksComparing(std::vector<double> &arr, size_t i, size_t step);
   static void BatcherOddEvenMerge(std::vector<double> &arr, size_t n);
-  void SortChunk(std::vector<double> &chunk, size_t chunk_size) const;
+  static void SortChunk(std::vector<double> &chunk, size_t chunk_size);
   void FinalMerge(size_t chunk_size, size_t pow2, size_t original_size);
 
   std::vector<double> local_data_;
