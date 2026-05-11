@@ -309,17 +309,22 @@ done
 
 ## 9. Источники
 
-- Документация курса ppc-2026-threads и структура примера `tasks/example_threads`
-- OpenMP Architecture Review Board. *OpenMP Application Programming Interface*, версия 5.2.
+1. Документация курса **ppc-2026-threads** и структура примера `tasks/example_threads`
+
+2. OpenMP Architecture Review Board. *OpenMP Application Programming Interface*, версия 5.2
+[Электронный ресурс]. — Режим доступа:
 [https://www.openmp.org/specifications/](https://www.openmp.org/specifications/)
-- UXL Foundation. *oneTBB Documentation*. [https://uxlfoundation.github.io/oneTBB/]
-(<https://uxlfoundation.github.io/oneTBB/>)
-- MPI Forum. *MPI: A Message-Passing Interface Standard*, версия 4.1. [https://www.mpi-forum.org/docs/]
-(<https://www.mpi-forum.org/docs/>)
-- cppreference.com. *std::thread*. [https://en.cppreference.com/w/cpp/thread/thread]
-(<https://en.cppreference.com/w/cpp/thread/thread>)
-- D. Knuth. *The Art of Computer Programming*, Vol. 3: Sorting and Searching.
-Алгоритм сортировки Шелла (§5.2.1) и сеть сортировки Бэтчера (§5.3.4).
+
+3. UXL Foundation. *oneTBB Documentation* [Электронный ресурс]. — Режим доступа:
+[https://uxlfoundation.github.io/oneTBB/](https://uxlfoundation.github.io/oneTBB/)
+
+4. MPI Forum. *MPI: A Message-Passing Interface Standard*, версия 4.1
+[Электронный ресурс]. — Режим доступа: [https://www.mpi-forum.org/docs/](https://www.mpi-forum.org/docs/)
+
+5. cppreference.com. *std::thread* [Электронный ресурс]. — Режим доступа:
+[https://en.cppreference.com/w/cpp/thread/thread](https://en.cppreference.com/w/cpp/thread/thread)
+
+6. Кнут, Д. Э. **Искусство программирования. Том 3. Сортировка и поиск** - Москва : Вильямс, 2007. - 832 с.
 
 ## 10. Приложение
 
