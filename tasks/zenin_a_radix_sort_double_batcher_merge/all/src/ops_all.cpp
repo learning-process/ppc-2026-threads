@@ -129,30 +129,28 @@ bool ZeninARadixSortDoubleBatcherMergeALL::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
   size_t original_size = 0;
-  size_t pow2 = 1;
-
   if (rank == 0) {
-    if (local_data_.empty()) {
-      MPI_Bcast(&original_size, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
-      return true;
-    }
     original_size = local_data_.size();
+  }
+
+  MPI_Bcast(&original_size, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+
+  if (original_size == 0) {
+    return true;
+  }
+
+  size_t pow2 = 1;
+  if (rank == 0) {
     while (pow2 < original_size) {
       pow2 <<= 1;
     }
-
     while (pow2 % static_cast<size_t>(num_procs) != 0) {
       pow2 <<= 1;
     }
     local_data_.resize(pow2, std::numeric_limits<double>::max());
   }
 
-  MPI_Bcast(&original_size, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
   MPI_Bcast(&pow2, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
-
-  if (original_size == 0) {
-    return true;
-  }
 
   size_t chunk_size = pow2 / static_cast<size_t>(num_procs);
   std::vector<double> chunk(chunk_size);
@@ -188,8 +186,13 @@ bool ZeninARadixSortDoubleBatcherMergeALL::RunImpl() {
         std::ranges::copy(block, local_data_.begin() + static_cast<std::ptrdiff_t>(lo));
       }
     }
+    local_data_.resize(original_size);  // после цикла
+  }
+
+  if (rank != 0) {
     local_data_.resize(original_size);
   }
+  MPI_Bcast(local_data_.data(), static_cast<int>(original_size), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   return true;
 }
