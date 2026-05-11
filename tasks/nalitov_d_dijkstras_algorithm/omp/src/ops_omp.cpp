@@ -157,10 +157,8 @@ bool NalitovDDijkstrasAlgorithmOmp::PreProcessingImpl() {
   const std::size_t arc_count = in.arcs.size();
 
 #pragma omp parallel for default(none) schedule(guided) num_threads(omp_threads) shared(in, g, row_next, arc_count)
-  for (std::ptrdiff_t ei = 0;
-       ei < static_cast<std::ptrdiff_t>(arc_count);  // NOLINT(modernize-use-integer-sign-comparison)
-       ++ei) {
-    const Arc &a = in.arcs[static_cast<std::size_t>(ei)];
+  for (std::size_t ei = 0; ei < arc_count; ++ei) {
+    const Arc &a = in.arcs[ei];
     const auto u = static_cast<std::size_t>(a.from);
     const std::size_t slot = row_next[u].fetch_add(1, std::memory_order_relaxed);
     g[u][slot] = {a.to, a.weight};
