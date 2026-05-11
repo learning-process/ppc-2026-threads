@@ -57,7 +57,6 @@ void SimpleMultiply(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &res
   result.rows = a.rows;
   result.cols = b.cols;
   result.data.assign(static_cast<std::size_t>(result.rows) * result.cols, 0.0);
-
   for (int i = 0; i < a.rows; ++i) {
     for (int j = 0; j < b.cols; ++j) {
       double sum = 0.0;
