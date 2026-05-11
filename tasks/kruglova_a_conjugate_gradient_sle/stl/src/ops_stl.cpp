@@ -4,6 +4,7 @@
 #include <cmath>
 #include <execution>
 #include <numeric>
+#include <thread>
 #include <vector>
 
 #include "kruglova_a_conjugate_gradient_sle/common/include/common.hpp"
@@ -57,7 +58,7 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
   for (int iter = 0; iter < n * 2; ++iter) {
     std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i) {
       double sum = 0.0;
-      const size_t row_offset = static_cast<size_t>(i) * n;
+      size_t row_offset = static_cast<size_t>(i) * n;
       for (int j = 0; j < n; ++j) {
         sum += a[row_offset + j] * p[j];
       }
