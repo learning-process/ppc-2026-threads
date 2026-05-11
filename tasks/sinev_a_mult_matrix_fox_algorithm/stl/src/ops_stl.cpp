@@ -43,7 +43,9 @@ void SinevAMultMatrixFoxAlgorithmSTL::SimpleMultiply(size_t n, const std::vector
 void SinevAMultMatrixFoxAlgorithmSTL::DecomposeToBlocks(const std::vector<double> &src, std::vector<double> &dst,
                                                         size_t n, size_t bs, int q) {
   unsigned int num_threads = std::thread::hardware_concurrency();
-  if (num_threads == 0) num_threads = 2;
+  if (num_threads == 0) {
+    num_threads = 2;
+  }
 
   std::vector<std::thread> threads;
   threads.reserve(num_threads);
@@ -77,7 +79,9 @@ void SinevAMultMatrixFoxAlgorithmSTL::DecomposeToBlocks(const std::vector<double
 void SinevAMultMatrixFoxAlgorithmSTL::AssembleFromBlocks(const std::vector<double> &src, std::vector<double> &dst,
                                                          size_t n, size_t bs, int q) {
   unsigned int num_threads = std::thread::hardware_concurrency();
-  if (num_threads == 0) num_threads = 2;
+  if (num_threads == 0) {
+    num_threads = 2;
+  }
 
   std::vector<std::thread> threads;
   threads.reserve(num_threads);
@@ -127,7 +131,9 @@ void SinevAMultMatrixFoxAlgorithmSTL::FoxStep(const std::vector<double> &blocks_
                                               std::vector<double> &blocks_c, size_t bs, int q, int step) {
   const size_t block_size = bs * bs;
   unsigned int num_threads = std::thread::hardware_concurrency();
-  if (num_threads == 0) num_threads = 2;
+  if (num_threads == 0) {
+    num_threads = 2;
+  }
 
   std::vector<std::thread> threads;
   threads.reserve(num_threads);
@@ -172,12 +178,12 @@ bool SinevAMultMatrixFoxAlgorithmSTL::RunImpl() {
   while (n % bs != 0 && bs > 16) {
     bs /= 2;
   }
-  
+
   if (n % bs != 0) {
     SimpleMultiply(n, a, b, c);
     return true;
   }
-  
+
   const int actual_q = static_cast<int>(n / bs);
 
   const auto total_blocks = static_cast<size_t>(actual_q) * static_cast<size_t>(actual_q);
@@ -200,10 +206,18 @@ bool SinevAMultMatrixFoxAlgorithmSTL::RunImpl() {
 }
 
 size_t SinevAMultMatrixFoxAlgorithmSTL::ChooseBlockSize(size_t n) {
-  if (n % 128 == 0) return 128;
-  if (n % 64 == 0) return 64;
-  if (n % 32 == 0) return 32;
-  if (n % 16 == 0) return 16;
+  if (n % 128 == 0) {
+    return 128;
+  }
+  if (n % 64 == 0) {
+    return 64;
+  }
+  if (n % 32 == 0) {
+    return 32;
+  }
+  if (n % 16 == 0) {
+    return 16;
+  }
   return 1;
 }
 
