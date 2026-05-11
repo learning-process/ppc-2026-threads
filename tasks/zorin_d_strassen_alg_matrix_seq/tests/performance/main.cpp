@@ -48,9 +48,6 @@ const auto kPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ZorinDStrassenAlgMatrixSEQ, ZorinDStrassenAlgMatrixOMP,
                                 ZorinDStrassenAlgMatrixSTL, ZorinDStrassenAlgMatrixTBB, ZorinDStrassenAlgMatrixALL>(
         PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq);
-const auto kPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZorinDStrassenAlgMatrixSEQ, ZorinDStrassenAlgMatrixOMP,
-                                                    ZorinDStrassenAlgMatrixSTL, ZorinDStrassenAlgMatrixTBB>(
-    PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq);
 
 const auto kValues = ppc::util::TupleToGTestValues(kPerfTasks);
 const auto kName = ZorinDRunPerfTests::CustomPerfTestName;
