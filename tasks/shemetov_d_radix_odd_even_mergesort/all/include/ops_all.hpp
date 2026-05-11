@@ -16,11 +16,13 @@ class ShemetovDRadixOddEvenMergeSortALL : public BaseTask {
   explicit ShemetovDRadixOddEvenMergeSortALL(const InType &in);
 
  private:
-  static void ScatterData(std::vector<int> &global_array, std::vector<int> &local_array, size_t chunk, int rank, int ranks, int mpi_init);
-  static void MPISort(std::vector<int>& local_array, size_t chunk);
+  static void ScatterData(std::vector<int> &global_array, std::vector<int> &local_array, size_t chunk, int rank,
+                          int ranks, int mpi_init);
+  static void MPISort(std::vector<int> &local_array, size_t chunk);
   void MPIMerge(size_t chunk);
-  static void GatherData(std::vector<int> &global_array, std::vector<int> &local_array, size_t chunk, int rank, int ranks, int mpi_init);
-  
+  static void GatherData(std::vector<int> &global_array, std::vector<int> &local_array, size_t chunk, int rank,
+                         int ranks, int mpi_init);
+
   static void RadixSort(std::vector<int> &array, size_t left, size_t right, std::vector<int> &buffer,
                         std::vector<int> &position);
   static void OddEvenMerge(std::vector<int> &array, size_t start, size_t segment);
