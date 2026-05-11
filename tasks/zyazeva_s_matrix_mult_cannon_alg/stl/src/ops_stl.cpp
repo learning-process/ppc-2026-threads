@@ -2,8 +2,10 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <functional>
 #include <thread>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -24,10 +26,10 @@ void ParallelFor(int count, const std::function<void(int)> &func) {
 
   int begin = 0;
 
-  for (unsigned int t = 0; t < threads_count; ++t) {
-    int end = begin + block_size + (t < static_cast<unsigned int>(remainder) ? 1 : 0);
+  for (unsigned int th = 0; th < threads_count; ++th) {
+    int end = begin + block_size + (th < static_cast<unsigned int>(remainder) ? 1 : 0);
 
-    threads[t] = std::thread([begin, end, &func]() {
+    threads[th] = std::thread([begin, end, &func]() {
       for (int i = begin; i < end; ++i) {
         func(i);
       }
@@ -47,7 +49,7 @@ void MulBlock(const std::vector<double> &a, const std::vector<double> &b, std::v
       double v = a[(i * bs) + k];
 
       for (int j = 0; j < bs; ++j) {
-        c[i * bs + j] += v * b[(k * bs) + j];
+        c[(i * bs) + j] += v * b[(k * bs) + j];
       }
     }
   }
@@ -73,8 +75,8 @@ void InitializeBlocks(const std::vector<double> &a, const std::vector<double> &b
     int i = id / g;
     int j = id % g;
 
-    ba[id].assign(bs * bs, 0.0);
-    bb[id].assign(bs * bs, 0.0);
+    ba[id].assign(static_cast<std::vector<double>::size_type>(bs * bs), 0.0);
+    bb[id].assign(static_cast<std::vector<double>::size_type>(bs * bs), 0.0);
 
     for (int bi = 0; bi < bs; ++bi) {
       for (int bj = 0; bj < bs; ++bj) {
@@ -157,14 +159,14 @@ bool ZyazevaSMatrixMultCannonAlgSTL::PreProcessingImpl() {
 }
 
 bool ZyazevaSMatrixMultCannonAlgSTL::RunImpl() {
-  int n = std::get<0>(GetInput());
+  size_t n = std::get<0>(GetInput());
 
   auto &a = std::get<1>(GetInput());
   auto &b = std::get<2>(GetInput());
 
   std::vector<double> res(n * n, 0.0);
 
-  int g = static_cast<int>(std::sqrt(n));
+  size_t g = static_cast<int>(std::sqrt(n));
 
   if (g <= 1 || g * g != n || n % g != 0) {
     RegularMultiplication(a, b, res, n);
@@ -187,7 +189,7 @@ bool ZyazevaSMatrixMultCannonAlgSTL::RunImpl() {
 
   AlignBlocks(ba, bb, aa, ab, g);
 
-  for (int step = 0; step < g; ++step) {
+  for (size_t step = 0; step < g; ++step) {
     CannonStep(aa, ab, c, g, bs);
 
     if (step < g - 1) {
