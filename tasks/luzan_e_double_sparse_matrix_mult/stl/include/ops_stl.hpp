@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "luzan_e_double_sparse_matrix_mult/common/include/common.hpp"
 #include "task/include/task.hpp"
 
