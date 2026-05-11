@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "kamalagin_a_binary_image_convex_hull/common/include/common.hpp"
+#include "kamalagin_a_binary_image_convex_hull/omp/include/ops_omp.hpp"
 #include "kamalagin_a_binary_image_convex_hull/seq/include/ops_seq.hpp"
 #include "performance/include/performance.hpp"
 #include "util/include/perf_test_util.hpp"
@@ -75,8 +76,9 @@ TEST_P(KamalaginRunPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KamalaginABinaryImageConvexHullSEQ>(
-    PPC_SETTINGS_kamalagin_a_binary_image_convex_hull);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, KamalaginABinaryImageConvexHullSEQ, KamalaginABinaryImageConvexHullOMP>(
+        PPC_SETTINGS_kamalagin_a_binary_image_convex_hull);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = KamalaginRunPerfTests::CustomPerfTestName;
