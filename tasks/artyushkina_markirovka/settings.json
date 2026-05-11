@@ -1,5 +1,6 @@
 {
   "tasks": {
+    "all": "enabled",
     "mpi": "enabled",
     "seq": "enabled"
   },

@@ -6,6 +6,7 @@
 #include <string>
 #include <tuple>
 
+#include "artyushkina_markirovka/all/include/ops_all.hpp"
 #include "artyushkina_markirovka/common/include/common.hpp"
 #include "artyushkina_markirovka/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
@@ -13,6 +14,7 @@
 
 namespace artyushkina_markirovka {
 
+// Существующие тесты для SEQ
 class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
@@ -82,8 +84,79 @@ class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType
   OutType expected_;
 };
 
+// Новые тесты для ALL
+class ArtyushkinaMarkirovkaAllFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+ public:
+  static std::string PrintTestParam(const TestType &test_param) {
+    return "ALL_" + std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+  }
+
+ protected:
+  void SetUp() override {
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    int test_id = std::get<0>(params);
+
+    switch (test_id) {
+      case 0: {
+        input_data_ = {3, 3, 0, 0, 255, 0, 255, 255, 255, 255, 0};
+        expected_ = {3, 3, 1, 1, 0, 1, 0, 0, 0, 0, 2};
+        break;
+      }
+      case 1: {
+        input_data_ = {3, 3, 0, 0, 0, 0, 255, 0, 0, 0, 255};
+        expected_ = {3, 3, 1, 1, 1, 1, 0, 1, 1, 1, 0};
+        break;
+      }
+      case 2: {
+        input_data_ = {2, 3, 255, 255, 255, 255, 255, 255};
+        expected_ = {2, 3, 0, 0, 0, 0, 0, 0};
+        break;
+      }
+      case 3: {
+        input_data_ = {2, 2, 0, 0, 0, 0};
+        expected_ = {2, 2, 1, 1, 1, 1};
+        break;
+      }
+      case 4: {
+        input_data_ = {3, 4, 0, 0, 0, 0, 255, 255, 255, 255, 0, 0, 0, 0};
+        expected_ = {3, 4, 1, 1, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2};
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  bool CheckTestOutputData(OutType &output_data) final {
+    if (output_data != expected_) {
+      std::cout << "ALL Expected: ";
+      for (auto val : expected_) {
+        std::cout << static_cast<int>(val) << ' ';
+      }
+      std::cout << '\n';
+
+      std::cout << "ALL Actual  : ";
+      for (auto val : output_data) {
+        std::cout << val << ' ';
+      }
+      std::cout << '\n';
+    }
+
+    return output_data == expected_;
+  }
+
+  InType GetTestInputData() final {
+    return input_data_;
+  }
+
+ private:
+  InType input_data_;
+  OutType expected_;
+};
+
 namespace {
 
+// Существующие тесты для SEQ
 TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponents) {
   ExecuteTest(GetParam());
 }
@@ -100,6 +173,20 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = ArtyushkinaMarkirovkaFuncTests::PrintFuncTestName<ArtyushkinaMarkirovkaFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(ComponentLabeling, ArtyushkinaMarkirovkaFuncTests, kGtestValues, kPerfTestName);
+
+// Новые тесты для ALL
+TEST_P(ArtyushkinaMarkirovkaAllFuncTests, MarkingComponentsALL) {
+  ExecuteTest(GetParam());
+}
+
+const auto kTestTasksListAll =
+    ppc::util::AddFuncTask<MarkingComponentsALL, InType>(kTestParam, PPC_SETTINGS_artyushkina_markirovka);
+
+const auto kGtestValuesAll = ppc::util::ExpandToValues(kTestTasksListAll);
+
+const auto kPerfTestNameAll = ArtyushkinaMarkirovkaAllFuncTests::PrintFuncTestName<ArtyushkinaMarkirovkaAllFuncTests>;
+
+INSTANTIATE_TEST_SUITE_P(ComponentLabelingALL, ArtyushkinaMarkirovkaAllFuncTests, kGtestValuesAll, kPerfTestNameAll);
 
 }  // namespace
 
