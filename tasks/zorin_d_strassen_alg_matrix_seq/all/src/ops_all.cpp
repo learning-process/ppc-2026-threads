@@ -67,13 +67,13 @@ void NaiveMulBlocked(const double *a, std::size_t a_stride, const double *b, std
                      std::size_t c_stride, std::size_t n) {
   ZeroMatrix(c, c_stride, n);
 
-  const std::ptrdiff_t n_signed = static_cast<std::ptrdiff_t>(n);
-  const std::ptrdiff_t block_signed = static_cast<std::ptrdiff_t>(kBlockSize);
+  const auto n_signed = static_cast<std::ptrdiff_t>(n);
+  const auto block_signed = static_cast<std::ptrdiff_t>(kBlockSize);
 
 #pragma omp parallel for schedule(static) default(none) \
     shared(a, a_stride, b, b_stride, c, c_stride, n, n_signed, block_signed)
   for (std::ptrdiff_t ii = 0; ii < n_signed; ii += block_signed) {
-    const std::size_t ii_usize = static_cast<std::size_t>(ii);
+    const auto ii_usize = static_cast<std::size_t>(ii);
     const std::size_t i_end = std::min(ii_usize + kBlockSize, n);
     for (std::size_t kk = 0; kk < n; kk += kBlockSize) {
       const std::size_t k_end = std::min(kk + kBlockSize, n);
@@ -417,7 +417,7 @@ bool ZorinDStrassenAlgMatrixALL::RunImpl() {
   }
   MPI_Bcast(&n_u64, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
 
-  const std::size_t n = static_cast<std::size_t>(n_u64);
+  const auto n = static_cast<std::size_t>(n_u64);
   const std::size_t padded = NextPow2(n);
 
   std::vector<double> a_pad(padded * padded, 0.0);
