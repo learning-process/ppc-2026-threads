@@ -2,15 +2,15 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <future>
-#include <numeric>
 #include <vector>
 
 #include "kruglova_a_conjugate_gradient_sle/common/include/common.hpp"
 
 namespace kruglova_a_conjugate_gradient_sle {
 
-double ParallelDotProduct(const std::vector<double> &v1, const std::vector<double> &v2) {
+static double ParallelDotProduct(const std::vector<double> &v1, const std::vector<double> &v2) {
   size_t n = v1.size();
   if (n == 0) {
     return 0.0;
@@ -149,7 +149,7 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
 
       futures.push_back(std::async(std::launch::async, [&, start, end, beta]() {
         for (size_t i = start; i < end; ++i) {
-          p[i] = r[i] + beta * p[i];
+          p[i] = r[i] + (beta * p[i]);
         }
       }));
     }
