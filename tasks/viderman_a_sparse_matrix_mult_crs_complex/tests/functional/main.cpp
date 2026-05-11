@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <functional>
 #include <ostream>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -23,9 +24,9 @@ constexpr double kTestTol = 1e-12;
 
 // Структура параметров с принудительной инициализацией всех полей
 struct MatrixTestParam {
-  std::string name{};
-  CRSMatrix a{};
-  CRSMatrix b{};
+  std::string name;
+  CRSMatrix a;
+  CRSMatrix b;
   std::function<bool(const CRSMatrix &)> check{nullptr};
   bool expect_valid = true;
 };
@@ -67,6 +68,13 @@ MatrixTestParam MakeCase(const std::string &name, CRSMatrix a, CRSMatrix b,
       .name = name, .a = std::move(a), .b = std::move(b), .check = std::move(check), .expect_valid = true};
 }
 
+void RunInvalidCase(const ppc::util::FuncTestParam<InType, OutType, MatrixTestParam> &test_param,
+                    const InType &input_data) {
+  auto task = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTaskGetter)>(test_param)(input_data);
+  EXPECT_FALSE(task->Validation());
+  EXPECT_THROW(task->Validation(), std::runtime_error);
+}
+
 }  // namespace
 
 class VidermanRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, MatrixTestParam> {
@@ -103,10 +111,7 @@ TEST_P(VidermanRunFuncTests, CRSComplexMult) {
   const auto &test_case = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(test_param);
 
   if (!test_case.expect_valid) {
-    auto task =
-        std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTaskGetter)>(test_param)(GetTestInputData());
-    EXPECT_FALSE(task->Validation());
-    EXPECT_THROW(task->Validation(), std::runtime_error);
+    RunInvalidCase(test_param, GetTestInputData());
     return;
   }
 
