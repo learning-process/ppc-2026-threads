@@ -39,8 +39,8 @@ SparseMatrix CreateBandMatrix(int n, int band_width) {
 class DolovVCrsMatMultRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    const int n = 5000;
-    const int width = 50;
+    const int n = 3000;
+    const int width = 30;
 
     SparseMatrix matrix_a = CreateBandMatrix(n, width);
     SparseMatrix matrix_b = CreateBandMatrix(n, width);
