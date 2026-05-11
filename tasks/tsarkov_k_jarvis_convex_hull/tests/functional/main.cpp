@@ -5,6 +5,7 @@
 #include <string>
 #include <tuple>
 
+#include "tsarkov_k_jarvis_convex_hull/all/include/ops_all.hpp"
 #include "tsarkov_k_jarvis_convex_hull/common/include/common.hpp"
 #include "tsarkov_k_jarvis_convex_hull/omp/include/ops_omp.hpp"
 #include "tsarkov_k_jarvis_convex_hull/seq/include/ops_seq.hpp"
@@ -80,6 +81,7 @@ const std::array<TestType, 7> kTestParam = {
     std::make_tuple(6, "diamond_with_inside")};
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<TsarkovKJarvisConvexHullALL, InType>(kTestParam, PPC_SETTINGS_tsarkov_k_jarvis_convex_hull),
     ppc::util::AddFuncTask<TsarkovKJarvisConvexHullOMP, InType>(kTestParam, PPC_SETTINGS_tsarkov_k_jarvis_convex_hull),
     ppc::util::AddFuncTask<TsarkovKJarvisConvexHullTBB, InType>(kTestParam, PPC_SETTINGS_tsarkov_k_jarvis_convex_hull),
     ppc::util::AddFuncTask<TsarkovKJarvisConvexHullSTL, InType>(kTestParam, PPC_SETTINGS_tsarkov_k_jarvis_convex_hull),

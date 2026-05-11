@@ -7,6 +7,7 @@
 #include "kichanova_k_lin_system_by_conjug_grad/common/include/common.hpp"
 #include "kichanova_k_lin_system_by_conjug_grad/omp/include/ops_omp.hpp"
 #include "kichanova_k_lin_system_by_conjug_grad/seq/include/ops_seq.hpp"
+#include "kichanova_k_lin_system_by_conjug_grad/stl/include/ops_stl.hpp"
 #include "kichanova_k_lin_system_by_conjug_grad/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -74,9 +75,9 @@ TEST_P(KichanovaKRunPerfTestsThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, KichanovaKLinSystemByConjugGradSEQ,
-                                               KichanovaKLinSystemByConjugGradOMP, KichanovaKLinSystemByConjugGradTBB>(
+const auto kAllPerfTasks = std::tuple_cat(
+    ppc::util::MakeAllPerfTasks<InType, KichanovaKLinSystemByConjugGradSEQ, KichanovaKLinSystemByConjugGradOMP,
+                                KichanovaKLinSystemByConjugGradTBB, KichanovaKLinSystemByConjugGradSTL>(
         PPC_SETTINGS_kichanova_k_lin_system_by_conjug_grad));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
