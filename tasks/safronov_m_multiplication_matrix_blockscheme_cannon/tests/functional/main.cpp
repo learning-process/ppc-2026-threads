@@ -12,6 +12,7 @@
 #include "safronov_m_multiplication_matrix_blockscheme_cannon/seq/include/ops_seq.hpp"
 #include "safronov_m_multiplication_matrix_blockscheme_cannon/stl/include/ops_stl.hpp"
 #include "safronov_m_multiplication_matrix_blockscheme_cannon/tbb/include/ops_tbb.hpp"
+#include "safronov_m_multiplication_matrix_blockscheme_cannon/all/include/ops_all.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -102,6 +103,8 @@ const auto kTestTasksList =
                    ppc::util::AddFuncTask<SafronovMMultiplicationMatrixBlockSchemeCannonTBB, InType>(
                        kTestParam, PPC_SETTINGS_safronov_m_multiplication_matrix_blockscheme_cannon),
                    ppc::util::AddFuncTask<SafronovMMultiplicationMatrixBlockSchemeCannonSTL, InType>(
+                       kTestParam, PPC_SETTINGS_safronov_m_multiplication_matrix_blockscheme_cannon),
+                   ppc::util::AddFuncTask<SafronovMMultiplicationMatrixBlockSchemeCannonALL, InType>(
                        kTestParam, PPC_SETTINGS_safronov_m_multiplication_matrix_blockscheme_cannon));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

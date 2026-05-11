@@ -10,6 +10,7 @@
 #include "safronov_m_multiplication_matrix_blockscheme_cannon/seq/include/ops_seq.hpp"
 #include "safronov_m_multiplication_matrix_blockscheme_cannon/stl/include/ops_stl.hpp"
 #include "safronov_m_multiplication_matrix_blockscheme_cannon/tbb/include/ops_tbb.hpp"
+#include "safronov_m_multiplication_matrix_blockscheme_cannon/all/include/ops_all.hpp"
 #include "util/include/perf_test_util.hpp"
 namespace safronov_m_multiplication_matrix_blocksscheme_cannon {
 
@@ -54,7 +55,8 @@ namespace {
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<
     InType, SafronovMMultiplicationMatrixBlockSchemeCannon, SafronovMMultiplicationMatrixBlockSchemeCannonOMP,
-    SafronovMMultiplicationMatrixBlockSchemeCannonTBB, SafronovMMultiplicationMatrixBlockSchemeCannonSTL>(
+    SafronovMMultiplicationMatrixBlockSchemeCannonTBB, SafronovMMultiplicationMatrixBlockSchemeCannonSTL,
+    SafronovMMultiplicationMatrixBlockSchemeCannonALL>(
     PPC_SETTINGS_safronov_m_multiplication_matrix_blockscheme_cannon);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
