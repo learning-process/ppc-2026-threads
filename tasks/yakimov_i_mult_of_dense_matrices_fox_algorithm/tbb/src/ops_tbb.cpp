@@ -87,7 +87,7 @@ void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &r
     SimpleMultiply(a, b, result);
     return;
   }
-  
+
   if (a.rows != a.cols || b.rows != b.cols || a.rows != b.rows) {
     SimpleMultiply(a, b, result);
     return;
