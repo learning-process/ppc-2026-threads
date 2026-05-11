@@ -11,6 +11,7 @@
 #include "buzulukski_d_gaus_gorizontal/common/include/common.hpp"
 #include "buzulukski_d_gaus_gorizontal/omp/include/ops_omp.hpp"
 #include "buzulukski_d_gaus_gorizontal/seq/include/ops_seq.hpp"
+#include "buzulukski_d_gaus_gorizontal/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 
 namespace buzulukski_d_gaus_gorizontal {
@@ -47,6 +48,7 @@ TEST_P(BuzulukskiDGausGorizontalFuncTests, ParallelRun) {
 namespace {
 const std::array<TestType, 2> kTestParamSeq = {std::make_tuple(3, "seq_size_3"), std::make_tuple(10, "seq_size_10")};
 const std::array<TestType, 2> kTestParamOmp = {std::make_tuple(3, "omp_size_3"), std::make_tuple(10, "omp_size_10")};
+const std::array<TestType, 2> kTestParamTbb = {std::make_tuple(3, "tbb_size_3"), std::make_tuple(10, "tbb_size_10")};
 
 INSTANTIATE_TEST_SUITE_P(
     buzulukski_d_gaus_gorizontal_combined, BuzulukskiDGausGorizontalFuncTests,
@@ -54,11 +56,13 @@ INSTANTIATE_TEST_SUITE_P(
         ppc::util::AddFuncTask<BuzulukskiDGausGorizontalSEQ, InType>(kTestParamSeq,
                                                                      PPC_SETTINGS_buzulukski_d_gaus_gorizontal),
         ppc::util::AddFuncTask<BuzulukskiDGausGorizontalOMP, InType>(kTestParamOmp,
+                                                                     PPC_SETTINGS_buzulukski_d_gaus_gorizontal),
+        ppc::util::AddFuncTask<BuzulukskiDGausGorizontalTBB, InType>(kTestParamTbb,
                                                                      PPC_SETTINGS_buzulukski_d_gaus_gorizontal))),
     BuzulukskiDGausGorizontalFuncTests::PrintTestParam);
 
 TEST(BuzulukskiDGausGorizontalExtra, AllZerosImage) {
-  auto task = std::make_shared<BuzulukskiDGausGorizontalSEQ>(4);
+  auto task = std::make_shared<BuzulukskiDGausGorizontalTBB>(4);
   ASSERT_TRUE(task->Validation());
   task->PreProcessing();
   std::fill(task->InputImage().begin(), task->InputImage().end(), static_cast<uint8_t>(0));
