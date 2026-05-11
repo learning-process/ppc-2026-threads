@@ -26,7 +26,6 @@ bool KonstantinovAGrahamTBB::IsLowerAnchor(const std::vector<double> &xs, const 
   }
 
   return false;
-
 }
 
 KonstantinovAGrahamTBB::KonstantinovAGrahamTBB(const InType &in) {
