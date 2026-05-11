@@ -21,6 +21,8 @@ class ChernovTRadixSortSTL : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
+  static void RadixSortLSDSequential(std::vector<int> &data);
+
   static void RadixSortLSDParallel(std::vector<int> &data, int num_threads);
 };
 
