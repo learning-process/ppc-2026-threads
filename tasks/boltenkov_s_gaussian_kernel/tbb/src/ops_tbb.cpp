@@ -51,39 +51,29 @@ bool BoltenkovSGaussianKernelTBB::RunImpl() {
   tbb::task_arena arena(ppc::util::GetNumThreads());
 
   arena.execute([&] {
-    tbb::parallel_for(
-        tbb::blocked_range<std::size_t>(1, n + 1),
-        [&](const tbb::blocked_range<std::size_t> &r) {
-          for (std::size_t i = r.begin(); i != r.end(); ++i) {
-            std::copy(data[i - 1].begin(), data[i - 1].end(),
-                      tmp_data[i].begin() + 1);
-          }
-        });
+    tbb::parallel_for(tbb::blocked_range<std::size_t>(1, n + 1), [&](const tbb::blocked_range<std::size_t> &r) {
+      for (std::size_t i = r.begin(); i != r.end(); ++i) {
+        std::copy(data[i - 1].begin(), data[i - 1].end(), tmp_data[i].begin() + 1);
+      }
+    });
   });
 
   auto kernel = kernel_;
   int shift = shift_;
 
   arena.execute([&] {
-    tbb::parallel_for(
-        tbb::blocked_range<std::size_t>(1, n + 1),
-        [&](const tbb::blocked_range<std::size_t> &r) {
-          for (std::size_t i = r.begin(); i != r.end(); ++i) {
-            for (std::size_t j = 1; j <= m; ++j) {
-              res[i - 1][j - 1] =
-                  (tmp_data[i - 1][j - 1] * kernel[0][0]) +
-                  (tmp_data[i - 1][j] * kernel[0][1]) +
-                  (tmp_data[i - 1][j + 1] * kernel[0][2]) +
-                  (tmp_data[i][j - 1] * kernel[1][0]) +
-                  (tmp_data[i][j] * kernel[1][1]) +
-                  (tmp_data[i][j + 1] * kernel[1][2]) +
-                  (tmp_data[i + 1][j - 1] * kernel[2][0]) +
-                  (tmp_data[i + 1][j] * kernel[2][1]) +
-                  (tmp_data[i + 1][j + 1] * kernel[2][2]);
-              res[i - 1][j - 1] >>= shift;
-            }
-          }
-        });
+    tbb::parallel_for(tbb::blocked_range<std::size_t>(1, n + 1), [&](const tbb::blocked_range<std::size_t> &r) {
+      for (std::size_t i = r.begin(); i != r.end(); ++i) {
+        for (std::size_t j = 1; j <= m; ++j) {
+          res[i - 1][j - 1] = (tmp_data[i - 1][j - 1] * kernel[0][0]) + (tmp_data[i - 1][j] * kernel[0][1]) +
+                              (tmp_data[i - 1][j + 1] * kernel[0][2]) + (tmp_data[i][j - 1] * kernel[1][0]) +
+                              (tmp_data[i][j] * kernel[1][1]) + (tmp_data[i][j + 1] * kernel[1][2]) +
+                              (tmp_data[i + 1][j - 1] * kernel[2][0]) + (tmp_data[i + 1][j] * kernel[2][1]) +
+                              (tmp_data[i + 1][j + 1] * kernel[2][2]);
+          res[i - 1][j - 1] >>= shift;
+        }
+      }
+    });
   });
 
   return true;
