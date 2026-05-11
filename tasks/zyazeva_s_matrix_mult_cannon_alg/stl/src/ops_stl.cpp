@@ -57,7 +57,8 @@ void MulBlock(const std::vector<double> &a, const std::vector<double> &b, std::v
   }
 }
 
-void RegularMultiplication(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, size_t n) {
+void RegularMultiplication(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c,
+                           size_t n) {
   ParallelFor(n, [&](size_t i) {
     for (size_t j = 0; j < n; ++j) {
       double s = 0.0;
