@@ -4,7 +4,6 @@
 #include <tbb/parallel_reduce.h>
 #include <tbb/parallel_sort.h>
 
-#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <utility>
