@@ -106,6 +106,7 @@ TEST_P(VidermanRunFuncTests, CRSComplexMult) {
     auto task =
         std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTaskGetter)>(test_param)(GetTestInputData());
     EXPECT_FALSE(task->Validation());
+    EXPECT_THROW(task->Validation(), std::runtime_error);
     return;
   }
 
