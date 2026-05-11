@@ -87,7 +87,7 @@ double ShkrebkoMCalcOfIntegralRectALL::ComputeSliceSum(double left0, double righ
     const double h0 = (right0 - left0) / static_cast<double>(steps0);
     double sum = 0.0;
     for (int i = 0; i < steps0; ++i) {
-      const double x0 = left0 + (static_cast<double>(i) + 0.5) * h0;
+      const double x0 = left0 + ((static_cast<double>(i) + 0.5) * h0);
       sum += local_input_.func({x0});
     }
     return sum * h0;
@@ -99,7 +99,7 @@ double ShkrebkoMCalcOfIntegralRectALL::ComputeSliceSum(double left0, double righ
 #pragma omp parallel for shared(left0, h0, steps0, h_other, limits_other, n_steps_other) reduction(+ : total) \
     schedule(static)
   for (int i = 0; i < steps0; ++i) {
-    const double x0 = left0 + (static_cast<double>(i) + 0.5) * h0;
+    const double x0 = left0 + ((static_cast<double>(i) + 0.5) * h0);
 
     std::vector<int> indices(other_dims, 0);
     double local_sum = 0.0;
@@ -116,7 +116,7 @@ double ShkrebkoMCalcOfIntegralRectALL::ComputeSliceSum(double left0, double righ
       for (int dim = static_cast<int>(other_dims) - 1; dim >= 0; --dim) {
         const int coord = static_cast<int>(tmp % static_cast<std::size_t>(n_steps_other[dim]));
         tmp /= static_cast<std::size_t>(n_steps_other[dim]);
-        point[dim + 1] = limits_other[dim].first + (static_cast<double>(coord) + 0.5) * h_other[dim];
+        point[dim + 1] = limits_other[dim].first + ((static_cast<double>(coord) + 0.5) * h_other[dim]);
       }
       local_sum += local_input_.func(point);
     }
