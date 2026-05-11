@@ -96,7 +96,8 @@ double ShkrebkoMCalcOfIntegralRectALL::ComputeSliceSum(double left0, double righ
   const double h0 = (right0 - left0) / static_cast<double>(steps0);
   double total = 0.0;
 
-#pragma omp parallel for shared(left0, h0, steps0, h_other, limits_other, n_steps_other) reduction(+ : total) schedule(static)
+#pragma omp parallel for shared(left0, h0, steps0, h_other, limits_other, n_steps_other) reduction(+ : total) \
+    schedule(static)
   for (int i = 0; i < steps0; ++i) {
     const double x0 = left0 + ((static_cast<double>(i) + 0.5) * h0);
 
