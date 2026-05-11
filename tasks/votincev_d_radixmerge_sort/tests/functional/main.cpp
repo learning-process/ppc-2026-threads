@@ -11,12 +11,12 @@
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
+#include "votincev_d_radixmerge_sort/all/include/ops_all.hpp"
 #include "votincev_d_radixmerge_sort/common/include/common.hpp"
 #include "votincev_d_radixmerge_sort/omp/include/ops_omp.hpp"
 #include "votincev_d_radixmerge_sort/seq/include/ops_seq.hpp"
 #include "votincev_d_radixmerge_sort/stl/include/ops_stl.hpp"
 #include "votincev_d_radixmerge_sort/tbb/include/ops_tbb.hpp"
-
 namespace votincev_d_radixmerge_sort {
 
 class VotincevDRadixMergeSortRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
@@ -82,7 +82,8 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<VotincevDRadixMergeSortSEQ, InType>(kTestParam, PPC_SETTINGS_votincev_d_radixmerge_sort),
     ppc::util::AddFuncTask<VotincevDRadixMergeSortOMP, InType>(kTestParam, PPC_SETTINGS_votincev_d_radixmerge_sort),
     ppc::util::AddFuncTask<VotincevDRadixMergeSortTBB, InType>(kTestParam, PPC_SETTINGS_votincev_d_radixmerge_sort),
-    ppc::util::AddFuncTask<VotincevDRadixMergeSortSTL, InType>(kTestParam, PPC_SETTINGS_votincev_d_radixmerge_sort));
+    ppc::util::AddFuncTask<VotincevDRadixMergeSortSTL, InType>(kTestParam, PPC_SETTINGS_votincev_d_radixmerge_sort),
+    ppc::util::AddFuncTask<VotincevDRadixMergeSortALL, InType>(kTestParam, PPC_SETTINGS_votincev_d_radixmerge_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

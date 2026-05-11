@@ -8,6 +8,7 @@
 #include "tochilin_e_hoar_sort_sim_mer/common/include/common.hpp"
 #include "tochilin_e_hoar_sort_sim_mer/omp/include/ops_omp.hpp"
 #include "tochilin_e_hoar_sort_sim_mer/seq/include/ops_seq.hpp"
+#include "tochilin_e_hoar_sort_sim_mer/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace tochilin_e_hoar_sort_sim_mer {
@@ -49,8 +50,9 @@ TEST_P(TochilinEHoarSortSimMerRunPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, TochilinEHoarSortSimMerSEQ, TochilinEHoarSortSimMerOMP>(
-    PPC_SETTINGS_tochilin_e_hoar_sort_sim_mer);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, TochilinEHoarSortSimMerSEQ, TochilinEHoarSortSimMerOMP,
+                                TochilinEHoarSortSimMerTBB>(PPC_SETTINGS_tochilin_e_hoar_sort_sim_mer);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
