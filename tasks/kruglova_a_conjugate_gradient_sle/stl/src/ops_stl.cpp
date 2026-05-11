@@ -1,16 +1,15 @@
-#include "kruglova_a_conjugate_gradient_sle/stl/include/ops_stl.hpp"
-
 #include <algorithm>
 #include <cmath>
-#include <cstddef>
 #include <future>
+#include <numeric>
 #include <vector>
 
 #include "kruglova_a_conjugate_gradient_sle/common/include/common.hpp"
+#include "kruglova_a_conjugate_gradient_sle/stl/include/ops_stl.hpp"
 
 namespace kruglova_a_conjugate_gradient_sle {
 
-static double ParallelDotProduct(const std::vector<double> &v1, const std::vector<double> &v2) {
+double ParallelDotProduct(const std::vector<double> &v1, const std::vector<double> &v2) {
   size_t n = v1.size();
   if (n == 0) {
     return 0.0;
@@ -18,32 +17,34 @@ static double ParallelDotProduct(const std::vector<double> &v1, const std::vecto
 
   unsigned int num_threads = std::thread::hardware_concurrency();
   if (num_threads == 0) {
-    num_threads = 2;
+    num_threads = 4;
   }
-  size_t chunk_size = (n + num_threads - 1) / num_threads;
 
+  size_t chunk_size = (n + num_threads - 1) / num_threads;
   std::vector<std::future<double>> futures;
-  for (unsigned int i = 0; i < num_threads; ++i) {
-    size_t start = i * chunk_size;
+  futures.reserve(num_threads);
+
+  for (unsigned int t = 0; t < num_threads; ++t) {
+    size_t start = t * chunk_size;
     size_t end = std::min(start + chunk_size, n);
     if (start >= n) {
       break;
     }
 
-    futures.push_back(std::async(std::launch::async, [&v1, &v2, start, end]() {
+    futures.emplace_back(std::async(std::launch::async, [&v1, &v2, start, end]() -> double {
       double sum = 0.0;
-      for (size_t j = start; j < end; ++j) {
-        sum += v1[j] * v2[j];
+      for (size_t i = start; i < end; ++i) {
+        sum += v1[i] * v2[i];
       }
       return sum;
     }));
   }
 
-  double total_sum = 0.0;
+  double total = 0.0;
   for (auto &f : futures) {
-    total_sum += f.get();
+    total += f.get();
   }
-  return total_sum;
+  return total;
 }
 
 KruglovaAConjGradSleSTL::KruglovaAConjGradSleSTL(const InType &in) {
@@ -63,98 +64,105 @@ bool KruglovaAConjGradSleSTL::PreProcessingImpl() {
 }
 
 bool KruglovaAConjGradSleSTL::RunImpl() {
-  const auto &a = GetInput().A;
+  const auto &A = GetInput().A;
   const auto &b = GetInput().b;
   const int n = GetInput().size;
   auto &x = GetOutput();
 
   std::vector<double> r = b;
   std::vector<double> p = r;
-  std::vector<double> ap(n);
+  std::vector<double> Ap(n, 0.0);
 
   double rsold = ParallelDotProduct(r, r);
-  const double tolerance = 1e-8;
+  const double tolerance = 1e-6;
+  const int max_iter = n * 6;
 
   unsigned int num_threads = std::thread::hardware_concurrency();
   if (num_threads == 0) {
-    num_threads = 2;
+    num_threads = 4;
   }
+  const size_t chunk = (static_cast<size_t>(n) + num_threads - 1) / num_threads;
 
-  for (int iter = 0; iter < n * 2; ++iter) {
-    std::vector<std::future<void>> futures;
-    size_t chunk = (static_cast<size_t>(n) + num_threads - 1) / num_threads;
-
-    for (unsigned int t = 0; t < num_threads; ++t) {
-      size_t start = t * chunk;
-      size_t end = std::min(start + chunk, static_cast<size_t>(n));
-      if (start >= static_cast<size_t>(n)) {
-        break;
-      }
-
-      futures.push_back(std::async(std::launch::async, [&, start, end, n]() {
-        for (size_t i = start; i < end; ++i) {
-          double sum = 0.0;
-          size_t row_off = i * n;
-          for (int j = 0; j < n; ++j) {
-            sum += a[row_off + j] * p[j];
-          }
-          ap[i] = sum;
+  for (int iter = 0; iter < max_iter; ++iter) {
+    // A * p → Ap
+    {
+      std::vector<std::future<void>> futures;
+      for (unsigned int t = 0; t < num_threads; ++t) {
+        size_t start = t * chunk;
+        size_t end = std::min(start + chunk, static_cast<size_t>(n));
+        if (start >= static_cast<size_t>(n)) {
+          break;
         }
-      }));
-    }
-    for (auto &f : futures) {
-      f.get();
-    }
-    futures.clear();
 
-    double p_ap = ParallelDotProduct(p, ap);
-    if (std::abs(p_ap) < 1e-15) {
+        futures.emplace_back(std::async(std::launch::async, [&A, &p, &Ap, n, start, end]() {
+          for (size_t i = start; i < end; ++i) {
+            double sum = 0.0;
+            size_t row = i * static_cast<size_t>(n);
+            for (int j = 0; j < n; ++j) {
+              sum += A[row + j] * p[j];
+            }
+            Ap[i] = sum;
+          }
+        }));
+      }
+      for (auto &f : futures) {
+        f.get();
+      }
+    }
+
+    double pAp = ParallelDotProduct(p, Ap);
+    if (std::abs(pAp) < 1e-14) {
       break;
     }
 
-    const double alpha = rsold / p_ap;
+    double alpha = rsold / pAp;
 
-    for (unsigned int t = 0; t < num_threads; ++t) {
-      size_t start = t * chunk;
-      size_t end = std::min(start + chunk, static_cast<size_t>(n));
-      if (start >= static_cast<size_t>(n)) {
-        break;
-      }
-
-      futures.push_back(std::async(std::launch::async, [&, start, end, alpha]() {
-        for (size_t i = start; i < end; ++i) {
-          x[i] += alpha * p[i];
-          r[i] -= alpha * ap[i];
+    {
+      std::vector<std::future<void>> futures;
+      for (unsigned int t = 0; t < num_threads; ++t) {
+        size_t start = t * chunk;
+        size_t end = std::min(start + chunk, static_cast<size_t>(n));
+        if (start >= static_cast<size_t>(n)) {
+          break;
         }
-      }));
-    }
-    for (auto &f : futures) {
-      f.get();
-    }
-    futures.clear();
 
-    const double rsnew = ParallelDotProduct(r, r);
+        futures.emplace_back(std::async(std::launch::async, [&x, &r, &p, &Ap, alpha, start, end]() {
+          for (size_t i = start; i < end; ++i) {
+            x[i] += alpha * p[i];
+            r[i] -= alpha * Ap[i];
+          }
+        }));
+      }
+      for (auto &f : futures) {
+        f.get();
+      }
+    }
+
+    double rsnew = ParallelDotProduct(r, r);
     if (std::sqrt(rsnew) < tolerance) {
       break;
     }
 
-    const double beta = rsnew / rsold;
+    double beta = rsnew / rsold;
 
-    for (unsigned int t = 0; t < num_threads; ++t) {
-      size_t start = t * chunk;
-      size_t end = std::min(start + chunk, static_cast<size_t>(n));
-      if (start >= static_cast<size_t>(n)) {
-        break;
-      }
-
-      futures.push_back(std::async(std::launch::async, [&, start, end, beta]() {
-        for (size_t i = start; i < end; ++i) {
-          p[i] = r[i] + (beta * p[i]);
+    {
+      std::vector<std::future<void>> futures;
+      for (unsigned int t = 0; t < num_threads; ++t) {
+        size_t start = t * chunk;
+        size_t end = std::min(start + chunk, static_cast<size_t>(n));
+        if (start >= static_cast<size_t>(n)) {
+          break;
         }
-      }));
-    }
-    for (auto &f : futures) {
-      f.get();
+
+        futures.emplace_back(std::async(std::launch::async, [&p, &r, beta, start, end]() {
+          for (size_t i = start; i < end; ++i) {
+            p[i] = r[i] + beta * p[i];
+          }
+        }));
+      }
+      for (auto &f : futures) {
+        f.get();
+      }
     }
 
     rsold = rsnew;
