@@ -64,8 +64,11 @@ bool MelnikIRadixSortIntSTL::RunImpl() {
   auto &output = GetOutput();
 
   if (num_threads <= 1) {
-    RadixSortRange(output, buffer, 0, data_size);
-    return !GetOutput().empty();
+    auto *final_buffer = RadixSortRange(output, buffer, 0, data_size);
+    if (final_buffer != &output) {
+      output.swap(*final_buffer);
+    }
+    return !output.empty();
   }
 
   std::vector<Range> ranges = BuildInitialRanges(data_size, num_threads, &output);
