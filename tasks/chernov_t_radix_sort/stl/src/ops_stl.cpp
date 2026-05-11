@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 #include <thread>
+#include <vector>
 
 #include "chernov_t_radix_sort/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -32,7 +32,9 @@ constexpr uint32_t kSignMask = 0x80000000U;
 
 void ChernovTRadixSortSTL::RadixSortLSDParallel(std::vector<int> &data, int num_threads) {
   const size_t n = data.size();
-  if (n <= 1) return;
+  if (n <= 1) {
+    return;
+  }
 
   std::vector<uint32_t> temp(n);
   std::vector<std::thread> threads;
@@ -47,7 +49,9 @@ void ChernovTRadixSortSTL::RadixSortLSDParallel(std::vector<int> &data, int num_
       }
     });
   }
-  for (auto &th : threads) th.join();
+  for (auto &th : threads) {
+    th.join();
+  }
   threads.clear();
 
   std::vector<uint32_t> buffer(n);
@@ -66,14 +70,18 @@ void ChernovTRadixSortSTL::RadixSortLSDParallel(std::vector<int> &data, int num_
         }
       });
     }
-    for (auto &th : threads) th.join();
+    for (auto &th : threads) {
+      th.join();
+    }
     threads.clear();
 
     std::vector<int> global_start(kRadix, 0);
     int current_pos = 0;
     for (int d = 0; d < kRadix; ++d) {
       int total_for_digit = 0;
-      for (int t = 0; t < num_threads; ++t) total_for_digit += local_counts[t][d];
+      for (int t = 0; t < num_threads; ++t) {
+        total_for_digit += local_counts[t][d];
+      }
       global_start[d] = current_pos;
       current_pos += total_for_digit;
     }
@@ -102,7 +110,9 @@ void ChernovTRadixSortSTL::RadixSortLSDParallel(std::vector<int> &data, int num_
         }
       });
     }
-    for (auto &th : threads) th.join();
+    for (auto &th : threads) {
+      th.join();
+    }
     threads.clear();
 
     temp.swap(buffer);
@@ -117,12 +127,16 @@ void ChernovTRadixSortSTL::RadixSortLSDParallel(std::vector<int> &data, int num_
       }
     });
   }
-  for (auto &th : threads) th.join();
+  for (auto &th : threads) {
+    th.join();
+  }
 }
 
 bool ChernovTRadixSortSTL::RunImpl() {
   auto &data = GetOutput();
-  if (data.size() <= 1) return true;
+  if (data.size() <= 1) {
+    return true;
+  }
 
   const int num_threads = ppc::util::GetNumThreads();
   RadixSortLSDParallel(data, num_threads);

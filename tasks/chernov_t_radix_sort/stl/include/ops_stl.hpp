@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include <thread>
+#include <vector>
 
 #include "chernov_t_radix_sort/common/include/common.hpp"
 #include "task/include/task.hpp"
