@@ -92,39 +92,22 @@ void ProcessStage(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &resul
   }
 }
 
-void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int block_size) {
-  if (block_size <= 0) {
-    SimpleMultiply(a, b, result);
-    return;
-  }
-
-  if (a.rows != a.cols || b.rows != b.cols || a.rows != b.rows) {
-    SimpleMultiply(a, b, result);
-    return;
-  }
-
-  if (a.rows % block_size != 0) {
-    SimpleMultiply(a, b, result);
-    return;
-  }
-
-  int n = a.rows;
-  int num_blocks = n / block_size;
-  result.rows = n;
-  result.cols = n;
-  result.data.assign(static_cast<std::size_t>(n) * n, 0.0);
-
+unsigned int CalculateNumThreads(int num_blocks) {
   unsigned int hardware_threads = std::thread::hardware_concurrency();
   unsigned int num_threads = (hardware_threads == 0U) ? 2U : hardware_threads;
-  num_threads = std::min(static_cast<unsigned int>(num_blocks), num_threads);
+  unsigned int result = std::min(static_cast<unsigned int>(num_blocks), num_threads);
+  return result;
+}
 
+void LaunchThreads(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int num_blocks, int block_size,
+                   unsigned int num_threads) {
   std::vector<std::thread> threads;
   threads.reserve(num_threads);
 
   int stages_per_thread = num_blocks / static_cast<int>(num_threads);
   int remaining_stages = num_blocks % static_cast<int>(num_threads);
-
   int stage_start = 0;
+
   for (unsigned int thread_index = 0U; thread_index < num_threads; ++thread_index) {
     int stages_for_this_thread = stages_per_thread;
     if (std::cmp_less(thread_index, remaining_stages)) {
@@ -150,6 +133,35 @@ void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &r
       thread.join();
     }
   }
+}
+
+void FoxAlgorithmImpl(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix &result, int block_size) {
+  if (block_size <= 0) {
+    SimpleMultiply(a, b, result);
+    return;
+  }
+
+  bool is_not_square = (a.rows != a.cols) || (b.rows != b.cols) || (a.rows != b.rows);
+  if (is_not_square) {
+    SimpleMultiply(a, b, result);
+    return;
+  }
+
+  if (a.rows % block_size != 0) {
+    SimpleMultiply(a, b, result);
+    return;
+  }
+
+  int n = a.rows;
+  int num_blocks = n / block_size;
+
+  result.rows = n;
+  result.cols = n;
+  auto total_elements = static_cast<std::size_t>(n) * static_cast<std::size_t>(n);
+  result.data.assign(total_elements, 0.0);
+
+  unsigned int num_threads = CalculateNumThreads(num_blocks);
+  LaunchThreads(a, b, result, num_blocks, block_size, num_threads);
 }
 
 }  // namespace
