@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <cstddef>
 #include <tuple>
 
 #include "nalitov_d_dijkstras_algorithm/common/include/common.hpp"
@@ -9,14 +11,29 @@
 
 namespace nalitov_d_dijkstras_algorithm {
 
+namespace {
+
+InType MakeStarFromZero(int n) {
+  InType g;
+  g.n = n;
+  g.source = 0;
+  g.arcs.reserve(static_cast<std::size_t>(std::max(0, n - 1)));
+  for (int i = 1; i < n; ++i) {
+    g.arcs.push_back(Arc{.from = 0, .to = i, .weight = i});
+  }
+  return g;
+}
+
+}  // namespace
+
 class NalitovDDijkstrasAlgorithmPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr int kGraphSize = 150;
   InType input_data_{};
   OutType expected_output_{};
 
   void SetUp() override {
-    input_data_ = kGraphSize;
-    expected_output_ = input_data_ * (input_data_ - 1) / 2;
+    input_data_ = MakeStarFromZero(kGraphSize);
+    expected_output_ = static_cast<OutType>(kGraphSize) * (kGraphSize - 1) / 2;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
