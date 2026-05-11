@@ -2,15 +2,16 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstdint>
 #include <functional>
 #include <thread>
 #include <utility>
 #include <vector>
 
+#include "zyazeva_s_matrix_mult_cannon_alg/common/include/common.hpp"
+
 namespace {
 
-void ParallelFor(int count, const std::function<void(int)> &func) {
+void ParallelFor(int count, const std::function<void(size_t)> &func) {
   unsigned int threads_count = std::thread::hardware_concurrency();
 
   if (threads_count == 0) {
@@ -21,13 +22,13 @@ void ParallelFor(int count, const std::function<void(int)> &func) {
 
   std::vector<std::thread> threads(threads_count);
 
-  int block_size = count / static_cast<int>(threads_count);
-  int remainder = count % static_cast<int>(threads_count);
+  size_t block_size = count / static_cast<int>(threads_count);
+  size_t remainder = count % static_cast<int>(threads_count);
 
-  int begin = 0;
+  size_t begin = 0;
 
   for (unsigned int th = 0; th < threads_count; ++th) {
-    int end = begin + block_size + (th < static_cast<unsigned int>(remainder) ? 1 : 0);
+    size_t end = begin + block_size + (static_cast<int>(th) < remainder ? 1 : 0);
 
     threads[th] = std::thread([begin, end, &func]() {
       for (int i = begin; i < end; ++i) {
@@ -43,12 +44,12 @@ void ParallelFor(int count, const std::function<void(int)> &func) {
   }
 }
 
-void MulBlock(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, int bs) {
-  for (int i = 0; i < bs; ++i) {
-    for (int k = 0; k < bs; ++k) {
+void MulBlock(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, size_t bs) {
+  for (size_t i = 0; i < bs; ++i) {
+    for (size_t k = 0; k < bs; ++k) {
       double v = a[(i * bs) + k];
 
-      for (int j = 0; j < bs; ++j) {
+      for (size_t j = 0; j < bs; ++j) {
         c[(i * bs) + j] += v * b[(k * bs) + j];
       }
     }
@@ -75,8 +76,8 @@ void InitializeBlocks(const std::vector<double> &a, const std::vector<double> &b
     int i = id / g;
     int j = id % g;
 
-    ba[id].assign(static_cast<std::vector<double>::size_type>(bs * bs), 0.0);
-    bb[id].assign(static_cast<std::vector<double>::size_type>(bs * bs), 0.0);
+    ba[id].assign(static_cast<size_t>(bs) * static_cast<size_t>(bs), 0.0);
+    bb[id].assign(static_cast<size_t>(bs) * static_cast<size_t>(bs), 0.0);
 
     for (int bi = 0; bi < bs; ++bi) {
       for (int bj = 0; bj < bs; ++bj) {
@@ -175,7 +176,7 @@ bool ZyazevaSMatrixMultCannonAlgSTL::RunImpl() {
     return true;
   }
 
-  int bs = n / g;
+  size_t bs = n / g;
 
   std::vector<std::vector<double>> ba(g * g);
   std::vector<std::vector<double>> bb(g * g);
