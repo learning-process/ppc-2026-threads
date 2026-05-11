@@ -112,6 +112,26 @@ std::vector<int> MakeRowStarts(int rows, int num_threads) {
   return row_starts;
 }
 
+int LabelSingleStrip(const InType &input, int cols, int r_begin, int r_end, std::vector<int> &plane) {
+  if (r_begin >= r_end) {
+    return 0;
+  }
+
+  int next_label = 0;
+  for (int row = r_begin; row < r_end; row++) {
+    for (int col = 0; col < cols; col++) {
+      const int flat = (row * cols) + col;
+      const int idx = flat + 2;
+      if (input[idx] != 0 || plane[static_cast<std::size_t>(flat)] != 0) {
+        continue;
+      }
+      next_label++;
+      BfsLabelInStrip(input, plane, cols, r_begin, r_end, row, col, next_label);
+    }
+  }
+  return next_label;
+}
+
 void ParallelLabelStrips(const InType &input, int cols, int num_threads, const std::vector<int> &row_starts,
                          std::vector<std::vector<int>> &local_planes, std::vector<int> &labels_used) {
   std::vector<std::thread> workers;
@@ -120,21 +140,8 @@ void ParallelLabelStrips(const InType &input, int cols, int num_threads, const s
   auto worker = [&](int tid) {
     const int r_begin = row_starts[static_cast<std::size_t>(tid)];
     const int r_end = row_starts[static_cast<std::size_t>(tid) + 1];
-    int next_label = 0;
-    if (r_begin < r_end) {
-      auto &plane = local_planes[static_cast<std::size_t>(tid)];
-      for (int row = r_begin; row < r_end; row++) {
-        for (int col = 0; col < cols; col++) {
-          const int flat = (row * cols) + col;
-          const int idx = flat + 2;
-          if (input[idx] == 0 && plane[static_cast<std::size_t>(flat)] == 0) {
-            next_label++;
-            BfsLabelInStrip(input, plane, cols, r_begin, r_end, row, col, next_label);
-          }
-        }
-      }
-    }
-    labels_used[static_cast<std::size_t>(tid)] = next_label;
+    auto &plane = local_planes[static_cast<std::size_t>(tid)];
+    labels_used[static_cast<std::size_t>(tid)] = LabelSingleStrip(input, cols, r_begin, r_end, plane);
   };
 
   for (int tid = 1; tid < num_threads; ++tid) {
