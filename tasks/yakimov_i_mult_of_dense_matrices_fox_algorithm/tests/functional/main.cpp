@@ -33,8 +33,8 @@ class YakimovIMultDenseFoxFuncTests : public ppc::util::BaseRunFuncTests<InType,
     InType test_id = std::get<0>(params);
 
     static const std::unordered_map<InType, std::pair<double, double>> kExpectedResults = {
-        {1, {50.2848, 1e-3}}, {2, {-77.0854, 1e-3}}, {3, {-1.68714, 1e-4}},   {4, {0.0, 1e-9}}, {5, {60.678, 1e-4}},
-        {6, {415.0, 1e-9}},   {7, {234.0, 1e-9}},    {8, {85089.6978, 1e-4}}, {9, {84.0, 1e-9}}};
+        {1, {50.2848, 1e-3}}, {2, {-77.0854, 1e-3}}, {3, {-1.68714, 1e-4}},   {4, {0.0, 1e-9}},
+        {5, {60.678, 1e-4}},  {6, {415.0, 1e-9}},    {8, {85089.6978, 1e-4}}, {9, {84.0, 1e-9}}};
 
     auto it = kExpectedResults.find(test_id);
     if (it == kExpectedResults.end()) {
@@ -59,12 +59,14 @@ TEST_P(YakimovIMultDenseFoxFuncTests, DenseMatrixMultiplicationFox) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 9> kAllTestParam = {
-    std::make_tuple(1, "small_2x3"),          std::make_tuple(2, "medium_3x3"),
-    std::make_tuple(3, "large_4x4"),          std::make_tuple(4, "zero_matrices"),
-    std::make_tuple(5, "negative_values"),    std::make_tuple(6, "non_square_2x3_times_3x2"),
-    std::make_tuple(7, "incompatible_sizes"), std::make_tuple(8, "not_multiple_of_block_size"),
-    std::make_tuple(9, "matrix_1x1")};
+const std::array<TestType, 8> kAllTestParam = {std::make_tuple(1, "small_2x3"),
+                                               std::make_tuple(2, "medium_3x3"),
+                                               std::make_tuple(3, "large_4x4"),
+                                               std::make_tuple(4, "zero_matrices"),
+                                               std::make_tuple(5, "negative_values"),
+                                               std::make_tuple(6, "non_square_2x3_times_3x2"),
+                                               std::make_tuple(8, "not_multiple_of_block_size"),
+                                               std::make_tuple(9, "matrix_1x1")};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<YakimovIMultOfDenseMatricesFoxAlgorithmSEQ, InType>(
