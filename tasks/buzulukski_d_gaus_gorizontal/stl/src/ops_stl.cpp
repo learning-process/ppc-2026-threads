@@ -26,15 +26,22 @@ uint8_t CalculatePixelSTL(const uint8_t *in, int py, int px, int w, int h, int c
       int ny = std::clamp(py + ky, 0, h - 1);
       int nx = std::clamp(px + kx, 0, w - 1);
 
-      size_t idx = (((static_cast<size_t>(ny) * static_cast<size_t>(w)) + static_cast<size_t>(nx)) * kChannels) +
-                   static_cast<size_t>(ch);
-
-      size_t row_idx = static_cast<size_t>(ky) + 1;
-      size_t col_idx = static_cast<size_t>(kx) + 1;
-      sum += static_cast<int>(in[idx]) * kKernel.at(row_idx).at(col_idx);
+      size_t idx = ((static_cast<size_t>(ny) * w + nx) * kChannels) + ch;
+      sum += static_cast<int>(in[idx]) * kKernel.at(ky + 1).at(kx + 1);
     }
   }
   return static_cast<uint8_t>(sum / kKernelSum);
+}
+
+void ProcessRows(int start_row, int end_row, int w, int h, const uint8_t *in, uint8_t *out) {
+  for (int py = start_row; py < end_row; ++py) {
+    for (int px = 0; px < w; ++px) {
+      for (int ch = 0; ch < kChannels; ++ch) {
+        size_t out_idx = ((static_cast<size_t>(py) * w + px) * kChannels) + ch;
+        out[out_idx] = CalculatePixelSTL(in, py, px, w, h, ch);
+      }
+    }
+  }
 }
 }  // namespace
 
@@ -51,7 +58,7 @@ bool BuzulukskiDGausGorizontalSTL::ValidationImpl() {
 bool BuzulukskiDGausGorizontalSTL::PreProcessingImpl() {
   width_ = GetInput();
   height_ = GetInput();
-  const auto total_size = static_cast<std::size_t>(width_) * static_cast<std::size_t>(height_) * kChannels;
+  const auto total_size = static_cast<std::size_t>(width_) * height_ * kChannels;
   input_image_.assign(total_size, 100);
   output_image_.assign(total_size, 0);
   return true;
@@ -63,35 +70,25 @@ bool BuzulukskiDGausGorizontalSTL::RunImpl() {
   const uint8_t *in_ptr = input_image_.data();
   uint8_t *out_ptr = output_image_.data();
 
-  unsigned int num_threads = std::thread::hardware_concurrency();
-  if (num_threads == 0) {
-    num_threads = 2;
-  }
+  unsigned int raw_threads = std::thread::hardware_concurrency();
+  int n_threads = (raw_threads == 0) ? 2 : static_cast<int>(raw_threads);
+
   std::vector<std::thread> threads;
-  threads.reserve(num_threads);
+  threads.reserve(n_threads);
 
-  int rows_per_thread = h / num_threads;
+  int rows_per_thread = h / n_threads;
 
-  for (unsigned int i = 0; i < num_threads; ++i) {
-    int start_row = i * rows_per_thread;
-    int end_row = (i == num_threads - 1) ? h : (i + 1) * rows_per_thread;
+  for (int i = 0; i < n_threads; ++i) {
+    int start = i * rows_per_thread;
+    int end = (i == n_threads - 1) ? h : (i + 1) * rows_per_thread;
 
-    threads.emplace_back([start_row, end_row, w, h, in_ptr, out_ptr]() {
-      for (int py = start_row; py < end_row; ++py) {
-        for (int px = 0; px < w; ++px) {
-          for (int ch = 0; ch < kChannels; ++ch) {
-            size_t out_idx =
-                (((static_cast<size_t>(py) * static_cast<size_t>(w)) + static_cast<size_t>(px)) * kChannels) +
-                static_cast<size_t>(ch);
-            out_ptr[out_idx] = CalculatePixelSTL(in_ptr, py, px, w, h, ch);
-          }
-        }
-      }
-    });
+    threads.emplace_back(ProcessRows, start, end, w, h, in_ptr, out_ptr);
   }
 
   for (auto &t : threads) {
-    t.join();
+    if (t.joinable()) {
+      t.join();
+    }
   }
 
   return true;
