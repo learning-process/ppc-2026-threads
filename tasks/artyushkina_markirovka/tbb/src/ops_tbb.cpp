@@ -18,14 +18,14 @@ namespace {
 
 tbb::mutex union_mutex;
 
-void AddNeighborIfValid(int neighbor_label, std::vector<int> &neighbor_labels) {
+void AddNeighborIfValid(int neighbor_label, std::vector<int>& neighbor_labels) {
   if (neighbor_label != 0) {
     neighbor_labels.push_back(neighbor_label);
   }
 }
 
-void CollectNeighborsLabels(int i, int j, const std::vector<std::vector<int>> &temp_labels,
-                            std::vector<int> &neighbor_labels, int /*rows*/, int cols) {
+void CollectNeighborsLabels(int i, int j, const std::vector<std::vector<int>>& temp_labels,
+                            std::vector<int>& neighbor_labels, int /*rows*/, int cols) {
   if (i > 0 && j > 0) {
     AddNeighborIfValid(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j - 1)], neighbor_labels);
   }
@@ -33,7 +33,9 @@ void CollectNeighborsLabels(int i, int j, const std::vector<std::vector<int>> &t
     AddNeighborIfValid(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)], neighbor_labels);
   }
   if (i > 0 && j + 1 < cols) {
-    int neighbor = temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j + 1)];
+    std::size_t row_idx = static_cast<std::size_t>(i - 1);
+    std::size_t col_idx = static_cast<std::size_t>(j + 1);
+    int neighbor = temp_labels[row_idx][col_idx];
     AddNeighborIfValid(neighbor, neighbor_labels);
   }
   if (j > 0) {
@@ -41,7 +43,7 @@ void CollectNeighborsLabels(int i, int j, const std::vector<std::vector<int>> &t
   }
 }
 
-int FindMinLabel(const std::vector<int> &labels) {
+int FindMinLabel(const std::vector<int>& labels) {
   if (labels.empty()) {
     return 0;
   }
@@ -52,10 +54,11 @@ int FindMinLabel(const std::vector<int> &labels) {
   return min_label;
 }
 
-void ProcessPixel(int i, int j, const InType &input, int cols, std::vector<std::vector<int>> &temp_labels,
-                  std::vector<int> &parent, std::atomic<int> &next_label) {
-  const std::size_t idx =
-      (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
+void ProcessPixel(int i, int j, const InType& input, int cols, 
+                  std::vector<std::vector<int>>& temp_labels,
+                  std::vector<int>& parent, std::atomic<int>& next_label) {
+  std::size_t idx = (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + 
+                    static_cast<std::size_t>(j) + 2;
 
   if (input[idx] != 0) {
     return;
@@ -89,9 +92,63 @@ void ProcessPixel(int i, int j, const InType &input, int cols, std::vector<std::
   }
 }
 
+std::vector<int> CollectUniqueLabels(const std::vector<std::vector<int>>& temp_labels, int rows, int cols) {
+  std::vector<int> unique_labels;
+  unique_labels.reserve(static_cast<std::size_t>(rows) * static_cast<std::size_t>(cols));
+
+  for (int i = 0; i < rows; ++i) {
+    for (int j = 0; j < cols; ++j) {
+      int label = temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
+      if (label != 0) {
+        unique_labels.push_back(label);
+      }
+    }
+  }
+  return unique_labels;
+}
+
+void SortAndRemoveDuplicates(std::vector<int>& unique_labels) {
+  if (unique_labels.empty()) {
+    return;
+  }
+  
+  for (std::size_t i = 0; i < unique_labels.size(); ++i) {
+    for (std::size_t j = i + 1; j < unique_labels.size(); ++j) {
+      if (unique_labels[i] > unique_labels[j]) {
+        std::swap(unique_labels[i], unique_labels[j]);
+      }
+    }
+  }
+  
+  std::vector<int> temp;
+  temp.reserve(unique_labels.size());
+  for (std::size_t i = 0; i < unique_labels.size(); ++i) {
+    if (i == 0 || unique_labels[i] != unique_labels[i - 1]) {
+      temp.push_back(unique_labels[i]);
+    }
+  }
+  unique_labels.swap(temp);
+}
+
+void ApplyLabelMapping(const std::map<int, int>& label_mapping, 
+                       const std::vector<std::vector<int>>& temp_labels,
+                       std::vector<std::vector<int>>& labels, int rows, int cols) {
+  tbb::parallel_for(0, rows, [&](int i) {
+    for (int j = 0; j < cols; ++j) {
+      int label = temp_labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
+      if (label != 0) {
+        auto it = label_mapping.find(label);
+        labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = it->second;
+      } else {
+        labels[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = 0;
+      }
+    }
+  });
+}
+
 }  // namespace
 
-MarkingComponentsTBB::MarkingComponentsTBB(const InType &in) {
+MarkingComponentsTBB::MarkingComponentsTBB(const InType& in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = OutType();
@@ -102,7 +159,7 @@ bool MarkingComponentsTBB::ValidationImpl() {
 }
 
 bool MarkingComponentsTBB::PreProcessingImpl() {
-  const auto &input = GetInput();
+  const auto& input = GetInput();
   rows_ = static_cast<int>(input[0]);
   cols_ = static_cast<int>(input[1]);
   input_ = input;
@@ -126,7 +183,7 @@ bool MarkingComponentsTBB::PreProcessingImpl() {
   return true;
 }
 
-int MarkingComponentsTBB::FindRoot(std::vector<int> &parent, int label) {
+int MarkingComponentsTBB::FindRoot(std::vector<int>& parent, int label) {
   int current_label = label;
   while (parent[static_cast<std::size_t>(current_label)] != current_label) {
     parent[static_cast<std::size_t>(current_label)] =
@@ -136,7 +193,7 @@ int MarkingComponentsTBB::FindRoot(std::vector<int> &parent, int label) {
   return current_label;
 }
 
-void MarkingComponentsTBB::UnionLabels(std::vector<int> &parent, int label1, int label2) {
+void MarkingComponentsTBB::UnionLabels(std::vector<int>& parent, int label1, int label2) {
   if (label1 == label2) {
     return;
   }
@@ -165,7 +222,7 @@ void MarkingComponentsTBB::ProcessFirstPass() {
 void MarkingComponentsTBB::ResolveEquivalences() {
   tbb::parallel_for(0, rows_, [&](int i) {
     for (int j = 0; j < cols_; ++j) {
-      int &label = temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
+      int& label = temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
       if (label != 0) {
         label = FindRoot(parent_, label);
       }
@@ -174,33 +231,9 @@ void MarkingComponentsTBB::ResolveEquivalences() {
 }
 
 void MarkingComponentsTBB::RemapLabels() {
-  std::vector<int> unique_labels;
-  unique_labels.reserve(static_cast<std::size_t>(rows_) * static_cast<std::size_t>(cols_));
-
-  for (int i = 0; i < rows_; ++i) {
-    for (int j = 0; j < cols_; ++j) {
-      int label = temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
-      if (label != 0) {
-        unique_labels.push_back(label);
-      }
-    }
-  }
-
-  for (size_t i = 0; i < unique_labels.size(); ++i) {
-    for (size_t j = i + 1; j < unique_labels.size(); ++j) {
-      if (unique_labels[i] > unique_labels[j]) {
-        std::swap(unique_labels[i], unique_labels[j]);
-      }
-    }
-  }
-
-  std::vector<int> temp;
-  for (size_t i = 0; i < unique_labels.size(); ++i) {
-    if (i == 0 || unique_labels[i] != unique_labels[i - 1]) {
-      temp.push_back(unique_labels[i]);
-    }
-  }
-  unique_labels.swap(temp);
+  std::vector<int> unique_labels = CollectUniqueLabels(temp_labels_, rows_, cols_);
+  
+  SortAndRemoveDuplicates(unique_labels);
 
   std::map<int, int> label_mapping;
   int current_label = 1;
@@ -208,16 +241,7 @@ void MarkingComponentsTBB::RemapLabels() {
     label_mapping[label] = current_label++;
   }
 
-  tbb::parallel_for(0, rows_, [&](int i) {
-    for (int j = 0; j < cols_; ++j) {
-      int label = temp_labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
-      if (label != 0) {
-        labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = label_mapping[label];
-      } else {
-        labels_[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] = 0;
-      }
-    }
-  });
+  ApplyLabelMapping(label_mapping, temp_labels_, labels_, rows_, cols_);
 }
 
 bool MarkingComponentsTBB::RunImpl() {
@@ -233,7 +257,7 @@ bool MarkingComponentsTBB::RunImpl() {
 }
 
 bool MarkingComponentsTBB::PostProcessingImpl() {
-  OutType &output = GetOutput();
+  OutType& output = GetOutput();
   output.clear();
 
   output.push_back(static_cast<uint8_t>(rows_));
