@@ -2,9 +2,8 @@
 
 #include <algorithm>
 #include <cmath>
-#include <execution>
+#include <future>
 #include <numeric>
-#include <thread>
 #include <vector>
 
 #include "kruglova_a_conjugate_gradient_sle/common/include/common.hpp"
@@ -12,7 +11,39 @@
 namespace kruglova_a_conjugate_gradient_sle {
 
 double ParallelDotProduct(const std::vector<double> &v1, const std::vector<double> &v2) {
-  return std::transform_reduce(std::execution::par, v1.begin(), v1.end(), v2.begin(), 0.0);
+  size_t n = v1.size();
+  if (n == 0) {
+    return 0.0;
+  }
+
+  unsigned int num_threads = std::thread::hardware_concurrency();
+  if (num_threads == 0) {
+    num_threads = 2;
+  }
+  size_t chunk_size = (n + num_threads - 1) / num_threads;
+
+  std::vector<std::future<double>> futures;
+  for (unsigned int i = 0; i < num_threads; ++i) {
+    size_t start = i * chunk_size;
+    size_t end = std::min(start + chunk_size, n);
+    if (start >= n) {
+      break;
+    }
+
+    futures.push_back(std::async(std::launch::async, [&v1, &v2, start, end]() {
+      double sum = 0.0;
+      for (size_t j = start; j < end; ++j) {
+        sum += v1[j] * v2[j];
+      }
+      return sum;
+    }));
+  }
+
+  double total_sum = 0.0;
+  for (auto &f : futures) {
+    total_sum += f.get();
+  }
+  return total_sum;
 }
 
 KruglovaAConjGradSleSTL::KruglovaAConjGradSleSTL(const InType &in) {
@@ -22,16 +53,8 @@ KruglovaAConjGradSleSTL::KruglovaAConjGradSleSTL(const InType &in) {
 
 bool KruglovaAConjGradSleSTL::ValidationImpl() {
   const auto &in = GetInput();
-  if (in.size <= 0) {
-    return false;
-  }
-  if (in.A.size() != static_cast<size_t>(in.size) * in.size) {
-    return false;
-  }
-  if (in.b.size() != static_cast<size_t>(in.size)) {
-    return false;
-  }
-  return true;
+  return in.size > 0 && in.A.size() == static_cast<size_t>(in.size) * in.size &&
+         in.b.size() == static_cast<size_t>(in.size);
 }
 
 bool KruglovaAConjGradSleSTL::PreProcessingImpl() {
@@ -49,21 +72,40 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
   std::vector<double> p = r;
   std::vector<double> ap(n);
 
-  std::vector<int> indices(n);
-  std::iota(indices.begin(), indices.end(), 0);
-
   double rsold = ParallelDotProduct(r, r);
   const double tolerance = 1e-8;
 
+  unsigned int num_threads = std::thread::hardware_concurrency();
+  if (num_threads == 0) {
+    num_threads = 2;
+  }
+
   for (int iter = 0; iter < n * 2; ++iter) {
-    std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i) {
-      double sum = 0.0;
-      size_t row_offset = static_cast<size_t>(i) * n;
-      for (int j = 0; j < n; ++j) {
-        sum += a[row_offset + j] * p[j];
+    std::vector<std::future<void>> futures;
+    size_t chunk = (static_cast<size_t>(n) + num_threads - 1) / num_threads;
+
+    for (unsigned int t = 0; t < num_threads; ++t) {
+      size_t start = t * chunk;
+      size_t end = std::min(start + chunk, static_cast<size_t>(n));
+      if (start >= static_cast<size_t>(n)) {
+        break;
       }
-      ap[i] = sum;
-    });
+
+      futures.push_back(std::async(std::launch::async, [&, start, end, n]() {
+        for (size_t i = start; i < end; ++i) {
+          double sum = 0.0;
+          size_t row_off = i * n;
+          for (int j = 0; j < n; ++j) {
+            sum += a[row_off + j] * p[j];
+          }
+          ap[i] = sum;
+        }
+      }));
+    }
+    for (auto &f : futures) {
+      f.get();
+    }
+    futures.clear();
 
     double p_ap = ParallelDotProduct(p, ap);
     if (std::abs(p_ap) < 1e-15) {
@@ -72,10 +114,24 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
 
     const double alpha = rsold / p_ap;
 
-    std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i) {
-      x[i] += alpha * p[i];
-      r[i] -= alpha * ap[i];
-    });
+    for (unsigned int t = 0; t < num_threads; ++t) {
+      size_t start = t * chunk;
+      size_t end = std::min(start + chunk, static_cast<size_t>(n));
+      if (start >= static_cast<size_t>(n)) {
+        break;
+      }
+
+      futures.push_back(std::async(std::launch::async, [&, start, end, alpha]() {
+        for (size_t i = start; i < end; ++i) {
+          x[i] += alpha * p[i];
+          r[i] -= alpha * ap[i];
+        }
+      }));
+    }
+    for (auto &f : futures) {
+      f.get();
+    }
+    futures.clear();
 
     const double rsnew = ParallelDotProduct(r, r);
     if (std::sqrt(rsnew) < tolerance) {
@@ -84,7 +140,22 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
 
     const double beta = rsnew / rsold;
 
-    std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i) { p[i] = r[i] + beta * p[i]; });
+    for (unsigned int t = 0; t < num_threads; ++t) {
+      size_t start = t * chunk;
+      size_t end = std::min(start + chunk, static_cast<size_t>(n));
+      if (start >= static_cast<size_t>(n)) {
+        break;
+      }
+
+      futures.push_back(std::async(std::launch::async, [&, start, end, beta]() {
+        for (size_t i = start; i < end; ++i) {
+          p[i] = r[i] + beta * p[i];
+        }
+      }));
+    }
+    for (auto &f : futures) {
+      f.get();
+    }
 
     rsold = rsnew;
   }
