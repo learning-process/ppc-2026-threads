@@ -66,7 +66,7 @@ class ArtyushkinaMarkirovkaFuncTests : public ppc::util::BaseRunFuncTests<InType
 
       std::cout << "Actual  : ";
       for (auto val : output_data) {
-        std::cout << val << ' ';
+        std::cout << static_cast<int>(val) << ' ';
       }
       std::cout << '\n';
     }
@@ -105,12 +105,12 @@ INSTANTIATE_TEST_SUITE_P(ComponentLabeling, ArtyushkinaMarkirovkaFuncTests, kGte
 
 }  // namespace
 
-}  // namespace artyushkina_markirovka
-
-// TBB тесты - отдельный анонимный namespace
+// TBB тесты
 namespace {
 
-using namespace artyushkina_markirovka;
+TEST_P(ArtyushkinaMarkirovkaFuncTests, MarkingComponentsTBB) {
+  ExecuteTest(GetParam());
+}
 
 const std::array<TestType, 5> kTbbTestParam = {
     std::make_tuple(0, "L_shaped_component_8connectivity"), std::make_tuple(1, "diagonal_connected_components"),
@@ -126,3 +126,5 @@ const auto kTbbPerfTestName = ArtyushkinaMarkirovkaFuncTests::PrintFuncTestName<
 INSTANTIATE_TEST_SUITE_P(ComponentLabelingTBB, ArtyushkinaMarkirovkaFuncTests, kTbbGtestValues, kTbbPerfTestName);
 
 }  // namespace
+
+}  // namespace artyushkina_markirovka
