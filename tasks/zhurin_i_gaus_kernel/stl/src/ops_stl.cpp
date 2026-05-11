@@ -1,4 +1,3 @@
-
 #include "zhurin_i_gaus_kernel/stl/include/ops_stl.hpp"
 
 #include <algorithm>

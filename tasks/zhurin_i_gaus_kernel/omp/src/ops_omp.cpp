@@ -1,4 +1,3 @@
-
 #include "zhurin_i_gaus_kernel/omp/include/ops_omp.hpp"
 
 #include <algorithm>

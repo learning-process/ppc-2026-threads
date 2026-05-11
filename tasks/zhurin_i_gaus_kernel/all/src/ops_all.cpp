@@ -1,4 +1,3 @@
-
 #include "zhurin_i_gaus_kernel/all/include/ops_all.hpp"
 
 #include <mpi.h>

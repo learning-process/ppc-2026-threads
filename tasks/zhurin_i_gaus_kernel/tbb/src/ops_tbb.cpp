@@ -1,5 +1,3 @@
-
-
 #include "zhurin_i_gaus_kernel/tbb/include/ops_tbb.hpp"
 
 #include <algorithm>
