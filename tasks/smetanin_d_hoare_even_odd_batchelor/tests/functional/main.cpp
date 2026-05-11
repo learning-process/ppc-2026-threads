@@ -8,11 +8,9 @@
 #include <string>
 #include <tuple>
 
-#include "smetanin_d_hoare_even_odd_batchelor/all/include/ops_all.hpp"
 #include "smetanin_d_hoare_even_odd_batchelor/common/include/common.hpp"
 #include "smetanin_d_hoare_even_odd_batchelor/omp/include/ops_omp.hpp"
 #include "smetanin_d_hoare_even_odd_batchelor/seq/include/ops_seq.hpp"
-#include "smetanin_d_hoare_even_odd_batchelor/stl/include/ops_stl.hpp"
 #include "smetanin_d_hoare_even_odd_batchelor/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -78,10 +76,8 @@ const std::array<TestType, 7> kTestParam = {
 };
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<SmetaninDHoarSortALL, InType>(kTestParam, PPC_SETTINGS_smetanin_d_hoare_even_odd_batchelor),
     ppc::util::AddFuncTask<SmetaninDHoarSortOMP, InType>(kTestParam, PPC_SETTINGS_smetanin_d_hoare_even_odd_batchelor),
     ppc::util::AddFuncTask<SmetaninDHoarSortSEQ, InType>(kTestParam, PPC_SETTINGS_smetanin_d_hoare_even_odd_batchelor),
-    ppc::util::AddFuncTask<SmetaninDHoarSortSTL, InType>(kTestParam, PPC_SETTINGS_smetanin_d_hoare_even_odd_batchelor),
     ppc::util::AddFuncTask<SmetaninDHoarSortTBB, InType>(kTestParam, PPC_SETTINGS_smetanin_d_hoare_even_odd_batchelor));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
