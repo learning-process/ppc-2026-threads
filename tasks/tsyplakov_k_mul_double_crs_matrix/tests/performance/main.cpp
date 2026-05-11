@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "tsyplakov_k_mul_double_crs_matrix/common/include/common.hpp"
-#include "tsyplakov_k_mul_double_crs_matrix/stl/include/stl_omp.hpp"
+#include "tsyplakov_k_mul_double_crs_matrix/stl/include/ops_stl.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace tsyplakov_k_mul_double_crs_matrix {
