@@ -15,10 +15,8 @@ namespace melnik_i_radix_sort_int {
 
 namespace {
 
-constexpr int kBitsPerPass = 8;
-constexpr std::size_t kBuckets = 1U << kBitsPerPass;
-
-std::vector<MelnikIRadixSortIntSTL::Range> BuildInitialRanges(std::size_t data_size, int num_ranges) {
+std::vector<MelnikIRadixSortIntSTL::Range> BuildInitialRanges(std::size_t data_size, int num_ranges,
+                                                              std::vector<int> *initial_buffer) {
   std::vector<MelnikIRadixSortIntSTL::Range> ranges;
   ranges.reserve(static_cast<std::size_t>(num_ranges));
   const std::size_t chunk_size =
@@ -30,7 +28,7 @@ std::vector<MelnikIRadixSortIntSTL::Range> BuildInitialRanges(std::size_t data_s
       break;
     }
     const std::size_t end = std::min(begin + chunk_size, data_size);
-    ranges.push_back(MelnikIRadixSortIntSTL::Range{.begin = begin, .end = end});
+    ranges.push_back(MelnikIRadixSortIntSTL::Range{.begin = begin, .end = end, .buffer = initial_buffer});
   }
 
   return ranges;
@@ -63,24 +61,24 @@ bool MelnikIRadixSortIntSTL::RunImpl() {
   const int num_threads = std::min<int>(requested_threads, static_cast<int>(data_size));
 
   std::vector<int> buffer(data_size);
+  auto &output = GetOutput();
 
   if (num_threads <= 1) {
-    RadixSortRange(GetOutput(), buffer, 0, data_size);
+    RadixSortRange(output, buffer, 0, data_size);
     return !GetOutput().empty();
   }
 
-  const std::vector<Range> ranges = BuildInitialRanges(data_size, num_threads);
+  std::vector<Range> ranges = BuildInitialRanges(data_size, num_threads, &output);
   const int active_ranges = static_cast<int>(ranges.size());
-  auto &output = GetOutput();
 
   std::vector<std::thread> workers;
   workers.reserve(static_cast<std::size_t>(active_ranges));
 
-  for (int range_index = 0; range_index < active_ranges; ++range_index) {
-    workers.emplace_back([&, range_index]() {
-      const Range range = ranges[static_cast<std::size_t>(range_index)];
+  for (int i = 0; i < active_ranges; ++i) {
+    workers.emplace_back([&, i]() {
+      Range &range = ranges[static_cast<std::size_t>(i)];
       if (range.begin < range.end) {
-        RadixSortRange(output, buffer, range.begin, range.end);
+        range.buffer = RadixSortRange(output, buffer, range.begin, range.end);
       }
     });
   }
@@ -90,7 +88,7 @@ bool MelnikIRadixSortIntSTL::RunImpl() {
   }
 
   MergeSortedRanges(output, buffer, ranges);
-  return !output.empty();
+  return !GetOutput().empty();
 }
 
 bool MelnikIRadixSortIntSTL::PostProcessingImpl() {
@@ -99,16 +97,7 @@ bool MelnikIRadixSortIntSTL::PostProcessingImpl() {
 
 void MelnikIRadixSortIntSTL::CountingSortByByte(const std::vector<int> &source, std::vector<int> &destination,
                                                 std::size_t begin, std::size_t end, std::int64_t exp,
-                                                std::int64_t offset) {
-  std::array<std::size_t, kBuckets> count{};
-  count.fill(0);
-
-  for (std::size_t index = begin; index < end; ++index) {
-    const std::int64_t shifted_value = static_cast<std::int64_t>(source[index]) + offset;
-    const auto bucket = static_cast<std::size_t>((shifted_value / exp) % static_cast<std::int64_t>(kBuckets));
-    ++count.at(bucket);
-  }
-
+                                                std::int64_t offset, const std::array<std::size_t, kBuckets> &count) {
   std::array<std::size_t, kBuckets> positions{};
   positions.at(0) = begin;
   for (std::size_t bucket = 1; bucket < kBuckets; ++bucket) {
@@ -123,14 +112,12 @@ void MelnikIRadixSortIntSTL::CountingSortByByte(const std::vector<int> &source, 
   }
 }
 
-void MelnikIRadixSortIntSTL::RadixSortRange(std::vector<int> &data, std::vector<int> &buffer, std::size_t begin,
-                                            std::size_t end) {
+std::vector<int> *MelnikIRadixSortIntSTL::RadixSortRange(std::vector<int> &data, std::vector<int> &buffer,
+                                                         std::size_t begin, std::size_t end) {
   if (end - begin <= 1) {
-    return;
+    return &data;
   }
 
-  std::vector<int> *source = &data;
-  std::vector<int> *destination = &buffer;
   const auto range_begin = data.begin() + static_cast<ptrdiff_t>(begin);
   const auto range_end = data.begin() + static_cast<ptrdiff_t>(end);
   const auto [min_it, max_it] = std::ranges::minmax_element(range_begin, range_end);
@@ -139,75 +126,117 @@ void MelnikIRadixSortIntSTL::RadixSortRange(std::vector<int> &data, std::vector<
   const std::int64_t offset = (min_value < 0) ? -min_value : 0;
   const std::int64_t max_shifted_value = max_value + offset;
 
+  std::vector<std::array<std::size_t, kBuckets>> all_counts;
   for (std::int64_t exp = 1; max_shifted_value / exp > 0; exp <<= kBitsPerPass) {
-    CountingSortByByte(*source, *destination, begin, end, exp, offset);
-    std::swap(source, destination);
+    all_counts.emplace_back();
+    all_counts.back().fill(0);
   }
 
-  if (source != &data) {
-    std::copy(source->begin() + static_cast<ptrdiff_t>(begin), source->begin() + static_cast<ptrdiff_t>(end),
-              data.begin() + static_cast<ptrdiff_t>(begin));
+  for (std::size_t index = begin; index < end; ++index) {
+    std::int64_t val = static_cast<std::int64_t>(data[index]) + offset;
+    for (auto &count_table : all_counts) {
+      count_table[static_cast<std::size_t>(val % static_cast<std::int64_t>(kBuckets))]++;
+      val /= static_cast<std::int64_t>(kBuckets);
+    }
   }
+
+  std::vector<int> *source = &data;
+  std::vector<int> *destination = &buffer;
+  std::int64_t exp = 1;
+
+  for (const auto &count_table : all_counts) {
+    CountingSortByByte(*source, *destination, begin, end, exp, offset, count_table);
+    std::swap(source, destination);
+    exp <<= kBitsPerPass;
+  }
+
+  return source;
 }
 
-void MelnikIRadixSortIntSTL::MergeRanges(const std::vector<int> &source, std::vector<int> &destination, Range left,
-                                         Range right, std::size_t write_begin) {
+void MelnikIRadixSortIntSTL::MergeRanges(const std::vector<int> &left_source, const std::vector<int> &right_source,
+                                         std::vector<int> &destination, Range left, Range right,
+                                         std::size_t write_begin) {
   std::size_t left_index = left.begin;
   std::size_t right_index = right.begin;
   std::size_t write_index = write_begin;
 
   while (left_index < left.end && right_index < right.end) {
-    if (source[left_index] <= source[right_index]) {
-      destination[write_index] = source[left_index];
+    if (left_source[left_index] <= right_source[right_index]) {
+      destination[write_index] = left_source[left_index];
       ++left_index;
     } else {
-      destination[write_index] = source[right_index];
+      destination[write_index] = right_source[right_index];
       ++right_index;
     }
     ++write_index;
   }
 
   if (left_index < left.end) {
-    std::copy(source.begin() + static_cast<ptrdiff_t>(left_index), source.begin() + static_cast<ptrdiff_t>(left.end),
+    std::copy(left_source.begin() + static_cast<ptrdiff_t>(left_index),
+              left_source.begin() + static_cast<ptrdiff_t>(left.end),
               destination.begin() + static_cast<ptrdiff_t>(write_index));
-    return;
+  } else if (right_index < right.end) {
+    std::copy(right_source.begin() + static_cast<ptrdiff_t>(right_index),
+              right_source.begin() + static_cast<ptrdiff_t>(right.end),
+              destination.begin() + static_cast<ptrdiff_t>(write_index));
   }
-
-  std::copy(source.begin() + static_cast<ptrdiff_t>(right_index), source.begin() + static_cast<ptrdiff_t>(right.end),
-            destination.begin() + static_cast<ptrdiff_t>(write_index));
 }
 
 void MelnikIRadixSortIntSTL::MergeSortedRanges(std::vector<int> &data, std::vector<int> &buffer,
-                                               const std::vector<Range> &ranges) {
+                                               std::vector<Range> &ranges) {
   if (ranges.empty()) {
     return;
   }
 
-  std::vector<int> *source = &data;
-  std::vector<int> *destination = &buffer;
   std::vector<Range> current_ranges = ranges;
 
   while (current_ranges.size() > 1U) {
     const std::size_t merged_count = (current_ranges.size() + 1U) / 2U;
     std::vector<Range> next_ranges(merged_count);
 
+    // Safety strategy: ensure all source ranges in a level use the same source buffer.
+    // If not, copy the 'odd' one to the majority buffer.
+    // In our case, after RadixSortRange, ranges might be in different buffers if passes differ.
+    // But since they are all 4-byte ints and we use max_shifted_value, passes are usually same.
+    // However, to be robust:
+    std::vector<int> *majority_source = current_ranges[0].buffer;
+    std::vector<int> *level_dest = (majority_source == &data) ? &buffer : &data;
+
     std::vector<std::thread> workers;
     workers.reserve(merged_count);
 
     for (std::size_t pair_index = 0; pair_index < merged_count; ++pair_index) {
-      workers.emplace_back([&, pair_index]() {
+      workers.emplace_back([&, pair_index, majority_source, level_dest]() {
         const std::size_t left_pos = pair_index * 2U;
-        const Range left = current_ranges[left_pos];
+        Range left = current_ranges[left_pos];
 
         if (left_pos + 1U >= current_ranges.size()) {
-          std::copy(source->begin() + static_cast<ptrdiff_t>(left.begin),
-                    source->begin() + static_cast<ptrdiff_t>(left.end),
-                    destination->begin() + static_cast<ptrdiff_t>(left.begin));
+          // If odd range is in wrong buffer, we MUST copy it to majority_source
+          // so that the NEXT level (which will merge this with others) is safe.
+          if (left.buffer != majority_source) {
+            std::copy(left.buffer->begin() + static_cast<ptrdiff_t>(left.begin),
+                      left.buffer->begin() + static_cast<ptrdiff_t>(left.end),
+                      majority_source->begin() + static_cast<ptrdiff_t>(left.begin));
+            left.buffer = majority_source;
+          }
           next_ranges[pair_index] = left;
         } else {
-          const Range right = current_ranges[left_pos + 1U];
-          MergeRanges(*source, *destination, left, right, left.begin);
-          next_ranges[pair_index] = Range{.begin = left.begin, .end = right.end};
+          Range right = current_ranges[left_pos + 1U];
+          // Ensure both are in majority_source before merging to level_dest
+          if (left.buffer != majority_source) {
+            std::copy(left.buffer->begin() + static_cast<ptrdiff_t>(left.begin),
+                      left.buffer->begin() + static_cast<ptrdiff_t>(left.end),
+                      majority_source->begin() + static_cast<ptrdiff_t>(left.begin));
+            left.buffer = majority_source;
+          }
+          if (right.buffer != majority_source) {
+            std::copy(right.buffer->begin() + static_cast<ptrdiff_t>(right.begin),
+                      right.buffer->begin() + static_cast<ptrdiff_t>(right.end),
+                      majority_source->begin() + static_cast<ptrdiff_t>(right.begin));
+            right.buffer = majority_source;
+          }
+          MergeRanges(*majority_source, *majority_source, *level_dest, left, right, left.begin);
+          next_ranges[pair_index] = Range{.begin = left.begin, .end = right.end, .buffer = level_dest};
         }
       });
     }
@@ -217,11 +246,10 @@ void MelnikIRadixSortIntSTL::MergeSortedRanges(std::vector<int> &data, std::vect
     }
 
     current_ranges = std::move(next_ranges);
-    std::swap(source, destination);
   }
 
-  if (source != &data) {
-    data.swap(*source);
+  if (current_ranges[0].buffer != &data) {
+    data.swap(*current_ranges[0].buffer);
   }
 }
 
