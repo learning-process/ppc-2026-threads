@@ -68,11 +68,20 @@ MatrixTestParam MakeCase(const std::string &name, CRSMatrix a, CRSMatrix b,
       .name = name, .a = std::move(a), .b = std::move(b), .check = std::move(check), .expect_valid = true};
 }
 
-void RunInvalidCase(const ppc::util::FuncTestParam<InType, OutType, MatrixTestParam> &test_param,
-                    const InType &input_data) {
+testing::AssertionResult CheckInvalidCase(const ppc::util::FuncTestParam<InType, OutType, MatrixTestParam> &test_param,
+                                          const InType &input_data) {
   auto task = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTaskGetter)>(test_param)(input_data);
-  EXPECT_FALSE(task->Validation());
-  EXPECT_THROW(task->Validation(), std::runtime_error);
+  if (task->Validation()) {
+    return testing::AssertionFailure() << "Validation() should return false";
+  }
+  try {
+    task->Validation();
+    return testing::AssertionFailure() << "Validation() should throw std::runtime_error";
+  } catch (const std::runtime_error &) {
+    return testing::AssertionSuccess();
+  } catch (...) {
+    return testing::AssertionFailure() << "Validation() threw an unexpected exception";
+  }
 }
 
 }  // namespace
@@ -111,7 +120,7 @@ TEST_P(VidermanRunFuncTests, CRSComplexMult) {
   const auto &test_case = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(test_param);
 
   if (!test_case.expect_valid) {
-    RunInvalidCase(test_param, GetTestInputData());
+    EXPECT_TRUE(CheckInvalidCase(test_param, GetTestInputData()));
     return;
   }
 
