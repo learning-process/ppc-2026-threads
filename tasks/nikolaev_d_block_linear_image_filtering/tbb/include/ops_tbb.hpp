@@ -22,6 +22,7 @@ class NikolaevDBlockLinearImageFilteringTBB : public BaseTask {
   bool PostProcessingImpl() override;
 
   static std::uint8_t GetPixel(const std::vector<uint8_t> &data, int w, int h, int x, int y, int ch);
+  static std::uint8_t ApplyKernel(const std::vector<uint8_t> &src, int w, int h, int nx, int ny, int ch);
 };
 
 }  // namespace nikolaev_d_block_linear_image_filtering

@@ -38,6 +38,20 @@ std::uint8_t NikolaevDBlockLinearImageFilteringTBB::GetPixel(const std::vector<u
   return data[((iy * w + ix) * 3) + ch];
 }
 
+std::uint8_t NikolaevDBlockLinearImageFilteringTBB::ApplyKernel(const std::vector<uint8_t> &src, int w, int h, int nx,
+                                                                int ny, int ch) {
+  static constexpr std::array<std::array<int, 3>, 3> kernel = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
+  int acc = 0;
+
+  for (int ky = -1; ky <= 1; ++ky) {
+    for (int kx = -1; kx <= 1; ++kx) {
+      acc += GetPixel(src, w, h, nx + kx, ny + ky, ch) * kernel[ky + 1][kx + 1];
+    }
+  }
+
+  return static_cast<uint8_t>(std::clamp((acc + 8) / 16, 0, 255));
+}
+
 bool NikolaevDBlockLinearImageFilteringTBB::RunImpl() {
   const int width = std::get<0>(GetInput());
   const int height = std::get<1>(GetInput());
@@ -46,22 +60,11 @@ bool NikolaevDBlockLinearImageFilteringTBB::RunImpl() {
   auto &dst = GetOutput();
   dst.assign(src.size(), 0);
 
-  const std::array<std::array<int, 3>, 3> kernel = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
-  const int sum = 16;
-
   tbb::parallel_for(tbb::blocked_range2d<int>(0, height, 0, width), [&](const tbb::blocked_range2d<int> &r) {
     for (int ny = r.rows().begin(); ny < r.rows().end(); ++ny) {
       for (int nx = r.cols().begin(); nx < r.cols().end(); ++nx) {
         for (int ch = 0; ch < 3; ++ch) {
-          int acc = 0;
-          for (int ky = -1; ky <= 1; ++ky) {
-            for (int kx = -1; kx <= 1; ++kx) {
-              acc += GetPixel(src, width, height, nx + kx, ny + ky, ch) * kernel[ky + 1][kx + 1];
-            }
-          }
-
-          int res = (acc + 8) / sum;
-          dst[((ny * width + nx) * 3) + ch] = static_cast<uint8_t>(std::clamp(res, 0, 255));
+          dst[((ny * width + nx) * 3) + ch] = ApplyKernel(src, width, height, nx, ny, ch);
         }
       }
     }
