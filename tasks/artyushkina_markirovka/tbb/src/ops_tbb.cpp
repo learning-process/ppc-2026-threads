@@ -33,9 +33,7 @@ void CollectNeighborsLabels(int i, int j, const std::vector<std::vector<int>> &t
     AddNeighborIfValid(temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j)], neighbor_labels);
   }
   if (i > 0 && j + 1 < cols) {
-    std::size_t row_idx = static_cast<std::size_t>(i - 1);
-    std::size_t col_idx = static_cast<std::size_t>(j + 1);
-    int neighbor = temp_labels[row_idx][col_idx];
+    int neighbor = temp_labels[static_cast<std::size_t>(i - 1)][static_cast<std::size_t>(j + 1)];
     AddNeighborIfValid(neighbor, neighbor_labels);
   }
   if (j > 0) {
@@ -229,7 +227,6 @@ void MarkingComponentsTBB::ResolveEquivalences() {
 
 void MarkingComponentsTBB::RemapLabels() {
   std::vector<int> unique_labels = CollectUniqueLabels(temp_labels_, rows_, cols_);
-
   SortAndRemoveDuplicates(unique_labels);
 
   std::map<int, int> label_mapping;
