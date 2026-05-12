@@ -8,7 +8,9 @@
 #include <vector>
 
 #include "sinev_a_mult_matrix_fox_algorithm/common/include/common.hpp"
+#include "sinev_a_mult_matrix_fox_algorithm/omp/include/ops_omp.hpp"
 #include "sinev_a_mult_matrix_fox_algorithm/seq/include/ops_seq.hpp"
+#include "sinev_a_mult_matrix_fox_algorithm/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -92,13 +94,21 @@ TEST_P(SinevARunFuncTestsThreads, MatMulFoxAlg) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 7> kTestParams = {std::make_tuple(1, "size_1x1"), std::make_tuple(2, "size_2x2"),
-                                             std::make_tuple(3, "size_3x3"), std::make_tuple(4, "size_4x4"),
-                                             std::make_tuple(5, "size_5x5"), std::make_tuple(6, "size_6x6"),
-                                             std::make_tuple(7, "size_7x7")};
+const std::array<TestType, 13> kTestParams = {
+    std::make_tuple(1, "size_1x1"),      std::make_tuple(2, "size_2x2"),    std::make_tuple(18, "size_18x18"),
+    std::make_tuple(4, "size_4x4"),      std::make_tuple(25, "size_25x25"), std::make_tuple(6, "size_6x6"),
+    std::make_tuple(75, "size_75x75"),   std::make_tuple(8, "size_8x8"),    std::make_tuple(9, "size_9x9"),
+    std::make_tuple(10, "size_10x10"),   std::make_tuple(16, "size_16x16"), std::make_tuple(50, "size_50x50"),
+    std::make_tuple(100, "size_100x100")};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<SinevAMultMatrixFoxAlgorithmSEQ, InType>(
-    kTestParams, PPC_SETTINGS_sinev_a_mult_matrix_fox_algorithm);
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SinevAMultMatrixFoxAlgorithmOMP, InType>(
+                                               kTestParams, PPC_SETTINGS_sinev_a_mult_matrix_fox_algorithm),
+                                           ppc::util::AddFuncTask<SinevAMultMatrixFoxAlgorithmSEQ, InType>(
+                                               kTestParams, PPC_SETTINGS_sinev_a_mult_matrix_fox_algorithm),
+                                           ppc::util::AddFuncTask<SinevAMultMatrixFoxAlgorithmTBB, InType>(
+                                               kTestParams, PPC_SETTINGS_sinev_a_mult_matrix_fox_algorithm)
+
+);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

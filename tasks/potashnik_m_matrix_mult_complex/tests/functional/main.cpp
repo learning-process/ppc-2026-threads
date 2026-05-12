@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <array>
 #include <cstddef>
@@ -8,9 +9,12 @@
 #include <utility>
 #include <vector>
 
+#include "potashnik_m_matrix_mult_complex/all/include/ops_all.hpp"
 #include "potashnik_m_matrix_mult_complex/common/include/common.hpp"
 #include "potashnik_m_matrix_mult_complex/omp/include/ops_omp.hpp"
 #include "potashnik_m_matrix_mult_complex/seq/include/ops_seq.hpp"
+#include "potashnik_m_matrix_mult_complex/stl/include/ops_stl.hpp"
+#include "potashnik_m_matrix_mult_complex/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -58,6 +62,15 @@ class PotashnikMMatrixMultComplexFuncTests : public ppc::util::BaseRunFuncTests<
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    // If not rank 0 - not checking
+    if (ppc::util::IsUnderMpirun()) {
+      int rank = 0;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      if (rank != 0) {
+        return true;
+      }
+    }
+
     const CCSMatrix &matrix_left = std::get<0>(input_data_);
     const CCSMatrix &matrix_right = std::get<1>(input_data_);
 
@@ -124,6 +137,12 @@ const std::array<TestType, 10> kTestParam = {
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<PotashnikMMatrixMultComplexSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_potashnik_m_matrix_mult_complex),
                                            ppc::util::AddFuncTask<PotashnikMMatrixMultComplexOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_potashnik_m_matrix_mult_complex),
+                                           ppc::util::AddFuncTask<PotashnikMMatrixMultComplexTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_potashnik_m_matrix_mult_complex),
+                                           ppc::util::AddFuncTask<PotashnikMMatrixMultComplexSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_potashnik_m_matrix_mult_complex),
+                                           ppc::util::AddFuncTask<PotashnikMMatrixMultComplexALL, InType>(
                                                kTestParam, PPC_SETTINGS_potashnik_m_matrix_mult_complex));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
