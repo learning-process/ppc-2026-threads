@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include "romanova_v_linear_histogram_stretch/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -17,7 +19,7 @@ class RomanovaVLinHistogramStretchSTL : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  void static GetThreadRange(size_t thid, size_t total, size_t num_th, size_t &beg, size_t &en);
+  static void GetThreadRange(size_t thid, size_t total, size_t num_th, size_t &beg, size_t &en);
 };
 
 }  // namespace romanova_v_linear_histogram_stretch_threads

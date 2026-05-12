@@ -1,8 +1,9 @@
 #include "romanova_v_linear_histogram_stretch/stl/include/ops_stl.hpp"
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <thread>
-#include <utility>
 #include <vector>
 
 #include "romanova_v_linear_histogram_stretch/common/include/common.hpp"
