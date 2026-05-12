@@ -11,6 +11,7 @@
 #include "tsibareva_e_integral_calculate_trapezoid_method/seq/include/ops_seq.hpp"
 #include "tsibareva_e_integral_calculate_trapezoid_method/stl/include/ops_stl.hpp"
 #include "tsibareva_e_integral_calculate_trapezoid_method/tbb/include/ops_tbb.hpp"
+#include "tsibareva_e_integral_calculate_trapezoid_method/all/include/ops_all.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -67,6 +68,8 @@ const auto kTestTasksList =
                    ppc::util::AddFuncTask<TsibarevaEIntegralCalculateTrapezoidMethodTBB, InType>(
                        kTestParams, PPC_SETTINGS_tsibareva_e_integral_calculate_trapezoid_method),
                    ppc::util::AddFuncTask<TsibarevaEIntegralCalculateTrapezoidMethodSTL, InType>(
+                       kTestParams, PPC_SETTINGS_tsibareva_e_integral_calculate_trapezoid_method),
+                   ppc::util::AddFuncTask<TsibarevaEIntegralCalculateTrapezoidMethodALL, InType>(
                        kTestParams, PPC_SETTINGS_tsibareva_e_integral_calculate_trapezoid_method));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
