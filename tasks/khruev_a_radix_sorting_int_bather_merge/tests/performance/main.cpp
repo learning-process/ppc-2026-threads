@@ -21,8 +21,7 @@ class KhruevARadixSortingIntBatherMergePerfTests : public ppc::util::BaseRunPerf
     input_data_.resize(kCount_);
     expected_data_.resize(kCount_);
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::mt19937 gen(42);
     std::uniform_int_distribution<int> dist(-100, 100);
 
     for (int i = 0; i < kCount_; i++) {
