@@ -4,9 +4,10 @@
 #include <cstddef>
 #include <vector>
 
+#include "artyushkina_markirovka/common/include/common.hpp"
+
 namespace artyushkina_markirovka {
 
-// Упрощенная структура без designated initializers
 struct NeighborOffsetAll {
   int di;
   int dj;
@@ -16,7 +17,6 @@ struct NeighborOffsetAll {
   int check_j_max;
 };
 
-// Инициализация через конструктор вместо designated initializers
 static std::vector<NeighborOffsetAll> GetFirstPassNeighbors() {
   std::vector<NeighborOffsetAll> neighbors(4);
   neighbors[0] = {-1, -1, 1, 0, 1, 0};
@@ -42,9 +42,9 @@ bool MarkingComponentsALL::PreProcessingImpl() {
   cols_ = static_cast<int>(input[1]);
 
   labels_.clear();
-  labels_.resize(rows_);
+  labels_.resize(static_cast<size_t>(rows_));
   for (int i = 0; i < rows_; ++i) {
-    labels_[i].resize(cols_, 0);
+    labels_[static_cast<size_t>(i)].resize(static_cast<size_t>(cols_), 0);
   }
 
   equivalent_labels_.clear();
@@ -54,11 +54,17 @@ bool MarkingComponentsALL::PreProcessingImpl() {
 }
 
 int MarkingComponentsALL::FindRoot(std::vector<int> &parent, int label) {
-  while (parent[label] != label) {
-    parent[label] = parent[parent[label]];
-    label = parent[label];
+  int root = label;
+  while (parent[static_cast<size_t>(root)] != root) {
+    root = parent[static_cast<size_t>(root)];
   }
-  return label;
+  int current = label;
+  while (current != root) {
+    int next = parent[static_cast<size_t>(current)];
+    parent[static_cast<size_t>(current)] = root;
+    current = next;
+  }
+  return root;
 }
 
 void MarkingComponentsALL::UnionLabels(std::vector<int> &parent, int label1, int label2) {
@@ -67,9 +73,9 @@ void MarkingComponentsALL::UnionLabels(std::vector<int> &parent, int label1, int
 
   if (root1 != root2) {
     if (root1 < root2) {
-      parent[root2] = root1;
+      parent[static_cast<size_t>(root2)] = root1;
     } else {
-      parent[root1] = root2;
+      parent[static_cast<size_t>(root1)] = root2;
     }
   }
 }
@@ -99,12 +105,10 @@ void MarkingComponentsALL::ProcessNeighborFirstPass(int i, int j, const Neighbor
   int ni = i + offset.di;
   int nj = j + offset.dj;
 
-  if (labels_[ni][nj] != 0) {
-    int label = labels_[ni][nj];
+  if (labels_[static_cast<size_t>(ni)][static_cast<size_t>(nj)] != 0) {
+    int label = labels_[static_cast<size_t>(ni)][static_cast<size_t>(nj)];
     neighbor_labels.push_back(label);
-    if (label < min_label) {
-      min_label = label;
-    }
+    min_label = std::min(label, min_label);
   }
 }
 
@@ -121,18 +125,17 @@ void MarkingComponentsALL::FirstPass() {
         std::vector<int> neighbor_labels;
         int min_label = next_label;
 
-        for (size_t k = 0; k < first_pass_neighbors.size(); ++k) {
-          ProcessNeighborFirstPass(i, j, first_pass_neighbors[k], neighbor_labels, min_label);
+        for (const auto &neighbor : first_pass_neighbors) {
+          ProcessNeighborFirstPass(i, j, neighbor, neighbor_labels, min_label);
         }
 
         if (neighbor_labels.empty()) {
-          labels_[i][j] = next_label;
+          labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = next_label;
           equivalent_labels_.push_back(next_label);
-          next_label++;
+          ++next_label;
         } else {
-          labels_[i][j] = min_label;
-          for (size_t k = 0; k < neighbor_labels.size(); ++k) {
-            int label = neighbor_labels[k];
+          labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = min_label;
+          for (int label : neighbor_labels) {
             if (label != min_label) {
               UnionLabels(equivalent_labels_, label, min_label);
             }
@@ -146,30 +149,29 @@ void MarkingComponentsALL::FirstPass() {
 void MarkingComponentsALL::SecondPass() {
   int label_count = static_cast<int>(equivalent_labels_.size());
 
-  // Первый проход - поиск корней
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
-      if (labels_[i][j] != 0) {
-        labels_[i][j] = FindRoot(equivalent_labels_, labels_[i][j]);
+      if (labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] != 0) {
+        labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] =
+            FindRoot(equivalent_labels_, labels_[static_cast<size_t>(i)][static_cast<size_t>(j)]);
       }
     }
   }
 
-  // Перемаппинг меток
-  std::vector<int> remap(label_count, 0);
+  std::vector<int> remap(static_cast<size_t>(label_count), 0);
   int current_label = 1;
   for (int i = 1; i < label_count; ++i) {
-    if (equivalent_labels_[i] == i) {
-      remap[i] = current_label;
-      current_label++;
+    if (equivalent_labels_[static_cast<size_t>(i)] == i) {
+      remap[static_cast<size_t>(i)] = current_label;
+      ++current_label;
     }
   }
 
-  // Применение перемаппинга
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
-      if (labels_[i][j] != 0) {
-        labels_[i][j] = remap[labels_[i][j]];
+      if (labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] != 0) {
+        labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] =
+            remap[static_cast<size_t>(labels_[static_cast<size_t>(i)][static_cast<size_t>(j)])];
       }
     }
   }
@@ -198,7 +200,7 @@ bool MarkingComponentsALL::PostProcessingImpl() {
 
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
-      output.push_back(labels_[i][j]);
+      output.push_back(labels_[static_cast<size_t>(i)][static_cast<size_t>(j)]);
     }
   }
 
