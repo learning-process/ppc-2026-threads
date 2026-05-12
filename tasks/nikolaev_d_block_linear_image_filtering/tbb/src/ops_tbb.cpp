@@ -40,12 +40,12 @@ std::uint8_t NikolaevDBlockLinearImageFilteringTBB::GetPixel(const std::vector<u
 
 std::uint8_t NikolaevDBlockLinearImageFilteringTBB::ApplyKernel(const std::vector<uint8_t> &src, int w, int h, int nx,
                                                                 int ny, int ch) {
-  static constexpr std::array<std::array<int, 3>, 3> kernel = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
+  static constexpr std::array<std::array<int, 3>, 3> kKernel = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
   int acc = 0;
 
   for (int ky = -1; ky <= 1; ++ky) {
     for (int kx = -1; kx <= 1; ++kx) {
-      acc += GetPixel(src, w, h, nx + kx, ny + ky, ch) * kernel[ky + 1][kx + 1];
+      acc += GetPixel(src, w, h, nx + kx, ny + ky, ch) * kKernel.at(ky + 1).at(kx + 1);
     }
   }
 
