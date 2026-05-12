@@ -28,6 +28,7 @@ class MaslovaUMultMatrALL : public BaseTask {
   static void GatherResults(int rank, int size, int a_rows, int b_cols, int local_rows, CRSMatrix &c,
                             const std::vector<int> &local_nnz, const std::vector<double> &flat_values,
                             const std::vector<int> &flat_cols);
+  static void SortVector(std::vector<int> &vec);
 };
 
 }  // namespace maslova_u_mult_matr_crs

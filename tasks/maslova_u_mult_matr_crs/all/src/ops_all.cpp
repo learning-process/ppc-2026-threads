@@ -13,6 +13,10 @@
 
 namespace maslova_u_mult_matr_crs {
 
+void MaslovaUMultMatrALL::SortVector(std::vector<int> &vec) {
+  std::ranges::sort(vec);
+}
+
 MaslovaUMultMatrALL::MaslovaUMultMatrALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   int rank = 0;
@@ -101,7 +105,7 @@ void MaslovaUMultMatrALL::ComputeLocalPart(const CRSMatrix &a, const CRSMatrix &
         }
       }
       local_nnz[i] = static_cast<int>(used.size());
-      std::sort(used.begin(), used.end());
+      SortVector(used);
       for (int col : used) {
         t_vals[i].push_back(acc[col]);
         t_cols[i].push_back(col);
