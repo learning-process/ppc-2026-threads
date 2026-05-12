@@ -37,7 +37,6 @@ bool ReadDimensions(std::ifstream &file, DenseMatrix &matrix) {
 bool ReadMatrixData(std::ifstream &file, DenseMatrix &matrix) {
   auto total_elements = static_cast<std::size_t>(matrix.rows) * static_cast<std::size_t>(matrix.cols);
   matrix.data.resize(total_elements, 0.0);
-
   for (int i = 0; i < matrix.rows; ++i) {
     for (int j = 0; j < matrix.cols; ++j) {
       if (!(file >> matrix(i, j))) {
