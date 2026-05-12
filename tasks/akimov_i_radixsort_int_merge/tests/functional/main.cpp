@@ -7,6 +7,7 @@
 #include <string>
 #include <tuple>
 
+#include "akimov_i_radixsort_int_merge/all/include/ops_all.hpp"
 #include "akimov_i_radixsort_int_merge/common/include/common.hpp"
 #include "akimov_i_radixsort_int_merge/omp/include/ops_omp.hpp"
 #include "akimov_i_radixsort_int_merge/seq/include/ops_seq.hpp"
@@ -65,7 +66,8 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<AkimovIRadixSortIntMergeSEQ, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge),
     ppc::util::AddFuncTask<AkimovIRadixSortIntMergeOMP, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge),
     ppc::util::AddFuncTask<AkimovIRadixSortIntMergeTBB, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge),
-    ppc::util::AddFuncTask<AkimovIRadixSortIntMergeSTL, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge));
+    ppc::util::AddFuncTask<AkimovIRadixSortIntMergeSTL, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge),
+    ppc::util::AddFuncTask<AkimovIRadixSortIntMergeALL, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

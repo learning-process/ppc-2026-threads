@@ -1,0 +1,189 @@
+#include "akimov_i_radixsort_int_merge/all/include/ops_all.hpp"
+
+#include <mpi.h>
+#include <oneapi/tbb/parallel_for.h>
+#include <omp.h>
+
+#include <algorithm>
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <iterator>
+#include <thread>
+#include <vector>
+
+#include "akimov_i_radixsort_int_merge/common/include/common.hpp"
+#include "util/include/util.hpp"
+
+namespace akimov_i_radixsort_int_merge {
+
+namespace {
+
+void CountingSortStep(std::vector<int>::iterator in_begin, std::vector<int>::iterator in_end,
+                      std::vector<int>::iterator out_begin, size_t byte_index) {
+  size_t shift = byte_index * 8;
+  std::array<size_t, 256> count = {0};
+
+  for (auto it = in_begin; it != in_end; ++it) {
+    auto raw_val = static_cast<unsigned int>(*it);
+    unsigned int byte_val = (raw_val >> shift) & 0xFF;
+
+    if (byte_index == sizeof(int) - 1) {
+      byte_val ^= 128;
+    }
+    count.at(byte_val)++;
+  }
+
+  std::array<size_t, 256> prefix{};
+  prefix[0] = 0;
+  for (int i = 1; i < 256; ++i) {
+    prefix.at(i) = prefix.at(i - 1) + count.at(i - 1);
+  }
+
+  for (auto it = in_begin; it != in_end; ++it) {
+    auto raw_val = static_cast<unsigned int>(*it);
+    unsigned int byte_val = (raw_val >> shift) & 0xFF;
+
+    if (byte_index == sizeof(int) - 1) {
+      byte_val ^= 128;
+    }
+
+    *(out_begin + static_cast<int64_t>(prefix.at(byte_val))) = *it;
+    prefix.at(byte_val)++;
+  }
+}
+
+void RadixSortLocal(std::vector<int>::iterator begin, std::vector<int>::iterator end) {
+  size_t n = std::distance(begin, end);
+  if (n < 2) return;
+
+  std::vector<int> temp(n);
+
+  for (size_t i = 0; i < sizeof(int); ++i) {
+    if (i % 2 == 0) {
+      CountingSortStep(begin, end, temp.begin(), i);
+    } else {
+      CountingSortStep(temp.begin(), temp.end(), begin, i);
+    }
+  }
+}
+
+void ParallelMerge(std::vector<int>& arr, const std::vector<int>& offsets, int num_blocks) {
+  for (int step = 1; step < num_blocks; step *= 2) {
+    tbb::parallel_for(0, num_blocks, [&](int i) {
+      if (i % (2 * step) == 0 && i + step < num_blocks) {
+        auto begin = arr.begin() + offsets[i];
+        auto middle = arr.begin() + offsets[i + step];
+        int end_idx = std::min(i + (2 * step), num_blocks);
+        auto end = arr.begin() + offsets[end_idx];
+        std::inplace_merge(begin, middle, end);
+      }
+    });
+  }
+}
+
+}  // namespace
+
+AkimovIRadixSortIntMergeALL::AkimovIRadixSortIntMergeALL(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = OutType();
+}
+
+bool AkimovIRadixSortIntMergeALL::ValidationImpl() {
+  return !GetInput().empty();
+}
+
+bool AkimovIRadixSortIntMergeALL::PreProcessingImpl() {
+  GetOutput() = GetInput();
+  return true;
+}
+
+bool AkimovIRadixSortIntMergeALL::RunImpl() {
+  auto& arr = GetOutput();
+  int n = static_cast<int>(arr.size());
+  if (n == 0) return true;
+
+  int rank = -1, world_size = -1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
+  std::vector<int> send_counts(world_size);
+  std::vector<int> send_displs(world_size);
+  int base = n / world_size;
+  int remainder = n % world_size;
+
+  std::vector<int> recv_counts(world_size);
+  std::vector<int> recv_displs(world_size);
+
+  int offset = 0;
+  for (int i = 0; i < world_size; ++i) {
+    send_counts[i] = base + (i < remainder ? 1 : 0);
+    send_displs[i] = offset;
+    offset += send_counts[i];
+  }
+
+  int local_size = send_counts[rank];
+  std::vector<int> local_data(local_size);
+
+  MPI_Scatterv(arr.data(), send_counts.data(), send_displs.data(), MPI_INT,
+               local_data.data(), local_size, MPI_INT, 0, MPI_COMM_WORLD);
+
+  constexpr int32_t kSignMask = INT32_MIN;
+#pragma omp parallel for default(none) shared(local_data, kSignMask)
+  for (int i = 0; i < local_size; ++i) {
+    local_data[i] ^= kSignMask;
+  }
+
+  RadixSortLocal(local_data.begin(), local_data.end());
+
+#pragma omp parallel for default(none) shared(local_data, kSignMask)
+  for (int i = 0; i < local_size; ++i) {
+    local_data[i] ^= kSignMask;
+  }
+
+  std::vector<int> temp_copy(local_size);
+  std::vector<std::thread> stl_threads;
+  int num_stl_threads = std::min(4, local_size);
+  int chunk = (local_size + num_stl_threads - 1) / num_stl_threads;
+  for (int t = 0; t < num_stl_threads; ++t) {
+    int start = t * chunk;
+    int end = std::min(start + chunk, local_size);
+    stl_threads.emplace_back([&local_data, &temp_copy, start, end]() {
+      std::copy(local_data.begin() + start, local_data.begin() + end, temp_copy.begin() + start);
+    });
+  }
+  for (auto& th : stl_threads) th.join();
+  local_data.swap(temp_copy);
+
+  std::vector<int> global_data;
+  if (rank == 0) {
+    global_data.resize(n);
+  }
+
+  MPI_Gatherv(local_data.data(), local_size, MPI_INT,
+              global_data.data(), send_counts.data(), send_displs.data(), MPI_INT,
+              0, MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    std::vector<int> offsets(world_size + 1);
+    offsets[0] = 0;
+    for (int i = 0; i < world_size; ++i) {
+      offsets[i + 1] = offsets[i] + send_counts[i];
+    }
+    ParallelMerge(global_data, offsets, world_size);
+    GetOutput() = std::move(global_data);
+  } else {
+    GetOutput().clear();
+  }
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  return true;
+}
+
+bool AkimovIRadixSortIntMergeALL::PostProcessingImpl() {
+  return true;
+}
+
+}  // namespace akimov_i_radixsort_int_merge
