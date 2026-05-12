@@ -61,6 +61,7 @@ void KhruevARadixSortingIntBatherMergeTBB::OddEvenMerge(std::vector<int> &a, siz
 
   size_t po = n / 2;
 
+  // Первая итерация вынесена из цикла для снижения когнитивной сложности (избавляемся от if-else)
   tbb::parallel_for(tbb::blocked_range<size_t>(0, po), [&](const tbb::blocked_range<size_t> &r) {
     for (size_t i = r.begin(); i != r.end(); ++i) {
       CompareExchange(a, i, i + po);
