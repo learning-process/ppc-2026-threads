@@ -4,11 +4,13 @@
 #include <cmath>
 #include <complex>
 #include <cstddef>
+#include <cstdint>
 #include <random>
 #include <string>
 #include <tuple>
 #include <vector>
 
+#include "ermakov_a_spar_mat_mult/all/include/ops_all.hpp"
 #include "ermakov_a_spar_mat_mult/common/include/common.hpp"
 #include "ermakov_a_spar_mat_mult/omp/include/ops_omp.hpp"
 #include "ermakov_a_spar_mat_mult/seq/include/ops_seq.hpp"
@@ -101,6 +103,17 @@ void FillRandom(DenseMatrix &a, DenseMatrix &b, int n, double density, std::mt19
   }
 }
 
+std::uint32_t MakeSeed(int n, const std::string &desc) {
+  std::uint32_t seed = 2166136261U;
+  for (unsigned char ch : desc) {
+    seed ^= ch;
+    seed *= 16777619U;
+  }
+  seed ^= static_cast<std::uint32_t>(n);
+  seed *= 16777619U;
+  return seed;
+}
+
 MatrixCRS DenseToCRS(const DenseMatrix &m, double eps = 1e-12) {
   MatrixCRS r;
 
@@ -179,7 +192,7 @@ class ErmakovARunFuncTestSparMatMult : public ppc::util::BaseRunFuncTests<InType
       }
       FillFixed(a, b);
     } else {
-      std::mt19937 gen(std::random_device{}());
+      std::mt19937 gen(MakeSeed(n, desc));
       const double density = ResolveDensity(desc);
       FillRandom(a, b, n, density, gen);
     }
@@ -214,6 +227,7 @@ const std::array<TestType, 4> kTestParam = {std::make_tuple(3, "SmallFixed"), st
                                             std::make_tuple(20, "MediumSparse"), std::make_tuple(30, "Dense")};
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<ErmakovASparMatMultALL, InType>(kTestParam, PPC_SETTINGS_ermakov_a_spar_mat_mult),
     ppc::util::AddFuncTask<ErmakovASparMatMultSTL, InType>(kTestParam, PPC_SETTINGS_ermakov_a_spar_mat_mult),
     ppc::util::AddFuncTask<ErmakovASparMatMultTBB, InType>(kTestParam, PPC_SETTINGS_ermakov_a_spar_mat_mult),
     ppc::util::AddFuncTask<ErmakovASparMatMultOMP, InType>(kTestParam, PPC_SETTINGS_ermakov_a_spar_mat_mult),

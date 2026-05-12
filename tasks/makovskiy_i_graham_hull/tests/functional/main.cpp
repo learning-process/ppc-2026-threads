@@ -1,10 +1,12 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <array>
 #include <cstddef>
 #include <string>
 #include <tuple>
 
+#include "makovskiy_i_graham_hull/all/include/ops_all.hpp"
 #include "makovskiy_i_graham_hull/common/include/common.hpp"
 #include "makovskiy_i_graham_hull/omp/include/ops_omp.hpp"
 #include "makovskiy_i_graham_hull/seq/include/ops_seq.hpp"
@@ -54,6 +56,14 @@ class MakovskiyIGrahamHullRunFuncTestsThreads : public ppc::util::BaseRunFuncTes
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    if (ppc::util::IsUnderMpirun()) {
+      int rank = 0;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      if (rank != 0) {
+        return true;
+      }
+    }
+
     int test_id = std::get<0>(std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()));
 
     if (test_id == 1) {
@@ -115,7 +125,8 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ConvexHullGrahamSEQ, InType>(kTestParam, PPC_SETTINGS_makovskiy_i_graham_hull),
     ppc::util::AddFuncTask<ConvexHullGrahamOMP, InType>(kTestParam, PPC_SETTINGS_makovskiy_i_graham_hull),
     ppc::util::AddFuncTask<ConvexHullGrahamTBB, InType>(kTestParam, PPC_SETTINGS_makovskiy_i_graham_hull),
-    ppc::util::AddFuncTask<ConvexHullGrahamSTL, InType>(kTestParam, PPC_SETTINGS_makovskiy_i_graham_hull));
+    ppc::util::AddFuncTask<ConvexHullGrahamSTL, InType>(kTestParam, PPC_SETTINGS_makovskiy_i_graham_hull),
+    ppc::util::AddFuncTask<ConvexHullGrahamALL, InType>(kTestParam, PPC_SETTINGS_makovskiy_i_graham_hull));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

@@ -1,14 +1,17 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <cmath>
 #include <vector>
 
+#include "../../all/include/rect_method_all.hpp"
 #include "../../common/include/common.hpp"
 #include "../../omp/include/rect_method_omp.hpp"
 #include "../../seq/include/rect_method_seq.hpp"
 #include "../../stl/include/rect_method_stl.hpp"
 #include "../../tbb/include/rect_method_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace kutergin_v_multidimensional_integration_rect_method {
 
@@ -27,6 +30,16 @@ class RectMethodPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> 
       }
       return sum;
     };
+
+    int rank = 0;
+    if (ppc::util::IsUnderMpirun()) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+
+    if (rank == 0) {
+      input_data_.limits.resize(5, {0.0, 1.0});
+      input_data_.n_steps.resize(5, 30);
+    }
   }
 
   bool CheckTestOutputData([[maybe_unused]] OutType &output_data) final {
@@ -47,8 +60,8 @@ TEST_P(RectMethodPerfTests, PerfTest) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, RectMethodSequential, RectMethodOMP, RectMethodTBB, RectMethodSTL>(
-        PPC_SETTINGS_kutergin_v_multidimensional_integration_rect_method);
+    ppc::util::MakeAllPerfTasks<InType, RectMethodSequential, RectMethodOMP, RectMethodTBB, RectMethodSTL,
+                                RectMethodALL>(PPC_SETTINGS_kutergin_v_multidimensional_integration_rect_method);
 
 INSTANTIATE_TEST_SUITE_P(MultidimensionalIntegrationPerf, RectMethodPerfTests,
                          ppc::util::TupleToGTestValues(kAllPerfTasks), RectMethodPerfTests::CustomPerfTestName);

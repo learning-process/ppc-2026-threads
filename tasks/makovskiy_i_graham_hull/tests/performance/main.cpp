@@ -1,13 +1,16 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <cmath>
 
+#include "makovskiy_i_graham_hull/all/include/ops_all.hpp"
 #include "makovskiy_i_graham_hull/common/include/common.hpp"
 #include "makovskiy_i_graham_hull/omp/include/ops_omp.hpp"
 #include "makovskiy_i_graham_hull/seq/include/ops_seq.hpp"
 #include "makovskiy_i_graham_hull/stl/include/ops_stl.hpp"
 #include "makovskiy_i_graham_hull/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace makovskiy_i_graham_hull {
 
@@ -23,6 +26,13 @@ class MakovskiyIGrahamHullRunPerfTestsThreads : public ppc::util::BaseRunPerfTes
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    if (ppc::util::IsUnderMpirun()) {
+      int rank = 0;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      if (rank != 0) {
+        return true;
+      }
+    }
     return output_data.size() >= 3;
   }
 
@@ -42,7 +52,7 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ConvexHullGrahamSEQ, ConvexHullGrahamOMP, ConvexHullGrahamTBB,
-                                ConvexHullGrahamSTL>(PPC_SETTINGS_makovskiy_i_graham_hull);
+                                ConvexHullGrahamSTL, ConvexHullGrahamALL>(PPC_SETTINGS_makovskiy_i_graham_hull);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
