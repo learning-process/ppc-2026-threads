@@ -2,22 +2,21 @@
 
 #include <vector>
 
-#include "olesnitskiy_v_hoare_sort_simple_merge_seq/common/include/common.hpp"
+#include "olesnitskiy_v_hoare_sort_simple_merge/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace olesnitskiy_v_hoare_sort_simple_merge_seq {
+namespace olesnitskiy_v_hoare_sort_simple_merge {
 
-class OlesnitskiyVHoareSortSimpleMergeOMP : public BaseTask {
+class OlesnitskiyVHoareSortSimpleMergeSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kOMP;
+    return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit OlesnitskiyVHoareSortSimpleMergeOMP(const InType &in);
+  explicit OlesnitskiyVHoareSortSimpleMergeSEQ(const InType &in);
 
  private:
   static int HoarePartition(std::vector<int> &values, int left, int right);
   static void HoareQuickSort(std::vector<int> &values, int left, int right);
-  static void Merge(std::vector<int> &values, int left, int mid, int right);
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
@@ -25,4 +24,4 @@ class OlesnitskiyVHoareSortSimpleMergeOMP : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace olesnitskiy_v_hoare_sort_simple_merge_seq
+}  // namespace olesnitskiy_v_hoare_sort_simple_merge

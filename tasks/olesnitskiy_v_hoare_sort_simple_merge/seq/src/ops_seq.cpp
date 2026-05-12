@@ -1,14 +1,13 @@
-#include "olesnitskiy_v_hoare_sort_simple_merge_seq/seq/include/ops_seq.hpp"
+#include "olesnitskiy_v_hoare_sort_simple_merge/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <cstddef>
 #include <stack>
 #include <utility>
 #include <vector>
 
-#include "olesnitskiy_v_hoare_sort_simple_merge_seq/common/include/common.hpp"
+#include "olesnitskiy_v_hoare_sort_simple_merge/common/include/common.hpp"
 
-namespace olesnitskiy_v_hoare_sort_simple_merge_seq {
+namespace olesnitskiy_v_hoare_sort_simple_merge {
 
 OlesnitskiyVHoareSortSimpleMergeSEQ::OlesnitskiyVHoareSortSimpleMergeSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -64,35 +63,6 @@ void OlesnitskiyVHoareSortSimpleMergeSEQ::HoareQuickSort(std::vector<int> &value
   }
 }
 
-void OlesnitskiyVHoareSortSimpleMergeSEQ::Merge(std::vector<int> &values, int left, int mid, int right) {
-  std::vector<int> merged;
-  const int merged_size = (right - left) + 1;
-  merged.reserve(static_cast<std::size_t>(merged_size));
-
-  int left_index = left;
-  int right_index = mid + 1;
-
-  while (left_index <= mid && right_index <= right) {
-    if (values[left_index] <= values[right_index]) {
-      merged.push_back(values[left_index++]);
-    } else {
-      merged.push_back(values[right_index++]);
-    }
-  }
-
-  while (left_index <= mid) {
-    merged.push_back(values[left_index++]);
-  }
-
-  while (right_index <= right) {
-    merged.push_back(values[right_index++]);
-  }
-
-  for (std::size_t idx = 0; idx < merged.size(); ++idx) {
-    values[static_cast<std::size_t>(left) + idx] = merged[idx];
-  }
-}
-
 bool OlesnitskiyVHoareSortSimpleMergeSEQ::ValidationImpl() {
   return !GetInput().empty();
 }
@@ -117,4 +87,4 @@ bool OlesnitskiyVHoareSortSimpleMergeSEQ::PostProcessingImpl() {
   return !GetOutput().empty() && std::ranges::is_sorted(GetOutput());
 }
 
-}  // namespace olesnitskiy_v_hoare_sort_simple_merge_seq
+}  // namespace olesnitskiy_v_hoare_sort_simple_merge
