@@ -124,83 +124,195 @@ TEST_P(ZhurinIGausKernelFuncTests, AllTests) {
 }
 
 // ========== Негативные тесты ==========
-TEST(ZhurinIGausKernelNegativeTest, InvalidWidth) {
-  int width = 0;
-  int height = 3;
-  int parts = 1;
+// InvalidWidth
+TEST(ZhurinIGausKernelNegativeTest, InvalidWidth_SEQ) {
+  int width = 0, height = 3, parts = 1;
   std::vector<std::vector<int>> img(height, std::vector<int>(3, 0));
   InType in = std::make_tuple(width, height, parts, img);
-
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelSEQ>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, InvalidWidth_OMP) {
+  int width = 0, height = 3, parts = 1;
+  std::vector<std::vector<int>> img(height, std::vector<int>(3, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelOMP>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, InvalidWidth_TBB) {
+  int width = 0, height = 3, parts = 1;
+  std::vector<std::vector<int>> img(height, std::vector<int>(3, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelTBB>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, InvalidWidth_STL) {
+  int width = 0, height = 3, parts = 1;
+  std::vector<std::vector<int>> img(height, std::vector<int>(3, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelSTL>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, InvalidWidth_ALL) {
+  int width = 0, height = 3, parts = 1;
+  std::vector<std::vector<int>> img(height, std::vector<int>(3, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelALL>(in)->Validation());
 }
 
-TEST(ZhurinIGausKernelNegativeTest, InvalidHeight) {
-  int width = 3;
-  int height = -1;
-  int parts = 1;
+// InvalidHeight
+TEST(ZhurinIGausKernelNegativeTest, InvalidHeight_SEQ) {
+  int width = 3, height = -1, parts = 1;
   std::vector<std::vector<int>> img(1, std::vector<int>(3, 0));
   InType in = std::make_tuple(width, height, parts, img);
-
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelSEQ>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, InvalidHeight_OMP) {
+  int width = 3, height = -1, parts = 1;
+  std::vector<std::vector<int>> img(1, std::vector<int>(3, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelOMP>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, InvalidHeight_TBB) {
+  int width = 3, height = -1, parts = 1;
+  std::vector<std::vector<int>> img(1, std::vector<int>(3, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelTBB>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, InvalidHeight_STL) {
+  int width = 3, height = -1, parts = 1;
+  std::vector<std::vector<int>> img(1, std::vector<int>(3, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelSTL>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, InvalidHeight_ALL) {
+  int width = 3, height = -1, parts = 1;
+  std::vector<std::vector<int>> img(1, std::vector<int>(3, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelALL>(in)->Validation());
 }
 
-TEST(ZhurinIGausKernelNegativeTest, InvalidPartsZero) {
-  int width = 3;
-  int height = 3;
-  int parts = 0;
+// InvalidPartsZero
+TEST(ZhurinIGausKernelNegativeTest, InvalidPartsZero_SEQ) {
+  int width = 3, height = 3, parts = 0;
   std::vector<std::vector<int>> img(height, std::vector<int>(width, 0));
   InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelSEQ>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, InvalidPartsZero_OMP) {
+  int width = 3, height = 3, parts = 0;
+  std::vector<std::vector<int>> img(height, std::vector<int>(width, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelOMP>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, InvalidPartsZero_TBB) {
+  int width = 3, height = 3, parts = 0;
+  std::vector<std::vector<int>> img(height, std::vector<int>(width, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelTBB>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, InvalidPartsZero_STL) {
+  int width = 3, height = 3, parts = 0;
+  std::vector<std::vector<int>> img(height, std::vector<int>(width, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelSTL>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, InvalidPartsZero_ALL) {
+  int width = 3, height = 3, parts = 0;
+  std::vector<std::vector<int>> img(height, std::vector<int>(width, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelALL>(in)->Validation());
 }
 
-TEST(ZhurinIGausKernelNegativeTest, InvalidPartsTooLarge) {
-  int width = 3;
-  int height = 3;
-  int parts = 5;
+// InvalidPartsTooLarge
+TEST(ZhurinIGausKernelNegativeTest, InvalidPartsTooLarge_SEQ) {
+  int width = 3, height = 3, parts = 5;
   std::vector<std::vector<int>> img(height, std::vector<int>(width, 0));
   InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelSEQ>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, InvalidPartsTooLarge_OMP) {
+  int width = 3, height = 3, parts = 5;
+  std::vector<std::vector<int>> img(height, std::vector<int>(width, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelOMP>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, InvalidPartsTooLarge_TBB) {
+  int width = 3, height = 3, parts = 5;
+  std::vector<std::vector<int>> img(height, std::vector<int>(width, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelTBB>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, InvalidPartsTooLarge_STL) {
+  int width = 3, height = 3, parts = 5;
+  std::vector<std::vector<int>> img(height, std::vector<int>(width, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelSTL>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, InvalidPartsTooLarge_ALL) {
+  int width = 3, height = 3, parts = 5;
+  std::vector<std::vector<int>> img(height, std::vector<int>(width, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelALL>(in)->Validation());
 }
 
-TEST(ZhurinIGausKernelNegativeTest, ImageRowsMismatch) {
-  int width = 3;
-  int height = 3;
-  int parts = 1;
+// ImageRowsMismatch
+TEST(ZhurinIGausKernelNegativeTest, ImageRowsMismatch_SEQ) {
+  int width = 3, height = 3, parts = 1;
   std::vector<std::vector<int>> img(2, std::vector<int>(width, 0));
   InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelSEQ>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, ImageRowsMismatch_OMP) {
+  int width = 3, height = 3, parts = 1;
+  std::vector<std::vector<int>> img(2, std::vector<int>(width, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelOMP>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, ImageRowsMismatch_TBB) {
+  int width = 3, height = 3, parts = 1;
+  std::vector<std::vector<int>> img(2, std::vector<int>(width, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelTBB>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, ImageRowsMismatch_STL) {
+  int width = 3, height = 3, parts = 1;
+  std::vector<std::vector<int>> img(2, std::vector<int>(width, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelSTL>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, ImageRowsMismatch_ALL) {
+  int width = 3, height = 3, parts = 1;
+  std::vector<std::vector<int>> img(2, std::vector<int>(width, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelALL>(in)->Validation());
 }
 
-TEST(ZhurinIGausKernelNegativeTest, ImageColsMismatch) {
-  int width = 3;
-  int height = 3;
-  int parts = 1;
+// ImageColsMismatch
+TEST(ZhurinIGausKernelNegativeTest, ImageColsMismatch_SEQ) {
+  int width = 3, height = 3, parts = 1;
   std::vector<std::vector<int>> img(height, std::vector<int>(2, 0));
   InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelSEQ>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, ImageColsMismatch_OMP) {
+  int width = 3, height = 3, parts = 1;
+  std::vector<std::vector<int>> img(height, std::vector<int>(2, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelOMP>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, ImageColsMismatch_TBB) {
+  int width = 3, height = 3, parts = 1;
+  std::vector<std::vector<int>> img(height, std::vector<int>(2, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelTBB>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, ImageColsMismatch_STL) {
+  int width = 3, height = 3, parts = 1;
+  std::vector<std::vector<int>> img(height, std::vector<int>(2, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelSTL>(in)->Validation());
+}
+TEST(ZhurinIGausKernelNegativeTest, ImageColsMismatch_ALL) {
+  int width = 3, height = 3, parts = 1;
+  std::vector<std::vector<int>> img(height, std::vector<int>(2, 0));
+  InType in = std::make_tuple(width, height, parts, img);
   EXPECT_FALSE(std::make_shared<ZhurinIGausKernelALL>(in)->Validation());
 }
 
