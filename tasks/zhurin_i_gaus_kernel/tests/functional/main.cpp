@@ -123,59 +123,67 @@ TEST_P(ZhurinIGausKernelFuncTests, AllTests) {
   ExecuteTest(GetParam());
 }
 
-// Негативные тесты (проверяют все реализации)
-template <typename... TaskTypes>
-void CheckValidationFalseAll(const InType &in) {
-  // Используем fold expression для C++17
-  ((EXPECT_FALSE(std::make_shared<TaskTypes>(in)->Validation())), ...);
+// ========== Негативные тесты ==========
+void CheckAllImplementations(const InType &in) {
+  EXPECT_FALSE(std::make_shared<ZhurinIGausKernelSEQ>(in)->Validation());
+  EXPECT_FALSE(std::make_shared<ZhurinIGausKernelOMP>(in)->Validation());
+  EXPECT_FALSE(std::make_shared<ZhurinIGausKernelTBB>(in)->Validation());
+  EXPECT_FALSE(std::make_shared<ZhurinIGausKernelSTL>(in)->Validation());
+  EXPECT_FALSE(std::make_shared<ZhurinIGausKernelALL>(in)->Validation());
 }
 
 TEST(ZhurinIGausKernelNegativeTest, InvalidWidth) {
-  int width = 0, height = 3, parts = 1;
+  int width = 0;
+  int height = 3;
+  int parts = 1;
   std::vector<std::vector<int>> img(height, std::vector<int>(3, 0));
   InType in = std::make_tuple(width, height, parts, img);
-  CheckValidationFalseAll<ZhurinIGausKernelSEQ, ZhurinIGausKernelOMP, ZhurinIGausKernelTBB, ZhurinIGausKernelSTL,
-                          ZhurinIGausKernelALL>(in);
+  CheckAllImplementations(in);
 }
 
 TEST(ZhurinIGausKernelNegativeTest, InvalidHeight) {
-  int width = 3, height = -1, parts = 1;
+  int width = 3;
+  int height = -1;
+  int parts = 1;
   std::vector<std::vector<int>> img(1, std::vector<int>(3, 0));
   InType in = std::make_tuple(width, height, parts, img);
-  CheckValidationFalseAll<ZhurinIGausKernelSEQ, ZhurinIGausKernelOMP, ZhurinIGausKernelTBB, ZhurinIGausKernelSTL,
-                          ZhurinIGausKernelALL>(in);
+  CheckAllImplementations(in);
 }
 
 TEST(ZhurinIGausKernelNegativeTest, InvalidPartsZero) {
-  int width = 3, height = 3, parts = 0;
+  int width = 3;
+  int height = 3;
+  int parts = 0;
   std::vector<std::vector<int>> img(height, std::vector<int>(width, 0));
   InType in = std::make_tuple(width, height, parts, img);
-  CheckValidationFalseAll<ZhurinIGausKernelSEQ, ZhurinIGausKernelOMP, ZhurinIGausKernelTBB, ZhurinIGausKernelSTL,
-                          ZhurinIGausKernelALL>(in);
+  CheckAllImplementations(in);
 }
 
 TEST(ZhurinIGausKernelNegativeTest, InvalidPartsTooLarge) {
-  int width = 3, height = 3, parts = 5;
+  int width = 3;
+  int height = 3;
+  int parts = 5;
   std::vector<std::vector<int>> img(height, std::vector<int>(width, 0));
   InType in = std::make_tuple(width, height, parts, img);
-  CheckValidationFalseAll<ZhurinIGausKernelSEQ, ZhurinIGausKernelOMP, ZhurinIGausKernelTBB, ZhurinIGausKernelSTL,
-                          ZhurinIGausKernelALL>(in);
+  CheckAllImplementations(in);
 }
 
 TEST(ZhurinIGausKernelNegativeTest, ImageRowsMismatch) {
-  int width = 3, height = 3, parts = 1;
+  int width = 3;
+  int height = 3;
+  int parts = 1;
   std::vector<std::vector<int>> img(2, std::vector<int>(width, 0));
   InType in = std::make_tuple(width, height, parts, img);
-  CheckValidationFalseAll<ZhurinIGausKernelSEQ, ZhurinIGausKernelOMP, ZhurinIGausKernelTBB, ZhurinIGausKernelSTL,
-                          ZhurinIGausKernelALL>(in);
+  CheckAllImplementations(in);
 }
 
 TEST(ZhurinIGausKernelNegativeTest, ImageColsMismatch) {
-  int width = 3, height = 3, parts = 1;
+  int width = 3;
+  int height = 3;
+  int parts = 1;
   std::vector<std::vector<int>> img(height, std::vector<int>(2, 0));
   InType in = std::make_tuple(width, height, parts, img);
-  CheckValidationFalseAll<ZhurinIGausKernelSEQ, ZhurinIGausKernelOMP, ZhurinIGausKernelTBB, ZhurinIGausKernelSTL,
-                          ZhurinIGausKernelALL>(in);
+  CheckAllImplementations(in);
 }
 
 }  // namespace
