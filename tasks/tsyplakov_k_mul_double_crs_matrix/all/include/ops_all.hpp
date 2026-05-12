@@ -11,7 +11,7 @@ class TsyplakovKTestTaskALL : public BaseTask {
     return ppc::task::TypeOfTask::kALL;
   }
 
-  explicit TsyplakovKTestTaskALL(const InType& in);
+  explicit TsyplakovKTestTaskALL(const InType &in);
 
  private:
   bool ValidationImpl() override;

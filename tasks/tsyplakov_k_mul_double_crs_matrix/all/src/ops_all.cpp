@@ -15,8 +15,8 @@ namespace tsyplakov_k_mul_double_crs_matrix {
 
 namespace {
 
-void ComputeRow(const SparseMatrixCRS& a, const SparseMatrixCRS& b, int row, std::vector<double>& values,
-                std::vector<int>& cols) {
+void ComputeRow(const SparseMatrixCRS &a, const SparseMatrixCRS &b, int row, std::vector<double> &values,
+                std::vector<int> &cols) {
   std::unordered_map<int, double> acc;
 
   for (int idx_a = a.row_ptr[row]; idx_a < a.row_ptr[row + 1]; ++idx_a) {
@@ -32,7 +32,7 @@ void ComputeRow(const SparseMatrixCRS& a, const SparseMatrixCRS& b, int row, std
   values.reserve(acc.size());
   cols.reserve(acc.size());
 
-  for (const auto& [col, val] : acc) {
+  for (const auto &[col, val] : acc) {
     if (std::fabs(val) > 1e-12) {
       cols.push_back(col);
       values.push_back(val);
@@ -42,13 +42,13 @@ void ComputeRow(const SparseMatrixCRS& a, const SparseMatrixCRS& b, int row, std
 
 }  // namespace
 
-TsyplakovKTestTaskALL::TsyplakovKTestTaskALL(const InType& in) {
+TsyplakovKTestTaskALL::TsyplakovKTestTaskALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
 bool TsyplakovKTestTaskALL::ValidationImpl() {
-  const auto& input = GetInput();
+  const auto &input = GetInput();
   return input.a.cols == input.b.rows;
 }
 
@@ -57,10 +57,10 @@ bool TsyplakovKTestTaskALL::PreProcessingImpl() {
 }
 
 bool TsyplakovKTestTaskALL::RunImpl() {
-  const auto& input = GetInput();
+  const auto &input = GetInput();
 
-  const auto& a = input.a;
-  const auto& b = input.b;
+  const auto &a = input.a;
+  const auto &b = input.b;
 
   int rank = 0;
   int size = 1;
@@ -132,9 +132,9 @@ bool TsyplakovKTestTaskALL::RunImpl() {
 
   SparseMatrixCRS result_matrix;
 
-  double* recv_values = nullptr;
-  int* recv_cols = nullptr;
-  int* gathered_rows_ptr = nullptr;
+  double *recv_values = nullptr;
+  int *recv_cols = nullptr;
+  int *gathered_rows_ptr = nullptr;
 
   std::vector<int> gathered_row_sizes;
 
