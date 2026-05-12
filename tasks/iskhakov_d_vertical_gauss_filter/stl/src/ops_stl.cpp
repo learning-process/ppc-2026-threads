@@ -1,5 +1,6 @@
 #include "iskhakov_d_vertical_gauss_filter/stl/include/ops_stl.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
