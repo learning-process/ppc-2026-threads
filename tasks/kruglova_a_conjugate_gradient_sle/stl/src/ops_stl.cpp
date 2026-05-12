@@ -5,13 +5,16 @@
 #include <cstddef>
 #include <future>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "kruglova_a_conjugate_gradient_sle/common/include/common.hpp"
 
 namespace kruglova_a_conjugate_gradient_sle {
 
-static double ParallelDotProduct(const std::vector<double> &v1, const std::vector<double> &v2) {
+namespace {
+
+double ParallelDotProduct(const std::vector<double> &v1, const std::vector<double> &v2) {
   std::size_t n = v1.size();
   if (n == 0) {
     return 0.0;
@@ -49,6 +52,36 @@ static double ParallelDotProduct(const std::vector<double> &v1, const std::vecto
   return total;
 }
 
+void MatrixVectorProduct(const std::vector<double> &a, const std::vector<double> &p, std::vector<double> &ap, int n,
+                         unsigned int num_threads) {
+  const std::size_t chunk = (static_cast<std::size_t>(n) + num_threads - 1) / num_threads;
+  std::vector<std::future<void>> futures;
+
+  for (unsigned int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+    std::size_t start = thread_idx * chunk;
+    std::size_t end = std::min(start + chunk, static_cast<std::size_t>(n));
+    if (start >= static_cast<std::size_t>(n)) {
+      break;
+    }
+
+    futures.emplace_back(std::async(std::launch::async, [&a, &p, &ap, n, start, end]() {
+      for (std::size_t i = start; i < end; ++i) {
+        double sum = 0.0;
+        std::size_t row = i * static_cast<std::size_t>(n);
+        for (int j = 0; j < n; ++j) {
+          sum += a[row + static_cast<std::size_t>(j)] * p[static_cast<std::size_t>(j)];
+        }
+        ap[i] = sum;
+      }
+    }));
+  }
+  for (auto &f : futures) {
+    f.get();
+  }
+}
+
+}  // namespace
+
 KruglovaAConjGradSleSTL::KruglovaAConjGradSleSTL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -76,41 +109,16 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
   std::vector<double> ap(n, 0.0);
 
   double rsold = ParallelDotProduct(r, r);
-  const double tolerance = 1e-6;
-  const int max_iter = n * 6;
+  const double tolerance = 1e-10;
+  const int max_iter = n * 10;
 
   unsigned int num_threads = std::thread::hardware_concurrency();
   if (num_threads == 0) {
     num_threads = 4;
   }
-  const std::size_t chunk = (static_cast<std::size_t>(n) + num_threads - 1) / num_threads;
 
   for (int iter = 0; iter < max_iter; ++iter) {
-    // A * p → ap
-    {
-      std::vector<std::future<void>> futures;
-      for (unsigned int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
-        std::size_t start = thread_idx * chunk;
-        std::size_t end = std::min(start + chunk, static_cast<std::size_t>(n));
-        if (start >= static_cast<std::size_t>(n)) {
-          break;
-        }
-
-        futures.emplace_back(std::async(std::launch::async, [&a, &p, &ap, n, start, end]() {
-          for (std::size_t i = start; i < end; ++i) {
-            double sum = 0.0;
-            std::size_t row = i * static_cast<std::size_t>(n);
-            for (int j = 0; j < n; ++j) {
-              sum += a[row + static_cast<std::size_t>(j)] * p[static_cast<std::size_t>(j)];
-            }
-            ap[i] = sum;
-          }
-        }));
-      }
-      for (auto &f : futures) {
-        f.get();
-      }
-    }
+    MatrixVectorProduct(a, p, ap, n, num_threads);
 
     double p_ap = ParallelDotProduct(p, ap);
     if (std::abs(p_ap) < 1e-14) {
@@ -119,25 +127,25 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
 
     double alpha = rsold / p_ap;
 
-    {
-      std::vector<std::future<void>> futures;
-      for (unsigned int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
-        std::size_t start = thread_idx * chunk;
-        std::size_t end = std::min(start + chunk, static_cast<std::size_t>(n));
-        if (start >= static_cast<std::size_t>(n)) {
-          break;
-        }
+    const std::size_t chunk = (static_cast<std::size_t>(n) + num_threads - 1) / num_threads;
+    std::vector<std::future<void>> futures;
 
-        futures.emplace_back(std::async(std::launch::async, [&x, &r, &p, &ap, alpha, start, end]() {
-          for (std::size_t i = start; i < end; ++i) {
-            x[i] += alpha * p[i];
-            r[i] -= alpha * ap[i];
-          }
-        }));
+    for (unsigned int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+      std::size_t start = thread_idx * chunk;
+      std::size_t end = std::min(start + chunk, static_cast<std::size_t>(n));
+      if (start >= static_cast<std::size_t>(n)) {
+        break;
       }
-      for (auto &f : futures) {
-        f.get();
-      }
+
+      futures.emplace_back(std::async(std::launch::async, [&x, &r, &p, &ap, alpha, start, end]() {
+        for (std::size_t i = start; i < end; ++i) {
+          x[i] += alpha * p[i];
+          r[i] -= alpha * ap[i];
+        }
+      }));
+    }
+    for (auto &f : futures) {
+      f.get();
     }
 
     double rsnew = ParallelDotProduct(r, r);
@@ -147,24 +155,22 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
 
     double beta = rsnew / rsold;
 
-    {
-      std::vector<std::future<void>> futures;
-      for (unsigned int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
-        std::size_t start = thread_idx * chunk;
-        std::size_t end = std::min(start + chunk, static_cast<std::size_t>(n));
-        if (start >= static_cast<std::size_t>(n)) {
-          break;
-        }
+    futures.clear();
+    for (unsigned int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+      std::size_t start = thread_idx * chunk;
+      std::size_t end = std::min(start + chunk, static_cast<std::size_t>(n));
+      if (start >= static_cast<std::size_t>(n)) {
+        break;
+      }
 
-        futures.emplace_back(std::async(std::launch::async, [&p, &r, beta, start, end]() {
-          for (std::size_t i = start; i < end; ++i) {
-            p[i] = r[i] + (beta * p[i]);
-          }
-        }));
-      }
-      for (auto &f : futures) {
-        f.get();
-      }
+      futures.emplace_back(std::async(std::launch::async, [&p, &r, beta, start, end]() {
+        for (std::size_t i = start; i < end; ++i) {
+          p[i] = r[i] + (beta * p[i]);
+        }
+      }));
+    }
+    for (auto &f : futures) {
+      f.get();
     }
 
     rsold = rsnew;
