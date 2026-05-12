@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <execution>
 #include <numeric>
+#include <ranges>
 #include <vector>
 
 #include "moskaev_v_lin_filt_block_gauss_3/common/include/common.hpp"
@@ -36,7 +37,7 @@ void MoskaevVLinFiltBlockGauss3STL::ApplyGaussianFilterToBlock(const std::vector
   int total_pixels = inner_height * inner_width;
 
   std::vector<int> indices(total_pixels);
-  std::iota(indices.begin(), indices.end(), 0);
+  std::ranges::iota(indices, 0);
 
   std::for_each(std::execution::par_unseq, indices.begin(), indices.end(), [&](int linear_idx) {
     int row = linear_idx / inner_width;
@@ -69,7 +70,7 @@ void CopyBlockWithPadding(const std::vector<uint8_t> &source_image, std::vector<
   int total_cols = current_block_width + 2;
 
   std::vector<int> linear_indices(static_cast<size_t>(total_rows) * static_cast<size_t>(total_cols));
-  std::iota(linear_indices.begin(), linear_indices.end(), 0);
+  std::ranges::iota(linear_indices, 0);
 
   std::for_each(std::execution::par_unseq, linear_indices.begin(), linear_indices.end(), [&](int linear_idx) {
     int dst_row = linear_idx / total_cols;
@@ -92,7 +93,7 @@ void CopyProcessedBlockToOutput(const std::vector<uint8_t> &processed_block, std
                                 int width, int channels, int block_x, int block_y, int current_block_width,
                                 int current_block_height) {
   std::vector<int> linear_indices(static_cast<size_t>(current_block_height) * static_cast<size_t>(current_block_width));
-  std::iota(linear_indices.begin(), linear_indices.end(), 0);
+  std::ranges::iota(linear_indices, 0);
 
   std::for_each(std::execution::par_unseq, linear_indices.begin(), linear_indices.end(), [&](int linear_idx) {
     int row = linear_idx / current_block_width;
@@ -128,7 +129,7 @@ bool MoskaevVLinFiltBlockGauss3STL::RunImpl() {
   int blocks_y = (height + block_size - 1) / block_size;
 
   std::vector<int> block_indices(static_cast<size_t>(blocks_y) * static_cast<size_t>(blocks_x));
-  std::iota(block_indices.begin(), block_indices.end(), 0);
+  std::ranges::iota(block_indices, 0);
 
   std::for_each(std::execution::par_unseq, block_indices.begin(), block_indices.end(), [&](int linear_idx) {
     int by = linear_idx / blocks_x;
