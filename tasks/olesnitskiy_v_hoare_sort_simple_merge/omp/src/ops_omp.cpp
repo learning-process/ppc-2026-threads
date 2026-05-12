@@ -137,8 +137,9 @@ bool OlesnitskiyVHoareSortSimpleMergeOMP::RunImpl() {
         std::vector<int> right_part(data_.begin() + static_cast<std::ptrdiff_t>(middle),
                                     data_.begin() + static_cast<std::ptrdiff_t>(right));
         std::vector<int> merged_part = SimpleMerge(left_part, right_part);
-        // NOLINTNEXTLINE(modernize-use-ranges): std::ranges::copy is not accepted in this OpenMP default(none) block.
-        std::copy(merged_part.begin(), merged_part.end(), merged_data.begin() + static_cast<std::ptrdiff_t>(left));
+        for (std::size_t idx = 0; idx < merged_part.size(); ++idx) {
+          merged_data[left + idx] = merged_part[idx];
+        }
       } else {
         std::copy(data_.begin() + static_cast<std::ptrdiff_t>(left), data_.begin() + static_cast<std::ptrdiff_t>(right),
                   merged_data.begin() + static_cast<std::ptrdiff_t>(left));
