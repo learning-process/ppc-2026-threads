@@ -261,7 +261,7 @@ cmake --build build --parallel
 ```bash
 cd build
 ./bin/ppc_func_tests \
-  --gtest_filter="*zavyalov_a_compl_sparse_matr_mult*SEQ*" \
+  --gtest_filter="*zavyalov_a_compl_sparse_matr_mult_seq*" \
   -v
 ```
 
@@ -271,7 +271,7 @@ cd build
 export PPC_NUM_THREADS=1
 ./bin/ppc_perf_tests \
   --running-type=performance \
-  --gtest_filter="*zavyalov_a_compl_sparse_matr_mult*SEQ*" \
+  --gtest_filter="*zavyalov_a_compl_sparse_matr_mult_seq*" \
   -v
 ```
 
@@ -282,7 +282,7 @@ export PPC_NUM_THREADS=1
 ./bin/ppc_perf_tests \
   --running-type=performance \
   --perf-mode=pipeline \
-  --gtest_filter="*zavyalov_a_compl_sparse_matr_mult*SEQ*" \
+  --gtest_filter="*zavyalov_a_compl_sparse_matr_mult_seq*" \
   -v
 ```
 
@@ -295,5 +295,5 @@ cmake -S . -B build-asan \
   -DCMAKE_CXX_FLAGS="-fsanitize=address"
 cmake --build build-asan --parallel
 ./build-asan/bin/ppc_func_tests \
-  --gtest_filter="*zavyalov_a_compl_sparse_matr_mult*SEQ*"
+  --gtest_filter="*zavyalov_a_compl_sparse_matr_mult_seq*"
 ```
