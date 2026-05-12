@@ -71,19 +71,19 @@ const std::array<TestType, 3> kTestCases = {
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<IlinAGrahamSEQ, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham),
                    ppc::util::AddFuncTask<IlinAGrahamOMP, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham),
+                   ppc::util::AddFuncTask<IlinAGrahamSTL, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham),
                    ppc::util::AddFuncTask<IlinAGrahamTBB, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham));
-                   ppc::util::AddFuncTask<IlinAGrahamSTL, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham));
 
-                   const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-                   const auto kTestName = IlinAGrahamFuncTests::PrintFuncTestName<IlinAGrahamFuncTests>;
+const auto kTestName = IlinAGrahamFuncTests::PrintFuncTestName<IlinAGrahamFuncTests>;
 
-                   INSTANTIATE_TEST_SUITE_P(GrahamTests, IlinAGrahamFuncTests, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(GrahamTests, IlinAGrahamFuncTests, kGtestValues, kTestName);
 
-                   TEST_P(IlinAGrahamFuncTests, BuildConvexHull) {
-                     ExecuteTest(GetParam());
-                   }
+TEST_P(IlinAGrahamFuncTests, BuildConvexHull) {
+  ExecuteTest(GetParam());
+}
 
-                   }  // namespace
+}  // namespace
 
-                   }  // namespace ilin_a_algorithm_graham
+}  // namespace ilin_a_algorithm_graham
