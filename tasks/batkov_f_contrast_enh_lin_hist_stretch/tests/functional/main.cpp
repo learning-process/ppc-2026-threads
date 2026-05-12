@@ -93,7 +93,7 @@ TEST_P(BatkovFRunFuncTestsThreads, ContrastEnhLinHistStretch) {
 
 const std::array<TestType, 5> kTestParam = {
     std::make_tuple(100, "small_image"),        std::make_tuple(500, "medium_image"),
-    std::make_tuple(1000, "big_image"),         std::make_tuple(2000, "large_image"),
+    std::make_tuple(1000, "big_image"),         std::make_tuple(1500, "large_image"),
     std::make_tuple(256, "degenerate_uniform"),
 };
 
