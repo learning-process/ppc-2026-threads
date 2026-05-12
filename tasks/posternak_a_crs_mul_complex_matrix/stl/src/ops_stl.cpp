@@ -98,7 +98,7 @@ std::vector<size_t> CountNonZeroElementsParallel(const posternak_a_crs_mul_compl
     num_threads = 1;
   }
 
-  const unsigned int chunk_size = std::max(1u, (static_cast<unsigned int>(total_rows) + num_threads - 1) / num_threads);
+  const unsigned int chunk_size = std::max(1U, (static_cast<unsigned int>(total_rows) + num_threads - 1) / num_threads);
 
   std::vector<std::thread> threads;
   threads.reserve(num_threads);
@@ -135,7 +135,7 @@ void ComputeResultValuesParallel(const posternak_a_crs_mul_complex_matrix::CRSMa
     num_threads = 1;
   }
 
-  const unsigned int chunk_size = std::max(1u, (static_cast<unsigned int>(total_rows) + num_threads - 1) / num_threads);
+  const unsigned int chunk_size = std::max(1U, (static_cast<unsigned int>(total_rows) + num_threads - 1) / num_threads);
 
   std::vector<std::thread> threads;
   threads.reserve(num_threads);
