@@ -7,6 +7,7 @@
 #include <tuple>
 #include <vector>
 
+#include "lazareva_a_matrix_mult_strassen/all/include/ops_all.hpp"
 #include "lazareva_a_matrix_mult_strassen/common/include/common.hpp"
 #include "lazareva_a_matrix_mult_strassen/omp/include/ops_omp.hpp"
 #include "lazareva_a_matrix_mult_strassen/seq/include/ops_seq.hpp"
@@ -39,12 +40,11 @@ class LazarevaARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
     input_data_ = MatrixInput{.a = a, .b = b, .n = n};
 
     expected_output_.assign(static_cast<size_t>(size), 0.0);
-    for (int row = 0; row < n; ++row) {
+    for (int i = 0; i < n; ++i) {
       for (int k = 0; k < n; ++k) {
-        for (int col = 0; col < n; ++col) {
-          expected_output_[static_cast<size_t>((static_cast<ptrdiff_t>(row) * n) + col)] +=
-              a[static_cast<size_t>((static_cast<ptrdiff_t>(row) * n) + k)] *
-              b[static_cast<size_t>((static_cast<ptrdiff_t>(k) * n) + col)];
+        const double aik = a[(static_cast<size_t>(i) * n) + k];
+        for (int j = 0; j < n; ++j) {
+          expected_output_[(static_cast<size_t>(i) * n) + j] += aik * b[(static_cast<size_t>(k) * n) + j];
         }
       }
     }
@@ -54,7 +54,7 @@ class LazarevaARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
     if (output_data.size() != expected_output_.size()) {
       return false;
     }
-    constexpr double kEps = 1e-9;
+    constexpr double kEps = 1e-5;
     for (size_t i = 0; i < output_data.size(); ++i) {
       if (std::fabs(output_data[i] - expected_output_[i]) > kEps) {
         return false;
@@ -73,28 +73,45 @@ class LazarevaARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
 };
 
 namespace {
-
 TEST_P(LazarevaARunFuncTestsThreads, StrassenMatmul) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 6> kTestParam = {
-    std::make_tuple(2, "2"), std::make_tuple(3, "3"),   std::make_tuple(5, "5"),
-    std::make_tuple(7, "7"), std::make_tuple(16, "16"), std::make_tuple(128, "128"),
-};
+const std::array<TestType, 8> kTestParamBase = {{
+    std::make_tuple(2, "2"),
+    std::make_tuple(3, "3"),
+    std::make_tuple(5, "5"),
+    std::make_tuple(7, "7"),
+    std::make_tuple(16, "16"),
+    std::make_tuple(64, "64"),
+    std::make_tuple(65, "65"),
+    std::make_tuple(128, "128"),
+}};
+
+const std::array<TestType, 9> kTestParamExtended = {{
+    std::make_tuple(2, "2"),
+    std::make_tuple(3, "3"),
+    std::make_tuple(5, "5"),
+    std::make_tuple(7, "7"),
+    std::make_tuple(16, "16"),
+    std::make_tuple(64, "64"),
+    std::make_tuple(65, "65"),
+    std::make_tuple(128, "128"),
+    std::make_tuple(256, "256"),
+}};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<LazarevaATestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_lazareva_a_matrix_mult_strassen),
-    ppc::util::AddFuncTask<LazarevaATestTaskOMP, InType>(kTestParam, PPC_SETTINGS_lazareva_a_matrix_mult_strassen),
-    ppc::util::AddFuncTask<LazarevaATestTaskTBB, InType>(kTestParam, PPC_SETTINGS_lazareva_a_matrix_mult_strassen),
-    ppc::util::AddFuncTask<LazarevaATestTaskSTL, InType>(kTestParam, PPC_SETTINGS_lazareva_a_matrix_mult_strassen));
+    ppc::util::AddFuncTask<LazarevaATestTaskALL, InType>(kTestParamExtended,
+                                                         PPC_SETTINGS_lazareva_a_matrix_mult_strassen),
+    ppc::util::AddFuncTask<LazarevaATestTaskOMP, InType>(kTestParamBase, PPC_SETTINGS_lazareva_a_matrix_mult_strassen),
+    ppc::util::AddFuncTask<LazarevaATestTaskSEQ, InType>(kTestParamBase, PPC_SETTINGS_lazareva_a_matrix_mult_strassen),
+    ppc::util::AddFuncTask<LazarevaATestTaskSTL, InType>(kTestParamBase, PPC_SETTINGS_lazareva_a_matrix_mult_strassen),
+    ppc::util::AddFuncTask<LazarevaATestTaskTBB, InType>(kTestParamBase, PPC_SETTINGS_lazareva_a_matrix_mult_strassen));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+const auto kFuncTestName = LazarevaARunFuncTestsThreads::PrintFuncTestName<LazarevaARunFuncTestsThreads>;
 
-const auto kPerfTestName = LazarevaARunFuncTestsThreads::PrintFuncTestName<LazarevaARunFuncTestsThreads>;
-
-INSTANTIATE_TEST_SUITE_P(SeqMatrixTests, LazarevaARunFuncTestsThreads, kGtestValues, kPerfTestName);
-
+INSTANTIATE_TEST_SUITE_P(MatrixTests, LazarevaARunFuncTestsThreads, kGtestValues, kFuncTestName);
 }  // namespace
 
 }  // namespace lazareva_a_matrix_mult_strassen

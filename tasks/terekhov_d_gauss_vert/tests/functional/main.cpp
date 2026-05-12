@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "terekhov_d_gauss_vert/all/include/ops_all.hpp"
 #include "terekhov_d_gauss_vert/common/include/common.hpp"
 #include "terekhov_d_gauss_vert/omp/include/ops_omp.hpp"
 #include "terekhov_d_gauss_vert/seq/include/ops_seq.hpp"
@@ -102,6 +103,7 @@ using TerekhovDGaussVertFuncTestsSEQ = TerekhovDGaussVertFuncTests;
 using TerekhovDGaussVertFuncTestsOMP = TerekhovDGaussVertFuncTests;
 using TerekhovDGaussVertFuncTestsTBB = TerekhovDGaussVertFuncTests;
 using TerekhovDGaussVertFuncTestsSTL = TerekhovDGaussVertFuncTests;
+using TerekhovDGaussVertFuncTestsALL = TerekhovDGaussVertFuncTests;
 
 namespace {
 
@@ -117,6 +119,9 @@ TEST_P(TerekhovDGaussVertFuncTestsTBB, GaussFilterTBB) {
 TEST_P(TerekhovDGaussVertFuncTestsSTL, GaussFilterSTL) {
   ExecuteTest(GetParam());
 }
+TEST_P(TerekhovDGaussVertFuncTestsALL, GaussFilterALL) {
+  ExecuteTest(GetParam());
+}
 
 const std::array<TestType, 3> kTestParam = {16, 256, 1024};
 
@@ -128,21 +133,26 @@ const auto kTbbTasksList =
     ppc::util::AddFuncTask<TerekhovDGaussVertTBB, InType>(kTestParam, PPC_SETTINGS_terekhov_d_gauss_vert);
 const auto kStlTasksList =
     ppc::util::AddFuncTask<TerekhovDGaussVertSTL, InType>(kTestParam, PPC_SETTINGS_terekhov_d_gauss_vert);
+const auto kAllTasksList =
+    ppc::util::AddFuncTask<TerekhovDGaussVertALL, InType>(kTestParam, PPC_SETTINGS_terekhov_d_gauss_vert);
 
 const auto kSeqValues = ppc::util::ExpandToValues(kSeqTasksList);
 const auto kOmpValues = ppc::util::ExpandToValues(kOmpTasksList);
 const auto kTbbValues = ppc::util::ExpandToValues(kTbbTasksList);
 const auto kStlValues = ppc::util::ExpandToValues(kStlTasksList);
+const auto kAllValues = ppc::util::ExpandToValues(kAllTasksList);
 
 const auto kNameFnSEQ = TerekhovDGaussVertFuncTestsSEQ::PrintFuncTestName<TerekhovDGaussVertFuncTestsSEQ>;
 const auto kNameFnOMP = TerekhovDGaussVertFuncTestsOMP::PrintFuncTestName<TerekhovDGaussVertFuncTestsOMP>;
 const auto kNameFnTBB = TerekhovDGaussVertFuncTestsTBB::PrintFuncTestName<TerekhovDGaussVertFuncTestsTBB>;
 const auto kNameFnSTL = TerekhovDGaussVertFuncTestsSTL::PrintFuncTestName<TerekhovDGaussVertFuncTestsSTL>;
+const auto kNameFnALL = TerekhovDGaussVertFuncTestsALL::PrintFuncTestName<TerekhovDGaussVertFuncTestsALL>;
 
 INSTANTIATE_TEST_SUITE_P(GaussFilterTestsSEQ, TerekhovDGaussVertFuncTestsSEQ, kSeqValues, kNameFnSEQ);
 INSTANTIATE_TEST_SUITE_P(GaussFilterTestsOMP, TerekhovDGaussVertFuncTestsOMP, kOmpValues, kNameFnOMP);
 INSTANTIATE_TEST_SUITE_P(GaussFilterTestsTBB, TerekhovDGaussVertFuncTestsTBB, kTbbValues, kNameFnTBB);
 INSTANTIATE_TEST_SUITE_P(GaussFilterTestsSTL, TerekhovDGaussVertFuncTestsSTL, kStlValues, kNameFnSTL);
+INSTANTIATE_TEST_SUITE_P(GaussFilterTestsALL, TerekhovDGaussVertFuncTestsALL, kAllValues, kNameFnALL);
 
 }  // namespace
 
