@@ -97,19 +97,6 @@ void RadixSortDouble(std::vector<double> &data, size_t begin, size_t end) {
   }
 }
 
-void MergingHalves(std::vector<double> &arr, size_t i, size_t len) {  // слияние половинок
-  size_t half = len / 2;
-  size_t end = std::min(i + len, arr.size());
-
-  for (size_t step = half; step > 0; step /= 2) {
-    for (size_t j = i; j + step < end; ++j) {
-      if (arr[j] > arr[j + step]) {
-        std::swap(arr[j], arr[j + step]);
-      }
-    }
-  }
-}
-
 // Нахождение ближайшей степени двойки, большей или равной n
 size_t NextPowerOfTwo(size_t n) {
   size_t power = 1;
@@ -132,7 +119,7 @@ void HybridSortDouble(std::vector<double> &data) {
 
   size_t threads = oneapi::tbb::this_task_arena::max_concurrency();
 
-  size_t block_size = (new_size + threads - 1) / threads;
+  size_t block_size = NextPowerOfTwo((new_size + threads - 1) / threads);
 
   // parallel radix sort
   oneapi::tbb::parallel_for(static_cast<size_t>(0), threads, [&](size_t t) {
@@ -147,12 +134,11 @@ void HybridSortDouble(std::vector<double> &data) {
 
   // parallel batcher merge tree
   for (size_t merge_size = block_size; merge_size < new_size; merge_size *= 2) {
-    oneapi::tbb::parallel_for(static_cast<size_t>(0), new_size, merge_size * 2,
+    oneapi::tbb::parallel_for(static_cast<size_t>(0), new_size, merge_size * 2, [&](size_t i) {
+      size_t mid = std::min(i + merge_size, new_size);
+      size_t end = std::min(i + merge_size * 2, new_size);
 
-                              [&](size_t i) {
-      size_t end = std::min(i + (merge_size * 2), new_size);
-
-      MergingHalves(data, i, end - i);
+      std::inplace_merge(data.begin() + i, data.begin() + mid, data.begin() + end);
     });
   }
 
