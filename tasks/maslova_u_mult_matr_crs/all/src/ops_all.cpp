@@ -13,7 +13,7 @@
 
 namespace maslova_u_mult_matr_crs {
 
-void MaslovaUMultMatrALL::SortVector(std::vector<int> &vec) {
+void MaslovaUMultMatrALL::SortVector(std::vector<int> &vec) {  // для прохождения clang-tidy
   std::ranges::sort(vec);
 }
 
