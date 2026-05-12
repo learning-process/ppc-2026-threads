@@ -3,9 +3,9 @@
 #include <omp.h>
 #include <tbb/tbb.h>
 
-#include <algorithm>
 #include <cmath>
 #include <complex>
+#include <cstddef>
 #include <vector>
 
 #include "borunov_v_complex_ccs/common/include/common.hpp"
@@ -93,6 +93,34 @@ void ProcessColumn(int j, const SparseMatrix &a, const SparseMatrix &b, int loca
   }
 }
 
+void ComputeTaskRange(int start_col, int end_col, int tid, const SparseMatrix &a, const SparseMatrix &b,
+                      std::vector<std::vector<std::complex<double>>> &vals, std::vector<std::vector<int>> &rows,
+                      std::vector<std::vector<int>> &col_nnz) {
+  const int cols_count = end_col - start_col;
+  col_nnz[tid].assign(cols_count, 0);
+
+  std::vector<std::complex<double>> acc(a.num_rows, {0.0, 0.0});
+  std::vector<int> marker(a.num_rows, -1);
+  std::vector<int> touched;
+  touched.reserve(static_cast<std::size_t>(a.num_rows));
+
+  for (int j = start_col; j < end_col; ++j) {
+    ProcessColumn(j, a, b, j - start_col, acc, marker, touched, vals[tid], rows[tid], col_nnz[tid]);
+  }
+}
+
+void FillColumnPointers(int start_col, int end_col, int num_threads, const std::vector<std::vector<int>> &col_nnz,
+                        std::vector<int> &col_ptrs) {
+  const int range = end_col - start_col;
+  for (int tid = 0; tid < num_threads; ++tid) {
+    const int tid_start_col = start_col + (range * tid) / num_threads;
+    const int tid_end_col = start_col + (range * (tid + 1)) / num_threads;
+    for (int j = tid_start_col; j < tid_end_col; ++j) {
+      col_ptrs[j + 1] = col_ptrs[j] + col_nnz[tid][j - tid_start_col];
+    }
+  }
+}
+
 }  // namespace
 
 bool BorunovVComplexCcsALL::RunImpl() {
@@ -114,35 +142,18 @@ bool BorunovVComplexCcsALL::RunImpl() {
   std::vector<std::vector<int>> omp_col_nnz(num_threads);
 
   if (half_cols > 0) {
-#pragma omp parallel num_threads(num_threads)
+#pragma omp parallel num_threads(num_threads) default(none) \
+    shared(a, b, half_cols, num_threads, omp_vals, omp_rows, omp_col_nnz)
     {
       const int tid = omp_get_thread_num();
       const int total_threads = omp_get_num_threads();
-
       const int tid_start_col = (half_cols * tid) / total_threads;
       const int tid_end_col = (half_cols * (tid + 1)) / total_threads;
-      const int cols_count = tid_end_col - tid_start_col;
-
-      omp_col_nnz[tid].assign(cols_count, 0);
-
-      std::vector<std::complex<double>> acc(a.num_rows, {0.0, 0.0});
-      std::vector<int> marker(a.num_rows, -1);
-      std::vector<int> touched;
-      touched.reserve(static_cast<std::size_t>(a.num_rows));
-
-      for (int j = tid_start_col; j < tid_end_col; ++j) {
-        ProcessColumn(j, a, b, j - tid_start_col, acc, marker, touched, omp_vals[tid], omp_rows[tid], omp_col_nnz[tid]);
-      }
+      ComputeTaskRange(tid_start_col, tid_end_col, tid, a, b, omp_vals, omp_rows, omp_col_nnz);
     }
   }
 
-  for (int tid = 0; tid < num_threads; ++tid) {
-    const int tid_start_col = (half_cols * tid) / num_threads;
-    const int tid_end_col = (half_cols * (tid + 1)) / num_threads;
-    for (int j = tid_start_col; j < tid_end_col; ++j) {
-      c.col_ptrs[j + 1] = c.col_ptrs[j] + omp_col_nnz[tid][j - tid_start_col];
-    }
-  }
+  FillColumnPointers(0, half_cols, num_threads, omp_col_nnz, c.col_ptrs);
 
   std::vector<std::vector<std::complex<double>>> tbb_vals(num_threads);
   std::vector<std::vector<int>> tbb_rows(num_threads);
@@ -152,33 +163,15 @@ bool BorunovVComplexCcsALL::RunImpl() {
     arena.execute([&] {
       tbb::parallel_for(tbb::blocked_range<int>(0, num_threads, 1), [&](const tbb::blocked_range<int> &r) {
         for (int tid = r.begin(); tid < r.end(); ++tid) {
-          const int tid_start_col = half_cols + ((num_cols - half_cols) * tid) / num_threads;
-          const int tid_end_col = half_cols + ((num_cols - half_cols) * (tid + 1)) / num_threads;
-          const int cols_count = tid_end_col - tid_start_col;
-
-          tbb_col_nnz[tid].assign(cols_count, 0);
-
-          std::vector<std::complex<double>> acc(a.num_rows, {0.0, 0.0});
-          std::vector<int> marker(a.num_rows, -1);
-          std::vector<int> touched;
-          touched.reserve(static_cast<std::size_t>(a.num_rows));
-
-          for (int j = tid_start_col; j < tid_end_col; ++j) {
-            ProcessColumn(j, a, b, j - tid_start_col, acc, marker, touched, tbb_vals[tid], tbb_rows[tid],
-                          tbb_col_nnz[tid]);
-          }
+          const int tid_start_col = half_cols + (((num_cols - half_cols) * tid) / num_threads);
+          const int tid_end_col = half_cols + (((num_cols - half_cols) * (tid + 1)) / num_threads);
+          ComputeTaskRange(tid_start_col, tid_end_col, tid, a, b, tbb_vals, tbb_rows, tbb_col_nnz);
         }
       }, tbb::static_partitioner());
     });
   }
 
-  for (int tid = 0; tid < num_threads; ++tid) {
-    const int tid_start_col = half_cols + ((num_cols - half_cols) * tid) / num_threads;
-    const int tid_end_col = half_cols + ((num_cols - half_cols) * (tid + 1)) / num_threads;
-    for (int j = tid_start_col; j < tid_end_col; ++j) {
-      c.col_ptrs[j + 1] = c.col_ptrs[j] + tbb_col_nnz[tid][j - tid_start_col];
-    }
-  }
+  FillColumnPointers(half_cols, num_cols, num_threads, tbb_col_nnz, c.col_ptrs);
 
   int total_nnz = c.col_ptrs[num_cols];
   c.values.reserve(total_nnz);
