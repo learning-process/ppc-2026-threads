@@ -39,7 +39,7 @@ class KonstantinovSRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InTy
   bool CheckTestOutputData(OutType &output_data) final {
     // std::cout<<std::endl;
     // if (output_data.size() != test_expected_output_.size()) {
-    //   // std::cout<<"AAAAA "<<output_data.size()<<"out< >ans "<<test_expected_output_.size()<<std::endl;
+    //   // std::cout<<"AAAA "<<output_data.size()<<"out< >ans "<<test_expected_output_.size()<<std::endl;
     //   // return false;
     // }
     // for (int i = 0; (i < std::max(output_data.size(), test_expected_output_.size())) && (output_data.size() > 0);
