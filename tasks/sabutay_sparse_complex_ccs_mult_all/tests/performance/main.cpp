@@ -8,7 +8,6 @@
 #include <utility>
 #include <vector>
 
-
 #include "sabutay_sparse_complex_ccs_mult_all/all/include/ops_all.hpp"
 #include "sabutay_sparse_complex_ccs_mult_all/common/include/common.hpp"
 #include "sabutay_sparse_complex_ccs_mult_all/omp/include/ops_omp.hpp"
