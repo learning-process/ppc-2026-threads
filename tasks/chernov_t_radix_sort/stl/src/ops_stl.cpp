@@ -27,7 +27,7 @@ bool ChernovTRadixSortSTL::PreProcessingImpl() {
 }
 
 constexpr int kBitsPerDigit = 8;
-constexpr int kRadix = 1 << kBitsPerDigit;  // 256
+constexpr int kRadix = 1 << kBitsPerDigit;
 constexpr uint32_t kSignMask = 0x80000000U;
 
 void ChernovTRadixSortSTL::RadixSortLSDSequential(std::vector<int> &data) {
@@ -64,6 +64,69 @@ void ChernovTRadixSortSTL::RadixSortLSDSequential(std::vector<int> &data) {
   }
 }
 
+void ChernovTRadixSortSTL::ConvertToIntegers(const std::vector<int> &input, std::vector<uint32_t> &output, size_t start,
+                                             size_t end, uint32_t sign_mask) {
+  for (size_t i = start; i < end; ++i) {
+    output[i] = static_cast<uint32_t>(input[i]) ^ sign_mask;
+  }
+}
+
+void ChernovTRadixSortSTL::ComputeLocalHistograms(const std::vector<uint32_t> &data,
+                                                  std::vector<std::vector<int>> &local_counts, size_t start, size_t end,
+                                                  int shift, int thread_idx) {
+  auto &cnt = local_counts[static_cast<size_t>(thread_idx)];
+  for (size_t i = start; i < end; ++i) {
+    int digit = static_cast<int>((data[i] >> shift) & 0xFFU);
+    ++cnt[digit];
+  }
+}
+
+void ChernovTRadixSortSTL::ComputeGlobalStarts(const std::vector<std::vector<int>> &local_counts,
+                                               std::vector<int> &global_start, int k_radix, int num_threads) {
+  int current_pos = 0;
+  for (int digit_idx = 0; digit_idx < k_radix; ++digit_idx) {
+    int total = 0;
+    for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+      total += local_counts[static_cast<size_t>(thread_idx)][digit_idx];
+    }
+    global_start[digit_idx] = current_pos;
+    current_pos += total;
+  }
+}
+
+void ChernovTRadixSortSTL::ComputeThreadOffsets(const std::vector<std::vector<int>> &local_counts,
+                                                std::vector<std::vector<int>> &thread_offset, int k_radix,
+                                                int num_threads) {
+  for (int digit_idx = 0; digit_idx < k_radix; ++digit_idx) {
+    int offset = 0;
+    for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+      thread_offset[static_cast<size_t>(thread_idx)][digit_idx] = offset;
+      offset += local_counts[static_cast<size_t>(thread_idx)][digit_idx];
+    }
+  }
+}
+
+void ChernovTRadixSortSTL::ScatterElements(const std::vector<uint32_t> &input, std::vector<uint32_t> &output,
+                                           const std::vector<int> &global_start,
+                                           const std::vector<std::vector<int>> &thread_offset,
+                                           std::vector<std::vector<int>> &local_counter, size_t start, size_t end,
+                                           int shift, int thread_idx) {
+  auto &my_counter = local_counter[static_cast<size_t>(thread_idx)];
+  for (size_t i = start; i < end; ++i) {
+    int digit = static_cast<int>((input[i] >> shift) & 0xFFU);
+    int pos = global_start[digit] + thread_offset[static_cast<size_t>(thread_idx)][digit] + my_counter[digit];
+    output[static_cast<size_t>(pos)] = input[i];
+    ++my_counter[digit];
+  }
+}
+
+void ChernovTRadixSortSTL::ConvertFromIntegers(const std::vector<uint32_t> &input, std::vector<int> &output,
+                                               size_t start, size_t end, uint32_t sign_mask) {
+  for (size_t i = start; i < end; ++i) {
+    output[i] = static_cast<int>(input[i] ^ sign_mask);
+  }
+}
+
 void ChernovTRadixSortSTL::RadixSortLSDParallel(std::vector<int> &data, int num_threads) {
   const size_t n = data.size();
   if (n <= 1) {
@@ -74,14 +137,10 @@ void ChernovTRadixSortSTL::RadixSortLSDParallel(std::vector<int> &data, int num_
   std::vector<std::thread> threads;
   const size_t chunk_size = (n + static_cast<size_t>(num_threads) - 1) / static_cast<size_t>(num_threads);
 
-  for (int t = 0; t < num_threads; ++t) {
-    const size_t start = static_cast<size_t>(t) * chunk_size;
+  for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+    const size_t start = static_cast<size_t>(thread_idx) * chunk_size;
     const size_t end = std::min(start + chunk_size, n);
-    threads.emplace_back([&data, &temp, start, end]() {
-      for (size_t i = start; i < end; ++i) {
-        temp[i] = static_cast<uint32_t>(data[i]) ^ kSignMask;
-      }
-    });
+    threads.emplace_back([&data, &temp, start, end]() { ConvertToIntegers(data, temp, start, end, kSignMask); });
   }
   for (auto &th : threads) {
     th.join();
@@ -93,15 +152,13 @@ void ChernovTRadixSortSTL::RadixSortLSDParallel(std::vector<int> &data, int num_
   for (int byte_index = 0; byte_index < 4; ++byte_index) {
     const int shift = byte_index * kBitsPerDigit;
 
+    // Гистограммы
     std::vector<std::vector<int>> local_counts(static_cast<size_t>(num_threads), std::vector<int>(kRadix, 0));
-    for (int t = 0; t < num_threads; ++t) {
-      const size_t start = static_cast<size_t>(t) * chunk_size;
+    for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+      const size_t start = static_cast<size_t>(thread_idx) * chunk_size;
       const size_t end = std::min(start + chunk_size, n);
-      threads.emplace_back([t, &local_counts, &temp, shift, start, end]() {
-        auto &cnt = local_counts[static_cast<size_t>(t)];
-        for (size_t i = start; i < end; ++i) {
-          ++cnt[static_cast<int>((temp[i] >> shift) & 0xFFU)];
-        }
+      threads.emplace_back([&temp, &local_counts, start, end, shift, thread_idx]() {
+        ComputeLocalHistograms(temp, local_counts, start, end, shift, thread_idx);
       });
     }
     for (auto &th : threads) {
@@ -110,38 +167,19 @@ void ChernovTRadixSortSTL::RadixSortLSDParallel(std::vector<int> &data, int num_
     threads.clear();
 
     std::vector<int> global_start(kRadix, 0);
-    int current_pos = 0;
-    for (int d = 0; d < kRadix; ++d) {
-      int total_for_digit = 0;
-      for (int t = 0; t < num_threads; ++t) {
-        total_for_digit += local_counts[static_cast<size_t>(t)][d];
-      }
-      global_start[d] = current_pos;
-      current_pos += total_for_digit;
-    }
+    ComputeGlobalStarts(local_counts, global_start, kRadix, num_threads);
 
     std::vector<std::vector<int>> thread_offset(static_cast<size_t>(num_threads), std::vector<int>(kRadix, 0));
-    for (int d = 0; d < kRadix; ++d) {
-      int offset = 0;
-      for (int t = 0; t < num_threads; ++t) {
-        thread_offset[static_cast<size_t>(t)][d] = offset;
-        offset += local_counts[static_cast<size_t>(t)][d];
-      }
-    }
+    ComputeThreadOffsets(local_counts, thread_offset, kRadix, num_threads);
 
     std::vector<std::vector<int>> local_counter(static_cast<size_t>(num_threads), std::vector<int>(kRadix, 0));
 
-    for (int t = 0; t < num_threads; ++t) {
-      const size_t start = static_cast<size_t>(t) * chunk_size;
+    for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+      const size_t start = static_cast<size_t>(thread_idx) * chunk_size;
       const size_t end = std::min(start + chunk_size, n);
-      threads.emplace_back([t, &buffer, &temp, &global_start, &thread_offset, &local_counter, shift, start, end]() {
-        auto &my_counter = local_counter[static_cast<size_t>(t)];
-        for (size_t i = start; i < end; ++i) {
-          int digit = static_cast<int>((temp[i] >> shift) & 0xFFU);
-          int pos = global_start[digit] + thread_offset[static_cast<size_t>(t)][digit] + my_counter[digit];
-          buffer[static_cast<size_t>(pos)] = temp[i];
-          ++my_counter[digit];
-        }
+      threads.emplace_back(
+          [&temp, &buffer, &global_start, &thread_offset, &local_counter, start, end, shift, thread_idx]() {
+        ScatterElements(temp, buffer, global_start, thread_offset, local_counter, start, end, shift, thread_idx);
       });
     }
     for (auto &th : threads) {
@@ -152,14 +190,10 @@ void ChernovTRadixSortSTL::RadixSortLSDParallel(std::vector<int> &data, int num_
     temp.swap(buffer);
   }
 
-  for (int t = 0; t < num_threads; ++t) {
-    const size_t start = static_cast<size_t>(t) * chunk_size;
+  for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+    const size_t start = static_cast<size_t>(thread_idx) * chunk_size;
     const size_t end = std::min(start + chunk_size, n);
-    threads.emplace_back([&data, &temp, start, end]() {
-      for (size_t i = start; i < end; ++i) {
-        data[i] = static_cast<int>(temp[i] ^ kSignMask);
-      }
-    });
+    threads.emplace_back([&temp, &data, start, end]() { ConvertFromIntegers(temp, data, start, end, kSignMask); });
   }
   for (auto &th : threads) {
     th.join();
