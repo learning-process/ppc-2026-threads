@@ -138,10 +138,10 @@ void HybridSortDouble(std::vector<double> &data) {
       size_t mid = std::min(i + merge_size, new_size);
       size_t end = std::min(i + (merge_size * 2), new_size);
 
-      using diff_t = std::vector<double>::difference_type;
+      using DiffT = std::vector<double>::difference_type;
 
-      std::inplace_merge(data.begin() + static_cast<diff_t>(i), data.begin() + static_cast<diff_t>(mid),
-                         data.begin() + static_cast<diff_t>(end));
+      std::inplace_merge(data.begin() + static_cast<DiffT>(i), data.begin() + static_cast<DiffT>(mid),
+                         data.begin() + static_cast<DiffT>(end));
     });
   }
 
