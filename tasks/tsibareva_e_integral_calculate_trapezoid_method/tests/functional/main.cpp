@@ -6,12 +6,12 @@
 #include <string>
 #include <tuple>
 
+#include "tsibareva_e_integral_calculate_trapezoid_method/all/include/ops_all.hpp"
 #include "tsibareva_e_integral_calculate_trapezoid_method/common/include/common.hpp"
 #include "tsibareva_e_integral_calculate_trapezoid_method/omp/include/ops_omp.hpp"
 #include "tsibareva_e_integral_calculate_trapezoid_method/seq/include/ops_seq.hpp"
 #include "tsibareva_e_integral_calculate_trapezoid_method/stl/include/ops_stl.hpp"
 #include "tsibareva_e_integral_calculate_trapezoid_method/tbb/include/ops_tbb.hpp"
-#include "tsibareva_e_integral_calculate_trapezoid_method/all/include/ops_all.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
