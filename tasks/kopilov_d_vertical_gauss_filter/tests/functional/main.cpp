@@ -74,6 +74,7 @@ const auto kTaskGenerators = std::tuple_cat(ppc::util::AddFuncTask<KopilovDVerti
                                             ppc::util::AddFuncTask<KopilovDVerticalGaussFilterTBB, InType>(
                                                 kValidationScenarios, PPC_SETTINGS_kopilov_d_vertical_gauss_filter));
 
+
 INSTANTIATE_TEST_SUITE_P(FilterFunctionality, VerticalGaussFilterTest, ppc::util::ExpandToValues(kTaskGenerators),
                          VerticalGaussFilterTest::PrintFuncTestName<VerticalGaussFilterTest>);
 
