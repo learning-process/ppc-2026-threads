@@ -17,7 +17,6 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-
 namespace sabutay_sparse_complex_ccs_mult_all {
 namespace {
 

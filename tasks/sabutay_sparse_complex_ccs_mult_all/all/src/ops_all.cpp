@@ -103,7 +103,6 @@ void CoalesceBufferToColumn(const std::vector<std::pair<int, std::complex<double
     return;
   }
 
-  
   column.clear();
   column.reserve(buffer.size());
   int active_row = buffer[0].first;
