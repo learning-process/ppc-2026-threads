@@ -40,8 +40,8 @@ void AddToBuffer(const double *a, std::size_t a_stride, const double *b, std::si
 }
 
 void MulIKJ(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c,
-            std::size_t c_stride, std::size_t ii, std::size_t i_end, std::size_t kk, std::size_t k_end,
-            std::size_t jj, std::size_t j_end) {
+            std::size_t c_stride, std::size_t ii, std::size_t i_end, std::size_t kk, std::size_t k_end, std::size_t jj,
+            std::size_t j_end) {
   for (std::size_t i = ii; i < i_end; ++i) {
     double *c_row = c + (i * c_stride);
     const double *a_row = a + (i * a_stride);
@@ -91,8 +91,9 @@ void CombineQuadrants(const std::vector<double> &m1, const std::vector<double> &
 void StrassenSeq(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c,
                  std::size_t c_stride, std::size_t n);
 
-void StrassenSeq(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c, // NOLINT(misc-no-recursion)
-                 std::size_t c_stride, std::size_t n) { 
+void StrassenSeq(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride,
+                 double *c,  // NOLINT(misc-no-recursion)
+                 std::size_t c_stride, std::size_t n) {
   if (n <= kCutoff) {
     NaiveMulBlocked(a, a_stride, b, b_stride, c, c_stride, n);
     return;
@@ -246,8 +247,6 @@ void StrassenTopOmp(const double *a, std::size_t a_stride, const double *b, std:
 }
 
 }  // namespace
-
-
 
 MuhammadkhonIStressenAlgOMP::MuhammadkhonIStressenAlgOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
