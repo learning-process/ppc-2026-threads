@@ -5,6 +5,7 @@
 #include <random>
 // #include <ranges>
 
+#include "khruev_a_radix_sorting_int_bather_merge/all/include/ops_all.hpp"
 #include "khruev_a_radix_sorting_int_bather_merge/common/include/common.hpp"
 #include "khruev_a_radix_sorting_int_bather_merge/omp/include/ops_omp.hpp"
 #include "khruev_a_radix_sorting_int_bather_merge/seq/include/ops_seq.hpp"
@@ -64,7 +65,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, KhruevARadixSortingIntBatherMergeSEQ, KhruevARadixSortingIntBatherMergeOMP,
-                                KhruevARadixSortingIntBatherMergeTBB, KhruevARadixSortingIntBatherMergeSTL>(
+                                KhruevARadixSortingIntBatherMergeTBB, KhruevARadixSortingIntBatherMergeSTL,
+                                KhruevARadixSortingIntBatherMergeALL>(
         PPC_SETTINGS_khruev_a_radix_sorting_int_bather_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
