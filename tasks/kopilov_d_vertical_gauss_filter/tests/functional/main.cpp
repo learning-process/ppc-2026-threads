@@ -79,11 +79,13 @@ INSTANTIATE_TEST_SUITE_P(FilterFunctionality, VerticalGaussFilterTest, ppc::util
 
 }  // namespace
 
+namespace {
 void AssertValidationFails(const Matrix &m) {
   EXPECT_FALSE(std::make_shared<KopilovDVerticalGaussFilterSEQ>(m)->Validation());
   EXPECT_FALSE(std::make_shared<KopilovDVerticalGaussFilterOMP>(m)->Validation());
   EXPECT_FALSE(std::make_shared<KopilovDVerticalGaussFilterTBB>(m)->Validation());
 }
+}  // namespace
 
 TEST(VerticalGaussFilterValidation, ZeroWidthFails) {
   AssertValidationFails(Matrix{0, 10, std::vector<uint8_t>(10, 0)});
