@@ -7,6 +7,10 @@
 #include <vector>
 
 #include "tsyplakov_k_mul_double_crs_matrix/all/include/ops_all.hpp"
+#include "tsyplakov_k_mul_double_crs_matrix/omp/include/ops_omp.hpp"
+#include "tsyplakov_k_mul_double_crs_matrix/seq/include/ops_seq.hpp"
+#include "tsyplakov_k_mul_double_crs_matrix/stl/include/ops_stl.hpp"
+#include "tsyplakov_k_mul_double_crs_matrix/tbb/include/ops_tbb.hpp"
 #include "tsyplakov_k_mul_double_crs_matrix/common/include/common.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
