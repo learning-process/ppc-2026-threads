@@ -38,13 +38,13 @@ bool RomanovaVLinHistogramStretchTBB::RunImpl() {
     uint8_t max;
   };
 
-  MM minmax = tbb::parallel_reduce(tbb::blocked_range<size_t>(0, in.size()), MM{255, 0},
+  MM minmax = tbb::parallel_reduce(tbb::blocked_range<size_t>(0, in.size()), MM{.min = 255, .max = 0},
                                    [&](const tbb::blocked_range<size_t> &range, MM init) {
     for (size_t i = range.begin(); i != range.end(); i++) {
-      init = MM{std::min(init.min, in[i]), std::max(init.max, in[i])};
+      init = MM{.min = std::min(init.min, in[i]), .max = std::max(init.max, in[i])};
     }
     return init;
-  }, [](MM first, MM second) { return MM{std::min(first.min, second.min), std::max(first.max, second.max)}; });
+  }, [](MM first, MM second) { return MM{.min = std::min(first.min, second.min), .max = std::max(first.max, second.max)}; });
 
   if (minmax.min == minmax.max) {
     tbb::parallel_for(tbb::blocked_range<size_t>(0, in.size()), [&](const tbb::blocked_range<size_t> &range) {
