@@ -1,5 +1,3 @@
-
-
 #pragma once
 
 #include <utility>
@@ -10,12 +8,12 @@
 
 namespace pankov_a_path_dejikstra {
 
-class PankovAPathDejikstraTBB : public BaseTask {
+class PankovAPathDejikstraSTL : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kTBB;
+    return ppc::task::TypeOfTask::kSTL;
   }
-  explicit PankovAPathDejikstraTBB(const InType &in);
+  explicit PankovAPathDejikstraSTL(const InType &in);
 
  private:
   bool ValidationImpl() override;
