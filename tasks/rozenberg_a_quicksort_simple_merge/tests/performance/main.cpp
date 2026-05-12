@@ -1,8 +1,9 @@
 #include <gtest/gtest.h>
 
-#include <fstream>
-#include <string>
+#include <algorithm>
+#include <random>
 
+#include "rozenberg_a_quicksort_simple_merge/all/include/ops_all.hpp"
 #include "rozenberg_a_quicksort_simple_merge/common/include/common.hpp"
 #include "rozenberg_a_quicksort_simple_merge/omp/include/ops_omp.hpp"
 #include "rozenberg_a_quicksort_simple_merge/seq/include/ops_seq.hpp"
@@ -17,28 +18,27 @@ class RozenbergARunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType,
   void SetUp() override {
     input_data_.clear();
     output_data_.clear();
-    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_rozenberg_a_quicksort_simple_merge, "perf_test.txt");
-    std::ifstream file(abs_path);
 
-    if (file.is_open()) {
-      int size = 0;
-      file >> size;
+    constexpr int kSize = 10000000;
+    std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int> dist(-10000000, 10000000);
 
-      InType input_data(size);
-      for (int i = 0; i < size; i++) {
-        file >> input_data[i];
-      }
-
-      OutType output_data(size);
-      for (int i = 0; i < size; i++) {
-        file >> output_data[i];
-      }
-      input_data_ = input_data;
-      output_data_ = output_data;
+    InType input_data(kSize);
+    for (int i = 0; i < kSize; i++) {
+      input_data[i] = dist(rng);
     }
+
+    OutType output_data = input_data;
+    std::ranges::sort(output_data);
+
+    input_data_ = input_data;
+    output_data_ = output_data;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    if (ppc::util::IsUnderMpirun() && ppc::util::GetMPIRank() != 0) {
+      return true;
+    }
     return (output_data_ == output_data);
   }
 
@@ -59,8 +59,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, RozenbergAQuicksortSimpleMergeSEQ, RozenbergAQuicksortSimpleMergeOMP,
-                                RozenbergAQuicksortSimpleMergeTBB, RozenbergAQuicksortSimpleMergeSTL>(
-        PPC_SETTINGS_rozenberg_a_quicksort_simple_merge);
+                                RozenbergAQuicksortSimpleMergeTBB, RozenbergAQuicksortSimpleMergeSTL,
+                                RozenbergAQuicksortSimpleMergeALL>(PPC_SETTINGS_rozenberg_a_quicksort_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

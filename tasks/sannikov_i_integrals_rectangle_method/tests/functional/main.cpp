@@ -9,6 +9,7 @@
 #include <tuple>
 #include <vector>
 
+#include "sannikov_i_integrals_rectangle_method/all/include/ops_all.hpp"
 #include "sannikov_i_integrals_rectangle_method/common/include/common.hpp"
 #include "sannikov_i_integrals_rectangle_method/omp/include/ops_omp.hpp"
 #include "sannikov_i_integrals_rectangle_method/seq/include/ops_seq.hpp"
@@ -117,6 +118,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SannikovIInteg
                                            ppc::util::AddFuncTask<SannikovIIntegralsRectangleMethodTBB, InType>(
                                                kTestParam, PPC_SETTINGS_sannikov_i_integrals_rectangle_method),
                                            ppc::util::AddFuncTask<SannikovIIntegralsRectangleMethodSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_sannikov_i_integrals_rectangle_method),
+                                           ppc::util::AddFuncTask<SannikovIIntegralsRectangleMethodALL, InType>(
                                                kTestParam, PPC_SETTINGS_sannikov_i_integrals_rectangle_method));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
