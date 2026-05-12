@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cstddef>
 
-#include "performance/include/performance.hpp"
 #include "smetanin_d_hoare_even_odd_batchelor/common/include/common.hpp"
 #include "smetanin_d_hoare_even_odd_batchelor/omp/include/ops_omp.hpp"
 #include "smetanin_d_hoare_even_odd_batchelor/seq/include/ops_seq.hpp"

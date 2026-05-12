@@ -1,6 +1,7 @@
 #include "smetanin_d_hoare_even_odd_batchelor/tbb/include/ops_tbb.hpp"
 
-#include <oneapi/tbb/task_group.h>
+#include <oneapi/tbb/concurrent_vector.h>
+#include <oneapi/tbb/parallel_for.h>
 
 #include <stack>
 #include <utility>
@@ -70,16 +71,30 @@ void HoarSortBatcherTBBImpl(std::vector<int> &arr, int lo, int hi) {
   if (lo >= hi) {
     return;
   }
-  if (hi - lo < kTaskCutoff) {
-    HoarSortBatcherSeq(arr, lo, hi);
-    return;
+
+  std::vector<std::pair<int, int>> cur;
+  cur.emplace_back(lo, hi);
+
+  while (!cur.empty()) {
+    tbb::concurrent_vector<std::pair<int, int>> next;
+    const std::size_t cur_sz = cur.size();
+    tbb::parallel_for(static_cast<std::size_t>(0), cur_sz, [&](std::size_t idx) {
+      const int l = cur[idx].first;
+      const int r = cur[idx].second;
+      if (l >= r) {
+        return;
+      }
+      if (r - l < kTaskCutoff) {
+        HoarSortBatcherSeq(arr, l, r);
+        return;
+      }
+      const int p = HoarePartition(arr, l, r);
+      OddEvenMerge(arr, l, r);
+      next.push_back({l, p});
+      next.push_back({p + 1, r});
+    });
+    cur.assign(next.begin(), next.end());
   }
-  int p = HoarePartition(arr, lo, hi);
-  OddEvenMerge(arr, lo, hi);
-  tbb::task_group g;
-  g.run([&arr, p, hi]() { HoarSortBatcherTBBImpl(arr, p + 1, hi); });
-  HoarSortBatcherTBBImpl(arr, lo, p);
-  g.wait();
 }
 
 }  // namespace
