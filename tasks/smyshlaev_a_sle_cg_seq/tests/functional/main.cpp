@@ -6,6 +6,7 @@
 #include <string>
 #include <tuple>
 
+#include "smyshlaev_a_sle_cg_seq/all/include/ops_all.hpp"
 #include "smyshlaev_a_sle_cg_seq/common/include/common.hpp"
 #include "smyshlaev_a_sle_cg_seq/omp/include/ops_omp.hpp"
 #include "smyshlaev_a_sle_cg_seq/seq/include/ops_seq.hpp"
@@ -81,7 +82,8 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<SmyshlaevASleCgTaskSEQ, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_sle_cg_seq),
     ppc::util::AddFuncTask<SmyshlaevASleCgTaskOMP, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_sle_cg_seq),
     ppc::util::AddFuncTask<SmyshlaevASleCgTaskTBB, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_sle_cg_seq),
-    ppc::util::AddFuncTask<SmyshlaevASleCgTaskSTL, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_sle_cg_seq));
+    ppc::util::AddFuncTask<SmyshlaevASleCgTaskSTL, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_sle_cg_seq),
+    ppc::util::AddFuncTask<SmyshlaevASleCgTaskALL, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_sle_cg_seq));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

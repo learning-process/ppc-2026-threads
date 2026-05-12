@@ -3,9 +3,11 @@
 #include <algorithm>
 #include <cmath>
 
+#include "lukin_i_ench_contr_lin_hist/all/include/ops_all.hpp"
 #include "lukin_i_ench_contr_lin_hist/common/include/common.hpp"
 #include "lukin_i_ench_contr_lin_hist/omp/include/ops_omp.hpp"
 #include "lukin_i_ench_contr_lin_hist/seq/include/ops_seq.hpp"
+#include "lukin_i_ench_contr_lin_hist/stl/include/ops_stl.hpp"
 #include "lukin_i_ench_contr_lin_hist/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -56,8 +58,9 @@ TEST_P(LukinIPerfTestThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LukinITestTaskSEQ, LukinITestTaskOMP, LukinITestTaskTBB>(
-    PPC_SETTINGS_lukin_i_ench_contr_lin_hist);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, LukinITestTaskSEQ, LukinITestTaskOMP, LukinITestTaskTBB, LukinITestTaskSTL,
+                                LukinITestTaskALL>(PPC_SETTINGS_lukin_i_ench_contr_lin_hist);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

@@ -10,6 +10,7 @@
 #include <tuple>
 #include <vector>
 
+#include "ermakov_a_spar_mat_mult/all/include/ops_all.hpp"
 #include "ermakov_a_spar_mat_mult/common/include/common.hpp"
 #include "ermakov_a_spar_mat_mult/omp/include/ops_omp.hpp"
 #include "ermakov_a_spar_mat_mult/seq/include/ops_seq.hpp"
@@ -226,6 +227,7 @@ const std::array<TestType, 4> kTestParam = {std::make_tuple(3, "SmallFixed"), st
                                             std::make_tuple(20, "MediumSparse"), std::make_tuple(30, "Dense")};
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<ErmakovASparMatMultALL, InType>(kTestParam, PPC_SETTINGS_ermakov_a_spar_mat_mult),
     ppc::util::AddFuncTask<ErmakovASparMatMultSTL, InType>(kTestParam, PPC_SETTINGS_ermakov_a_spar_mat_mult),
     ppc::util::AddFuncTask<ErmakovASparMatMultTBB, InType>(kTestParam, PPC_SETTINGS_ermakov_a_spar_mat_mult),
     ppc::util::AddFuncTask<ErmakovASparMatMultOMP, InType>(kTestParam, PPC_SETTINGS_ermakov_a_spar_mat_mult),

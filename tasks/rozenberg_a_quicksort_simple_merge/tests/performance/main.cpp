@@ -6,6 +6,7 @@
 #include "rozenberg_a_quicksort_simple_merge/common/include/common.hpp"
 #include "rozenberg_a_quicksort_simple_merge/omp/include/ops_omp.hpp"
 #include "rozenberg_a_quicksort_simple_merge/seq/include/ops_seq.hpp"
+#include "rozenberg_a_quicksort_simple_merge/stl/include/ops_stl.hpp"
 #include "rozenberg_a_quicksort_simple_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 #include "util/include/util.hpp"
@@ -58,7 +59,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, RozenbergAQuicksortSimpleMergeSEQ, RozenbergAQuicksortSimpleMergeOMP,
-                                RozenbergAQuicksortSimpleMergeTBB>(PPC_SETTINGS_rozenberg_a_quicksort_simple_merge);
+                                RozenbergAQuicksortSimpleMergeTBB, RozenbergAQuicksortSimpleMergeSTL>(
+        PPC_SETTINGS_rozenberg_a_quicksort_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

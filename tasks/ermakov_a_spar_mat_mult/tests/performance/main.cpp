@@ -5,6 +5,7 @@
 #include <random>
 #include <vector>
 
+#include "ermakov_a_spar_mat_mult/all/include/ops_all.hpp"
 #include "ermakov_a_spar_mat_mult/common/include/common.hpp"
 #include "ermakov_a_spar_mat_mult/omp/include/ops_omp.hpp"
 #include "ermakov_a_spar_mat_mult/seq/include/ops_seq.hpp"
@@ -91,7 +92,7 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ErmakovASparMatMultSEQ, ErmakovASparMatMultOMP, ErmakovASparMatMultTBB,
-                                ErmakovASparMatMultSTL>(PPC_SETTINGS_ermakov_a_spar_mat_mult);
+                                ErmakovASparMatMultSTL, ErmakovASparMatMultALL>(PPC_SETTINGS_ermakov_a_spar_mat_mult);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
