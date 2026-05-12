@@ -207,7 +207,7 @@ export PPC_NUM_THREADS=4
 
 # Тесты производительности
 export PPC_NUM_THREADS=4
-./build/bin/ppc_perf_tests --running-type=performance --gtest_filter="*zavyalov_a_compl_sparse_matr_mult_omp*" -v
+./build/bin/ppc_perf_tests--gtest_filter="*zavyalov_a_compl_sparse_matr_mult_omp*" -v
 ```
 ## 8. Результаты
 
