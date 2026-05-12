@@ -9,6 +9,7 @@
 #include "litvyakov_d_shell_sort/common/include/common.hpp"
 #include "litvyakov_d_shell_sort/omp/include/ops_omp.hpp"
 #include "litvyakov_d_shell_sort/seq/include/ops_seq.hpp"
+#include "litvyakov_d_shell_sort/stl/include/ops_stl.hpp"
 #include "litvyakov_d_shell_sort/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -63,8 +64,8 @@ TEST_P(LitvyakovDShellSortRunPerfTest, PerfSortTest) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, LitvyakovDShellSortSEQ, LitvyakovDShellSortOMP, LitvyakovDShellSortTBB>(
-        PPC_SETTINGS_litvyakov_d_shell_sort);
+    ppc::util::MakeAllPerfTasks<InType, LitvyakovDShellSortSEQ, LitvyakovDShellSortOMP, LitvyakovDShellSortTBB,
+                                LitvyakovDShellSortSTL>(PPC_SETTINGS_litvyakov_d_shell_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
