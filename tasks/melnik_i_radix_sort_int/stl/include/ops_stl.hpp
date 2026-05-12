@@ -40,6 +40,10 @@ class MelnikIRadixSortIntSTL : public BaseTask {
   static void MergeRanges(const std::vector<int> &left_source, const std::vector<int> &right_source,
                           std::vector<int> &destination, Range left, Range right, std::size_t write_begin);
   static void MergeSortedRanges(std::vector<int> &data, std::vector<int> &buffer, std::vector<Range> &ranges);
+
+  static void EnsureRangeInBuffer(Range &range, std::vector<int> *target_buffer);
+  static Range ProcessMergePair(std::size_t pair_index, const std::vector<Range> &current_ranges,
+                                std::vector<int> *majority_source, std::vector<int> *level_dest);
 };
 
 }  // namespace melnik_i_radix_sort_int

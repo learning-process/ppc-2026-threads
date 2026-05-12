@@ -138,7 +138,7 @@ std::vector<int> *MelnikIRadixSortIntSTL::RadixSortRange(std::vector<int> &data,
   for (std::size_t index = begin; index < end; ++index) {
     std::int64_t val = static_cast<std::int64_t>(data[index]) + offset;
     for (auto &count_table : all_counts) {
-      count_table[static_cast<std::size_t>(val % static_cast<std::int64_t>(kBuckets))]++;
+      count_table.at(static_cast<std::size_t>(val % static_cast<std::int64_t>(kBuckets)))++;
       val /= static_cast<std::int64_t>(kBuckets);
     }
   }
@@ -185,6 +185,35 @@ void MelnikIRadixSortIntSTL::MergeRanges(const std::vector<int> &left_source, co
   }
 }
 
+void MelnikIRadixSortIntSTL::EnsureRangeInBuffer(Range &range, std::vector<int> *target_buffer) {
+  if (range.buffer == target_buffer) {
+    return;
+  }
+  std::copy(range.buffer->begin() + static_cast<ptrdiff_t>(range.begin),
+            range.buffer->begin() + static_cast<ptrdiff_t>(range.end),
+            target_buffer->begin() + static_cast<ptrdiff_t>(range.begin));
+  range.buffer = target_buffer;
+}
+
+MelnikIRadixSortIntSTL::Range MelnikIRadixSortIntSTL::ProcessMergePair(std::size_t pair_index,
+                                                                       const std::vector<Range> &current_ranges,
+                                                                       std::vector<int> *majority_source,
+                                                                       std::vector<int> *level_dest) {
+  const std::size_t left_pos = pair_index * 2U;
+  Range left = current_ranges[left_pos];
+
+  if (left_pos + 1U >= current_ranges.size()) {
+    EnsureRangeInBuffer(left, majority_source);
+    return left;
+  }
+
+  Range right = current_ranges[left_pos + 1U];
+  EnsureRangeInBuffer(left, majority_source);
+  EnsureRangeInBuffer(right, majority_source);
+  MergeRanges(*majority_source, *majority_source, *level_dest, left, right, left.begin);
+  return Range{.begin = left.begin, .end = right.end, .buffer = level_dest};
+}
+
 void MelnikIRadixSortIntSTL::MergeSortedRanges(std::vector<int> &data, std::vector<int> &buffer,
                                                std::vector<Range> &ranges) {
   if (ranges.empty()) {
@@ -196,12 +225,6 @@ void MelnikIRadixSortIntSTL::MergeSortedRanges(std::vector<int> &data, std::vect
   while (current_ranges.size() > 1U) {
     const std::size_t merged_count = (current_ranges.size() + 1U) / 2U;
     std::vector<Range> next_ranges(merged_count);
-
-    // Safety strategy: ensure all source ranges in a level use the same source buffer.
-    // If not, copy the 'odd' one to the majority buffer.
-    // In our case, after RadixSortRange, ranges might be in different buffers if passes differ.
-    // But since they are all 4-byte ints and we use max_shifted_value, passes are usually same.
-    // However, to be robust:
     std::vector<int> *majority_source = current_ranges[0].buffer;
     std::vector<int> *level_dest = (majority_source == &data) ? &buffer : &data;
 
@@ -210,37 +233,7 @@ void MelnikIRadixSortIntSTL::MergeSortedRanges(std::vector<int> &data, std::vect
 
     for (std::size_t pair_index = 0; pair_index < merged_count; ++pair_index) {
       workers.emplace_back([&, pair_index, majority_source, level_dest]() {
-        const std::size_t left_pos = pair_index * 2U;
-        Range left = current_ranges[left_pos];
-
-        if (left_pos + 1U >= current_ranges.size()) {
-          // If odd range is in wrong buffer, we MUST copy it to majority_source
-          // so that the NEXT level (which will merge this with others) is safe.
-          if (left.buffer != majority_source) {
-            std::copy(left.buffer->begin() + static_cast<ptrdiff_t>(left.begin),
-                      left.buffer->begin() + static_cast<ptrdiff_t>(left.end),
-                      majority_source->begin() + static_cast<ptrdiff_t>(left.begin));
-            left.buffer = majority_source;
-          }
-          next_ranges[pair_index] = left;
-        } else {
-          Range right = current_ranges[left_pos + 1U];
-          // Ensure both are in majority_source before merging to level_dest
-          if (left.buffer != majority_source) {
-            std::copy(left.buffer->begin() + static_cast<ptrdiff_t>(left.begin),
-                      left.buffer->begin() + static_cast<ptrdiff_t>(left.end),
-                      majority_source->begin() + static_cast<ptrdiff_t>(left.begin));
-            left.buffer = majority_source;
-          }
-          if (right.buffer != majority_source) {
-            std::copy(right.buffer->begin() + static_cast<ptrdiff_t>(right.begin),
-                      right.buffer->begin() + static_cast<ptrdiff_t>(right.end),
-                      majority_source->begin() + static_cast<ptrdiff_t>(right.begin));
-            right.buffer = majority_source;
-          }
-          MergeRanges(*majority_source, *majority_source, *level_dest, left, right, left.begin);
-          next_ranges[pair_index] = Range{.begin = left.begin, .end = right.end, .buffer = level_dest};
-        }
+        next_ranges[pair_index] = ProcessMergePair(pair_index, current_ranges, majority_source, level_dest);
       });
     }
 
