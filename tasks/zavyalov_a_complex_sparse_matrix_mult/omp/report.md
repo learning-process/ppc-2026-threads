@@ -14,7 +14,7 @@ OpenMP-версия является первым шагом в распарал
 
 ## 2. Постановка задачи
 
-Полностью соответствует `seq/report.md` (разделы 2 и 3). Напоминание:
+Полностью соответствует `seq/report.md` (разделы 2 и 3). 
 - Вход: две разреженные матрицы `A` (height × width) и `B` (height' × width'), где `width == height'`.
 - Выход: разреженная матрица `C = A × B` в формате CCS.
 - Ограничения: совместимость размеров проверяется в `ValidationImpl`.
@@ -63,7 +63,7 @@ for (size_t i = 0; i < Count(); ++i) {
 | Переменная | Атрибут | Обоснование |
 |------------|---------|-------------|
 | `matr_a`, `matr_b` | `shared` | Только чтение, гонок нет |
-| `local_maps` | `shared` | Каждый поток пишет в свой элемент `local_maps[tid]` → конфликта нет |
+| `local_maps` | `shared` | Каждый поток пишет в свой элемент `local_maps[tid]`, поэтому конфликта нет |
 | `i` | `private` (автоматически) | Индекс цикла, уникален для каждой итерации |
 | `row_a`, `col_a`, `val_a`, `tid` | `private` | Локальные переменные внутри итерации |
 | `j` | `private` | Индекс внутреннего цикла |
@@ -190,7 +190,7 @@ Build:     Release
 
 **Параметры тестов производительности:**
 
-- Матрицы: `11000 × 11000`, 2 ненулевых элемента на строку → `nnz = 22000` для каждой.
+- Матрицы: `11000 × 11000`, 2 ненулевых элемента на строку -> `nnz = 22000` для каждой.
 - Число потоков: `1, 2, 4`.
 - Переменная окружения: `export PPC_NUM_THREADS=<N>`.
 
@@ -198,16 +198,16 @@ Build:     Release
 
 ```bash
 # Сборка
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --parallel
+cmake -S . -B build -D USE_FUNC_TESTS=ON -D USE_PERF_TESTS=ON -D CMAKE_BUILD_TYPE=Release
+cmake --build build --config Release --parallel
 
 # Функциональные тесты
 export PPC_NUM_THREADS=4
-./build/bin/ppc_func_tests --gtest_filter="*zavyalov_a_compl_sparse_matr_mult*OMP*" -v
+./build/bin/ppc_func_tests --gtest_filter="*zavyalov_a_compl_sparse_matr_mult_omp*" -v
 
 # Тесты производительности
 export PPC_NUM_THREADS=4
-./build/bin/ppc_perf_tests --running-type=performance --gtest_filter="*zavyalov_a_compl_sparse_matr_mult*OMP*" -v
+./build/bin/ppc_perf_tests --running-type=performance --gtest_filter="*zavyalov_a_compl_sparse_matr_mult_omp*" -v
 ```
 ## 8. Результаты
 
@@ -225,8 +225,8 @@ export PPC_NUM_THREADS=4
 
 **Сильное масштабирование:**
 
-- **1 → 2 потока:** Ускорение 1.84× (эффективность 92.2%) — отличный результат, близкий к линейному.
-- **2 → 4 потока:** Ускорение 1.53× (с 81 до 53 мс). Эффективность снижается до 70.3%, что указывает на появление накладных расходов при удвоении числа потоков.
+- **1 -> 2 потока:** Ускорение 1.84× (эффективность 92.2%) — отличный результат, близкий к линейному.
+- **2 -> 4 потока:** Ускорение 1.53× (с 81 до 53 мс). Эффективность снижается до 70.3%, что указывает на появление накладных расходов при удвоении числа потоков.
 
 **Предполагаемые узкие места:**
 
@@ -262,31 +262,3 @@ export PPC_NUM_THREADS=4
 OpenMP-версия демонстрирует **умеренное ускорение** (2.81× на 4 потоках) с **приемлемой эффективностью** (70.3%). Основным узким местом является не модель распараллеливания, а внутреннее устройство `std::map`.
 
 
-## 10. Команды для воспроизведения
-
-### Сборка проекта
-
-```bash
-cd /path/to/ppc
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --parallel
-```
-
-### Запуск функциональных тестов (для OMP)
-
-```bash
-export PPC_NUM_THREADS=4
-./build/bin/ppc_func_tests --gtest_filter="*zavyalov_a_compl_sparse_matr_mult_omp*"
-```
-
-### Запуск тестов производительности
-
-```bash
-# 1 поток (baseline)
-export PPC_NUM_THREADS=1
-./build/bin/ppc_perf_tests --running-type=performance --gtest_filter="*zavyalov_a_compl_sparse_matr_mult_omp*"
-
-# 4 потока
-export PPC_NUM_THREADS=4
-./build/bin/ppc_perf_tests --running-type=performance --gtest_filter="*zavyalov_a_compl_sparse_matr_mult_omp*"
-```

@@ -154,11 +154,11 @@ SparseMatrix matr2(matr_b);
 
 ```cpp
 // File: tests/functional/main.cpp, CheckTestOutputData()
-auto matr_a = RestoreDense(matr1, matr1.height, matr1.width);  // CCS → плотный
+auto matr_a = RestoreDense(matr1, matr1.height, matr1.width);  // CCS -> плотный
 auto matr_b = RestoreDense(matr2, matr2.height, matr2.width);
 
 auto matr_c = MultiplyDense(matr_a, matr_b);  // Эталонное умножение плотных матриц
-SparseMatrix expected(matr_c);                // Плотный → CCS
+SparseMatrix expected(matr_c);                // Плотный -> CCS
 
 return CompareSparse(expected, output_data);  // Сравнение поэлементно
 ```
@@ -211,8 +211,8 @@ for (size_t i = 0; i < cols_a_rows_b; ++i) {
 ```
 
 **Вывод по разреженности:**
-- Матрица A: `11000 × 11000`, 2 элемента на строку → 22000 ненулевых элементов (доля заполнения 0.018%)
-- Матрица B: `11000 × 11000`, 2 элемента на строку → 22000 ненулевых элементов (доля заполнения 0.018%)
+- Матрица A: `11000 × 11000`, 2 элемента на строку -> 22000 ненулевых элементов (доля заполнения 0.018%)
+- Матрица B: `11000 × 11000`, 2 элемента на строку -> 22000 ненулевых элементов (доля заполнения 0.018%)
 - Результат C: ожидаемо, порядка 22000 ненулевых элементов (в зависимости от пересечений строк/столбцов)
 
 ## 7. Результаты
@@ -225,7 +225,7 @@ for (size_t i = 0; i < cols_a_rows_b; ++i) {
 
 | Режим | Размер матриц | nnz_A | nnz_B | Время (мс), медиана (min-max) | Примечание |
 |-------|---------------|-------|-------|------------|-----------|
-| task  | 11000×11000×11000 | 22000 | 22000 | 149 (145 - 154) | baseline для ускорения, 10 замеров |
+| task  | 11000×11000×11000 | 22000 | 22000 | 149 (148–151) | baseline для ускорения, 10 замеров |
 
 
 Самым «дорогим» фрагментом является вложенный двойной цикл в `SparseMatrix::operator*` — при росте плотности матриц его стоимость растёт как O(nnz_A · nnz_B).
@@ -246,54 +246,25 @@ for (size_t i = 0; i < cols_a_rows_b; ++i) {
 
 
 
-## 9. Команды для воспроизведения
+## 10. Команды для воспроизведения
 
 ### Сборка проекта
 
 ```bash
 cd /path/to/ppc
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --parallel
+cmake -S . -B build -D USE_FUNC_TESTS=ON -D USE_PERF_TESTS=ON -D CMAKE_BUILD_TYPE=Release
+cmake --build build --config Release --parallel
 ```
 
 ### Запуск функциональных тестов
 
 ```bash
-cd build
-./bin/ppc_func_tests \
-  --gtest_filter="*zavyalov_a_compl_sparse_matr_mult_seq*" \
-  -v
+export PPC_NUM_THREADS=4
+./build/bin/ppc_func_tests --gtest_filter="*zavyalov_a_compl_sparse_matr_mult_seq*"
 ```
 
-### Запуск тестов производительности (режим task)
+### Запуск тестов производительности
 
 ```bash
-export PPC_NUM_THREADS=1
-./bin/ppc_perf_tests \
-  --running-type=performance \
-  --gtest_filter="*zavyalov_a_compl_sparse_matr_mult_seq*" \
-  -v
-```
-
-### Запуск тестов производительности (режим pipeline)
-
-```bash
-export PPC_NUM_THREADS=1
-./bin/ppc_perf_tests \
-  --running-type=performance \
-  --perf-mode=pipeline \
-  --gtest_filter="*zavyalov_a_compl_sparse_matr_mult_seq*" \
-  -v
-```
-
-### Профилирование
-
-```bash
-# AddressSanitizer (проверка памяти)
-cmake -S . -B build-asan \
-  -DCMAKE_BUILD_TYPE=Debug \
-  -DCMAKE_CXX_FLAGS="-fsanitize=address"
-cmake --build build-asan --parallel
-./build-asan/bin/ppc_func_tests \
-  --gtest_filter="*zavyalov_a_compl_sparse_matr_mult_seq*"
+./build/bin/ppc_perf_tests --gtest_filter="*zavyalov_a_compl_sparse_matr_mult_seq*"
 ```
