@@ -168,8 +168,7 @@ bool OlesnitskiyVHoareSortSimpleMergeSTL::RunImpl() {
       if (middle < right) {
         SimpleMerge(data_, merged_data, left, middle, right);
       } else {
-        std::copy(data_.begin() + static_cast<std::ptrdiff_t>(left),
-                  data_.begin() + static_cast<std::ptrdiff_t>(right),
+        std::copy(data_.begin() + static_cast<std::ptrdiff_t>(left), data_.begin() + static_cast<std::ptrdiff_t>(right),
                   merged_data.begin() + static_cast<std::ptrdiff_t>(left));
       }
     });
