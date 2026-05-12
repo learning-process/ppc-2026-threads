@@ -8,8 +8,8 @@
 #include "moskaev_v_lin_filt_block_gauss_3/common/include/common.hpp"
 #include "moskaev_v_lin_filt_block_gauss_3/omp/include/ops_omp.hpp"
 #include "moskaev_v_lin_filt_block_gauss_3/seq/include/ops_seq.hpp"
-#include "util/include/perf_test_util.hpp"
 #include "moskaev_v_lin_filt_block_gauss_3/stl/include/ops_stl.hpp"
+#include "util/include/perf_test_util.hpp"
 
 namespace moskaev_v_lin_filt_block_gauss_3 {
 

@@ -144,13 +144,11 @@ bool MoskaevVLinFiltBlockGauss3STL::RunImpl() {
     int block_with_padding_height = current_block_height + 2;
 
     std::vector<uint8_t> input_block(static_cast<size_t>(block_with_padding_width) *
-                                         static_cast<size_t>(block_with_padding_height) *
-                                         static_cast<size_t>(channels),
+                                         static_cast<size_t>(block_with_padding_height) * static_cast<size_t>(channels),
                                      0);
 
     std::vector<uint8_t> output_block(static_cast<size_t>(current_block_width) *
-                                          static_cast<size_t>(current_block_height) *
-                                          static_cast<size_t>(channels),
+                                          static_cast<size_t>(current_block_height) * static_cast<size_t>(channels),
                                       0);
 
     CopyBlockWithPadding(image_data, input_block, width, height, channels, block_x, block_y, current_block_width,
