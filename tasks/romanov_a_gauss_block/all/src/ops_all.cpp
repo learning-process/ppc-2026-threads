@@ -31,8 +31,7 @@ bool RomanovAGaussBlockALL::ValidationImpl() {
   if (rank != 0) {
     return true;
   }
-  return std::get<0>(GetInput()) * std::get<1>(GetInput()) * 3 ==
-         static_cast<int>(std::get<2>(GetInput()).size());
+  return std::get<0>(GetInput()) * std::get<1>(GetInput()) * 3 == static_cast<int>(std::get<2>(GetInput()).size());
 }
 
 bool RomanovAGaussBlockALL::PreProcessingImpl() {
@@ -43,9 +42,8 @@ namespace {
 
 constexpr int kBlockSize = 32;
 
-int ApplyKernel(const std::vector<uint8_t> &img, int row, int col, int channel,
-                int width, int buffer_height, int halo_top,
-                const std::array<std::array<int, 3>, 3> &kernel) {
+int ApplyKernel(const std::vector<uint8_t> &img, int row, int col, int channel, int width, int buffer_height,
+                int halo_top, const std::array<std::array<int, 3>, 3> &kernel) {
   int sum = 0;
   for (size_t kr = 0; kr < 3; ++kr) {
     for (size_t kc = 0; kc < 3; ++kc) {
@@ -61,8 +59,8 @@ int ApplyKernel(const std::vector<uint8_t> &img, int row, int col, int channel,
   return sum;
 }
 
-void ProcessFullBlock(const std::vector<uint8_t> &input, std::vector<uint8_t> &output,
-                      int width, int buffer_height, int halo_top, int start_row, int start_col) {
+void ProcessFullBlock(const std::vector<uint8_t> &input, std::vector<uint8_t> &output, int width, int buffer_height,
+                      int halo_top, int start_row, int start_col) {
   static constexpr std::array<std::array<int, 3>, 3> kKernel = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
 
   for (int row = start_row; row < start_row + kBlockSize; ++row) {
@@ -78,9 +76,8 @@ void ProcessFullBlock(const std::vector<uint8_t> &input, std::vector<uint8_t> &o
   }
 }
 
-void ProcessPartBlock(const std::vector<uint8_t> &input, std::vector<uint8_t> &output,
-                      int width, int local_rows, int buffer_height, int halo_top,
-                      int start_row, int start_col) {
+void ProcessPartBlock(const std::vector<uint8_t> &input, std::vector<uint8_t> &output, int width, int local_rows,
+                      int buffer_height, int halo_top, int start_row, int start_col) {
   static constexpr std::array<std::array<int, 3>, 3> kKernel = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
 
   const int end_row = std::min(local_rows, start_row + kBlockSize);
@@ -174,9 +171,8 @@ bool RomanovAGaussBlockALL::RunImpl() {
   }
 
   const uint8_t *send_buf = (rank == 0) ? std::get<2>(GetInput()).data() : nullptr;
-  MPI_Scatterv(send_buf, scatter_counts.data(), scatter_displs.data(), MPI_UNSIGNED_CHAR,
-               local_input.data(), static_cast<int>(local_input.size()), MPI_UNSIGNED_CHAR,
-               0, MPI_COMM_WORLD);
+  MPI_Scatterv(send_buf, scatter_counts.data(), scatter_displs.data(), MPI_UNSIGNED_CHAR, local_input.data(),
+               static_cast<int>(local_input.size()), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
   std::vector<uint8_t> local_output(static_cast<size_t>(local_rows) * width * 3);
 
@@ -202,15 +198,14 @@ bool RomanovAGaussBlockALL::RunImpl() {
 
       for (int bi = left_border_r; bi < right_border_r; ++bi) {
         for (int bj = 0; bj < num_col_blocks; ++bj) {
-          ProcessFullBlock(local_input, local_output, width, buffer_height, halo_top,
-                           bi * kBlockSize, bj * kBlockSize);
+          ProcessFullBlock(local_input, local_output, width, buffer_height, halo_top, bi * kBlockSize, bj * kBlockSize);
         }
       }
 
       if (width_has_remainder) {
         for (int bi = left_border_r; bi < right_border_r; ++bi) {
-          ProcessPartBlock(local_input, local_output, width, local_rows, buffer_height, halo_top,
-                           bi * kBlockSize, start_col_tail);
+          ProcessPartBlock(local_input, local_output, width, local_rows, buffer_height, halo_top, bi * kBlockSize,
+                           start_col_tail);
         }
       }
 
@@ -218,8 +213,8 @@ bool RomanovAGaussBlockALL::RunImpl() {
         int left_border_l = (num_col_blocks * current_part) / num_threads;
         int right_border_l = (num_col_blocks * (current_part + 1)) / num_threads;
         for (int bj = left_border_l; bj < right_border_l; ++bj) {
-          ProcessPartBlock(local_input, local_output, width, local_rows, buffer_height, halo_top,
-                           bottom_row_start, bj * kBlockSize);
+          ProcessPartBlock(local_input, local_output, width, local_rows, buffer_height, halo_top, bottom_row_start,
+                           bj * kBlockSize);
         }
       }
     };
@@ -232,8 +227,8 @@ bool RomanovAGaussBlockALL::RunImpl() {
     }
 
     if (is_last && height_remainder > 0) {
-      ProcessPartBlock(local_input, local_output, width, local_rows, buffer_height, halo_top,
-                       bottom_row_start, start_col_tail);
+      ProcessPartBlock(local_input, local_output, width, local_rows, buffer_height, halo_top, bottom_row_start,
+                       start_col_tail);
     }
   }
 
@@ -245,9 +240,8 @@ bool RomanovAGaussBlockALL::RunImpl() {
   }
 
   std::vector<uint8_t> result(static_cast<size_t>(height) * width * 3);
-  MPI_Gatherv(local_output.data(), static_cast<int>(local_output.size()), MPI_UNSIGNED_CHAR,
-              result.data(), recv_counts.data(), recv_displs.data(), MPI_UNSIGNED_CHAR,
-              0, MPI_COMM_WORLD);
+  MPI_Gatherv(local_output.data(), static_cast<int>(local_output.size()), MPI_UNSIGNED_CHAR, result.data(),
+              recv_counts.data(), recv_displs.data(), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
   MPI_Bcast(result.data(), static_cast<int>(result.size()), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
