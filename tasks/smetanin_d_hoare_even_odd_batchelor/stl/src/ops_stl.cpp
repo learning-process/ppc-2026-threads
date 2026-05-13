@@ -1,6 +1,9 @@
 #include "smetanin_d_hoare_even_odd_batchelor/stl/include/ops_stl.hpp"
 
 #include <algorithm>
+#include <atomic>
+#include <cstddef>
+#include <mutex>
 #include <stack>
 #include <thread>
 #include <utility>
@@ -67,19 +70,64 @@ void HoarSortBatcherSeq(std::vector<int> &arr, int lo, int hi) {
   }
 }
 
-void HoarSortBatcherSTLImpl(std::vector<int> &arr, int lo, int hi, int parallel_depth) {
+void HoarSortBatcherSTLImpl(std::vector<int> &arr, int lo, int hi, int num_threads) {
   if (lo >= hi) {
     return;
   }
-  if (parallel_depth <= 0 || hi - lo < kTaskCutoff) {
-    HoarSortBatcherSeq(arr, lo, hi);
-    return;
+
+  std::vector<std::pair<int, int>> cur;
+  cur.emplace_back(lo, hi);
+
+  while (!cur.empty()) {
+    std::vector<std::pair<int, int>> next;
+    std::mutex next_mtx;
+    const std::size_t cur_sz = cur.size();
+
+    auto process_range = [&](std::size_t idx) {
+      const int l = cur[idx].first;
+      const int r = cur[idx].second;
+      if (l >= r) {
+        return;
+      }
+      if (r - l < kTaskCutoff) {
+        HoarSortBatcherSeq(arr, l, r);
+        return;
+      }
+      const int p = HoarePartition(arr, l, r);
+      OddEvenMerge(arr, l, r);
+      std::lock_guard<std::mutex> lk(next_mtx);
+      next.push_back({l, p});
+      next.push_back({p + 1, r});
+    };
+
+    const int workers = std::clamp(num_threads, 1, std::max<int>(1, static_cast<int>(cur_sz)));
+
+    if (workers <= 1 || cur_sz <= 1) {
+      for (std::size_t i = 0; i < cur_sz; ++i) {
+        process_range(i);
+      }
+    } else {
+      std::vector<std::thread> threads;
+      std::atomic<std::size_t> cursor{0};
+      threads.reserve(static_cast<std::size_t>(workers));
+      for (int w = 0; w < workers; ++w) {
+        threads.emplace_back([&]() {
+          while (true) {
+            const std::size_t i = cursor.fetch_add(1);
+            if (i >= cur_sz) {
+              break;
+            }
+            process_range(i);
+          }
+        });
+      }
+      for (auto &t : threads) {
+        t.join();
+      }
+    }
+
+    cur = std::move(next);
   }
-  int p = HoarePartition(arr, lo, hi);
-  OddEvenMerge(arr, lo, hi);
-  std::thread right([&arr, p, hi, parallel_depth]() { HoarSortBatcherSTLImpl(arr, p + 1, hi, parallel_depth - 1); });
-  HoarSortBatcherSTLImpl(arr, lo, p, parallel_depth - 1);
-  right.join();
 }
 
 }  // namespace
@@ -102,8 +150,8 @@ bool SmetaninDHoarSortSTL::RunImpl() {
   auto &data = GetOutput();
   int n = static_cast<int>(data.size());
   if (n > 1) {
-    const int parallel_depth = std::max(0, ppc::util::GetNumThreads() - 1);
-    HoarSortBatcherSTLImpl(data, 0, n - 1, parallel_depth);
+    const int num_threads = std::max(1, ppc::util::GetNumThreads());
+    HoarSortBatcherSTLImpl(data, 0, n - 1, num_threads);
   }
   return true;
 }
