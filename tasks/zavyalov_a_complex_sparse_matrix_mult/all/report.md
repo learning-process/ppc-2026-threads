@@ -37,7 +37,7 @@ for (size_t i = 0; i < Count(); ++i) {
     }
   }
 }
-```text
+```
 
 Двойной вложенный цикл является вычислительным ядром. В гибридной версии:
 
@@ -70,7 +70,7 @@ int leftover = total % world_size;
 for (int proc = 0; proc < world_size; ++proc) {
   sendcounts[proc] = blocksize + (proc < leftover ? 1 : 0);
 }
-```text
+```
 
 Каждый процесс получает непрерывный блок элементов `A`. Это обеспечивает:
 
@@ -113,7 +113,7 @@ for (size_t i = start; i < end; ++i) {
   int tid = omp_get_thread_num();
   // ... вычисления и накопление в local_maps[tid]
 }
-```text
+```
 
 - **Область параллелизации:** внешний цикл по элементам `A` в пределах локального блока.
 - **Schedule:** `static` — нагрузка равномерна, overhead минимален.
@@ -128,7 +128,7 @@ for (auto &lm : local_maps) {
     result[key] += value;
   }
 }
-```text
+```
 
 После завершения параллельной области потоки последовательно объединяют свои карты в одну.
 
@@ -139,7 +139,7 @@ MPI_Comm_size = P (число процессов)
 PPC_NUM_THREADS = T (число потоков на процесс)
 
 Общее число работников: P × T
-```text
+```
 
 - Каждый MPI-процесс обрабатывает свою порцию элементов `A`.
 - Внутри процесса T потоков параллельно перебирают эту порцию.
@@ -172,7 +172,7 @@ void BroadcastMatrix(SparseMatrix &m) {
   MPI_Bcast(re.data(), count, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(im.data(), count, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
-```text
+```
 
 **2. `ScatterMatrixA` — распределение элементов A между процессами:**
 
@@ -203,7 +203,7 @@ std::map<std::pair<size_t, size_t>, Complex> ComputeLocalChunk(
   }
   return result;
 }
-```text
+```
 
 **4. `GatherResult` — сбор результатов на процесс 0:**
 
@@ -260,7 +260,7 @@ OS:        Ubuntu 24.04
 Compiler:  g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0
 CMake:     версия 3.28
 Build:     Release
-```text
+```
 
 **Параметры тестов производительности:**
 
@@ -285,7 +285,7 @@ mpirun --oversubscribe -n 2 ./build/bin/ppc_func_tests --gtest_filter="*zavyalov
 export PPC_NUM_PROC=2
 export PPC_NUM_THREADS=2
 mpirun --oversubscribe -n 2 ./build/bin/ppc_perf_tests --gtest_filter="*zavyalov_a_compl_sparse_matr_mult_all*"
-```text
+```
 
 ## 9. Результаты
 

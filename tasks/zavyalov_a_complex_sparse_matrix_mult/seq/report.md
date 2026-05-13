@@ -169,7 +169,7 @@ return CompareSparse(expected, output_data);  // Сравнение поэлем
 
 ### Окружение
 
-```
+```text
 CPU:       Intel Core i5 14600kf, 6 производительных ядер
 RAM:       16 GB
 OS:        Ubuntu 24.04
