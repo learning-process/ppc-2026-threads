@@ -72,11 +72,12 @@ bool IvanovaPMarkingComponentsOnBinaryImageOMP::PreProcessingImpl() {
 }
 
 int IvanovaPMarkingComponentsOnBinaryImageOMP::FindRoot(int i) {
-  while (parent_[i] != i) {
-    parent_[i] = parent_[parent_[i]];
-    i = parent_[i];
+  int root = i;
+  while (parent_[root] != root) {
+    // Убрала строку parent_[root] = parent_[parent_[root]];
+    root = parent_[root];
   }
-  return i;
+  return root;
 }
 
 void IvanovaPMarkingComponentsOnBinaryImageOMP::UnionLabels(int i, int j) {
@@ -111,45 +112,34 @@ void IvanovaPMarkingComponentsOnBinaryImageOMP::InitLabelsOmp(int total_pixels, 
 }
 
 void IvanovaPMarkingComponentsOnBinaryImageOMP::MergeHorizontalPairsOmp(int n_threads) {
-#pragma omp parallel for default(none) shared(n_threads) num_threads(n_threads)
+#pragma omp parallel for default(none) shared(n_threads, labels_, width_, height_) num_threads(n_threads)
   for (int yy = 0; yy < height_; ++yy) {
     for (int xx = 0; xx < width_ - 1; ++xx) {
       const int idx = (yy * width_) + xx;
-      const int cur_label = labels_[idx];
-      if (cur_label == 0) {
-        continue;
-      }
-
-      const int right_label = labels_[idx + 1];
-      if (right_label != 0) {
-        UnionLabels(cur_label, right_label);
+      if (labels_[idx] != 0 && labels_[idx + 1] != 0) {
+        UnionLabels(labels_[idx], labels_[idx + 1]);
       }
     }
   }
 }
 
 void IvanovaPMarkingComponentsOnBinaryImageOMP::MergeVerticalPairsOmp(int n_threads) {
-#pragma omp parallel for default(none) shared(n_threads) num_threads(n_threads)
+#pragma omp parallel for default(none) shared(n_threads, labels_, width_, height_) num_threads(n_threads)
   for (int yy = 0; yy < height_ - 1; ++yy) {
     for (int xx = 0; xx < width_; ++xx) {
       const int idx = (yy * width_) + xx;
-      const int cur_label = labels_[idx];
-      if (cur_label == 0) {
-        continue;
-      }
-
-      const int bottom_label = labels_[idx + width_];
-      if (bottom_label != 0) {
-        UnionLabels(cur_label, bottom_label);
+      if (labels_[idx] != 0 && labels_[idx + width_] != 0) {
+        UnionLabels(labels_[idx], labels_[idx + width_]);
       }
     }
   }
 }
 
 void IvanovaPMarkingComponentsOnBinaryImageOMP::FinalizeRootsOmp(int total_pixels, int n_threads) {
-#pragma omp parallel for default(none) shared(total_pixels) num_threads(n_threads)
+#pragma omp parallel for default(none) shared(total_pixels, labels_, n_threads) num_threads(n_threads)
   for (int i = 0; i < total_pixels; ++i) {
     if (labels_[i] != 0) {
+      // Здесь FindRoot только читает, что безопасно
       labels_[i] = FindRoot(labels_[i]);
     }
   }
