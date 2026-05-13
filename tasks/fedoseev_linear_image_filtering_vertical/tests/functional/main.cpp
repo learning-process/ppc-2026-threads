@@ -15,6 +15,7 @@
 #include "fedoseev_linear_image_filtering_vertical/common/include/common.hpp"
 #include "fedoseev_linear_image_filtering_vertical/omp/include/ops_omp.hpp"
 #include "fedoseev_linear_image_filtering_vertical/seq/include/ops_seq.hpp"
+#include "fedoseev_linear_image_filtering_vertical/stl/include/ops_stl.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -25,21 +26,21 @@ Image ReferenceFilter(const Image &input) {
   int w = input.width;
   int h = input.height;
   const std::vector<int> &src = input.data;
-
-  // Для изображений меньше 3x3 возвращаем пустое (они не должны обрабатываться)
   if (w < 3 || h < 3) {
     return Image{};
   }
 
   std::vector<int> dst(static_cast<size_t>(w) * static_cast<size_t>(h), 0);
 
-  const std::array<std::array<int, 3>, 3> kernel = {{{{1, 2, 1}}, {{2, 4, 2}}, {{1, 2, 1}}}};
+  const std::array<std::array<int, 3>, 3> kernel = {
+      {{{1, 2, 1}}, {{2, 4, 2}}, {{1, 2, 1}}}};
   const int kernel_sum = 16;
 
   auto get = [&](int col, int row) -> int {
     col = std::clamp(col, 0, w - 1);
     row = std::clamp(row, 0, h - 1);
-    return src[(static_cast<size_t>(row) * static_cast<size_t>(w)) + static_cast<size_t>(col)];
+    return src[(static_cast<size_t>(row) * static_cast<size_t>(w)) +
+               static_cast<size_t>(col)];
   };
 
   for (int row = 0; row < h; ++row) {
@@ -50,7 +51,8 @@ Image ReferenceFilter(const Image &input) {
           sum += get(col + kx, row + ky) * kernel.at(ky + 1).at(kx + 1);
         }
       }
-      dst[(static_cast<size_t>(row) * static_cast<size_t>(w)) + static_cast<size_t>(col)] = sum / kernel_sum;
+      dst[(static_cast<size_t>(row) * static_cast<size_t>(w)) +
+          static_cast<size_t>(col)] = sum / kernel_sum;
     }
   }
   return {w, h, dst};
@@ -79,7 +81,8 @@ void FillCheckerboard(Image &img, int size) {
   const int cell = 16;
   for (int row = 0; row < size; ++row) {
     for (int col = 0; col < size; ++col) {
-      size_t idx = (static_cast<size_t>(row) * static_cast<size_t>(size)) + static_cast<size_t>(col);
+      size_t idx = (static_cast<size_t>(row) * static_cast<size_t>(size)) +
+                   static_cast<size_t>(col);
       img.data[idx] = (((col / cell) + (row / cell)) % 2 != 0) ? 255 : 0;
     }
   }
@@ -91,8 +94,12 @@ Image GenerateImage(int size, const std::string &type) {
   img.height = size;
   img.data.resize(static_cast<size_t>(size) * static_cast<size_t>(size));
 
-  static const std::unordered_map<std::string, std::function<void(Image &, int)>> kFillers = {
-      {"const", FillConst}, {"grad", FillGrad}, {"rand", FillRand}, {"check", FillCheckerboard}};
+  static const std::unordered_map<std::string,
+                                  std::function<void(Image &, int)>>
+      kFillers = {{"const", FillConst},
+                  {"grad", FillGrad},
+                  {"rand", FillRand},
+                  {"check", FillCheckerboard}};
 
   auto it = kFillers.find(type);
   if (it != kFillers.end()) {
@@ -105,7 +112,8 @@ Image GenerateImage(int size, const std::string &type) {
 
 }  // namespace
 
-class FedoseevFuncTest : public ppc::util::BaseRunFuncTests<Image, Image, TestType> {
+class FedoseevFuncTest
+    : public ppc::util::BaseRunFuncTests<Image, Image, TestType> {
  public:
   static std::string PrintTestParam(const TestType &param) {
     return std::to_string(std::get<0>(param)) + "_" + std::get<1>(param);
@@ -113,7 +121,8 @@ class FedoseevFuncTest : public ppc::util::BaseRunFuncTests<Image, Image, TestTy
 
  protected:
   void SetUp() override {
-    auto param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    auto param = std::get<static_cast<std::size_t>(
+        ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int size = std::get<0>(param);
     std::string type = std::get<1>(param);
 
@@ -122,15 +131,14 @@ class FedoseevFuncTest : public ppc::util::BaseRunFuncTests<Image, Image, TestTy
   }
 
   bool CheckTestOutputData(Image &output_data) override {
-    if (output_data.width != expected_.width || output_data.height != expected_.height) {
+    if (output_data.width != expected_.width ||
+        output_data.height != expected_.height) {
       return false;
     }
     return output_data.data == expected_.data;
   }
 
-  Image GetTestInputData() override {
-    return input_;
-  }
+  Image GetTestInputData() override { return input_; }
 
  private:
   Image input_;
@@ -176,12 +184,11 @@ TEST(FedoseevValidationTest, InvalidDataSize) {
   EXPECT_FALSE(omp_task->Validation());
 }
 
-TEST_P(FedoseevFuncTest, ImageFiltering) {
-  ExecuteTest(GetParam());
-}
+TEST_P(FedoseevFuncTest, ImageFiltering) { ExecuteTest(GetParam()); }
 
 constexpr std::array<int, 5> kSizes = {3, 5, 7, 10, 16};
-constexpr std::array<const char *, 4> kTypes = {"const", "grad", "rand", "check"};
+constexpr std::array<const char *, 4> kTypes = {"const", "grad", "rand",
+                                                "check"};
 constexpr size_t kNumParams = kSizes.size() * kTypes.size();
 
 std::array<TestType, kNumParams> GenerateParams() {
@@ -197,16 +204,23 @@ std::array<TestType, kNumParams> GenerateParams() {
 
 const auto kTestParams = GenerateParams();
 
-const auto kSeqTasks = ppc::util::AddFuncTask<LinearImageFilteringVerticalSeq, Image>(
-    kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
-const auto kOmpTasks = ppc::util::AddFuncTask<LinearImageFilteringVerticalOMP, Image>(
-    kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
-const auto kTestTasksList = std::tuple_cat(kSeqTasks, kOmpTasks);
+const auto kSeqTasks =
+    ppc::util::AddFuncTask<LinearImageFilteringVerticalSeq, Image>(
+        kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
+const auto kOmpTasks =
+    ppc::util::AddFuncTask<LinearImageFilteringVerticalOMP, Image>(
+        kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
+const auto kStlTasks =
+    ppc::util::AddFuncTask<LinearImageFilteringVerticalSTL, Image>(
+        kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
+const auto kTestTasksList =
+    std::tuple_cat(kSeqTasks, kOmpTasks, kTbbTasks, kStlTasks);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = FedoseevFuncTest::PrintFuncTestName<FedoseevFuncTest>;
 
-INSTANTIATE_TEST_SUITE_P(ImageFilteringFuncTests, FedoseevFuncTest, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(ImageFilteringFuncTests, FedoseevFuncTest,
+                         kGtestValues, kTestName);
 }  // namespace
 
 }  // namespace fedoseev_linear_image_filtering_vertical

@@ -8,6 +8,7 @@
 #include "fedoseev_linear_image_filtering_vertical/common/include/common.hpp"
 #include "fedoseev_linear_image_filtering_vertical/omp/include/ops_omp.hpp"
 #include "fedoseev_linear_image_filtering_vertical/seq/include/ops_seq.hpp"
+#include "fedoseev_linear_image_filtering_vertical/stl/include/ops_stl.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace fedoseev_linear_image_filtering_vertical {
@@ -29,31 +30,31 @@ class FedoseevPerfTest : public ppc::util::BaseRunPerfTests<Image, Image> {
   }
 
   bool CheckTestOutputData(Image &output_data) override {
-    return (output_data.width == input_.width && output_data.height == input_.height);
+    return (output_data.width == input_.width &&
+            output_data.height == input_.height);
   }
 
-  Image GetTestInputData() override {
-    return input_;
-  }
+  Image GetTestInputData() override { return input_; }
 
  private:
   Image input_;
 };
 
-TEST_P(FedoseevPerfTest, RunPerfModes) {
-  ExecuteTest(GetParam());
-}
+TEST_P(FedoseevPerfTest, RunPerfModes) { ExecuteTest(GetParam()); }
 
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<Image, LinearImageFilteringVerticalSeq, LinearImageFilteringVerticalOMP>(
+    ppc::util::MakeAllPerfTasks<Image, LinearImageFilteringVerticalSeq,
+                                LinearImageFilteringVerticalOMP,
+                                LinearImageFilteringVerticalSTL>(
         PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = FedoseevPerfTest::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(PerfTests, FedoseevPerfTest, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PerfTests, FedoseevPerfTest, kGtestValues,
+                         kPerfTestName);
 
 }  // namespace
 
