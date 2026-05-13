@@ -23,6 +23,7 @@ namespace {
 using Z = std::complex<double>;
 constexpr double kCmpTol = 1e-12;
 
+
 struct Dense {
   int m{0};
   int n{0};
