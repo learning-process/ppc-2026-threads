@@ -91,10 +91,13 @@ TEST_P(BatkovFRunFuncTestsThreads, ContrastEnhLinHistStretch) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {
-    std::make_tuple(100, "small_image"),        std::make_tuple(500, "medium_image"),
-    std::make_tuple(1000, "big_image"),         std::make_tuple(1500, "large_image"),
-    std::make_tuple(256, "degenerate_uniform"),
+const std::array<TestType, 6> kTestParam = {
+    std::make_tuple(50, "small_image"),
+    std::make_tuple(100, "medium_image"),
+    std::make_tuple(500, "big_image"),
+    std::make_tuple(1000, "large_image"),
+    std::make_tuple(256, "degenerate_uniform_1"),
+    std::make_tuple(512, "degenerate_uniform_2"),
 };
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchSEQ, InType>(
