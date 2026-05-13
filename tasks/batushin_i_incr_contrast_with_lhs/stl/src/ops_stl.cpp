@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <mutex>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -36,41 +35,65 @@ unsigned char NormalizePixel(unsigned char pixel, unsigned char min_val, double 
   return static_cast<unsigned char>(normalized);
 }
 
+unsigned int GetNumThreads() {
+  unsigned int threads = std::thread::hardware_concurrency();
+  return (threads == 0) ? 1 : threads;
+}
+
+size_t ComputeChunkSize(size_t data_size, unsigned int num_threads) {
+  return std::max(static_cast<size_t>(1), data_size / num_threads);
+}
+
+size_t ComputeNumBlocks(size_t data_size, size_t chunk_size) {
+  return (data_size + chunk_size - 1) / chunk_size;
+}
+
+struct MinMaxResult {
+  unsigned char min_val;
+  unsigned char max_val;
+};
+
+MinMaxResult FindMinMaxInBlock(const std::vector<unsigned char> &data, size_t start, size_t end) {
+  unsigned char local_min = 255;
+  unsigned char local_max = 0;
+  for (size_t idx = start; idx < end; ++idx) {
+    unsigned char val = data[idx];
+    local_min = std::min(local_min, val);
+    local_max = std::max(local_max, val);
+  }
+  return {local_min, local_max};
+}
+
+MinMaxResult MergeMinMaxResults(const std::vector<MinMaxResult> &results) {
+  unsigned char global_min = 255;
+  unsigned char global_max = 0;
+  for (const auto &result : results) {
+    global_min = std::min(global_min, result.min_val);
+    global_max = std::max(global_max, result.max_val);
+  }
+  return {global_min, global_max};
+}
+
 std::pair<unsigned char, unsigned char> FindMinMaxParallel(const std::vector<unsigned char> &data) {
   if (data.empty()) {
     return {0, 0};
   }
 
-  unsigned int num_threads = std::thread::hardware_concurrency();
-  if (num_threads == 0) {
-    num_threads = 1;
-  }
-
   const size_t data_size = data.size();
-  const size_t chunk_size = std::max(static_cast<size_t>(1), data_size / num_threads);
-  const size_t num_blocks = (data_size + chunk_size - 1) / chunk_size;
+  const unsigned int num_threads = GetNumThreads();
+  const size_t chunk_size = ComputeChunkSize(data_size, num_threads);
+  const size_t num_blocks = ComputeNumBlocks(data_size, chunk_size);
 
-  std::vector<std::pair<unsigned char, unsigned char>> block_results(num_blocks, {255, 0});
+  std::vector<MinMaxResult> block_results(num_blocks, {255, 0});
   std::vector<std::thread> threads;
   threads.reserve(num_blocks);
 
-  for (size_t b = 0; b < num_blocks; ++b) {
-    size_t start = b * chunk_size;
+  for (size_t block_idx = 0; block_idx < num_blocks; ++block_idx) {
+    size_t start = block_idx * chunk_size;
     size_t end = std::min(start + chunk_size, data_size);
 
-    threads.emplace_back([&data, &block_results, b, start, end] {
-      unsigned char local_min = 255;
-      unsigned char local_max = 0;
-      for (size_t i = start; i < end; ++i) {
-        unsigned char val = data[i];
-        if (val < local_min) {
-          local_min = val;
-        }
-        if (val > local_max) {
-          local_max = val;
-        }
-      }
-      block_results[b] = {local_min, local_max};
+    threads.emplace_back([&data, &block_results, block_idx, start, end] {
+      block_results[block_idx] = FindMinMaxInBlock(data, start, end);
     });
   }
 
@@ -80,42 +103,33 @@ std::pair<unsigned char, unsigned char> FindMinMaxParallel(const std::vector<uns
     }
   }
 
-  unsigned char global_min = 255;
-  unsigned char global_max = 0;
-  for (const auto &res : block_results) {
-    if (res.first < global_min) {
-      global_min = res.first;
-    }
-    if (res.second > global_max) {
-      global_max = res.second;
-    }
-  }
+  MinMaxResult final_result = MergeMinMaxResults(block_results);
+  return {final_result.min_val, final_result.max_val};
+}
 
-  return {global_min, global_max};
+void NormalizeBlock(const std::vector<unsigned char> &source, std::vector<unsigned char> &destination, size_t start,
+                    size_t end, unsigned char min_value, double scale_coefficient) {
+  for (size_t idx = start; idx < end; ++idx) {
+    destination[idx] = NormalizePixel(source[idx], min_value, scale_coefficient);
+  }
 }
 
 void NormalizeImageParallel(const std::vector<unsigned char> &source, std::vector<unsigned char> &destination,
                             unsigned char min_value, double scale_coefficient) {
-  unsigned int num_threads = std::thread::hardware_concurrency();
-  if (num_threads == 0) {
-    num_threads = 1;
-  }
-
   const size_t data_size = source.size();
-  const size_t chunk_size = std::max(static_cast<size_t>(1), data_size / num_threads);
-  const size_t num_blocks = (data_size + chunk_size - 1) / chunk_size;
+  const unsigned int num_threads = GetNumThreads();
+  const size_t chunk_size = ComputeChunkSize(data_size, num_threads);
+  const size_t num_blocks = ComputeNumBlocks(data_size, chunk_size);
 
   std::vector<std::thread> threads;
   threads.reserve(num_blocks);
 
-  for (size_t b = 0; b < num_blocks; ++b) {
-    size_t start = b * chunk_size;
+  for (size_t block_idx = 0; block_idx < num_blocks; ++block_idx) {
+    size_t start = block_idx * chunk_size;
     size_t end = std::min(start + chunk_size, data_size);
 
     threads.emplace_back([&source, &destination, start, end, min_value, scale_coefficient] {
-      for (size_t i = start; i < end; ++i) {
-        destination[i] = NormalizePixel(source[i], min_value, scale_coefficient);
-      }
+      NormalizeBlock(source, destination, start, end, min_value, scale_coefficient);
     });
   }
 
@@ -126,27 +140,25 @@ void NormalizeImageParallel(const std::vector<unsigned char> &source, std::vecto
   }
 }
 
-void FillUniformImageParallel(std::vector<unsigned char> &output, size_t size) {
-  unsigned int num_threads = std::thread::hardware_concurrency();
-  if (num_threads == 0) {
-    num_threads = 1;
+void FillUniformBlock(std::vector<unsigned char> &output, size_t start, size_t end) {
+  for (size_t idx = start; idx < end; ++idx) {
+    output[idx] = 128;
   }
+}
 
-  const size_t chunk_size = std::max(static_cast<size_t>(1), size / num_threads);
-  const size_t num_blocks = (size + chunk_size - 1) / chunk_size;
+void FillUniformImageParallel(std::vector<unsigned char> &output, size_t size) {
+  const unsigned int num_threads = GetNumThreads();
+  const size_t chunk_size = ComputeChunkSize(size, num_threads);
+  const size_t num_blocks = ComputeNumBlocks(size, chunk_size);
 
   std::vector<std::thread> threads;
   threads.reserve(num_blocks);
 
-  for (size_t b = 0; b < num_blocks; ++b) {
-    size_t start = b * chunk_size;
+  for (size_t block_idx = 0; block_idx < num_blocks; ++block_idx) {
+    size_t start = block_idx * chunk_size;
     size_t end = std::min(start + chunk_size, size);
 
-    threads.emplace_back([&output, start, end] {
-      for (size_t i = start; i < end; ++i) {
-        output[i] = 128;
-      }
-    });
+    threads.emplace_back([&output, start, end] { FillUniformBlock(output, start, end); });
   }
 
   for (auto &thread : threads) {
