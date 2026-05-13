@@ -16,7 +16,7 @@ namespace {
 int GetPixel(const std::vector<int>& src, int w, int h, int col, int row) {
   col = std::clamp(col, 0, w - 1);
   row = std::clamp(row, 0, h - 1);
-  return src[static_cast<size_t>(row) * static_cast<size_t>(w) +
+  return src[(static_cast<size_t>(row) * static_cast<size_t>(w)) +
              static_cast<size_t>(col)];
 }
 }  // namespace
@@ -30,7 +30,9 @@ LinearImageFilteringVerticalTBB::LinearImageFilteringVerticalTBB(
 
 bool LinearImageFilteringVerticalTBB::ValidationImpl() {
   const InType& input = GetInput();
-  if (input.width < 3 || input.height < 3) return false;
+  if (input.width < 3 || input.height < 3) {
+    return false;
+  }
   return input.data.size() ==
          static_cast<size_t>(input.width) * static_cast<size_t>(input.height);
 }
@@ -70,10 +72,10 @@ bool LinearImageFilteringVerticalTBB::RunImpl() {
               for (int kx = 0; kx < 3; ++kx) {
                 int px = col + kx - 1;
                 int py = row + ky - 1;
-                sum += GetPixel(src, w, h, px, py) * kernel[ky][kx];
+                sum += GetPixel(src, w, h, px, py) * kernel[ky][kx];  // NOLINT
               }
             }
-            dst[static_cast<size_t>(row) * static_cast<size_t>(w) +
+            dst[(static_cast<size_t>(row) * static_cast<size_t>(w)) +
                 static_cast<size_t>(col)] = sum / kernel_sum;
           }
         }
