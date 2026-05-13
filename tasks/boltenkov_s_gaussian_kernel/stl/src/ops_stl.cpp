@@ -46,6 +46,7 @@ void BoltenkovSGaussianKernelSTL::CopyRowsToPaddedBuffer(const std::vector<std::
   std::size_t rows_per_thread = n / num_threads;
   std::size_t remainder = n % num_threads;
   std::size_t start = 1;
+
   for (unsigned int tid = 0; tid < num_threads; ++tid) {
     std::size_t count = rows_per_thread + (tid < remainder ? 1 : 0);
     std::size_t end = start + count;
