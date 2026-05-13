@@ -22,12 +22,8 @@ void RomanovaVLinHistogramStretchSTL::FindMinMax(size_t begin, size_t end, uint8
                                                  const InType &in) {
   for (size_t i = begin; i < end; ++i) {
     uint8_t val = in[i];
-    if (val < curr_min) {
-      curr_min = val;
-    }
-    if (val > curr_max) {
-      curr_max = val;
-    }
+    curr_min = std::min(curr_min, val);
+    curr_max = std::max(curr_max, val);
   }
 }
 

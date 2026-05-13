@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 
 #include "romanova_v_linear_histogram_stretch/common/include/common.hpp"
 #include "task/include/task.hpp"
