@@ -44,7 +44,6 @@ void MatrixVectorProductHybrid(const std::vector<double> &a, const std::vector<d
       double sum = 0.0;
 
       int j = 0;
-#pragma omp simd reduction(+ : sum) aligned(row, v : 64)
       for (; j <= n - 8; j += 8) {
         sum += row[j] * v[j];
         sum += row[j + 1] * v[j + 1];
@@ -164,7 +163,6 @@ bool KichanovaKLinSystemByConjugGradALL::RunImpl() {
     }
 
     double alpha = rr_old / p_ap;
-
     UpdateSolutionAndResidualHybrid(x, r, p, ap, alpha, n);
 
     double rr_new = DotProductHybrid(r, r, n);
@@ -175,7 +173,6 @@ bool KichanovaKLinSystemByConjugGradALL::RunImpl() {
     }
 
     double beta = rr_new / rr_old;
-
     UpdateDirectionHybrid(p, r, beta, n);
 
     rr_old = rr_new;
