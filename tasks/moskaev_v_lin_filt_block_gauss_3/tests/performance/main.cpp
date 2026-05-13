@@ -9,6 +9,7 @@
 #include "moskaev_v_lin_filt_block_gauss_3/omp/include/ops_omp.hpp"
 #include "moskaev_v_lin_filt_block_gauss_3/seq/include/ops_seq.hpp"
 #include "moskaev_v_lin_filt_block_gauss_3/stl/include/ops_stl.hpp"
+#include "moskaev_v_lin_filt_block_gauss_3/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace moskaev_v_lin_filt_block_gauss_3 {
@@ -59,6 +60,7 @@ const auto kAllPerfTasks = std::tuple_cat(
     ppc::util::MakeAllPerfTasks<InType, MoskaevVLinFiltBlockGauss3SEQ>(PPC_SETTINGS_moskaev_v_lin_filt_block_gauss_3),
     ppc::util::MakeAllPerfTasks<InType, MoskaevVLinFiltBlockGauss3OMP>(PPC_SETTINGS_moskaev_v_lin_filt_block_gauss_3),
     ppc::util::MakeAllPerfTasks<InType, MoskaevVLinFiltBlockGauss3STL>(PPC_SETTINGS_moskaev_v_lin_filt_block_gauss_3));
+    ppc::util::MakeAllPerfTasks<InType, MoskaevVLinFiltBlockGauss3TBB>(PPC_SETTINGS_moskaev_v_lin_filt_block_gauss_3));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
