@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <random>
 
 #include "olesnitskiy_v_hoare_sort_simple_merge/common/include/common.hpp"
 #include "olesnitskiy_v_hoare_sort_simple_merge/seq/include/ops_seq.hpp"
@@ -9,29 +10,24 @@
 
 namespace olesnitskiy_v_hoare_sort_simple_merge {
 
-namespace {
-int NextPseudoRandom(int &state) {
-  state = (state * 1103515245 + 12345) & 0x7fffffff;
-  return state;
-}
-}  // namespace
-
-class OlesnitskiyVRunPerfTestSEQ : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class OlesnitskiyVRunPerfTestsSEQ : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
 
   void SetUp() override {
-    constexpr size_t kSize = 100000;
-    input_data_.resize(kSize);
+    constexpr std::size_t kCount = 100000;
+    input_data_.resize(kCount);
 
-    int state = 2026;
-    std::ranges::generate(input_data_, [&]() {
-      int value = NextPseudoRandom(state);
-      return (value % 2000001) - 1000000;
-    });
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(-1000000, 1000000);
+
+    for (std::size_t i = 0; i < kCount; ++i) {
+      input_data_[i] = dist(gen);
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::ranges::is_sorted(output_data);
+    return output_data.size() == input_data_.size() && std::ranges::is_sorted(output_data);
   }
 
   InType GetTestInputData() final {
@@ -39,7 +35,7 @@ class OlesnitskiyVRunPerfTestSEQ : public ppc::util::BaseRunPerfTests<InType, Ou
   }
 };
 
-TEST_P(OlesnitskiyVRunPerfTestSEQ, RunPerfModes) {
+TEST_P(OlesnitskiyVRunPerfTestsSEQ, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -50,9 +46,9 @@ const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, OlesnitskiyVHoare
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = OlesnitskiyVRunPerfTestSEQ::CustomPerfTestName;
+const auto kPerfTestName = OlesnitskiyVRunPerfTestsSEQ::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, OlesnitskiyVRunPerfTestSEQ, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, OlesnitskiyVRunPerfTestsSEQ, kGtestValues, kPerfTestName);
 
 }  // namespace
 

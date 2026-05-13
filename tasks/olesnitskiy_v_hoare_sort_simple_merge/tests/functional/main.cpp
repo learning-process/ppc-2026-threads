@@ -1,8 +1,12 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
+#include <limits>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "olesnitskiy_v_hoare_sort_simple_merge/common/include/common.hpp"
 #include "olesnitskiy_v_hoare_sort_simple_merge/seq/include/ops_seq.hpp"
@@ -19,9 +23,9 @@ class OlesnitskiyVRunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, O
 
  protected:
   void SetUp() override {
-    TestType param = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = std::get<0>(param);
-    expected_data_ = std::get<1>(param);
+    const TestType &params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    input_data_ = std::get<0>(params);
+    expected_data_ = std::get<1>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -39,28 +43,45 @@ class OlesnitskiyVRunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, O
 
 namespace {
 
-TEST_P(OlesnitskiyVRunFuncTestsSEQ, HoareSortSimpleMergeSeq) {
+TEST_P(OlesnitskiyVRunFuncTestsSEQ, HoareSortSimpleMerging) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 8> kTestParam = {
-    TestType{InType{5}, OutType{5}, "single_element"},
-    TestType{InType{2, 1}, OutType{1, 2}, "two_elements"},
-    TestType{InType{1, 2, 3, 4, 5}, OutType{1, 2, 3, 4, 5}, "already_sorted"},
-    TestType{InType{9, 7, 5, 3, 1}, OutType{1, 3, 5, 7, 9}, "reverse_sorted"},
-    TestType{InType{4, 1, 3, 4, 2, 3, 1}, OutType{1, 1, 2, 3, 3, 4, 4}, "with_duplicates"},
-    TestType{InType{-3, 0, 5, -10, 8, -1}, OutType{-10, -3, -1, 0, 5, 8}, "negative_values"},
-    TestType{InType{10, -5, 0, 10, -5, 8, 2, 2}, OutType{-5, -5, 0, 2, 2, 8, 10, 10}, "mixed_values"},
-    TestType{InType{15, 3, 27, 9, 1, 8, 2, 11, 6, 4, 5}, OutType{1, 2, 3, 4, 5, 6, 8, 9, 11, 15, 27}, "odd_size"}};
+TestType MakeTest(InType input, std::string name) {
+  OutType expected = input;
+  std::ranges::sort(expected);
+  return {std::move(input), std::move(expected), std::move(name)};
+}
+
+const std::array<TestType, 15> kTestParam = {
+    MakeTest(std::vector<int>{42}, "single"),
+    MakeTest(std::vector<int>{2, 1}, "two_elements"),
+    MakeTest(std::vector<int>{1, 2, 3, 4, 5}, "already_sorted"),
+    MakeTest(std::vector<int>{5, 4, 3, 2, 1}, "reverse_sorted"),
+    MakeTest(std::vector<int>{5, 1, 5, 1, 5, 1}, "duplicates"),
+    MakeTest(std::vector<int>{0, -1, 7, -5, 2, -3}, "mixed_signs"),
+    MakeTest(std::vector<int>{10, 3, 8, 6, 4, 9, 2, 7, 1, 5}, "random_10"),
+    MakeTest(std::vector<int>{100, 1, 50, 2, 75, 3, 60, 4, 20, 5, 30}, "odd_count"),
+    MakeTest(std::vector<int>{9, 9, 8, 8, 7, 7, 6, 6, 5, 5}, "pair_duplicates"),
+    MakeTest(std::vector<int>{1000, -1000, 500, -500, 0, 250, -250}, "wide_range"),
+    MakeTest(std::vector<int>(64, 7), "one_block_equal"),
+    MakeTest(std::vector<int>{64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43,
+                              42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21,
+                              20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9,  8,  7,  6,  5,  4,  3,  2,  1,  0},
+             "crosses_block"),
+    MakeTest(std::vector<int>{std::numeric_limits<int>::max(), 0, std::numeric_limits<int>::min(), -1, 1},
+             "int_limits"),
+    MakeTest(std::vector<int>{3, 3, 3, 2, 2, 1, 1, 0, 0, -1, -1}, "many_equal_runs"),
+    MakeTest(std::vector<int>{17, -4, 23, 0, 17, -4, 99, -100, 8, 8, 42, -100, 5}, "repeated_mixed")};
 
 const auto kTestTasksList = ppc::util::AddFuncTask<OlesnitskiyVHoareSortSimpleMergeSEQ, InType>(
     kTestParam, PPC_SETTINGS_olesnitskiy_v_hoare_sort_simple_merge);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kTestName = OlesnitskiyVRunFuncTestsSEQ::PrintFuncTestName<OlesnitskiyVRunFuncTestsSEQ>;
+const auto kPerfTestName = OlesnitskiyVRunFuncTestsSEQ::PrintFuncTestName<OlesnitskiyVRunFuncTestsSEQ>;
 
-INSTANTIATE_TEST_SUITE_P(HoareSimpleMergeFuncTests, OlesnitskiyVRunFuncTestsSEQ, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(HoareSortSimpleMergingTests, OlesnitskiyVRunFuncTestsSEQ, kGtestValues, kPerfTestName);
 
 }  // namespace
 
