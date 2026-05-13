@@ -1,4 +1,5 @@
 #include "timur_a_cannon/all/include/ops_all.hpp"
+#include "timur_a_cannon/common/include/common.hpp"
 
 #include <mpi.h>
 #include <omp.h>
@@ -26,10 +27,10 @@ std::vector<double> FlattenMatrix(const Matrix &matrix) {
   return flat;
 }
 
-Matrix UnflattenMatrix(const std::vector<double> &flat, int rows, int cols) {
+Matrix UnflattenMatrix(const std::vector<double> &flat, std::size_t rows, std::size_t cols) {
   Matrix matrix(rows, std::vector<double>(cols));
 
-  for (int row = 0; row < rows; ++row) {
+  for (std::size_t row = 0; row < rows; ++row) {
     std::copy(flat.begin() + static_cast<std::ptrdiff_t>(row * cols),
               flat.begin() + static_cast<std::ptrdiff_t>((row + 1) * cols), matrix[row].begin());
   }
@@ -84,35 +85,11 @@ void TimurACannonMatrixMultiplicationALL::BlockMultiplyAccumulate(const std::vec
   }
 }
 
-bool TimurACannonMatrixMultiplicationALL::RunImpl() {
-  const auto &input = GetInput();
-  const int b_size = std::get<0>(input);
-  Matrix src_a = std::get<1>(input);
-  Matrix src_b = std::get<2>(input);
-  const int n = static_cast<int>(src_a.size());
-  const int grid_sz = n / b_size;
-  const int total_elems = n * n;
-
-  int rank = 0;
-  int size = 1;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-  std::vector<double> flat_a = FlattenMatrix(src_a);
-  std::vector<double> flat_b = FlattenMatrix(src_b);
-
-  MPI_Bcast(flat_a.data(), total_elems, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(flat_b.data(), total_elems, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-  src_a = UnflattenMatrix(flat_a, n, n);
-  src_b = UnflattenMatrix(flat_b, n, n);
-
-  const int base_block_rows = grid_sz / size;
-  const int extra_block_rows = grid_sz % size;
-  const int local_block_rows = base_block_rows + (rank < extra_block_rows ? 1 : 0);
-  const int block_row_start = (rank * base_block_rows) + std::min(rank, extra_block_rows);
-
-  Matrix local_result(local_block_rows * b_size, std::vector<double>(n, 0.0));
+std::vector<std::vector<double>> TimurACannonMatrixMultiplicationALL::ComputeLocalResult(const Matrix &src_a, const Matrix &src_b, int b_size,
+                                                                int grid_sz, int block_row_start,
+                                                                int local_block_rows, int n) {
+  Matrix local_result(static_cast<std::size_t>(local_block_rows) * static_cast<std::size_t>(b_size),
+                      std::vector<double>(static_cast<std::size_t>(n), 0.0));
 
 #pragma omp parallel for default(none) \
     shared(local_result, src_a, src_b, b_size, grid_sz, block_row_start, local_block_rows)
@@ -144,6 +121,39 @@ bool TimurACannonMatrixMultiplicationALL::RunImpl() {
     }
   }
 
+  return local_result;
+}
+
+bool TimurACannonMatrixMultiplicationALL::RunImpl() {
+  const auto &input = GetInput();
+  const int b_size = std::get<0>(input);
+  Matrix src_a = std::get<1>(input);
+  Matrix src_b = std::get<2>(input);
+  const int n = static_cast<int>(src_a.size());
+  const int grid_sz = n / b_size;
+  const int total_elems = n * n;
+
+  int rank = 0;
+  int size = 1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  std::vector<double> flat_a = FlattenMatrix(src_a);
+  std::vector<double> flat_b = FlattenMatrix(src_b);
+
+  MPI_Bcast(flat_a.data(), total_elems, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(flat_b.data(), total_elems, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  src_a = UnflattenMatrix(flat_a, static_cast<std::size_t>(n), static_cast<std::size_t>(n));
+  src_b = UnflattenMatrix(flat_b, static_cast<std::size_t>(n), static_cast<std::size_t>(n));
+
+  const int base_block_rows = grid_sz / size;
+  const int extra_block_rows = grid_sz % size;
+  const int local_block_rows = base_block_rows + (rank < extra_block_rows ? 1 : 0);
+  const int block_row_start = (rank * base_block_rows) + std::min(rank, extra_block_rows);
+
+  Matrix local_result = ComputeLocalResult(src_a, src_b, b_size, grid_sz, block_row_start, local_block_rows, n);
+
   std::vector<double> local_flat = FlattenMatrix(local_result);
   std::vector<int> recv_counts(size);
   std::vector<int> displs(size);
@@ -160,7 +170,7 @@ bool TimurACannonMatrixMultiplicationALL::RunImpl() {
   MPI_Allgatherv(local_flat.data(), static_cast<int>(local_flat.size()), MPI_DOUBLE, global_flat.data(),
                  recv_counts.data(), displs.data(), MPI_DOUBLE, MPI_COMM_WORLD);
 
-  GetOutput() = UnflattenMatrix(global_flat, n, n);
+  GetOutput() = UnflattenMatrix(global_flat, static_cast<std::size_t>(n), static_cast<std::size_t>(n));
   return true;
 }
 
