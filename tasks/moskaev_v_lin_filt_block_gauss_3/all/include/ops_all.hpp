@@ -15,14 +15,14 @@ class MoskaevVLinFiltBlockGauss3ALL : public BaseTask {
   }
   explicit MoskaevVLinFiltBlockGauss3ALL(const InType &in);
 
+  static void ApplyGaussianFilterToBlock(const std::vector<uint8_t> &input_block, std::vector<uint8_t> &output_block,
+                                         int block_width, int block_height, int channels);
+
  private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
-  static void ApplyGaussianFilterToBlock(const std::vector<uint8_t> &input_block, std::vector<uint8_t> &output_block,
-                                         int block_width, int block_height, int channels);
 
   ImageInfo image_info_;
   int block_size_{0};

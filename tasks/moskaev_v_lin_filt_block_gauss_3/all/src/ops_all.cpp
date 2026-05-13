@@ -1,15 +1,15 @@
 #include "moskaev_v_lin_filt_block_gauss_3/all/include/ops_all.hpp"
 
+#include <mpi.h>
+
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
 
-#include <mpi.h>
-
 #ifdef _OPENMP
-#include <omp.h>
+#  include <omp.h>
 #endif
 
 #include "moskaev_v_lin_filt_block_gauss_3/common/include/common.hpp"
@@ -35,7 +35,7 @@ bool MoskaevVLinFiltBlockGauss3ALL::PreProcessingImpl() {
 namespace {
 
 inline void ComputeFilteredPixel(const std::vector<uint8_t> &input_block, std::vector<uint8_t> &output_block,
-                                  int block_width, int inner_width, int channels, int row, int col, int channel) {
+                                 int block_width, int inner_width, int channels, int row, int col, int channel) {
   float sum = 0.0F;
   for (int ky = -1; ky <= 1; ++ky) {
     for (int kx = -1; kx <= 1; ++kx) {
@@ -161,7 +161,9 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
   int channels = std::get<2>(input);
   const auto &image_data = std::get<4>(input);
 
-  if (image_data.empty()) return false;
+  if (image_data.empty()) {
+    return false;
+  }
 
   block_size_ = 64;
   int block_size = block_size_;
@@ -174,7 +176,9 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
   MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   std::vector<uint8_t> local_image(total_size);
-  if (rank_ == 0) local_image = image_data;
+  if (rank_ == 0) {
+    local_image = image_data;
+  }
   MPI_Bcast(local_image.data(), total_size, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
   int blocks_y = (height + block_size - 1) / block_size;
