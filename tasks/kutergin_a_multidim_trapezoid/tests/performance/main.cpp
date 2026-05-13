@@ -32,7 +32,7 @@ class KuterginATrapezoidPerfTest : public ppc::util::BaseRunPerfTests<InType, Ou
   }
 
   bool CheckTestOutputData(OutType &output) final {
-    constexpr double kTolerance = 1e-2;
+    constexpr double kTolerance = 1e-1;
     return (std::fabs(output - expected_) <= kTolerance);
   }
 

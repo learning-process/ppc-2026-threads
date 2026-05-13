@@ -2,7 +2,6 @@
 
 #include <array>
 #include <cmath>
-#include <cstddef>
 #include <numbers>
 #include <string>
 #include <tuple>
@@ -13,7 +12,6 @@
 #include "kutergin_a_multidim_trapezoid/omp/include/ops_omp.hpp"
 #include "kutergin_a_multidim_trapezoid/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace kutergin_a_multidim_trapezoid {
 namespace {
@@ -67,7 +65,7 @@ class KuterginATrapezoidFuncTest : public ppc::util::BaseRunFuncTests<InType, Ou
 
     std::string result = task_name + "_" + case_name;
     for (char &c : result) {
-      if (!std::isalnum(static_cast<unsigned char>(c)) && c != '_') {
+      if (std::isalnum(static_cast<unsigned char>(c)) == 0 && c != '_') {
         c = '_';
       }
     }
