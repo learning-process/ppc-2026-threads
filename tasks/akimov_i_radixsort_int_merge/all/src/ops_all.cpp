@@ -138,8 +138,7 @@ bool AkimovIRadixSortIntMergeALL::RunImpl() {
   }
 
   RadixSortLocal(local_data.begin(), local_data.end());
-  
-  // Восстановление знакового бита
+
 #pragma omp parallel for default(none) shared(local_data, kSignMask, local_size)
   for (int i = 0; i < local_size; ++i) {
     local_data[i] ^= kSignMask;
