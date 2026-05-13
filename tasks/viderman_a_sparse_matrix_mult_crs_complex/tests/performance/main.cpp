@@ -10,6 +10,7 @@
 #include "viderman_a_sparse_matrix_mult_crs_complex/common/include/common.hpp"
 #include "viderman_a_sparse_matrix_mult_crs_complex/omp/include/ops_omp.hpp"
 #include "viderman_a_sparse_matrix_mult_crs_complex/seq/include/ops_seq.hpp"
+#include "viderman_a_sparse_matrix_mult_crs_complex/tbb/include/ops_tbb.hpp"
 
 namespace viderman_a_sparse_matrix_mult_crs_complex {
 namespace {
@@ -292,7 +293,8 @@ TEST_P(VidermanPerfRectangularBandMatrix, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, VidermanASparseMatrixMultCRSComplexSEQ, VidermanASparseMatrixMultCRSComplexOMP>(
+    ppc::util::MakeAllPerfTasks<InType, VidermanASparseMatrixMultCRSComplexSEQ, VidermanASparseMatrixMultCRSComplexOMP,
+                                VidermanASparseMatrixMultCRSComplexTBB>(
         PPC_SETTINGS_viderman_a_sparse_matrix_mult_crs_complex);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

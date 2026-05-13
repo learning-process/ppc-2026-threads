@@ -1,9 +1,11 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <algorithm>
 #include <tuple>
 #include <vector>
 
+#include "dolov_v_crs_mat_mult/all/include/ops_all.hpp"
 #include "dolov_v_crs_mat_mult/common/include/common.hpp"
 #include "dolov_v_crs_mat_mult/omp/include/ops_omp.hpp"
 #include "dolov_v_crs_mat_mult/seq/include/ops_seq.hpp"
@@ -37,8 +39,8 @@ SparseMatrix CreateBandMatrix(int n, int band_width) {
 class DolovVCrsMatMultRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    const int n = 2000;
-    const int width = 20;
+    const int n = 3000;
+    const int width = 30;
 
     SparseMatrix matrix_a = CreateBandMatrix(n, width);
     SparseMatrix matrix_b = CreateBandMatrix(n, width);
@@ -47,6 +49,18 @@ class DolovVCrsMatMultRunPerfTestThreads : public ppc::util::BaseRunPerfTests<In
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+    int is_mpi_init = 0;
+
+    MPI_Initialized(&is_mpi_init);
+    if (is_mpi_init != 0) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+
+    if (rank != 0) {
+      return true;
+    }
+
     return output_data.num_rows == input_data_[0].num_rows && !output_data.values.empty();
   }
 
@@ -68,7 +82,8 @@ const auto kAllPerfTasks =
     std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultSeq>(PPC_SETTINGS_dolov_v_crs_mat_mult),
                    ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultOmp>(PPC_SETTINGS_dolov_v_crs_mat_mult),
                    ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultTbb>(PPC_SETTINGS_dolov_v_crs_mat_mult),
-                   ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultStl>(PPC_SETTINGS_dolov_v_crs_mat_mult));
+                   ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultStl>(PPC_SETTINGS_dolov_v_crs_mat_mult),
+                   ppc::util::MakeAllPerfTasks<InType, DolovVCrsMatMultAll>(PPC_SETTINGS_dolov_v_crs_mat_mult));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = DolovVCrsMatMultRunPerfTestThreads::CustomPerfTestName;
