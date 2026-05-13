@@ -113,40 +113,41 @@ bool OlesnitskiyVHoareSortSimpleMergeOMP::RunImpl() {
   }
 
   constexpr std::size_t kBlockSize = 64;
-  const std::size_t size = data_.size();
+  auto &data = data_;
+  const std::size_t size = data.size();
 
-#pragma omp parallel for default(none) shared(size, data_)
+#pragma omp parallel for default(none) shared(size, data)
   for (std::size_t block_start = 0; block_start < size; block_start += kBlockSize) {
     const std::size_t block_end = std::min(block_start + kBlockSize, size);
     if ((block_end - block_start) > 1) {
-      HoareQuickSort(data_, static_cast<int>(block_start), static_cast<int>(block_end - 1));
+      HoareQuickSort(data, static_cast<int>(block_start), static_cast<int>(block_end - 1));
     }
   }
 
   for (std::size_t merge_width = kBlockSize; merge_width < size; merge_width *= 2) {
     std::vector<int> merged_data(size);
 
-#pragma omp parallel for default(none) shared(merge_width, size, merged_data, data_)
+#pragma omp parallel for default(none) shared(merge_width, size, merged_data, data)
     for (std::size_t left = 0; left < size; left += (2 * merge_width)) {
       const std::size_t middle = std::min(left + merge_width, size);
       const std::size_t right = std::min(left + (2 * merge_width), size);
 
       if (middle < right) {
-        std::vector<int> left_part(data_.begin() + static_cast<std::ptrdiff_t>(left),
-                                   data_.begin() + static_cast<std::ptrdiff_t>(middle));
-        std::vector<int> right_part(data_.begin() + static_cast<std::ptrdiff_t>(middle),
-                                    data_.begin() + static_cast<std::ptrdiff_t>(right));
+        std::vector<int> left_part(data.begin() + static_cast<std::ptrdiff_t>(left),
+                                   data.begin() + static_cast<std::ptrdiff_t>(middle));
+        std::vector<int> right_part(data.begin() + static_cast<std::ptrdiff_t>(middle),
+                                    data.begin() + static_cast<std::ptrdiff_t>(right));
         std::vector<int> merged_part = SimpleMerge(left_part, right_part);
         for (std::size_t idx = 0; idx < merged_part.size(); ++idx) {
           merged_data[left + idx] = merged_part[idx];
         }
       } else {
-        std::copy(data_.begin() + static_cast<std::ptrdiff_t>(left), data_.begin() + static_cast<std::ptrdiff_t>(right),
+        std::copy(data.begin() + static_cast<std::ptrdiff_t>(left), data.begin() + static_cast<std::ptrdiff_t>(right),
                   merged_data.begin() + static_cast<std::ptrdiff_t>(left));
       }
     }
 
-    data_.swap(merged_data);
+    data.swap(merged_data);
   }
 
   return true;
