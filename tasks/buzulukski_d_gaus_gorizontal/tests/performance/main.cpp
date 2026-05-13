@@ -3,13 +3,15 @@
 #include "buzulukski_d_gaus_gorizontal/common/include/common.hpp"
 #include "buzulukski_d_gaus_gorizontal/omp/include/ops_omp.hpp"
 #include "buzulukski_d_gaus_gorizontal/seq/include/ops_seq.hpp"
+#include "buzulukski_d_gaus_gorizontal/stl/include/ops_stl.hpp"
+#include "buzulukski_d_gaus_gorizontal/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace buzulukski_d_gaus_gorizontal {
 
 class BuzulukskiDGausGorizontalPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
-  static constexpr int kCount = 1000;
+  static constexpr int kCount = 1500;
 
   void SetUp() override {
     input_data_ = kCount;
@@ -31,7 +33,8 @@ TEST_P(BuzulukskiDGausGorizontalPerfTests, RunPerfModes) {
 
 namespace {
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, BuzulukskiDGausGorizontalSEQ, BuzulukskiDGausGorizontalOMP>(
+    ppc::util::MakeAllPerfTasks<InType, BuzulukskiDGausGorizontalSEQ, BuzulukskiDGausGorizontalOMP,
+                                BuzulukskiDGausGorizontalTBB, BuzulukskiDGausGorizontalSTL>(
         PPC_SETTINGS_buzulukski_d_gaus_gorizontal);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
@@ -39,5 +42,4 @@ const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 INSTANTIATE_TEST_SUITE_P(RunModeTests, BuzulukskiDGausGorizontalPerfTests, kGtestValues,
                          BuzulukskiDGausGorizontalPerfTests::CustomPerfTestName);
 }  // namespace
-
 }  // namespace buzulukski_d_gaus_gorizontal

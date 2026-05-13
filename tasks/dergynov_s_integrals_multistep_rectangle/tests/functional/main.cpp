@@ -9,9 +9,11 @@
 #include <utility>
 #include <vector>
 
+#include "dergynov_s_integrals_multistep_rectangle/all/include/ops_all.hpp"
 #include "dergynov_s_integrals_multistep_rectangle/common/include/common.hpp"
 #include "dergynov_s_integrals_multistep_rectangle/omp/include/ops_omp.hpp"
 #include "dergynov_s_integrals_multistep_rectangle/seq/include/ops_seq.hpp"
+#include "dergynov_s_integrals_multistep_rectangle/stl/include/ops_stl.hpp"
 #include "dergynov_s_integrals_multistep_rectangle/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -210,6 +212,10 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<DergynovSInteg
                                            ppc::util::AddFuncTask<DergynovSIntegralsMultistepRectangleOMP, InType>(
                                                kTests, PPC_SETTINGS_dergynov_s_integrals_multistep_rectangle),
                                            ppc::util::AddFuncTask<DergynovSIntegralsMultistepRectangleTBB, InType>(
+                                               kTests, PPC_SETTINGS_dergynov_s_integrals_multistep_rectangle),
+                                           ppc::util::AddFuncTask<DergynovSIntegralsMultistepRectangleSTL, InType>(
+                                               kTests, PPC_SETTINGS_dergynov_s_integrals_multistep_rectangle),
+                                           ppc::util::AddFuncTask<DergynovSIntegralsMultistepRectangleALL, InType>(
                                                kTests, PPC_SETTINGS_dergynov_s_integrals_multistep_rectangle));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

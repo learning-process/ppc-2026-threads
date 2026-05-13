@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "perepelkin_i_convex_hull_graham_scan/all/include/ops_all.hpp"
 #include "perepelkin_i_convex_hull_graham_scan/common/include/common.hpp"
 #include "perepelkin_i_convex_hull_graham_scan/omp/include/ops_omp.hpp"
 #include "perepelkin_i_convex_hull_graham_scan/seq/include/ops_seq.hpp"
@@ -81,6 +82,8 @@ const auto kAllPerfTasks = std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, Pe
                                           ppc::util::MakeAllPerfTasks<InType, PerepelkinIConvexHullGrahamScanTBB>(
                                               PPC_SETTINGS_perepelkin_i_convex_hull_graham_scan),
                                           ppc::util::MakeAllPerfTasks<InType, PerepelkinIConvexHullGrahamScanSTL>(
+                                              PPC_SETTINGS_perepelkin_i_convex_hull_graham_scan),
+                                          ppc::util::MakeAllPerfTasks<InType, PerepelkinIConvexHullGrahamScanALL>(
                                               PPC_SETTINGS_perepelkin_i_convex_hull_graham_scan));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
