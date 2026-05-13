@@ -15,6 +15,7 @@
 #include "fedoseev_linear_image_filtering_vertical/common/include/common.hpp"
 #include "fedoseev_linear_image_filtering_vertical/omp/include/ops_omp.hpp"
 #include "fedoseev_linear_image_filtering_vertical/seq/include/ops_seq.hpp"
+#include "fedoseev_linear_image_filtering_vertical/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
