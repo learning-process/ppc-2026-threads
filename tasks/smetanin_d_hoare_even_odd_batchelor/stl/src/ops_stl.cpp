@@ -1,8 +1,6 @@
 #include "smetanin_d_hoare_even_odd_batchelor/stl/include/ops_stl.hpp"
 
 #include <algorithm>
-#include <atomic>
-#include <cstddef>
 #include <stack>
 #include <thread>
 #include <utility>
@@ -73,68 +71,15 @@ void HoarSortBatcherSTLImpl(std::vector<int> &arr, int lo, int hi, int num_threa
   if (lo >= hi) {
     return;
   }
-
-  std::vector<std::pair<int, int>> cur;
-  cur.emplace_back(lo, hi);
-
-  while (!cur.empty()) {
-    const std::size_t cur_sz = cur.size();
-
-    std::vector<std::pair<int, int>> next(cur_sz * 2);
-
-    auto process_range = [&](std::size_t idx) {
-      const int l = cur[idx].first;
-      const int r = cur[idx].second;
-      if (l >= r) {
-        return;
-      }
-      if (r - l < kTaskCutoff) {
-        HoarSortBatcherSeq(arr, l, r);
-        return;
-      }
-      const int p = HoarePartition(arr, l, r);
-      OddEvenMerge(arr, l, r);
-      const std::size_t slot = idx * 2;
-      next[slot] = {l, p};
-      next[slot + 1] = {p + 1, r};
-    };
-
-    const int workers = std::clamp(num_threads, 1, std::max<int>(1, static_cast<int>(cur_sz)));
-
-    if (workers <= 1 || cur_sz <= 1) {
-      for (std::size_t i = 0; i < cur_sz; ++i) {
-        process_range(i);
-      }
-    } else {
-      std::vector<std::thread> threads;
-      std::atomic<std::size_t> cursor{0};
-      threads.reserve(static_cast<std::size_t>(workers));
-      for (int w = 0; w < workers; ++w) {
-        threads.emplace_back([&]() {
-          while (true) {
-            const std::size_t i = cursor.fetch_add(1);
-            if (i >= cur_sz) {
-              break;
-            }
-            process_range(i);
-          }
-        });
-      }
-      for (auto &t : threads) {
-        t.join();
-      }
-    }
-
-    const std::size_t nnext = cur_sz * 2;
-    cur.clear();
-    cur.reserve(nnext);
-    for (std::size_t i = 0; i < cur_sz * 2; ++i) {
-      const auto pr = next[i];
-      if (pr.first < pr.second) {
-        cur.push_back(pr);
-      }
-    }
+  if (hi - lo < kTaskCutoff || num_threads <= 1) {
+    HoarSortBatcherSeq(arr, lo, hi);
+    return;
   }
+  const int p = HoarePartition(arr, lo, hi);
+  OddEvenMerge(arr, lo, hi);
+  std::thread right([&arr, p, hi]() { HoarSortBatcherSeq(arr, p + 1, hi); });
+  HoarSortBatcherSeq(arr, lo, p);
+  right.join();
 }
 
 }  // namespace
