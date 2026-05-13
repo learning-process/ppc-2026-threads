@@ -1,0 +1,29 @@
+#pragma once
+
+#include <cstdint>
+
+#include "task/include/task.hpp"
+#include "votincev_d_radixmerge_sort/common/include/common.hpp"
+
+namespace votincev_d_radixmerge_sort {
+
+class VotincevDRadixMergeSortSTL : public BaseTask {
+ public:
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kSTL;
+  }
+  explicit VotincevDRadixMergeSortSTL(const InType &in);
+
+ private:
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
+
+  // ==============================
+  // мои дополнительные функции ===
+  static void LocalRadixSort(uint32_t *begin, uint32_t *end);
+  static void Merge(const uint32_t *src, uint32_t *dst, int32_t left, int32_t mid, int32_t right);
+  static void ParallelRadixMergeSort(uint32_t *data, int32_t n, uint32_t *temp);
+};
+}  // namespace votincev_d_radixmerge_sort

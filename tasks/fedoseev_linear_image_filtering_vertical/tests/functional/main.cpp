@@ -4,6 +4,7 @@
 #include <array>
 #include <cstddef>
 #include <functional>
+#include <memory>
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -12,6 +13,7 @@
 #include <vector>
 
 #include "fedoseev_linear_image_filtering_vertical/common/include/common.hpp"
+#include "fedoseev_linear_image_filtering_vertical/omp/include/ops_omp.hpp"
 #include "fedoseev_linear_image_filtering_vertical/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -23,6 +25,12 @@ Image ReferenceFilter(const Image &input) {
   int w = input.width;
   int h = input.height;
   const std::vector<int> &src = input.data;
+
+  // Для изображений меньше 3x3 возвращаем пустое (они не должны обрабатываться)
+  if (w < 3 || h < 3) {
+    return Image{};
+  }
+
   std::vector<int> dst(static_cast<size_t>(w) * static_cast<size_t>(h), 0);
 
   const std::array<std::array<int, 3>, 3> kernel = {{{{1, 2, 1}}, {{2, 4, 2}}, {{1, 2, 1}}}};
@@ -131,6 +139,47 @@ class FedoseevFuncTest : public ppc::util::BaseRunFuncTests<Image, Image, TestTy
 
 namespace {
 
+void CheckOutputEmpty(const std::shared_ptr<BaseTask> &task) {
+  EXPECT_EQ(task->GetOutput().width, 0);
+  EXPECT_EQ(task->GetOutput().height, 0);
+  EXPECT_TRUE(task->GetOutput().data.empty());
+}
+
+void CheckInvalidSize(const std::shared_ptr<BaseTask> &task) {
+  EXPECT_FALSE(task->Validation());
+  CheckOutputEmpty(task);
+}
+
+TEST(FedoseevValidationTest, InvalidSize) {
+  Image input;
+  input.width = 2;
+  input.height = 2;
+  input.data.resize(4, 0);
+
+  auto seq_task = std::make_shared<LinearImageFilteringVerticalSeq>(input);
+  CheckInvalidSize(seq_task);
+
+  auto omp_task = std::make_shared<LinearImageFilteringVerticalOMP>(input);
+  CheckInvalidSize(omp_task);
+}
+
+TEST(FedoseevValidationTest, InvalidDataSize) {
+  Image input;
+  input.width = 3;
+  input.height = 3;
+  input.data.resize(8, 0);
+
+  auto seq_task = std::make_shared<LinearImageFilteringVerticalSeq>(input);
+  EXPECT_FALSE(seq_task->Validation());
+
+  auto omp_task = std::make_shared<LinearImageFilteringVerticalOMP>(input);
+  EXPECT_FALSE(omp_task->Validation());
+}
+
+TEST_P(FedoseevFuncTest, ImageFiltering) {
+  ExecuteTest(GetParam());
+}
+
 constexpr std::array<int, 5> kSizes = {3, 5, 7, 10, 16};
 constexpr std::array<const char *, 4> kTypes = {"const", "grad", "rand", "check"};
 constexpr size_t kNumParams = kSizes.size() * kTypes.size();
@@ -148,14 +197,16 @@ std::array<TestType, kNumParams> GenerateParams() {
 
 const auto kTestParams = GenerateParams();
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LinearImageFilteringVerticalSeq, Image>(
-    kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical));
+const auto kSeqTasks = ppc::util::AddFuncTask<LinearImageFilteringVerticalSeq, Image>(
+    kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
+const auto kOmpTasks = ppc::util::AddFuncTask<LinearImageFilteringVerticalOMP, Image>(
+    kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
+const auto kTestTasksList = std::tuple_cat(kSeqTasks, kOmpTasks);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = FedoseevFuncTest::PrintFuncTestName<FedoseevFuncTest>;
 
 INSTANTIATE_TEST_SUITE_P(ImageFilteringFuncTests, FedoseevFuncTest, kGtestValues, kTestName);
-
 }  // namespace
 
 }  // namespace fedoseev_linear_image_filtering_vertical
