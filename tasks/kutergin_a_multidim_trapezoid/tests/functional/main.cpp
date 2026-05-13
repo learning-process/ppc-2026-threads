@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cctype>
 #include <cmath>
 #include <numbers>
 #include <string>
