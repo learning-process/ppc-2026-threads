@@ -15,7 +15,7 @@
 
 namespace olesnitskiy_v_hoare_sort_simple_merge {
 
-class OlesnitskiyVRunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class OlesnitskiyVRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<2>(test_param);
@@ -43,7 +43,7 @@ class OlesnitskiyVRunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, O
 
 namespace {
 
-TEST_P(OlesnitskiyVRunFuncTestsSEQ, HoareSortSimpleMerging) {
+TEST_P(OlesnitskiyVRunFuncTestsThreads, HoareSortSimpleMerging) {
   ExecuteTest(GetParam());
 }
 
@@ -79,9 +79,9 @@ const auto kTestTasksList = ppc::util::AddFuncTask<OlesnitskiyVHoareSortSimpleMe
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = OlesnitskiyVRunFuncTestsSEQ::PrintFuncTestName<OlesnitskiyVRunFuncTestsSEQ>;
+const auto kPerfTestName = OlesnitskiyVRunFuncTestsThreads::PrintFuncTestName<OlesnitskiyVRunFuncTestsThreads>;
 
-INSTANTIATE_TEST_SUITE_P(HoareSortSimpleMergingTests, OlesnitskiyVRunFuncTestsSEQ, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(HoareSortSimpleMergingTests, OlesnitskiyVRunFuncTestsThreads, kGtestValues, kPerfTestName);
 
 }  // namespace
 
