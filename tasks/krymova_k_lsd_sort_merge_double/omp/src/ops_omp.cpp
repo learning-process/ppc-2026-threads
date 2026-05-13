@@ -100,28 +100,28 @@ void KrymovaKLsdSortMergeDoubleOMP::MergeSections(double *left, const double *ri
   std::vector<double> temp(left_size);
   std::ranges::copy(left, left + left_size, temp.begin());
 
-  int l = 0;
-  int r = 0;
-  int k = 0;
+  int left_index = 0;
+  int right_index = 0;
+  int dest_index = 0;
 
-  while (l < left_size && r < right_size) {
-    if (temp[l] <= right[r]) {
-      left[k++] = temp[l++];
+  while (left_index < left_size && right_index < right_size) {
+    if (temp[left_index] <= right[right_index]) {
+      left[dest_index++] = temp[left_index++];
     } else {
-      left[k++] = right[r++];
+      left[dest_index++] = right[right_index++];
     }
   }
 
-  while (l < left_size) {
-    left[k++] = temp[l++];
+  while (left_index < left_size) {
+    left[dest_index++] = temp[left_index++];
   }
 }
 
 void KrymovaKLsdSortMergeDoubleOMP::SortSectionsParallel(double *arr, int size, int portion) {
 #pragma omp parallel for default(none) shared(arr, size, portion)
-  for (int i = 0; i < size; i += portion) {
-    int current_size = std::min(portion, size - i);
-    LSDSortDouble(arr + i, current_size);
+  for (int block_start = 0; block_start < size; block_start += portion) {
+    int current_size = std::min(portion, size - block_start);
+    LSDSortDouble(arr + block_start, current_size);
   }
 }
 
@@ -133,16 +133,17 @@ void KrymovaKLsdSortMergeDoubleOMP::IterativeMergeSort(double *arr, int size, in
   SortSectionsParallel(arr, size, portion);
 
   for (int merge_size = portion; merge_size < size; merge_size *= 2) {
-    for (int i = 0; i < size; i += 2 * merge_size) {
+#pragma omp parallel for default(none) shared(arr, size, merge_size)
+    for (int pair_start = 0; pair_start < size; pair_start += 2 * merge_size) {
       int left_size = merge_size;
-      int right_size = std::min(merge_size, size - (i + merge_size));
+      int right_size = std::min(merge_size, size - (pair_start + merge_size));
 
       if (right_size <= 0) {
         continue;
       }
 
-      double *left = arr + i;
-      const double *right = arr + i + left_size;
+      double *left = arr + pair_start;
+      const double *right = arr + pair_start + left_size;
 
       MergeSections(left, right, left_size, right_size);
     }
@@ -157,8 +158,8 @@ bool KrymovaKLsdSortMergeDoubleOMP::RunImpl() {
     return true;
   }
 
-  int portion = std::max(1, size / (num_threads_ * 2));
-  portion = std::min(portion, 5000);
+  int portion = std::max(1, size / num_threads_);
+  portion = std::min(portion, 1000000);
 
   IterativeMergeSort(output.data(), size, portion);
 
