@@ -50,7 +50,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, RomanovaVLinHistogramStretchSEQ, RomanovaVLinHistogramStretchOMP,
-                                RomanovaVLinHistogramStretchTBB, RomanovaVLinHistogramStretchSTL>(PPC_SETTINGS_romanova_v_linear_histogram_stretch);
+                                RomanovaVLinHistogramStretchTBB, RomanovaVLinHistogramStretchSTL>(
+        PPC_SETTINGS_romanova_v_linear_histogram_stretch);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
