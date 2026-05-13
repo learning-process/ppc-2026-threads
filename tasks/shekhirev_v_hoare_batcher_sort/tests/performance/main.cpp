@@ -3,11 +3,11 @@
 #include <algorithm>
 #include <cstddef>
 
-#include "shekhirev_v_hoare_batcher_sort_seq/common/include/common.hpp"
-#include "shekhirev_v_hoare_batcher_sort_seq/seq/include/ops_seq.hpp"
+#include "shekhirev_v_hoare_batcher_sort/common/include/common.hpp"
+#include "shekhirev_v_hoare_batcher_sort/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace shekhirev_v_hoare_batcher_sort_seq {
+namespace shekhirev_v_hoare_batcher_sort {
 
 class ShekhirevVRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
@@ -40,7 +40,7 @@ TEST_P(ShekhirevVRunPerfTest, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ShekhirevHoareBatcherSortSEQ>(PPC_SETTINGS_shekhirev_v_hoare_batcher_sort_seq);
+    ppc::util::MakeAllPerfTasks<InType, ShekhirevHoareBatcherSortSEQ>(PPC_SETTINGS_shekhirev_v_hoare_batcher_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -50,4 +50,4 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, ShekhirevVRunPerfTest, kGtestValues, kPer
 
 }  // namespace
 
-}  // namespace shekhirev_v_hoare_batcher_sort_seq
+}  // namespace shekhirev_v_hoare_batcher_sort

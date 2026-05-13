@@ -1,4 +1,4 @@
-#include "shekhirev_v_hoare_batcher_sort_seq/seq/include/ops_seq.hpp"
+#include "shekhirev_v_hoare_batcher_sort/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <climits>
@@ -7,9 +7,9 @@
 #include <utility>
 #include <vector>
 
-#include "shekhirev_v_hoare_batcher_sort_seq/common/include/common.hpp"
+#include "shekhirev_v_hoare_batcher_sort/common/include/common.hpp"
 
-namespace shekhirev_v_hoare_batcher_sort_seq {
+namespace shekhirev_v_hoare_batcher_sort {
 
 namespace {
 
@@ -147,4 +147,4 @@ bool ShekhirevHoareBatcherSortSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace shekhirev_v_hoare_batcher_sort_seq
+}  // namespace shekhirev_v_hoare_batcher_sort

@@ -7,12 +7,12 @@
 #include <string>
 #include <tuple>
 
-#include "shekhirev_v_hoare_batcher_sort_seq/common/include/common.hpp"
-#include "shekhirev_v_hoare_batcher_sort_seq/seq/include/ops_seq.hpp"
+#include "shekhirev_v_hoare_batcher_sort/common/include/common.hpp"
+#include "shekhirev_v_hoare_batcher_sort/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace shekhirev_v_hoare_batcher_sort_seq {
+namespace shekhirev_v_hoare_batcher_sort {
 
 using TaskTestType = std::tuple<size_t, int>;
 
@@ -58,7 +58,7 @@ const std::array<TaskTestType, 6> kTestParams = {std::make_tuple(0, 42),  std::m
                                                  std::make_tuple(128, 1), std::make_tuple(200, 123)};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ShekhirevHoareBatcherSortSEQ, InType>(
-    kTestParams, PPC_SETTINGS_shekhirev_v_hoare_batcher_sort_seq));
+    kTestParams, PPC_SETTINGS_shekhirev_v_hoare_batcher_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -66,4 +66,4 @@ INSTANTIATE_TEST_SUITE_P(SeqSortTests_Group, ShekhirevVFuncTest, kGtestValues,
                          ShekhirevVFuncTest::PrintFuncTestName<ShekhirevVFuncTest>);
 }  // namespace
 
-}  // namespace shekhirev_v_hoare_batcher_sort_seq
+}  // namespace shekhirev_v_hoare_batcher_sort
