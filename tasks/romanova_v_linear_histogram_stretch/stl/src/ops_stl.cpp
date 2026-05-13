@@ -13,11 +13,9 @@ namespace romanova_v_linear_histogram_stretch_threads {
 
 void RomanovaVLinHistogramStretchSTL::GetThreadRange(size_t thid, size_t total, size_t num_th, size_t &beg,
                                                      size_t &en) {
-  size_t extra = total % num_th;
-  size_t delta = total / num_th;
-  size_t chunk = delta + (thid < extra ? 1 : 0);
-  beg = (thid < extra ? thid * chunk : (extra * (chunk + 1)) + ((thid - extra) * chunk));
-  en = beg + chunk;
+  size_t chunk = total / num_th;
+  beg = thid * chunk;
+  en = (thid == num_th - 1) ? total : (beg + chunk);
 }
 
 RomanovaVLinHistogramStretchSTL::RomanovaVLinHistogramStretchSTL(const InType &in) {
@@ -54,10 +52,21 @@ bool RomanovaVLinHistogramStretchSTL::RunImpl() {
 
       GetThreadRange(thid, size, num_th, begin, end);
 
-      for (size_t i = begin; i < end; i++) {
-        local_min[thid] = std::min(local_min[thid], in[i]);
-        local_max[thid] = std::max(local_max[thid], in[i]);
+      uint8_t current_min = 255;
+      uint8_t current_max = 0;
+
+      for (size_t i = begin; i < end; ++i) {
+        uint8_t val = in[i];
+        if (val < current_min) {
+          current_min = val;
+        }
+        if (val > current_max) {
+          current_max = val;
+        }
       }
+
+      local_min[thid] = current_min;
+      local_max[thid] = current_max;
     });
   }
 
