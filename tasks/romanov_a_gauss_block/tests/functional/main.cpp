@@ -7,6 +7,7 @@
 #include <tuple>
 #include <vector>
 
+#include "romanov_a_gauss_block/all/include/ops_all.hpp"
 #include "romanov_a_gauss_block/common/include/common.hpp"
 #include "romanov_a_gauss_block/omp/include/ops_omp.hpp"
 #include "romanov_a_gauss_block/seq/include/ops_seq.hpp"
@@ -70,6 +71,7 @@ const std::array<TestType, 8> kTestParam = {
                     std::vector<uint8_t>(static_cast<size_t>((100 * 100) * 3), 0), "Test8")};
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<RomanovAGaussBlockALL, InType>(kTestParam, PPC_SETTINGS_romanov_a_gauss_block),
     ppc::util::AddFuncTask<RomanovAGaussBlockOMP, InType>(kTestParam, PPC_SETTINGS_romanov_a_gauss_block),
     ppc::util::AddFuncTask<RomanovAGaussBlockSEQ, InType>(kTestParam, PPC_SETTINGS_romanov_a_gauss_block),
     ppc::util::AddFuncTask<RomanovAGaussBlockSTL, InType>(kTestParam, PPC_SETTINGS_romanov_a_gauss_block),
