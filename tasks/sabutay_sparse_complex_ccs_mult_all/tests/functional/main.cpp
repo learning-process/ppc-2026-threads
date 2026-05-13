@@ -20,7 +20,6 @@
 namespace sabutay_sparse_complex_ccs_mult_all {
 namespace {
 
-  
 using Z = std::complex<double>;
 constexpr double kCmpTol = 1e-12;
 
