@@ -34,7 +34,7 @@ void MatrixVectorProductHybrid(const std::vector<double> &a, const std::vector<d
     return;
   }
 
-  const auto size_t stride = static_cast<size_t>(n);
+  const auto stride = static_cast<size_t>(n);
 
   tbb::parallel_for(tbb::blocked_range<int>(0, n, 64), [&](const tbb::blocked_range<int> &range) {
     for (int i = range.begin(); i < range.end(); ++i) {
