@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <functional>
 #include <numeric>
 #include <thread>
 #include <vector>
@@ -22,6 +23,20 @@ double ExampleIntegrand(const std::array<double, 3> &x) {
     s += xi * xi;
   }
   return std::exp(-s);
+}
+
+double ComputeSumForI(int i, int n, double h) {
+  double sum = 0.0;
+  std::array<double, 3> x{};
+  x[0] = (static_cast<double>(i) + 0.5) * h;
+  for (int j = 0; j < n; ++j) {
+    x[1] = (static_cast<double>(j) + 0.5) * h;
+    for (int k = 0; k < n; ++k) {
+      x[2] = (static_cast<double>(k) + 0.5) * h;
+      sum += ExampleIntegrand(x);
+    }
+  }
+  return sum;
 }
 
 }  // namespace
@@ -63,23 +78,13 @@ bool AfanasyevAIntegRectMethodALL::RunImpl() {
   for (int thread_id = 0; thread_id < worker_count; ++thread_id) {
     const int end_i = start_i + chunk_size + (thread_id < remainder ? 1 : 0);
     workers.emplace_back([thread_id, start_i, end_i, n, h, &local_sums]() {
-      local_sums[thread_id] = tbb::parallel_reduce(
-          tbb::blocked_range<int>(start_i, end_i), 0.0,
-          [&](const tbb::blocked_range<int> &range, double sum) {
-            std::array<double, 3> x{};
-            for (int i = range.begin(); i < range.end(); ++i) {
-              x[0] = (static_cast<double>(i) + 0.5) * h;
-              for (int j = 0; j < n; ++j) {
-                x[1] = (static_cast<double>(j) + 0.5) * h;
-                for (int k = 0; k < n; ++k) {
-                  x[2] = (static_cast<double>(k) + 0.5) * h;
-                  sum += ExampleIntegrand(x);
-                }
-              }
-            }
-            return sum;
-          },
-          std::plus<>());
+      local_sums[thread_id] = tbb::parallel_reduce(tbb::blocked_range<int>(start_i, end_i), 0.0,
+                                                   [&](const tbb::blocked_range<int> &range, double sum) {
+        for (int i = range.begin(); i < range.end(); ++i) {
+          sum += ComputeSumForI(i, n, h);
+        }
+        return sum;
+      }, std::plus<>());
     });
     start_i = end_i;
   }

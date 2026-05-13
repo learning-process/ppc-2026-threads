@@ -46,8 +46,7 @@ namespace {
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, AfanasyevAIntegRectMethodSEQ, AfanasyevAIntegRectMethodOMP,
                                 AfanasyevAIntegRectMethodSTL, AfanasyevAIntegRectMethodTBB,
-                                AfanasyevAIntegRectMethodALL>(
-        PPC_SETTINGS_afanasyev_a_integ_rect_method);
+                                AfanasyevAIntegRectMethodALL>(PPC_SETTINGS_afanasyev_a_integ_rect_method);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
