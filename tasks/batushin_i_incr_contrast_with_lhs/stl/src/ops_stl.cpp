@@ -36,7 +36,7 @@ unsigned char NormalizePixel(unsigned char pixel, unsigned char min_val, double 
   return static_cast<unsigned char>(normalized);
 }
 
-std::pair<unsigned char, unsigned char> FindMinMaxParallel(const std::vector<unsigned char>& data) {
+std::pair<unsigned char, unsigned char> FindMinMaxParallel(const std::vector<unsigned char> &data) {
   if (data.empty()) {
     return {0, 0};
   }
@@ -63,14 +63,18 @@ std::pair<unsigned char, unsigned char> FindMinMaxParallel(const std::vector<uns
       unsigned char local_max = 0;
       for (size_t i = start; i < end; ++i) {
         unsigned char val = data[i];
-        if (val < local_min) local_min = val;
-        if (val > local_max) local_max = val;
+        if (val < local_min) {
+          local_min = val;
+        }
+        if (val > local_max) {
+          local_max = val;
+        }
       }
       block_results[b] = {local_min, local_max};
     });
   }
 
-  for (auto& thread : threads) {
+  for (auto &thread : threads) {
     if (thread.joinable()) {
       thread.join();
     }
@@ -78,18 +82,20 @@ std::pair<unsigned char, unsigned char> FindMinMaxParallel(const std::vector<uns
 
   unsigned char global_min = 255;
   unsigned char global_max = 0;
-  for (const auto& res : block_results) {
-    if (res.first < global_min) global_min = res.first;
-    if (res.second > global_max) global_max = res.second;
+  for (const auto &res : block_results) {
+    if (res.first < global_min) {
+      global_min = res.first;
+    }
+    if (res.second > global_max) {
+      global_max = res.second;
+    }
   }
 
   return {global_min, global_max};
 }
 
-void NormalizeImageParallel(const std::vector<unsigned char>& source,
-                            std::vector<unsigned char>& destination,
-                            unsigned char min_value,
-                            double scale_coefficient) {
+void NormalizeImageParallel(const std::vector<unsigned char> &source, std::vector<unsigned char> &destination,
+                            unsigned char min_value, double scale_coefficient) {
   unsigned int num_threads = std::thread::hardware_concurrency();
   if (num_threads == 0) {
     num_threads = 1;
@@ -113,14 +119,14 @@ void NormalizeImageParallel(const std::vector<unsigned char>& source,
     });
   }
 
-  for (auto& thread : threads) {
+  for (auto &thread : threads) {
     if (thread.joinable()) {
       thread.join();
     }
   }
 }
 
-void FillUniformImageParallel(std::vector<unsigned char>& output, size_t size) {
+void FillUniformImageParallel(std::vector<unsigned char> &output, size_t size) {
   unsigned int num_threads = std::thread::hardware_concurrency();
   if (num_threads == 0) {
     num_threads = 1;
@@ -143,7 +149,7 @@ void FillUniformImageParallel(std::vector<unsigned char>& output, size_t size) {
     });
   }
 
-  for (auto& thread : threads) {
+  for (auto &thread : threads) {
     if (thread.joinable()) {
       thread.join();
     }
@@ -153,8 +159,8 @@ void FillUniformImageParallel(std::vector<unsigned char>& output, size_t size) {
 }  // namespace
 
 bool BatushinIIncrContrastWithLhsSTL::RunImpl() {
-  const std::vector<unsigned char>& source = GetInput();
-  std::vector<unsigned char>& destination = GetOutput();
+  const std::vector<unsigned char> &source = GetInput();
+  std::vector<unsigned char> &destination = GetOutput();
 
   auto min_max = FindMinMaxParallel(source);
   unsigned char min_value = min_max.first;

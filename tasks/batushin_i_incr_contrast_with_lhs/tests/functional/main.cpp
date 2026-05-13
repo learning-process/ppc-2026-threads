@@ -9,8 +9,8 @@
 #include "batushin_i_incr_contrast_with_lhs/common/include/common.hpp"
 #include "batushin_i_incr_contrast_with_lhs/omp/include/ops_omp.hpp"
 #include "batushin_i_incr_contrast_with_lhs/seq/include/ops_seq.hpp"
-#include "batushin_i_incr_contrast_with_lhs/tbb/include/ops_tbb.hpp"
 #include "batushin_i_incr_contrast_with_lhs/stl/include/ops_stl.hpp"
+#include "batushin_i_incr_contrast_with_lhs/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 

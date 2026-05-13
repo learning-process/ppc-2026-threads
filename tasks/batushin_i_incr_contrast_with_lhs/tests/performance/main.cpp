@@ -5,8 +5,8 @@
 #include "batushin_i_incr_contrast_with_lhs/common/include/common.hpp"
 #include "batushin_i_incr_contrast_with_lhs/omp/include/ops_omp.hpp"
 #include "batushin_i_incr_contrast_with_lhs/seq/include/ops_seq.hpp"
-#include "batushin_i_incr_contrast_with_lhs/tbb/include/ops_tbb.hpp"
 #include "batushin_i_incr_contrast_with_lhs/stl/include/ops_stl.hpp"
+#include "batushin_i_incr_contrast_with_lhs/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace batushin_i_incr_contrast_with_lhs {
@@ -39,7 +39,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, BatushinIIncrContrastWithLhsOMP, BatushinITestTaskSEQ,
-                                BatushinIIncrContrastWithLhsTBB, BatushinIIncrContrastWithLhsSTL>(PPC_SETTINGS_batushin_i_incr_contrast_with_lhs);
+                                BatushinIIncrContrastWithLhsTBB, BatushinIIncrContrastWithLhsSTL>(
+        PPC_SETTINGS_batushin_i_incr_contrast_with_lhs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
