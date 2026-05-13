@@ -53,7 +53,7 @@ bool RomanovaVLinHistogramStretchALL::PreProcessingImpl() {
   vector_displs_.resize(n);
 
   if (rank == 0) {
-    for (size_t i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
       vector_counts_[i] = delta + (i < extra ? 1 : 0);
     }
 
@@ -102,7 +102,7 @@ bool RomanovaVLinHistogramStretchALL::RunImpl() {
   const uint8_t diff = max_v - min_v;
   const double ratio = 255.0 / diff;
 
-#pragma omp parallel for default(none)  // shared(local_data_, local_out, min_v, ratio, size)
+#pragma omp parallel for default(none) shared(min_v, ratio)
   for (size_t i = 0; i < local_size_; i++) {
     uint8_t pix = local_data_[i];
     local_out_[i] = (std::clamp(static_cast<int>((pix - min_v) * ratio), 0, 255));
