@@ -1,0 +1,40 @@
+#pragma once
+
+#include <cstdint>
+#include <vector>
+
+#include "task/include/task.hpp"
+#include "vdovin_a_gauss_block/common/include/common.hpp"
+
+namespace vdovin_a_gauss_block {
+
+class VdovinAGaussBlockSTL : public BaseTask {
+ public:
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kSTL;
+  }
+  explicit VdovinAGaussBlockSTL(const InType &in);
+
+  std::vector<uint8_t> &InputImage() {
+    return input_image_;
+  }
+  std::vector<uint8_t> &OutputImage() {
+    return output_image_;
+  }
+
+ private:
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
+
+  void ApplyGaussianToPixel(int py, int px);
+  void ProcessRows(int row_start, int row_end);
+
+  int width_ = 0;
+  int height_ = 0;
+  std::vector<uint8_t> input_image_;
+  std::vector<uint8_t> output_image_;
+};
+
+}  // namespace vdovin_a_gauss_block
