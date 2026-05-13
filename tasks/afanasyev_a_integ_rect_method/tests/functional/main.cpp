@@ -6,7 +6,7 @@
 #include <string>
 #include <tuple>
 
-#include "afanasyev_a_integ_rect_method/common/include/common.hpp"
+#include "afanasyev_a_integ_rect_method/common/include/common.hpp" 
 #include "afanasyev_a_integ_rect_method/all/include/ops_all.hpp"
 #include "afanasyev_a_integ_rect_method/omp/include/ops_omp.hpp"
 #include "afanasyev_a_integ_rect_method/seq/include/ops_seq.hpp"
