@@ -3,10 +3,8 @@
 #include <omp.h>
 #include <tbb/tbb.h>
 
-#include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <numeric>
 #include <vector>
 
 #include "kichanova_k_lin_system_by_conjug_grad/common/include/common.hpp"
@@ -36,7 +34,7 @@ void MatrixVectorProductHybrid(const std::vector<double> &a, const std::vector<d
     return;
   }
 
-  const size_t stride = static_cast<size_t>(n);
+  const auto size_t stride = static_cast<size_t>(n);
 
   tbb::parallel_for(tbb::blocked_range<int>(0, n, 64), [&](const tbb::blocked_range<int> &range) {
     for (int i = range.begin(); i < range.end(); ++i) {
