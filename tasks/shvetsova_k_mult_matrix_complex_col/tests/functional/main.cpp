@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <array>
 #include <cstddef>
@@ -7,8 +8,11 @@
 #include <tuple>
 #include <vector>
 
+#include "../../all/include/ops_all.hpp"
 #include "../../common/include/common.hpp"
 #include "../../omp/include/ops_omp.hpp"
+#include "../../stl/include/ops_stl.hpp"
+#include "../../tbb/include/ops_tbb.hpp"
 #include "omp.h"
 #include "shvetsova_k_mult_matrix_complex_col/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
@@ -148,6 +152,15 @@ class ShvetsovaKRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType,
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+    int is_mpi_init = 0;
+    MPI_Initialized(&is_mpi_init);
+    if (is_mpi_init != 0) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+    if (rank != 0) {
+      return true;
+    }
     return output_data == expected_data_;
   }
 
@@ -172,6 +185,12 @@ const std::array<TestType, 5> kTestParam = {std::make_tuple(0, "0"), std::make_t
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ShvetsovaKMultMatrixComplexSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_shvetsova_k_mult_matrix_complex_col),
                                            ppc::util::AddFuncTask<ShvetsovaKMultMatrixComplexOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_shvetsova_k_mult_matrix_complex_col),
+                                           ppc::util::AddFuncTask<ShvetsovaKMultMatrixComplexTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_shvetsova_k_mult_matrix_complex_col),
+                                           ppc::util::AddFuncTask<ShvetsovaKMultMatrixComplexSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_shvetsova_k_mult_matrix_complex_col),
+                                           ppc::util::AddFuncTask<ShvetsovaKMultMatrixComplexALL, InType>(
                                                kTestParam, PPC_SETTINGS_shvetsova_k_mult_matrix_complex_col));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

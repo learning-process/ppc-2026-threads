@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <array>
 #include <cmath>
@@ -10,9 +11,11 @@
 #include <utility>
 #include <vector>
 
+#include "shkrebko_m_calc_of_integral_rect/all/include/ops_all.hpp"
 #include "shkrebko_m_calc_of_integral_rect/common/include/common.hpp"
 #include "shkrebko_m_calc_of_integral_rect/omp/include/ops_omp.hpp"
 #include "shkrebko_m_calc_of_integral_rect/seq/include/ops_seq.hpp"
+#include "shkrebko_m_calc_of_integral_rect/stl/include/ops_stl.hpp"
 #include "shkrebko_m_calc_of_integral_rect/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -33,6 +36,15 @@ class ShkrebkoMRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+    if (ppc::util::IsUnderMpirun()) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+
+    if (rank != 0) {
+      return true;
+    }
+
     const double eps = 1e-4;
     return std::fabs(output_data - expected_) <= eps;
   }
@@ -82,6 +94,10 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ShkrebkoMCalcO
                                            ppc::util::AddFuncTask<ShkrebkoMCalcOfIntegralRectOMP, InType>(
                                                kTestCases, PPC_SETTINGS_shkrebko_m_calc_of_integral_rect),
                                            ppc::util::AddFuncTask<ShkrebkoMCalcOfIntegralRectTBB, InType>(
+                                               kTestCases, PPC_SETTINGS_shkrebko_m_calc_of_integral_rect),
+                                           ppc::util::AddFuncTask<ShkrebkoMCalcOfIntegralRectSTL, InType>(
+                                               kTestCases, PPC_SETTINGS_shkrebko_m_calc_of_integral_rect),
+                                           ppc::util::AddFuncTask<ShkrebkoMCalcOfIntegralRectALL, InType>(
                                                kTestCases, PPC_SETTINGS_shkrebko_m_calc_of_integral_rect));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

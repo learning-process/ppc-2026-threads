@@ -7,9 +7,11 @@
 #include <string>
 #include <tuple>
 
+#include "sakharov_a_shell_sorting_with_merging_butcher/all/include/ops_all.hpp"
 #include "sakharov_a_shell_sorting_with_merging_butcher/common/include/common.hpp"
 #include "sakharov_a_shell_sorting_with_merging_butcher/omp/include/ops_omp.hpp"
 #include "sakharov_a_shell_sorting_with_merging_butcher/seq/include/ops_seq.hpp"
+#include "sakharov_a_shell_sorting_with_merging_butcher/stl/include/ops_stl.hpp"
 #include "sakharov_a_shell_sorting_with_merging_butcher/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -70,9 +72,13 @@ const std::array<TestType, 5> kTestParam = {
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SakharovAShellButcherSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_sakharov_a_shell_sorting_with_merging_butcher),
+                                           ppc::util::AddFuncTask<SakharovAShellButcherALL, InType>(
+                                               kTestParam, PPC_SETTINGS_sakharov_a_shell_sorting_with_merging_butcher),
                                            ppc::util::AddFuncTask<SakharovAShellButcherOMP, InType>(
                                                kTestParam, PPC_SETTINGS_sakharov_a_shell_sorting_with_merging_butcher),
                                            ppc::util::AddFuncTask<SakharovAShellButcherTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_sakharov_a_shell_sorting_with_merging_butcher),
+                                           ppc::util::AddFuncTask<SakharovAShellButcherSTL, InType>(
                                                kTestParam, PPC_SETTINGS_sakharov_a_shell_sorting_with_merging_butcher));
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kFuncTestName = SakharovAShellButcherFuncTests::PrintFuncTestName<SakharovAShellButcherFuncTests>;

@@ -4,8 +4,8 @@
 #include <cstddef>
 #include <random>
 
-// #include "zenin_a_radix_sort_double_batcher_merge/all/include/ops_all.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "zenin_a_radix_sort_double_batcher_merge/all/include/ops_all.hpp"
 #include "zenin_a_radix_sort_double_batcher_merge/common/include/common.hpp"
 #include "zenin_a_radix_sort_double_batcher_merge/omp/include/ops_omp.hpp"
 #include "zenin_a_radix_sort_double_batcher_merge/seq/include/ops_seq.hpp"
@@ -19,8 +19,7 @@ class ZeninARadixSortDoubleBatcherMergePerfTestsThreads : public ppc::util::Base
   InType input_data_;
 
   void SetUp() override {
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::mt19937 gen(static_cast<unsigned int>(kCount_));
     std::uniform_real_distribution<double> dist(-1e6, 1e6);
 
     input_data_.resize(kCount_);
@@ -56,7 +55,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ZeninARadixSortDoubleBatcherMergeOMP, ZeninARadixSortDoubleBatcherMergeSeqseq,
-                                ZeninARadixSortDoubleBatcherMergeTBB, ZeninARadixSortDoubleBatcherMergeSTL>(
+                                ZeninARadixSortDoubleBatcherMergeTBB, ZeninARadixSortDoubleBatcherMergeSTL,
+                                ZeninARadixSortDoubleBatcherMergeALL>(
         PPC_SETTINGS_zenin_a_radix_sort_double_batcher_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

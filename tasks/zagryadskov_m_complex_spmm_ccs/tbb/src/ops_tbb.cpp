@@ -56,9 +56,8 @@ void ZagryadskovMComplexSpMMCCSTBB::SpMMSymbolic(const CCS &a, const CCS &b, std
 }
 
 void ZagryadskovMComplexSpMMCCSTBB::SpMMKernel(const CCS &a, const CCS &b, CCS &c, const std::complex<double> &zero,
-                                               double eps, std::vector<int> &rows,
-                                               std::vector<std::complex<double>> &acc, std::vector<int> &marker,
-                                               int j) {
+                                               std::vector<int> &rows, std::vector<std::complex<double>> &acc,
+                                               std::vector<int> &marker, int j) {
   rows.clear();
 
   int write_ptr = c.col_ptr[j];
@@ -80,17 +79,14 @@ void ZagryadskovMComplexSpMMCCSTBB::SpMMKernel(const CCS &a, const CCS &b, CCS &
   }
 
   for (int r_idx : rows) {
-    if (std::norm(acc[r_idx]) > eps * eps) {
-      c.row_ind[write_ptr] = r_idx;
-      c.values[write_ptr] = acc[r_idx];
-      ++write_ptr;
-    }
+    c.row_ind[write_ptr] = r_idx;
+    c.values[write_ptr] = acc[r_idx];
+    ++write_ptr;
     acc[r_idx] = zero;
   }
 }
 
-void ZagryadskovMComplexSpMMCCSTBB::SpMMNumeric(const CCS &a, const CCS &b, CCS &c, const std::complex<double> &zero,
-                                                double eps) {
+void ZagryadskovMComplexSpMMCCSTBB::SpMMNumeric(const CCS &a, const CCS &b, CCS &c, const std::complex<double> &zero) {
   const int m = a.m;
   const int n = b.n;
 
@@ -106,7 +102,7 @@ void ZagryadskovMComplexSpMMCCSTBB::SpMMNumeric(const CCS &a, const CCS &b, CCS 
     std::vector<int> rows;
 
     for (int j = r.begin(); j < r.end(); ++j) {
-      SpMMKernel(a, b, c, zero, eps, rows, acc, marker, j);
+      SpMMKernel(a, b, c, zero, rows, acc, marker, j);
     }
   });
 }
@@ -116,7 +112,6 @@ void ZagryadskovMComplexSpMMCCSTBB::SpMM(const CCS &a, const CCS &b, CCS &c) {
   c.n = b.n;
 
   std::complex<double> zero(0.0, 0.0);
-  const double eps = 1e-14;
 
   SpMMSymbolic(a, b, c.col_ptr);
 
@@ -124,7 +119,7 @@ void ZagryadskovMComplexSpMMCCSTBB::SpMM(const CCS &a, const CCS &b, CCS &c) {
   c.row_ind.resize(nnz);
   c.values.resize(nnz);
 
-  SpMMNumeric(a, b, c, zero, eps);
+  SpMMNumeric(a, b, c, zero);
 }
 
 bool ZagryadskovMComplexSpMMCCSTBB::ValidationImpl() {
