@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "shekhirev_v_hoare_batcher_sort_seq/common/include/common.hpp"
+#include "shekhirev_v_hoare_batcher_sort/common/include/common.hpp"
 #include "task/include/task.hpp"
 
 namespace shekhirev_v_hoare_batcher_sort {
@@ -24,4 +24,4 @@ class ShekhirevHoareBatcherSortSEQ : public BaseTask {
   static void BatcherMerge(std::vector<int> &arr, int start_left, int start_right, int start_r);
 };
 
-}  // namespace shekhirev_v_hoare_batcher_sort_seq
+}  // namespace shekhirev_v_hoare_batcher_sort
