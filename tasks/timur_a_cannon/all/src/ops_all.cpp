@@ -32,16 +32,32 @@ Matrix UnflattenMatrix(const std::vector<double> &flat, std::size_t rows, std::s
   Matrix matrix(rows, std::vector<double>(cols));
 
   for (std::size_t row = 0; row < rows; ++row) {
-    std::copy(flat.begin() + static_cast<std::ptrdiff_t>(row * cols),
-              flat.begin() + static_cast<std::ptrdiff_t>((row + 1) * cols), matrix[row].begin());
+    const std::ptrdiff_t begin_idx = (static_cast<std::ptrdiff_t>(row) * static_cast<std::ptrdiff_t>(cols));
+    const std::ptrdiff_t end_idx = (static_cast<std::ptrdiff_t>(row + 1) * static_cast<std::ptrdiff_t>(cols));
+    std::copy(flat.begin() + begin_idx, flat.begin() + end_idx, matrix[row].begin());
   }
 
   return matrix;
 }
 
+std::pair<std::vector<int>, std::vector<int>> BuildGatherLayout(int size, int base_block_rows, int extra_block_rows,
+                                                                int b_size, int n) {
+  std::vector<int> recv_counts(size);
+  std::vector<int> displs(size);
+  int offset = 0;
+  for (int proc = 0; proc < size; ++proc) {
+    const int proc_block_rows = base_block_rows + (proc < extra_block_rows ? 1 : 0);
+    recv_counts[proc] = proc_block_rows * b_size * n;
+    displs[proc] = offset;
+    offset += recv_counts[proc];
+  }
+  return {recv_counts, displs};
+}
+
 }  // namespace
 
-TimurACannonMatrixMultiplicationALL::TimurACannonMatrixMultiplicationALL(const InType &in) {
+TimurACannonMatrixMultiplicationALL::TimurACannonMatrixMultiplicationALL(
+    const std::tuple<int, std::vector<std::vector<double>>, std::vector<std::vector<double>>> &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
@@ -158,16 +174,7 @@ bool TimurACannonMatrixMultiplicationALL::RunImpl() {
   Matrix local_result = ComputeLocalResult(src_a, src_b, b_size, grid_sz, block_row_start, local_block_rows, n);
 
   std::vector<double> local_flat = FlattenMatrix(local_result);
-  std::vector<int> recv_counts(size);
-  std::vector<int> displs(size);
-
-  int offset = 0;
-  for (int proc = 0; proc < size; ++proc) {
-    const int proc_block_rows = base_block_rows + (proc < extra_block_rows ? 1 : 0);
-    recv_counts[proc] = proc_block_rows * b_size * n;
-    displs[proc] = offset;
-    offset += recv_counts[proc];
-  }
+  auto [recv_counts, displs] = BuildGatherLayout(size, base_block_rows, extra_block_rows, b_size, n);
 
   std::vector<double> global_flat(total_elems);
   MPI_Allgatherv(local_flat.data(), static_cast<int>(local_flat.size()), MPI_DOUBLE, global_flat.data(),
@@ -182,4 +189,3 @@ bool TimurACannonMatrixMultiplicationALL::PostProcessingImpl() {
 }
 
 }  // namespace timur_a_cannon
-
