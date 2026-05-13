@@ -42,7 +42,7 @@ class SafronovMMultiplicationMatrixBlockSchemeCannonALL : public BaseTask {
   static void CollectResult(MPI_Comm comm, int worker_rank, int worker_size, int q, int block_size,
                             std::vector<double> &flat_result, const std::vector<double> &local_c);
   static void FillResultFromBuffer(std::vector<double> &flat_result, const std::vector<double> &buffer, int row,
-                                   int col, int block_size, int padded_n);
+                                   int col, int block_size, int padded_n);  //
 };
 
 }  // namespace safronov_m_multiplication_matrix_blocksscheme_cannon
