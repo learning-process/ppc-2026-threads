@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "kamalagin_a_binary_image_convex_hull/all/include/ops_all.hpp"
 #include "kamalagin_a_binary_image_convex_hull/common/include/common.hpp"
 #include "kamalagin_a_binary_image_convex_hull/omp/include/ops_omp.hpp"
 #include "kamalagin_a_binary_image_convex_hull/seq/include/ops_seq.hpp"
@@ -223,6 +224,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KamalaginABina
                                            ppc::util::AddFuncTask<KamalaginABinaryImageConvexHullTBB, InType>(
                                                kTestParam, PPC_SETTINGS_kamalagin_a_binary_image_convex_hull),
                                            ppc::util::AddFuncTask<KamalaginABinaryImageConvexHullSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_kamalagin_a_binary_image_convex_hull),
+                                           ppc::util::AddFuncTask<KamalaginABinaryImageConvexHullALL, InType>(
                                                kTestParam, PPC_SETTINGS_kamalagin_a_binary_image_convex_hull));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

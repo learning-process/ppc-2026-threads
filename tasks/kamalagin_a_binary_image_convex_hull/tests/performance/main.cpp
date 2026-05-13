@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <vector>
 
+#include "kamalagin_a_binary_image_convex_hull/all/include/ops_all.hpp"
 #include "kamalagin_a_binary_image_convex_hull/common/include/common.hpp"
 #include "kamalagin_a_binary_image_convex_hull/omp/include/ops_omp.hpp"
 #include "kamalagin_a_binary_image_convex_hull/seq/include/ops_seq.hpp"
@@ -80,8 +81,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, KamalaginABinaryImageConvexHullSEQ, KamalaginABinaryImageConvexHullOMP,
-                                KamalaginABinaryImageConvexHullTBB, KamalaginABinaryImageConvexHullSTL>(
-        PPC_SETTINGS_kamalagin_a_binary_image_convex_hull);
+                                KamalaginABinaryImageConvexHullTBB, KamalaginABinaryImageConvexHullSTL,
+                                KamalaginABinaryImageConvexHullALL>(PPC_SETTINGS_kamalagin_a_binary_image_convex_hull);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = KamalaginRunPerfTests::CustomPerfTestName;
