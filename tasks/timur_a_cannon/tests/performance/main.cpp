@@ -4,6 +4,7 @@
 #include <tuple>
 #include <vector>
 
+#include "timur_a_cannon/all/include/ops_all.hpp"
 #include "timur_a_cannon/common/include/common.hpp"
 #include "timur_a_cannon/omp/include/ops_omp.hpp"
 #include "timur_a_cannon/seq/include/ops_seq.hpp"
@@ -41,9 +42,9 @@ TEST_P(TimurACannonPerfTests, MultiplicationMatrixBlockSchemeCannonPerf) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, TimurACannonMatrixMultiplication, TimurACannonMatrixMultiplicationOMP,
-                                TimurACannonMatrixMultiplicationTBB, TimurACannonMatrixMultiplicationSTL>(
-        PPC_SETTINGS_timur_a_cannon);
+    ppc::util::MakeAllPerfTasks<InType, TimurACannonMatrixMultiplicationALL, TimurACannonMatrixMultiplication,
+                                TimurACannonMatrixMultiplicationOMP, TimurACannonMatrixMultiplicationTBB,
+                                TimurACannonMatrixMultiplicationSTL>(PPC_SETTINGS_timur_a_cannon);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <cstddef>
 #include <map>
@@ -7,6 +8,8 @@
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
+#include "zavyalov_a_complex_sparse_matrix_mult/all/include/ops_all.hpp"
 #include "zavyalov_a_complex_sparse_matrix_mult/common/include/common.hpp"
 #include "zavyalov_a_complex_sparse_matrix_mult/omp/include/ops_omp.hpp"
 #include "zavyalov_a_complex_sparse_matrix_mult/seq/include/ops_seq.hpp"
@@ -43,6 +46,16 @@ class ZavyalovAComplexSparseMatrMultPerfTest : public ppc::util::BaseRunPerfTest
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+
+    if (ppc::util::IsUnderMpirun()) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+
+    if (rank != 0) {
+      return true;
+    }
+
     const SparseMatrix &matr1 = std::get<0>(input_data_);
     const SparseMatrix &matr2 = std::get<1>(input_data_);
 
@@ -85,9 +98,9 @@ TEST_P(ZavyalovAComplexSparseMatrMultPerfTest, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZavyalovAComplSparseMatrMultSEQ, ZavyalovAComplSparseMatrMultOMP,
-                                ZavyalovAComplSparseMatrMultTBB, ZavyalovAComplSparseMatrMultSTL>(
-        PPC_SETTINGS_zavyalov_a_complex_sparse_matrix_mult);
+    ppc::util::MakeAllPerfTasks<InType, ZavyalovAComplSparseMatrMultSEQ, ZavyalovAComplSparseMatrMultALL,
+                                ZavyalovAComplSparseMatrMultOMP, ZavyalovAComplSparseMatrMultTBB,
+                                ZavyalovAComplSparseMatrMultSTL>(PPC_SETTINGS_zavyalov_a_complex_sparse_matrix_mult);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

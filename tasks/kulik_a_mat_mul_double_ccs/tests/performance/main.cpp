@@ -10,6 +10,7 @@
 #include "kulik_a_mat_mul_double_ccs/common/include/common.hpp"
 #include "kulik_a_mat_mul_double_ccs/omp/include/ops_omp.hpp"
 #include "kulik_a_mat_mul_double_ccs/seq/include/ops_seq.hpp"
+#include "kulik_a_mat_mul_double_ccs/stl/include/ops_stl.hpp"
 #include "kulik_a_mat_mul_double_ccs/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -117,8 +118,8 @@ TEST_P(KulikARunPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KulikAMatMulDoubleCcsSEQ, KulikAMatMulDoubleCcsOMP, KulikAMatMulDoubleCcsTBB>(
-        PPC_SETTINGS_kulik_a_mat_mul_double_ccs);
+    ppc::util::MakeAllPerfTasks<InType, KulikAMatMulDoubleCcsSEQ, KulikAMatMulDoubleCcsOMP, KulikAMatMulDoubleCcsTBB,
+                                KulikAMatMulDoubleCcsSTL>(PPC_SETTINGS_kulik_a_mat_mul_double_ccs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

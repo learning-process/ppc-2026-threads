@@ -10,6 +10,7 @@
 #include "moskaev_v_lin_filt_block_gauss_3/common/include/common.hpp"
 #include "moskaev_v_lin_filt_block_gauss_3/omp/include/ops_omp.hpp"
 #include "moskaev_v_lin_filt_block_gauss_3/seq/include/ops_seq.hpp"
+#include "moskaev_v_lin_filt_block_gauss_3/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -63,6 +64,8 @@ const std::array<TestType, 4> kTestParam = {
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<MoskaevVLinFiltBlockGauss3SEQ, InType>(
                                                kTestParam, PPC_SETTINGS_moskaev_v_lin_filt_block_gauss_3),
                                            ppc::util::AddFuncTask<MoskaevVLinFiltBlockGauss3OMP, InType>(
+                                               kTestParam, PPC_SETTINGS_moskaev_v_lin_filt_block_gauss_3),
+                                           ppc::util::AddFuncTask<MoskaevVLinFiltBlockGauss3TBB, InType>(
                                                kTestParam, PPC_SETTINGS_moskaev_v_lin_filt_block_gauss_3));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

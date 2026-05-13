@@ -5,6 +5,7 @@
 #include <random>
 #include <vector>
 
+#include "terekhov_d_gauss_vert/all/include/ops_all.hpp"
 #include "terekhov_d_gauss_vert/common/include/common.hpp"
 #include "terekhov_d_gauss_vert/omp/include/ops_omp.hpp"
 #include "terekhov_d_gauss_vert/seq/include/ops_seq.hpp"
@@ -51,7 +52,7 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, TerekhovDGaussVertSEQ, TerekhovDGaussVertOMP, TerekhovDGaussVertTBB,
-                                TerekhovDGaussVertSTL>(PPC_SETTINGS_terekhov_d_gauss_vert);
+                                TerekhovDGaussVertSTL, TerekhovDGaussVertALL>(PPC_SETTINGS_terekhov_d_gauss_vert);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = TerekhovDGaussVertPerfTests::CustomPerfTestName;

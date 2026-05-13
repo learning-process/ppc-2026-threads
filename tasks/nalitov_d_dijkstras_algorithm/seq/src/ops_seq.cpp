@@ -1,7 +1,12 @@
 #include "nalitov_d_dijkstras_algorithm/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <limits>
+#include <queue>
+#include <utility>
 #include <vector>
 
 #include "nalitov_d_dijkstras_algorithm/common/include/common.hpp"
@@ -10,78 +15,83 @@ namespace nalitov_d_dijkstras_algorithm {
 
 namespace {
 
-inline bool SafeAdd(InType a, InType b, InType &result) {
-  if (a > 0 && b > std::numeric_limits<InType>::max() - a) {
+using OutgoingTable = std::vector<std::vector<std::pair<NodeId, Cost>>>;
+
+struct FrontierNode {
+  Cost dist{};
+  NodeId node{};
+  friend bool operator<(const FrontierNode &a, const FrontierNode &b) {
+    if (a.dist != b.dist) {
+      return a.dist < b.dist;
+    }
+    return a.node < b.node;
+  }
+  friend bool operator>(const FrontierNode &a, const FrontierNode &b) {
+    return b < a;
+  }
+};
+
+bool CheckedSum(std::int64_t acc, Cost addend, std::int64_t &out) {
+  const auto x = static_cast<std::int64_t>(addend);
+  if (x > 0 && acc > std::numeric_limits<std::int64_t>::max() - x) {
     return false;
   }
-  if (a < 0 && b < std::numeric_limits<InType>::min() - a) {
+  if (x < 0 && acc < std::numeric_limits<std::int64_t>::min() - x) {
     return false;
   }
-  result = a + b;
+  out = acc + x;
   return true;
 }
 
-inline InType GetEdgeWeight(InType from, InType to) {
-  if (from == to) {
-    return 0;
-  }
-  return (from > to) ? (from - to) : (to - from);
-}
+std::vector<Cost> FindShortestPaths(NodeId start, const OutgoingTable &graph) {
+  const auto vertex_count = graph.size();
+  std::vector<Cost> best(vertex_count, kInf);
+  std::priority_queue<FrontierNode, std::vector<FrontierNode>, std::greater<>> pq;
 
-InType FindMinDistanceVertex(const std::vector<InType> &distances, const std::vector<bool> &processed,
-                             InType k_infinity) {
-  InType min_distance = k_infinity;
-  InType current_vertex = -1;
-  const auto num_vertices = static_cast<InType>(distances.size());
+  best[static_cast<std::size_t>(start)] = 0;
+  pq.push({0, start});
 
-  for (InType vertex_idx = 0; vertex_idx < num_vertices; ++vertex_idx) {
-    if (!processed[vertex_idx] && distances[vertex_idx] < min_distance) {
-      min_distance = distances[vertex_idx];
-      current_vertex = vertex_idx;
-    }
-  }
+  while (!pq.empty()) {
+    const FrontierNode top = pq.top();
+    pq.pop();
+    const Cost dist_u = top.dist;
+    const NodeId u = top.node;
+    const auto ui = static_cast<std::size_t>(u);
 
-  return current_vertex;
-}
-
-void RelaxEdges(InType current_vertex, std::vector<InType> &distances, const std::vector<bool> &processed,
-                InType k_infinity) {
-  const auto num_vertices = static_cast<InType>(distances.size());
-
-  for (InType neighbor = 0; neighbor < num_vertices; ++neighbor) {
-    if (processed[neighbor] || neighbor == current_vertex) {
+    if (dist_u != best[ui]) {
       continue;
     }
 
-    const InType edge_weight = GetEdgeWeight(current_vertex, neighbor);
+    for (const auto &neighbor : graph[ui]) {
+      const NodeId v = neighbor.first;
+      const Cost w = neighbor.second;
+      const auto vi = static_cast<std::size_t>(v);
 
-    if (distances[current_vertex] == k_infinity) {
-      continue;
-    }
-
-    InType new_distance = 0;
-    if (!SafeAdd(distances[current_vertex], edge_weight, new_distance)) {
-      continue;
-    }
-
-    distances[neighbor] = std::min(new_distance, distances[neighbor]);
-  }
-}
-
-OutType CalculateTotalDistance(const std::vector<InType> &distances, InType k_infinity) {
-  OutType total_sum = 0;
-  const auto num_vertices = static_cast<InType>(distances.size());
-
-  for (InType vertex_idx = 0; vertex_idx < num_vertices; ++vertex_idx) {
-    if (distances[vertex_idx] != k_infinity) {
-      if (total_sum > std::numeric_limits<OutType>::max() - distances[vertex_idx]) {
-        return -1;  // Overflow indicator
+      if (dist_u <= kInf - w && dist_u + w < best[vi]) {
+        best[vi] = dist_u + w;
+        pq.push({best[vi], v});
       }
-      total_sum += distances[vertex_idx];
     }
   }
 
-  return total_sum;
+  return best;
+}
+
+bool AccumulateFiniteDistances(const std::vector<Cost> &best, OutType &sum) {
+  std::int64_t acc = 0;
+  for (Cost d : best) {
+    if (d == kInf) {
+      continue;
+    }
+    if (!CheckedSum(acc, d, acc)) {
+      return false;
+    }
+  }
+  if (acc < 0 || acc > std::numeric_limits<OutType>::max()) {
+    return false;
+  }
+  sum = acc;
+  return true;
 }
 
 }  // namespace
@@ -93,67 +103,52 @@ NalitovDDijkstrasAlgorithmSeq::NalitovDDijkstrasAlgorithmSeq(const InType &in) {
 }
 
 bool NalitovDDijkstrasAlgorithmSeq::ValidationImpl() {
-  const InType n = GetInput();
-
-  constexpr InType kMaxVertices = 10000;
-  if (n <= 0 || n > kMaxVertices) {
-    return false;
-  }
-
   if (GetOutput() != 0) {
     return false;
   }
 
-  return true;
+  const InType &in = GetInput();
+  constexpr int kMaxVertices = 10000;
+  if (in.n <= 0 || in.n > kMaxVertices) {
+    return false;
+  }
+  if (in.source < 0 || in.source >= in.n) {
+    return false;
+  }
+
+  const auto arc_ok = [&in](const Arc &a) {
+    return a.from >= 0 && a.to >= 0 && a.from < in.n && a.to < in.n && a.weight >= 0;
+  };
+  return std::ranges::all_of(in.arcs, arc_ok);
 }
 
 bool NalitovDDijkstrasAlgorithmSeq::PreProcessingImpl() {
+  const InType &in = GetInput();
+  graph_.assign(static_cast<std::size_t>(in.n), {});
+
+  for (const Arc &a : in.arcs) {
+    graph_[static_cast<std::size_t>(a.from)].emplace_back(a.to, a.weight);
+  }
   GetOutput() = 0;
   return true;
 }
 
 bool NalitovDDijkstrasAlgorithmSeq::RunImpl() {
-  const InType n = GetInput();
-
-  if (n <= 0) {
+  const InType &in = GetInput();
+  if (graph_.size() != static_cast<std::size_t>(in.n)) {
     return false;
   }
 
-  if (n == 1) {
-    GetOutput() = 0;
-    return true;
-  }
-
-  if (n < 2) {
+  const std::vector<Cost> best = FindShortestPaths(in.source, graph_);
+  if (best.size() != static_cast<std::size_t>(in.n)) {
     return false;
   }
 
-  const InType k_infinity = std::numeric_limits<InType>::max();
-  std::vector<InType> distances(n, k_infinity);
-  std::vector<bool> processed(n, false);
-
-  if (distances.empty()) {
+  OutType total = 0;
+  if (!AccumulateFiniteDistances(best, total)) {
     return false;
   }
-  distances[0] = 0;
-
-  for (InType iteration = 0; iteration < n; ++iteration) {
-    const InType current_vertex = FindMinDistanceVertex(distances, processed, k_infinity);
-
-    if (current_vertex == -1 || distances[current_vertex] == k_infinity) {
-      break;
-    }
-
-    processed[current_vertex] = true;
-    RelaxEdges(current_vertex, distances, processed, k_infinity);
-  }
-
-  const OutType total_sum = CalculateTotalDistance(distances, k_infinity);
-  if (total_sum < 0) {
-    return false;  // Overflow occurred
-  }
-
-  GetOutput() = total_sum;
+  GetOutput() = total;
   return true;
 }
 
