@@ -6,15 +6,32 @@
 #include <algorithm>
 #include <cstddef>
 #include <tuple>
+#include <utility>
 #include <vector>
-
-#include "timur_a_cannon/common/include/common.hpp"
 
 namespace timur_a_cannon {
 
 namespace {
 
 using Matrix = std::vector<std::vector<double>>;
+
+void CopyBlocksForStep(const Matrix &src_a, const Matrix &src_b, int b_size, int global_i, int shift, int j,
+                       Matrix &block_a, Matrix &block_b) {
+  for (int row = 0; row < b_size; ++row) {
+    for (int col = 0; col < b_size; ++col) {
+      block_a[row][col] = src_a[(global_i * b_size) + row][(shift * b_size) + col];
+      block_b[row][col] = src_b[(shift * b_size) + row][(j * b_size) + col];
+    }
+  }
+}
+
+void ScatterBlockIntoResult(Matrix &local_result, const Matrix &block_c, int local_i, int j, int b_size) {
+  for (int row = 0; row < b_size; ++row) {
+    for (int col = 0; col < b_size; ++col) {
+      local_result[(local_i * b_size) + row][(j * b_size) + col] = block_c[row][col];
+    }
+  }
+}
 
 std::vector<double> FlattenMatrix(const Matrix &matrix) {
   const std::size_t rows = matrix.size();
@@ -121,22 +138,11 @@ std::vector<std::vector<double>> TimurACannonMatrixMultiplicationALL::ComputeLoc
         const int shift = (global_i + j + step) % grid_sz;
         Matrix block_a(b_size, std::vector<double>(b_size));
         Matrix block_b(b_size, std::vector<double>(b_size));
-
-        for (int row = 0; row < b_size; ++row) {
-          for (int col = 0; col < b_size; ++col) {
-            block_a[row][col] = src_a[(global_i * b_size) + row][(shift * b_size) + col];
-            block_b[row][col] = src_b[(shift * b_size) + row][(j * b_size) + col];
-          }
-        }
-
+        CopyBlocksForStep(src_a, src_b, b_size, global_i, shift, j, block_a, block_b);
         BlockMultiplyAccumulate(block_a, block_b, block_c, b_size);
       }
 
-      for (int row = 0; row < b_size; ++row) {
-        for (int col = 0; col < b_size; ++col) {
-          local_result[(local_i * b_size) + row][(j * b_size) + col] = block_c[row][col];
-        }
-      }
+      ScatterBlockIntoResult(local_result, block_c, local_i, j, b_size);
     }
   }
 
