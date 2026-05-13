@@ -10,7 +10,7 @@ namespace muhammadkhon_i_stressen_alg {
 
 namespace {
 
-constexpr std::size_t kCutoff = 64;  // у тебя в seq было 32, можно поиграть
+constexpr std::size_t kCutoff = 64;
 constexpr std::size_t kBlockSize = 64;
 
 std::size_t NextPow2(std::size_t x) {
@@ -88,12 +88,16 @@ void CombineQuadrants(const std::vector<double> &m1, const std::vector<double> &
   }
 }
 
-void StrassenSeq(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c,
-                 std::size_t c_stride, std::size_t n);
+using StrassenFn = void (*)(const double *, std::size_t, const double *, std::size_t, double *, std::size_t,
+                            std::size_t);
 
-void StrassenSeq(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride,
-                 double *c,  // NOLINT(misc-no-recursion)
-                 std::size_t c_stride, std::size_t n) {
+void StrassenSeqImpl(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c,
+                     std::size_t c_stride, std::size_t n);
+
+constexpr StrassenFn kStrassenSeq = &StrassenSeqImpl;
+
+void StrassenSeqImpl(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c,
+                     std::size_t c_stride, std::size_t n) {
   if (n <= kCutoff) {
     NaiveMulBlocked(a, a_stride, b, b_stride, c, c_stride, n);
     return;
@@ -119,36 +123,29 @@ void StrassenSeq(const double *a, std::size_t a_stride, const double *b, std::si
   std::vector<double> m6(half * half);
   std::vector<double> m7(half * half);
 
-  // M1 = (A11+A22)(B11+B22)
   AddToBuffer(a11, a_stride, a22, a_stride, lhs.data(), half, 1.0);
   AddToBuffer(b11, b_stride, b22, b_stride, rhs.data(), half, 1.0);
-  StrassenSeq(lhs.data(), half, rhs.data(), half, m1.data(), half, half);
+  kStrassenSeq(lhs.data(), half, rhs.data(), half, m1.data(), half, half);
 
-  // M2 = (A21+A22)B11
   AddToBuffer(a21, a_stride, a22, a_stride, lhs.data(), half, 1.0);
-  StrassenSeq(lhs.data(), half, b11, b_stride, m2.data(), half, half);
+  kStrassenSeq(lhs.data(), half, b11, b_stride, m2.data(), half, half);
 
-  // M3 = A11(B12-B22)
   AddToBuffer(b12, b_stride, b22, b_stride, rhs.data(), half, -1.0);
-  StrassenSeq(a11, a_stride, rhs.data(), half, m3.data(), half, half);
+  kStrassenSeq(a11, a_stride, rhs.data(), half, m3.data(), half, half);
 
-  // M4 = A22(B21-B11)
   AddToBuffer(b21, b_stride, b11, b_stride, rhs.data(), half, -1.0);
-  StrassenSeq(a22, a_stride, rhs.data(), half, m4.data(), half, half);
+  kStrassenSeq(a22, a_stride, rhs.data(), half, m4.data(), half, half);
 
-  // M5 = (A11+A12)B22
   AddToBuffer(a11, a_stride, a12, a_stride, lhs.data(), half, 1.0);
-  StrassenSeq(lhs.data(), half, b22, b_stride, m5.data(), half, half);
+  kStrassenSeq(lhs.data(), half, b22, b_stride, m5.data(), half, half);
 
-  // M6 = (A21-A11)(B11+B12)
   AddToBuffer(a21, a_stride, a11, a_stride, lhs.data(), half, -1.0);
   AddToBuffer(b11, b_stride, b12, b_stride, rhs.data(), half, 1.0);
-  StrassenSeq(lhs.data(), half, rhs.data(), half, m6.data(), half, half);
+  kStrassenSeq(lhs.data(), half, rhs.data(), half, m6.data(), half, half);
 
-  // M7 = (A12-A22)(B21+B22)
   AddToBuffer(a12, a_stride, a22, a_stride, lhs.data(), half, -1.0);
   AddToBuffer(b21, b_stride, b22, b_stride, rhs.data(), half, 1.0);
-  StrassenSeq(lhs.data(), half, rhs.data(), half, m7.data(), half, half);
+  kStrassenSeq(lhs.data(), half, rhs.data(), half, m7.data(), half, half);
 
   CombineQuadrants(m1, m2, m3, m4, m5, m6, m7, c, c_stride, half);
 }
@@ -184,60 +181,53 @@ void StrassenTopOmp(const double *a, std::size_t a_stride, const double *b, std:
   {
 #pragma omp single nowait
     {
-// M1 = (A11+A22)(B11+B22)
 #pragma omp task default(none) shared(m1, a11, a22, b11, b22, a_stride, b_stride, half)
       {
         std::vector<double> lhs(half * half);
         std::vector<double> rhs(half * half);
         AddToBuffer(a11, a_stride, a22, a_stride, lhs.data(), half, 1.0);
         AddToBuffer(b11, b_stride, b22, b_stride, rhs.data(), half, 1.0);
-        StrassenSeq(lhs.data(), half, rhs.data(), half, m1.data(), half, half);
+        kStrassenSeq(lhs.data(), half, rhs.data(), half, m1.data(), half, half);
       }
-// M2 = (A21+A22)B11
 #pragma omp task default(none) shared(m2, a21, a22, b11, a_stride, b_stride, half)
       {
         std::vector<double> lhs(half * half);
         AddToBuffer(a21, a_stride, a22, a_stride, lhs.data(), half, 1.0);
-        StrassenSeq(lhs.data(), half, b11, b_stride, m2.data(), half, half);
+        kStrassenSeq(lhs.data(), half, b11, b_stride, m2.data(), half, half);
       }
-// M3 = A11(B12-B22)
 #pragma omp task default(none) shared(m3, a11, b12, b22, a_stride, b_stride, half)
       {
         std::vector<double> rhs(half * half);
         AddToBuffer(b12, b_stride, b22, b_stride, rhs.data(), half, -1.0);
-        StrassenSeq(a11, a_stride, rhs.data(), half, m3.data(), half, half);
+        kStrassenSeq(a11, a_stride, rhs.data(), half, m3.data(), half, half);
       }
-// M4 = A22(B21-B11)
 #pragma omp task default(none) shared(m4, a22, b21, b11, a_stride, b_stride, half)
       {
         std::vector<double> rhs(half * half);
         AddToBuffer(b21, b_stride, b11, b_stride, rhs.data(), half, -1.0);
-        StrassenSeq(a22, a_stride, rhs.data(), half, m4.data(), half, half);
+        kStrassenSeq(a22, a_stride, rhs.data(), half, m4.data(), half, half);
       }
-// M5 = (A11+A12)B22
 #pragma omp task default(none) shared(m5, a11, a12, b22, a_stride, b_stride, half)
       {
         std::vector<double> lhs(half * half);
         AddToBuffer(a11, a_stride, a12, a_stride, lhs.data(), half, 1.0);
-        StrassenSeq(lhs.data(), half, b22, b_stride, m5.data(), half, half);
+        kStrassenSeq(lhs.data(), half, b22, b_stride, m5.data(), half, half);
       }
-// M6 = (A21-A11)(B11+B12)
 #pragma omp task default(none) shared(m6, a21, a11, b11, b12, a_stride, b_stride, half)
       {
         std::vector<double> lhs(half * half);
         std::vector<double> rhs(half * half);
         AddToBuffer(a21, a_stride, a11, a_stride, lhs.data(), half, -1.0);
         AddToBuffer(b11, b_stride, b12, b_stride, rhs.data(), half, 1.0);
-        StrassenSeq(lhs.data(), half, rhs.data(), half, m6.data(), half, half);
+        kStrassenSeq(lhs.data(), half, rhs.data(), half, m6.data(), half, half);
       }
-// M7 = (A12-A22)(B21+B22)
 #pragma omp task default(none) shared(m7, a12, a22, b21, b22, a_stride, b_stride, half)
       {
         std::vector<double> lhs(half * half);
         std::vector<double> rhs(half * half);
         AddToBuffer(a12, a_stride, a22, a_stride, lhs.data(), half, -1.0);
         AddToBuffer(b21, b_stride, b22, b_stride, rhs.data(), half, 1.0);
-        StrassenSeq(lhs.data(), half, rhs.data(), half, m7.data(), half, half);
+        kStrassenSeq(lhs.data(), half, rhs.data(), half, m7.data(), half, half);
       }
 #pragma omp taskwait
     }

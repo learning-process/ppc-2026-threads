@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <cmath>
 #include <cstddef>
+#include <cstdlib>
 #include <tuple>
 #include <vector>
 
 #include "muhammadkhon_i_stressen_alg/common/include/common.hpp"
-#include "muhammadkhon_i_stressen_alg/omp/include/ops_omp.hpp"  // <-- добавил
+#include "muhammadkhon_i_stressen_alg/omp/include/ops_omp.hpp"
 #include "muhammadkhon_i_stressen_alg/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 

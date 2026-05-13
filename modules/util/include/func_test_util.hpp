@@ -108,7 +108,7 @@ class BaseRunFuncTests : public ::testing::TestWithParam<FuncTestParam<InType, O
   }
 
  private:
-  ppc::task::TaskPtr<InType, OutType> task_;
+  ppc::task::TaskPtr<InType, OutType> task_{};
 };
 
 template <typename Tuple, std::size_t... Is>
