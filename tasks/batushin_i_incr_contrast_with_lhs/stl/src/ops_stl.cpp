@@ -61,7 +61,8 @@ MinMaxResult FindMinMaxInBlock(const std::vector<unsigned char> &data, size_t st
     local_min = std::min(local_min, val);
     local_max = std::max(local_max, val);
   }
-  return {local_min, local_max};
+  // Используем designated initializers
+  return MinMaxResult{.min_val = local_min, .max_val = local_max};
 }
 
 MinMaxResult MergeMinMaxResults(const std::vector<MinMaxResult> &results) {
@@ -71,7 +72,8 @@ MinMaxResult MergeMinMaxResults(const std::vector<MinMaxResult> &results) {
     global_min = std::min(global_min, result.min_val);
     global_max = std::max(global_max, result.max_val);
   }
-  return {global_min, global_max};
+  // Используем designated initializers
+  return MinMaxResult{.min_val = global_min, .max_val = global_max};
 }
 
 std::pair<unsigned char, unsigned char> FindMinMaxParallel(const std::vector<unsigned char> &data) {
@@ -84,7 +86,7 @@ std::pair<unsigned char, unsigned char> FindMinMaxParallel(const std::vector<uns
   const size_t chunk_size = ComputeChunkSize(data_size, num_threads);
   const size_t num_blocks = ComputeNumBlocks(data_size, chunk_size);
 
-  std::vector<MinMaxResult> block_results(num_blocks, {255, 0});
+  std::vector<MinMaxResult> block_results(num_blocks, MinMaxResult{.min_val = 255, .max_val = 0});
   std::vector<std::thread> threads;
   threads.reserve(num_blocks);
 
