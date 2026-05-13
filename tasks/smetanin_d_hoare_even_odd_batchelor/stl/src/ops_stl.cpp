@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <atomic>
 #include <cstddef>
-#include <mutex>
 #include <stack>
 #include <thread>
 #include <utility>
@@ -79,9 +78,9 @@ void HoarSortBatcherSTLImpl(std::vector<int> &arr, int lo, int hi, int num_threa
   cur.emplace_back(lo, hi);
 
   while (!cur.empty()) {
-    std::vector<std::pair<int, int>> next;
-    std::mutex next_mtx;
     const std::size_t cur_sz = cur.size();
+
+    std::vector<std::pair<int, int>> next(cur_sz * 2);
 
     auto process_range = [&](std::size_t idx) {
       const int l = cur[idx].first;
@@ -95,9 +94,9 @@ void HoarSortBatcherSTLImpl(std::vector<int> &arr, int lo, int hi, int num_threa
       }
       const int p = HoarePartition(arr, l, r);
       OddEvenMerge(arr, l, r);
-      std::lock_guard<std::mutex> lk(next_mtx);
-      next.push_back({l, p});
-      next.push_back({p + 1, r});
+      const std::size_t slot = idx * 2;
+      next[slot] = {l, p};
+      next[slot + 1] = {p + 1, r};
     };
 
     const int workers = std::clamp(num_threads, 1, std::max<int>(1, static_cast<int>(cur_sz)));
@@ -126,7 +125,15 @@ void HoarSortBatcherSTLImpl(std::vector<int> &arr, int lo, int hi, int num_threa
       }
     }
 
-    cur = std::move(next);
+    const std::size_t nnext = cur_sz * 2;
+    cur.clear();
+    cur.reserve(nnext);
+    for (std::size_t i = 0; i < cur_sz * 2; ++i) {
+      const auto pr = next[i];
+      if (pr.first < pr.second) {
+        cur.push_back(pr);
+      }
+    }
   }
 }
 
