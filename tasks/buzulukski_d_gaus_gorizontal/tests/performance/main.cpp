@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include "buzulukski_d_gaus_gorizontal/all/include/ops_all.hpp"
 #include "buzulukski_d_gaus_gorizontal/common/include/common.hpp"
 #include "buzulukski_d_gaus_gorizontal/omp/include/ops_omp.hpp"
 #include "buzulukski_d_gaus_gorizontal/seq/include/ops_seq.hpp"
@@ -34,8 +35,8 @@ TEST_P(BuzulukskiDGausGorizontalPerfTests, RunPerfModes) {
 namespace {
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, BuzulukskiDGausGorizontalSEQ, BuzulukskiDGausGorizontalOMP,
-                                BuzulukskiDGausGorizontalTBB, BuzulukskiDGausGorizontalSTL>(
-        PPC_SETTINGS_buzulukski_d_gaus_gorizontal);
+                                BuzulukskiDGausGorizontalTBB, BuzulukskiDGausGorizontalSTL,
+                                BuzulukskiDGausGorizontalALL>(PPC_SETTINGS_buzulukski_d_gaus_gorizontal);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
