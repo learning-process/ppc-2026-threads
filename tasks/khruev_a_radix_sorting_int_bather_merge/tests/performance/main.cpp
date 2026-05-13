@@ -21,7 +21,7 @@ class KhruevARadixSortingIntBatherMergePerfTests : public ppc::util::BaseRunPerf
     input_data_.resize(kCount_);
     expected_data_.resize(kCount_);
 
-    std::mt19937 gen(42);
+    std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
     std::uniform_int_distribution<int> dist(-100, 100);
 
     for (int i = 0; i < kCount_; i++) {
