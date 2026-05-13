@@ -72,7 +72,7 @@ bool LinearImageFilteringVerticalTBB::RunImpl() {
               for (int kx = 0; kx < 3; ++kx) {
                 int px = col + kx - 1;
                 int py = row + ky - 1;
-                sum += GetPixel(src, w, h, px, py) * kernel[ky][kx];  // NOLINT
+                sum += GetPixel(src, w, h, px, py) * kernel.at(ky).at(kx);
               }
             }
             dst[(static_cast<size_t>(row) * static_cast<size_t>(w)) +
