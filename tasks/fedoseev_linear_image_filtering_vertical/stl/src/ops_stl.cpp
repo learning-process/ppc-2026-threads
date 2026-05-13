@@ -11,52 +11,47 @@
 namespace fedoseev_linear_image_filtering_vertical {
 
 namespace {
-int GetPixel(const std::vector<int>& src, int w, int h, int col, int row) {
+int GetPixel(const std::vector<int> &src, int w, int h, int col, int row) {
   col = std::clamp(col, 0, w - 1);
   row = std::clamp(row, 0, h - 1);
-  return src[(static_cast<size_t>(row) * static_cast<size_t>(w)) +
-             static_cast<size_t>(col)];
+  return src[(static_cast<size_t>(row) * static_cast<size_t>(w)) + static_cast<size_t>(col)];
 }
 }  // namespace
 
-LinearImageFilteringVerticalSTL::LinearImageFilteringVerticalSTL(
-    const InType& in) {
+LinearImageFilteringVerticalSTL::LinearImageFilteringVerticalSTL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = InType{};
 }
 
 bool LinearImageFilteringVerticalSTL::ValidationImpl() {
-  const InType& input = GetInput();
+  const InType &input = GetInput();
   if (input.width < 3 || input.height < 3) {
     return false;
   }
-  return input.data.size() ==
-         static_cast<size_t>(input.width) * static_cast<size_t>(input.height);
+  return input.data.size() == static_cast<size_t>(input.width) * static_cast<size_t>(input.height);
 }
 
 bool LinearImageFilteringVerticalSTL::PreProcessingImpl() {
-  const InType& input = GetInput();
+  const InType &input = GetInput();
   OutType output;
   output.width = input.width;
   output.height = input.height;
-  output.data.resize(
-      static_cast<size_t>(input.width) * static_cast<size_t>(input.height), 0);
+  output.data.resize(static_cast<size_t>(input.width) * static_cast<size_t>(input.height), 0);
   GetOutput() = output;
   return true;
 }
 
 bool LinearImageFilteringVerticalSTL::RunImpl() {
-  const InType& input = GetInput();
-  OutType& output = GetOutput();
+  const InType &input = GetInput();
+  OutType &output = GetOutput();
 
   int w = input.width;
   int h = input.height;
-  const std::vector<int>& src = input.data;
-  std::vector<int>& dst = output.data;
+  const std::vector<int> &src = input.data;
+  std::vector<int> &dst = output.data;
 
-  const std::array<std::array<int, 3>, 3> kernel = {
-      {{{1, 2, 1}}, {{2, 4, 2}}, {{1, 2, 1}}}};
+  const std::array<std::array<int, 3>, 3> kernel = {{{{1, 2, 1}}, {{2, 4, 2}}, {{1, 2, 1}}}};
   const int kernel_sum = 16;
   const int block_width = 64;
 
@@ -78,18 +73,21 @@ bool LinearImageFilteringVerticalSTL::RunImpl() {
               sum += GetPixel(src, w, h, px, py) * kernel.at(ky).at(kx);
             }
           }
-          dst[(static_cast<size_t>(row) * static_cast<size_t>(w)) +
-              static_cast<size_t>(col)] = sum / kernel_sum;
+          dst[(static_cast<size_t>(row) * static_cast<size_t>(w)) + static_cast<size_t>(col)] = sum / kernel_sum;
         }
       }
     });
   }
 
-  for (auto& t : threads) t.join();
+  for (auto &t : threads) {
+    t.join();
+  }
 
   return true;
 }
 
-bool LinearImageFilteringVerticalSTL::PostProcessingImpl() { return true; }
+bool LinearImageFilteringVerticalSTL::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace fedoseev_linear_image_filtering_vertical
