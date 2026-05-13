@@ -1,5 +1,4 @@
 #include "timur_a_cannon/all/include/ops_all.hpp"
-#include "timur_a_cannon/common/include/common.hpp"
 
 #include <mpi.h>
 #include <omp.h>
@@ -8,6 +7,8 @@
 #include <cstddef>
 #include <tuple>
 #include <vector>
+
+#include "timur_a_cannon/common/include/common.hpp"
 
 namespace timur_a_cannon {
 
@@ -85,9 +86,11 @@ void TimurACannonMatrixMultiplicationALL::BlockMultiplyAccumulate(const std::vec
   }
 }
 
-std::vector<std::vector<double>> TimurACannonMatrixMultiplicationALL::ComputeLocalResult(const Matrix &src_a, const Matrix &src_b, int b_size,
-                                                                int grid_sz, int block_row_start,
-                                                                int local_block_rows, int n) {
+std::vector<std::vector<double>> TimurACannonMatrixMultiplicationALL::ComputeLocalResult(const Matrix &src_a,
+                                                                                         const Matrix &src_b,
+                                                                                         int b_size, int grid_sz,
+                                                                                         int block_row_start,
+                                                                                         int local_block_rows, int n) {
   Matrix local_result(static_cast<std::size_t>(local_block_rows) * static_cast<std::size_t>(b_size),
                       std::vector<double>(static_cast<std::size_t>(n), 0.0));
 
@@ -179,3 +182,4 @@ bool TimurACannonMatrixMultiplicationALL::PostProcessingImpl() {
 }
 
 }  // namespace timur_a_cannon
+
