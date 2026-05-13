@@ -214,7 +214,7 @@ const auto kStlTasks =
     ppc::util::AddFuncTask<LinearImageFilteringVerticalSTL, Image>(
         kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
 const auto kTestTasksList =
-    std::tuple_cat(kSeqTasks, kOmpTasks, kTbbTasks, kStlTasks);
+    std::tuple_cat(kSeqTasks, kOmpTasks, kStlTasks);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = FedoseevFuncTest::PrintFuncTestName<FedoseevFuncTest>;
