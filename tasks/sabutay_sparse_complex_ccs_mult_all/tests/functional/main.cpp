@@ -17,6 +17,8 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
+// Functional tests: CCS result checked against dense reference multiplication.
+
 namespace sabutay_sparse_complex_ccs_mult_all {
 namespace {
 

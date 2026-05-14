@@ -3,6 +3,8 @@
 #include "sabutay_sparse_complex_ccs_mult_all/common/include/common.hpp"
 #include "task/include/task.hpp"
 
+// kALL task entry: CCS-format sparse complex matrix product (see ops_all.cpp).
+
 namespace sabutay_sparse_complex_ccs_mult_all {
 
 class SabutaySparseComplexCcsMultAll : public BaseTask {

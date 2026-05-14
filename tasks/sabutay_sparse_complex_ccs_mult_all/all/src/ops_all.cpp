@@ -21,6 +21,8 @@
 namespace sabutay_sparse_complex_ccs_mult_all {
 namespace {
 
+// File-local CCS SpMM helpers and BuildProductMatrix backend routing.
+
 constexpr double kDropMagnitude = 1e-14;
 
 auto IsValidStructure(const CCS &matrix) -> bool {
