@@ -75,8 +75,7 @@ void ProcessRows(const Image &input_image, std::vector<int> &output_data, int ro
 }
 
 void ProcessRowsOMP(const Image &input_image, std::vector<int> &output_data, int row_begin, int row_end) {
-#pragma omp parallel for default(none) shared(input_image, output_data, row_begin, row_end) num_threads(thread_count) \
-    schedule(static)
+#pragma omp parallel for default(none) shared(input_image, output_data, row_begin, row_end) schedule(static)
   for (int row_index = row_begin; row_index < row_end; ++row_index) {
     ProcessRows(input_image, output_data, row_index, row_index + 1);
   }
