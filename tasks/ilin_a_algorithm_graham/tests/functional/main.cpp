@@ -49,6 +49,12 @@ class IlinAGrahamFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
     }
 
     return output_set == expected_set;
+    for (size_t i = 0; i < output_data.size(); ++i) {
+      if (std::abs(output_data[i].x - expected_[i].x) > 1e-6 || std::abs(output_data[i].y - expected_[i].y) > 1e-6) {
+        return false;
+      }
+    }
+    return true;
   }
 
   InType GetTestInputData() final {
@@ -81,6 +87,7 @@ const auto kTestTasksList =
                    ppc::util::AddFuncTask<IlinAGrahamSTL, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham),
                    ppc::util::AddFuncTask<IlinAGrahamTBB, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham),
                    ppc::util::AddFuncTask<IlinAGrahamALL, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham));
+                   ppc::util::AddFuncTask<IlinAGrahamSTL, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

@@ -1,8 +1,10 @@
 #include "votincev_d_radixmerge_sort/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "votincev_d_radixmerge_sort/common/include/common.hpp"
@@ -14,78 +16,73 @@ VotincevDRadixMergeSortSEQ::VotincevDRadixMergeSortSEQ(const InType &in) {
   GetInput() = in;
 }
 
-// проверка входных данных
 bool VotincevDRadixMergeSortSEQ::ValidationImpl() {
-  // проверка: входной вектор не должен быть пустым
   return !GetInput().empty();
 }
 
-// препроцессинг
 bool VotincevDRadixMergeSortSEQ::PreProcessingImpl() {
   return true;
 }
 
-// вспомогательный метод для распределения и слияния разрядов
+// поразрядная сортировка
 void VotincevDRadixMergeSortSEQ::SortByDigit(std::vector<int32_t> &array, int32_t exp) {
-  std::vector<std::vector<int32_t>> buckets(10);
+  size_t n = array.size();
+  std::vector<int32_t> output(n);
+  std::array<int32_t, 10> count{};
 
-  // распределение элементов по корзинам
-  for (const auto &num : array) {
-    int32_t digit = (num / exp) % 10;
-    buckets[digit].push_back(num);
+  for (size_t i = 0; i < n; i++) {
+    int32_t digit = (array[i] / exp) % 10;
+    count.at(static_cast<size_t>(digit))++;
   }
 
-  // простое слияние корзин обратно в рабочий массив
-  size_t index = 0;
-  for (int i = 0; i < 10; ++i) {
-    for (const auto &val : buckets[i]) {
-      array[index++] = val;
-    }
-    // очистка корзины для следующего разряда
-    buckets[i].clear();
+  // префиксные суммы
+  for (size_t i = 1; i < 10; i++) {
+    count.at(i) += count.at(i - 1);
   }
+
+  // формирую выходной массив
+  for (int64_t i = static_cast<int64_t>(n) - 1; i >= 0; i--) {
+    auto idx = static_cast<size_t>(i);
+    auto digit = static_cast<size_t>((array.at(idx) / exp) % 10);
+    size_t pos = static_cast<size_t>(count.at(digit)) - 1;
+    output.at(pos) = array.at(idx);
+    count.at(digit)--;
+  }
+
+  array = std::move(output);
 }
 
-// основной метод алгоритма
 bool VotincevDRadixMergeSortSEQ::RunImpl() {
-  if (GetInput().empty()) {
-    return false;
-  }
-
-  // локальная копия данных для сортировки
   std::vector<int32_t> working_array = GetInput();
 
-  // обработка отрицательных чисел
-  int32_t min_val = *std::ranges::min_element(working_array);
+  auto [min_it, max_it] = std::ranges::minmax_element(working_array);
+  int32_t min_val = *min_it;
+  int32_t max_val = *max_it;
 
+  // сдвиг в положительную область
   if (min_val < 0) {
     for (auto &num : working_array) {
       num -= min_val;
     }
+    max_val -= min_val;
   }
 
-  // ищем максимальное число для определения количества разрядов
-  int32_t max_val = *std::ranges::max_element(working_array);
-
-  // цикл по разрядам (единицы, десятки, сотни...)
-  for (int32_t exp = 1; max_val / exp > 0; exp *= 10) {
-    SortByDigit(working_array, exp);
+  // цикл по разрядам
+  for (int64_t exp = 1; static_cast<int64_t>(max_val) / exp > 0; exp *= 10) {
+    SortByDigit(working_array, static_cast<int32_t>(exp));
   }
 
-  // возвращаем значения к исходному диапазону
+  // возврат к исходному диапазону
   if (min_val < 0) {
     for (auto &num : working_array) {
       num += min_val;
     }
   }
 
-  // запись результата в выходные данные
-  GetOutput() = working_array;
-
+  GetOutput() = std::move(working_array);
   return true;
 }
 
-// постпроцессинг
 bool VotincevDRadixMergeSortSEQ::PostProcessingImpl() {
   return true;
 }

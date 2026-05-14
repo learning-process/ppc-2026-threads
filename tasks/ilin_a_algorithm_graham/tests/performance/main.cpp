@@ -55,6 +55,7 @@ const auto kAllPerfTasks =
                    ppc::util::MakeAllPerfTasks<InType, IlinAGrahamSTL>(PPC_SETTINGS_ilin_a_algorithm_graham),
                    ppc::util::MakeAllPerfTasks<InType, IlinAGrahamTBB>(PPC_SETTINGS_ilin_a_algorithm_graham),
                    ppc::util::MakeAllPerfTasks<InType, IlinAGrahamALL>(PPC_SETTINGS_ilin_a_algorithm_graham));
+                   ppc::util::MakeAllPerfTasks<InType, IlinAGrahamSTL>(PPC_SETTINGS_ilin_a_algorithm_graham));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
