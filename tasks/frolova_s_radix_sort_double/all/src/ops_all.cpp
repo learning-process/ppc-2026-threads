@@ -13,7 +13,26 @@ namespace frolova_s_radix_sort_double {
 namespace {
 
 void LocalRadixSort(std::vector<double> &chunk) {
-  tbb::parallel_sort(chunk.begin(), chunk.end());
+  if (chunk.empty()) {
+    return;
+  }
+
+  auto total_order = [](double a, double b) {
+    uint64_t ua = std::bit_cast<uint64_t>(a);
+    uint64_t ub = std::bit_cast<uint64_t>(b);
+
+    auto transform = [](uint64_t x) {
+      if (x & (1ULL << 63)) {
+        return ~x;
+      } else {
+        return x ^ (1ULL << 63);
+      }
+    };
+
+    return transform(ua) < transform(ub);
+  };
+
+  tbb::parallel_sort(chunk.begin(), chunk.end(), total_order);
 }
 
 }  // namespace
@@ -63,6 +82,7 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
                sendcounts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   LocalRadixSort(local_data);
+
   std::vector<double> gathered;
   if (rank == 0) {
     gathered.resize(total_size);
