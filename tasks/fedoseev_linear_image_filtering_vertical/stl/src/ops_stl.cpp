@@ -16,6 +16,29 @@ int GetPixel(const std::vector<int> &src, int w, int h, int col, int row) {
   row = std::clamp(row, 0, h - 1);
   return src[(static_cast<size_t>(row) * static_cast<size_t>(w)) + static_cast<size_t>(col)];
 }
+
+int ComputePixel(const std::vector<int> &src, int w, int h, int col, int row,
+                 const std::array<std::array<int, 3>, 3> &kernel, int kernel_sum) {
+  int sum = 0;
+  for (int ky = 0; ky < 3; ++ky) {
+    for (int kx = 0; kx < 3; ++kx) {
+      int px = col + kx - 1;
+      int py = row + ky - 1;
+      sum += GetPixel(src, w, h, px, py) * kernel[ky][kx];
+    }
+  }
+  return sum / kernel_sum;
+}
+
+void ProcessBlock(const std::vector<int> &src, std::vector<int> &dst, int w, int h, int col_start, int col_end,
+                  const std::array<std::array<int, 3>, 3> &kernel, int kernel_sum) {
+  for (int row = 0; row < h; ++row) {
+    for (int col = col_start; col < col_end; ++col) {
+      dst[(static_cast<size_t>(row) * static_cast<size_t>(w)) + static_cast<size_t>(col)] =
+          ComputePixel(src, w, h, col, row, kernel, kernel_sum);
+    }
+  }
+}
 }  // namespace
 
 LinearImageFilteringVerticalSTL::LinearImageFilteringVerticalSTL(const InType &in) {
@@ -29,7 +52,10 @@ bool LinearImageFilteringVerticalSTL::ValidationImpl() {
   if (input.width < 3 || input.height < 3) {
     return false;
   }
-  return input.data.size() == static_cast<size_t>(input.width) * static_cast<size_t>(input.height);
+  if (input.data.size() != static_cast<size_t>(input.width) * static_cast<size_t>(input.height)) {
+    return false;
+  }
+  return true;
 }
 
 bool LinearImageFilteringVerticalSTL::PreProcessingImpl() {
@@ -54,35 +80,22 @@ bool LinearImageFilteringVerticalSTL::RunImpl() {
   const std::array<std::array<int, 3>, 3> kernel = {{{{1, 2, 1}}, {{2, 4, 2}}, {{1, 2, 1}}}};
   const int kernel_sum = 16;
   const int block_width = 64;
+  const int num_blocks = (w + block_width - 1) / block_width;
 
-  int num_blocks = (w + block_width - 1) / block_width;
   std::vector<std::thread> threads;
-  threads.reserve(num_blocks);
+  threads.reserve(static_cast<size_t>(num_blocks));
 
   for (int block_idx = 0; block_idx < num_blocks; ++block_idx) {
     int col_start = block_idx * block_width;
     int col_end = std::min(col_start + block_width, w);
-    threads.emplace_back([&, col_start, col_end]() {
-      for (int row = 0; row < h; ++row) {
-        for (int col = col_start; col < col_end; ++col) {
-          int sum = 0;
-          for (int ky = 0; ky < 3; ++ky) {
-            for (int kx = 0; kx < 3; ++kx) {
-              int px = col + kx - 1;
-              int py = row + ky - 1;
-              sum += GetPixel(src, w, h, px, py) * kernel.at(ky).at(kx);
-            }
-          }
-          dst[(static_cast<size_t>(row) * static_cast<size_t>(w)) + static_cast<size_t>(col)] = sum / kernel_sum;
-        }
-      }
+    threads.emplace_back([&src, &dst, w, h, col_start, col_end, &kernel, kernel_sum]() {
+      ProcessBlock(src, dst, w, h, col_start, col_end, kernel, kernel_sum);
     });
   }
 
   for (auto &t : threads) {
     t.join();
   }
-
   return true;
 }
 
