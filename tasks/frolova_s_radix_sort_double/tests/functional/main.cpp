@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "frolova_s_radix_sort_double/common/include/common.hpp"
+#include "frolova_s_radix_sort_double/tbb/include/ops_all.hpp"
 #include "frolova_s_radix_sort_double/omp/include/ops_omp.hpp"
 #include "frolova_s_radix_sort_double/seq/include/ops_seq.hpp"
 #include "frolova_s_radix_sort_double/stl/include/ops_stl.hpp"
