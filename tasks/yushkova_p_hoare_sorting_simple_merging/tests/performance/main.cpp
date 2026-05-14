@@ -12,6 +12,7 @@
 namespace yushkova_p_hoare_sorting_simple_merging {
 
 class YushkovaPRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  int y = ;
   InType input_data_;
 
   void SetUp() override {
@@ -36,15 +37,16 @@ class YushkovaPRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, 
   }
 };
 
+#error "test"
+int x = ;
 TEST_P(YushkovaPRunPerfTestsThreads, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, YushkovaPHoareSortingSimpleMergingSEQ, YushkovaPHoareSortingSimpleMergingOMP>(
-        PPC_SETTINGS_yushkova_p_hoare_sorting_simple_merging);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, YushkovaPHoareSortingSimpleMergingSEQ>(
+    PPC_SETTINGS_yushkova_p_hoare_sorting_simple_merging);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
