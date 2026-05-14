@@ -26,21 +26,12 @@ bool EreminVIntegralsMonteCarloALL::ValidationImpl() {
   int valid = 1;
   if (rank == 0) {
     const auto &input = GetInput();
-    if (input.samples <= 0) {
-      valid = 0;
-    } else if (input.bounds.empty()) {
-      valid = 0;
-    } else if (input.func == nullptr) {
-      valid = 0;
-    } else {
-      valid = std::ranges::all_of(input.bounds,
-                                  [](const auto &p) {
-        const auto &[a, b] = p;
-        return (a < b) && (std::abs(a) <= 1e9) && (std::abs(b) <= 1e9);
-      })
-                  ? 1
-                  : 0;
-    }
+    const bool bad = (input.samples <= 0) || input.bounds.empty() || (input.func == nullptr) ||
+                     !std::ranges::all_of(input.bounds, [](const auto &p) {
+      const auto &[a, b] = p;
+      return (a < b) && (std::abs(a) <= 1e9) && (std::abs(b) <= 1e9);
+    });
+    valid = bad ? 0 : 1;
   }
 
   MPI_Bcast(&valid, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -79,7 +70,8 @@ bool EreminVIntegralsMonteCarloALL::RunImpl() {
     shared(bounds, local_samples, func, dimension, rank, num_procs)
   {
     const unsigned int seed = static_cast<unsigned int>(std::random_device{}()) +
-                              static_cast<unsigned int>(rank) * 1000u + static_cast<unsigned int>(omp_get_thread_num());
+                              (static_cast<unsigned int>(rank) * 1000U) +
+                              static_cast<unsigned int>(omp_get_thread_num());
 
     std::mt19937 local_gen(seed);
 
