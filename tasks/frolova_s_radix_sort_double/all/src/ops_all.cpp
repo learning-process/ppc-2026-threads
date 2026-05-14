@@ -41,13 +41,14 @@ void LocalRadixSort(std::vector<double> &chunk) {
 
   std::vector<double> neg, pos;
   for (double val : chunk) {
-    if (val < 0) {
+    if ((std::bit_cast<uint64_t>(val) >> 63) != 0) {
       neg.push_back(val);
     } else {
       pos.push_back(val);
     }
   }
-  std::ranges::reverse(neg);
+  std::reverse(neg.begin(), neg.end());
+
   chunk.clear();
   chunk.insert(chunk.end(), neg.begin(), neg.end());
   chunk.insert(chunk.end(), pos.begin(), pos.end());
@@ -63,10 +64,12 @@ FrolovaSRadixSortDoubleALL::FrolovaSRadixSortDoubleALL(const InType &in) {
 bool FrolovaSRadixSortDoubleALL::ValidationImpl() {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int res = 0;
   if (rank == 0) {
-    return !GetInput().empty();
+    res = GetInput().empty() ? 0 : 1;
   }
-  return true;
+  MPI_Bcast(&res, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  return res == 1;
 }
 
 bool FrolovaSRadixSortDoubleALL::PreProcessingImpl() {
@@ -83,6 +86,10 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
     total_size = static_cast<int>(GetInput().size());
   }
   MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (total_size == 0) {
+    return true;
+  }
 
   std::vector<int> sendcounts(size), displs(size);
   int rem = total_size % size;
