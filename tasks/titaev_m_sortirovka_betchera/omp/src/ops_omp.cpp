@@ -25,18 +25,19 @@ double OrderedUintToDouble(uint64_t x) {
 }  // namespace
 
 bool TitaevSortirovkaBetcheraOMP::ValidationImpl() {
-  return task_data->inputs_count[0] > 0 && task_data->outputs_count[0] == task_data->inputs_count[0];
+  return !task_data->inputs.empty() && !task_data->outputs.empty() &&
+         task_data->inputs_count[0] == task_data->outputs_count[0];
 }
 
 bool TitaevSortirovkaBetcheraOMP::PreProcessingImpl() {
-  size_t n = task_data->inputs_count[0];
-  input_.resize(n);
   auto *ptr = reinterpret_cast<double *>(task_data->inputs[0]);
-  std::copy(ptr, ptr + n, input_.begin());
+  size_t n = task_data->inputs_count[0];
+  GetInput().assign(ptr, ptr + n);
+  GetOutput().resize(n);
   return true;
 }
 
-void TitaevSortirovkaBetcheraOMP::ConvertToKeys(const std::vector<double> &input, std::vector<uint64_t> &keys) {
+void TitaevSortirovkaBetcheraOMP::ConvertToKeys(const InType &input, std::vector<uint64_t> &keys) {
   size_t n = input.size();
 #pragma omp parallel for
   for (int i = 0; i < (int)n; i++) {
@@ -63,15 +64,14 @@ void TitaevSortirovkaBetcheraOMP::RadixSort(std::vector<uint64_t> &keys) {
   }
 }
 
-void TitaevSortirovkaBetcheraOMP::ConvertFromKeys(const std::vector<uint64_t> &keys, std::vector<double> &output) {
-  output.resize(keys.size());
+void TitaevSortirovkaBetcheraOMP::ConvertFromKeys(const std::vector<uint64_t> &keys, OutType &output) {
 #pragma omp parallel for
   for (int i = 0; i < (int)keys.size(); i++) {
     output[i] = OrderedUintToDouble(keys[i]);
   }
 }
 
-void TitaevSortirovkaBetcheraOMP::BatcherStep(std::vector<double> &result, size_t n, size_t step, size_t stage) {
+void TitaevSortirovkaBetcheraOMP::BatcherStep(OutType &result, size_t n, size_t step, size_t stage) {
 #pragma omp parallel for
   for (int i = 0; i < (int)n; i++) {
     size_t j = i ^ stage;
@@ -85,20 +85,23 @@ void TitaevSortirovkaBetcheraOMP::BatcherStep(std::vector<double> &result, size_
 }
 
 void TitaevSortirovkaBetcheraOMP::BatcherSort() {
-  size_t n = output_.size();
+  size_t n = GetOutput().size();
   for (size_t step = 1; step < n; step <<= 1) {
     for (size_t stage = step; stage > 0; stage >>= 1) {
-      BatcherStep(output_, n, step, stage);
+      BatcherStep(GetOutput(), n, step, stage);
     }
   }
 }
 
 bool TitaevSortirovkaBetcheraOMP::RunImpl() {
-  size_t n = input_.size();
+  size_t n = GetInput().size();
+  if (n == 0) {
+    return true;
+  }
   std::vector<uint64_t> keys(n);
-  ConvertToKeys(input_, keys);
+  ConvertToKeys(GetInput(), keys);
   RadixSort(keys);
-  ConvertFromKeys(keys, output_);
+  ConvertFromKeys(keys, GetOutput());
   if ((n & (n - 1)) == 0) {
     BatcherSort();
   }
@@ -107,7 +110,7 @@ bool TitaevSortirovkaBetcheraOMP::RunImpl() {
 
 bool TitaevSortirovkaBetcheraOMP::PostProcessingImpl() {
   auto *ptr = reinterpret_cast<double *>(task_data->outputs[0]);
-  std::copy(output_.begin(), output_.end(), ptr);
+  std::copy(GetOutput().begin(), GetOutput().end(), ptr);
   return true;
 }
 
