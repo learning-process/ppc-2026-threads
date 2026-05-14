@@ -12,11 +12,11 @@ class OvchinnikovMShellSortBatcherMergeSTL : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSTL;
   }
-  explicit OvchinnikovMShellSortBatcherMergeSTL(const InType& in);
+  explicit OvchinnikovMShellSortBatcherMergeSTL(const InType &in);
 
  private:
-  static void ShellSort(std::vector<int>& data);
-  static std::vector<int> BatcherOddEvenMerge(const std::vector<int>& left, const std::vector<int>& right);
+  static void ShellSort(std::vector<int> &data);
+  static std::vector<int> BatcherOddEvenMerge(const std::vector<int> &left, const std::vector<int> &right);
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;

@@ -21,7 +21,7 @@ std::size_t NextPowerOfTwo(std::size_t value) {
   return power;
 }
 
-std::vector<int> MergeSorted(const std::vector<int>& first, const std::vector<int>& second) {
+std::vector<int> MergeSorted(const std::vector<int> &first, const std::vector<int> &second) {
   std::vector<int> merged;
   merged.reserve(first.size() + second.size());
 
@@ -53,7 +53,7 @@ bool IsEvenPosition(std::size_t index) {
   return (index % 2) == 0;
 }
 
-void SplitByParity(const std::vector<int>& input, std::vector<int>& even, std::vector<int>& odd) {
+void SplitByParity(const std::vector<int> &input, std::vector<int> &even, std::vector<int> &odd) {
   even.reserve((input.size() + 1) / 2);
   odd.reserve(input.size() / 2);
   for (std::size_t i = 0; i < input.size(); ++i) {
@@ -65,7 +65,7 @@ void SplitByParity(const std::vector<int>& input, std::vector<int>& even, std::v
   }
 }
 
-std::vector<int> InterleaveByParity(const std::vector<int>& even, const std::vector<int>& odd) {
+std::vector<int> InterleaveByParity(const std::vector<int> &even, const std::vector<int> &odd) {
   std::vector<int> merged(even.size() + odd.size());
   std::size_t even_index = 0;
   std::size_t odd_index = 0;
@@ -81,14 +81,14 @@ std::vector<int> InterleaveByParity(const std::vector<int>& even, const std::vec
   return merged;
 }
 
-std::pair<std::vector<int>, std::vector<int>> SplitInHalf(const std::vector<int>& data) {
+std::pair<std::vector<int>, std::vector<int>> SplitInHalf(const std::vector<int> &data) {
   const auto middle = data.begin() + static_cast<std::ptrdiff_t>(data.size() / 2);
   std::vector<int> left(data.begin(), middle);
   std::vector<int> right(middle, data.end());
   return {std::move(left), std::move(right)};
 }
 
-void CompareExchangeOddPairs(std::vector<int>& data) {
+void CompareExchangeOddPairs(std::vector<int> &data) {
   for (std::size_t i = 1; i + 1 < data.size(); i += 2) {
     if (data[i] > data[i + 1]) {
       std::swap(data[i], data[i + 1]);
@@ -98,12 +98,12 @@ void CompareExchangeOddPairs(std::vector<int>& data) {
 
 }  // namespace
 
-OvchinnikovMShellSortBatcherMergeSTL::OvchinnikovMShellSortBatcherMergeSTL(const InType& in) {
+OvchinnikovMShellSortBatcherMergeSTL::OvchinnikovMShellSortBatcherMergeSTL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
-void OvchinnikovMShellSortBatcherMergeSTL::ShellSort(std::vector<int>& data) {
+void OvchinnikovMShellSortBatcherMergeSTL::ShellSort(std::vector<int> &data) {
   const std::size_t n = data.size();
   for (std::size_t gap = n / 2; gap > 0; gap /= 2) {
     for (std::size_t i = gap; i < n; ++i) {
@@ -118,8 +118,8 @@ void OvchinnikovMShellSortBatcherMergeSTL::ShellSort(std::vector<int>& data) {
   }
 }
 
-std::vector<int> OvchinnikovMShellSortBatcherMergeSTL::BatcherOddEvenMerge(const std::vector<int>& left,
-                                                                           const std::vector<int>& right) {
+std::vector<int> OvchinnikovMShellSortBatcherMergeSTL::BatcherOddEvenMerge(const std::vector<int> &left,
+                                                                           const std::vector<int> &right) {
   if (left.empty()) {
     return right;
   }
@@ -166,8 +166,8 @@ bool OvchinnikovMShellSortBatcherMergeSTL::RunImpl() {
   data_.resize(padded_size, std::numeric_limits<int>::max());
 
   auto halves = SplitInHalf(data_);
-  auto& left = halves.first;
-  auto& right = halves.second;
+  auto &left = halves.first;
+  auto &right = halves.second;
 
   std::thread left_thread([&left]() { ShellSort(left); });
   std::thread right_thread([&right]() { ShellSort(right); });
