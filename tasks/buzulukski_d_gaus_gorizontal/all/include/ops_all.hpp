@@ -8,12 +8,12 @@
 
 namespace buzulukski_d_gaus_gorizontal {
 
-class Buzulukski_D_Gaus_Gorizontal_ALL : public BaseTask {
+class BuzulukskiDGausGorizontalALL : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kALL;
   }
-  explicit Buzulukski_D_Gaus_Gorizontal_ALL(const InType &in);
+  explicit BuzulukskiDGausGorizontalALL(const InType &in);
 
  private:
   bool ValidationImpl() override;

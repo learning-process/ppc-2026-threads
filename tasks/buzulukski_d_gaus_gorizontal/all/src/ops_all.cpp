@@ -32,17 +32,17 @@ uint8_t CalculatePixelALL(const uint8_t *in, int py, int px, int w, int h, int c
 }
 }  // namespace
 
-Buzulukski_D_Gaus_Gorizontal_ALL::Buzulukski_D_Gaus_Gorizontal_ALL(const InType &in) : BaseTask() {
+BuzulukskiDGausGorizontalALL::BuzulukskiDGausGorizontalALL(const InType &in) : BaseTask() {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
 }
 
-bool Buzulukski_D_Gaus_Gorizontal_ALL::ValidationImpl() {
+bool BuzulukskiDGausGorizontalALL::ValidationImpl() {
   return GetInput() >= 3;
 }
 
-bool Buzulukski_D_Gaus_Gorizontal_ALL::PreProcessingImpl() {
+bool BuzulukskiDGausGorizontalALL::PreProcessingImpl() {
   width_ = GetInput();
   height_ = GetInput();
   size_t total_size = static_cast<size_t>(width_) * height_ * kChannels;
@@ -51,7 +51,7 @@ bool Buzulukski_D_Gaus_Gorizontal_ALL::PreProcessingImpl() {
   return true;
 }
 
-bool Buzulukski_D_Gaus_Gorizontal_ALL::RunImpl() {
+bool BuzulukskiDGausGorizontalALL::RunImpl() {
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -97,7 +97,7 @@ bool Buzulukski_D_Gaus_Gorizontal_ALL::RunImpl() {
   return true;
 }
 
-bool Buzulukski_D_Gaus_Gorizontal_ALL::PostProcessingImpl() {
+bool BuzulukskiDGausGorizontalALL::PostProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
