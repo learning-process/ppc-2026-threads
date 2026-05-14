@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <random>
@@ -16,18 +17,18 @@ namespace kopilov_d_vertical_gauss_filter {
 class GaussFilterPerfTester : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    constexpr int target_width = 8192;
-    constexpr int target_height = 8192;
+    constexpr int kTargetWidth = 8192;
+    constexpr int kTargetHeight = 8192;
 
-    source_image_.width = target_width;
-    source_image_.height = target_height;
-    source_image_.data.resize(target_width * target_height);
+    source_image_.width = kTargetWidth;
+    source_image_.height = kTargetHeight;
+    source_image_.data.resize(static_cast<size_t>(kTargetWidth) * static_cast<size_t>(kTargetHeight));
 
-    std::mt19937 rand_engine(1337);
+    std::random_device rd;
+    std::mt19937 rand_engine(rd());
     std::uniform_int_distribution<int> color_dist(0, 255);
 
-    std::generate(source_image_.data.begin(), source_image_.data.end(),
-                  [&]() { return static_cast<uint8_t>(color_dist(rand_engine)); });
+    std::ranges::generate(source_image_.data, [&]() { return static_cast<uint8_t>(color_dist(rand_engine)); });
   }
 
   bool CheckTestOutputData(OutType &out) final {
@@ -55,7 +56,6 @@ const auto kPerformanceTasks =
 
 INSTANTIATE_TEST_SUITE_P(GaussFilterPerf, GaussFilterPerfTester, ppc::util::TupleToGTestValues(kPerformanceTasks),
                          GaussFilterPerfTester::CustomPerfTestName);
-
 }  // namespace
 
 }  // namespace kopilov_d_vertical_gauss_filter

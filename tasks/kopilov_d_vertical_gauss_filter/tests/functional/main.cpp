@@ -3,9 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <memory>
-#include <ostream>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -57,15 +55,15 @@ TEST_P(VerticalGaussFilterTest, CheckCorrectness) {
 namespace {
 
 const std::array<TestType, 5> kValidationScenarios = {
-    // 1x1
-    std::make_tuple(Matrix{1, 1, {100}}, Matrix{1, 1, {100}}),
-    // 2x2
-    std::make_tuple(Matrix{2, 2, {1, 2, 3, 4}}, Matrix{2, 2, {1, 2, 2, 3}}),
-    // 3x3
-    std::make_tuple(Matrix{3, 3, std::vector<uint8_t>(9, 16)}, Matrix{3, 3, std::vector<uint8_t>(9, 16)}),
-    std::make_tuple(Matrix{3, 3, std::vector<uint8_t>(9, 42)}, Matrix{3, 3, std::vector<uint8_t>(9, 42)}),
-    // 4x4
-    std::make_tuple(Matrix{4, 4, std::vector<uint8_t>(16, 100)}, Matrix{4, 4, std::vector<uint8_t>(16, 100)})};
+    std::make_tuple(Matrix{.width = 1, .height = 1, .data = {100}}, Matrix{.width = 1, .height = 1, .data = {100}}),
+    std::make_tuple(Matrix{.width = 2, .height = 2, .data = {1, 2, 3, 4}},
+                    Matrix{.width = 2, .height = 2, .data = {1, 2, 2, 3}}),
+    std::make_tuple(Matrix{.width = 3, .height = 3, .data = std::vector<uint8_t>(9, 16)},
+                    Matrix{.width = 3, .height = 3, .data = std::vector<uint8_t>(9, 16)}),
+    std::make_tuple(Matrix{.width = 3, .height = 3, .data = std::vector<uint8_t>(9, 42)},
+                    Matrix{.width = 3, .height = 3, .data = std::vector<uint8_t>(9, 42)}),
+    std::make_tuple(Matrix{.width = 4, .height = 4, .data = std::vector<uint8_t>(16, 100)},
+                    Matrix{.width = 4, .height = 4, .data = std::vector<uint8_t>(16, 100)})};
 
 const auto kTaskGenerators = std::tuple_cat(ppc::util::AddFuncTask<KopilovDVerticalGaussFilterSEQ, InType>(
                                                 kValidationScenarios, PPC_SETTINGS_kopilov_d_vertical_gauss_filter),
@@ -75,7 +73,7 @@ const auto kTaskGenerators = std::tuple_cat(ppc::util::AddFuncTask<KopilovDVerti
                                                 kValidationScenarios, PPC_SETTINGS_kopilov_d_vertical_gauss_filter));
 
 INSTANTIATE_TEST_SUITE_P(FilterFunctionality, VerticalGaussFilterTest, ppc::util::ExpandToValues(kTaskGenerators),
-                         VerticalGaussFilterTest::PrintFuncTestName<VerticalGaussFilterTest>);
+                         VerticalGaussFilterTest::PrintFuncTestName<VerticalGaussFilterTest>);  // NOLINT
 
 }  // namespace
 
@@ -88,27 +86,27 @@ void AssertValidationFails(const Matrix &m) {
 }  // namespace
 
 TEST(VerticalGaussFilterValidation, ZeroWidthFails) {
-  AssertValidationFails(Matrix{0, 10, std::vector<uint8_t>(10, 0)});
+  AssertValidationFails(Matrix{.width = 0, .height = 10, .data = std::vector<uint8_t>(10, 0)});
 }
 
 TEST(VerticalGaussFilterValidation, ZeroHeightFails) {
-  AssertValidationFails(Matrix{10, 0, std::vector<uint8_t>(10, 0)});
+  AssertValidationFails(Matrix{.width = 10, .height = 0, .data = std::vector<uint8_t>(10, 0)});
 }
 
 TEST(VerticalGaussFilterValidation, NegativeWidthFails) {
-  AssertValidationFails(Matrix{-5, 5, std::vector<uint8_t>(25, 0)});
+  AssertValidationFails(Matrix{.width = -5, .height = 5, .data = std::vector<uint8_t>(25, 0)});
 }
 
 TEST(VerticalGaussFilterValidation, NegativeHeightFails) {
-  AssertValidationFails(Matrix{5, -5, std::vector<uint8_t>(25, 0)});
+  AssertValidationFails(Matrix{.width = 5, .height = -5, .data = std::vector<uint8_t>(25, 0)});
 }
 
 TEST(VerticalGaussFilterValidation, DataSizeMismatchFails) {
-  AssertValidationFails(Matrix{5, 5, std::vector<uint8_t>(15, 0)});
+  AssertValidationFails(Matrix{.width = 5, .height = 5, .data = std::vector<uint8_t>(15, 0)});
 }
 
 TEST(VerticalGaussFilterValidation, EmptyDataFails) {
-  AssertValidationFails(Matrix{0, 0, {}});
+  AssertValidationFails(Matrix{.width = 0, .height = 0, .data = {}});
 }
 
 }  // namespace kopilov_d_vertical_gauss_filter

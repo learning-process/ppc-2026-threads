@@ -1,6 +1,7 @@
 #include "kopilov_d_vertical_gauss_filter/tbb/include/ops_tbb.hpp"
 
-#include <tbb/tbb.h>
+#include <oneapi/tbb/blocked_range2d.h>
+#include <oneapi/tbb/parallel_for.h>
 
 #include <array>
 #include <cstddef>
@@ -30,7 +31,8 @@ uint8_t GetPixelMirroredTBB(const std::vector<uint8_t> &image, int x, int y, int
   } else if (new_y >= height) {
     new_y = (2 * height) - new_y - 1;
   }
-  return image[(new_y * width) + new_x];
+  auto idx = static_cast<size_t>(new_y) * static_cast<size_t>(width) + static_cast<size_t>(new_x);
+  return image[idx];
 }
 }  // namespace
 
@@ -68,14 +70,17 @@ bool KopilovDVerticalGaussFilterTBB::RunImpl() {
       for (int i = range.cols().begin(); i != range.cols().end(); ++i) {
         int pixel_sum = 0;
 
-        for (int kernel_y = -1; kernel_y <= 1; ++kernel_y) {
-          for (int kernel_x = -1; kernel_x <= 1; ++kernel_x) {
-            pixel_sum += kGaussKernel[kernel_y + 1][kernel_x + 1] *
-                         GetPixelMirroredTBB(source_image, i + kernel_x, j + kernel_y, width, height);
+        for (size_t ky = 0; ky < 3; ++ky) {
+          for (size_t kx = 0; kx < 3; ++kx) {
+            int current_x = i + static_cast<int>(kx) - 1;
+            int current_y = j + static_cast<int>(ky) - 1;
+            pixel_sum +=
+                kGaussKernel.at(ky).at(kx) * GetPixelMirroredTBB(source_image, current_x, current_y, width, height);
           }
         }
 
-        destination_image[(j * width) + i] = static_cast<uint8_t>(pixel_sum / kDivisor);
+        auto out_idx = static_cast<size_t>(j) * static_cast<size_t>(width) + static_cast<size_t>(i);
+        destination_image[out_idx] = static_cast<uint8_t>(pixel_sum / kDivisor);
       }
     }
   });
