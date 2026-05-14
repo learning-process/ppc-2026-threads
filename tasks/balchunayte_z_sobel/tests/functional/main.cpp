@@ -7,8 +7,8 @@
 #include <tuple>
 #include <vector>
 
-#include "balchunayte_z_sobel/common/include/common.hpp"
 #include "balchunayte_z_sobel/all/include/ops_all.hpp"
+#include "balchunayte_z_sobel/common/include/common.hpp"
 #include "balchunayte_z_sobel/omp/include/ops_omp.hpp"
 #include "balchunayte_z_sobel/seq/include/ops_seq.hpp"
 #include "balchunayte_z_sobel/stl/include/ops_stl.hpp"
