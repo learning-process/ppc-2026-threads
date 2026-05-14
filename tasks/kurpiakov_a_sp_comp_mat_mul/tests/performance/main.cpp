@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "kurpiakov_a_sp_comp_mat_mul/common/include/common.hpp"
+#include "kurpiakov_a_sp_comp_mat_mul/omp/include/ops_omp.hpp"
 #include "kurpiakov_a_sp_comp_mat_mul/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -40,7 +41,7 @@ class KurpiakovRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
   OutType expected_output_;
 
   void SetUp() override {
-    constexpr int kSize = 500;
+    constexpr int kSize = 5000;
 
     auto a = MakeTridiagonal(kSize);
     auto b = MakeTridiagonal(kSize);
@@ -64,8 +65,8 @@ TEST_P(KurpiakovRunPerfTests, SparseMatMulPerf) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KurpiskovACRSMatMulSEQ>(PPC_SETTINGS_kurpiakov_a_sp_comp_mat_mul);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KurpiskovACRSMatMulSEQ, KurpiakovACRSMatMulOMP>(
+    PPC_SETTINGS_kurpiakov_a_sp_comp_mat_mul);
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = KurpiakovRunPerfTests::CustomPerfTestName;
 
