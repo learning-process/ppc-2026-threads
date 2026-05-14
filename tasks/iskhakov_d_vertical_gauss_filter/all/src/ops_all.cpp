@@ -114,11 +114,20 @@ bool IskhakovDVerticalGaussFilterALL::RunImpl() {
     for (int sender_rank = 1; sender_rank < size; ++sender_rank) {
       const int sender_start_col = sender_rank * cols_per_proc + std::min(sender_rank, remainder);
       const int sender_cols = cols_per_proc + (sender_rank < remainder ? 1 : 0);
+
       if (sender_cols == 0) {
         continue;
       }
-      MPI_Recv(&global_result[sender_start_col], sender_cols * height, MPI_UINT8_T, sender_rank, 0, MPI_COMM_WORLD,
+      std::vector<uint8_t> recv_buf(static_cast<size_t>(sender_cols) * height);
+      MPI_Recv(recv_buf.data(), static_cast<int>(recv_buf.size()), MPI_UINT8_T, sender_rank, 0, MPI_COMM_WORLD,
                MPI_STATUS_IGNORE);
+
+      for (int vertical_band = 0; vertical_band < height; ++vertical_band) {
+        for (int col = 0; col < sender_cols; ++col) {
+          global_result[(vertical_band * width) + sender_start_col + col] =
+              recv_buf[(vertical_band * sender_cols) + col];
+        }
+      }
     }
   } else {
     if (local_cols > 0) {
