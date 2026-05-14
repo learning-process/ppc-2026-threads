@@ -64,15 +64,17 @@ bool BuzulukskiDGausGorizontalALL::RunImpl() {
   int start_row = rank * rows_per_proc;
   int end_row = (rank == size - 1) ? h : (rank + 1) * rows_per_proc;
 
+  const uint8_t *input_ptr = input_image_.data();
   std::vector<uint8_t> local_output((static_cast<size_t>(end_row) - start_row) * w * kChannels);
+  uint8_t *local_ptr = local_output.data();
 
-#pragma omp parallel for collapse(2) default(none) shared(start_row, end_row, w, h, input_image_, local_output)
+#pragma omp parallel for collapse(2) default(none) shared(start_row, end_row, w, h, input_ptr, local_ptr)
   for (int py = start_row; py < end_row; ++py) {
     for (int px = 0; px < w; ++px) {
       for (int ch = 0; ch < kChannels; ++ch) {
         int local_py = py - start_row;
         size_t local_idx = ((static_cast<size_t>(local_py) * w + px) * kChannels) + ch;
-        local_output[local_idx] = CalculatePixelALL(input_image_.data(), py, px, w, h, ch);
+        local_ptr[local_idx] = CalculatePixelALL(input_ptr, py, px, w, h, ch);
       }
     }
   }
@@ -91,7 +93,7 @@ bool BuzulukskiDGausGorizontalALL::RunImpl() {
     }
   }
 
-  MPI_Gatherv(local_output.data(), static_cast<int>(local_output.size()), MPI_UNSIGNED_CHAR, output_image_.data(),
+  MPI_Gatherv(local_ptr, static_cast<int>(local_output.size()), MPI_UNSIGNED_CHAR, output_image_.data(),
               recv_counts.data(), displs.data(), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
   return true;
