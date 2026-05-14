@@ -73,7 +73,7 @@ bool TsyplakovKTestTaskALL::RunImpl() {
   const int rows_per_proc = rows / size;
   const int remainder = rows % size;
 
-  const int start_row = rank * rows_per_proc + std::min(rank, remainder);
+  const int start_row = (rank * rows_per_proc) + std::min(rank, remainder);
 
   const int local_rows = rows_per_proc + (rank < remainder ? 1 : 0);
 
