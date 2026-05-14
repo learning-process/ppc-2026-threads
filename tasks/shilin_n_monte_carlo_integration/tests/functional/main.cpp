@@ -8,6 +8,7 @@
 #include <tuple>
 #include <vector>
 
+#include "shilin_n_monte_carlo_integration/all/include/ops_all.hpp"
 #include "shilin_n_monte_carlo_integration/common/include/common.hpp"
 #include "shilin_n_monte_carlo_integration/omp/include/ops_omp.hpp"
 #include "shilin_n_monte_carlo_integration/seq/include/ops_seq.hpp"
@@ -88,6 +89,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ShilinNMonteCa
                                            ppc::util::AddFuncTask<ShilinNMonteCarloIntegrationTBB, InType>(
                                                kTestParam, PPC_SETTINGS_shilin_n_monte_carlo_integration),
                                            ppc::util::AddFuncTask<ShilinNMonteCarloIntegrationSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_shilin_n_monte_carlo_integration),
+                                           ppc::util::AddFuncTask<ShilinNMonteCarloIntegrationALL, InType>(
                                                kTestParam, PPC_SETTINGS_shilin_n_monte_carlo_integration));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
