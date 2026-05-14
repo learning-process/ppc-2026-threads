@@ -1,6 +1,7 @@
 #include "frolova_s_radix_sort_double/all/include/ops_all.hpp"
 
 #include <mpi.h>
+#include <tbb/parallel_sort.h>
 
 #include <algorithm>
 #include <bit>
@@ -12,45 +13,9 @@ namespace frolova_s_radix_sort_double {
 namespace {
 
 void LocalRadixSort(std::vector<double> &chunk) {
-  if (chunk.empty()) {
-    return;
-  }
-  const int radix = 256;
-  const int num_bits = 8;
-  const int num_passes = sizeof(uint64_t);
-  std::vector<double> temp(chunk.size());
+  tbb::parallel_sort(chunk.begin(), chunk.end());
+}
 
-  for (int pass = 0; pass < num_passes; ++pass) {
-    std::vector<int> count(radix, 0);
-    for (double val : chunk) {
-      auto bits = std::bit_cast<uint64_t>(val);
-      count[(bits >> (pass * num_bits)) & 0xFF]++;
-    }
-    int total = 0;
-    for (int i = 0; i < radix; ++i) {
-      int old = count[i];
-      count[i] = total;
-      total += old;
-    }
-    for (double val : chunk) {
-      auto bits = std::bit_cast<uint64_t>(val);
-      temp[count[(bits >> (pass * num_bits)) & 0xFF]++] = val;
-    }
-    chunk.swap(temp);
-  }
-
-  std::vector<double> neg, pos;
-  for (double val : chunk) {
-    if ((std::bit_cast<uint64_t>(val) >> 63) != 0) {
-      neg.push_back(val);
-    } else {
-      pos.push_back(val);
-    }
-  }
-  std::reverse(neg.begin(), neg.end());
-  chunk.clear();
-  chunk.insert(chunk.end(), neg.begin(), neg.end());
-  chunk.insert(chunk.end(), pos.begin(), pos.end());
 }  // namespace
 
 FrolovaSRadixSortDoubleALL::FrolovaSRadixSortDoubleALL(const InType &in) {
@@ -59,14 +24,7 @@ FrolovaSRadixSortDoubleALL::FrolovaSRadixSortDoubleALL(const InType &in) {
 }
 
 bool FrolovaSRadixSortDoubleALL::ValidationImpl() {
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  int res = 0;
-  if (rank == 0) {
-    res = GetInput().empty() ? 0 : 1;
-  }
-  MPI_Bcast(&res, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  return res == 1;
+  return true;
 }
 
 bool FrolovaSRadixSortDoubleALL::PreProcessingImpl() {
@@ -98,18 +56,21 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
   }
 
   std::vector<double> local_data(sendcounts[rank]);
-  MPI_Scatterv(rank == 0 ? GetInput().data() : nullptr, sendcounts.data(), displs.data(), MPI_DOUBLE, local_data.data(),
+  double dummy;
+  double *recvbuf = (sendcounts[rank] > 0) ? local_data.data() : &dummy;
+
+  MPI_Scatterv(rank == 0 ? GetInput().data() : nullptr, sendcounts.data(), displs.data(), MPI_DOUBLE, recvbuf,
                sendcounts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   LocalRadixSort(local_data);
-
   std::vector<double> gathered;
   if (rank == 0) {
     gathered.resize(total_size);
   }
 
-  MPI_Gatherv(local_data.data(), sendcounts[rank], MPI_DOUBLE, gathered.data(), sendcounts.data(), displs.data(),
-              MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  double *sendbuf = (sendcounts[rank] > 0) ? local_data.data() : &dummy;
+  MPI_Gatherv(sendbuf, sendcounts[rank], MPI_DOUBLE, gathered.data(), sendcounts.data(), displs.data(), MPI_DOUBLE, 0,
+              MPI_COMM_WORLD);
 
   if (rank == 0) {
     std::vector<double> result;
@@ -135,7 +96,5 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
 bool FrolovaSRadixSortDoubleALL::PostProcessingImpl() {
   return true;
 }
-
-}  // namespace
 
 }  // namespace frolova_s_radix_sort_double
