@@ -88,7 +88,7 @@ void BadanovASelectEdgeSobelSTL::ApplySobelOperator(const std::vector<uint8_t> &
       }
 
       std::scoped_lock lock(max_mutex);
-      local_max = std::max(magnitude_value, local_max);
+      global_max = std::max(local_max, global_max);
     });
   }
 
