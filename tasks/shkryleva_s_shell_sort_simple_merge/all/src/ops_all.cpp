@@ -1,25 +1,23 @@
 #include "shkryleva_s_shell_sort_simple_merge/all/include/ops_all.hpp"
 
 #include <mpi.h>
+#include <omp.h>
 
 #include <algorithm>
 #include <cstddef>
-#include <thread>
-#include <utility>
 #include <vector>
 
 #include "shkryleva_s_shell_sort_simple_merge/common/include/common.hpp"
 
 namespace shkryleva_s_shell_sort_simple_merge {
 
-namespace {
+// ==================== Реализация вспомогательных функций ====================
 
-// ========== Локальная параллельная сортировка (STL-версия) ==========
-void ShellSort(int left, int right, std::vector<int> &arr) {
-  int sub_array_size = right - left + 1;
+void ShkrylevaSShellMergeALL::ShellSort(std::vector<int> &arr, int left, int right) {
+  int sub_size = right - left + 1;
   int gap = 1;
-  while (gap <= sub_array_size / 3) {
-    gap = (gap * 3) + 1;
+  while (gap <= sub_size / 3) {
+    gap = gap * 3 + 1;
   }
   for (; gap > 0; gap /= 3) {
     for (int i = left + gap; i <= right; ++i) {
@@ -34,118 +32,98 @@ void ShellSort(int left, int right, std::vector<int> &arr) {
   }
 }
 
-void Merge(int left, int mid, int right, std::vector<int> &arr, std::vector<int> &buffer) {
+void ShkrylevaSShellMergeALL::Merge(std::vector<int> &arr, int left, int mid, int right, std::vector<int> &buffer) {
   int i = left;
   int j = mid + 1;
   int k = 0;
-  int merge_size = right - left + 1;
-  if (static_cast<std::size_t>(merge_size) > buffer.size()) {
-    buffer.resize(static_cast<std::size_t>(merge_size));
+  int size = right - left + 1;
+  if (static_cast<std::size_t>(size) > buffer.size()) {
+    buffer.resize(static_cast<std::size_t>(size));
   }
-  while (i <= mid || j <= right) {
-    if (i > mid) {
-      buffer[k++] = arr[j++];
-    } else if (j > right) {
-      buffer[k++] = arr[i++];
-    } else {
-      buffer[k++] = (arr[i] <= arr[j]) ? arr[i++] : arr[j++];
-    }
+  while (i <= mid && j <= right) {
+    buffer[k++] = (arr[i] <= arr[j]) ? arr[i++] : arr[j++];
+  }
+  while (i <= mid) {
+    buffer[k++] = arr[i++];
+  }
+  while (j <= right) {
+    buffer[k++] = arr[j++];
   }
   for (int idx = 0; idx < k; ++idx) {
     arr[left + idx] = buffer[idx];
   }
 }
 
-void SortSegments(std::vector<int> &arr, int num_threads, int sub_arr_size) {
-  std::vector<std::thread> threads;
-  for (int i = 0; i < num_threads; ++i) {
-    int left = i * sub_arr_size;
-    int right = std::min(left + sub_arr_size - 1, static_cast<int>(arr.size()) - 1);
-    if (left < right) {
-      threads.emplace_back([&arr, left, right] { ShellSort(left, right, arr); });
-    }
-  }
-  for (auto &t : threads) {
-    if (t.joinable()) {
-      t.join();
-    }
-  }
-}
-
-void HierarchicalMerge(std::vector<int> &arr, int num_threads, int sub_arr_size) {
-  while (num_threads > 1) {
-    int new_num_threads = (num_threads + 1) / 2;
-    std::vector<std::thread> threads;
-    for (int i = 0; i < new_num_threads; ++i) {
-      int left = i * 2 * sub_arr_size;
-      int mid = std::min(left + sub_arr_size - 1, static_cast<int>(arr.size()) - 1);
-      int right = std::min(left + (2 * sub_arr_size) - 1, static_cast<int>(arr.size()) - 1);
-      if (mid < right) {
-        threads.emplace_back([&arr, left, mid, right] {
-          std::vector<int> local_buffer;
-          Merge(left, mid, right, arr, local_buffer);
-        });
-      }
-    }
-    for (auto &t : threads) {
-      if (t.joinable()) {
-        t.join();
-      }
-    }
-    sub_arr_size *= 2;
-    num_threads = new_num_threads;
-  }
-}
-
-void SortVectorParallel(std::vector<int> &arr) {
-  if (arr.size() < 2) {
+void ShkrylevaSShellMergeALL::ParallelShellSort(std::vector<int> &arr) {
+  int n = static_cast<int>(arr.size());
+  if (n < 2) {
     return;
   }
 
-  const int array_size = static_cast<int>(arr.size());
-  unsigned int hardware_threads = std::thread::hardware_concurrency();
-  int num_threads = (hardware_threads > 0) ? static_cast<int>(hardware_threads) : 1;
-  num_threads = std::min(num_threads, array_size);
+  int num_threads = omp_get_max_threads();
+  if (num_threads > n) {
+    num_threads = n;
+  }
 
-  int sub_arr_size = (array_size + num_threads - 1) / num_threads;
+  // Разбиение на блоки
+  int block_size = (n + num_threads - 1) / num_threads;
+  std::vector<std::vector<int>> local_buffers(num_threads);  // буферы для слияния
 
-  SortSegments(arr, num_threads, sub_arr_size);
-  HierarchicalMerge(arr, num_threads, sub_arr_size);
-}
+  // Параллельная сортировка блоков
+#pragma omp parallel for schedule(static) num_threads(num_threads)
+  for (int t = 0; t < num_threads; ++t) {
+    int left = t * block_size;
+    int right = std::min(left + block_size - 1, n - 1);
+    if (left < right) {
+      ShellSort(arr, left, right);
+    }
+  }
 
-void ComputeChunkParams(size_t total_size, int mpi_size, std::vector<size_t> &chunk_sizes,
-                        std::vector<size_t> &offsets) {
-  const auto mpi_size_usz = static_cast<size_t>(mpi_size);
-  chunk_sizes.assign(mpi_size_usz, 0);
-  offsets.assign(mpi_size_usz, 0);
-  const size_t base = total_size / mpi_size_usz;
-  const size_t remainder = total_size % mpi_size_usz;
-  for (size_t i = 0; i < mpi_size_usz; ++i) {
-    chunk_sizes[i] = base + (i < remainder ? 1U : 0U);
-    offsets[i] = (i == 0) ? 0 : offsets[i - 1] + chunk_sizes[i - 1];
+  // Иерархическое слияние блоков
+  int step = block_size;
+  int active = num_threads;
+  while (active > 1) {
+    int new_active = (active + 1) / 2;
+#pragma omp parallel for schedule(static) num_threads(new_active)
+    for (int t = 0; t < new_active; ++t) {
+      int left = t * 2 * step;
+      int mid = std::min(left + step - 1, n - 1);
+      int right = std::min(left + 2 * step - 1, n - 1);
+      if (mid < right) {
+        Merge(arr, left, mid, right, local_buffers[t]);
+      }
+    }
+    step *= 2;
+    active = new_active;
   }
 }
 
-void ScatterData(const std::vector<int> &global_data, std::vector<int> &local_data,
-                 const std::vector<size_t> &chunk_sizes, const std::vector<size_t> &offsets) {
-  int mpi_size = static_cast<int>(chunk_sizes.size());
-  std::vector<int> send_counts(mpi_size);
-  std::vector<int> send_displs(mpi_size);
-  for (int i = 0; i < mpi_size; ++i) {
-    send_counts[i] = static_cast<int>(chunk_sizes[static_cast<size_t>(i)]);
-    send_displs[i] = static_cast<int>(offsets[static_cast<size_t>(i)]);
+std::vector<int> ShkrylevaSShellMergeALL::SimpleMerge(const std::vector<int> &a, const std::vector<int> &b) {
+  std::vector<int> res;
+  res.reserve(a.size() + b.size());
+  size_t i = 0, j = 0;
+  while (i < a.size() && j < b.size()) {
+    if (a[i] <= b[j]) {
+      res.push_back(a[i++]);
+    } else {
+      res.push_back(b[j++]);
+    }
   }
-  MPI_Scatterv(global_data.data(), send_counts.data(), send_displs.data(), MPI_INT, local_data.data(),
-               static_cast<int>(local_data.size()), MPI_INT, 0, MPI_COMM_WORLD);
+  while (i < a.size()) {
+    res.push_back(a[i++]);
+  }
+  while (j < b.size()) {
+    res.push_back(b[j++]);
+  }
+  return res;
 }
 
-}  // namespace
+// ==================== Реализация методов класса ====================
 
-// ========== Реализация класса ShkrylevaSShellMergeALL ==========
 ShkrylevaSShellMergeALL::ShkrylevaSShellMergeALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = in;
+  GetOutput() = std::vector<int>();  // как в успешной задаче
 }
 
 bool ShkrylevaSShellMergeALL::ValidationImpl() {
@@ -153,76 +131,65 @@ bool ShkrylevaSShellMergeALL::ValidationImpl() {
 }
 
 bool ShkrylevaSShellMergeALL::PreProcessingImpl() {
-  GetOutput() = GetInput();
-  return true;
+  return true;  // ничего не делаем
 }
 
 bool ShkrylevaSShellMergeALL::RunImpl() {
-  int mpi_rank = 0;
-  int mpi_size = 1;
-  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+  int rank = 0, size_comm = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size_comm);
 
-  std::vector<int> &data = GetOutput();
-  const size_t total_size = data.size();
-  if (total_size <= 1) {
+  int total_size = static_cast<int>(GetInput().size());
+  MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (total_size == 0) {
     return true;
   }
 
-  // Разбиение на чанки
-  std::vector<size_t> chunk_sizes;
-  std::vector<size_t> offsets;
-  ComputeChunkParams(total_size, mpi_size, chunk_sizes, offsets);
+  // Подготовка параметров для Scatterv
+  std::vector<int> send_counts(size_comm), offsets(size_comm);
+  int chunk = total_size / size_comm;
+  int rem = total_size % size_comm;
+  for (int i = 0; i < size_comm; ++i) {
+    send_counts[i] = chunk + (i < rem ? 1 : 0);
+    offsets[i] = (i == 0) ? 0 : offsets[i - 1] + send_counts[i - 1];
+  }
 
-  std::vector<int> local_data(chunk_sizes[mpi_rank]);
-  ScatterData(data, local_data, chunk_sizes, offsets);
+  std::vector<int> local_data(send_counts[rank]);
+  const int *in_ptr = (rank == 0) ? GetInput().data() : nullptr;
+  MPI_Scatterv(const_cast<int *>(in_ptr), send_counts.data(), offsets.data(), MPI_INT, local_data.data(),
+               send_counts[rank], MPI_INT, 0, MPI_COMM_WORLD);
 
-  // Локальная параллельная сортировка (STL-потоки)
-  SortVectorParallel(local_data);
+  // Локальная сортировка с использованием OpenMP
+  ParallelShellSort(local_data);
 
-  // Сбор всех отсортированных кусков на процессе 0
-  std::vector<int> all_data;
-  if (mpi_rank == 0) {
-    all_data.resize(total_size);
-    std::vector<int> recv_counts(mpi_size);
-    for (int i = 0; i < mpi_size; ++i) {
-      recv_counts[i] = static_cast<int>(chunk_sizes[i]);
+  // Сбор и слияние на процессе 0
+  if (rank == 0) {
+    std::vector<int> final = local_data;
+    for (int i = 1; i < size_comm; ++i) {
+      if (send_counts[i] == 0) {
+        continue;
+      }
+      std::vector<int> recv_buf(send_counts[i]);
+      MPI_Recv(recv_buf.data(), send_counts[i], MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      final = SimpleMerge(final, recv_buf);
     }
-    std::vector<int> displs(mpi_size, 0);
-    for (int i = 1; i < mpi_size; ++i) {
-      displs[i] = displs[i - 1] + recv_counts[i - 1];
+    GetOutput() = std::move(final);
+  } else {
+    if (!local_data.empty()) {
+      MPI_Send(local_data.data(), send_counts[rank], MPI_INT, 0, 0, MPI_COMM_WORLD);
     }
-    MPI_Gatherv(local_data.data(), static_cast<int>(local_data.size()), MPI_INT, all_data.data(), recv_counts.data(),
-                displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
-  } else {
-    MPI_Gatherv(local_data.data(), static_cast<int>(local_data.size()), MPI_INT, nullptr, nullptr, nullptr, MPI_INT, 0,
-                MPI_COMM_WORLD);
   }
 
-  // На процессе 0 – финальная сортировка (можно std::sort)
-  if (mpi_rank == 0) {
-    std::ranges::sort(all_data);
-    data = std::move(all_data);
-  }
+  // Рассылка отсортированного массива всем процессам
+  GetOutput().resize(static_cast<std::size_t>(total_size));
+  MPI_Bcast(GetOutput().data(), total_size, MPI_INT, 0, MPI_COMM_WORLD);
 
-  // Рассылка результата всем процессам
-  if (mpi_rank == 0) {
-    size_t sz = data.size();
-    MPI_Bcast(&sz, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
-    MPI_Bcast(data.data(), static_cast<int>(sz), MPI_INT, 0, MPI_COMM_WORLD);
-  } else {
-    size_t sz = 0;
-    MPI_Bcast(&sz, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
-    data.resize(sz);
-    MPI_Bcast(data.data(), static_cast<int>(sz), MPI_INT, 0, MPI_COMM_WORLD);
-  }
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  return std::ranges::is_sorted(data);
+  return true;
 }
 
 bool ShkrylevaSShellMergeALL::PostProcessingImpl() {
-  return !GetOutput().empty();
+  return true;
 }
 
 }  // namespace shkryleva_s_shell_sort_simple_merge

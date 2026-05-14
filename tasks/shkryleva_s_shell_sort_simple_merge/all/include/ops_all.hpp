@@ -17,6 +17,12 @@ class ShkrylevaSShellMergeALL : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  // Вспомогательные функции
+  static void ShellSort(std::vector<int> &arr, int left, int right);
+  static void Merge(std::vector<int> &arr, int left, int mid, int right, std::vector<int> &buffer);
+  static void ParallelShellSort(std::vector<int> &arr);
+  static std::vector<int> SimpleMerge(const std::vector<int> &a, const std::vector<int> &b);
 };
 
 }  // namespace shkryleva_s_shell_sort_simple_merge
