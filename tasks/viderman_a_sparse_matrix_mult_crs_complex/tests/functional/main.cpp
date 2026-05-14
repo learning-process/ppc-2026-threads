@@ -12,6 +12,7 @@
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
+#include "viderman_a_sparse_matrix_mult_crs_complex/all/include/ops_all.hpp"
 #include "viderman_a_sparse_matrix_mult_crs_complex/common/include/common.hpp"
 #include "viderman_a_sparse_matrix_mult_crs_complex/omp/include/ops_omp.hpp"
 #include "viderman_a_sparse_matrix_mult_crs_complex/seq/include/ops_seq.hpp"
@@ -653,7 +654,9 @@ const std::array<TestCaseType, 34> kTestParam = {
   return MakeCase("matrix_squared_known_result", j, j, [minus_i](const CRSMatrix &c) { return CrsEqual(minus_i, c); });
 }()};
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<VidermanASparseMatrixMultCRSComplexSEQ, InType>(
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<VidermanASparseMatrixMultCRSComplexALL, InType>(
+                                               kTestParam, PPC_SETTINGS_viderman_a_sparse_matrix_mult_crs_complex),
+                                           ppc::util::AddFuncTask<VidermanASparseMatrixMultCRSComplexSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_viderman_a_sparse_matrix_mult_crs_complex),
                                            ppc::util::AddFuncTask<VidermanASparseMatrixMultCRSComplexOMP, InType>(
                                                kTestParam, PPC_SETTINGS_viderman_a_sparse_matrix_mult_crs_complex),
