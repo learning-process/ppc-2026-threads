@@ -184,7 +184,7 @@ void RunLocal(int rank, int world_size, int width, int height, const Distributio
   const int num_col_blocks = width / kBlockSize;
   const bool width_has_remainder = (width % kBlockSize) != 0;
   const int local_block_rows =
-      (rank < total_block_rows % world_size) ? (total_block_rows / world_size + 1) : (total_block_rows / world_size);
+      (rank < total_block_rows % world_size) ? ((total_block_rows / world_size) + 1) : (total_block_rows / world_size);
   const bool is_last = (rank == world_size - 1);
 
   int num_threads = std::max(1, ppc::util::GetNumThreads());
