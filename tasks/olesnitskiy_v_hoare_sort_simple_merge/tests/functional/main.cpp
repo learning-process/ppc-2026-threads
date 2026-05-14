@@ -5,10 +5,12 @@
 #include <cstddef>
 #include <limits>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
 #include "olesnitskiy_v_hoare_sort_simple_merge/common/include/common.hpp"
+#include "olesnitskiy_v_hoare_sort_simple_merge/omp/include/ops_omp.hpp"
 #include "olesnitskiy_v_hoare_sort_simple_merge/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -18,18 +20,19 @@ namespace olesnitskiy_v_hoare_sort_simple_merge {
 class OlesnitskiyVRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::get<2>(test_param);
+    return std::get<1>(test_param);
   }
 
  protected:
   void SetUp() override {
     const TestType &params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_ = std::get<0>(params);
-    expected_data_ = std::get<1>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == expected_data_;
+    OutType expected_data = input_data_;
+    std::ranges::sort(expected_data);
+    return output_data == expected_data;
   }
 
   InType GetTestInputData() final {
@@ -38,7 +41,6 @@ class OlesnitskiyVRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InTyp
 
  private:
   InType input_data_;
-  OutType expected_data_;
 };
 
 namespace {
@@ -48,9 +50,7 @@ TEST_P(OlesnitskiyVRunFuncTestsThreads, HoareSortSimpleMerging) {
 }
 
 TestType MakeTest(InType input, std::string name) {
-  OutType expected = input;
-  std::ranges::sort(expected);
-  return {std::move(input), std::move(expected), std::move(name)};
+  return {std::move(input), std::move(name)};
 }
 
 const std::array<TestType, 15> kTestParam = {
@@ -74,8 +74,10 @@ const std::array<TestType, 15> kTestParam = {
     MakeTest(std::vector<int>{3, 3, 3, 2, 2, 1, 1, 0, 0, -1, -1}, "many_equal_runs"),
     MakeTest(std::vector<int>{17, -4, 23, 0, 17, -4, 99, -100, 8, 8, 42, -100, 5}, "repeated_mixed")};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<OlesnitskiyVHoareSortSimpleMergeSEQ, InType>(
-    kTestParam, PPC_SETTINGS_olesnitskiy_v_hoare_sort_simple_merge);
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<OlesnitskiyVHoareSortSimpleMergeSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_olesnitskiy_v_hoare_sort_simple_merge),
+                                           ppc::util::AddFuncTask<OlesnitskiyVHoareSortSimpleMergeOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_olesnitskiy_v_hoare_sort_simple_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

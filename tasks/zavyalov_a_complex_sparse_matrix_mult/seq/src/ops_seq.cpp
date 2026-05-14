@@ -1,8 +1,5 @@
 #include "zavyalov_a_complex_sparse_matrix_mult/seq/include/ops_seq.hpp"
 
-#include <chrono>
-#include <thread>
-
 #include "zavyalov_a_complex_sparse_matrix_mult/common/include/common.hpp"
 
 namespace zavyalov_a_compl_sparse_matr_mult {
@@ -28,9 +25,6 @@ bool ZavyalovAComplSparseMatrMultSEQ::RunImpl() {
 
   GetOutput() = matr_a * matr_b;
 
-  // CheckTestOutputData works much slower than RunImpl in perf tests.
-  // That's why we use this slowing method
-  std::this_thread::sleep_for(std::chrono::milliseconds(10));
   return true;
 }
 

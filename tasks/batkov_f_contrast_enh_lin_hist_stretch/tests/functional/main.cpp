@@ -1,0 +1,117 @@
+#include <gtest/gtest.h>
+#include <stb/stb_image.h>
+
+#include <algorithm>
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <random>
+#include <string>
+#include <tuple>
+
+#include "batkov_f_contrast_enh_lin_hist_stretch/common/include/common.hpp"
+#include "batkov_f_contrast_enh_lin_hist_stretch/omp/include/ops_omp.hpp"
+#include "batkov_f_contrast_enh_lin_hist_stretch/seq/include/ops_seq.hpp"
+#include "batkov_f_contrast_enh_lin_hist_stretch/stl/include/ops_stl.hpp"
+#include "batkov_f_contrast_enh_lin_hist_stretch/tbb/include/ops_tbb.hpp"
+#include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
+
+namespace batkov_f_contrast_enh_lin_hist_stretch {
+
+class BatkovFRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+ public:
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+  }
+
+ protected:
+  void SetUp() override {
+    const TestType &params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+
+    const auto size = static_cast<size_t>(std::get<0>(params));
+    const std::string &scenario = std::get<1>(params);
+
+    input_data_.resize(size * size);
+
+    if (scenario == "degenerate_uniform") {
+      expect_identity_ = true;
+      constexpr uint8_t kGray = 140;
+      std::ranges::fill(input_data_, kGray);
+      return;
+    }
+
+    expect_identity_ = false;
+
+    int base_intensity = 120;
+    int contrast_range = 40;
+    std::uniform_int_distribution<> dis(-contrast_range / 2, contrast_range / 2);
+
+    input_data_.resize(size * size);
+    for (size_t row = 0; row < size; ++row) {
+      for (size_t col = 0; col < size; ++col) {
+        int noise = dis(gen_);
+        int value = base_intensity + noise;
+        value = std::clamp(value, 80, 160);
+        input_data_[(row * size) + col] = static_cast<uint8_t>(value);
+      }
+    }
+  }
+
+  bool CheckTestOutputData(OutType &output_data) final {
+    if (expect_identity_) {
+      return output_data == input_data_;
+    }
+
+    auto [min_it, max_it] = std::ranges::minmax_element(output_data);
+    uint8_t min_out = *min_it;
+    uint8_t max_out = *max_it;
+
+    if (min_out == max_out) {
+      return true;
+    }
+
+    return (min_out <= 1) && (max_out >= 254);
+  }
+
+  InType GetTestInputData() final {
+    return input_data_;
+  }
+
+ private:
+  std::random_device rd_;
+  std::mt19937 gen_{rd_()};
+  InType input_data_;
+  bool expect_identity_ = false;
+};
+
+namespace {
+
+TEST_P(BatkovFRunFuncTestsThreads, ContrastEnhLinHistStretch) {
+  ExecuteTest(GetParam());
+}
+
+const std::array<TestType, 5> kTestParam = {
+    std::make_tuple(100, "small_image"),        std::make_tuple(500, "medium_image"),
+    std::make_tuple(1000, "big_image"),         std::make_tuple(1500, "large_image"),
+    std::make_tuple(256, "degenerate_uniform"),
+};
+
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch),
+                                           ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch),
+                                           ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch),
+                                           ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch));
+
+const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+
+const auto kPerfTestName = BatkovFRunFuncTestsThreads::PrintFuncTestName<BatkovFRunFuncTestsThreads>;
+
+INSTANTIATE_TEST_SUITE_P(ContrastEnhLinHistStretch, BatkovFRunFuncTestsThreads, kGtestValues, kPerfTestName);
+
+}  // namespace
+
+}  // namespace batkov_f_contrast_enh_lin_hist_stretch
