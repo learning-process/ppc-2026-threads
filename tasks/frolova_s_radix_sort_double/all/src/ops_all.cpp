@@ -136,4 +136,6 @@ bool FrolovaSRadixSortDoubleALL::PostProcessingImpl() {
   return true;
 }
 
+}  // namespace
+
 }  // namespace frolova_s_radix_sort_double
