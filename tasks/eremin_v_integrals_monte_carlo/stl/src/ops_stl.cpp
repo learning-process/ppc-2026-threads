@@ -60,11 +60,11 @@ bool EreminVIntegralsMonteCarloSTL::RunImpl() {
   std::vector<std::thread> threads;
   threads.reserve(static_cast<std::size_t>(num_threads));
 
-  for (int t = 0; t < num_threads; ++t) {
-    const int begin = (samples * t) / num_threads;
-    const int end = (samples * (t + 1)) / num_threads;
-    threads.emplace_back([&, t, begin, end]() {
-      std::mt19937 local_gen(std::random_device{}() + static_cast<unsigned>(t));
+  for (int tid = 0; tid < num_threads; ++tid) {
+    const int begin = (samples * tid) / num_threads;
+    const int end = (samples * (tid + 1)) / num_threads;
+    threads.emplace_back([&, tid, begin, end]() {
+      std::mt19937 local_gen(std::random_device{}() + static_cast<unsigned>(tid));
 
       std::vector<std::uniform_real_distribution<double>> local_distributions;
       local_distributions.reserve(dimension);
@@ -80,7 +80,7 @@ bool EreminVIntegralsMonteCarloSTL::RunImpl() {
         }
         local_sum += func(point);
       }
-      partial_sums[static_cast<std::size_t>(t)] = local_sum;
+      partial_sums[static_cast<std::size_t>(tid)] = local_sum;
     });
   }
 
