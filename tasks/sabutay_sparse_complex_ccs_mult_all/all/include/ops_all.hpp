@@ -3,13 +3,11 @@
 #include "sabutay_sparse_complex_ccs_mult_all/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-// kALL task entry: CCS-format sparse complex matrix product (see ops_all.cpp).
-
 namespace sabutay_sparse_complex_ccs_mult_all {
 
 class SabutaySparseComplexCcsMultAll : public BaseTask {
  public:
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+  static constexpr auto GetStaticTypeOfTask() -> ppc::task::TypeOfTask {
     return ppc::task::TypeOfTask::kALL;
   }
   explicit SabutaySparseComplexCcsMultAll(const InType &in);

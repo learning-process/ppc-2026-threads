@@ -16,14 +16,12 @@
 #include "sabutay_sparse_complex_ccs_mult_all/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
-// Performance tests: timing on pseudo-random CCS inputs.
-
 namespace sabutay_sparse_complex_ccs_mult_all {
 namespace {
 
 CCS BuildRandomCcs(int rows, int cols, int seed, int max_per_col) {
   std::mt19937 gen(static_cast<std::uint32_t>(seed));
-  std::uniform_real_distribution<double> re(-3.0, 3.0);
+  std::uniform_real_distribution<double> re((-3.0), (3.0));
   std::uniform_int_distribution<int> per_col(0, max_per_col);
 
   CCS m;

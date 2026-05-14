@@ -17,13 +17,11 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-// Functional tests: CCS result checked against dense reference multiplication.
-
 namespace sabutay_sparse_complex_ccs_mult_all {
 namespace {
 
 using Z = std::complex<double>;
-constexpr double kCmpTol = 1e-12;
+constexpr double kCmpTol = (1e-12);
 
 struct Dense {
   int m{0};
