@@ -137,8 +137,8 @@ class KlimovichVCrsComplexFuncTests : public ppc::util::BaseRunFuncTests<InType,
   }
 
  private:
-  InType input_data_{};
-  std::vector<std::vector<Cplx>> expected_{};
+  InType input_data_;
+  std::vector<std::vector<Cplx>> expected_;
 };
 
 namespace {

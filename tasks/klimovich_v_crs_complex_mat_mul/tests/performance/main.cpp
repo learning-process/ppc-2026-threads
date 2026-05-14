@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <algorithm>
 #include <cstdint>
 #include <tuple>
+#include <utility>
 
 #include "klimovich_v_crs_complex_mat_mul/common/include/common.hpp"
 #include "klimovich_v_crs_complex_mat_mul/seq/include/ops_seq.hpp"
@@ -39,7 +41,7 @@ CrsMatrix BuildScatteredMatrix(int n, std::uint32_t step, std::uint32_t shift) {
 
 class KlimovichVCrsComplexPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr int kSize = 1500;
-  InType input_data_{};
+  InType input_data_;
 
  public:
   void SetUp() override {

@@ -21,7 +21,7 @@ struct CrsMatrix {
 
   CrsMatrix() = default;
 
-  CrsMatrix(int rows, int cols) : n_rows(rows), n_cols(cols), row_offsets(static_cast<std::size_t>(rows) + 1, 0) {}
+  CrsMatrix(int rows, int cols) : n_rows(rows), n_cols(cols), row_offsets(rows + 1, 0) {}
 };
 
 using InType = std::tuple<CrsMatrix, CrsMatrix>;
