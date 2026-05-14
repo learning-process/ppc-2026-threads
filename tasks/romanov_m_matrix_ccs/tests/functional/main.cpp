@@ -11,6 +11,8 @@
 #include "romanov_m_matrix_ccs/common/include/common.hpp"
 #include "romanov_m_matrix_ccs/omp/include/ops_omp.hpp"
 #include "romanov_m_matrix_ccs/seq/include/ops_seq.hpp"
+#include "romanov_m_matrix_ccs/stl/include/ops_stl.hpp"
+#include "romanov_m_matrix_ccs/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -117,7 +119,9 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(1, "test_2x2_basic")
                                             std::make_tuple(3, "test_rectangular_1x3_3x1")};
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<RomanovMMatrixCCSSeq, InType>(kTestParam, PPC_SETTINGS_romanov_m_matrix_ccs),
-                   ppc::util::AddFuncTask<RomanovMMatrixCCSOMP, InType>(kTestParam, PPC_SETTINGS_romanov_m_matrix_ccs));
+                   ppc::util::AddFuncTask<RomanovMMatrixCCSOMP, InType>(kTestParam, PPC_SETTINGS_romanov_m_matrix_ccs),
+                   ppc::util::AddFuncTask<RomanovMMatrixCCSTBB, InType>(kTestParam, PPC_SETTINGS_romanov_m_matrix_ccs),
+                   ppc::util::AddFuncTask<RomanovMMatrixCCSSTL, InType>(kTestParam, PPC_SETTINGS_romanov_m_matrix_ccs));
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = RomanovMRunFuncTests::PrintFuncTestName<RomanovMRunFuncTests>;

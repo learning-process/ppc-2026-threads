@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <array>
 #include <cstddef>
@@ -7,9 +8,12 @@
 #include <tuple>
 #include <vector>
 
+#include "kolotukhin_a_gaussian_blur/all/include/ops_all.hpp"
 #include "kolotukhin_a_gaussian_blur/common/include/common.hpp"
 #include "kolotukhin_a_gaussian_blur/omp/include/ops_omp.hpp"
 #include "kolotukhin_a_gaussian_blur/seq/include/ops_seq.hpp"
+#include "kolotukhin_a_gaussian_blur/stl/include/ops_stl.hpp"
+#include "kolotukhin_a_gaussian_blur/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -28,6 +32,15 @@ class KolotukhinAGaussinBlureFuncTests : public ppc::util::BaseRunFuncTests<InTy
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+    if (initialized != 0) {
+      int rank = -1;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      if (rank != 0) {
+        return true;
+      }
+    }
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     return get<1>(params) == output_data;
   }
@@ -69,7 +82,10 @@ const std::array<TestType, 4> kTestParam = {std::make_tuple(InType{test_1, 3, 3}
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KolotukhinAGaussinBlureSEQ, InType>(kTestParam, PPC_SETTINGS_kolotukhin_a_gaussian_blur),
-    ppc::util::AddFuncTask<KolotukhinAGaussinBlureOMP, InType>(kTestParam, PPC_SETTINGS_kolotukhin_a_gaussian_blur));
+    ppc::util::AddFuncTask<KolotukhinAGaussinBlureOMP, InType>(kTestParam, PPC_SETTINGS_kolotukhin_a_gaussian_blur),
+    ppc::util::AddFuncTask<KolotukhinAGaussinBlureTBB, InType>(kTestParam, PPC_SETTINGS_kolotukhin_a_gaussian_blur),
+    ppc::util::AddFuncTask<KolotukhinAGaussinBlureSTL, InType>(kTestParam, PPC_SETTINGS_kolotukhin_a_gaussian_blur),
+    ppc::util::AddFuncTask<KolotukhinAGaussinBlurALL, InType>(kTestParam, PPC_SETTINGS_kolotukhin_a_gaussian_blur));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

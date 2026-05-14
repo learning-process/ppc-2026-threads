@@ -8,6 +8,7 @@
 #include <tuple>
 #include <vector>
 
+#include "timur_a_cannon/all/include/ops_all.hpp"
 #include "timur_a_cannon/common/include/common.hpp"
 #include "timur_a_cannon/omp/include/ops_omp.hpp"
 #include "timur_a_cannon/seq/include/ops_seq.hpp"
@@ -95,6 +96,7 @@ const std::array<TestType, 8> kTestParam = {
                     std::vector<std::vector<double>>(9, std::vector<double>(9, 19.8)))};
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<TimurACannonMatrixMultiplicationALL, InType>(kTestParam, PPC_SETTINGS_timur_a_cannon),
     ppc::util::AddFuncTask<TimurACannonMatrixMultiplication, InType>(kTestParam, PPC_SETTINGS_timur_a_cannon),
     ppc::util::AddFuncTask<TimurACannonMatrixMultiplicationOMP, InType>(kTestParam, PPC_SETTINGS_timur_a_cannon),
     ppc::util::AddFuncTask<TimurACannonMatrixMultiplicationTBB, InType>(kTestParam, PPC_SETTINGS_timur_a_cannon),
