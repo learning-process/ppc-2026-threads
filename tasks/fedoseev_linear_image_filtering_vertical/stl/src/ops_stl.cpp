@@ -78,7 +78,6 @@ bool LinearImageFilteringVerticalSTL::RunImpl() {
   std::vector<int> &dst = output.data;
 
   const std::array<std::array<int, 3>, 3> kernel = {{{{1, 2, 1}}, {{2, 4, 2}}, {{1, 2, 1}}}};
-  const int kernel_sum = 16;
   const int block_width = 64;
   const int num_blocks = (w + block_width - 1) / block_width;
 
@@ -88,8 +87,8 @@ bool LinearImageFilteringVerticalSTL::RunImpl() {
   for (int block_idx = 0; block_idx < num_blocks; ++block_idx) {
     int col_start = block_idx * block_width;
     int col_end = std::min(col_start + block_width, w);
-    threads.emplace_back([&src, &dst, w, h, col_start, col_end, &kernel, kernel_sum]() {
-      ProcessBlock(src, dst, w, h, col_start, col_end, kernel, kernel_sum);
+    threads.emplace_back([&src, &dst, w, h, col_start, col_end, &kernel]() {
+      ProcessBlock(src, dst, w, h, col_start, col_end, kernel, 16);
     });
   }
 
