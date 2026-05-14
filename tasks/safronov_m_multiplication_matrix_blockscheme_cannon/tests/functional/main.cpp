@@ -7,6 +7,7 @@
 #include <tuple>
 #include <vector>
 
+#include "safronov_m_multiplication_matrix_blockscheme_cannon/all/include/ops_all.hpp"
 #include "safronov_m_multiplication_matrix_blockscheme_cannon/common/include/common.hpp"
 #include "safronov_m_multiplication_matrix_blockscheme_cannon/omp/include/ops_omp.hpp"
 #include "safronov_m_multiplication_matrix_blockscheme_cannon/seq/include/ops_seq.hpp"
@@ -102,6 +103,8 @@ const auto kTestTasksList =
                    ppc::util::AddFuncTask<SafronovMMultiplicationMatrixBlockSchemeCannonTBB, InType>(
                        kTestParam, PPC_SETTINGS_safronov_m_multiplication_matrix_blockscheme_cannon),
                    ppc::util::AddFuncTask<SafronovMMultiplicationMatrixBlockSchemeCannonSTL, InType>(
+                       kTestParam, PPC_SETTINGS_safronov_m_multiplication_matrix_blockscheme_cannon),
+                   ppc::util::AddFuncTask<SafronovMMultiplicationMatrixBlockSchemeCannonALL, InType>(
                        kTestParam, PPC_SETTINGS_safronov_m_multiplication_matrix_blockscheme_cannon));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

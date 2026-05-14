@@ -1,5 +1,8 @@
 #pragma once
 
+#include <utility>
+#include <vector>
+
 #include "nalitov_d_dijkstras_algorithm/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -17,6 +20,9 @@ class NalitovDDijkstrasAlgorithmSeq : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  using OutgoingTable = std::vector<std::vector<std::pair<NodeId, Cost>>>;
+  OutgoingTable graph_;
 };
 
 }  // namespace nalitov_d_dijkstras_algorithm
