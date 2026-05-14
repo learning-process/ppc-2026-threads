@@ -34,14 +34,14 @@ void LocalRadixSort(std::vector<double> &chunk) {
       int byte = static_cast<int>((bits >> (pass * num_bits)) & 0xFF);
       count[byte]++;
     }
-    
+
     int total = 0;
     for (int i = 0; i < radix; i++) {
       int old = count[i];
       count[i] = total;
       total += old;
     }
-    
+
     for (double value : chunk) {
       auto bits = std::bit_cast<uint64_t>(value);
       int byte = static_cast<int>((bits >> (pass * num_bits)) & 0xFF);
@@ -106,7 +106,7 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
   if (rank == 0) {
     total_size = static_cast<int>(GetInput().size());
   }
-  
+
   // Рассылаем общий размер массива всем процессам
   MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -119,7 +119,7 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
   std::vector<int> displs(size);
   int remainder = total_size % size;
   int offset = 0;
-  
+
   for (int i = 0; i < size; ++i) {
     sendcounts[i] = total_size / size + (i < remainder ? 1 : 0);
     displs[i] = offset;
@@ -131,11 +131,11 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
 
   // Распределяем данные
   if (rank == 0) {
-    MPI_Scatterv(GetInput().data(), sendcounts.data(), displs.data(), MPI_DOUBLE,
-                 local_data.data(), sendcounts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(GetInput().data(), sendcounts.data(), displs.data(), MPI_DOUBLE, local_data.data(), sendcounts[rank],
+                 MPI_DOUBLE, 0, MPI_COMM_WORLD);
   } else {
-    MPI_Scatterv(nullptr, nullptr, nullptr, MPI_DOUBLE,
-                 local_data.data(), sendcounts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(nullptr, nullptr, nullptr, MPI_DOUBLE, local_data.data(), sendcounts[rank], MPI_DOUBLE, 0,
+                 MPI_COMM_WORLD);
   }
 
   // Локальная поразрядная сортировка каждого блока
@@ -145,11 +145,11 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
   std::vector<double> gathered_data;
   if (rank == 0) {
     gathered_data.resize(total_size);
-    MPI_Gatherv(local_data.data(), sendcounts[rank], MPI_DOUBLE,
-                gathered_data.data(), sendcounts.data(), displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(local_data.data(), sendcounts[rank], MPI_DOUBLE, gathered_data.data(), sendcounts.data(), displs.data(),
+                MPI_DOUBLE, 0, MPI_COMM_WORLD);
   } else {
-    MPI_Gatherv(local_data.data(), sendcounts[rank], MPI_DOUBLE,
-                nullptr, nullptr, nullptr, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(local_data.data(), sendcounts[rank], MPI_DOUBLE, nullptr, nullptr, nullptr, MPI_DOUBLE, 0,
+                MPI_COMM_WORLD);
   }
 
   // Простое слияние на главном процессе (rank 0)
@@ -164,11 +164,9 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
       std::vector<double> merged(merged_result.size() + sendcounts[i]);
       auto next_chunk_begin = gathered_data.begin() + displs[i];
       auto next_chunk_end = next_chunk_begin + sendcounts[i];
-      
-      std::merge(merged_result.begin(), merged_result.end(), 
-                 next_chunk_begin, next_chunk_end, 
-                 merged.begin());
-                 
+
+      std::merge(merged_result.begin(), merged_result.end(), next_chunk_begin, next_chunk_end, merged.begin());
+
       merged_result = std::move(merged);
     }
 
