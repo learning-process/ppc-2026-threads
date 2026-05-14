@@ -1,0 +1,6 @@
+{
+  "tasks": {
+    "omp": "enabled"
+  },
+  "tasks_type": "processes"
+}
