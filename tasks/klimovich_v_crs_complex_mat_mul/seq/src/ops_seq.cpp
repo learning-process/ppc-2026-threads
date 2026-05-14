@@ -60,7 +60,9 @@ bool KlimovichVCrsComplexMatMulSeq::ValidationImpl() {
   return lhs.n_cols == rhs.n_rows;
 }
 
-bool KlimovichVCrsComplexMatMulSeq::PreProcessingImpl() { return true; }
+bool KlimovichVCrsComplexMatMulSeq::PreProcessingImpl() {
+  return true;
+}
 
 CrsMatrix KlimovichVCrsComplexMatMulSeq::MultiplyCrs(const CrsMatrix &lhs, const CrsMatrix &rhs) {
   CrsMatrix result(lhs.n_rows, rhs.n_cols);
@@ -85,6 +87,8 @@ bool KlimovichVCrsComplexMatMulSeq::RunImpl() {
   return true;
 }
 
-bool KlimovichVCrsComplexMatMulSeq::PostProcessingImpl() { return true; }
+bool KlimovichVCrsComplexMatMulSeq::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace klimovich_v_crs_complex_mat_mul
