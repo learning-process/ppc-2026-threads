@@ -13,6 +13,25 @@ namespace kichanova_k_lin_system_by_conjug_grad {
 
 namespace {
 
+double ComputeRowProduct(const double *row, const double *v_ptr, int n) {
+  double sum = 0.0;
+  int j = 0;
+  for (; j <= n - 8; j += 8) {
+    sum += row[j] * v_ptr[j];
+    sum += row[j + 1] * v_ptr[j + 1];
+    sum += row[j + 2] * v_ptr[j + 2];
+    sum += row[j + 3] * v_ptr[j + 3];
+    sum += row[j + 4] * v_ptr[j + 4];
+    sum += row[j + 5] * v_ptr[j + 5];
+    sum += row[j + 6] * v_ptr[j + 6];
+    sum += row[j + 7] * v_ptr[j + 7];
+  }
+  for (; j < n; ++j) {
+    sum += row[j] * v_ptr[j];
+  }
+  return sum;
+}
+
 double DotProductHybrid(const std::vector<double> &a, const std::vector<double> &b, int n) {
   if (n <= 0) {
     return 0.0;
@@ -66,23 +85,7 @@ void MatrixVectorProductHybrid(const std::vector<double> &a, const std::vector<d
     tbb::parallel_for(tbb::blocked_range<int>(start, end, 32), [&](const tbb::blocked_range<int> &range) {
       for (int i = range.begin(); i < range.end(); ++i) {
         const double *row = &a[i * stride];
-        double sum = 0.0;
-
-        int j = 0;
-        for (; j <= n - 8; j += 8) {
-          sum += row[j] * v_ptr[j];
-          sum += row[j + 1] * v_ptr[j + 1];
-          sum += row[j + 2] * v_ptr[j + 2];
-          sum += row[j + 3] * v_ptr[j + 3];
-          sum += row[j + 4] * v_ptr[j + 4];
-          sum += row[j + 5] * v_ptr[j + 5];
-          sum += row[j + 6] * v_ptr[j + 6];
-          sum += row[j + 7] * v_ptr[j + 7];
-        }
-        for (; j < n; ++j) {
-          sum += row[j] * v_ptr[j];
-        }
-        result[i] = sum;
+        result[i] = ComputeRowProduct(row, v_ptr, n);
       }
     });
   }
