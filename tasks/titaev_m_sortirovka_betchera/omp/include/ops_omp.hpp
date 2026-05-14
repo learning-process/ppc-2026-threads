@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <vector>
 
-#include "../src/ops_omp.cpp"
 #include "task/include/task.hpp"
 #include "titaev_m_sortirovka_betchera/common/include/common.hpp"
 
@@ -37,3 +36,5 @@ class TitaevSortirovkaBetcheraOMP : public BaseTask {
 };
 
 }  // namespace titaev_m_sortirovka_betchera
+
+#include "../src/ops_omp.cpp"
