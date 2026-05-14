@@ -14,6 +14,7 @@
 #include "eremin_v_integrals_monte_carlo/omp/include/ops_omp.hpp"
 #include "eremin_v_integrals_monte_carlo/seq/include/ops_seq.hpp"
 #include "eremin_v_integrals_monte_carlo/tbb/include/ops_tbb.hpp"
+#include "eremin_v_integrals_monte_carlo/all/include/ops_all.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -79,6 +80,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<EreminVIntegra
                                            ppc::util::AddFuncTask<EreminVIntegralsMonteCarloOMP, InType>(
                                                kTestParam, PPC_SETTINGS_eremin_v_integrals_monte_carlo),
                                            ppc::util::AddFuncTask<EreminVIntegralsMonteCarloTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_eremin_v_integrals_monte_carlo),
+                                           ppc::util::AddFuncTask<EreminVIntegralsMonteCarloALL, InType>(
                                                kTestParam, PPC_SETTINGS_eremin_v_integrals_monte_carlo));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
