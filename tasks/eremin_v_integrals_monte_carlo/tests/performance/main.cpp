@@ -6,6 +6,7 @@
 #include "eremin_v_integrals_monte_carlo/common/include/common.hpp"
 #include "eremin_v_integrals_monte_carlo/omp/include/ops_omp.hpp"
 #include "eremin_v_integrals_monte_carlo/seq/include/ops_seq.hpp"
+#include "eremin_v_integrals_monte_carlo/stl/include/ops_stl.hpp"
 #include "eremin_v_integrals_monte_carlo/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -45,7 +46,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, EreminVIntegralsMonteCarloSEQ, EreminVIntegralsMonteCarloOMP,
-                                EreminVIntegralsMonteCarloTBB>(PPC_SETTINGS_eremin_v_integrals_monte_carlo);
+                                EreminVIntegralsMonteCarloSTL, EreminVIntegralsMonteCarloTBB>(
+        PPC_SETTINGS_eremin_v_integrals_monte_carlo);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
