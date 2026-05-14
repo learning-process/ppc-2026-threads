@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <array>
 #include <cstddef>
@@ -10,9 +11,11 @@
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
+#include "zavyalov_a_complex_sparse_matrix_mult/all/include/ops_all.hpp"
 #include "zavyalov_a_complex_sparse_matrix_mult/common/include/common.hpp"
 #include "zavyalov_a_complex_sparse_matrix_mult/omp/include/ops_omp.hpp"
 #include "zavyalov_a_complex_sparse_matrix_mult/seq/include/ops_seq.hpp"
+#include "zavyalov_a_complex_sparse_matrix_mult/stl/include/ops_stl.hpp"
 #include "zavyalov_a_complex_sparse_matrix_mult/tbb/include/ops_tbb.hpp"
 
 namespace zavyalov_a_compl_sparse_matr_mult {
@@ -57,6 +60,15 @@ class ZavyalovAComplSparseMatrMultFuncTests : public ppc::util::BaseRunFuncTests
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+
+    if (ppc::util::IsUnderMpirun()) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+
+    if (rank != 0) {
+      return true;
+    }
     const SparseMatrix &matr1 = std::get<0>(input_data_);
     const SparseMatrix &matr2 = std::get<1>(input_data_);
 
@@ -147,6 +159,10 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ZavyalovACompl
                                            ppc::util::AddFuncTask<ZavyalovAComplSparseMatrMultOMP, InType>(
                                                kTestParam, PPC_SETTINGS_zavyalov_a_complex_sparse_matrix_mult),
                                            ppc::util::AddFuncTask<ZavyalovAComplSparseMatrMultTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_zavyalov_a_complex_sparse_matrix_mult),
+                                           ppc::util::AddFuncTask<ZavyalovAComplSparseMatrMultSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_zavyalov_a_complex_sparse_matrix_mult),
+                                           ppc::util::AddFuncTask<ZavyalovAComplSparseMatrMultALL, InType>(
                                                kTestParam, PPC_SETTINGS_zavyalov_a_complex_sparse_matrix_mult));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

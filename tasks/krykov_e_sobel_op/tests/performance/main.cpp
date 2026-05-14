@@ -6,6 +6,8 @@
 #include "krykov_e_sobel_op/common/include/common.hpp"
 #include "krykov_e_sobel_op/omp/include/ops_omp.hpp"
 #include "krykov_e_sobel_op/seq/include/ops_seq.hpp"
+#include "krykov_e_sobel_op/stl/include/ops_stl.hpp"
+#include "krykov_e_sobel_op/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace krykov_e_sobel_op {
@@ -48,7 +50,8 @@ TEST_P(KrykovERunPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KrykovESobelOpSEQ, KrykovESobelOpOMP>(PPC_SETTINGS_krykov_e_sobel_op);
+    ppc::util::MakeAllPerfTasks<InType, KrykovESobelOpSEQ, KrykovESobelOpOMP, KrykovESobelOpTBB, KrykovESobelOpSTL>(
+        PPC_SETTINGS_krykov_e_sobel_op);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

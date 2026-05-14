@@ -1,12 +1,17 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <algorithm>
 #include <climits>
 
+#include "baldin_a_radix_sort/all/include/ops_all.hpp"
 #include "baldin_a_radix_sort/common/include/common.hpp"
 #include "baldin_a_radix_sort/omp/include/ops_omp.hpp"
 #include "baldin_a_radix_sort/seq/include/ops_seq.hpp"
+#include "baldin_a_radix_sort/stl/include/ops_stl.hpp"
+#include "baldin_a_radix_sort/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace baldin_a_radix_sort {
 
@@ -26,6 +31,16 @@ class BaldinARadixSortPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+
+    if (ppc::util::IsUnderMpirun()) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+
+    if (rank != 0) {
+      return true;
+    }
+
     return std::ranges::is_sorted(output_data);
   }
 
@@ -44,7 +59,8 @@ TEST_P(BaldinARadixSortPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, BaldinARadixSortSEQ, BaldinARadixSortOMP>(PPC_SETTINGS_baldin_a_radix_sort);
+    ppc::util::MakeAllPerfTasks<InType, BaldinARadixSortSEQ, BaldinARadixSortOMP, BaldinARadixSortTBB,
+                                BaldinARadixSortSTL, BaldinARadixSortALL>(PPC_SETTINGS_baldin_a_radix_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
