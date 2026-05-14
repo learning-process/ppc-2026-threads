@@ -21,8 +21,7 @@ double DotProductHybrid(const std::vector<double> &a, const std::vector<double> 
   double result = 0.0;
   const int num_threads = omp_get_max_threads();
 
-#pragma omp parallel for reduction(+ : result) schedule(static) default(none) \
-    shared(a, b, n, num_threads) private(result)
+#pragma omp parallel for reduction(+ : result) schedule(static) default(none) shared(a, b, n, num_threads)
   for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
     const int start = thread_idx * (n / num_threads);
     const int end = (thread_idx == num_threads - 1) ? n : (thread_idx + 1) * (n / num_threads);
@@ -55,7 +54,7 @@ void MatrixVectorProductHybrid(const std::vector<double> &a, const std::vector<d
   const double *v_ptr = v.data();
   const int num_threads = omp_get_max_threads();
 
-#pragma omp parallel for schedule(dynamic, 1) default(none) shared(a, v, result, n, stride, v_ptr, num_threads)
+#pragma omp parallel for schedule(dynamic, 1) default(none) shared(a, result, n, stride, v_ptr, num_threads)
   for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
     const int start = thread_idx * (n / num_threads);
     const int end = (thread_idx == num_threads - 1) ? n : (thread_idx + 1) * (n / num_threads);
