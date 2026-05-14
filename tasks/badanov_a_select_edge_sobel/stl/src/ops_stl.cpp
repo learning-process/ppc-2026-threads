@@ -54,9 +54,8 @@ void BadanovASelectEdgeSobelSTL::ApplySobelOperator(const std::vector<uint8_t> &
     num_threads = 2;
   }
 
-  // Вычисляем строки на поток (только внутренние строки: от 1 до height-2)
   int rows_to_process = height - 2;
-  int rows_per_thread = rows_to_process / num_threads;
+  unsigned int rows_per_thread = rows_to_process / num_threads;
   if (rows_per_thread < 1) {
     rows_per_thread = 1;
   }
@@ -66,9 +65,9 @@ void BadanovASelectEdgeSobelSTL::ApplySobelOperator(const std::vector<uint8_t> &
   std::mutex max_mutex;
   float global_max = 0.0F;
 
-  for (unsigned int t = 0; t < num_threads; ++t) {
-    int start_row = 1 + t * rows_per_thread;
-    int end_row = (t == num_threads - 1) ? (height - 1) : (start_row + rows_per_thread);
+  for (unsigned int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+    unsigned int start_row = 1 + (thread_idx * rows_per_thread);
+    int end_row = (thread_idx == num_threads - 1) ? (height - 1) : (start_row + rows_per_thread);
 
     threads.emplace_back([&, start_row, end_row]() {
       float local_max = 0.0F;
@@ -84,16 +83,12 @@ void BadanovASelectEdgeSobelSTL::ApplySobelOperator(const std::vector<uint8_t> &
           const size_t idx = (static_cast<size_t>(row) * static_cast<size_t>(width)) + static_cast<size_t>(col);
           magnitude[idx] = magnitude_value;
 
-          if (magnitude_value > local_max) {
-            local_max = magnitude_value;
-          }
+          local_max = std::max(magnitude_value, local_max);
         }
       }
 
-      std::lock_guard<std::mutex> lock(max_mutex);
-      if (local_max > global_max) {
-        global_max = local_max;
-      }
+      std::scoped_lock lock(max_mutex);
+      local_max = std::max(magnitude_value, local_max);
     });
   }
 
@@ -141,9 +136,9 @@ void BadanovASelectEdgeSobelSTL::ApplyThreshold(const std::vector<float> &magnit
     std::vector<std::thread> threads;
     size_t chunk_size = (size + num_threads - 1) / num_threads;
 
-    for (unsigned int t = 0; t < num_threads; ++t) {
-      size_t start = t * chunk_size;
-      size_t end = (t == num_threads - 1) ? size : (start + chunk_size);
+    for (unsigned int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+      size_t start = thread_idx * chunk_size;
+      size_t end = (thread_idx == num_threads - 1) ? size : (start + chunk_size);
 
       threads.emplace_back([&, start, end]() {
         for (size_t i = start; i < end; ++i) {
