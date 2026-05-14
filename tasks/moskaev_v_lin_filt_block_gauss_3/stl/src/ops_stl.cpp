@@ -4,6 +4,10 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+<<<<<<< HEAD
+=======
+#include <numeric>
+>>>>>>> 6a51fa9d (TEST_W_A_1)
 #include <thread>
 #include <vector>
 
