@@ -1,9 +1,9 @@
-#ifndef TITAEV_M_SOR_BETCHER_OMP_CPP
-#define TITAEV_M_SOR_BETCHER_OMP_CPP
+#include "titaev_m_sortirovka_betchera/omp/include/ops_omp.hpp"
 
 #include <omp.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <limits>
 #include <vector>
@@ -67,7 +67,7 @@ void TitaevSortirovkaBetcheraOMP::LSDRadixSort(std::vector<double> &array) {
 
   for (int pass = 0; pass < kPasses; ++pass) {
     const int shift = pass * kBits;
-    size_t cnt[kBuckets + 1] = {0};
+    std::vector<size_t> cnt(kBuckets + 1, 0);
     for (size_t i = 0; i < n; ++i) {
       ++cnt[((keys[i] >> shift) & (kBuckets - 1)) + 1];
     }
@@ -89,17 +89,16 @@ void TitaevSortirovkaBetcheraOMP::LSDRadixSort(std::vector<double> &array) {
 
 void TitaevSortirovkaBetcheraOMP::BatcherOddEvenMerge(std::vector<double> &arr, size_t n) {
   for (size_t po = n / 2; po > 0; po >>= 1) {
-#pragma omp parallel for default(none) shared(arr, po, n)
-    for (long long i = 0; i < (long long)n; i++) {
-      // Упрощенная логика Батчера для стабильности параллелизма
-      size_t idx = (size_t)i;
-      if (po == n / 2) {
-        if (idx < po) {
-          CompareSwap(arr, idx, idx + po);
-        }
-      } else {
-        if ((idx / po) % 2 == 1 && idx + po < n) {
-          CompareSwap(arr, idx, idx + po);
+    if (po == n / 2) {
+#pragma omp parallel for default(none) shared(arr, po)
+      for (long long i = 0; i < (long long)po; ++i) {
+        CompareSwap(arr, (size_t)i, (size_t)i + po);
+      }
+    } else {
+#pragma omp parallel for default(none) shared(arr, n, po)
+      for (long long i = (long long)po; i < (long long)(n - po); i += (long long)(2 * po)) {
+        for (size_t j = 0; j < po; ++j) {
+          CompareSwap(arr, (size_t)i + j, (size_t)i + j + po);
         }
       }
     }
@@ -143,5 +142,3 @@ bool TitaevSortirovkaBetcheraOMP::RunImpl() {
 }
 
 }  // namespace titaev_m_sortirovka_betchera
-
-#endif  // TITAEV_M_SOR_BETCHER_OMP_CPP
