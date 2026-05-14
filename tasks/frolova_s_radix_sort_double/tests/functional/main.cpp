@@ -75,7 +75,8 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<FrolovaSRadixSortDoubleSEQ, InType>(kTestParam, PPC_SETTINGS_frolova_s_radix_sort_double),
     ppc::util::AddFuncTask<FrolovaSRadixSortDoubleOMP, InType>(kTestParam, PPC_SETTINGS_frolova_s_radix_sort_double),
     ppc::util::AddFuncTask<FrolovaSRadixSortDoubleTBB, InType>(kTestParam, PPC_SETTINGS_frolova_s_radix_sort_double),
-    ppc::util::AddFuncTask<FrolovaSRadixSortDoubleSTL, InType>(kTestParam, PPC_SETTINGS_frolova_s_radix_sort_double));
+    ppc::util::AddFuncTask<FrolovaSRadixSortDoubleSTL, InType>(kTestParam, PPC_SETTINGS_frolova_s_radix_sort_double),
+    ppc::util::AddFuncTask<FrolovaSRadixSortDoubleALL, InType>(kTestParam, PPC_SETTINGS_frolova_s_radix_sort_double));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
