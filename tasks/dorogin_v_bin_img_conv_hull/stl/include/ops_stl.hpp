@@ -24,6 +24,8 @@ class DoroginVBinImgConvHullSTL : public BaseTask {
 
   void ThresholdImage();
   void FindComponents();
+  static void FillConvexHullsChunk(const std::vector<std::vector<Point>> &components,
+                                   std::vector<std::vector<Point>> &convex_hulls, std::size_t begin, std::size_t end);
   static std::vector<Point> BuildHull(const std::vector<Point> &points);
   static std::size_t Index(int col, int row, int width);
   void ExploreComponent(int start_col, int start_row, int width, int height, std::vector<bool> &visited,

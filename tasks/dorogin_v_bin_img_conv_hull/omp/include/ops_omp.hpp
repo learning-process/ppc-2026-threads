@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstddef>
+#include <vector>
+
 #include "dorogin_v_bin_img_conv_hull/common/include/common.hpp"
 #include "task/include/task.hpp"
 

@@ -52,6 +52,22 @@ bool DoroginVBinImgConvHullSTL::PreProcessingImpl() {
   return true;
 }
 
+void DoroginVBinImgConvHullSTL::FillConvexHullsChunk(const std::vector<std::vector<Point>> &components,
+                                                     std::vector<std::vector<Point>> &convex_hulls,
+                                                     const std::size_t begin, const std::size_t end) {
+  for (std::size_t i = begin; i < end; ++i) {
+    const auto &comp = components[i];
+    if (comp.empty()) {
+      continue;
+    }
+    if (comp.size() <= 2) {
+      convex_hulls[i] = comp;
+    } else {
+      convex_hulls[i] = BuildHull(comp);
+    }
+  }
+}
+
 bool DoroginVBinImgConvHullSTL::RunImpl() {
   FindComponents();
 
@@ -69,29 +85,17 @@ bool DoroginVBinImgConvHullSTL::RunImpl() {
   std::vector<std::thread> threads;
   threads.reserve(num_threads);
 
-  for (std::size_t t = 0; t < num_threads; ++t) {
-    const std::size_t begin = t * chunk;
+  for (std::size_t thread_index = 0; thread_index < num_threads; ++thread_index) {
+    const std::size_t begin = thread_index * chunk;
     if (begin >= n) {
       break;
     }
     const std::size_t end = std::min(begin + chunk, n);
-    threads.emplace_back([&, begin, end]() {
-      for (std::size_t i = begin; i < end; ++i) {
-        const auto &comp = components[i];
-        if (comp.empty()) {
-          continue;
-        }
-        if (comp.size() <= 2) {
-          convex_hulls[i] = comp;
-        } else {
-          convex_hulls[i] = BuildHull(comp);
-        }
-      }
-    });
+    threads.emplace_back([&, begin, end]() { FillConvexHullsChunk(components, convex_hulls, begin, end); });
   }
 
-  for (auto &th : threads) {
-    th.join();
+  for (auto &worker : threads) {
+    worker.join();
   }
 
   GetOutput() = w_;
