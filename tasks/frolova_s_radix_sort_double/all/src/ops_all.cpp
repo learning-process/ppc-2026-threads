@@ -47,12 +47,10 @@ void LocalRadixSort(std::vector<double> &chunk) {
       pos.push_back(val);
     }
   }
-
+  std::reverse(neg.begin(), neg.end());
   chunk.clear();
   chunk.insert(chunk.end(), neg.begin(), neg.end());
   chunk.insert(chunk.end(), pos.begin(), pos.end());
-}
-
 }  // namespace
 
 FrolovaSRadixSortDoubleALL::FrolovaSRadixSortDoubleALL(const InType &in) {
