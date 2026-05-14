@@ -17,6 +17,9 @@ class ShemetovDRadixOddEvenMergeSortTBB : public BaseTask {
 
  private:
   static void RadixSort(std::vector<int> &array, size_t left, size_t right);
+
+  static void ApplyFirstPass(std::vector<int> &array, size_t start_offset, size_t padding);
+  static void ApplyMainPass(std::vector<int> &array, size_t start_offset, size_t segment, size_t padding);
   static void OddEvenMerge(std::vector<int> &array, size_t start, size_t segment);
 
   bool ValidationImpl() override;
