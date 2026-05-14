@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
+#include <vector>  // добавлено явно
 
 #include "shkryleva_s_shell_sort_simple_merge/all/include/ops_all.hpp"
 #include "shkryleva_s_shell_sort_simple_merge/common/include/common.hpp"
@@ -69,8 +70,6 @@ const std::array<TestType, 8> kTestParam = {
     TestType{InType{2, 1}, OutType{1, 2}},
     TestType{InType{1, -2, 3, -5}, OutType{-5, -2, 1, 3}},
     TestType{InType{1, 22, 13, 51, 2, 1, 2, 2, 34, 41}, OutType{1, 1, 2, 2, 2, 13, 22, 34, 41, 51}}};
-
-// ... остальные включения и код ...
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ShkrylevaSShellMergeSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge),

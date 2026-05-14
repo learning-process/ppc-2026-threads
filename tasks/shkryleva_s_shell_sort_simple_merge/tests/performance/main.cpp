@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <random>
+#include <vector>  // добавлено явно
 
 #include "shkryleva_s_shell_sort_simple_merge/all/include/ops_all.hpp"
 #include "shkryleva_s_shell_sort_simple_merge/common/include/common.hpp"
@@ -29,7 +30,8 @@ class ShkrylevaSShellMergePerfTests : public ppc::util::BaseRunPerfTests<InType,
       input_data_[i] = number;
       expected_data_[i] = number;
     }
-    std::ranges::sort(expected_data_);
+    // заменяем std::ranges::sort на std::sort
+    std::sort(expected_data_.begin(), expected_data_.end());
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -60,7 +62,6 @@ TEST_P(ShkrylevaSShellMergePerfTests, RunPerfModes) {
 
 namespace {
 
-// Перечисляем все реализации для перформанс-тестов
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ShkrylevaSShellMergeSEQ, ShkrylevaSShellMergeOMP, ShkrylevaSShellMergeSTL,
                                 ShkrylevaSShellMergeTBB, ShkrylevaSShellMergeALL>(

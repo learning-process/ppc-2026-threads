@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "shkryleva_s_shell_sort_simple_merge/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -18,7 +20,6 @@ class ShkrylevaSShellMergeALL : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  // Вспомогательные функции
   static void ShellSort(std::vector<int> &arr, int left, int right);
   static void Merge(std::vector<int> &arr, int left, int mid, int right, std::vector<int> &buffer);
   static void ParallelShellSort(std::vector<int> &arr);
