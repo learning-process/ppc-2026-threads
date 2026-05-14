@@ -60,12 +60,13 @@ bool EreminVIntegralsMonteCarloSTL::RunImpl() {
   std::vector<std::thread> threads;
   threads.reserve(static_cast<std::size_t>(num_threads));
 
+  const unsigned base_seed = std::random_device{}();
+
   for (int tid = 0; tid < num_threads; ++tid) {
     const int begin = (samples * tid) / num_threads;
     const int end = (samples * (tid + 1)) / num_threads;
     threads.emplace_back([&, tid, begin, end]() {
-      std::mt19937 local_gen(std::random_device{}() + static_cast<unsigned>(tid));
-
+      std::minstd_rand local_gen(base_seed + static_cast<unsigned>(tid));
       std::vector<std::uniform_real_distribution<double>> local_distributions;
       local_distributions.reserve(dimension);
       for (const auto &[a, b] : bounds) {
