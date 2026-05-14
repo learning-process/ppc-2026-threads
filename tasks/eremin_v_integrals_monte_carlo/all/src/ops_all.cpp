@@ -33,10 +33,11 @@ bool EreminVIntegralsMonteCarloALL::ValidationImpl() {
     } else if (input.func == nullptr) {
       valid = 0;
     } else {
-      valid = std::ranges::all_of(input.bounds, [](const auto &p) {
-                const auto &[a, b] = p;
-                return (a < b) && (std::abs(a) <= 1e9) && (std::abs(b) <= 1e9);
-              })
+      valid = std::ranges::all_of(input.bounds,
+                                  [](const auto &p) {
+        const auto &[a, b] = p;
+        return (a < b) && (std::abs(a) <= 1e9) && (std::abs(b) <= 1e9);
+      })
                   ? 1
                   : 0;
     }
@@ -77,10 +78,8 @@ bool EreminVIntegralsMonteCarloALL::RunImpl() {
 #pragma omp parallel reduction(+ : local_sum) default(none) \
     shared(bounds, local_samples, func, dimension, rank, num_procs)
   {
-    const unsigned int seed =
-        static_cast<unsigned int>(std::random_device{}()) +
-        static_cast<unsigned int>(rank) * 1000u +
-        static_cast<unsigned int>(omp_get_thread_num());
+    const unsigned int seed = static_cast<unsigned int>(std::random_device{}()) +
+                              static_cast<unsigned int>(rank) * 1000u + static_cast<unsigned int>(omp_get_thread_num());
 
     std::mt19937 local_gen(seed);
 
