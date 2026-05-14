@@ -16,7 +16,7 @@
 #include "konstantinov_s_graham/common/include/common.hpp"
 #include "konstantinov_s_graham/omp/include/ops_omp.hpp"
 #include "konstantinov_s_graham/seq/include/ops_seq.hpp"
-// #include "konstantinov_s_graham/stl/include/ops_stl.hpp"
+#include "konstantinov_s_graham/stl/include/ops_stl.hpp"
 #include "konstantinov_s_graham/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -102,7 +102,8 @@ const std::array<TestType, 10> kTestParam = {
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KonstantinovAGrahamSEQ, InType>(kTestParam, PPC_SETTINGS_konstantinov_s_graham),
     ppc::util::AddFuncTask<KonstantinovAGrahamOMP, InType>(kTestParam, PPC_SETTINGS_konstantinov_s_graham),
-    ppc::util::AddFuncTask<KonstantinovAGrahamTBB, InType>(kTestParam, PPC_SETTINGS_konstantinov_s_graham));
+    ppc::util::AddFuncTask<KonstantinovAGrahamTBB, InType>(kTestParam, PPC_SETTINGS_konstantinov_s_graham),
+    ppc::util::AddFuncTask<KonstantinovAGrahamSTL, InType>(kTestParam, PPC_SETTINGS_konstantinov_s_graham));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
