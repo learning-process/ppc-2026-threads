@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 #include "buzulukski_d_gaus_gorizontal/common/include/common.hpp"
@@ -7,12 +8,12 @@
 
 namespace buzulukski_d_gaus_gorizontal {
 
-class BuzulukskiDGausGorizontalALL : public BaseTask {
+class Buzulukski_D_Gaus_Gorizontal_ALL : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kALL;
   }
-  explicit BuzulukskiDGausGorizontalALL(const InType &in);
+  explicit Buzulukski_D_Gaus_Gorizontal_ALL(const InType &in);
 
  private:
   bool ValidationImpl() override;

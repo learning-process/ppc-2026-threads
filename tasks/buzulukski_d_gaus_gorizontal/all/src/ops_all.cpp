@@ -1,8 +1,12 @@
 #include "buzulukski_d_gaus_gorizontal/all/include/ops_all.hpp"
 
 #include <mpi.h>
+#include <omp.h>
 
 #include <algorithm>
+#include <array>
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "buzulukski_d_gaus_gorizontal/common/include/common.hpp"
@@ -12,7 +16,7 @@ namespace buzulukski_d_gaus_gorizontal {
 namespace {
 constexpr int kChannels = 3;
 constexpr int kKernelSum = 16;
-const int kKernel[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
+constexpr std::array<std::array<int, 3>, 3> kKernel = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
 
 uint8_t CalculatePixelALL(const uint8_t *in, int py, int px, int w, int h, int ch) {
   int sum = 0;
@@ -20,25 +24,25 @@ uint8_t CalculatePixelALL(const uint8_t *in, int py, int px, int w, int h, int c
     for (int kx = -1; kx <= 1; ++kx) {
       int ny = std::clamp(py + ky, 0, h - 1);
       int nx = std::clamp(px + kx, 0, w - 1);
-      size_t idx = (static_cast<size_t>(ny) * w + nx) * kChannels + ch;
-      sum += static_cast<int>(in[idx]) * kKernel[ky + 1][kx + 1];
+      size_t idx = ((static_cast<size_t>(ny) * w + nx) * kChannels) + ch;
+      sum += static_cast<int>(in[idx]) * kKernel.at(static_cast<size_t>(ky) + 1).at(static_cast<size_t>(kx) + 1);
     }
   }
   return static_cast<uint8_t>(sum / kKernelSum);
 }
 }  // namespace
 
-BuzulukskiDGausGorizontalALL::BuzulukskiDGausGorizontalALL(const InType &in) : BaseTask() {
+Buzulukski_D_Gaus_Gorizontal_ALL::Buzulukski_D_Gaus_Gorizontal_ALL(const InType &in) : BaseTask() {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
 }
 
-bool BuzulukskiDGausGorizontalALL::ValidationImpl() {
+bool Buzulukski_D_Gaus_Gorizontal_ALL::ValidationImpl() {
   return GetInput() >= 3;
 }
 
-bool BuzulukskiDGausGorizontalALL::PreProcessingImpl() {
+bool Buzulukski_D_Gaus_Gorizontal_ALL::PreProcessingImpl() {
   width_ = GetInput();
   height_ = GetInput();
   size_t total_size = static_cast<size_t>(width_) * height_ * kChannels;
@@ -47,9 +51,9 @@ bool BuzulukskiDGausGorizontalALL::PreProcessingImpl() {
   return true;
 }
 
-bool BuzulukskiDGausGorizontalALL::RunImpl() {
-  int rank;
-  int size;
+bool Buzulukski_D_Gaus_Gorizontal_ALL::RunImpl() {
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -62,21 +66,23 @@ bool BuzulukskiDGausGorizontalALL::RunImpl() {
 
   std::vector<uint8_t> local_output((static_cast<size_t>(end_row) - start_row) * w * kChannels);
 
-#pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(2) default(none) shared(start_row, end_row, w, h, input_image_, local_output)
   for (int py = start_row; py < end_row; ++py) {
     for (int px = 0; px < w; ++px) {
       for (int ch = 0; ch < kChannels; ++ch) {
         int local_py = py - start_row;
-        size_t local_idx = (static_cast<size_t>(local_py) * w + px) * kChannels + ch;
+        size_t local_idx = ((static_cast<size_t>(local_py) * w + px) * kChannels) + ch;
         local_output[local_idx] = CalculatePixelALL(input_image_.data(), py, px, w, h, ch);
       }
     }
   }
 
-  std::vector<int> recv_counts(size);
-  std::vector<int> displs(size);
+  std::vector<int> recv_counts;
+  std::vector<int> displs;
 
   if (rank == 0) {
+    recv_counts.resize(size);
+    displs.resize(size);
     for (int i = 0; i < size; ++i) {
       int s = i * rows_per_proc;
       int e = (i == size - 1) ? h : (i + 1) * rows_per_proc;
@@ -91,13 +97,13 @@ bool BuzulukskiDGausGorizontalALL::RunImpl() {
   return true;
 }
 
-bool BuzulukskiDGausGorizontalALL::PostProcessingImpl() {
-  int rank;
+bool Buzulukski_D_Gaus_Gorizontal_ALL::PostProcessingImpl() {
+  int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
     int64_t total_sum = 0;
     for (const auto &val : output_image_) {
-      total_sum += val;
+      total_sum += static_cast<int64_t>(val);
     }
     GetOutput() = static_cast<int>(total_sum / static_cast<int64_t>(output_image_.size()));
   }
