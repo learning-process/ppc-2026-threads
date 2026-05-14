@@ -36,5 +36,3 @@ class TitaevSortirovkaBetcheraOMP : public BaseTask {
 };
 
 }  // namespace titaev_m_sortirovka_betchera
-
-#include "../src/ops_omp.cpp"
