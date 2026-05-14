@@ -31,7 +31,7 @@ uint8_t GetPixelMirroredTBB(const std::vector<uint8_t> &image, int x, int y, int
   } else if (new_y >= height) {
     new_y = (2 * height) - new_y - 1;
   }
-  auto idx = static_cast<size_t>(new_y) * static_cast<size_t>(width) + static_cast<size_t>(new_x);
+  auto idx = (static_cast<size_t>(new_y) * static_cast<size_t>(width)) + static_cast<size_t>(new_x);
   return image[idx];
 }
 }  // namespace
@@ -79,7 +79,7 @@ bool KopilovDVerticalGaussFilterTBB::RunImpl() {
           }
         }
 
-        auto out_idx = static_cast<size_t>(j) * static_cast<size_t>(width) + static_cast<size_t>(i);
+        auto out_idx = (static_cast<size_t>(j) * static_cast<size_t>(width)) + static_cast<size_t>(i);
         destination_image[out_idx] = static_cast<uint8_t>(pixel_sum / kDivisor);
       }
     }
