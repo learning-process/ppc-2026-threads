@@ -14,10 +14,17 @@
 
 namespace nalitov_d_dijkstras_algorithm {
 
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable : 4324)
+#endif
 struct alignas(64) ShardResult {
   Cost cost = kInf;
   NodeId id = -1;
 };
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 class NalitovDDijkstrasAlgorithmSTL : public BaseTask {
  public:
@@ -37,7 +44,12 @@ class NalitovDDijkstrasAlgorithmSTL : public BaseTask {
 
   void StopWorkers();
 
-  enum class WorkMode : std::uint8_t { kParked, kScanBest, kPushDist, kShutdown };
+  enum class WorkMode : std::uint8_t {
+    kParked,
+    kScanBest,
+    kPushDist,
+    kShutdown,
+  };
 
   void WorkerBody(int slot);
   void PartitionScanBest(int slot);
