@@ -19,8 +19,8 @@ class KuterginAMultidimTrapezoidTBB : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  InType local_input_; // Храним копию входных данных
-  double res_{0.0};    // Храним результат
+  InType local_input_;  // Храним копию входных данных
+  double res_{0.0};     // Храним результат
 };
 
 }  // namespace kutergin_a_multidim_trapezoid
