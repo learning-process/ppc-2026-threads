@@ -13,7 +13,6 @@ class SabutaySparseComplexCcsMultAll : public BaseTask {
   explicit SabutaySparseComplexCcsMultAll(const InType &in);
   static void BuildProductMatrix(const CCS &left, const CCS &right, CCS &out, ppc::task::TypeOfTask backend);
 
-  
  private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;

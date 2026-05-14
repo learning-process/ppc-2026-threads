@@ -16,7 +16,6 @@
 #include "sabutay_sparse_complex_ccs_mult_all/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
-
 namespace sabutay_sparse_complex_ccs_mult_all {
 namespace {
 
