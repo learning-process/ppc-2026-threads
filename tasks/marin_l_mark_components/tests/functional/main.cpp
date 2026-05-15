@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "marin_l_mark_components/all/include/ops_all.hpp"
 #include "marin_l_mark_components/common/include/common.hpp"
 #include "marin_l_mark_components/omp/include/ops_omp.hpp"
 #include "marin_l_mark_components/seq/include/ops_seq.hpp"
@@ -243,6 +244,7 @@ const std::array<TestType, 6> kTestParams{std::make_tuple(5, 5, "SingleBlob"), s
                                           std::make_tuple(15, 10, "Random"),   std::make_tuple(4, 6, "TwoBlocks")};
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<MarinLMarkComponentsALL, InType>(kTestParams, PPC_SETTINGS_marin_l_mark_components),
     ppc::util::AddFuncTask<MarinLMarkComponentsSTL, InType>(kTestParams, PPC_SETTINGS_marin_l_mark_components),
     ppc::util::AddFuncTask<MarinLMarkComponentsTBB, InType>(kTestParams, PPC_SETTINGS_marin_l_mark_components),
     ppc::util::AddFuncTask<MarinLMarkComponentsOMP, InType>(kTestParams, PPC_SETTINGS_marin_l_mark_components),
