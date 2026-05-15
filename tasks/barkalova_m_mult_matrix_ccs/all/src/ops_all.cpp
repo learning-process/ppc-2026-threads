@@ -105,12 +105,11 @@ void BroadcastMatrix(CCSMatrix &matrix) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  // Используем std::array вместо C-style массива
   std::array<int, 4> meta = {matrix.rows, matrix.cols, matrix.nnz, 0};
   if (rank == 0) {
     meta[3] = static_cast<int>(matrix.col_ptrs.size());
   }
-  MPI_Bcast(meta.data(), 4, MPI_INT, 0, MPI_COMM_WORLD);  // .data() вместо имени массива
+  MPI_Bcast(meta.data(), 4, MPI_INT, 0, MPI_COMM_WORLD);
 
   matrix.rows = meta[0];
   matrix.cols = meta[1];
