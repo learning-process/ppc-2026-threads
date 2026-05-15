@@ -2,11 +2,10 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstddef>
-#include <execution>
+#include <future>
 #include <numeric>
-#include <ranges>
 #include <tuple>
+#include <vector>
 
 #include "kosolapov_v_calc_mult_integrals_m_rectangles/common/include/common.hpp"
 
@@ -94,17 +93,32 @@ double KosolapovVCalcMultIntegralsMRectanglesSTL::RectanglesIntegral(int func_id
   double hx = (b - a) / steps;
   double hy = (d - c) / steps;
   size_t total = static_cast<size_t>(steps) * steps;
-
-  auto indices = std::views::iota(0ULL, total);
-  double sum =
-      std::transform_reduce(std::execution::par, indices.begin(), indices.end(), 0.0, std::plus<>(), [&](size_t idx) {
-    int i = static_cast<int>(idx / steps);
-    int j = static_cast<int>(idx % steps);
-    double x = a + ((i + 0.5) * hx);
-    double y = c + ((j + 0.5) * hy);
-    return CallFunction(func_id, x, y);
-  });
-
+  unsigned int num_threads = std::max(1u, std::thread::hardware_concurrency());
+  size_t chunk_size = (total + num_threads - 1) / num_threads;
+  std::vector<std::future<double>> futures;
+  futures.reserve(num_threads);
+  for (unsigned int t = 0; t < num_threads; ++t) {
+    size_t start = t * chunk_size;
+    size_t end = std::min(start + chunk_size, total);
+    if (start >= end) {
+      continue;
+    }
+    futures.push_back(std::async(std::launch::async, [=]() -> double {
+      double local_sum = 0.0;
+      for (size_t idx = start; idx < end; ++idx) {
+        int i = static_cast<int>(idx / steps);
+        int j = static_cast<int>(idx % steps);
+        double x = a + ((i + 0.5) * hx);
+        double y = c + ((j + 0.5) * hy);
+        local_sum += CallFunction(func_id, x, y);
+      }
+      return local_sum;
+    }));
+  }
+  double sum = 0.0;
+  for (auto &fut : futures) {
+    sum += fut.get();
+  }
   return sum * hx * hy;
 }
 
