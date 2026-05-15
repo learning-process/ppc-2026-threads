@@ -1,11 +1,12 @@
 #include "titaev_m_sortirovka_betchera/seq/include/ops_seq.hpp"
-#include "titaev_m_sortirovka_betchera/omp/include/ops_omp.hpp"
+
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <vector>
 
 #include "titaev_m_sortirovka_betchera/common/include/common.hpp"
+#include "titaev_m_sortirovka_betchera/omp/include/ops_omp.hpp"
 
 namespace titaev_m_sortirovka_betchera {
 

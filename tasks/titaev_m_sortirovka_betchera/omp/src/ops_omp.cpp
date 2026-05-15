@@ -8,31 +8,7 @@
 
 namespace titaev_m_sortirovka_betchera {
 
-namespace {
-uint64_t DoubleToOrderedUint(double value) {
-  uint64_t x = 0;
-  std::memcpy(&x, &value, sizeof(double));
-  constexpr uint64_t kSignMask = (1ULL << 63);
-  if ((x & kSignMask) != 0ULL) {
-    x = ~x;
-  } else {
-    x ^= kSignMask;
-  }
-  return x;
-}
-
-double OrderedUintToDouble(uint64_t x) {
-  constexpr uint64_t kSignMask = (1ULL << 63);
-  if ((x & kSignMask) != 0ULL) {
-    x ^= kSignMask;
-  } else {
-    x = ~x;
-  }
-  double result = 0.0;
-  std::memcpy(&result, &x, sizeof(double));
-  return result;
-}
-}  // namespace
+// ТУТ ПУСТО (хелперы DoubleToOrderedUint берутся из ops_seq.cpp)
 
 TitaevSortirovkaBetcheraOMP::TitaevSortirovkaBetcheraOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -43,7 +19,6 @@ TitaevSortirovkaBetcheraOMP::TitaevSortirovkaBetcheraOMP(const InType &in) {
 bool TitaevSortirovkaBetcheraOMP::ValidationImpl() {
   return !GetInput().empty();
 }
-
 bool TitaevSortirovkaBetcheraOMP::PreProcessingImpl() {
   GetOutput() = GetInput();
   return true;
@@ -62,29 +37,23 @@ void TitaevSortirovkaBetcheraOMP::RadixSortParallel(std::vector<uint64_t> &keys)
   if (n <= 1) {
     return;
   }
-
   constexpr int kBits = 8;
   constexpr int kBuckets = 1 << kBits;
   constexpr int kPasses = 64 / kBits;
-
   std::vector<uint64_t> tmp(n);
-
   for (int pass = 0; pass < kPasses; pass++) {
     std::vector<std::vector<size_t>> local_counts(omp_get_max_threads(), std::vector<size_t>(kBuckets, 0));
-
 #pragma omp parallel
     {
       int tid = omp_get_thread_num();
 #pragma omp for
       for (long long i = 0; i < (long long)n; i++) {
-        size_t bucket = (keys[i] >> (pass * kBits)) & (kBuckets - 1);
-        local_counts[tid][bucket]++;
+        local_counts[tid][(keys[i] >> (pass * kBits)) & (kBuckets - 1)]++;
       }
     }
-
     std::vector<size_t> common_counts(kBuckets, 0);
     for (int b = 0; b < kBuckets; b++) {
-      for (int t = 0; t < omp_get_max_threads(); t++) {
+      for (int t = 0; t < (int)local_counts.size(); t++) {
         common_counts[b] += local_counts[t][b];
       }
     }
@@ -97,19 +66,17 @@ void TitaevSortirovkaBetcheraOMP::RadixSortParallel(std::vector<uint64_t> &keys)
     std::vector<std::vector<size_t>> thread_offsets(omp_get_max_threads(), std::vector<size_t>(kBuckets, 0));
     for (int b = 0; b < kBuckets; b++) {
       size_t current_offset = prefixes[b];
-      for (int t = 0; t < omp_get_max_threads(); t++) {
+      for (int t = 0; t < (int)thread_offsets.size(); t++) {
         thread_offsets[t][b] = current_offset;
         current_offset += local_counts[t][b];
       }
     }
-
 #pragma omp parallel
     {
       int tid = omp_get_thread_num();
 #pragma omp for
       for (long long i = 0; i < (long long)n; i++) {
-        size_t bucket = (keys[i] >> (pass * kBits)) & (kBuckets - 1);
-        tmp[thread_offsets[tid][bucket]++] = keys[i];
+        tmp[thread_offsets[tid][(keys[i] >> (pass * kBits)) & (kBuckets - 1)]++] = keys[i];
       }
     }
     keys.swap(tmp);
@@ -131,14 +98,8 @@ void TitaevSortirovkaBetcheraOMP::BatcherStepParallel(OutType &result, size_t n,
     size_t j = (size_t)i ^ stage;
     if (j > (size_t)i && j < n) {
       const bool ascending = ((size_t)i & step) == 0;
-      if (ascending) {
-        if (result[i] > result[j]) {
-          std::swap(result[i], result[j]);
-        }
-      } else {
-        if (result[i] < result[j]) {
-          std::swap(result[i], result[j]);
-        }
+      if (ascending ? (result[i] > result[j]) : (result[i] < result[j])) {
+        std::swap(result[i], result[j]);
       }
     }
   }
@@ -160,12 +121,10 @@ bool TitaevSortirovkaBetcheraOMP::RunImpl() {
   if (n <= 1) {
     return true;
   }
-
   std::vector<uint64_t> keys(n);
   ConvertToKeys(input, keys);
   RadixSortParallel(keys);
   ConvertFromKeys(keys, GetOutput());
-
   if ((n & (n - 1)) == 0) {
     BatcherSortParallel();
   }
