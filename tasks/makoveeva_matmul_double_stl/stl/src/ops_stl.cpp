@@ -1,7 +1,7 @@
 #include "makoveeva_matmul_double_stl/stl/include/ops_stl.hpp"
 
+#include <algorithm>
 #include <cstddef>
-#include <future>
 #include <thread>
 #include <vector>
 
@@ -23,7 +23,7 @@ void MultiplyRowRange(const std::vector<double> &a, const std::vector<double> &b
 
 }  // namespace
 
-MatmulDoubleSTLTask::MatmulDoubleSTLTask(const InType &in) : n_(0), A_(), B_(), C_() {
+MatmulDoubleSTLTask::MatmulDoubleSTLTask(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<double>();
@@ -59,25 +59,27 @@ bool MatmulDoubleSTLTask::RunImpl() {
   auto &c = C_;
 
   const size_t num_threads = std::thread::hardware_concurrency();
+  if (num_threads == 0) {
+    return false;
+  }
+
   const size_t rows_per_thread = (n + num_threads - 1) / num_threads;
 
-  std::vector<std::future<void>> futures;
+  std::vector<std::thread> threads;
 
-  for (size_t thread_index = 0; thread_index < num_threads; ++thread_index) {
-    size_t start_row = thread_index * rows_per_thread;
-    size_t end_row = std::min(start_row + rows_per_thread, n);
+  for (size_t thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+    size_t start_row = thread_idx * rows_per_thread;
+    size_t end_row = (std::min)(start_row + rows_per_thread, n);
 
     if (start_row >= n) {
       break;
     }
 
-    futures.push_back(std::async(std::launch::async, [&a, &b, &c, n, start_row, end_row]() {
-      MultiplyRowRange(a, b, c, n, start_row, end_row);
-    }));
+    threads.emplace_back([&a, &b, &c, n, start_row, end_row]() { MultiplyRowRange(a, b, c, n, start_row, end_row); });
   }
 
-  for (auto &future : futures) {
-    future.get();
+  for (auto &thread : threads) {
+    thread.join();
   }
 
   GetOutput() = C_;

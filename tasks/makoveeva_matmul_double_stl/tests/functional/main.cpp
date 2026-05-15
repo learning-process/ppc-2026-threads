@@ -13,99 +13,173 @@
 
 namespace makoveeva_matmul_double_stl {
 
-class MakoveevaSTLRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
- public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    size_t n = std::get<0>(test_param);
-    std::string desc = std::get<1>(test_param);
-    return desc + "_" + std::to_string(n) + "x" + std::to_string(n);
-  }
-
- protected:
-  void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-
-    size_t n = std::get<0>(params);
-    size_t size = n * n;
-
-    const double start = 0.5;
-    const double step = 0.75;
-
-    std::vector<double> a(size);
-    std::vector<double> b(size);
-
-    for (size_t i = 0; i < size; ++i) {
-      a[i] = start + (static_cast<double>(i) * step);
-    }
-
-    for (size_t i = 0; i < size; ++i) {
-      b[i] = start + (static_cast<double>(size - 1 - i) * step);
-    }
-
-    input_data_ = std::make_tuple(n, a, b);
-
-    std::vector<double> expected(size, 0.0);
-    ReferenceMultiply(a, b, expected, n);
-    expected_output_ = expected;
-  }
-
-  bool CheckTestOutputData(OutType &output_data) final {
-    if (expected_output_.size() != output_data.size()) {
-      return false;
-    }
-
-    const double epsilon = 1e-10;
-    for (size_t i = 0; i < expected_output_.size(); ++i) {
-      if (std::abs(expected_output_[i] - output_data[i]) > epsilon) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  InType GetTestInputData() final {
-    return input_data_;
-  }
-
-  static void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c,
-                                size_t n) {
-    for (size_t i = 0; i < n; ++i) {
-      for (size_t j = 0; j < n; ++j) {
-        double sum = 0.0;
-        for (size_t k = 0; k < n; ++k) {
-          sum += a[(i * n) + k] * b[(k * n) + j];
-        }
-        c[(i * n) + j] = sum;
-      }
-    }
-  }
-
- private:
-  InType input_data_;
-  OutType expected_output_;
-};
-
 namespace {
 
-TEST_P(MakoveevaSTLRunFuncTests, MatMulFoxAlg) {
-  ExecuteTest(GetParam());
+void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, size_t n) {
+  c.assign(n * n, 0.0);
+  for (size_t i = 0; i < n; ++i) {
+    for (size_t k = 0; k < n; ++k) {
+      const double aik = a[(i * n) + k];
+      for (size_t j = 0; j < n; ++j) {
+        c[(i * n) + j] += aik * b[(k * n) + j];
+      }
+    }
+  }
 }
 
-const std::array<TestType, 12> kTestParams = {
-    std::make_tuple(1, "size_1x1"),    std::make_tuple(2, "size_2x2"),    std::make_tuple(3, "size_3x3"),
-    std::make_tuple(4, "size_4x4"),    std::make_tuple(5, "size_5x5"),    std::make_tuple(6, "size_6x6"),
-    std::make_tuple(7, "size_7x7"),    std::make_tuple(8, "size_8x8"),    std::make_tuple(9, "size_9x9"),
-    std::make_tuple(10, "size_10x10"), std::make_tuple(16, "size_16x16"), std::make_tuple(32, "size_32x32")};
+void RunTest(size_t n, const std::vector<double> &a, const std::vector<double> &b) {
+  std::vector<double> expected(n * n, 0.0);
+  ReferenceMultiply(a, b, expected, n);
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<MatmulDoubleSTLTask, InType>(kTestParams, PPC_SETTINGS_makoveeva_matmul_double_stl);
+  auto input = std::make_tuple(n, a, b);
+  MatmulDoubleSTLTask task(input);
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+  EXPECT_TRUE(task.ValidationImpl());
+  EXPECT_TRUE(task.PreProcessingImpl());
+  EXPECT_TRUE(task.RunImpl());
+  EXPECT_TRUE(task.PostProcessingImpl());
 
-const auto kTestName = MakoveevaSTLRunFuncTests::PrintFuncTestName<MakoveevaSTLRunFuncTests>;
+  const auto &result = task.GetResult();
+  ASSERT_EQ(result.size(), expected.size());
 
-INSTANTIATE_TEST_SUITE_P(STLMatMulFoxAlgTests, MakoveevaSTLRunFuncTests, kGtestValues, kTestName);
+  const double epsilon = 1e-10;
+  for (size_t i = 0; i < result.size(); ++i) {
+    EXPECT_NEAR(result[i], expected[i], epsilon);
+  }
+}
 
 }  // namespace
+
+TEST(MatmulDoubleSTLTest, Multiply1x1) {
+  const size_t n = 1;
+  const std::vector<double> a = {2.0};
+  const std::vector<double> b = {3.0};
+  RunTest(n, a, b);
+}
+
+TEST(MatmulDoubleSTLTest, Multiply2x2) {
+  const size_t n = 2;
+  const std::vector<double> a = {1.0, 2.0, 3.0, 4.0};
+  const std::vector<double> b = {5.0, 6.0, 7.0, 8.0};
+  RunTest(n, a, b);
+}
+
+TEST(MatmulDoubleSTLTest, Multiply3x3) {
+  const size_t n = 3;
+  const std::vector<double> a = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
+  const std::vector<double> b = {9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0};
+  RunTest(n, a, b);
+}
+
+TEST(MatmulDoubleSTLTest, Multiply4x4) {
+  const size_t n = 4;
+  const std::vector<double> a = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0};
+  const std::vector<double> b = {16.0, 15.0, 14.0, 13.0, 12.0, 11.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0};
+  RunTest(n, a, b);
+}
+
+TEST(MatmulDoubleSTLTest, Multiply5x5) {
+  const size_t n = 5;
+  const size_t size = n * n;
+  std::vector<double> a(size);
+  std::vector<double> b(size);
+
+  for (size_t i = 0; i < size; ++i) {
+    a[i] = static_cast<double>(i + 1);
+    b[i] = static_cast<double>(size - i);
+  }
+  RunTest(n, a, b);
+}
+
+TEST(MatmulDoubleSTLTest, Multiply6x6) {
+  const size_t n = 6;
+  const size_t size = n * n;
+  std::vector<double> a(size);
+  std::vector<double> b(size);
+
+  for (size_t i = 0; i < size; ++i) {
+    a[i] = static_cast<double>(i + 1);
+    b[i] = static_cast<double>(size - i);
+  }
+  RunTest(n, a, b);
+}
+
+TEST(MatmulDoubleSTLTest, Multiply7x7) {
+  const size_t n = 7;
+  const size_t size = n * n;
+  std::vector<double> a(size);
+  std::vector<double> b(size);
+
+  for (size_t i = 0; i < size; ++i) {
+    a[i] = static_cast<double>(i + 1);
+    b[i] = static_cast<double>(size - i);
+  }
+  RunTest(n, a, b);
+}
+
+TEST(MatmulDoubleSTLTest, Multiply8x8) {
+  const size_t n = 8;
+  const size_t size = n * n;
+  std::vector<double> a(size);
+  std::vector<double> b(size);
+
+  for (size_t i = 0; i < size; ++i) {
+    a[i] = static_cast<double>(i + 1);
+    b[i] = static_cast<double>(size - i);
+  }
+  RunTest(n, a, b);
+}
+
+TEST(MatmulDoubleSTLTest, Multiply9x9) {
+  const size_t n = 9;
+  const size_t size = n * n;
+  std::vector<double> a(size);
+  std::vector<double> b(size);
+
+  for (size_t i = 0; i < size; ++i) {
+    a[i] = static_cast<double>(i + 1);
+    b[i] = static_cast<double>(size - i);
+  }
+  RunTest(n, a, b);
+}
+
+TEST(MatmulDoubleSTLTest, Multiply10x10) {
+  const size_t n = 10;
+  const size_t size = n * n;
+  std::vector<double> a(size);
+  std::vector<double> b(size);
+
+  for (size_t i = 0; i < size; ++i) {
+    a[i] = static_cast<double>(i + 1);
+    b[i] = static_cast<double>(size - i);
+  }
+  RunTest(n, a, b);
+}
+
+TEST(MatmulDoubleSTLTest, Multiply16x16) {
+  const size_t n = 16;
+  const size_t size = n * n;
+  std::vector<double> a(size);
+  std::vector<double> b(size);
+
+  for (size_t i = 0; i < size; ++i) {
+    a[i] = static_cast<double>(i + 1);
+    b[i] = static_cast<double>(size - i);
+  }
+  RunTest(n, a, b);
+}
+
+TEST(MatmulDoubleSTLTest, Multiply32x32) {
+  const size_t n = 32;
+  const size_t size = n * n;
+  std::vector<double> a(size);
+  std::vector<double> b(size);
+
+  for (size_t i = 0; i < size; ++i) {
+    a[i] = static_cast<double>(i + 1);
+    b[i] = static_cast<double>(size - i);
+  }
+  RunTest(n, a, b);
+}
 
 }  // namespace makoveeva_matmul_double_stl

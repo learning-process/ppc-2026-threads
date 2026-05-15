@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstddef>
-#include <future>
 #include <vector>
 
 #include "makoveeva_matmul_double_stl/common/include/common.hpp"
@@ -30,7 +29,7 @@ class MatmulDoubleSTLTask : public BaseTask {
   using BaseTask::GetOutput;
 
  private:
-  size_t n_;
+  size_t n_{0};
   std::vector<double> A_;
   std::vector<double> B_;
   std::vector<double> C_;
