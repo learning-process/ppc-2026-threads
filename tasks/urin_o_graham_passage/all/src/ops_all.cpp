@@ -4,7 +4,7 @@
 #include <atomic>
 #include <cmath>
 #include <cstddef>
-#include <thread>
+// #include <thread>
 #include <vector>
 
 // Подключение TBB
@@ -17,7 +17,7 @@
 #include <omp.h>
 
 #include "urin_o_graham_passage/common/include/common.hpp"
-#include "util/include/util.hpp"
+// #include "util/include/util.hpp"
 
 namespace urin_o_graham_passage {
 
@@ -109,7 +109,7 @@ std::vector<Point> UrinOGrahamPassageALL::PrepareOtherPointsParallel(const InTyp
     }
   });
   std::vector<Point> other_points(other_points_concurrent.begin(), other_points_concurrent.end());
-  std::sort(other_points.begin(), other_points.end(), [&p0](const Point &a, const Point &b) {
+  std::ranges::sort(other_points.begin(), other_points.end(), [&p0](const Point &a, const Point &b) {
     double angle_a = PolarAngle(p0, a);
     double angle_b = PolarAngle(p0, b);
     if (std::abs(angle_a - angle_b) < 1e-10) {
