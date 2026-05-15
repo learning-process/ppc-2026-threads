@@ -8,24 +8,24 @@
 
 namespace chaschin_v_linear_image_filtration_all {
 
-ChaschinVLinearFiltrationSTL::ChaschinVLinearFiltrationSTL(const chaschin_v_linear_image_filtration_seq::InType &in) {
+ChaschinVLinearFiltrationALL::ChaschinVLinearFiltrationALL(const chaschin_v_linear_image_filtration_seq::InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   auto in_copy = in;
   GetInput() = std::move(in_copy);
   this->GetOutput().clear();
 }
 
-bool ChaschinVLinearFiltrationSTL::ValidationImpl() {
+bool ChaschinVLinearFiltrationALL::ValidationImpl() {
   const auto &in = GetInput();
   const auto &image = std::get<0>(in);
   return !image.empty();
 }
 
-bool ChaschinVLinearFiltrationSTL::PreProcessingImpl() {
+bool ChaschinVLinearFiltrationALL::PreProcessingImpl() {
   return true;
 }
 
-inline float HorizontalFilterAtSTL(const std::vector<float> &img, int n, int x, int y) {
+inline float HorizontalFilterAtALL(const std::vector<float> &img, int n, int x, int y) {
   const int idx = (y * n) + x;
   if (x == 0) {
     return ((2.F * img[idx]) + img[idx + 1]) / 3.F;
@@ -36,7 +36,7 @@ inline float HorizontalFilterAtSTL(const std::vector<float> &img, int n, int x, 
   return (img[idx - 1] + (2.F * img[idx]) + img[idx + 1]) / 4.F;
 }
 
-inline float VerticalFilterAtSTL(const std::vector<float> &temp, int n, int m, int x, int y) {
+inline float VerticalFilterAtALL(const std::vector<float> &temp, int n, int m, int x, int y) {
   const int idx = (y * n) + x;
   if (y == 0) {
     return ((2.F * temp[idx]) + temp[idx + n]) / 3.F;
@@ -47,7 +47,7 @@ inline float VerticalFilterAtSTL(const std::vector<float> &temp, int n, int m, i
   return (temp[idx - n] + (2.F * temp[idx]) + temp[idx + n]) / 4.F;
 }
 
-bool ChaschinVLinearFiltrationSTL::RunImpl() {
+bool ChaschinVLinearFiltrationALL::RunImpl() {
   const auto &in = GetInput();
   const auto &image = std::get<0>(in);
   int n = std::get<1>(in);
@@ -71,7 +71,7 @@ bool ChaschinVLinearFiltrationSTL::RunImpl() {
     for (int yi = start_y; yi < end_y; ++yi) {
 #pragma omp simd
       for (int xf = 0; xf < n; ++xf) {
-        temp[(yi * n) + xf] = HorizontalFilterAtSTL(image, n, xf, yi);
+        temp[(yi * n) + xf] = HorizontalFilterAtALL(image, n, xf, yi);
       }
     }
   };
@@ -95,7 +95,7 @@ bool ChaschinVLinearFiltrationSTL::RunImpl() {
     for (int yi = start_y; yi < end_y; ++yi) {
 #pragma omp simd
       for (int xy = 0; xy < n; ++xy) {
-        out[(yi * n) + xy] = VerticalFilterAtSTL(temp, n, m, xy, yi);
+        out[(yi * n) + xy] = VerticalFilterAtALL(temp, n, m, xy, yi);
       }
     }
   };
@@ -115,7 +115,7 @@ bool ChaschinVLinearFiltrationSTL::RunImpl() {
   return true;
 }
 
-bool ChaschinVLinearFiltrationSTL::PostProcessingImpl() {
+bool ChaschinVLinearFiltrationALL::PostProcessingImpl() {
   return true;
 }
 
