@@ -63,39 +63,51 @@ void ProcessLocalBlock(const std::vector<uint8_t> &matrix, std::vector<uint8_t> 
   }
 }
 
+void CopyOwnBand(const std::vector<uint8_t> &local_result, std::vector<uint8_t> &global_result, int width, int height,
+                 int start_col, int end_col, int local_cols) {
+  for (int vertical_band = 0; vertical_band < height; ++vertical_band) {
+    for (int horizontal_band = start_col; horizontal_band < end_col; ++horizontal_band) {
+      const int local_col_idx = horizontal_band - start_col;
+      global_result[(vertical_band * width) + horizontal_band] =
+          local_result[(vertical_band * local_cols) + local_col_idx];
+    }
+  }
+}
+
+void ReceiveOtherBands(std::vector<uint8_t> &global_result, int width, int height, int size, int cols_per_proc,
+                       int remainder) {
+  for (int sender_rank = 1; sender_rank < size; ++sender_rank) {
+    const int sender_start_col = (sender_rank * cols_per_proc) + std::min(sender_rank, remainder);
+    const int sender_cols = cols_per_proc + (sender_rank < remainder ? 1 : 0);
+    if (sender_cols == 0) {
+      continue;
+    }
+    std::vector<uint8_t> recv_buf(static_cast<size_t>(sender_cols) * height);
+    MPI_Recv(recv_buf.data(), static_cast<int>(recv_buf.size()), MPI_UNSIGNED_CHAR, sender_rank, 0, MPI_COMM_WORLD,
+             MPI_STATUS_IGNORE);
+    for (int vertical_band = 0; vertical_band < height; ++vertical_band) {
+      for (int col = 0; col < sender_cols; ++col) {
+        global_result[(vertical_band * width) + sender_start_col + col] = recv_buf[(vertical_band * sender_cols) + col];
+      }
+    }
+  }
+}
+
+void SendOwnBand(const std::vector<uint8_t> &local_result) {
+  if (!local_result.empty()) {
+    MPI_Send(local_result.data(), static_cast<int>(local_result.size()), MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
+  }
+}
+
 void GatherAndBroadcast(const std::vector<uint8_t> &local_result, std::vector<uint8_t> &global_result, int width,
                         int height, int rank, int size, int cols_per_proc, int remainder, int start_col, int end_col,
                         int local_cols) {
   if (rank == 0) {
-    for (int vertical_band = 0; vertical_band < height; ++vertical_band) {
-      for (int horizontal_band = start_col; horizontal_band < end_col; ++horizontal_band) {
-        const int local_col_idx = horizontal_band - start_col;
-        global_result[(vertical_band * width) + horizontal_band] =
-            local_result[(vertical_band * local_cols) + local_col_idx];
-      }
-    }
-    for (int sender_rank = 1; sender_rank < size; ++sender_rank) {
-      const int sender_start_col = (sender_rank * cols_per_proc) + std::min(sender_rank, remainder);
-      const int sender_cols = cols_per_proc + (sender_rank < remainder ? 1 : 0);
-      if (sender_cols == 0) {
-        continue;
-      }
-      std::vector<uint8_t> recv_buf(static_cast<size_t>(sender_cols) * height);
-      MPI_Recv(recv_buf.data(), static_cast<int>(recv_buf.size()), MPI_UNSIGNED_CHAR, sender_rank, 0, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
-      for (int vertical_band = 0; vertical_band < height; ++vertical_band) {
-        for (int col = 0; col < sender_cols; ++col) {
-          global_result[(vertical_band * width) + sender_start_col + col] =
-              recv_buf[(vertical_band * sender_cols) + col];
-        }
-      }
-    }
+    CopyOwnBand(local_result, global_result, width, height, start_col, end_col, local_cols);
+    ReceiveOtherBands(global_result, width, height, size, cols_per_proc, remainder);
   } else {
-    if (local_cols > 0) {
-      MPI_Send(local_result.data(), static_cast<int>(local_result.size()), MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
-    }
+    SendOwnBand(local_result);
   }
-
   MPI_Bcast(global_result.data(), static_cast<int>(global_result.size()), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 }
 
