@@ -128,7 +128,7 @@ const auto kAllTaskPack = std::tuple_cat(ppc::util::AddFuncTask<KuterginAMultidi
                                              kFunctionalTests, PPC_SETTINGS_kutergin_a_multidim_trapezoid),
                                          ppc::util::AddFuncTask<KuterginAMultidimTrapezoidOMP, InType>(
                                              kFunctionalTests, PPC_SETTINGS_kutergin_a_multidim_trapezoid),
-                                            ppc::util::AddFuncTask<KuterginAMultidimTrapezoidSTL, InType>(
+                                         ppc::util::AddFuncTask<KuterginAMultidimTrapezoidSTL, InType>(
                                              kFunctionalTests, PPC_SETTINGS_kutergin_a_multidim_trapezoid));
 
 const auto kAllFuncValues = ppc::util::ExpandToValues(kAllTaskPack);

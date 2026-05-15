@@ -49,8 +49,8 @@ TEST_P(KuterginATrapezoidPerfTest, PerformanceModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KuterginAMultidimTrapezoidSEQ, KuterginAMultidimTrapezoidOMP, KuterginAMultidimTrapezoidSTL>(
-        PPC_SETTINGS_kutergin_a_multidim_trapezoid);
+    ppc::util::MakeAllPerfTasks<InType, KuterginAMultidimTrapezoidSEQ, KuterginAMultidimTrapezoidOMP,
+                                KuterginAMultidimTrapezoidSTL>(PPC_SETTINGS_kutergin_a_multidim_trapezoid);
 
 INSTANTIATE_TEST_SUITE_P(KuterginATrapezoidPerfAll, KuterginATrapezoidPerfTest,
                          ppc::util::TupleToGTestValues(kAllPerfTasks), KuterginATrapezoidPerfTest::CustomPerfTestName);

@@ -91,7 +91,8 @@ bool KuterginAMultidimTrapezoidSTL::PostProcessingImpl() {
   return true;
 }
 
-double KuterginAMultidimTrapezoidSTL::CalculateChunkSum(size_t start_idx, size_t end_idx, const std::vector<double> &h) {
+double KuterginAMultidimTrapezoidSTL::CalculateChunkSum(size_t start_idx, size_t end_idx,
+                                                        const std::vector<double> &h) {
   const auto &input = GetInput();
   const auto &func = std::get<0>(input);
   const auto &borders = std::get<1>(input);

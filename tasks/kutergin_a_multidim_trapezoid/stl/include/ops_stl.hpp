@@ -1,12 +1,12 @@
 #pragma once
 
-#include <vector>
 #include <utility>
+#include <vector>
 
-#include "task/include/task.hpp"
 #include "kutergin_a_multidim_trapezoid/common/include/common.hpp"
+#include "task/include/task.hpp"
 
-namespace kutergin_a_multidim_trapezoid { 
+namespace kutergin_a_multidim_trapezoid {
 
 class KuterginAMultidimTrapezoidSTL : public BaseTask {
  public:
@@ -22,7 +22,7 @@ class KuterginAMultidimTrapezoidSTL : public BaseTask {
   bool PostProcessingImpl() override;
 
  private:
-  double CalculateChunkSum(size_t start_idx, size_t end_idx, const std::vector<double>& h);
+  double CalculateChunkSum(size_t start_idx, size_t end_idx, const std::vector<double> &h);
 
   double res_{0.0};
 };
