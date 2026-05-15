@@ -126,10 +126,7 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
   ParallelRadixSortOpenMP(local_data);
   FixNegativeOrderOpenMP(local_data);
 
-  std::vector<double> gathered;
-  if (rank == 0) {
-    gathered.resize(total_n);
-  }
+  std::vector<double> gathered(rank == 0 ? total_n : 0);
   MPI_Gatherv(local_data.data(), local_data.size(), MPI_DOUBLE, rank == 0 ? gathered.data() : nullptr,
               sendcounts.data(), displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
