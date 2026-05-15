@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstddef>
-#include <vector>
 
 #include "peterson_r_graham_scan/common/include/common.hpp"
 #include "task/include/task.hpp"
