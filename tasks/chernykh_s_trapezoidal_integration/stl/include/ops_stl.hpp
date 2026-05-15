@@ -14,9 +14,6 @@ class ChernykhSTrapezoidalIntegrationSTL : public BaseTask {
   explicit ChernykhSTrapezoidalIntegrationSTL(const InType &in);
 
  private:
-  static double CalculatePointAndWeight(const IntegrationInType &input, const std::vector<std::size_t> &counters,
-                                        std::vector<double> &point);
-
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
