@@ -7,6 +7,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "iskhakov_d_vertical_gauss_filter/common/include/common.hpp"
@@ -31,6 +32,73 @@ uint8_t IskhakovDGetPixelMirrorAll(const std::vector<uint8_t> &src, int col, int
   }
   return src[(row * width) + col];
 }
+
+void ProcessLocalBlock(const std::vector<uint8_t> &matrix, std::vector<uint8_t> &local_result, int width, int height,
+                       int start_col, int end_col, int local_cols) {
+#pragma omp parallel for default(none) \
+    shared(matrix, local_result, width, height, start_col, end_col, local_cols, kGaussKernel, kDivConst)
+  for (int horizontal_band = start_col; horizontal_band < end_col; ++horizontal_band) {
+    const int local_col_idx = horizontal_band - start_col;
+    for (int vertical_band = 0; vertical_band < height; ++vertical_band) {
+      int sum = 0;
+
+      sum += kGaussKernel[0][0] *
+             IskhakovDGetPixelMirrorAll(matrix, horizontal_band - 1, vertical_band - 1, width, height);
+      sum += kGaussKernel[0][1] * IskhakovDGetPixelMirrorAll(matrix, horizontal_band, vertical_band - 1, width, height);
+      sum += kGaussKernel[0][2] *
+             IskhakovDGetPixelMirrorAll(matrix, horizontal_band + 1, vertical_band - 1, width, height);
+
+      sum += kGaussKernel[1][0] * IskhakovDGetPixelMirrorAll(matrix, horizontal_band - 1, vertical_band, width, height);
+      sum += kGaussKernel[1][1] * IskhakovDGetPixelMirrorAll(matrix, horizontal_band, vertical_band, width, height);
+      sum += kGaussKernel[1][2] * IskhakovDGetPixelMirrorAll(matrix, horizontal_band + 1, vertical_band, width, height);
+
+      sum += kGaussKernel[2][0] *
+             IskhakovDGetPixelMirrorAll(matrix, horizontal_band - 1, vertical_band + 1, width, height);
+      sum += kGaussKernel[2][1] * IskhakovDGetPixelMirrorAll(matrix, horizontal_band, vertical_band + 1, width, height);
+      sum += kGaussKernel[2][2] *
+             IskhakovDGetPixelMirrorAll(matrix, horizontal_band + 1, vertical_band + 1, width, height);
+
+      local_result[(vertical_band * local_cols) + local_col_idx] = static_cast<uint8_t>(sum / kDivConst);
+    }
+  }
+}
+
+void GatherAndBroadcast(const std::vector<uint8_t> &local_result, std::vector<uint8_t> &global_result, int width,
+                        int height, int rank, int size, int cols_per_proc, int remainder, int start_col, int end_col,
+                        int local_cols) {
+  if (rank == 0) {
+    for (int vertical_band = 0; vertical_band < height; ++vertical_band) {
+      for (int horizontal_band = start_col; horizontal_band < end_col; ++horizontal_band) {
+        const int local_col_idx = horizontal_band - start_col;
+        global_result[(vertical_band * width) + horizontal_band] =
+            local_result[(vertical_band * local_cols) + local_col_idx];
+      }
+    }
+    for (int sender_rank = 1; sender_rank < size; ++sender_rank) {
+      const int sender_start_col = (sender_rank * cols_per_proc) + std::min(sender_rank, remainder);
+      const int sender_cols = cols_per_proc + (sender_rank < remainder ? 1 : 0);
+      if (sender_cols == 0) {
+        continue;
+      }
+      std::vector<uint8_t> recv_buf(static_cast<size_t>(sender_cols) * height);
+      MPI_Recv(recv_buf.data(), static_cast<int>(recv_buf.size()), MPI_UNSIGNED_CHAR, sender_rank, 0, MPI_COMM_WORLD,
+               MPI_STATUS_IGNORE);
+      for (int vertical_band = 0; vertical_band < height; ++vertical_band) {
+        for (int col = 0; col < sender_cols; ++col) {
+          global_result[(vertical_band * width) + sender_start_col + col] =
+              recv_buf[(vertical_band * sender_cols) + col];
+        }
+      }
+    }
+  } else {
+    if (local_cols > 0) {
+      MPI_Send(local_result.data(), static_cast<int>(local_result.size()), MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
+    }
+  }
+
+  MPI_Bcast(global_result.data(), static_cast<int>(global_result.size()), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+}
+
 }  // namespace
 
 IskhakovDVerticalGaussFilterALL::IskhakovDVerticalGaussFilterALL(const InType &in) {
@@ -61,13 +129,14 @@ bool IskhakovDVerticalGaussFilterALL::RunImpl() {
   const int height = in.height;
   const std::vector<uint8_t> &matrix = in.data;
 
-  int rank, size;
+  int rank = 0;
+  int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   const int cols_per_proc = width / size;
   const int remainder = width % size;
-  const int start_col = rank * cols_per_proc + std::min(rank, remainder);
+  const int start_col = (rank * cols_per_proc) + std::min(rank, remainder);
   const int end_col = start_col + cols_per_proc + (rank < remainder ? 1 : 0);
   const int local_cols = end_col - start_col;
 
@@ -75,67 +144,11 @@ bool IskhakovDVerticalGaussFilterALL::RunImpl() {
 
   omp_set_num_threads(ppc::util::GetNumThreads());
 
-#pragma omp parallel for default(none) \
-    shared(matrix, local_result, width, height, start_col, end_col, local_cols, kGaussKernel, kDivConst)
-  for (int horizontal_band = start_col; horizontal_band < end_col; ++horizontal_band) {
-    const int local_col_idx = horizontal_band - start_col;
-    for (int vertical_band = 0; vertical_band < height; ++vertical_band) {
-      int sum = 0;
-
-      sum += kGaussKernel[0][0] *
-             IskhakovDGetPixelMirrorAll(matrix, horizontal_band - 1, vertical_band - 1, width, height);
-      sum += kGaussKernel[0][1] * IskhakovDGetPixelMirrorAll(matrix, horizontal_band, vertical_band - 1, width, height);
-      sum += kGaussKernel[0][2] *
-             IskhakovDGetPixelMirrorAll(matrix, horizontal_band + 1, vertical_band - 1, width, height);
-
-      sum += kGaussKernel[1][0] * IskhakovDGetPixelMirrorAll(matrix, horizontal_band - 1, vertical_band, width, height);
-      sum += kGaussKernel[1][1] * IskhakovDGetPixelMirrorAll(matrix, horizontal_band, vertical_band, width, height);
-      sum += kGaussKernel[1][2] * IskhakovDGetPixelMirrorAll(matrix, horizontal_band + 1, vertical_band, width, height);
-
-      sum += kGaussKernel[2][0] *
-             IskhakovDGetPixelMirrorAll(matrix, horizontal_band - 1, vertical_band + 1, width, height);
-      sum += kGaussKernel[2][1] * IskhakovDGetPixelMirrorAll(matrix, horizontal_band, vertical_band + 1, width, height);
-      sum += kGaussKernel[2][2] *
-             IskhakovDGetPixelMirrorAll(matrix, horizontal_band + 1, vertical_band + 1, width, height);
-
-      local_result[(vertical_band * local_cols) + local_col_idx] = static_cast<uint8_t>(sum / kDivConst);
-    }
-  }
+  ProcessLocalBlock(matrix, local_result, width, height, start_col, end_col, local_cols);
 
   std::vector<uint8_t> global_result(static_cast<size_t>(width) * height);
-  if (rank == 0) {
-    for (int vertical_band = 0; vertical_band < height; ++vertical_band) {
-      for (int horizontal_band = start_col; horizontal_band < end_col; ++horizontal_band) {
-        const int local_col_idx = horizontal_band - start_col;
-        global_result[(vertical_band * width) + horizontal_band] =
-            local_result[(vertical_band * local_cols) + local_col_idx];
-      }
-    }
-    for (int sender_rank = 1; sender_rank < size; ++sender_rank) {
-      const int sender_start_col = sender_rank * cols_per_proc + std::min(sender_rank, remainder);
-      const int sender_cols = cols_per_proc + (sender_rank < remainder ? 1 : 0);
-
-      if (sender_cols == 0) {
-        continue;
-      }
-      std::vector<uint8_t> recv_buf(static_cast<size_t>(sender_cols) * height);
-      MPI_Recv(recv_buf.data(), static_cast<int>(recv_buf.size()), MPI_UINT8_T, sender_rank, 0, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
-
-      for (int vertical_band = 0; vertical_band < height; ++vertical_band) {
-        for (int col = 0; col < sender_cols; ++col) {
-          global_result[(vertical_band * width) + sender_start_col + col] =
-              recv_buf[(vertical_band * sender_cols) + col];
-        }
-      }
-    }
-  } else {
-    if (local_cols > 0) {
-      MPI_Send(local_result.data(), static_cast<int>(local_result.size()), MPI_UINT8_T, 0, 0, MPI_COMM_WORLD);
-    }
-  }
-
-  MPI_Bcast(global_result.data(), static_cast<int>(global_result.size()), MPI_UINT8_T, 0, MPI_COMM_WORLD);
+  GatherAndBroadcast(local_result, global_result, width, height, rank, size, cols_per_proc, remainder, start_col,
+                     end_col, local_cols);
 
   GetOutput().width = width;
   GetOutput().height = height;
