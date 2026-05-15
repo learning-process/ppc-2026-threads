@@ -7,12 +7,12 @@
 
 namespace ilin_a_algorithm_graham {
 
-class IlinAGrahamTBB : public BaseTask {
+class IlinAGrahamALL : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kTBB;
+    return ppc::task::TypeOfTask::kALL;
   }
-  explicit IlinAGrahamTBB(const InType &in);
+  explicit IlinAGrahamALL(const InType &in);
 
  private:
   bool ValidationImpl() override;
