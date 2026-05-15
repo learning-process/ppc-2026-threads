@@ -53,12 +53,15 @@ bool KrykovESobelOpALL::RunImpl() {
   int nproc = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-  const int base = interior / nproc;
-  const int extra = interior % nproc;
+
+  const int base = (h - 2) / nproc;
+  const int extra = (h - 2) % nproc;
+
   const int local_count = base + (rank < extra ? 1 : 0);
   const int local_start = 1 + base * rank + std::min(rank, extra);
 
   std::vector<int> local_output(static_cast<size_t>(local_count) * static_cast<size_t>(w), 0);
+
   std::vector<int> counts(nproc);
   std::vector<int> displs(nproc);
   for (int i = 0; i < nproc; ++i) {
@@ -67,6 +70,7 @@ bool KrykovESobelOpALL::RunImpl() {
     counts[i] = cnt * w;
     displs[i] = start * w;
   }
+
 #pragma omp parallel for default(none) shared(local_output, gray, gx_kernel, gy_kernel) \
     firstprivate(local_start, local_count, w) schedule(static)
   for (int li = 0; li < local_count; ++li) {
