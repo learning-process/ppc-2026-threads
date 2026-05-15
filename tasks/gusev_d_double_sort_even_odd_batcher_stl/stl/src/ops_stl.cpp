@@ -5,7 +5,8 @@
 #include <bit>
 #include <cstddef>
 #include <cstdint>
-#include <iterator>
+#include <exception>
+#include <mutex>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -71,13 +72,13 @@ void RadixSortDoubles(OutType &data) {
     const auto shift = byte * kBitsPerByte;
 
     for (ValueType value : *source) {
-      count[GetBucketIndex(value, shift)]++;
+      count.at(GetBucketIndex(value, shift))++;
     }
     BuildPrefixSums(count);
 
     for (ValueType value : *source) {
       const auto bucket = GetBucketIndex(value, shift);
-      (*destination)[count[bucket]++] = value;
+      (*destination)[count.at(bucket)++] = value;
     }
 
     std::swap(source, destination);
@@ -105,16 +106,25 @@ void CompareExchange(std::vector<MergeItem> &data, size_t left, size_t right) {
   }
 }
 
-void OddEvenMerge(std::vector<MergeItem> &data, size_t first, size_t length, size_t distance) {
-  const auto next_distance = distance * 2;
-  if (next_distance < length) {
-    OddEvenMerge(data, first, length, next_distance);
-    OddEvenMerge(data, first + distance, length, next_distance);
-    for (size_t i = first + distance; (i + distance) < (first + length); i += next_distance) {
-      CompareExchange(data, i, i + distance);
+void CompareExchangeBlocks(std::vector<MergeItem> &data, size_t first, size_t distance) {
+  for (size_t i = 0; i < distance; ++i) {
+    CompareExchange(data, first + i, first + distance + i);
+  }
+}
+
+void OddEvenMerge(std::vector<MergeItem> &data) {
+  if (data.size() < 2) {
+    return;
+  }
+
+  auto distance = data.size() / 2;
+  CompareExchangeBlocks(data, 0, distance);
+
+  for (distance /= 2; distance > 0; distance /= 2) {
+    const auto step = distance * 2;
+    for (size_t first = distance; (first + distance) < data.size(); first += step) {
+      CompareExchangeBlocks(data, first, distance);
     }
-  } else {
-    CompareExchange(data, first, first + distance);
   }
 }
 
@@ -148,7 +158,7 @@ Block MergeBatcherEvenOdd(const Block &left, const Block &right) {
 
   CopyBlockToMergeItems(left, items, 0);
   CopyBlockToMergeItems(right, items, half_size);
-  OddEvenMerge(items, 0, items.size(), 1);
+  OddEvenMerge(items);
   return ExtractMergedValues(items, left.size() + right.size());
 }
 
@@ -170,28 +180,60 @@ void FillAndSortBlock(const InType &input, Block &block, BlockRange range) {
 }
 
 template <typename Function>
-void RunThreadedByIndex(size_t work_count, size_t max_threads, Function &&function) {
-  if (work_count < kMinThreadedTasks || max_threads < kMinThreadedTasks) {
-    for (size_t index = 0; index < work_count; ++index) {
+void RunSequentialByIndex(size_t work_count, const Function &function) {
+  for (size_t index = 0; index < work_count; ++index) {
+    function(index);
+  }
+}
+
+void StoreCurrentException(std::exception_ptr &worker_exception, std::mutex &exception_mutex) noexcept {
+  const std::scoped_lock lock(exception_mutex);
+  if (worker_exception == nullptr) {
+    worker_exception = std::current_exception();
+  }
+}
+
+template <typename Function>
+void RunThreadChunk(size_t thread_index, size_t work_count, size_t thread_count, const Function &function,
+                    std::exception_ptr &worker_exception, std::mutex &exception_mutex) noexcept {
+  try {
+    for (size_t index = thread_index; index < work_count; index += thread_count) {
       function(index);
     }
+  } catch (...) {
+    StoreCurrentException(worker_exception, exception_mutex);
+  }
+}
+
+void JoinWorkersAndRethrow(std::vector<std::thread> &workers, const std::exception_ptr &worker_exception) {
+  for (auto &worker : workers) {
+    worker.join();
+  }
+
+  if (worker_exception != nullptr) {
+    std::rethrow_exception(worker_exception);
+  }
+}
+
+template <typename Function>
+void RunThreadedByIndex(size_t work_count, size_t max_threads, const Function &function) {
+  if (work_count < kMinThreadedTasks || max_threads < kMinThreadedTasks) {
+    RunSequentialByIndex(work_count, function);
     return;
   }
 
   const auto thread_count = std::min(work_count, max_threads);
   std::vector<std::thread> workers;
   workers.reserve(thread_count);
+  std::exception_ptr worker_exception;
+  std::mutex exception_mutex;
   for (size_t thread_index = 0; thread_index < thread_count; ++thread_index) {
     workers.emplace_back([&, thread_index] {
-      for (size_t index = thread_index; index < work_count; index += thread_count) {
-        function(index);
-      }
+      RunThreadChunk(thread_index, work_count, thread_count, function, worker_exception, exception_mutex);
     });
   }
 
-  for (auto &worker : workers) {
-    worker.join();
-  }
+  JoinWorkersAndRethrow(workers, worker_exception);
 }
 
 BlockList MakeSortedBlocks(const InType &input, size_t parallelism) {
@@ -239,7 +281,7 @@ Block MergeBlocks(BlockList blocks, size_t parallelism) {
 
 }  // namespace
 
-DoubleSortEvenOddBatcherSTL::DoubleSortEvenOddBatcherSTL(const InType &in) {
+DoubleSortEvenOddBatcherSTL::DoubleSortEvenOddBatcherSTL(const InType &in) : input_data_(in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};
