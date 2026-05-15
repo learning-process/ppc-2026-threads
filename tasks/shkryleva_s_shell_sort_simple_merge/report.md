@@ -85,7 +85,7 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release cmake --build build --config Release
 ### Функциональные тесты
 $env:PPC_NUM_THREADS = 4 ./build/bin/Release/ppc_func_tests.exe
 
-# Перформанс-тесты для разных бэкендов
+### Перформанс-тесты для разных бэкендов
 $env:PPC_NUM_THREADS = 12 ./build/bin/Release/ppc_perf_tests.exe
 --gtest_filter=*omp* ./build/bin/Release/ppc_perf_tests.exe --gtest_filter=*tbb*
 ./build/bin/Release/ppc_perf_tests.exe --gtest_filter=*stl*
