@@ -111,6 +111,7 @@ _Пояснение к коду:_ Вычислительное ядро разб
 - **Compiler:** Microsoft Visual C++ (MSVC).
 - **Размер задачи:** Система $3000 \times 3000$ (`kSystemSize = 3000`).
 - **Команды запуска:**
+
     ```bash
     export PPC_NUM_THREADS=1
     build/bin/ppc_perf_tests.exe --gtest_filter=*Smyshlaev*seq_enabled*

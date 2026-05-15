@@ -76,6 +76,7 @@ _Пояснение:_ Внешний цикл по строкам $i$ распр
 - **Compiler:** Microsoft Visual C++ (MSVC).
 - **Размер задачи:** Система $3000 \times 3000$ (`kSystemSize = 3000`).
 - **Команда запуска:**
+
     ```bash
     export PPC_NUM_THREADS=4
     build/bin/ppc_perf_tests.exe --gtest_filter=*Smyshlaev*omp_enabled*

@@ -76,6 +76,7 @@ _Пояснение:_ Здесь `parallel_reduce` одновременно об
 - **Compiler:** Microsoft Visual C++ (MSVC).
 - **Размер задачи:** Система $3000 \times 3000$ (`kSystemSize = 3000`).
 - **Команда запуска:**
+
     ```bash
     export PPC_NUM_THREADS=8
     build/bin/ppc_perf_tests.exe --gtest_filter=*Smyshlaev*tbb_enabled*
