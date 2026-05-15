@@ -8,16 +8,6 @@
 
 namespace peterson_r_graham_scan {
 
-struct Point2D {
-  double coord_x;
-  double coord_y;
-
-  Point2D() = default;
-  Point2D(double x_val, double y_val) : coord_x(x_val), coord_y(y_val) {}
-};
-
-using PointSet = std::vector<Point2D>;
-
 class PetersonGrahamScannerOmp : public TaskBase {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
