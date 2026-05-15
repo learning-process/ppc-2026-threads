@@ -138,7 +138,7 @@ void RozenbergAQuicksortSimpleMergeALL::ThreadMerge(InType &data, int left, int 
 }
 
 void RozenbergAQuicksortSimpleMergeALL::ThreadQuicksort(InType &local_data) {
-  int num_threads = omp_get_max_threads();
+  int num_threads = ppc::util::GetNumThreads();
   int local_n = static_cast<int>(local_data.size());
 
   if (local_n > num_threads) {

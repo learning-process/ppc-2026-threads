@@ -125,7 +125,7 @@ void RozenbergAQuicksortSimpleMergeTBB::Merge(InType &data, int left, int mid, i
 bool RozenbergAQuicksortSimpleMergeTBB::RunImpl() {
   InType data = GetInput();
   int n = static_cast<int>(data.size());
-  int num_threads = tbb::info::default_concurrency();
+  int num_threads = ppc::util::GetNumThreads();
 
   tbb::global_control control(tbb::global_control::max_allowed_parallelism, num_threads);
 
