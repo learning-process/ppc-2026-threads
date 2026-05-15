@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "ermakov_a_spar_mat_mult/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -23,6 +25,9 @@ class ErmakovASparMatMultALL : public BaseTask {
   MatrixCRS a_;
   MatrixCRS b_;
   MatrixCRS c_;
+  MatrixCRS local_a_;
+  std::vector<int> row_bounds_;
+  std::vector<int> nnz_counts_;
 };
 
 }  // namespace ermakov_a_spar_mat_mult

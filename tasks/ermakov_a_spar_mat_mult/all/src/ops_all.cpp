@@ -20,7 +20,7 @@ namespace {
 
 struct LocalRowData {
   std::vector<int> cols;
-  std::vector<std::complex<double>> vals;  // 1
+  std::vector<std::complex<double>> vals;
 };
 
 std::vector<int> BuildRowBounds(const MatrixCRS &matrix, int proc_count) {
@@ -82,25 +82,19 @@ std::vector<int> BuildNNZCounts(const MatrixCRS &matrix, const std::vector<int> 
   return counts;
 }
 
-std::vector<double> PackComplexValues(const std::vector<std::complex<double>> &values) {
-  std::vector<double> packed(values.size() * 2ULL, 0.0);
-  for (std::size_t i = 0; i < values.size(); ++i) {
-    packed[i * 2ULL] = values[i].real();
-    packed[(i * 2ULL) + 1ULL] = values[i].imag();
+MPI_Datatype GetComplexBytesType() {
+  static MPI_Datatype datatype = MPI_DATATYPE_NULL;
+  static bool initialized = false;
+  if (!initialized) {
+    MPI_Type_contiguous(static_cast<int>(sizeof(std::complex<double>)), MPI_BYTE, &datatype);
+    MPI_Type_commit(&datatype);
+    initialized = true;
   }
-  return packed;
-}
-
-void UnpackComplexValues(const std::vector<double> &packed, std::vector<std::complex<double>> &values) {
-  const std::size_t count = packed.size() / 2ULL;
-  values.resize(count);
-  for (std::size_t i = 0; i < count; ++i) {
-    values[i] = std::complex<double>(packed[i * 2ULL], packed[(i * 2ULL) + 1ULL]);
-  }
+  return datatype;
 }
 
 MatrixCRS ScatterRows(const MatrixCRS &matrix, const std::vector<int> &row_bounds, const std::vector<int> &nnz_counts,
-                      int rank, int proc_count) {
+                      int rank) {
   const std::vector<int> row_counts = BuildCountsFromBounds(row_bounds);
   const std::vector<int> row_displs = BuildDisplacements(row_counts);
   const std::vector<int> nnz_displs = BuildDisplacements(nnz_counts);
@@ -110,24 +104,15 @@ MatrixCRS ScatterRows(const MatrixCRS &matrix, const std::vector<int> &row_bound
   local.cols = matrix.cols;
   local.row_ptr.assign(static_cast<std::size_t>(local.rows) + 1ULL, 0);
   local.col_index.resize(static_cast<std::size_t>(nnz_counts[static_cast<std::size_t>(rank)]));
+  local.values.resize(static_cast<std::size_t>(nnz_counts[static_cast<std::size_t>(rank)]));
 
   std::vector<int> all_row_lengths;
-  std::vector<double> packed_values;
-  std::vector<int> packed_counts;
-  std::vector<int> packed_displs;
 
   if (rank == 0) {
     all_row_lengths.resize(static_cast<std::size_t>(matrix.rows), 0);
     for (int row = 0; row < matrix.rows; ++row) {
       all_row_lengths[static_cast<std::size_t>(row)] =
           matrix.row_ptr[static_cast<std::size_t>(row) + 1ULL] - matrix.row_ptr[static_cast<std::size_t>(row)];
-    }
-    packed_values = PackComplexValues(matrix.values);
-    packed_counts.resize(static_cast<std::size_t>(proc_count), 0);
-    packed_displs.resize(static_cast<std::size_t>(proc_count), 0);
-    for (int proc = 0; proc < proc_count; ++proc) {
-      packed_counts[static_cast<std::size_t>(proc)] = nnz_counts[static_cast<std::size_t>(proc)] * 2;
-      packed_displs[static_cast<std::size_t>(proc)] = nnz_displs[static_cast<std::size_t>(proc)] * 2;
     }
   }
 
@@ -139,10 +124,8 @@ MatrixCRS ScatterRows(const MatrixCRS &matrix, const std::vector<int> &row_bound
   MPI_Scatterv(matrix.col_index.data(), nnz_counts.data(), nnz_displs.data(), MPI_INT, local.col_index.data(),
                local_nnz, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<double> local_packed(static_cast<std::size_t>(local_nnz) * 2ULL, 0.0);
-  MPI_Scatterv(packed_values.data(), packed_counts.data(), packed_displs.data(), MPI_DOUBLE, local_packed.data(),
-               local_nnz * 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  UnpackComplexValues(local_packed, local.values);
+  MPI_Scatterv(matrix.values.data(), nnz_counts.data(), nnz_displs.data(), GetComplexBytesType(), local.values.data(),
+               local_nnz, GetComplexBytesType(), 0, MPI_COMM_WORLD);
 
   int prefix = 0;
   for (int row = 0; row < local.rows; ++row) {
@@ -168,18 +151,7 @@ void BroadcastMatrix(MatrixCRS &matrix, int rank) {
 
   MPI_Bcast(matrix.col_index.data(), dims[2], MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(matrix.row_ptr.data(), matrix.rows + 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  std::vector<double> packed_values;
-  if (rank == 0) {
-    packed_values = PackComplexValues(matrix.values);
-  } else {
-    packed_values.resize(static_cast<std::size_t>(dims[2]) * 2ULL, 0.0);
-  }
-
-  MPI_Bcast(packed_values.data(), dims[2] * 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  if (rank != 0) {
-    UnpackComplexValues(packed_values, matrix.values);
-  }
+  MPI_Bcast(matrix.values.data(), dims[2], GetComplexBytesType(), 0, MPI_COMM_WORLD);
 }
 
 void AccumulateRowProducts(const MatrixCRS &a, const MatrixCRS &b, int row_index,
@@ -235,8 +207,8 @@ MatrixCRS MultiplyLocalOMP(const MatrixCRS &a, const MatrixCRS &b) {
     return result;
   }
 
-  std::vector<LocalRowData> rows_data(static_cast<std::size_t>(a.rows));
   const int thread_count = std::max(1, std::min(ppc::util::GetNumThreads(), a.rows));
+  std::vector<LocalRowData> rows_data(static_cast<std::size_t>(a.rows));
 
 #pragma omp parallel default(none) shared(a, b, rows_data) num_threads(thread_count) if (thread_count > 1)
   {
@@ -288,9 +260,7 @@ void GatherMatrix(const MatrixCRS &local, MatrixCRS &global, const std::vector<i
   std::vector<int> nnz_displs;
   std::vector<int> gathered_row_lengths;
   std::vector<int> gathered_cols;
-  std::vector<double> gathered_packed_values;
-  std::vector<int> packed_counts;
-  std::vector<int> packed_displs;
+  std::vector<std::complex<double>> gathered_values;
 
   if (rank == 0) {
     nnz_displs.resize(static_cast<std::size_t>(size), 0);
@@ -301,13 +271,7 @@ void GatherMatrix(const MatrixCRS &local, MatrixCRS &global, const std::vector<i
 
     gathered_row_lengths.resize(static_cast<std::size_t>(total_rows), 0);
     gathered_cols.resize(static_cast<std::size_t>(std::accumulate(nnz_counts.begin(), nnz_counts.end(), 0)), 0);
-    gathered_packed_values.resize(gathered_cols.size() * 2ULL, 0.0);
-    packed_counts.resize(static_cast<std::size_t>(size), 0);
-    packed_displs.resize(static_cast<std::size_t>(size), 0);
-    for (int proc = 0; proc < size; ++proc) {
-      packed_counts[static_cast<std::size_t>(proc)] = nnz_counts[static_cast<std::size_t>(proc)] * 2;
-      packed_displs[static_cast<std::size_t>(proc)] = nnz_displs[static_cast<std::size_t>(proc)] * 2;
-    }
+    gathered_values.resize(gathered_cols.size());
   }
 
   MPI_Gatherv(local_row_lengths.data(), local.rows, MPI_INT, gathered_row_lengths.data(), row_counts.data(),
@@ -315,9 +279,8 @@ void GatherMatrix(const MatrixCRS &local, MatrixCRS &global, const std::vector<i
   MPI_Gatherv(local.col_index.data(), local_nnz, MPI_INT, gathered_cols.data(), nnz_counts.data(), nnz_displs.data(),
               MPI_INT, 0, MPI_COMM_WORLD);
 
-  const std::vector<double> local_packed_values = PackComplexValues(local.values);
-  MPI_Gatherv(local_packed_values.data(), local_nnz * 2, MPI_DOUBLE, gathered_packed_values.data(),
-              packed_counts.data(), packed_displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Gatherv(local.values.data(), local_nnz, GetComplexBytesType(), gathered_values.data(), nnz_counts.data(),
+              nnz_displs.data(), GetComplexBytesType(), 0, MPI_COMM_WORLD);
 
   if (rank != 0) {
     return;
@@ -332,7 +295,7 @@ void GatherMatrix(const MatrixCRS &local, MatrixCRS &global, const std::vector<i
   global.row_ptr[static_cast<std::size_t>(total_rows)] = prefix;
 
   global.col_index = std::move(gathered_cols);
-  UnpackComplexValues(gathered_packed_values, global.values);
+  global.values = std::move(gathered_values);
 }
 
 }  // namespace
@@ -383,6 +346,11 @@ bool ErmakovASparMatMultALL::ValidationImpl() {
 }
 
 bool ErmakovASparMatMultALL::PreProcessingImpl() {
+  int rank = 0;
+  int size = 1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
   a_ = GetInput().A;
   b_ = GetInput().B;
   c_.rows = a_.rows;
@@ -390,6 +358,28 @@ bool ErmakovASparMatMultALL::PreProcessingImpl() {
   c_.values.clear();
   c_.col_index.clear();
   c_.row_ptr.assign(static_cast<std::size_t>(c_.rows) + 1ULL, 0);
+
+  if (size == 1) {
+    local_a_ = a_;
+    row_bounds_ = {0, a_.rows};
+    nnz_counts_ = {static_cast<int>(a_.values.size())};
+    return true;
+  }
+
+  BroadcastMatrix(b_, rank);
+
+  row_bounds_.assign(static_cast<std::size_t>(size) + 1ULL, 0);
+  nnz_counts_.assign(static_cast<std::size_t>(size), 0);
+  if (rank == 0) {
+    row_bounds_ = BuildRowBounds(a_, size);
+    nnz_counts_ = BuildNNZCounts(a_, row_bounds_);
+  }
+
+  MPI_Bcast(row_bounds_.data(), size + 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(nnz_counts_.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
+
+  local_a_ = ScatterRows(a_, row_bounds_, nnz_counts_, rank);
+
   return true;
 }
 
@@ -403,36 +393,21 @@ bool ErmakovASparMatMultALL::RunImpl() {
     return false;
   }
 
-  BroadcastMatrix(b_, rank);
+  if (size == 1) {
+    c_ = MultiplyLocalOMP(local_a_, b_);
+    return true;
+  }
+
+  const MatrixCRS local_c = MultiplyLocalOMP(local_a_, b_);
 
   c_.rows = a_.rows;
   c_.cols = b_.cols;
   c_.values.clear();
   c_.col_index.clear();
   c_.row_ptr.assign(static_cast<std::size_t>(c_.rows) + 1ULL, 0);
-
-  std::vector<int> row_bounds(static_cast<std::size_t>(size) + 1ULL, 0);
-  std::vector<int> nnz_counts(static_cast<std::size_t>(size), 0);
-  if (rank == 0) {
-    row_bounds = BuildRowBounds(a_, size);
-    nnz_counts = BuildNNZCounts(a_, row_bounds);
-  }
-  MPI_Bcast(row_bounds.data(), size + 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(nnz_counts.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
-
-  const MatrixCRS local_a = ScatterRows(a_, row_bounds, nnz_counts, rank, size);
-  const MatrixCRS local_c = MultiplyLocalOMP(local_a, b_);
-
-  GatherMatrix(local_c, c_, row_bounds, rank, size, a_.rows);
+  GatherMatrix(local_c, c_, row_bounds_, rank, size, a_.rows);
 
   if (GetStateOfTesting() == ppc::task::StateOfTesting::kPerf) {
-    if (rank != 0) {
-      c_.rows = a_.rows;
-      c_.cols = b_.cols;
-      c_.values.clear();
-      c_.col_index.clear();
-      c_.row_ptr.assign(static_cast<std::size_t>(c_.rows) + 1ULL, 0);
-    }
     MPI_Barrier(MPI_COMM_WORLD);
     return true;
   }
