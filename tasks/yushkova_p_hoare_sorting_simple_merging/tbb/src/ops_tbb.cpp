@@ -47,7 +47,7 @@ int YushkovaPHoareSortingSimpleMergingTBB::HoarePartition(std::vector<int> &valu
 }
 
 void YushkovaPHoareSortingSimpleMergingTBB::HoareQuickSort(std::vector<int> &values, int left, int right) {
-  if (left >= right || static_cast<size_t>(right) >= values.size()) {
+  if (left >= right || static_cast<size_t>(left) >= values.size() || static_cast<size_t>(right) >= values.size()) {
     return;
   }
 
@@ -62,7 +62,15 @@ void YushkovaPHoareSortingSimpleMergingTBB::HoareQuickSort(std::vector<int> &val
       continue;
     }
 
+    if (current_left < 0 || static_cast<size_t>(current_right) >= values.size()) {
+      continue;
+    }
+
     const int partition_index = HoarePartition(values, current_left, current_right);
+    if (partition_index < current_left || partition_index > current_right) {
+      continue;
+    }
+
     if ((partition_index - current_left) > (current_right - (partition_index + 1))) {
       stack.emplace_back(current_left, partition_index);
       stack.emplace_back(partition_index + 1, current_right);
@@ -75,6 +83,10 @@ void YushkovaPHoareSortingSimpleMergingTBB::HoareQuickSort(std::vector<int> &val
 
 void YushkovaPHoareSortingSimpleMergingTBB::SimpleMerge(const std::vector<int> &source, std::vector<int> &destination,
                                                         size_t left, size_t middle, size_t right) {
+  if (left >= right || middle > right || left >= middle) {
+    return;
+  }
+
   size_t left_index = left;
   size_t right_index = middle;
   size_t destination_index = left;
@@ -108,8 +120,14 @@ bool YushkovaPHoareSortingSimpleMergingTBB::PreProcessingImpl() {
 
 bool YushkovaPHoareSortingSimpleMergingTBB::RunImpl() {
   const size_t size = data_.size();
-  if (size <= 1) {
-    GetOutput() = data_;
+
+  if (size == 0) {
+    GetOutput().clear();
+    return true;
+  }
+
+  if (size == 1) {
+    GetOutput().assign(1, data_[0]);
     return true;
   }
 
@@ -120,13 +138,14 @@ bool YushkovaPHoareSortingSimpleMergingTBB::RunImpl() {
     for (size_t block_index = range.begin(); block_index != range.end(); ++block_index) {
       const size_t block_start = block_index * kBlockSize;
       const size_t block_end = std::min(block_start + kBlockSize, size);
-      if (block_end > block_start + 1 && block_end <= size) {
+      if (block_end > block_start + 1 && block_end <= size && block_start < size) {
         HoareQuickSort(data_, static_cast<int>(block_start), static_cast<int>(block_end - 1));
       }
     }
   });
 
-  std::vector<int> merged_data(size);
+  std::vector<int> merged_data;
+  merged_data.resize(size);
 
   for (size_t merge_width = kBlockSize; merge_width < size; merge_width *= 2) {
     const size_t merge_count = (size + (2 * merge_width) - 1) / (2 * merge_width);
@@ -145,21 +164,22 @@ bool YushkovaPHoareSortingSimpleMergingTBB::RunImpl() {
         if (middle < right) {
           SimpleMerge(data_, merged_data, left, middle, right);
         } else if (left < right) {
-          const ptrdiff_t left_offset = static_cast<ptrdiff_t>(left);
-          const ptrdiff_t right_offset = static_cast<ptrdiff_t>(right);
-          const ptrdiff_t dest_offset = static_cast<ptrdiff_t>(left);
-
-          if (left_offset >= 0 && right_offset <= static_cast<ptrdiff_t>(size) && dest_offset >= 0) {
-            std::copy(data_.begin() + left_offset, data_.begin() + right_offset, merged_data.begin() + dest_offset);
+          for (size_t i = left; i < right; ++i) {
+            merged_data[i] = data_[i];
           }
         }
       }
     });
     data_.swap(merged_data);
+    merged_data.resize(size);
   }
 
   if (std::is_sorted(data_.begin(), data_.end())) {
-    GetOutput() = data_;
+    GetOutput().clear();
+    GetOutput().reserve(data_.size());
+    for (const auto &val : data_) {
+      GetOutput().push_back(val);
+    }
     return true;
   }
 
@@ -167,7 +187,10 @@ bool YushkovaPHoareSortingSimpleMergingTBB::RunImpl() {
 }
 
 bool YushkovaPHoareSortingSimpleMergingTBB::PostProcessingImpl() {
-  return !GetOutput().empty() && std::is_sorted(GetOutput().begin(), GetOutput().end());
+  if (GetOutput().empty()) {
+    return false;
+  }
+  return std::is_sorted(GetOutput().begin(), GetOutput().end());
 }
 
 }  // namespace yushkova_p_hoare_sorting_simple_merging
