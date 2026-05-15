@@ -132,8 +132,7 @@ bool VlasovaASimpsonMethodSTL::RunImpl() {
   std::vector<int> indices(first_dim_size);
   std::iota(indices.begin(), indices.end(), 0);
 
-  std::for_each(std::execution::par, indices.begin(), indices.end(),
-                [this, dim, first_dim_size, &partial_sums](int idx0) {
+  std::for_each(std::execution::par, indices.begin(), indices.end(), [this, dim, &partial_sums](int idx0) {
     static thread_local std::vector<int> cur_index(dim);
     static thread_local std::vector<double> cur_point;
     cur_index[0] = idx0;
