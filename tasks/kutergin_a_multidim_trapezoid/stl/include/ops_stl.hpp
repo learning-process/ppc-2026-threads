@@ -1,6 +1,6 @@
 #pragma once
 
-#include <utility>
+#include <cstddef>
 #include <vector>
 
 #include "kutergin_a_multidim_trapezoid/common/include/common.hpp"
