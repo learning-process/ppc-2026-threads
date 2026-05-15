@@ -110,6 +110,7 @@ void GatherAndBroadcast(const std::vector<uint8_t> &local_result, std::vector<ui
   }
   MPI_Bcast(global_result.data(), static_cast<int>(global_result.size()), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 }
+
 }  // namespace
 
 IskhakovDVerticalGaussFilterALL::IskhakovDVerticalGaussFilterALL(const InType &in) {
