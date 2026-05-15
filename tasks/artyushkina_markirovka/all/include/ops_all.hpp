@@ -1,7 +1,5 @@
 #pragma once
 
-#include <queue>
-#include <utility>
 #include <vector>
 
 #include "artyushkina_markirovka/common/include/common.hpp"
@@ -25,13 +23,14 @@ class MarkingComponentsALL : public BaseTask {
   bool PostProcessingImpl() override;
 
   static int FindRoot(std::vector<int> &parent, int label);
-  void UnionLabels(std::vector<int> &parent, int label1, int label2);
+  static void UnionLabels(std::vector<int> &parent, int label1, int label2);
+  
   void FirstPass();
   void SecondPass();
 
   [[nodiscard]] bool IsValidNeighbor(int i, int j, const NeighborOffsetAll &offset) const;
-  void ProcessNeighborFirstPass(int i, int j, const NeighborOffsetAll &offset, std::vector<int> &current_labels,
-                                int &min_label);
+  void ProcessNeighborFirstPass(int i, int j, const NeighborOffsetAll &offset, 
+                                std::vector<int> &neighbor_labels, int &min_label);
 
   int rows_ = 0;
   int cols_ = 0;

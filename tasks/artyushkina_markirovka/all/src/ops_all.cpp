@@ -17,14 +17,18 @@ struct NeighborOffsetAll {
   int check_j_max;
 };
 
-static std::vector<NeighborOffsetAll> GetFirstPassNeighbors() {
+namespace {
+
+std::vector<NeighborOffsetAll> GetFirstPassNeighbors() {
   std::vector<NeighborOffsetAll> neighbors(4);
-  neighbors[0] = {-1, -1, 1, 0, 1, 0};
-  neighbors[1] = {-1, 0, 1, 0, 0, 0};
-  neighbors[2] = {-1, 1, 1, 0, 0, 1};
-  neighbors[3] = {0, -1, 0, 0, 1, 0};
+  neighbors[0] = {.di = -1, .dj = -1, .check_i_min = 1, .check_i_max = 0, .check_j_min = 1, .check_j_max = 0};
+  neighbors[1] = {.di = -1, .dj = 0,  .check_i_min = 1, .check_i_max = 0, .check_j_min = 0, .check_j_max = 0};
+  neighbors[2] = {.di = -1, .dj = 1,  .check_i_min = 1, .check_i_max = 0, .check_j_min = 0, .check_j_max = 1};
+  neighbors[3] = {.di = 0,  .dj = -1, .check_i_min = 0, .check_i_max = 0, .check_j_min = 1, .check_j_max = 0};
   return neighbors;
 }
+
+}  // namespace
 
 MarkingComponentsALL::MarkingComponentsALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -121,24 +125,26 @@ void MarkingComponentsALL::FirstPass() {
     for (int j = 0; j < cols_; ++j) {
       size_t idx = (static_cast<size_t>(i) * static_cast<size_t>(cols_)) + static_cast<size_t>(j) + 2;
 
-      if (input[idx] == 0) {
-        std::vector<int> neighbor_labels;
-        int min_label = next_label;
+      if (input[idx] != 0) {
+        continue;
+      }
+      
+      std::vector<int> neighbor_labels;
+      int min_label = next_label;
 
-        for (const auto &neighbor : first_pass_neighbors) {
-          ProcessNeighborFirstPass(i, j, neighbor, neighbor_labels, min_label);
-        }
+      for (const auto &neighbor : first_pass_neighbors) {
+        ProcessNeighborFirstPass(i, j, neighbor, neighbor_labels, min_label);
+      }
 
-        if (neighbor_labels.empty()) {
-          labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = next_label;
-          equivalent_labels_.push_back(next_label);
-          ++next_label;
-        } else {
-          labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = min_label;
-          for (int label : neighbor_labels) {
-            if (label != min_label) {
-              UnionLabels(equivalent_labels_, label, min_label);
-            }
+      if (neighbor_labels.empty()) {
+        labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = next_label;
+        equivalent_labels_.push_back(next_label);
+        ++next_label;
+      } else {
+        labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = min_label;
+        for (int label : neighbor_labels) {
+          if (label != min_label) {
+            UnionLabels(equivalent_labels_, label, min_label);
           }
         }
       }
