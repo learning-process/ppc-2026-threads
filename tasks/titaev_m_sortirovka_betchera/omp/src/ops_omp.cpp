@@ -74,7 +74,6 @@ void TitaevSortirovkaBetcheraOMP::LSDRadixSort(std::vector<double> &array) {
     keys.swap(tmp_keys);
     array.swap(tmp_vals);
   }
-
   for (size_t i = 0; i < n; ++i) {
     array[i] = UnpackDouble(keys[i]);
   }
@@ -119,11 +118,11 @@ bool TitaevSortirovkaBetcheraOMP::RunImpl() {
 
   size_t half = pow2 / 2;
   if (half > 0) {
-#pragma omp parallel sections shared(data)
+#pragma omp parallel sections shared(data, half)
     {
 #pragma omp section
       {
-        std::vector<double> l(data.begin(), data.begin() + half);
+        std::vector<double> l(data.begin(), data.begin() + (long long)half);
         LSDRadixSort(l);
         if (!l.empty()) {
           std::copy(l.begin(), l.end(), data.begin());
@@ -131,10 +130,10 @@ bool TitaevSortirovkaBetcheraOMP::RunImpl() {
       }
 #pragma omp section
       {
-        std::vector<double> r(data.begin() + half, data.end());
+        std::vector<double> r(data.begin() + (long long)half, data.end());
         LSDRadixSort(r);
         if (!r.empty()) {
-          std::copy(r.begin(), r.end(), data.begin() + half);
+          std::copy(r.begin(), r.end(), data.begin() + (long long)half);
         }
       }
     }
