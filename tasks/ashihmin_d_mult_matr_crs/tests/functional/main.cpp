@@ -113,8 +113,8 @@ const std::array<TestType, 6> kTestParams = {
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<AshihminDMultMatrCrsSEQ, InType>(kTestParams, PPC_SETTINGS_ashihmin_d_mult_matr_crs),
 
-    ppc::util::AddFuncTask<AshihminDMultMatrCrsOMP, InType>(kTestParams, PPC_SETTINGS_ashihmin_d_mult_matr_crs)
-        ppc::util::AddFuncTask<AshihminDMultMatrCrsTBB, InType>(kTestParams, PPC_SETTINGS_ashihmin_d_mult_matr_crs));
+    ppc::util::AddFuncTask<AshihminDMultMatrCrsOMP, InType>(kTestParams, PPC_SETTINGS_ashihmin_d_mult_matr_crs),
+    ppc::util::AddFuncTask<AshihminDMultMatrCrsTBB, InType>(kTestParams, PPC_SETTINGS_ashihmin_d_mult_matr_crs));
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = AshihminDMultMatrCrsFuncTests::PrintFuncTestName<AshihminDMultMatrCrsFuncTests>;
