@@ -8,10 +8,10 @@
 #include <memory>
 #include <random>
 #include <string>
-#include <utility>
 
 #include "gusev_d_double_sort_even_odd_batcher_stl/common/include/common.hpp"
 #include "gusev_d_double_sort_even_odd_batcher_stl/stl/include/ops_stl.hpp"
+#include "performance/include/performance.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace gusev_d_double_sort_even_odd_batcher_stl_task_threads {
