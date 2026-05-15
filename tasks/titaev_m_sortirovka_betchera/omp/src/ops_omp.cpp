@@ -9,8 +9,9 @@
 
 namespace titaev_m_sortirovka_betchera {
 
-TitaevSortirovkaBetcheraOMP::TitaevSortirovkaBetcheraOMP(const InType &in) : BaseTask(in) {
+TitaevSortirovkaBetcheraOMP::TitaevSortirovkaBetcheraOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
 }
 
 bool TitaevSortirovkaBetcheraOMP::ValidationImpl() {
@@ -113,7 +114,9 @@ bool TitaevSortirovkaBetcheraOMP::RunImpl() {
   }
 
   std::vector<double> data(pow2, std::numeric_limits<double>::max());
-  std::copy(input.begin(), input.end(), data.begin());
+  for (size_t i = 0; i < original_size; ++i) {
+    data[i] = input[i];
+  }
 
   size_t half = pow2 / 2;
   if (half > 0) {
