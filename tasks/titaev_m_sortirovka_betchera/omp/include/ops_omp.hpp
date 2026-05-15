@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
 #include <vector>
 
 #include "task/include/task.hpp"
@@ -27,7 +25,7 @@ class TitaevSortirovkaBetcheraOMP : public BaseTask {
   static uint64_t PackDouble(double v) noexcept;
   static double UnpackDouble(uint64_t k) noexcept;
 
-  static void LSDRadixSort(std::vector<double> &arr);
+  static void LSDRadixSort(std::vector<double> &array);
   static void BatcherOddEvenMerge(std::vector<double> &arr, size_t n);
   static void CompareSwap(std::vector<double> &arr, size_t i, size_t j);
 };

@@ -5,18 +5,12 @@
 #include <algorithm>
 #include <cstring>
 #include <limits>
-#include <vector>
 
 namespace titaev_m_sortirovka_betchera {
 
 TitaevSortirovkaBetcheraOMP::TitaevSortirovkaBetcheraOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  // Безопасное копирование данных
-  auto &input_ref = GetInput();
-  input_ref.clear();
-  for (const auto &val : in) {
-    input_ref.push_back(val);
-  }
+  GetInput() = in;
 }
 
 bool TitaevSortirovkaBetcheraOMP::ValidationImpl() {
@@ -31,14 +25,14 @@ bool TitaevSortirovkaBetcheraOMP::PostProcessingImpl() {
 
 uint64_t TitaevSortirovkaBetcheraOMP::PackDouble(double v) noexcept {
   uint64_t bits;
-  std::memcpy(&bits, &v, 8);
+  std::memcpy(&bits, &v, sizeof(double));
   return (bits & 0x8000000000000000ULL) ? ~bits : (bits | 0x8000000000000000ULL);
 }
 
 double TitaevSortirovkaBetcheraOMP::UnpackDouble(uint64_t k) noexcept {
   uint64_t bits = (k & 0x8000000000000000ULL) ? (k & ~0x8000000000000000ULL) : ~k;
   double v;
-  std::memcpy(&v, &bits, 8);
+  std::memcpy(&v, &bits, sizeof(double));
   return v;
 }
 
@@ -108,14 +102,12 @@ bool TitaevSortirovkaBetcheraOMP::RunImpl() {
     GetOutput() = std::vector<double>();
     return true;
   }
-
   size_t original_size = input.size();
   size_t pow2 = 1;
   while (pow2 < original_size) {
     pow2 <<= 1;
   }
 
-  // Использование явных циклов вместо std::copy убирает ошибку null-dereference в GCC 14
   std::vector<double> data(pow2, std::numeric_limits<double>::max());
   for (size_t i = 0; i < original_size; ++i) {
     data[i] = input[i];
@@ -123,29 +115,31 @@ bool TitaevSortirovkaBetcheraOMP::RunImpl() {
 
   size_t half = pow2 / 2;
   if (half > 0) {
-#pragma omp parallel sections shared(data, half, pow2)
+    // Получаем указатель на данные, чтобы GCC 14 не выдавал null-dereference error
+    double *d_ptr = data.data();
+#pragma omp parallel sections shared(d_ptr, half, pow2)
     {
 #pragma omp section
       {
         std::vector<double> l(half);
         for (size_t i = 0; i < half; ++i) {
-          l[i] = data[i];
+          l[i] = d_ptr[i];
         }
         LSDRadixSort(l);
         for (size_t i = 0; i < half; ++i) {
-          data[i] = l[i];
+          d_ptr[i] = l[i];
         }
       }
 #pragma omp section
       {
-        size_t r_size = pow2 - half;
-        std::vector<double> r(r_size);
-        for (size_t i = 0; i < r_size; ++i) {
-          r[i] = data[half + i];
+        size_t rs = pow2 - half;
+        std::vector<double> r(rs);
+        for (size_t i = 0; i < rs; ++i) {
+          r[i] = d_ptr[half + i];
         }
         LSDRadixSort(r);
-        for (size_t i = 0; i < r_size; ++i) {
-          data[half + i] = r[i];
+        for (size_t i = 0; i < rs; ++i) {
+          d_ptr[half + i] = r[i];
         }
       }
     }
@@ -154,11 +148,11 @@ bool TitaevSortirovkaBetcheraOMP::RunImpl() {
     LSDRadixSort(data);
   }
 
-  std::vector<double> res(original_size);
+  std::vector<double> result(original_size);
   for (size_t i = 0; i < original_size; ++i) {
-    res[i] = data[i];
+    result[i] = data[i];
   }
-  GetOutput() = std::move(res);
+  GetOutput() = std::move(result);
   return true;
 }
 
