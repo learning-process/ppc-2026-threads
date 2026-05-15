@@ -16,13 +16,13 @@ namespace {
 constexpr size_t kBlockSize = 64;
 }  // namespace
 
-YushkovaPHoareSortingSimpleMergingTBB::YushkovaPHoareSortingSimpleMergingTBB(const InType &in) {
+YushkovaPHoareSortingSimpleMergingTBB::YushkovaPHoareSortingSimpleMergingTBB(const InType& in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};
 }
 
-int YushkovaPHoareSortingSimpleMergingTBB::HoarePartition(std::vector<int> &values, int left, int right) {
+int YushkovaPHoareSortingSimpleMergingTBB::HoarePartition(std::vector<int>& values, int left, int right) {
   const int pivot = values[left + ((right - left) / 2)];
   int i = left - 1;
   int j = right + 1;
@@ -46,16 +46,17 @@ int YushkovaPHoareSortingSimpleMergingTBB::HoarePartition(std::vector<int> &valu
   }
 }
 
-void YushkovaPHoareSortingSimpleMergingTBB::HoareQuickSort(std::vector<int> &values, int left, int right) {
+void YushkovaPHoareSortingSimpleMergingTBB::HoareQuickSort(std::vector<int>& values, int left, int right) {
   if (left >= right || static_cast<size_t>(left) >= values.size() || static_cast<size_t>(right) >= values.size()) {
     return;
   }
 
   std::vector<std::pair<int, int>> stack;
+  stack.reserve(64);
   stack.emplace_back(left, right);
 
   while (!stack.empty()) {
-    auto [current_left, current_right] = stack.back();
+    const auto [current_left, current_right] = stack.back();
     stack.pop_back();
 
     if (current_left >= current_right) {
@@ -81,7 +82,7 @@ void YushkovaPHoareSortingSimpleMergingTBB::HoareQuickSort(std::vector<int> &val
   }
 }
 
-void YushkovaPHoareSortingSimpleMergingTBB::SimpleMerge(const std::vector<int> &source, std::vector<int> &destination,
+void YushkovaPHoareSortingSimpleMergingTBB::SimpleMerge(const std::vector<int>& source, std::vector<int>& destination,
                                                         size_t left, size_t middle, size_t right) {
   if (left >= right || middle > right || left >= middle) {
     return;
@@ -121,41 +122,40 @@ bool YushkovaPHoareSortingSimpleMergingTBB::PreProcessingImpl() {
 bool YushkovaPHoareSortingSimpleMergingTBB::RunImpl() {
   const size_t size = data_.size();
 
-  if (size == 0) {
+  if (size == 0U) {
     GetOutput().clear();
     return true;
   }
 
-  if (size == 1) {
-    GetOutput().assign(1, data_[0]);
+  if (size == 1U) {
+    GetOutput() = data_;
     return true;
   }
 
-  const size_t block_count = (size + kBlockSize - 1) / kBlockSize;
+  const size_t block_count = (size + kBlockSize - 1U) / kBlockSize;
 
-  oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<size_t>(0, block_count),
-                            [this, size](const oneapi::tbb::blocked_range<size_t> &range) {
+  oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<size_t>(0U, block_count),
+                            [this, size](const oneapi::tbb::blocked_range<size_t>& range) {
     for (size_t block_index = range.begin(); block_index != range.end(); ++block_index) {
       const size_t block_start = block_index * kBlockSize;
-      const size_t block_end = std::min(block_start + kBlockSize, size);
-      if (block_end > block_start + 1 && block_end <= size && block_start < size) {
-        HoareQuickSort(data_, static_cast<int>(block_start), static_cast<int>(block_end - 1));
+      const size_t block_end = (std::min)(block_start + kBlockSize, size);
+      if ((block_end > block_start + 1U) && (block_end <= size) && (block_start < size)) {
+        HoareQuickSort(data_, static_cast<int>(block_start), static_cast<int>(block_end - 1U));
       }
     }
   });
 
-  std::vector<int> merged_data;
-  merged_data.resize(size);
+  for (size_t merge_width = kBlockSize; merge_width < size; merge_width *= 2U) {
+    std::vector<int> merged_data(size);
 
-  for (size_t merge_width = kBlockSize; merge_width < size; merge_width *= 2) {
-    const size_t merge_count = (size + (2 * merge_width) - 1) / (2 * merge_width);
+    const size_t merge_count = (size + (2U * merge_width) - 1U) / (2U * merge_width);
 
-    oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<size_t>(0, merge_count),
-                              [this, size, merge_width, &merged_data](const oneapi::tbb::blocked_range<size_t> &range) {
+    oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<size_t>(0U, merge_count),
+                              [this, size, merge_width, &merged_data](const oneapi::tbb::blocked_range<size_t>& range) {
       for (size_t merge_index = range.begin(); merge_index != range.end(); ++merge_index) {
-        const size_t left = merge_index * 2 * merge_width;
-        const size_t middle = std::min(left + merge_width, size);
-        const size_t right = std::min(left + 2 * merge_width, size);
+        const size_t left = merge_index * 2U * merge_width;
+        const size_t middle = (std::min)(left + merge_width, size);
+        const size_t right = (std::min)(left + (2U * merge_width), size);
 
         if (left >= size) {
           continue;
@@ -171,15 +171,10 @@ bool YushkovaPHoareSortingSimpleMergingTBB::RunImpl() {
       }
     });
     data_.swap(merged_data);
-    merged_data.resize(size);
   }
 
-  if (std::is_sorted(data_.begin(), data_.end())) {
-    GetOutput().clear();
-    GetOutput().reserve(data_.size());
-    for (const auto &val : data_) {
-      GetOutput().push_back(val);
-    }
+  if (std::ranges::is_sorted(data_)) {
+    GetOutput() = data_;
     return true;
   }
 
@@ -190,7 +185,7 @@ bool YushkovaPHoareSortingSimpleMergingTBB::PostProcessingImpl() {
   if (GetOutput().empty()) {
     return false;
   }
-  return std::is_sorted(GetOutput().begin(), GetOutput().end());
+  return std::ranges::is_sorted(GetOutput());
 }
 
 }  // namespace yushkova_p_hoare_sorting_simple_merging
