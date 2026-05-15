@@ -12,6 +12,7 @@
 #include "yushkova_p_hoare_sorting_simple_merging/common/include/common.hpp"
 #include "yushkova_p_hoare_sorting_simple_merging/omp/include/ops_omp.hpp"
 #include "yushkova_p_hoare_sorting_simple_merging/seq/include/ops_seq.hpp"
+#include "yushkova_p_hoare_sorting_simple_merging/stl/include/ops_stl.hpp"
 #include "yushkova_p_hoare_sorting_simple_merging/tbb/include/ops_tbb.hpp"
 
 namespace yushkova_p_hoare_sorting_simple_merging {
@@ -37,12 +38,12 @@ class YushkovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
     }
 
     std::vector<int> expected = input_data_;
-    std::sort(expected.begin(), expected.end());
+    std::ranges::sort(expected);
     return output_data == expected;
   }
 
-  bool IsSorted(const OutType &data) const {
-    return std::adjacent_find(data.begin(), data.end(), [](const int &a, const int &b) { return a > b; }) == data.end();
+  [[nodiscard]] static bool IsSorted(const OutType &data) {
+    return std::ranges::adjacent_find(data, [](const int &a, const int &b) { return a > b; }) == data.end();
   }
 
   InType GetTestInputData() final {
@@ -74,6 +75,8 @@ const std::array<TestType, 10> kTestParam = {
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<YushkovaPHoareSortingSimpleMergingSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_yushkova_p_hoare_sorting_simple_merging),
                                            ppc::util::AddFuncTask<YushkovaPHoareSortingSimpleMergingOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_yushkova_p_hoare_sorting_simple_merging),
+                                           ppc::util::AddFuncTask<YushkovaPHoareSortingSimpleMergingSTL, InType>(
                                                kTestParam, PPC_SETTINGS_yushkova_p_hoare_sorting_simple_merging),
                                            ppc::util::AddFuncTask<YushkovaPHoareSortingSimpleMergingTBB, InType>(
                                                kTestParam, PPC_SETTINGS_yushkova_p_hoare_sorting_simple_merging));
