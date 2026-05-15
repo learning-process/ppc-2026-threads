@@ -3,6 +3,7 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <complex>
 #include <cstddef>
@@ -16,11 +17,25 @@ namespace barkalova_m_mult_matrix_ccs {
 
 BarkalovaMMultMatrixCcsALL::BarkalovaMMultMatrixCcsALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  if (rank == 0) {
+    GetInput() = in;
+  }
+
   GetOutput() = CCSMatrix{};
 }
 
 bool BarkalovaMMultMatrixCcsALL::ValidationImpl() {
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  if (rank != 0) {
+    return true;
+  }
+
   const auto &[A, B] = GetInput();
   if (A.cols != B.rows) {
     return false;
@@ -82,6 +97,58 @@ void TransponirMatr(const CCSMatrix &a, CCSMatrix &at) {
       at.values[pos] = val;
       at.row_indices[pos] = col;
       current_pos[row]++;
+    }
+  }
+}
+
+void BroadcastMatrix(CCSMatrix &matrix) {
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  // Используем std::array вместо C-style массива
+  std::array<int, 4> meta = {matrix.rows, matrix.cols, matrix.nnz, 0};
+  if (rank == 0) {
+    meta[3] = static_cast<int>(matrix.col_ptrs.size());
+  }
+  MPI_Bcast(meta.data(), 4, MPI_INT, 0, MPI_COMM_WORLD);  // .data() вместо имени массива
+
+  matrix.rows = meta[0];
+  matrix.cols = meta[1];
+  matrix.nnz = meta[2];
+  int col_ptrs_size = meta[3];
+
+  if (matrix.nnz == 0) {
+    matrix.values.clear();
+    matrix.row_indices.clear();
+    matrix.col_ptrs.assign(col_ptrs_size, 0);
+    return;
+  }
+
+  if (rank != 0) {
+    matrix.values.resize(matrix.nnz);
+    matrix.row_indices.resize(matrix.nnz);
+    matrix.col_ptrs.resize(col_ptrs_size);
+  }
+
+  MPI_Bcast(matrix.col_ptrs.data(), col_ptrs_size, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(matrix.row_indices.data(), matrix.nnz, MPI_INT, 0, MPI_COMM_WORLD);
+
+  std::vector<double> values_real(matrix.nnz);
+  std::vector<double> values_imag(matrix.nnz);
+
+  if (rank == 0) {
+    for (int i = 0; i < matrix.nnz; ++i) {
+      values_real[i] = matrix.values[i].real();
+      values_imag[i] = matrix.values[i].imag();
+    }
+  }
+
+  MPI_Bcast(values_real.data(), matrix.nnz, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(values_imag.data(), matrix.nnz, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  if (rank != 0) {
+    for (int i = 0; i < matrix.nnz; ++i) {
+      matrix.values[i] = Complex(values_real[i], values_imag[i]);
     }
   }
 }
@@ -219,14 +286,17 @@ void BroadcastRes(int rank, int total_rows, int total_cols, int total_nnz, std::
 }  // namespace
 
 bool BarkalovaMMultMatrixCcsALL::RunImpl() {
-  const auto &a = GetInput().first;
-  const auto &b = GetInput().second;
-
   try {
     int rank = 0;
     int size = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    CCSMatrix a = GetInput().first;
+    CCSMatrix b = GetInput().second;
+
+    BroadcastMatrix(a);
+    BroadcastMatrix(b);
 
     CCSMatrix at;
     TransponirMatr(a, at);
@@ -295,6 +365,13 @@ bool BarkalovaMMultMatrixCcsALL::RunImpl() {
 }
 
 bool BarkalovaMMultMatrixCcsALL::PostProcessingImpl() {
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  if (rank != 0) {
+    return true;
+  }
+
   const auto &c = GetOutput();
   if (c.rows <= 0 || c.cols <= 0) {
     return false;
