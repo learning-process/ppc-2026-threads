@@ -12,7 +12,6 @@ namespace titaev_m_sortirovka_betchera {
 TitaevSortirovkaBetcheraOMP::TitaevSortirovkaBetcheraOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput().clear();
 }
 
 bool TitaevSortirovkaBetcheraOMP::ValidationImpl() {
@@ -78,6 +77,9 @@ void TitaevSortirovkaBetcheraOMP::LSDRadixSort(std::vector<double> &array) {
 }
 
 void TitaevSortirovkaBetcheraOMP::BatcherOddEvenMerge(std::vector<double> &arr, size_t n) {
+  if (n == 0) {
+    return;
+  }
   for (size_t po = n / 2; po > 0; po >>= 1) {
     if (po == n / 2) {
 #pragma omp parallel for default(none) shared(arr, po)
@@ -96,41 +98,47 @@ void TitaevSortirovkaBetcheraOMP::BatcherOddEvenMerge(std::vector<double> &arr, 
 }
 
 bool TitaevSortirovkaBetcheraOMP::RunImpl() {
-  auto &data = GetInput();
-  if (data.size() <= 1) {
-    GetOutput() = data;
+  const auto &input_data = GetInput();
+  if (input_data.empty()) {
+    GetOutput() = std::vector<double>();
     return true;
   }
 
-  size_t original_size = data.size();
+  size_t original_size = input_data.size();
+
   size_t pow2 = 1;
   while (pow2 < original_size) {
     pow2 <<= 1;
   }
 
-  std::vector<double> extended_data = data;
-  extended_data.resize(pow2, std::numeric_limits<double>::max());
+  std::vector<double> data = input_data;
+  data.resize(pow2, std::numeric_limits<double>::max());
 
   size_t half = pow2 / 2;
-#pragma omp parallel sections shared(extended_data)
-  {
-#pragma omp section
+  if (half > 0) {
+#pragma omp parallel sections shared(data)
     {
-      std::vector<double> l(extended_data.begin(), extended_data.begin() + half);
-      LSDRadixSort(l);
-      std::copy(l.begin(), l.end(), extended_data.begin());
-    }
 #pragma omp section
-    {
-      std::vector<double> r(extended_data.begin() + half, extended_data.end());
-      LSDRadixSort(r);
-      std::copy(r.begin(), r.end(), extended_data.begin() + half);
+      {
+        std::vector<double> l(data.begin(), data.begin() + half);
+        LSDRadixSort(l);
+        std::copy(l.begin(), l.end(), data.begin());
+      }
+#pragma omp section
+      {
+        std::vector<double> r(data.begin() + half, data.end());
+        LSDRadixSort(r);
+        std::copy(r.begin(), r.end(), data.begin() + half);
+      }
     }
+
+    BatcherOddEvenMerge(data, pow2);
+  } else {
+    LSDRadixSort(data);
   }
 
-  BatcherOddEvenMerge(extended_data, pow2);
-  extended_data.resize(original_size);
-  GetOutput() = extended_data;
+  data.resize(original_size);
+  GetOutput() = std::move(data);
   return true;
 }
 
