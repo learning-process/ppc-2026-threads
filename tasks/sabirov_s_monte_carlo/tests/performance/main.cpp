@@ -3,6 +3,7 @@
 #include <cmath>
 #include <tuple>
 
+#include "sabirov_s_monte_carlo/all/include/ops_all.hpp"
 #include "sabirov_s_monte_carlo/common/include/common.hpp"
 #include "sabirov_s_monte_carlo/omp/include/ops_omp.hpp"
 #include "sabirov_s_monte_carlo/seq/include/ops_seq.hpp"
@@ -41,7 +42,8 @@ const auto kAllPerfTasks =
     std::tuple_cat(ppc::util::MakePerfTaskTuples<SabirovSMonteCarloSEQ, InType>(PPC_SETTINGS_sabirov_s_monte_carlo),
                    ppc::util::MakePerfTaskTuples<SabirovSMonteCarloOMP, InType>(PPC_SETTINGS_sabirov_s_monte_carlo),
                    ppc::util::MakePerfTaskTuples<SabirovSMonteCarloSTL, InType>(PPC_SETTINGS_sabirov_s_monte_carlo),
-                   ppc::util::MakePerfTaskTuples<SabirovSMonteCarloTBB, InType>(PPC_SETTINGS_sabirov_s_monte_carlo));
+                   ppc::util::MakePerfTaskTuples<SabirovSMonteCarloTBB, InType>(PPC_SETTINGS_sabirov_s_monte_carlo),
+                   ppc::util::MakePerfTaskTuples<SabirovSMonteCarloALL, InType>(PPC_SETTINGS_sabirov_s_monte_carlo));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
