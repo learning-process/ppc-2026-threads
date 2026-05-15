@@ -20,8 +20,7 @@ AgafonovIMatrixCCSTBB::AgafonovIMatrixCCSTBB(const InType &in) {
 bool AgafonovIMatrixCCSTBB::ValidationImpl() {
   const auto &left = GetInput().first;
   const auto &right = GetInput().second;
-  return (left.cols_num == right.rows_num) && 
-         (left.col_ptrs.size() == left.cols_num + 1) &&
+  return (left.cols_num == right.rows_num) && (left.col_ptrs.size() == left.cols_num + 1) &&
          (right.col_ptrs.size() == right.cols_num + 1);
 }
 
@@ -82,15 +81,14 @@ bool AgafonovIMatrixCCSTBB::RunImpl() {
   std::vector<std::vector<double>> local_vals(b.cols_num);
   std::vector<std::vector<int>> local_rows(b.cols_num);
 
-  tbb::parallel_for(tbb::blocked_range<size_t>(0, b.cols_num),
-    [&](const tbb::blocked_range<size_t>& range) {
-      std::vector<double> accumulator(a.rows_num, 0.0);
-      std::vector<size_t> active_rows;
-      std::vector<bool> row_mask(a.rows_num, false);
+  tbb::parallel_for(tbb::blocked_range<size_t>(0, b.cols_num), [&](const tbb::blocked_range<size_t> &range) {
+    std::vector<double> accumulator(a.rows_num, 0.0);
+    std::vector<size_t> active_rows;
+    std::vector<bool> row_mask(a.rows_num, false);
 
-      for (size_t j = range.begin(); j < range.end(); ++j) {
-        ProcessColumn(j, a, b, accumulator, active_rows, row_mask, local_vals[j], local_rows[j]);
-      }
+    for (size_t j = range.begin(); j < range.end(); ++j) {
+      ProcessColumn(j, a, b, accumulator, active_rows, row_mask, local_vals[j], local_rows[j]);
+    }
   });
 
   int current_nnz = 0;
@@ -105,6 +103,8 @@ bool AgafonovIMatrixCCSTBB::RunImpl() {
   return true;
 }
 
-bool AgafonovIMatrixCCSTBB::PostProcessingImpl() { return true; }
+bool AgafonovIMatrixCCSTBB::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace agafonov_i_matrix_ccs_seq
