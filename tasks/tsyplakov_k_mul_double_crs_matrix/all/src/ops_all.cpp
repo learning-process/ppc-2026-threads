@@ -91,8 +91,6 @@ bool TsyplakovKTestTaskALL::RunImpl() {
 
   SparseMatrixCRS local_matrix(local_rows, b.cols);
 
-  local_matrix.row_ptr[0] = 0;
-
   for (int i = 0; i < local_rows; ++i) {
     local_matrix.row_ptr[i + 1] = local_matrix.row_ptr[i] + static_cast<int>(local_values[i].size());
   }
