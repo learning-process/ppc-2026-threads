@@ -62,7 +62,9 @@ bool ChaschinVLinearFiltrationSTL::RunImpl() {
   std::vector<float> temp(static_cast<size_t>(n) * m);
 
   unsigned int num_threads = std::thread::hardware_concurrency();
-  if (num_threads == 0) num_threads = 2;
+  if (num_threads == 0) {
+    num_threads = 2;
+  }
 
   // ---------- горизонтальная фильтрация ----------
   {
