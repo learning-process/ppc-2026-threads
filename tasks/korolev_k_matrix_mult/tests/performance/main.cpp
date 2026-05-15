@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <vector>
 
-// #include "korolev_k_matrix_mult/all/include/ops_all.hpp"
+#include "korolev_k_matrix_mult/all/include/ops_all.hpp"
 #include "korolev_k_matrix_mult/common/include/common.hpp"
 #include "korolev_k_matrix_mult/omp/include/ops_omp.hpp"
 #include "korolev_k_matrix_mult/seq/include/ops_seq.hpp"
@@ -69,8 +69,7 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, KorolevKMatrixMultSEQ, KorolevKMatrixMultOMP, KorolevKMatrixMultTBB,
-                                KorolevKMatrixMultSTL>(PPC_SETTINGS_korolev_k_matrix_mult);
-// KorolevKMatrixMultALL,
+                                KorolevKMatrixMultSTL, KorolevKMatrixMultALL>(PPC_SETTINGS_korolev_k_matrix_mult);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
