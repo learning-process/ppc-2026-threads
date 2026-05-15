@@ -30,11 +30,8 @@ class TitaevSortirovkaBetcheraOMP : public BaseTask {
   static void LSDRadixSort(std::vector<double> &arr);
   static void BatcherOddEvenMerge(std::vector<double> &arr, size_t n);
 
-  static inline void CompareSwap(std::vector<double> &arr, size_t i, size_t j) {
-    if (i < arr.size() && j < arr.size() && arr[i] > arr[j]) {
-      std::swap(arr[i], arr[j]);
-    }
-  }
+  // Только объявление! Без {}
+  static void CompareSwap(std::vector<double> &arr, size_t i, size_t j);
 };
 
 }  // namespace titaev_m_sortirovka_betchera

@@ -17,11 +17,9 @@ TitaevSortirovkaBetcheraOMP::TitaevSortirovkaBetcheraOMP(const InType &in) {
 bool TitaevSortirovkaBetcheraOMP::ValidationImpl() {
   return true;
 }
-
 bool TitaevSortirovkaBetcheraOMP::PreProcessingImpl() {
   return true;
 }
-
 bool TitaevSortirovkaBetcheraOMP::PostProcessingImpl() {
   return true;
 }
