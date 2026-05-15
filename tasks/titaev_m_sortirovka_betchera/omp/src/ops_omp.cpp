@@ -1,3 +1,4 @@
+// ops_omp.cpp
 #include "titaev_m_sortirovka_betchera/omp/include/ops_omp.hpp"
 
 #include <omp.h>

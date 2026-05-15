@@ -1,5 +1,7 @@
+// ops_omp.hpp
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 #include "task/include/task.hpp"
