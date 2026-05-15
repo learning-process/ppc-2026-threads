@@ -4,143 +4,88 @@
 #include <oneapi/tbb/parallel_for.h>
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <vector>
+
+#include "fatehov_k_gaussian/common/include/common.hpp"
 
 namespace fatehov_k_gaussian {
-
-namespace {
-
-constexpr int kKernelRadius = 1;
-constexpr int kKernelSize = 3;
-constexpr int kKernelElements = kKernelSize * kKernelSize;
-constexpr int kMinPixelValue = 0;
-constexpr int kMaxPixelValue = 255;
-
-using Kernel = std::array<float, kKernelElements>;
-
-std::size_t GetPixelIndex(std::size_t y, std::size_t x, std::size_t channel, std::size_t width, std::size_t channels) {
-  return ((y * width) + x) * channels + channel;
-}
-
-int ClampCoordinate(int coordinate, std::size_t limit) {
-  return std::clamp(coordinate, 0, static_cast<int>(limit) - 1);
-}
-
-Kernel CreateGaussianKernel(float sigma) {
-  Kernel kernel{};
-  float sum = 0.0F;
-
-  for (int y = -kKernelRadius; y <= kKernelRadius; ++y) {
-    for (int x = -kKernelRadius; x <= kKernelRadius; ++x) {
-      const int kernel_y = y + kKernelRadius;
-      const int kernel_x = x + kKernelRadius;
-      const std::size_t index = static_cast<std::size_t>((kernel_y * kKernelSize) + kernel_x);
-
-      const float distance = static_cast<float>((x * x) + (y * y));
-      const float value = std::exp(-distance / (2.0F * sigma * sigma));
-
-      kernel[index] = value;
-      sum += value;
-    }
-  }
-
-  for (float &value : kernel) {
-    value /= sum;
-  }
-
-  return kernel;
-}
-
-uint8_t ApplyKernelToPixel(const Image &src, const Kernel &kernel, std::size_t y, std::size_t x, std::size_t channel) {
-  float pixel_value = 0.0F;
-
-  for (int ky = -kKernelRadius; ky <= kKernelRadius; ++ky) {
-    const int current_y = ClampCoordinate(static_cast<int>(y) + ky, src.height);
-
-    for (int kx = -kKernelRadius; kx <= kKernelRadius; ++kx) {
-      const int current_x = ClampCoordinate(static_cast<int>(x) + kx, src.width);
-
-      const int kernel_y = ky + kKernelRadius;
-      const int kernel_x = kx + kKernelRadius;
-      const std::size_t kernel_index = static_cast<std::size_t>((kernel_y * kKernelSize) + kernel_x);
-
-      const std::size_t src_index = GetPixelIndex(
-          static_cast<std::size_t>(current_y), static_cast<std::size_t>(current_x), channel, src.width, src.channels);
-
-      pixel_value += static_cast<float>(src.data[src_index]) * kernel[kernel_index];
-    }
-  }
-
-  const int rounded_value = static_cast<int>(std::round(pixel_value));
-  return static_cast<uint8_t>(std::clamp(rounded_value, kMinPixelValue, kMaxPixelValue));
-}
-
-void ProcessImageRows(const Image &src, Image &dst, const Kernel &kernel,
-                      const oneapi::tbb::blocked_range<std::size_t> &range) {
-  for (std::size_t y = range.begin(); y < range.end(); ++y) {
-    for (std::size_t x = 0; x < src.width; ++x) {
-      for (std::size_t channel = 0; channel < src.channels; ++channel) {
-        const std::size_t dst_index = GetPixelIndex(y, x, channel, src.width, src.channels);
-        dst.data[dst_index] = ApplyKernelToPixel(src, kernel, y, x, channel);
-      }
-    }
-  }
-}
-
-void ApplyGaussianFilterTBB(const Image &src, Image &dst, float sigma) {
-  const Kernel kernel = CreateGaussianKernel(sigma);
-
-  oneapi::tbb::parallel_for(
-      oneapi::tbb::blocked_range<std::size_t>(0, static_cast<std::size_t>(src.height)),
-      [&](const oneapi::tbb::blocked_range<std::size_t> &range) { ProcessImageRows(src, dst, kernel, range); });
-}
-
-}  // namespace
 
 FatehovKGaussianTBB::FatehovKGaussianTBB(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = Image{};
 }
 
 bool FatehovKGaussianTBB::ValidationImpl() {
   const auto &input = GetInput();
-
-  if (input.sigma <= 0.0F) {
-    return false;
-  }
-
-  if (input.image.width == 0 || input.image.height == 0 || input.image.channels == 0) {
-    return false;
-  }
-
-  const std::size_t expected_size =
-      static_cast<std::size_t>(input.image.width) * input.image.height * input.image.channels;
-
-  return input.image.data.size() == expected_size;
+  return input.image.width > 0 && input.image.height > 0 && input.image.channels > 0 && !input.image.data.empty() &&
+         input.sigma > 0.0F;
 }
 
 bool FatehovKGaussianTBB::PreProcessingImpl() {
-  const auto &input_image = GetInput().image;
+  const auto &input = GetInput();
+  const float sigma = input.sigma;
 
-  GetOutput() = Image(input_image.width, input_image.height, input_image.channels);
+  kernel_size_ = (2 * static_cast<int>(std::ceil(3.0F * sigma))) + 1;
+  kernel_.resize(static_cast<std::size_t>(kernel_size_) * kernel_size_);
 
-  return GetOutput().data.size() == input_image.data.size();
+  const int half = kernel_size_ / 2;
+  const float two_sigma_sq = 2.0F * sigma * sigma;
+  float sum = 0.0F;
+
+  for (int i = -half; i <= half; ++i) {
+    for (int j = -half; j <= half; ++j) {
+      const float val = std::exp(-(static_cast<float>((i * i) + (j * j))) / two_sigma_sq);
+      kernel_[((i + half) * kernel_size_) + (j + half)] = val;
+      sum += val;
+    }
+  }
+
+  for (float &val : kernel_) {
+    val /= sum;
+  }
+
+  GetOutput() = Image(input.image.width, input.image.height, input.image.channels);
+
+  return true;
 }
 
 bool FatehovKGaussianTBB::RunImpl() {
   const auto &input = GetInput();
+  auto &output = GetOutput();
+  const int w = static_cast<int>(input.image.width);
+  const int h = static_cast<int>(input.image.height);
+  const int ch = static_cast<int>(input.image.channels);
+  const int half = kernel_size_ / 2;
+  const int kernel_size = kernel_size_;
+  const auto &kernel = kernel_;
 
-  ApplyGaussianFilterTBB(input.image, GetOutput(), input.sigma);
+  oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<int>(0, h), [&](const oneapi::tbb::blocked_range<int> &range) {
+    for (int y_coord = range.begin(); y_coord < range.end(); ++y_coord) {
+      for (int x_coord = 0; x_coord < w; ++x_coord) {
+        for (int c_coord = 0; c_coord < ch; ++c_coord) {
+          float res = 0.0F;
+          for (int ky = -half; ky <= half; ++ky) {
+            for (int kx = -half; kx <= half; ++kx) {
+              const int ny = std::clamp(y_coord + ky, 0, h - 1);
+              const int nx = std::clamp(x_coord + kx, 0, w - 1);
+              const float weight = kernel[((ky + half) * kernel_size) + (kx + half)];
+              res += static_cast<float>(input.image.data[((ny * w + nx) * ch) + c_coord]) * weight;
+            }
+          }
+          output.data[((y_coord * w + x_coord) * ch) + c_coord] = static_cast<uint8_t>(std::clamp(res, 0.0F, 255.0F));
+        }
+      }
+    }
+  });
 
   return true;
 }
 
 bool FatehovKGaussianTBB::PostProcessingImpl() {
-  return !GetOutput().data.empty();
+  return true;
 }
 
 }  // namespace fatehov_k_gaussian
