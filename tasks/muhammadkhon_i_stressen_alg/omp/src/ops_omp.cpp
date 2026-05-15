@@ -34,7 +34,7 @@ void AddToBuffer(const double *a, std::size_t a_stride, const double *b, std::si
                  std::size_t n, double b_coeff) {
   for (std::size_t i = 0; i < n; ++i) {
     for (std::size_t j = 0; j < n; ++j) {
-      dst[(i * n) + j] = a[(i * a_stride) + j] + b_coeff * b[(i * b_stride) + j];
+      dst[(i * n) + j] = a[(i * a_stride) + j] + (b_coeff * b[(i * b_stride) + j]);
     }
   }
 }
