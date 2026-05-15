@@ -125,7 +125,17 @@ mpiexec -n 2 build/bin/ppc_perf_tests.exe --gtest_filter=*Smyshlaev*all_enabled*
 
 ## 10. Приложение: схема отчётности и кода
 
-flowchart TD ROOT["tasks/smyshlaev_a_sle_cg_seq/report.md"] ROOT --> SEQ["seq/report.md"] ROOT --> OMP["omp/report.md"]
-ROOT --> TBB["tbb/report.md"] ROOT --> STL["stl/report.md"] ROOT --> ALL["all/report.md"] ROOT -->
-TESTS["tests/functional + tests/performance"] ROOT --> COMMON["common/include/common.hpp"] ROOT --> META["info.json +
-settings.json"]
+## 10. Приложение: схема отчётности и кода
+
+```mermaid
+flowchart TD
+  ROOT["tasks/smyshlaev_a_sle_cg_seq/report.md"]
+  ROOT --> SEQ["seq/report.md"]
+  ROOT --> OMP["omp/report.md"]
+  ROOT --> TBB["tbb/report.md"]
+  ROOT --> STL["stl/report.md"]
+  ROOT --> ALL["all/report.md"]
+  ROOT --> TESTS["tests/functional + tests/performance"]
+  ROOT --> COMMON["common/include/common.hpp"]
+  ROOT --> META["info.json + settings.json"]
+```
