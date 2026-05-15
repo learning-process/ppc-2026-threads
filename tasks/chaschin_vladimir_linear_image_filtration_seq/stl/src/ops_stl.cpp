@@ -1,10 +1,13 @@
-#include "chaschin_vladimir_linear_image_filtration_seq/stl/include/ops_stl.hpp"
+#include "chaschin_v_linear_image_filtration_stl/stl/include/ops_stl.hpp"
 
-#include <execution>
+#include <algorithm>
+#include <future>
+#include <numeric>
+#include <thread>
 #include <utility>
 #include <vector>
 
-#include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
+#include "chaschin_v_linear_image_filtration_seq/common/include/common.hpp"
 
 namespace chaschin_v_linear_image_filtration_stl {
 
@@ -58,22 +61,42 @@ bool ChaschinVLinearFiltrationSTL::RunImpl() {
 
   std::vector<float> temp(static_cast<size_t>(n) * m);
 
-  std::vector<int> rows(m);
-  std::iota(rows.begin(), rows.end(), 0);
+  unsigned int num_threads = std::thread::hardware_concurrency();
+  if (num_threads == 0) num_threads = 2;
 
   // ---------- горизонтальная фильтрация ----------
-  std::for_each(std::execution::par, rows.begin(), rows.end(), [&](int yi) {
-    for (int xf = 0; xf < n; ++xf) {
-      temp[(yi * n) + xf] = HorizontalFilterAtSTL(image, n, xf, yi);
+  {
+    std::vector<std::future<void>> futures;
+    for (unsigned int t = 0; t < num_threads; ++t) {
+      futures.push_back(std::async(std::launch::async, [t, num_threads, m, n, &image, &temp]() {
+        for (int yi = t; yi < m; yi += num_threads) {
+          for (int xf = 0; xf < n; ++xf) {
+            temp[(yi * n) + xf] = HorizontalFilterAtSTL(image, n, xf, yi);
+          }
+        }
+      }));
     }
-  });
+    for (auto &f : futures) {
+      f.wait();
+    }
+  }
 
   // ---------- вертикальная фильтрация ----------
-  std::for_each(std::execution::par, rows.begin(), rows.end(), [&](int yi) {
-    for (int xy = 0; xy < n; ++xy) {
-      out[(yi * n) + xy] = VerticalFilterAtSTL(temp, n, m, xy, yi);
+  {
+    std::vector<std::future<void>> futures;
+    for (unsigned int t = 0; t < num_threads; ++t) {
+      futures.push_back(std::async(std::launch::async, [t, num_threads, m, n, &temp, &out]() {
+        for (int yi = t; yi < m; yi += num_threads) {
+          for (int xy = 0; xy < n; ++xy) {
+            out[(yi * n) + xy] = VerticalFilterAtSTL(temp, n, m, xy, yi);
+          }
+        }
+      }));
     }
-  });
+    for (auto &f : futures) {
+      f.wait();
+    }
+  }
 
   return true;
 }
