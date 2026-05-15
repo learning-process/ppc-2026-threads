@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cctype>
 #include <cmath>
-#include <cstddef>
 #include <numbers>
 #include <string>
 #include <tuple>
@@ -10,9 +10,9 @@
 #include <vector>
 
 #include "kutergin_a_multidim_trapezoid/common/include/common.hpp"
+#include "kutergin_a_multidim_trapezoid/omp/include/ops_omp.hpp"
 #include "kutergin_a_multidim_trapezoid/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace kutergin_a_multidim_trapezoid {
 namespace {
@@ -60,13 +60,24 @@ class KuterginATrapezoidFuncTest : public ppc::util::BaseRunFuncTests<InType, Ou
 
   static std::string GetName(const testing::TestParamInfo<ParamType> &info) {
     const auto &full_param = info.param;
-    const auto &test_data = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(full_param);
-    return std::get<0>(test_data);
+    std::string task_name = std::get<1>(full_param);
+    const auto &test_data = std::get<2>(full_param);
+    std::string case_name = std::get<0>(test_data);
+
+    std::string result = task_name + "_" + case_name;
+    for (char &c : result) {
+      if (std::isalnum(static_cast<unsigned char>(c)) == 0 && c != '_') {
+        c = '_';
+      }
+    }
+    return result;
   }
 
  protected:
   void SetUp() override {
-    const auto &data = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    const auto &full_param = GetParam();
+    const auto &data = std::get<2>(full_param);
+
     in_data_ = std::get<1>(data);
     ref_value_ = std::get<2>(data);
   }
@@ -112,13 +123,14 @@ const std::array<TestType, 12> kFunctionalTests = {{
      (std::pow(IntExp(0.0, 1.0), 2))},
 }};
 
-const auto kTaskPack = std::tuple_cat(ppc::util::AddFuncTask<KuterginAMultidimTrapezoidSEQ, InType>(
-    kFunctionalTests, PPC_SETTINGS_kutergin_a_multidim_trapezoid));
+const auto kAllTaskPack = std::tuple_cat(ppc::util::AddFuncTask<KuterginAMultidimTrapezoidSEQ, InType>(
+                                             kFunctionalTests, PPC_SETTINGS_kutergin_a_multidim_trapezoid),
+                                         ppc::util::AddFuncTask<KuterginAMultidimTrapezoidOMP, InType>(
+                                             kFunctionalTests, PPC_SETTINGS_kutergin_a_multidim_trapezoid));
 
-const auto kValues = ppc::util::ExpandToValues(kTaskPack);
+const auto kAllFuncValues = ppc::util::ExpandToValues(kAllTaskPack);
 
-INSTANTIATE_TEST_SUITE_P(KuterginATrapezoidSuite, KuterginATrapezoidFuncTest, kValues,
+INSTANTIATE_TEST_SUITE_P(KuterginATrapezoidFuncAll, KuterginATrapezoidFuncTest, kAllFuncValues,
                          KuterginATrapezoidFuncTest::GetName);
-
 }  // namespace
 }  // namespace kutergin_a_multidim_trapezoid

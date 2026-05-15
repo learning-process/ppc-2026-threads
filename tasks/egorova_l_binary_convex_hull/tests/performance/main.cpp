@@ -6,6 +6,7 @@
 #include "egorova_l_binary_convex_hull/common/include/common.hpp"
 #include "egorova_l_binary_convex_hull/omp/include/ops_omp.hpp"
 #include "egorova_l_binary_convex_hull/seq/include/ops_seq.hpp"
+#include "egorova_l_binary_convex_hull/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace egorova_l_binary_convex_hull {
@@ -46,25 +47,15 @@ class EgorovaLPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
   }
 };
 
-TEST_P(EgorovaLPerfTest, RunPerfModesSEQ) {
+TEST_P(EgorovaLPerfTest, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 namespace {
-const auto kAllPerfTasksSEQ =
-    ppc::util::MakeAllPerfTasks<InType, BinaryConvexHullSEQ>(PPC_SETTINGS_egorova_l_binary_convex_hull);
-INSTANTIATE_TEST_SUITE_P(RunModeTestsSEQ, EgorovaLPerfTest, ppc::util::TupleToGTestValues(kAllPerfTasksSEQ),
-                         EgorovaLPerfTest::CustomPerfTestName);
-}  // namespace
-
-TEST_P(EgorovaLPerfTest, RunPerfModesOMP) {
-  ExecuteTest(GetParam());
-}
-
-namespace {
-const auto kAllPerfTasksOMP =
-    ppc::util::MakeAllPerfTasks<InType, BinaryConvexHullOMP>(PPC_SETTINGS_egorova_l_binary_convex_hull);
-INSTANTIATE_TEST_SUITE_P(RunModeTestsOMP, EgorovaLPerfTest, ppc::util::TupleToGTestValues(kAllPerfTasksOMP),
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, BinaryConvexHullSEQ, BinaryConvexHullOMP, BinaryConvexHullTBB>(
+        PPC_SETTINGS_egorova_l_binary_convex_hull);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, EgorovaLPerfTest, ppc::util::TupleToGTestValues(kAllPerfTasks),
                          EgorovaLPerfTest::CustomPerfTestName);
 }  // namespace
 
