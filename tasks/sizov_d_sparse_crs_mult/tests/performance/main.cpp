@@ -8,6 +8,7 @@
 
 #include "performance/include/performance.hpp"
 #include "sizov_d_sparse_crs_mult/common/include/common.hpp"
+#include "sizov_d_sparse_crs_mult/omp/include/ops_omp.hpp"
 #include "sizov_d_sparse_crs_mult/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -75,12 +76,12 @@ TEST_P(SizovDSparseCRSMultPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, SizovDSparseCRSMultSEQ>(PPC_SETTINGS_sizov_d_sparse_crs_mult);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SizovDSparseCRSMultOMP, SizovDSparseCRSMultSEQ>(
+    PPC_SETTINGS_sizov_d_sparse_crs_mult);
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = SizovDSparseCRSMultPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(SizovSparseCRSPerfTests, SizovDSparseCRSMultPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(SparseCRSMultPerfTests, SizovDSparseCRSMultPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
