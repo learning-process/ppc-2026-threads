@@ -63,19 +63,15 @@ bool ChaschinVLinearFiltrationSTL::RunImpl() {
 
   // ---------- горизонтальная фильтрация ----------
   std::for_each(std::execution::par, rows.begin(), rows.end(), [&](int yi) {
-    for (int yi = r.begin(); yi < r.end(); ++yi) {
-      for (int xf = 0; xf < n; ++xf) {
-        temp[(yi * n) + xf] = HorizontalFilterAtSTL(image, n, xf, yi);
-      }
+    for (int xf = 0; xf < n; ++xf) {
+      temp[(yi * n) + xf] = HorizontalFilterAtSTL(image, n, xf, yi);
     }
   });
 
   // ---------- вертикальная фильтрация ----------
   std::for_each(std::execution::par, rows.begin(), rows.end(), [&](int yi) {
-    for (int yi = r.begin(); yi < r.end(); ++yi) {
-      for (int xy = 0; xy < n; ++xy) {
-        out[(yi * n) + xy] = VerticalFilterAtSTL(temp, n, m, xy, yi);
-      }
+    for (int xy = 0; xy < n; ++xy) {
+      out[(yi * n) + xy] = VerticalFilterAtSTL(temp, n, m, xy, yi);
     }
   });
 
