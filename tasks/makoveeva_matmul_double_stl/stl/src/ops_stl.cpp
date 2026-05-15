@@ -3,7 +3,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <thread>
-#include <vector>
+
+#include "makoveeva_matmul_double_stl/common/include/common.hpp"
 
 namespace makoveeva_matmul_double_stl {
 namespace {
@@ -59,10 +60,6 @@ bool MatmulDoubleSTLTask::RunImpl() {
   auto &c = C_;
 
   const size_t num_threads = std::thread::hardware_concurrency();
-  if (num_threads == 0) {
-    return false;
-  }
-
   const size_t rows_per_thread = (n + num_threads - 1) / num_threads;
 
   std::vector<std::thread> threads;
