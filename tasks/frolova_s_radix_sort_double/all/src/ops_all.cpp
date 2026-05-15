@@ -101,6 +101,18 @@ bool FrolovaSRadixSortDoubleALL::PreProcessingImpl() {
 }
 
 bool FrolovaSRadixSortDoubleALL::RunImpl() {
+  int mpi_initialized_flag = 0;
+  MPI_Initialized(&mpi_initialized_flag);
+
+  if (!mpi_initialized_flag) {
+    // Запуск без MPI — только OpenMP
+    std::vector<double> working = GetInput();
+    ParallelRadixSortOpenMP(working);
+    FixNegativeOrderOpenMP(working);
+    GetOutput() = std::move(working);
+    return true;
+  }
+
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
