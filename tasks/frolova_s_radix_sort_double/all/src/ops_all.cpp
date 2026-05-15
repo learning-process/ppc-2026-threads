@@ -15,7 +15,9 @@ namespace {
 
 void ParallelRadixSortOpenMP(std::vector<double> &data) {
   const std::size_t n = data.size();
-  if (n < 2) return;
+  if (n < 2) {
+    return;
+  }
 
   constexpr int kRadix = 256;
   constexpr int kNumBits = 8;
@@ -116,8 +118,8 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
   }
 
   std::vector<double> local_data(sendcounts[rank]);
-  MPI_Scatterv(full_input.data(), sendcounts.data(), displs.data(), MPI_DOUBLE,
-               local_data.data(), sendcounts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(full_input.data(), sendcounts.data(), displs.data(), MPI_DOUBLE, local_data.data(), sendcounts[rank],
+               MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   ParallelRadixSortOpenMP(local_data);
   FixNegativeOrderOpenMP(local_data);
@@ -126,9 +128,8 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
   if (rank == 0) {
     gathered.resize(total_n);
   }
-  MPI_Gatherv(local_data.data(), local_data.size(), MPI_DOUBLE,
-              gathered.data(), sendcounts.data(), displs.data(), MPI_DOUBLE,
-              0, MPI_COMM_WORLD);
+  MPI_Gatherv(local_data.data(), local_data.size(), MPI_DOUBLE, gathered.data(), sendcounts.data(), displs.data(),
+              MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
     std::vector<std::size_t> indices(size, 0);
@@ -147,7 +148,9 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
           }
         }
       }
-      if (best_proc == -1) break;
+      if (best_proc == -1) {
+        break;
+      }
       result.push_back(min_val);
       ++indices[best_proc];
     }
