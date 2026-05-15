@@ -11,7 +11,7 @@
 namespace kruglova_a_conjugate_gradient_sle {
 
 // Параллельное скалярное произведение через std::async (стандартный STL)
-double ParallelDotProduct(const std::vector<double> &v1, const std::vector<double> &v2) {
+static double ParallelDotProduct(const std::vector<double> &v1, const std::vector<double> &v2) {
   size_t n = v1.size();
   if (n == 0) {
     return 0.0;
