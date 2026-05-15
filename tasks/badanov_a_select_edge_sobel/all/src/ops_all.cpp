@@ -53,7 +53,7 @@ void BadanovASelectEdgeSobelALL::ApplySobelOperator(const std::vector<uint8_t> &
   }
 
   int rows_per_process = (height - 2) / size_;
-  int start_row = 1 + rank_ * rows_per_process;
+  int start_row = 1 + (rank_ * rows_per_process);
   int end_row = (rank_ == size_ - 1) ? (height - 1) : (start_row + rows_per_process);
 
   if (start_row >= end_row) {
@@ -68,18 +68,17 @@ void BadanovASelectEdgeSobelALL::ApplySobelOperator(const std::vector<uint8_t> &
 
   int rows_to_process = end_row - start_row;
   unsigned int rows_per_thread = rows_to_process / num_threads;
-  if (rows_per_thread < 1) {
-    rows_per_thread = 1;
-  }
-  num_threads = (rows_to_process + rows_per_thread - 1) / rows_per_thread;
+  rows_per_thread = std::max<unsigned int>(rows_per_thread, 1);
+  num_threads = (static_cast<unsigned int>(rows_to_process) + rows_per_thread - 1) / rows_per_thread;
 
   std::vector<std::thread> threads;
   std::mutex max_mutex;
   float local_max = 0.0F;
 
-  for (unsigned int t = 0; t < num_threads; ++t) {
-    int thread_start_row = start_row + t * rows_per_thread;
-    int thread_end_row = (t == num_threads - 1) ? end_row : (thread_start_row + rows_per_thread);
+  for (unsigned int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+    int thread_start_row = start_row + static_cast<int>(thread_idx * rows_per_thread);
+    int thread_end_row =
+        (thread_idx == num_threads - 1) ? end_row : (thread_start_row + static_cast<int>(rows_per_thread));
 
     threads.emplace_back([&, thread_start_row, thread_end_row]() {
       float thread_local_max = 0.0F;
@@ -152,9 +151,9 @@ void BadanovASelectEdgeSobelALL::ApplyThreshold(const std::vector<float> &magnit
   std::vector<std::thread> threads;
   size_t chunk_size = (size + num_threads - 1) / num_threads;
 
-  for (unsigned int t = 0; t < num_threads; ++t) {
-    size_t start = t * chunk_size;
-    size_t end = (t == num_threads - 1) ? size : (start + chunk_size);
+  for (unsigned int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+    size_t start = thread_idx * chunk_size;
+    size_t end = (thread_idx == num_threads - 1) ? size : (start + chunk_size);
 
     threads.emplace_back([&, start, end]() {
       for (size_t i = start; i < end; ++i) {
@@ -186,10 +185,6 @@ bool BadanovASelectEdgeSobelALL::RunImpl() {
   MPI_Allreduce(&max_magnitude, &global_max, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
 
   ApplyThreshold(magnitude, global_max, output);
-
-  if (rank_ != 0) {
-    return true;
-  }
 
   return true;
 }
