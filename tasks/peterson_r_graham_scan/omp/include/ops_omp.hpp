@@ -7,13 +7,13 @@
 
 namespace peterson_r_graham_scan {
 
-class PetersonGrahamScannerSeq : public TaskBase {
+class PetersonGrahamScannerOmp : public TaskBase {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kSEQ;
+    return ppc::task::TypeOfTask::kOMP;
   }
 
-  explicit PetersonGrahamScannerSeq(const InputValue &in);
+  explicit PetersonGrahamScannerOmp(const InputValue &in);
 
   void LoadPoints(const PointSet &points);
   [[nodiscard]] PointSet GetConvexHull() const;
@@ -31,8 +31,9 @@ class PetersonGrahamScannerSeq : public TaskBase {
   static double ComputeOrientation(const Point2D &origin, const Point2D &a, const Point2D &b);
   static double ComputeDistanceSq(const Point2D &p1, const Point2D &p2);
   static bool AreAllPointsIdentical(const PointSet &points);
-  static std::size_t FindLowestPoint(const PointSet &points);
-  static void SortByAngle(PointSet &points);
+  static std::size_t FindLowestPointParallel(const PointSet &points);
+  static void SortPointsByAngleParallel(PointSet &points);
+  static void ParallelMergeSort(PointSet &points, int left, int right, const Point2D &origin);
 };
 
 }  // namespace peterson_r_graham_scan

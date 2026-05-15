@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "peterson_r_graham_scan/common/include/common.hpp"
-#include "peterson_r_graham_scan/seq/include/ops_seq.hpp"
+#include "peterson_r_graham_scan/omp/include/ops_omp.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace peterson_r_graham_scan {
@@ -30,7 +30,7 @@ TEST_P(PetersonGrahamScannerPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InputValue, PetersonGrahamScannerSeq>(PPC_SETTINGS_peterson_r_graham_scan);
+    ppc::util::MakeAllPerfTasks<InputValue, PetersonGrahamScannerOmp>(PPC_SETTINGS_peterson_r_graham_scan);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kTestNameGenerator = PetersonGrahamScannerPerfTests::CustomPerfTestName;
