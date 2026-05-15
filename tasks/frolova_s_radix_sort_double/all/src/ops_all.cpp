@@ -9,6 +9,8 @@
 #include <cstdint>
 #include <vector>
 
+#include "frolova_s_radix_sort_double/common/include/common.hpp"
+
 namespace frolova_s_radix_sort_double {
 
 namespace {
@@ -87,11 +89,11 @@ void FixNegativeOrderOpenMP(std::vector<double> &data) {
 
 FrolovaSRadixSortDoubleALL::FrolovaSRadixSortDoubleALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  input_ = in;
+  GetInput() = in;
 }
 
 bool FrolovaSRadixSortDoubleALL::ValidationImpl() {
-  return !input_.empty();
+  return !GetInput().empty();
 }
 
 bool FrolovaSRadixSortDoubleALL::PreProcessingImpl() {
@@ -103,7 +105,7 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const std::vector<double> &full_input = input_;
+  const InType &full_input = GetInput();
   std::size_t total_n = full_input.size();
 
   std::vector<int> sendcounts(size, 0);
@@ -124,7 +126,7 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
   ParallelRadixSortOpenMP(local_data);
   FixNegativeOrderOpenMP(local_data);
 
-  std::vector<double> gathered;
+  OutType gathered;
   if (rank == 0) {
     gathered.resize(total_n);
   }
@@ -133,14 +135,14 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
 
   if (rank == 0) {
     std::vector<std::size_t> indices(size, 0);
-    std::vector<double> result;
+    OutType result;
     result.reserve(total_n);
 
     while (result.size() < total_n) {
       int best_proc = -1;
       double min_val = 0.0;
       for (int p = 0; p < size; ++p) {
-        if (indices[p] < sendcounts[p]) {
+        if (indices[p] < static_cast<std::size_t>(sendcounts[p])) {
           double val = gathered[displs[p] + indices[p]];
           if (best_proc == -1 || val < min_val) {
             min_val = val;
@@ -155,19 +157,18 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
       ++indices[best_proc];
     }
 
-    output_ = std::move(result);
+    GetOutput() = std::move(result);
   }
 
   if (rank != 0) {
-    output_.resize(total_n);
+    GetOutput().resize(total_n);
   }
-  MPI_Bcast(output_.data(), total_n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(GetOutput().data(), total_n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   return true;
 }
 
 bool FrolovaSRadixSortDoubleALL::PostProcessingImpl() {
-  GetOutput() = output_;
   return true;
 }
 
