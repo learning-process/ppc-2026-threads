@@ -30,7 +30,7 @@ class MatmulDoubleSTLTask : public BaseTask {
   using BaseTask::GetOutput;
 
  private:
-  size_t n_ = 0;
+  size_t n_;
   std::vector<double> A_;
   std::vector<double> B_;
   std::vector<double> C_;

@@ -1,16 +1,29 @@
 #include "makoveeva_matmul_double_stl/stl/include/ops_stl.hpp"
 
-#include <cmath>
 #include <cstddef>
 #include <future>
 #include <thread>
 #include <vector>
 
-#include "makoveeva_matmul_double_stl/common/include/common.hpp"
-
 namespace makoveeva_matmul_double_stl {
+namespace {
 
-MatmulDoubleSTLTask::MatmulDoubleSTLTask(const InType &in) {
+void MultiplyRowRange(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, size_t n,
+                      size_t start_row, size_t end_row) {
+  for (size_t i = start_row; i < end_row; ++i) {
+    for (size_t j = 0; j < n; ++j) {
+      double sum = 0.0;
+      for (size_t k = 0; k < n; ++k) {
+        sum += a[(i * n) + k] * b[(k * n) + j];
+      }
+      c[(i * n) + j] = sum;
+    }
+  }
+}
+
+}  // namespace
+
+MatmulDoubleSTLTask::MatmulDoubleSTLTask(const InType &in) : n_(0), A_(), B_(), C_() {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<double>();
@@ -35,19 +48,6 @@ bool MatmulDoubleSTLTask::PreProcessingImpl() {
   return true;
 }
 
-void MultiplyRowRange(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, size_t n,
-                      size_t start_row, size_t end_row) {
-  for (size_t i = start_row; i < end_row; ++i) {
-    for (size_t j = 0; j < n; ++j) {
-      double sum = 0.0;
-      for (size_t k = 0; k < n; ++k) {
-        sum += a[(i * n) + k] * b[(k * n) + j];
-      }
-      c[(i * n) + j] = sum;
-    }
-  }
-}
-
 bool MatmulDoubleSTLTask::RunImpl() {
   if (n_ <= 0) {
     return false;
@@ -58,15 +58,13 @@ bool MatmulDoubleSTLTask::RunImpl() {
   const auto &b = B_;
   auto &c = C_;
 
-  // Определяем количество потоков
   const size_t num_threads = std::thread::hardware_concurrency();
   const size_t rows_per_thread = (n + num_threads - 1) / num_threads;
 
   std::vector<std::future<void>> futures;
 
-  // Запускаем асинхронные задачи
-  for (size_t t = 0; t < num_threads; ++t) {
-    size_t start_row = t * rows_per_thread;
+  for (size_t thread_index = 0; thread_index < num_threads; ++thread_index) {
+    size_t start_row = thread_index * rows_per_thread;
     size_t end_row = std::min(start_row + rows_per_thread, n);
 
     if (start_row >= n) {
@@ -78,7 +76,6 @@ bool MatmulDoubleSTLTask::RunImpl() {
     }));
   }
 
-  // Ждем завершения всех задач
   for (auto &future : futures) {
     future.get();
   }
