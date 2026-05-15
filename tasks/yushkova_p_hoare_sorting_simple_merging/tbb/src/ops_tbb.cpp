@@ -47,6 +47,10 @@ int YushkovaPHoareSortingSimpleMergingTBB::HoarePartition(std::vector<int> &valu
 }
 
 void YushkovaPHoareSortingSimpleMergingTBB::HoareQuickSort(std::vector<int> &values, int left, int right) {
+  if (left >= right || static_cast<size_t>(right) >= values.size()) {
+    return;
+  }
+
   std::vector<std::pair<int, int>> stack;
   stack.emplace_back(left, right);
 
@@ -116,7 +120,7 @@ bool YushkovaPHoareSortingSimpleMergingTBB::RunImpl() {
     for (size_t block_index = range.begin(); block_index != range.end(); ++block_index) {
       const size_t block_start = block_index * kBlockSize;
       const size_t block_end = std::min(block_start + kBlockSize, size);
-      if (block_end > block_start + 1) {
+      if (block_end > block_start + 1 && block_end <= size) {
         HoareQuickSort(data_, static_cast<int>(block_start), static_cast<int>(block_end - 1));
       }
     }
@@ -133,12 +137,21 @@ bool YushkovaPHoareSortingSimpleMergingTBB::RunImpl() {
         const size_t left = merge_index * 2 * merge_width;
         const size_t middle = std::min(left + merge_width, size);
         const size_t right = std::min(left + 2 * merge_width, size);
+
+        if (left >= size) {
+          continue;
+        }
+
         if (middle < right) {
           SimpleMerge(data_, merged_data, left, middle, right);
-        } else {
-          std::copy(data_.begin() + static_cast<std::ptrdiff_t>(left),
-                    data_.begin() + static_cast<std::ptrdiff_t>(right),
-                    merged_data.begin() + static_cast<std::ptrdiff_t>(left));
+        } else if (left < right) {
+          const ptrdiff_t left_offset = static_cast<ptrdiff_t>(left);
+          const ptrdiff_t right_offset = static_cast<ptrdiff_t>(right);
+          const ptrdiff_t dest_offset = static_cast<ptrdiff_t>(left);
+
+          if (left_offset >= 0 && right_offset <= static_cast<ptrdiff_t>(size) && dest_offset >= 0) {
+            std::copy(data_.begin() + left_offset, data_.begin() + right_offset, merged_data.begin() + dest_offset);
+          }
         }
       }
     });
@@ -146,7 +159,7 @@ bool YushkovaPHoareSortingSimpleMergingTBB::RunImpl() {
   }
 
   if (std::is_sorted(data_.begin(), data_.end())) {
-    GetOutput().assign(data_.begin(), data_.end());
+    GetOutput() = data_;
     return true;
   }
 
