@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include <vector>
 
 #include "nalitov_d_dijkstras_algorithm/common/include/common.hpp"
@@ -20,8 +21,8 @@ class NalitovDDijkstrasAlgorithmOmp : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  std::vector<InType> distances_;
-  std::vector<char> processed_;
+  using OutgoingTable = std::vector<std::vector<std::pair<NodeId, Cost>>>;
+  OutgoingTable graph_;
 };
 
 }  // namespace nalitov_d_dijkstras_algorithm
