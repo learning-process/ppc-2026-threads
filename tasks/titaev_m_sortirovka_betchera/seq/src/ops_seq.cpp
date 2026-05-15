@@ -1,5 +1,5 @@
 #include "titaev_m_sortirovka_betchera/seq/include/ops_seq.hpp"
-
+#include "titaev_m_sortirovka_betchera/omp/include/ops_omp.hpp"
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
