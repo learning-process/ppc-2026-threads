@@ -32,10 +32,10 @@
 - **Build type:** Release.
 - **Compiler:** Microsoft Visual C++ (MSVC).
 - **Методика:**
-  - Размер тестовой системы: $3000 \times 3000$.
-  - Для каждой технологии снимались показатели времени в режиме `task_run`.
-  - Ускорение считалось как $T_{seq} / T_{parallel}$.
-  - Эффективность считалась как $S / p$, где $p$ — число работников.
+    - Размер тестовой системы: $3000 \times 3000$.
+    - Для каждой технологии снимались показатели времени в режиме `task_run`.
+    - Ускорение считалось как $T_{seq} / T_{parallel}$.
+    - Эффективность считалась как $S / p$, где $p$ — число работников.
 
 ## 4. Сводка корректности
 
@@ -122,8 +122,6 @@ mpiexec -n 2 build/bin/ppc_perf_tests.exe --gtest_filter=*Smyshlaev*all_enabled*
 
 [repo-ppc]: https://github.com/learning-process/ppc-2026-threads
 [onetbb-doc]: https://www.intel.com/content/www/us/en/developer/tools/oneapi/onetbb.html
-
-## 10. Приложение: схема отчётности и кода
 
 ## 10. Приложение: схема отчётности и кода
 
