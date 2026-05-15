@@ -10,7 +10,10 @@
 #include <vector>
 
 #include "barkalova_m_mult_matrix_ccs/common/include/common.hpp"
+#include "barkalova_m_mult_matrix_ccs/omp/include/ops_omp.hpp"
 #include "barkalova_m_mult_matrix_ccs/seq/include/ops_seq.hpp"
+#include "barkalova_m_mult_matrix_ccs/stl/include/ops_stl.hpp"
+#include "barkalova_m_mult_matrix_ccs/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -244,12 +247,14 @@ TEST_P(BarkalovaMatrixMultiplyFixedTest, MatrixMultiplyFixedTest) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 6> kFixedTestParams = {std::make_tuple(1, ""), std::make_tuple(2, ""),
-                                                  std::make_tuple(3, ""), std::make_tuple(4, ""),
-                                                  std::make_tuple(5, ""), std::make_tuple(6, "")};
+const std::array<TestType, 6> kTestParam = {std::make_tuple(1, ""), std::make_tuple(2, ""), std::make_tuple(3, ""),
+                                            std::make_tuple(4, ""), std::make_tuple(5, ""), std::make_tuple(6, "")};
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsSEQ, InType>(
-    kFixedTestParams, PPC_SETTINGS_barkalova_m_mult_matrix_ccs));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsSEQ, InType>(kTestParam, PPC_SETTINGS_barkalova_m_mult_matrix_ccs),
+    ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsOMP, InType>(kTestParam, PPC_SETTINGS_barkalova_m_mult_matrix_ccs),
+    ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsTBB, InType>(kTestParam, PPC_SETTINGS_barkalova_m_mult_matrix_ccs),
+    ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsSTL, InType>(kTestParam, PPC_SETTINGS_barkalova_m_mult_matrix_ccs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
