@@ -1,8 +1,6 @@
 #include "krymova_k_lsd_sort_merge_double/stl/include/ops_stl.hpp"
 
 #include <algorithm>
-#include <array>
-#include <atomic>
 #include <cstdint>
 #include <cstring>
 #include <thread>
@@ -30,13 +28,11 @@ bool KrymovaKLsdSortMergeDoubleSTL::PreProcessingImpl() {
 uint64_t KrymovaKLsdSortMergeDoubleSTL::DoubleToULL(double d) {
   uint64_t ull = 0;
   std::memcpy(&ull, &d, sizeof(double));
-
   if ((ull & 0x8000000000000000ULL) != 0U) {
     ull = ~ull;
   } else {
     ull |= 0x8000000000000000ULL;
   }
-
   return ull;
 }
 
@@ -46,163 +42,42 @@ double KrymovaKLsdSortMergeDoubleSTL::ULLToDouble(uint64_t ull) {
   } else {
     ull = ~ull;
   }
-
   double d = 0.0;
   std::memcpy(&d, &ull, sizeof(double));
   return d;
-}
-
-void KrymovaKLsdSortMergeDoubleSTL::ComputeHistogramParallel(const std::vector<uint64_t> &ull_arr, int shift,
-                                                             int num_threads,
-                                                             std::array<std::atomic<unsigned int>, 256> &count) {
-  int size = static_cast<int>(ull_arr.size());
-  int chunk_size = (size + num_threads - 1) / num_threads;
-  std::vector<std::thread> threads;
-
-  for (int thread_id = 0; thread_id < num_threads; ++thread_id) {
-    int start = thread_id * chunk_size;
-    int end = (std::min)(start + chunk_size, size);
-    if (start >= size) {
-      break;
-    }
-
-    threads.emplace_back([&, start, end, shift]() {
-      for (int idx = start; idx < end; ++idx) {
-        unsigned int digit = (ull_arr[idx] >> shift) & 0xFF;
-        (*(count.data() + digit)).fetch_add(1, std::memory_order_relaxed);
-      }
-    });
-  }
-
-  for (auto &thr : threads) {
-    thr.join();
-  }
-}
-
-std::vector<unsigned int> KrymovaKLsdSortMergeDoubleSTL::BuildOffsetsFromHistogram(
-    const std::array<std::atomic<unsigned int>, 256> &count) {
-  std::vector<unsigned int> offsets(256);
-  unsigned int total = 0;
-
-  for (int digit = 0; digit < 256; ++digit) {
-    offsets[digit] = total;
-    total += (*(count.data() + digit)).load();
-  }
-
-  return offsets;
-}
-
-void KrymovaKLsdSortMergeDoubleSTL::DistributeParallel(const std::vector<uint64_t> &src, std::vector<uint64_t> &dst,
-                                                       const std::vector<unsigned int> &offsets, int shift,
-                                                       int num_threads) {
-  int size = static_cast<int>(src.size());
-  int chunk_size = (size + num_threads - 1) / num_threads;
-  std::vector<std::thread> threads;
-
-  for (int thread_id = 0; thread_id < num_threads; ++thread_id) {
-    int start = thread_id * chunk_size;
-    int end = (std::min)(start + chunk_size, size);
-    if (start >= size) {
-      break;
-    }
-
-    threads.emplace_back([&, start, end, shift, offsets]() {
-      std::vector<unsigned int> local_offsets = offsets;
-      for (int idx = start; idx < end; ++idx) {
-        unsigned int digit = (src[idx] >> shift) & 0xFF;
-        dst[local_offsets[digit]++] = src[idx];
-      }
-    });
-  }
-
-  for (auto &thr : threads) {
-    thr.join();
-  }
 }
 
 void KrymovaKLsdSortMergeDoubleSTL::LSDSortDoubleSequential(double *arr, int size) {
   if (size <= 1) {
     return;
   }
-
   const int k_bits_per_pass = 8;
   const int k_radix = 1 << k_bits_per_pass;
   const int k_passes = static_cast<int>(sizeof(double)) * 8 / k_bits_per_pass;
-
   std::vector<uint64_t> ull_arr(size);
   std::vector<uint64_t> ull_tmp(size);
-
   for (int i = 0; i < size; ++i) {
     ull_arr[i] = DoubleToULL(arr[i]);
   }
-
   std::vector<unsigned int> count(k_radix, 0U);
-
   for (int pass = 0; pass < k_passes; ++pass) {
     int shift = pass * k_bits_per_pass;
-
     for (auto &val : count) {
       val = 0U;
     }
-
     for (int i = 0; i < size; ++i) {
       unsigned int digit = (ull_arr[i] >> shift) & (k_radix - 1);
       ++count[digit];
     }
-
     for (int i = 1; i < k_radix; ++i) {
       count[i] += count[i - 1];
     }
-
     for (int i = size - 1; i >= 0; --i) {
       unsigned int digit = (ull_arr[i] >> shift) & (k_radix - 1);
       ull_tmp[--count[digit]] = ull_arr[i];
     }
-
     ull_arr.swap(ull_tmp);
   }
-
-  for (int i = 0; i < size; ++i) {
-    arr[i] = ULLToDouble(ull_arr[i]);
-  }
-}
-
-void KrymovaKLsdSortMergeDoubleSTL::LSDSortDoubleParallel(double *arr, int size, int num_threads) {
-  if (size <= 1) {
-    return;
-  }
-
-  const int k_bits_per_pass = 8;
-  const int k_radix = 1 << k_bits_per_pass;
-  const int k_passes = static_cast<int>(sizeof(double)) * 8 / k_bits_per_pass;
-
-  std::vector<uint64_t> ull_arr(size);
-  std::vector<uint64_t> ull_tmp(size);
-
-  for (int i = 0; i < size; ++i) {
-    ull_arr[i] = DoubleToULL(arr[i]);
-  }
-
-  if (num_threads <= 1) {
-    LSDSortDoubleSequential(arr, size);
-    return;
-  }
-
-  for (int pass = 0; pass < k_passes; ++pass) {
-    int shift = pass * k_bits_per_pass;
-
-    std::array<std::atomic<unsigned int>, k_radix> count;
-    for (auto &val : count) {
-      val = 0;
-    }
-
-    ComputeHistogramParallel(ull_arr, shift, num_threads, count);
-    std::vector<unsigned int> offsets = BuildOffsetsFromHistogram(count);
-    DistributeParallel(ull_arr, ull_tmp, offsets, shift, num_threads);
-
-    ull_arr.swap(ull_tmp);
-  }
-
   for (int i = 0; i < size; ++i) {
     arr[i] = ULLToDouble(ull_arr[i]);
   }
@@ -211,11 +86,9 @@ void KrymovaKLsdSortMergeDoubleSTL::LSDSortDoubleParallel(double *arr, int size,
 void KrymovaKLsdSortMergeDoubleSTL::MergeSections(double *left, const double *right, int left_size, int right_size) {
   std::vector<double> temp(left_size);
   std::copy(left, left + left_size, temp.begin());
-
   int left_index = 0;
   int right_index = 0;
   int dest_index = 0;
-
   while (left_index < left_size && right_index < right_size) {
     if (temp[left_index] <= right[right_index]) {
       left[dest_index++] = temp[left_index++];
@@ -223,7 +96,6 @@ void KrymovaKLsdSortMergeDoubleSTL::MergeSections(double *left, const double *ri
       left[dest_index++] = right[right_index++];
     }
   }
-
   while (left_index < left_size) {
     left[dest_index++] = temp[left_index++];
   }
@@ -232,7 +104,6 @@ void KrymovaKLsdSortMergeDoubleSTL::MergeSections(double *left, const double *ri
 void KrymovaKLsdSortMergeDoubleSTL::SortSectionsParallel(double *arr, int size, int portion, int num_threads) {
   int num_blocks = (size + portion - 1) / portion;
   int num_threads_used = (std::min)(num_threads, num_blocks);
-
   if (num_threads_used <= 1) {
     for (int start = 0; start < size; start += portion) {
       int current_size = (std::min)(portion, size - start);
@@ -240,14 +111,11 @@ void KrymovaKLsdSortMergeDoubleSTL::SortSectionsParallel(double *arr, int size, 
     }
     return;
   }
-
   std::vector<std::thread> threads;
   int blocks_per_thread = (num_blocks + num_threads_used - 1) / num_threads_used;
-
   for (int thread_id = 0; thread_id < num_threads_used; ++thread_id) {
     int start_block = thread_id * blocks_per_thread;
     int end_block = (std::min)(start_block + blocks_per_thread, num_blocks);
-
     threads.emplace_back([&, start_block, end_block, portion, size, arr]() {
       for (int block = start_block; block < end_block; ++block) {
         int start_pos = block * portion;
@@ -256,7 +124,6 @@ void KrymovaKLsdSortMergeDoubleSTL::SortSectionsParallel(double *arr, int size, 
       }
     });
   }
-
   for (auto &thr : threads) {
     thr.join();
   }
@@ -266,21 +133,16 @@ void KrymovaKLsdSortMergeDoubleSTL::IterativeMergeSort(double *arr, int size, in
   if (size <= 1) {
     return;
   }
-
   SortSectionsParallel(arr, size, portion, num_threads);
-
   for (int merge_size = portion; merge_size < size; merge_size *= 2) {
     for (int start_pos = 0; start_pos < size; start_pos += 2 * merge_size) {
       int left_size = merge_size;
       int right_size = (std::min)(merge_size, size - (start_pos + merge_size));
-
       if (right_size <= 0) {
         continue;
       }
-
       double *left = arr + start_pos;
       const double *right = arr + start_pos + left_size;
-
       MergeSections(left, right, left_size, right_size);
     }
   }
@@ -289,30 +151,23 @@ void KrymovaKLsdSortMergeDoubleSTL::IterativeMergeSort(double *arr, int size, in
 bool KrymovaKLsdSortMergeDoubleSTL::RunImpl() {
   OutType &output = GetOutput();
   int size = static_cast<int>(output.size());
-
   if (size <= 1) {
     return true;
   }
-
   int num_threads = (std::max)(1, static_cast<int>(std::thread::hardware_concurrency()));
   num_threads = (std::min)(num_threads, size);
-
   int portion = (std::max)(1, size / num_threads);
-
   IterativeMergeSort(output.data(), size, portion, num_threads);
-
   return true;
 }
 
 bool KrymovaKLsdSortMergeDoubleSTL::PostProcessingImpl() {
   const OutType &output = GetOutput();
-
   for (size_t i = 1; i < output.size(); ++i) {
     if (output[i] < output[i - 1]) {
       return false;
     }
   }
-
   return true;
 }
 
