@@ -18,8 +18,8 @@ class YushkovaPHoareSortingSimpleMergingTBB : public BaseTask {
  private:
   static int HoarePartition(std::vector<int> &values, int left, int right);
   static void HoareQuickSort(std::vector<int> &values, int left, int right);
-  static void SimpleMerge(const std::vector<int> &source, std::vector<int> &destination,
-                          size_t left, size_t middle, size_t right);
+  static void SimpleMerge(const std::vector<int> &source, std::vector<int> &destination, size_t left, size_t middle,
+                          size_t right);
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;

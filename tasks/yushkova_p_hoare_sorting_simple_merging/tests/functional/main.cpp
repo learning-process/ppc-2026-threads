@@ -42,8 +42,7 @@ class YushkovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
   }
 
   bool IsSorted(const OutType &data) const {
-    return std::adjacent_find(data.begin(), data.end(),
-                              [](const int &a, const int &b) { return a > b; }) == data.end();
+    return std::adjacent_find(data.begin(), data.end(), [](const int &a, const int &b) { return a > b; }) == data.end();
   }
 
   InType GetTestInputData() final {

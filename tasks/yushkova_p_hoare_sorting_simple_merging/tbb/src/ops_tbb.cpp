@@ -2,6 +2,7 @@
 
 #include <oneapi/tbb/blocked_range.h>
 #include <oneapi/tbb/parallel_for.h>
+
 #include <algorithm>
 #include <cstddef>
 #include <utility>
@@ -68,11 +69,8 @@ void YushkovaPHoareSortingSimpleMergingTBB::HoareQuickSort(std::vector<int> &val
   }
 }
 
-void YushkovaPHoareSortingSimpleMergingTBB::SimpleMerge(const std::vector<int> &source,
-                                                        std::vector<int> &destination,
-                                                        size_t left,
-                                                        size_t middle,
-                                                        size_t right) {
+void YushkovaPHoareSortingSimpleMergingTBB::SimpleMerge(const std::vector<int> &source, std::vector<int> &destination,
+                                                        size_t left, size_t middle, size_t right) {
   size_t left_index = left;
   size_t right_index = middle;
   size_t destination_index = left;
@@ -115,15 +113,14 @@ bool YushkovaPHoareSortingSimpleMergingTBB::RunImpl() {
 
   oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<size_t>(0, block_count),
                             [this, size](const oneapi::tbb::blocked_range<size_t> &range) {
-                              for (size_t block_index = range.begin(); block_index != range.end(); ++block_index) {
-                                const size_t block_start = block_index * kBlockSize;
-                                const size_t block_end = std::min(block_start + kBlockSize, size);
-                                if (block_end > block_start + 1) {
-                                  HoareQuickSort(data_, static_cast<int>(block_start),
-                                                 static_cast<int>(block_end - 1));
-                                }
-                              }
-                            });
+    for (size_t block_index = range.begin(); block_index != range.end(); ++block_index) {
+      const size_t block_start = block_index * kBlockSize;
+      const size_t block_end = std::min(block_start + kBlockSize, size);
+      if (block_end > block_start + 1) {
+        HoareQuickSort(data_, static_cast<int>(block_start), static_cast<int>(block_end - 1));
+      }
+    }
+  });
 
   std::vector<int> merged_data(size);
 
@@ -132,19 +129,19 @@ bool YushkovaPHoareSortingSimpleMergingTBB::RunImpl() {
 
     oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<size_t>(0, merge_count),
                               [this, size, merge_width, &merged_data](const oneapi::tbb::blocked_range<size_t> &range) {
-                                for (size_t merge_index = range.begin(); merge_index != range.end(); ++merge_index) {
-                                  const size_t left = merge_index * 2 * merge_width;
-                                  const size_t middle = std::min(left + merge_width, size);
-                                  const size_t right = std::min(left + 2 * merge_width, size);
-                                  if (middle < right) {
-                                    SimpleMerge(data_, merged_data, left, middle, right);
-                                  } else {
-                                    std::copy(data_.begin() + static_cast<std::ptrdiff_t>(left),
-                                              data_.begin() + static_cast<std::ptrdiff_t>(right),
-                                              merged_data.begin() + static_cast<std::ptrdiff_t>(left));
-                                  }
-                                }
-                              });
+      for (size_t merge_index = range.begin(); merge_index != range.end(); ++merge_index) {
+        const size_t left = merge_index * 2 * merge_width;
+        const size_t middle = std::min(left + merge_width, size);
+        const size_t right = std::min(left + 2 * merge_width, size);
+        if (middle < right) {
+          SimpleMerge(data_, merged_data, left, middle, right);
+        } else {
+          std::copy(data_.begin() + static_cast<std::ptrdiff_t>(left),
+                    data_.begin() + static_cast<std::ptrdiff_t>(right),
+                    merged_data.begin() + static_cast<std::ptrdiff_t>(left));
+        }
+      }
+    });
     data_.swap(merged_data);
   }
 
@@ -152,7 +149,7 @@ bool YushkovaPHoareSortingSimpleMergingTBB::RunImpl() {
     GetOutput().assign(data_.begin(), data_.end());
     return true;
   }
-  
+
   return false;
 }
 
