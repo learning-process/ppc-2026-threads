@@ -1,14 +1,13 @@
 #include "krykov_e_sobel_op/all/include/ops_all.hpp"
 
+#include <mpi.h>
+#include <omp.h>
+
 #include <array>
 #include <cmath>
 #include <cstddef>
 #include <thread>
 #include <vector>
-
-#include <mpi.h>
-#include <omp.h>
-
 
 #include "krykov_e_sobel_op/common/include/common.hpp"
 
@@ -42,14 +41,14 @@ bool KrykovESobelOpALL::PreProcessingImpl() {
 }
 
 bool KrykovESobelOpALL::RunImpl() {
-    const std::array<std::array<int, 3>, 3> gx_kernel = {{{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}}};
+  const std::array<std::array<int, 3>, 3> gx_kernel = {{{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}}};
   const std::array<std::array<int, 3>, 3> gy_kernel = {{{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}}};
- 
+
   auto &output = GetOutput();
   const auto &gray = grayscale_;
   const int h = height_;
   const int w = width_;
- 
+
   int rank = 0;
   int nproc = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -58,7 +57,7 @@ bool KrykovESobelOpALL::RunImpl() {
   const int extra = interior % nproc;
   const int local_count = base + (rank < extra ? 1 : 0);
   const int local_start = 1 + base * rank + std::min(rank, extra);
- 
+
   std::vector<int> local_output(static_cast<size_t>(local_count) * static_cast<size_t>(w), 0);
   std::vector<int> counts(nproc);
   std::vector<int> displs(nproc);
@@ -68,16 +67,14 @@ bool KrykovESobelOpALL::RunImpl() {
     counts[i] = cnt * w;
     displs[i] = start * w;
   }
-#pragma omp parallel for default(none) \
-    shared(local_output, gray, gx_kernel, gy_kernel) \
-    firstprivate(local_start, local_count, w) \
-    schedule(static)
+#pragma omp parallel for default(none) shared(local_output, gray, gx_kernel, gy_kernel) \
+    firstprivate(local_start, local_count, w) schedule(static)
   for (int li = 0; li < local_count; ++li) {
     const int row = local_start + li;
     for (int col = 1; col < w - 1; ++col) {
       int gx = 0;
       int gy = 0;
- 
+
       for (int ky = -1; ky <= 1; ++ky) {
         for (int kx = -1; kx <= 1; ++kx) {
           int pixel = gray[static_cast<size_t>((row + ky) * w + (col + kx))];
@@ -85,17 +82,16 @@ bool KrykovESobelOpALL::RunImpl() {
           gy += pixel * gy_kernel.at(static_cast<size_t>(ky + 1)).at(static_cast<size_t>(kx + 1));
         }
       }
- 
+
       int magnitude = static_cast<int>(std::sqrt(static_cast<double>((gx * gx) + (gy * gy))));
       local_output[static_cast<size_t>(li * w + col)] = magnitude;
     }
   }
- 
-  MPI_Gatherv(local_output.data(), counts[rank], MPI_INT,
-              output.data(), counts.data(), displs.data(), MPI_INT,
-              0, MPI_COMM_WORLD);
+
+  MPI_Gatherv(local_output.data(), counts[rank], MPI_INT, output.data(), counts.data(), displs.data(), MPI_INT, 0,
+              MPI_COMM_WORLD);
   MPI_Bcast(output.data(), w * h, MPI_INT, 0, MPI_COMM_WORLD);
- 
+
   return true;
 }
 
