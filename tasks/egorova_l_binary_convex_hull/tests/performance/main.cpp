@@ -48,17 +48,17 @@ class EgorovaLPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
   }
 };
 
-TEST_P(EgorovaLPerfTest, RunPerfModes) {
-  ExecuteTest(GetParam());
-}
-
 namespace {
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, BinaryConvexHullSEQ, BinaryConvexHullOMP, BinaryConvexHullTBB,
                                 BinaryConvexHullSTL>(PPC_SETTINGS_egorova_l_binary_convex_hull);
-}  // namespace
+
+TEST_P(EgorovaLPerfTest, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
 
 INSTANTIATE_TEST_SUITE_P(RunModeTests, EgorovaLPerfTest, ppc::util::TupleToGTestValues(kAllPerfTasks),
                          EgorovaLPerfTest::CustomPerfTestName);
+}  // namespace
 
 }  // namespace egorova_l_binary_convex_hull
