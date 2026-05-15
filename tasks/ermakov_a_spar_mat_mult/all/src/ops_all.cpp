@@ -6,7 +6,9 @@
 #include <array>
 #include <complex>
 #include <cstddef>
+#include <cstdint>
 #include <numeric>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -23,34 +25,47 @@ struct LocalRowData {
   std::vector<std::complex<double>> vals;
 };
 
-std::vector<int> BuildRowBounds(const MatrixCRS &matrix, int proc_count) {
+std::vector<int> BuildRowBounds(const MatrixCRS &a, const MatrixCRS &b, int proc_count) {
   if (proc_count <= 0) {
     return {};
   }
 
   std::vector<int> bounds(static_cast<std::size_t>(proc_count) + 1ULL, 0);
-  bounds.back() = matrix.rows;
+  bounds.back() = a.rows;
 
-  const int total_nnz = matrix.row_ptr[static_cast<std::size_t>(matrix.rows)];
-  if (proc_count <= 1 || total_nnz == 0) {
+  std::vector<int> row_costs(static_cast<std::size_t>(a.rows), 0);
+  std::int64_t total_cost = 0;
+  for (int row = 0; row < a.rows; ++row) {
+    int row_cost = 0;
+    for (int ak = a.row_ptr[static_cast<std::size_t>(row)]; ak < a.row_ptr[static_cast<std::size_t>(row) + 1ULL];
+         ++ak) {
+      const int b_row = a.col_index[static_cast<std::size_t>(ak)];
+      row_cost += b.row_ptr[static_cast<std::size_t>(b_row) + 1ULL] - b.row_ptr[static_cast<std::size_t>(b_row)];
+    }
+    row_costs[static_cast<std::size_t>(row)] = row_cost;
+    total_cost += row_cost;
+  }
+
+  if (proc_count <= 1 || total_cost == 0) {
     for (int proc = 0; proc <= proc_count; ++proc) {
-      bounds[static_cast<std::size_t>(proc)] = (proc * matrix.rows) / proc_count;
+      bounds[static_cast<std::size_t>(proc)] = (proc * a.rows) / proc_count;
     }
     return bounds;
   }
 
   int next_proc = 1;
-  for (int row = 0; row < matrix.rows && next_proc < proc_count; ++row) {
-    const int prefix_nnz = matrix.row_ptr[static_cast<std::size_t>(row) + 1ULL];
-    const int target_nnz = (next_proc * total_nnz) / proc_count;
-    if (prefix_nnz >= target_nnz) {
+  std::int64_t prefix_cost = 0;
+  for (int row = 0; row < a.rows && next_proc < proc_count; ++row) {
+    prefix_cost += row_costs[static_cast<std::size_t>(row)];
+    const std::int64_t target_cost = (static_cast<std::int64_t>(next_proc) * total_cost) / proc_count;
+    if (prefix_cost >= target_cost) {
       bounds[static_cast<std::size_t>(next_proc)] = row + 1;
       ++next_proc;
     }
   }
 
   while (next_proc < proc_count) {
-    bounds[static_cast<std::size_t>(next_proc)] = matrix.rows;
+    bounds[static_cast<std::size_t>(next_proc)] = a.rows;
     ++next_proc;
   }
 
@@ -207,7 +222,16 @@ MatrixCRS MultiplyLocalOMP(const MatrixCRS &a, const MatrixCRS &b) {
     return result;
   }
 
-  const int thread_count = std::max(1, std::min(ppc::util::GetNumThreads(), a.rows));
+  int rank_count = 1;
+  MPI_Comm_size(MPI_COMM_WORLD, &rank_count);
+
+  int thread_count = ppc::util::GetNumThreads();
+  const unsigned hw_threads = std::thread::hardware_concurrency();
+  if (hw_threads > 0U && rank_count > 1) {
+    const unsigned per_rank_cap = std::max(1U, hw_threads / static_cast<unsigned>(rank_count));
+    thread_count = std::min(thread_count, static_cast<int>(per_rank_cap));
+  }
+  thread_count = std::max(1, std::min(thread_count, a.rows));
   std::vector<LocalRowData> rows_data(static_cast<std::size_t>(a.rows));
 
 #pragma omp parallel default(none) shared(a, b, rows_data) num_threads(thread_count) if (thread_count > 1)
@@ -346,11 +370,6 @@ bool ErmakovASparMatMultALL::ValidationImpl() {
 }
 
 bool ErmakovASparMatMultALL::PreProcessingImpl() {
-  int rank = 0;
-  int size = 1;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-
   a_ = GetInput().A;
   b_ = GetInput().B;
   c_.rows = a_.rows;
@@ -358,28 +377,6 @@ bool ErmakovASparMatMultALL::PreProcessingImpl() {
   c_.values.clear();
   c_.col_index.clear();
   c_.row_ptr.assign(static_cast<std::size_t>(c_.rows) + 1ULL, 0);
-
-  if (size == 1) {
-    local_a_ = a_;
-    row_bounds_ = {0, a_.rows};
-    nnz_counts_ = {static_cast<int>(a_.values.size())};
-    return true;
-  }
-
-  BroadcastMatrix(b_, rank);
-
-  row_bounds_.assign(static_cast<std::size_t>(size) + 1ULL, 0);
-  nnz_counts_.assign(static_cast<std::size_t>(size), 0);
-  if (rank == 0) {
-    row_bounds_ = BuildRowBounds(a_, size);
-    nnz_counts_ = BuildNNZCounts(a_, row_bounds_);
-  }
-
-  MPI_Bcast(row_bounds_.data(), size + 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(nnz_counts_.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
-
-  local_a_ = ScatterRows(a_, row_bounds_, nnz_counts_, rank);
-
   return true;
 }
 
@@ -394,18 +391,31 @@ bool ErmakovASparMatMultALL::RunImpl() {
   }
 
   if (size == 1) {
-    c_ = MultiplyLocalOMP(local_a_, b_);
+    c_ = MultiplyLocalOMP(a_, b_);
     return true;
   }
 
-  const MatrixCRS local_c = MultiplyLocalOMP(local_a_, b_);
+  BroadcastMatrix(b_, rank);
+
+  std::vector<int> row_bounds(static_cast<std::size_t>(size) + 1ULL, 0);
+  std::vector<int> nnz_counts(static_cast<std::size_t>(size), 0);
+  if (rank == 0) {
+    row_bounds = BuildRowBounds(a_, b_, size);
+    nnz_counts = BuildNNZCounts(a_, row_bounds);
+  }
+
+  MPI_Bcast(row_bounds.data(), size + 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(nnz_counts.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
+
+  const MatrixCRS local_a = ScatterRows(a_, row_bounds, nnz_counts, rank);
+  const MatrixCRS local_c = MultiplyLocalOMP(local_a, b_);
 
   c_.rows = a_.rows;
   c_.cols = b_.cols;
   c_.values.clear();
   c_.col_index.clear();
   c_.row_ptr.assign(static_cast<std::size_t>(c_.rows) + 1ULL, 0);
-  GatherMatrix(local_c, c_, row_bounds_, rank, size, a_.rows);
+  GatherMatrix(local_c, c_, row_bounds, rank, size, a_.rows);
 
   if (GetStateOfTesting() == ppc::task::StateOfTesting::kPerf) {
     MPI_Barrier(MPI_COMM_WORLD);
