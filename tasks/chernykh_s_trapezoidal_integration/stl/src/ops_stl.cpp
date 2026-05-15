@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <thread>
@@ -10,6 +9,7 @@
 #include <vector>
 
 #include "chernykh_s_trapezoidal_integration/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace chernykh_s_trapezoidal_integration {
 
@@ -31,9 +31,34 @@ bool ChernykhSTrapezoidalIntegrationSTL::PreProcessingImpl() {
   return true;
 }
 
+void ChernykhSTrapezoidalIntegrationSTL::MemberWorker(int64_t start, int64_t end, double &local_result,
+                                                      const std::vector<double> &h, int dims) {
+  const auto &input = GetInput();
+  double sum = 0.0;
+  std::vector<double> point(dims);
+
+  for (int64_t i = start; i < end; i++) {
+    int64_t local_index = i;
+    double weight = 1.0;
+
+    for (int j = dims - 1; j >= 0; j--) {
+      int64_t idx = local_index % (input.steps[j] + 1);
+      local_index /= (input.steps[j] + 1);
+
+      point[j] = input.limits[j].first + (static_cast<double>(idx) * h[j]);
+
+      if (idx == 0 || idx == input.steps[j]) {
+        weight *= 0.5;
+      }
+    }
+    sum += input.func(point) * weight;
+  }
+  local_result = sum;
+}
+
 bool ChernykhSTrapezoidalIntegrationSTL::RunImpl() {
   auto &input = GetInput();
-  int dims = input.limits.size();
+  int dims = static_cast<int>(input.limits.size());
   int64_t total_point = 1;
   for (int setka : input.steps) {
     total_point *= static_cast<int64_t>(setka) + 1;
@@ -66,32 +91,10 @@ bool ChernykhSTrapezoidalIntegrationSTL::RunImpl() {
     borders[i].second = start;
   }
 
-  auto WorkFunction = [&](int64_t start, int64_t end, double &local_result) {
-    double sum = 0.0;
-    std::vector<double> point(dims);
-
-    for (int64_t i = start; i < end; i++) {
-      int64_t local_index = i;
-      double weight = 1.0;
-
-      for (int j = dims - 1; j >= 0; j--) {
-        int64_t idx = local_index % (input.steps[j] + 1);
-        local_index /= (input.steps[j] + 1);
-
-        point[j] = input.limits[j].first + (static_cast<double>(idx) * h[j]);
-
-        if (idx == 0 || idx == input.steps[j]) {
-          weight *= 0.5;
-        }
-      }
-      sum += input.func(point) * weight;
-    }
-
-    local_result = sum;
-  };
+  auto work_function = [&](int64_t s, int64_t e, double &res) { MemberWorker(s, e, res, h, dims); };
 
   for (int i = 0; i < num_threads; ++i) {
-    threads[i] = std::thread(WorkFunction, borders[i].first, borders[i].second, std::ref(result[i]));
+    threads[i] = std::thread(work_function, borders[i].first, borders[i].second, std::ref(result[i]));
   }
 
   for (int i = 0; i < num_threads; ++i) {

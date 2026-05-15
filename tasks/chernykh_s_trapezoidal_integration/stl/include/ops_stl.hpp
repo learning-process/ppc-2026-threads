@@ -1,5 +1,6 @@
 #pragma once
-#include <cstddef>
+
+#include <cstdint>
 #include <vector>
 
 #include "chernykh_s_trapezoidal_integration/common/include/common.hpp"
@@ -12,6 +13,8 @@ class ChernykhSTrapezoidalIntegrationSTL : public BaseTask {
     return ppc::task::TypeOfTask::kSTL;
   }
   explicit ChernykhSTrapezoidalIntegrationSTL(const InType &in);
+
+  void MemberWorker(int64_t start, int64_t end, double &local_result, const std::vector<double> &h, int dims);
 
  private:
   bool ValidationImpl() override;
