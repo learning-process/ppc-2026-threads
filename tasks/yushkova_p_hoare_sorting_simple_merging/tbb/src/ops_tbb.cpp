@@ -47,11 +47,7 @@ int YushkovaPHoareSortingSimpleMergingTBB::HoarePartition(std::vector<int> &valu
 }
 
 void YushkovaPHoareSortingSimpleMergingTBB::HoareQuickSort(std::vector<int> &values, int left, int right) {
-<<<<<<< HEAD
   if (left >= right || static_cast<size_t>(left) >= values.size() || static_cast<size_t>(right) >= values.size()) {
-=======
-  if (left >= right || static_cast<size_t>(right) >= values.size()) {
->>>>>>> 9b3a1122 (TBB)
     return;
   }
 
@@ -175,12 +171,12 @@ bool YushkovaPHoareSortingSimpleMergingTBB::PreProcessingImpl() {
 
 bool YushkovaPHoareSortingSimpleMergingTBB::RunImpl() {
   const size_t size = data_.size();
+
   if (size == 0) {
     GetOutput().clear();
     return true;
   }
 
-<<<<<<< HEAD
   if (size == 1) {
     GetOutput().assign(1, data_[0]);
     return true;
@@ -192,54 +188,6 @@ bool YushkovaPHoareSortingSimpleMergingTBB::RunImpl() {
   }
 
   if (std::ranges::is_sorted(data_)) {
-=======
-  const size_t block_count = (size + kBlockSize - 1) / kBlockSize;
-
-  oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<size_t>(0, block_count),
-                            [this, size](const oneapi::tbb::blocked_range<size_t> &range) {
-    for (size_t block_index = range.begin(); block_index != range.end(); ++block_index) {
-      const size_t block_start = block_index * kBlockSize;
-      const size_t block_end = std::min(block_start + kBlockSize, size);
-      if (block_end > block_start + 1 && block_end <= size) {
-        HoareQuickSort(data_, static_cast<int>(block_start), static_cast<int>(block_end - 1));
-      }
-    }
-  });
-
-  std::vector<int> merged_data(size);
-
-  for (size_t merge_width = kBlockSize; merge_width < size; merge_width *= 2) {
-    const size_t merge_count = (size + (2 * merge_width) - 1) / (2 * merge_width);
-
-    oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<size_t>(0, merge_count),
-                              [this, size, merge_width, &merged_data](const oneapi::tbb::blocked_range<size_t> &range) {
-      for (size_t merge_index = range.begin(); merge_index != range.end(); ++merge_index) {
-        const size_t left = merge_index * 2 * merge_width;
-        const size_t middle = std::min(left + merge_width, size);
-        const size_t right = std::min(left + 2 * merge_width, size);
-
-        if (left >= size) {
-          continue;
-        }
-
-        if (middle < right) {
-          SimpleMerge(data_, merged_data, left, middle, right);
-        } else if (left < right) {
-          const ptrdiff_t left_offset = static_cast<ptrdiff_t>(left);
-          const ptrdiff_t right_offset = static_cast<ptrdiff_t>(right);
-          const ptrdiff_t dest_offset = static_cast<ptrdiff_t>(left);
-
-          if (left_offset >= 0 && right_offset <= static_cast<ptrdiff_t>(size) && dest_offset >= 0) {
-            std::copy(data_.begin() + left_offset, data_.begin() + right_offset, merged_data.begin() + dest_offset);
-          }
-        }
-      }
-    });
-    data_.swap(merged_data);
-  }
-
-  if (std::is_sorted(data_.begin(), data_.end())) {
->>>>>>> 9b3a1122 (TBB)
     GetOutput() = data_;
     return true;
   }
