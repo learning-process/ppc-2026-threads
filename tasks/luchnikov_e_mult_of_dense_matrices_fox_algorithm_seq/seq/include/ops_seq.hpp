@@ -22,8 +22,6 @@ class LuchnikovEMultOfDenseMatrixFoxAlgoritmSeq : public BaseTask {
   DenseMatrix matrix_b_;
   DenseMatrix result_matrix_;
   int block_size_ = 32;
-  std::string path_a_;
-  std::string path_b_;
 };
 
 }  // namespace luchnikov_e_mult_of_dense_matrices_fox_algorithm_seq

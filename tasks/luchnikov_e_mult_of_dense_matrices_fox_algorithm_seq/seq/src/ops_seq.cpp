@@ -1,36 +1,16 @@
 #include "luchnikov_e_mult_of_dense_matrices_fox_algorithm_seq/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <cstddef>
-#include <fstream>
-#include <string>
-
-#include "util/include/util.hpp"
+#include <cmath>
 
 namespace luchnikov_e_mult_of_dense_matrices_fox_algorithm_seq {
 
 namespace {
 
-bool LoadMatrixFromFile(const std::string &file_path, DenseMatrix &mat) {
-  std::ifstream input(file_path);
-  if (!input.is_open()) {
-    return false;
-  }
-
-  input >> mat.rows >> mat.cols;
-  if (input.fail() || mat.rows <= 0 || mat.cols <= 0) {
-    return false;
-  }
-
-  std::size_t total = static_cast<std::size_t>(mat.rows) * mat.cols;
-  mat.values.resize(total);
-  for (std::size_t i = 0; i < total; ++i) {
-    input >> mat.values[i];
-    if (input.fail()) {
-      return false;
-    }
-  }
-  return !input.fail();
+void FillMatrixWithOnes(DenseMatrix &mat, int n) {
+  mat.rows = n;
+  mat.cols = n;
+  mat.values.assign(static_cast<std::size_t>(n) * n, 1.0);
 }
 
 void FillMatrixWithZeros(DenseMatrix &mat, int r, int c) {
@@ -101,10 +81,6 @@ LuchnikovEMultOfDenseMatrixFoxAlgoritmSeq::LuchnikovEMultOfDenseMatrixFoxAlgorit
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
-
-  std::string task_id = "luchnikov_e_mult_of_dense_matrices_fox_algorithm_seq";
-  path_a_ = ppc::util::GetAbsoluteTaskPath(task_id, "A_" + std::to_string(in) + ".txt");
-  path_b_ = ppc::util::GetAbsoluteTaskPath(task_id, "B_" + std::to_string(in) + ".txt");
 }
 
 bool LuchnikovEMultOfDenseMatrixFoxAlgoritmSeq::ValidationImpl() {
@@ -112,18 +88,12 @@ bool LuchnikovEMultOfDenseMatrixFoxAlgoritmSeq::ValidationImpl() {
 }
 
 bool LuchnikovEMultOfDenseMatrixFoxAlgoritmSeq::PreProcessingImpl() {
-  if (!LoadMatrixFromFile(path_a_, matrix_a_)) {
-    return false;
-  }
-  if (!LoadMatrixFromFile(path_b_, matrix_b_)) {
-    return false;
-  }
+  int n = GetInput();
+  // Генерируем матрицы программно, чтобы не зависеть от внешних файлов
+  FillMatrixWithOnes(matrix_a_, n);
+  FillMatrixWithOnes(matrix_b_, n);
 
-  if (matrix_a_.rows != matrix_b_.rows || !matrix_a_.IsSquare()) {
-    block_size_ = 0;
-  } else {
-    block_size_ = DetermineBlockSize(matrix_a_.rows);
-  }
+  block_size_ = DetermineBlockSize(n);
   return true;
 }
 
