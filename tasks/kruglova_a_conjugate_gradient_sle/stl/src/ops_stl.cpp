@@ -1,7 +1,7 @@
 #include "kruglova_a_conjugate_gradient_sle/stl/include/ops_stl.hpp"
 
-#include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <thread>
 #include <vector>
 
@@ -34,9 +34,7 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
   }
 
   int num_threads = (n >= 250) ? static_cast<int>(std::thread::hardware_concurrency()) : 1;
-  if (num_threads < 1) {
-    num_threads = 1;
-  }
+  num_threads = (num_threads < 1) ? 1 : num_threads;
 
   std::vector<double> r = b;
   std::vector<double> p = r;
