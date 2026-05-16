@@ -1,10 +1,9 @@
 #include "vlasova_a_simpson_method/stl/include/ops_stl.hpp"
 
-#include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <execution>
 #include <numeric>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -83,47 +82,103 @@ void VlasovaASimpsonMethodSTL::ComputePoint(const std::vector<int> &index, std::
   }
 }
 
-double VlasovaASimpsonMethodSTL::ComputePartialSum(int idx0) const {
+void VlasovaASimpsonMethodSTL::ComputePartialSumRange(int start_idx, int end_idx, double &partial_sum) const {
   size_t dim = task_data_.a.size();
-
-  size_t inner_total = 1;
-  for (size_t i = 1; i < dim; ++i) {
-    inner_total *= static_cast<size_t>(dimensions_[i]);
-  }
-
   std::vector<int> cur_index(dim, 0);
   std::vector<double> cur_point;
-  cur_index[0] = idx0;
-
   double local_sum = 0.0;
-  for (size_t flat = 0; flat < inner_total; ++flat) {
-    size_t temp = flat;
-    for (size_t i = 1; i < dim; ++i) {
-      cur_index[i] = static_cast<int>(temp % static_cast<size_t>(dimensions_[i]));
-      temp /= static_cast<size_t>(dimensions_[i]);
+
+  for (int idx = start_idx; idx < end_idx; ++idx) {
+    size_t temp_idx = static_cast<size_t>(idx);
+    for (size_t i = 0; i < dim; ++i) {
+      cur_index[i] = static_cast<int>(temp_idx % static_cast<size_t>(dimensions_[i]));
+      temp_idx /= static_cast<size_t>(dimensions_[i]);
     }
+
     double weight = 0.0;
     ComputeWeight(cur_index, weight);
     ComputePoint(cur_index, cur_point);
     local_sum += weight * task_data_.func(cur_point);
   }
 
-  return local_sum;
+  partial_sum = local_sum;
 }
 
 bool VlasovaASimpsonMethodSTL::RunImpl() {
   size_t dim = task_data_.a.size();
-  int first_dim_size = dimensions_[0];
 
-  std::vector<int> indices(first_dim_size);
-  int val = 0;
-  std::for_each(indices.begin(), indices.end(), [&val](int &x) { x = val++; });
+  size_t total_points = 1;
+  for (size_t i = 0; i < dim; ++i) {
+    total_points *= static_cast<size_t>(dimensions_[i]);
+  }
 
-  std::vector<double> partial_sums(first_dim_size, 0.0);
-  std::transform(std::execution::par, indices.begin(), indices.end(), partial_sums.begin(),
-                 [this](int idx0) { return ComputePartialSum(idx0); });
+  // Для маленьких задач используем последовательное выполнение
+  if (total_points < 10000) {
+    std::vector<int> cur_index(dim, 0);
+    std::vector<double> cur_point;
+    double sum = 0.0;
 
-  double sum = std::reduce(std::execution::par_unseq, partial_sums.begin(), partial_sums.end(), 0.0);
+    for (size_t idx = 0; idx < total_points; ++idx) {
+      size_t temp_idx = idx;
+      for (size_t i = 0; i < dim; ++i) {
+        cur_index[i] = static_cast<int>(temp_idx % static_cast<size_t>(dimensions_[i]));
+        temp_idx /= static_cast<size_t>(dimensions_[i]);
+      }
+
+      double weight = 0.0;
+      ComputeWeight(cur_index, weight);
+      ComputePoint(cur_index, cur_point);
+      sum += weight * task_data_.func(cur_point);
+    }
+
+    double factor = 1.0;
+    for (size_t i = 0; i < dim; ++i) {
+      factor *= h_[i] / 3.0;
+    }
+
+    result_ = sum * factor;
+    GetOutput() = result_;
+    return true;
+  }
+
+  // Параллельное выполнение с std::thread (как у коллег)
+  unsigned int num_threads = ppc::util::GetNumThreads();
+  if (num_threads == 0) {
+    num_threads = std::thread::hardware_concurrency();
+  }
+  if (num_threads == 0) {
+    num_threads = 2;
+  }
+
+  // Не создаем больше потоков, чем нужно
+  if (static_cast<size_t>(num_threads) > total_points) {
+    num_threads = static_cast<unsigned int>(total_points);
+  }
+
+  size_t points_per_thread = total_points / num_threads;
+  size_t remainder = total_points % num_threads;
+
+  std::vector<std::thread> threads;
+  std::vector<double> partial_sums(num_threads, 0.0);
+
+  size_t start_idx = 0;
+  for (unsigned int t = 0; t < num_threads; ++t) {
+    size_t end_idx = start_idx + points_per_thread + (t < remainder ? 1 : 0);
+    threads.emplace_back([this, start_idx, end_idx, &partial_sums, t]() {
+      double local_sum = 0.0;
+      ComputePartialSumRange(static_cast<int>(start_idx), static_cast<int>(end_idx), local_sum);
+      partial_sums[t] = local_sum;
+    });
+    start_idx = end_idx;
+  }
+
+  for (auto &thread : threads) {
+    if (thread.joinable()) {
+      thread.join();
+    }
+  }
+
+  double sum = std::accumulate(partial_sums.begin(), partial_sums.end(), 0.0);
 
   double factor = 1.0;
   for (size_t i = 0; i < dim; ++i) {
