@@ -21,7 +21,8 @@ using ParamType = std::tuple<TaskFactory, std::string, TestType>;
 
 class TitaevBatcherRadixFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const testing::TestParamInfo<ParamType> &info) {
+  static std::string PrintTestParam(
+      const testing::TestParamInfo<typename TitaevBatcherRadixFuncTests::ParamType> &info) {
     return std::get<1>(info.param);
   }
 
@@ -29,7 +30,7 @@ class TitaevBatcherRadixFuncTests : public ppc::util::BaseRunFuncTests<InType, O
   InType input;
 
   void SetUp() override {
-    ParamType full_param = GetParam();
+    auto full_param = GetParam();
     TestType param = std::get<2>(full_param);
     const int size = std::get<0>(param);
 
@@ -62,21 +63,24 @@ class TitaevBatcherRadixFuncTests : public ppc::util::BaseRunFuncTests<InType, O
 
 namespace {
 
-std::shared_ptr<ppc::task::Task<InType, OutType>> CreateSeqTask(InType in) {
+std::shared_ptr<ppc::task::Task<InType, OutType>> CreateSeqTask(const InType &in) {
   return std::make_shared<TitaevSortirovkaBetcheraSEQ>(in);
 }
 
-std::shared_ptr<ppc::task::Task<InType, OutType>> CreateOmpTask(InType in) {
+std::shared_ptr<ppc::task::Task<InType, OutType>> CreateOmpTask(const InType &in) {
   return std::make_shared<TitaevSortirovkaBetcheraOMP>(in);
 }
 
-const std::vector<ParamType> kSeqParams = {{CreateSeqTask, "seq_size_128", TestType{128, "size_128"}},
-                                           {CreateSeqTask, "seq_size_512", TestType{512, "size_512"}},
-                                           {CreateSeqTask, "seq_size{1024", TestType{1024, "size_1024"}}};
+using ActualParamType = TitaevBatcherRadixFuncTests::ParamType;
 
-const std::vector<ParamType> kOmpParams = {{CreateOmpTask, "omp_size_128", TestType{128, "size_128"}},
-                                           {CreateOmpTask, "omp_size_512", TestType{512, "size_512"}},
-                                           {CreateOmpTask, "omp_size_1024", TestType{1024, "size_1024"}}};
+const std::vector<ActualParamType> kSeqParams = {{CreateSeqTask, "seq_size_128", TestType{128, "size_128"}},
+                                                 {CreateSeqTask, "seq_size_512", TestType{512, "size_512"}},
+                                                 {CreateSeqTask, "seq_size_1024", TestType{1024, "size_1024"}}};
+
+const std::vector<ActualParamType> kOmpParams = {{CreateOmpTask, "omp_size_128", TestType{128, "size_128"}},
+                                                 {CreateOmpTask, "omp_size_512", TestType{512, "size_512"}},
+                                                 {CreateOmpTask, "omp_size_1024", TestType{1024, "size_1024"}}};
+}  // namespace
 
 INSTANTIATE_TEST_SUITE_P(SequentialTests, TitaevBatcherRadixFuncTests, ::testing::ValuesIn(kSeqParams),
                          TitaevBatcherRadixFuncTests::PrintTestParam);
@@ -84,5 +88,4 @@ INSTANTIATE_TEST_SUITE_P(SequentialTests, TitaevBatcherRadixFuncTests, ::testing
 INSTANTIATE_TEST_SUITE_P(OpenMPTests, TitaevBatcherRadixFuncTests, ::testing::ValuesIn(kOmpParams),
                          TitaevBatcherRadixFuncTests::PrintTestParam);
 
-}  // namespace
 }  // namespace titaev_m_sortirovka_betchera
