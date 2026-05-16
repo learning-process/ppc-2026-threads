@@ -57,23 +57,22 @@ bool ChaschinVLinearFiltrationALL::RunImpl() {
 
   auto &out = GetOutput();
   out.resize(static_cast<std::vector<float>::size_type>(n) * static_cast<std::vector<float>::size_type>(m));
-  std::vector<float> temp(static_cast<std::vector<float>::size_type>(n) * static_cast<std::vector<float>::size_type>(m));
+  std::vector<float> temp(static_cast<std::vector<float>::size_type>(n) *
+                          static_cast<std::vector<float>::size_type>(m));
 
   std::vector<int> indices_x(n);
   std::iota(indices_x.begin(), indices_x.end(), 0);
 
 #pragma omp parallel for
   for (int yi = 0; yi < m; ++yi) {
-    std::for_each(std::execution::unseq, indices_x.begin(), indices_x.end(), [&](int xf) {
-      temp[(yi * n) + xf] = HorizontalFilterAtALL(image, n, xf, yi);
-    });
+    std::for_each(std::execution::unseq, indices_x.begin(), indices_x.end(),
+                  [&](int xf) { temp[(yi * n) + xf] = HorizontalFilterAtALL(image, n, xf, yi); });
   }
 
 #pragma omp parallel for
   for (int yi = 0; yi < m; ++yi) {
-    std::for_each(std::execution::unseq, indices_x.begin(), indices_x.end(), [&](int xy) {
-      out[(yi * n) + xy] = VerticalFilterAtALL(temp, n, m, xy, yi);
-    });
+    std::for_each(std::execution::unseq, indices_x.begin(), indices_x.end(),
+                  [&](int xy) { out[(yi * n) + xy] = VerticalFilterAtALL(temp, n, m, xy, yi); });
   }
 
   return true;
@@ -83,4 +82,4 @@ bool ChaschinVLinearFiltrationALL::PostProcessingImpl() {
   return true;
 }
 
-}
+}  // namespace chaschin_v_linear_image_filtration_all
