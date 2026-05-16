@@ -1,33 +1,31 @@
 #include "chaschin_vladimir_linear_image_filtration_seq/all/include/ops_all.hpp"
 
 #include <omp.h>
+#include <tbb/tbb.h>
 
-#include <algorithm>
-#include <execution>
-#include <numeric>
 #include <utility>
 #include <vector>
 
 namespace chaschin_v_linear_image_filtration_all {
 
-ChaschinVLinearFiltrationALL::ChaschinVLinearFiltrationALL(const chaschin_v_linear_image_filtration_seq::InType &in) {
+ChaschinVLinearFiltrationSTL::ChaschinVLinearFiltrationSTL(const chaschin_v_linear_image_filtration_seq::InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   auto in_copy = in;
   GetInput() = std::move(in_copy);
   this->GetOutput().clear();
 }
 
-bool ChaschinVLinearFiltrationALL::ValidationImpl() {
+bool ChaschinVLinearFiltrationSTL::ValidationImpl() {
   const auto &in = GetInput();
   const auto &image = std::get<0>(in);
   return !image.empty();
 }
 
-bool ChaschinVLinearFiltrationALL::PreProcessingImpl() {
+bool ChaschinVLinearFiltrationSTL::PreProcessingImpl() {
   return true;
 }
 
-inline float HorizontalFilterAtALL(const std::vector<float> &img, int n, int x, int y) {
+inline float HorizontalFilterAtSTL(const std::vector<float> &img, int n, int x, int y) {
   const int idx = (y * n) + x;
   if (x == 0) {
     return ((2.F * img[idx]) + img[idx + 1]) / 3.F;
@@ -38,7 +36,7 @@ inline float HorizontalFilterAtALL(const std::vector<float> &img, int n, int x, 
   return (img[idx - 1] + (2.F * img[idx]) + img[idx + 1]) / 4.F;
 }
 
-inline float VerticalFilterAtALL(const std::vector<float> &temp, int n, int m, int x, int y) {
+inline float VerticalFilterAtSTL(const std::vector<float> &temp, int n, int m, int x, int y) {
   const int idx = (y * n) + x;
   if (y == 0) {
     return ((2.F * temp[idx]) + temp[idx + n]) / 3.F;
@@ -49,7 +47,7 @@ inline float VerticalFilterAtALL(const std::vector<float> &temp, int n, int m, i
   return (temp[idx - n] + (2.F * temp[idx]) + temp[idx + n]) / 4.F;
 }
 
-bool ChaschinVLinearFiltrationALL::RunImpl() {
+bool ChaschinVLinearFiltrationSTL::RunImpl() {
   const auto &in = GetInput();
   const auto &image = std::get<0>(in);
   int n = std::get<1>(in);
@@ -60,25 +58,25 @@ bool ChaschinVLinearFiltrationALL::RunImpl() {
   std::vector<float> temp(static_cast<std::vector<float>::size_type>(n) *
                           static_cast<std::vector<float>::size_type>(m));
 
-  std::vector<int> indices_x(n);
-  std::iota(indices_x.begin(), indices_x.end(), 0);
+  tbb::parallel_for(tbb::blocked_range<int>(0, m), [&](const tbb::blocked_range<int> &r) {
+    for (int yi = r.begin(); yi != r.end(); ++yi) {
+      for (int xf = 0; xf < n; ++xf) {
+        temp[(yi * n) + xf] = HorizontalFilterAtSTL(image, n, xf, yi);
+      }
+    }
+  });
 
 #pragma omp parallel for
   for (int yi = 0; yi < m; ++yi) {
-    std::for_each(std::execution::unseq, indices_x.begin(), indices_x.end(),
-                  [&](int xf) { temp[(yi * n) + xf] = HorizontalFilterAtALL(image, n, xf, yi); });
-  }
-
-#pragma omp parallel for
-  for (int yi = 0; yi < m; ++yi) {
-    std::for_each(std::execution::unseq, indices_x.begin(), indices_x.end(),
-                  [&](int xy) { out[(yi * n) + xy] = VerticalFilterAtALL(temp, n, m, xy, yi); });
+    for (int xy = 0; xy < n; ++xy) {
+      out[(yi * n) + xy] = VerticalFilterAtSTL(temp, n, m, xy, yi);
+    }
   }
 
   return true;
 }
 
-bool ChaschinVLinearFiltrationALL::PostProcessingImpl() {
+bool ChaschinVLinearFiltrationSTL::PostProcessingImpl() {
   return true;
 }
 
