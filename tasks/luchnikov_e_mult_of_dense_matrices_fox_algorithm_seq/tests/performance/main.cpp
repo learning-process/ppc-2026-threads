@@ -35,7 +35,7 @@ namespace {
 
 const auto kPerfTaskList =
     std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, LuchnikovEMultOfDenseMatrixFoxAlgoritmSeq>(
-        PPC_SETTINGS_luchnikov_e_mult_of_dense_matrices_fox_algorithm));
+        PPC_SETTINGS_luchnikov_e_mult_of_dense_matrices_fox_algorithm_seq));
 
 const auto kGtestParams = ppc::util::TupleToGTestValues(kPerfTaskList);
 const auto kTestPrinter = LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTestThreads::CustomPerfTestName;

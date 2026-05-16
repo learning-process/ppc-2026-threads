@@ -67,7 +67,7 @@ const std::array<TestType, 9> kTestCases = {
     std::make_tuple(24, "max_block_coverage")};
 
 const auto kTasks = ppc::util::AddFuncTask<LuchnikovEMultOfDenseMatrixFoxAlgoritmSeq, InType>(
-    kTestCases, PPC_SETTINGS_luchnikov_e_mult_of_dense_matrices_fox_algorithm);
+    kTestCases, PPC_SETTINGS_luchnikov_e_mult_of_dense_matrices_fox_algorithm_seq);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTasks);
 const auto kPrinter = LuchnikovEMultOfDenseMatrixFoxAlgoritmFuncTestsThreads::PrintFuncTestName<
