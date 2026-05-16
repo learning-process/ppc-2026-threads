@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <thread>
+#include <vector>
 
 #include "makoveeva_matmul_double_stl/common/include/common.hpp"
 
