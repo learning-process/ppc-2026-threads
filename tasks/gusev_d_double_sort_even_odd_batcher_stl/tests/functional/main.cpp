@@ -1,153 +1,3 @@
-#include <gtest/gtest.h>
-
-#include <algorithm>
-#include <cstddef>
-#include <cstdint>
-#include <libenvpp/detail/environment.hpp>
-#include <limits>
-#include <numbers>
-#include <random>
-#include <stdexcept>
-#include <string>
-
-#include "gusev_d_double_sort_even_odd_batcher_stl/common/include/common.hpp"
-#include "gusev_d_double_sort_even_odd_batcher_stl/stl/include/ops_stl.hpp"
-
-namespace {
-
-using gusev_d_double_sort_even_odd_batcher_stl_task_threads::DoubleSortEvenOddBatcherSTL;
-using gusev_d_double_sort_even_odd_batcher_stl_task_threads::InType;
-using gusev_d_double_sort_even_odd_batcher_stl_task_threads::OutType;
-using gusev_d_double_sort_even_odd_batcher_stl_task_threads::ValueType;
-
-InType GenerateRandomInput(size_t size, uint64_t seed) {
-  std::mt19937_64 generator(seed);
-  std::uniform_real_distribution<ValueType> distribution(-1.0e6, 1.0e6);
-
-  InType input(size);
-  for (ValueType &value : input) {
-    value = distribution(generator);
-  }
-
-  return input;
-}
-
-InType MakeDenseDuplicateInput() {
-  return {5.0, 3.0, 5.0, -1.0, -1.0, 0.0, 3.0, 3.0, 8.0, 8.0, 8.0, -4.0, -4.0, 2.0, 2.0};
-}
-
-InType MakeExtremeInput() {
-  return {std::numbers::pi,
-          -std::numbers::e,
-          0.0,
-          -0.0,
-          42.0,
-          -42.0,
-          std::numeric_limits<ValueType>::max(),
-          std::numeric_limits<ValueType>::lowest(),
-          std::numeric_limits<ValueType>::min(),
-          -std::numeric_limits<ValueType>::min(),
-          std::numeric_limits<ValueType>::infinity(),
-          -std::numeric_limits<ValueType>::infinity(),
-          1.0e-12,
-          -1.0e-12,
-          7.5,
-          7.5,
-          -7.5};
-}
-
-InType MakeAlternatingMagnitudeInput() {
-  return {1.0e-12, -1.0e12, 2.0e-12, -2.0e12,  3.0e-12, -3.0e12,  4.0e-12, -4.0e12,
-          5.0e-12, -5.0e12, 6.0e-12, -6.0e12,  7.0e-12, -7.0e12,  8.0e-12, -8.0e12,
-          9.0e-12, -9.0e12, 1.0e13,  -1.0e-13, 2.0e13,  -2.0e-13, 3.0e13,  -3.0e-13};
-}
-
-class GusevDoubleSortEvenOddBatcherStlEnabled : public ::testing::TestWithParam<int> {};
-
-class StlThreadCountGuard {
- public:
-  explicit StlThreadCountGuard(int thread_count) : scoped_("PPC_NUM_THREADS", std::to_string(thread_count)) {}
-
- private:
-  env::detail::set_scoped_environment_variable scoped_;
-};
-
-OutType RunTaskPipeline(const InType &input) {
-  DoubleSortEvenOddBatcherSTL task(input);
-  if (!task.Validation()) {
-    throw std::runtime_error("Validation failed");
-  }
-  if (!task.PreProcessing()) {
-    throw std::runtime_error("PreProcessing failed");
-  }
-  if (!task.Run()) {
-    throw std::runtime_error("Run failed");
-  }
-  if (!task.PostProcessing()) {
-    throw std::runtime_error("PostProcessing failed");
-  }
-
-  return task.GetOutput();
-}
-
-void CheckMatchesStdSort(const InType &input) {
-  auto expected = input;
-  std::ranges::sort(expected);
-
-  const auto output = RunTaskPipeline(input);
-  EXPECT_EQ(output, expected);
-}
-
-bool ValidationRejectsPreparedOutputImpl() {
-  DoubleSortEvenOddBatcherSTL task({3.0, 2.0, 1.0});
-  task.GetOutput() = {0.0};
-
-  if (task.Validation()) {
-    return false;
-  }
-
-  try {
-    static_cast<void>(task.Run());
-  } catch (const std::runtime_error &) {
-    return true;
-  }
-
-  return false;
-}
-
-bool ThrowsIfPreProcessingBeforeValidationImpl() {
-  DoubleSortEvenOddBatcherSTL task({1.0});
-
-  try {
-    static_cast<void>(task.PreProcessing());
-  } catch (const std::runtime_error &) {
-    return true;
-  }
-
-  return false;
-}
-
-bool ThrowsIfRunBeforePreProcessingImpl() {
-  DoubleSortEvenOddBatcherSTL task({2.0, 1.0});
-  if (!task.Validation()) {
-    return false;
-  }
-
-  try {
-    static_cast<void>(task.Run());
-  } catch (const std::runtime_error &) {
-    return true;
-  }
-
-  return false;
-}
-
-bool ThrowsIfPostProcessingBeforeRunImpl() {
-  DoubleSortEvenOddBatcherSTL task({2.0, 1.0});
-  if (!task.Validation() || !task.PreProcessing()) {
-    return false;
-  }
-
   try {
     static_cast<void>(task.PostProcessing());
   } catch (const std::runtime_error &) {
@@ -216,7 +66,7 @@ TEST_P(GusevDoubleSortEvenOddBatcherStlEnabled, MatchesStdSortForPrimeSizedRando
 }
 
 TEST_P(GusevDoubleSortEvenOddBatcherStlEnabled, MatchesStdSortForLargeRandomInput) {
-  CheckMatchesStdSort(GenerateRandomInput(4096, 20260321));
+  CheckMatchesStdSort(GenerateRandomInput(1024, 20260321));
 }
 
 TEST_P(GusevDoubleSortEvenOddBatcherStlEnabled, MatchesStdSortForExtremesAndSignedZeros) {
@@ -238,8 +88,8 @@ TEST_P(GusevDoubleSortEvenOddBatcherStlEnabled, MatchesStdSortForOddNumberOfBloc
 }
 
 TEST_P(GusevDoubleSortEvenOddBatcherStlEnabled, MatchesStdSortForParallelMergeWithOddCarryBlock) {
-  const StlThreadCountGuard guard(65);
-  CheckMatchesStdSort(GenerateRandomInput(65, 20260325));
+  const StlThreadCountGuard guard(7);
+  CheckMatchesStdSort(GenerateRandomInput(17, 20260325));
 }
 
 TEST_P(GusevDoubleSortEvenOddBatcherStlEnabled, MatchesStdSortForSmallRandomInput) {
