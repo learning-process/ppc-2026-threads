@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "task/include/task.hpp"
 
@@ -14,7 +15,7 @@ using BaseTask = ppc::task::Task<InType, OutType>;
 struct DenseMatrix {
   int rows = 0;
   int cols = 0;
-  std::vector<double> values{};
+  std::vector<double> values;
 
   double &At(int r, int c) {
     return values[static_cast<std::size_t>(r) * cols + c];

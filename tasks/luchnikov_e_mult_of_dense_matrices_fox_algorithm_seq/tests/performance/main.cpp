@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cmath>
 #include <cstddef>
 
@@ -11,11 +12,11 @@ namespace luchnikov_e_mult_of_dense_matrices_fox_algorithm_seq {
 
 class LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  static bool CheckTestOutputData(OutType &output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     return std::isfinite(static_cast<double>(output_data));
   }
 
-  static InType GetTestInputData() final {
+  InType GetTestInputData() final {
     static constexpr std::array<InType, 9> kBenchmarkSizes = {8, 12, 24, 48, 96, 192, 384, 512, 768};
 
     static thread_local size_t run_counter = 0;
@@ -25,7 +26,8 @@ class LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTestThreads : public ppc::util::
   }
 };
 
-static TestP(LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTestThreads /*unused*/, BenchmarkFoxAlgorithm /*unused*/) {
+// NOLINTNEXTLINE(readability-named-parameter)
+TEST_P(LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTestThreads, BenchmarkFoxAlgorithm) {
   ExecuteTest(GetParam());
 }
 
@@ -38,8 +40,8 @@ const auto kPerfTaskList =
 const auto kGtestParams = ppc::util::TupleToGTestValues(kPerfTaskList);
 const auto kTestPrinter = LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTestThreads::CustomPerfTestName;
 
-InstantiateTestSuiteP(FoxAlgorithmBenchmark, LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTestThreads, kGtestParams,
-                      kTestPrinter);
+INSTANTIATE_TEST_SUITE_P(FoxAlgorithmBenchmark, LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTestThreads, kGtestParams,
+                         kTestPrinter);
 
 }  // namespace
 }  // namespace luchnikov_e_mult_of_dense_matrices_fox_algorithm_seq

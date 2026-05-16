@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cmath>
+#include <map>
 #include <string>
 #include <tuple>
 
@@ -19,7 +21,8 @@ class LuchnikovEMultOfDenseMatrixFoxAlgoritmFuncTestsThreads
   }
 
  protected:
-  static bool CheckTestOutputData(OutType &output_data) final {
+  // Убран static: переопределение виртуального метода
+  bool CheckTestOutputData(OutType &output_data) final {
     if (!std::isfinite(output_data)) {
       return false;
     }
@@ -42,7 +45,8 @@ class LuchnikovEMultOfDenseMatrixFoxAlgoritmFuncTestsThreads
     return std::abs(output_data - expected) <= ((std::abs(expected) * rel_tol) + abs_tol);
   }
 
-  static InType GetTestInputData() final {
+  // Убран static: переопределение виртуального метода
+  InType GetTestInputData() final {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     return std::get<0>(params);
   }
@@ -50,7 +54,8 @@ class LuchnikovEMultOfDenseMatrixFoxAlgoritmFuncTestsThreads
 
 namespace {
 
-TestP(LuchnikovEMultOfDenseMatrixFoxAlgoritmFuncTestsThreads /*unused*/, VerifyFoxMultiplication /*unused*/) {
+// NOLINTNEXTLINE(readability-named-parameter)
+TEST_P(LuchnikovEMultOfDenseMatrixFoxAlgoritmFuncTestsThreads, VerifyFoxMultiplication) {
   ExecuteTest(GetParam());
 }
 
@@ -61,15 +66,15 @@ const std::array<TestType, 9> kTestCases = {
     std::make_tuple(16, "power_of_two"),      std::make_tuple(20, "multiple_of_block"),
     std::make_tuple(24, "max_block_coverage")};
 
-const auto kTasks = ppc::util::AddFuncTask<LuchnikovEMultOfDenseMatrixFoxAlgoritmSeq, kInType>(
+const auto kTasks = ppc::util::AddFuncTask<LuchnikovEMultOfDenseMatrixFoxAlgoritmSeq, InType>(
     kTestCases, PPC_SETTINGS_luchnikov_e_mult_of_dense_matrices_fox_algorithm);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTasks);
 const auto kPrinter = LuchnikovEMultOfDenseMatrixFoxAlgoritmFuncTestsThreads::PrintFuncTestName<
     LuchnikovEMultOfDenseMatrixFoxAlgoritmFuncTestsThreads>;
 
-InstantiateTestSuiteP(FoxAlgorithmValidation, LuchnikovEMultOfDenseMatrixFoxAlgoritmFuncTestsThreads, kGtestValues,
-                      kPrinter);
+INSTANTIATE_TEST_SUITE_P(FoxAlgorithmValidation, LuchnikovEMultOfDenseMatrixFoxAlgoritmFuncTestsThreads, kGtestValues,
+                         kPrinter);
 
 }  // namespace
 }  // namespace luchnikov_e_mult_of_dense_matrices_fox_algorithm_seq

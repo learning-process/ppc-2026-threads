@@ -85,7 +85,6 @@ void ExecuteFoxAlgorithm(const DenseMatrix &a, const DenseMatrix &b, DenseMatrix
   int stages = n / blk;
   FillMatrixWithZeros(res, n, n);
 
-  // FIX: переменная 's' переименована в 'stage' для соответствия clang-tidy
   for (int stage = 0; stage < stages; ++stage) {
     for (int i = 0; i < stages; ++i) {
       int broadcast_idx = (i + stage) % stages;
