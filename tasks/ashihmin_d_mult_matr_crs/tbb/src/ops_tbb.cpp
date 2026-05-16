@@ -6,6 +6,8 @@
 #include <map>
 #include <vector>
 
+#include "ashihmin_d_mult_matr_crs/common/include/common.hpp"
+
 namespace ashihmin_d_mult_matr_crs {
 
 AshihminDMultMatrCrsTBB::AshihminDMultMatrCrsTBB(const InType &in) {
