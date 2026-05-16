@@ -16,7 +16,7 @@ SinevAMultMatrixFoxAlgorithmALL::SinevAMultMatrixFoxAlgorithmALL(const InType &i
 
   GetInput() = in;
   GetOutput() = {};
-} 
+}
 
 bool SinevAMultMatrixFoxAlgorithmALL::ValidationImpl() {
   const auto &[n, a, b] = GetInput();
