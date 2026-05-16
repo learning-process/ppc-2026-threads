@@ -9,6 +9,7 @@
 #include "fedoseev_linear_image_filtering_vertical/omp/include/ops_omp.hpp"
 #include "fedoseev_linear_image_filtering_vertical/seq/include/ops_seq.hpp"
 #include "fedoseev_linear_image_filtering_vertical/stl/include/ops_stl.hpp"
+#include "fedoseev_linear_image_filtering_vertical/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace fedoseev_linear_image_filtering_vertical {
@@ -49,7 +50,9 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<Image, LinearImageFilteringVerticalSeq, LinearImageFilteringVerticalOMP,
-                                LinearImageFilteringVerticalSTL>(PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
+                                LinearImageFilteringVerticalSTL, LinearImageFilteringVerticalTBB>(
+        PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
+> (PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = FedoseevPerfTest::CustomPerfTestName;

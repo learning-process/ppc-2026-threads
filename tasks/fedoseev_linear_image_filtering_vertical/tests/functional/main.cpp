@@ -16,6 +16,7 @@
 #include "fedoseev_linear_image_filtering_vertical/omp/include/ops_omp.hpp"
 #include "fedoseev_linear_image_filtering_vertical/seq/include/ops_seq.hpp"
 #include "fedoseev_linear_image_filtering_vertical/stl/include/ops_stl.hpp"
+#include "fedoseev_linear_image_filtering_vertical/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -202,7 +203,9 @@ const auto kOmpTasks = ppc::util::AddFuncTask<LinearImageFilteringVerticalOMP, I
     kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
 const auto kStlTasks = ppc::util::AddFuncTask<LinearImageFilteringVerticalSTL, Image>(
     kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
-const auto kTestTasksList = std::tuple_cat(kSeqTasks, kOmpTasks, kStlTasks);
+const auto kTbbTasks = ppc::util::AddFuncTask<LinearImageFilteringVerticalTBB, Image>(
+    kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
+const auto kTestTasksList = std::tuple_cat(kSeqTasks, kOmpTasks, kTbbTasks, kStlTasks);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = FedoseevFuncTest::PrintFuncTestName<FedoseevFuncTest>;
