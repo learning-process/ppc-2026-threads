@@ -2,12 +2,8 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstddef>
-#include <execution>
-#include <numeric>
+#include <thread>
 #include <vector>
-
-#include "kruglova_a_conjugate_gradient_sle/common/include/common.hpp"
 
 namespace kruglova_a_conjugate_gradient_sle {
 
@@ -37,61 +33,127 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
     return true;
   }
 
+  int num_threads = (n >= 250) ? static_cast<int>(std::thread::hardware_concurrency()) : 1;
+  if (num_threads < 1) {
+    num_threads = 1;
+  }
+
   std::vector<double> r = b;
   std::vector<double> p = r;
   std::vector<double> ap(n, 0.0);
 
-  // Вектор индексов для организации параллельного обхода через std::for_each
-  std::vector<int> indices(n);
-  std::iota(indices.begin(), indices.end(), 0);
+  std::vector<double> partial_buffer(num_threads);
 
-  // Вычисление стартового значения rsold через параллельный скалярный редуктор
-  double rsold = std::transform_reduce(std::execution::par, r.begin(), r.end(), r.begin(), 0.0);
+  auto launch_parallel = [&](int total, auto &&func) {
+    std::vector<std::thread> workers;
+    int chunk = total / num_threads;
+    for (int i = 0; i < num_threads; ++i) {
+      int start = i * chunk;
+      int end = (i == num_threads - 1) ? total : (i + 1) * chunk;
+      workers.emplace_back(func, start, end, i);
+    }
+    for (auto &w : workers) {
+      w.join();
+    }
+  };
+
+  double rsold = 0.0;
+  for (int i = 0; i < n; ++i) {
+    rsold += r[i] * r[i];
+  }
 
   const double tolerance = 1e-8;
-  const int max_iter = n * 2;
+  const int max_iter = n;
 
   for (int iter = 0; iter < max_iter; ++iter) {
-    // 1. Матрично-векторное умножение: ap = A * p
-    std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i) {
-      double sum = 0.0;
-      size_t row_offset = static_cast<size_t>(i) * n;
-      for (int j = 0; j < n; ++j) {
-        sum += a[row_offset + j] * p[j];
+    // 1. ap = A * p
+    if (num_threads > 1) {
+      launch_parallel(n, [&](int start, int end, int /*tid*/) {
+        for (int i = start; i < end; ++i) {
+          double sum = 0.0;
+          for (int j = 0; j < n; ++j) {
+            sum += a[i * n + j] * p[j];
+          }
+          ap[i] = sum;
+        }
+      });
+    } else {
+      for (int i = 0; i < n; ++i) {
+        double sum = 0.0;
+        for (int j = 0; j < n; ++j) {
+          sum += a[i * n + j] * p[j];
+        }
+        ap[i] = sum;
       }
-      ap[i] = sum;
-    });
-
-    // 2. Вычисление скалярного произведения: p_ap = p * ap
-    double p_ap = std::transform_reduce(std::execution::par, p.begin(), p.end(), ap.begin(), 0.0);
-
-    if (std::abs(p_ap) < 1e-15) {
-      break;
     }
 
+    // 2. p_ap = p * ap
+    double p_ap = 0.0;
+    if (num_threads > 1) {
+      launch_parallel(n, [&](int start, int end, int tid) {
+        double local = 0.0;
+        for (int i = start; i < end; ++i) {
+          local += p[i] * ap[i];
+        }
+        partial_buffer[tid] = local;
+      });
+      for (double val : partial_buffer) {
+        p_ap += val;
+      }
+    } else {
+      for (int i = 0; i < n; ++i) {
+        p_ap += p[i] * ap[i];
+      }
+    }
+
+    if (std::abs(p_ap) < 1e-16) {
+      break;
+    }
     const double alpha = rsold / p_ap;
 
-    // 3. Параллельное обновление векторов x и r
-    std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i) {
-      x[i] += alpha * p[i];
-      r[i] -= alpha * ap[i];
-    });
-
-    // 4. Расчет новой невязки rsnew = r * r
-    double rsnew = std::transform_reduce(std::execution::par, r.begin(), r.end(), r.begin(), 0.0);
+    // 3. Обновление x, r и вычисление rsnew
+    double rsnew = 0.0;
+    if (num_threads > 1) {
+      launch_parallel(n, [&](int start, int end, int tid) {
+        double local = 0.0;
+        for (int i = start; i < end; ++i) {
+          x[i] += alpha * p[i];
+          r[i] -= alpha * ap[i];
+          local += r[i] * r[i];
+        }
+        partial_buffer[tid] = local;
+      });
+      for (double val : partial_buffer) {
+        rsnew += val;
+      }
+    } else {
+      for (int i = 0; i < n; ++i) {
+        x[i] += alpha * p[i];
+        r[i] -= alpha * ap[i];
+        rsnew += r[i] * r[i];
+      }
+    }
 
     if (std::sqrt(rsnew) < tolerance) {
       break;
     }
 
+    // 4. p = r + beta * p
     const double beta = rsnew / rsold;
-
-    // 5. Параллельное обновление вектора направлений p
-    std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i) { p[i] = r[i] + beta * p[i]; });
+    if (num_threads > 1) {
+      launch_parallel(n, [&](int start, int end, int /*tid*/) {
+        for (int i = start; i < end; ++i) {
+          p[i] = r[i] + beta * p[i];
+        }
+      });
+    } else {
+      for (int i = 0; i < n; ++i) {
+        p[i] = r[i] + beta * p[i];
+      }
+    }
 
     rsold = rsnew;
   }
-
   return true;
 }
 
