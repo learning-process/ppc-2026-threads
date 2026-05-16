@@ -1,12 +1,12 @@
 #include "vlasova_a_simpson_method/stl/include/ops_stl.hpp"
 
 #include <algorithm>
-#include <atomic>
 #include <cmath>
 #include <cstddef>
 #include <execution>
 #include <functional>
 #include <numeric>
+#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -85,78 +85,37 @@ void VlasovaASimpsonMethodSTL::ComputePoint(const std::vector<int> &index, std::
   }
 }
 
+double VlasovaASimpsonMethodSTL::TraverseFrom(size_t dim, std::vector<int> &cur_index, std::vector<double> &cur_point,
+                                              size_t d) const {
+  if (d == dim) {
+    double weight = 0.0;
+    ComputeWeight(cur_index, weight);
+    ComputePoint(cur_index, cur_point);
+    return weight * task_data_.func(cur_point);
+  }
+  double local_sum = 0.0;
+  for (int i = 0; i < dimensions_[d]; ++i) {
+    cur_index[d] = i;
+    local_sum += TraverseFrom(dim, cur_index, cur_point, d + 1);
+  }
+  return local_sum;
+}
+
 bool VlasovaASimpsonMethodSTL::RunImpl() {
   size_t dim = task_data_.a.size();
-
-  size_t total_points = 1;
-  for (size_t i = 0; i < dim; ++i) {
-    total_points *= static_cast<size_t>(dimensions_[i]);
-  }
-
-  if (total_points < 10000) {
-    std::vector<int> cur_index(dim, 0);
-    std::vector<double> cur_point;
-    double sum = 0.0;
-
-    std::function<bool(size_t)> next_index = [&](size_t d) -> bool {
-      if (d == dim) {
-        return false;
-      }
-      cur_index[d]++;
-      if (cur_index[d] < dimensions_[d]) {
-        return true;
-      }
-      cur_index[d] = 0;
-      return next_index(d + 1);
-    };
-
-    do {
-      double weight = 0.0;
-      ComputeWeight(cur_index, weight);
-      ComputePoint(cur_index, cur_point);
-      sum += weight * task_data_.func(cur_point);
-    } while (next_index(0));
-
-    double factor = 1.0;
-    for (size_t i = 0; i < dim; ++i) {
-      factor *= h_[i] / 3.0;
-    }
-
-    result_ = sum * factor;
-    GetOutput() = result_;
-    return true;
-  }
-
   int first_dim_size = dimensions_[0];
-  std::vector<double> partial_sums(first_dim_size);
+
   std::vector<int> indices(first_dim_size);
-  std::iota(indices.begin(), indices.end(), 0);
+  std::ranges::iota(indices, 0);
 
-  std::for_each(std::execution::par, indices.begin(), indices.end(), [this, dim, &partial_sums](int idx0) {
-    static thread_local std::vector<int> cur_index(dim);
-    static thread_local std::vector<double> cur_point;
+  std::vector<double> partial_sums(first_dim_size, 0.0);
+
+  std::transform(std::execution::par, indices.begin(), indices.end(), partial_sums.begin(), [this, dim](int idx0) {
+    thread_local std::vector<int> cur_index;
+    thread_local std::vector<double> cur_point;
+    cur_index.assign(dim, 0);
     cur_index[0] = idx0;
-
-    double local_sum = 0.0;
-
-    // Рекурсивный обход остальных измерений
-    std::function<void(size_t)> traverse = [&](size_t d) {
-      if (d == dim) {
-        double weight = 0.0;
-        ComputeWeight(cur_index, weight);
-        ComputePoint(cur_index, cur_point);
-        local_sum += weight * task_data_.func(cur_point);
-        return;
-      }
-
-      for (int i = 0; i < dimensions_[d]; ++i) {
-        cur_index[d] = i;
-        traverse(d + 1);
-      }
-    };
-
-    traverse(1);  // Начинаем со второго измерения
-    partial_sums[idx0] = local_sum;
+    return TraverseFrom(dim, cur_index, cur_point, 1);
   });
 
   double sum = std::reduce(std::execution::par_unseq, partial_sums.begin(), partial_sums.end(), 0.0);

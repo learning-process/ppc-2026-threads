@@ -23,6 +23,7 @@ class VlasovaASimpsonMethodSTL : public BaseTask {
 
   void ComputeWeight(const std::vector<int> &index, double &weight) const;
   void ComputePoint(const std::vector<int> &index, std::vector<double> &point) const;
+  double TraverseFrom(size_t dim, std::vector<int> &cur_index, std::vector<double> &cur_point, size_t d) const;
 
   InType task_data_;
   double result_ = 0.0;
