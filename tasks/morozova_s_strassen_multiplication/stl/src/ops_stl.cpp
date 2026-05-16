@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <numeric>
 #include <vector>
 
 #include "morozova_s_strassen_multiplication/common/include/common.hpp"
@@ -16,8 +15,7 @@ Matrix AddMatrixImpl(const Matrix &a, const Matrix &b) {
   int n = a.size;
   Matrix result(n);
 
-  std::transform(a.data.begin(), a.data.end(), b.data.begin(), result.data.begin(),
-                 [](double x, double y) { return x + y; });
+  std::ranges::transform(a.data, b.data, result.data.begin(), [](double x, double y) { return x + y; });
 
   return result;
 }
@@ -26,8 +24,7 @@ Matrix SubtractMatrixImpl(const Matrix &a, const Matrix &b) {
   int n = a.size;
   Matrix result(n);
 
-  std::transform(a.data.begin(), a.data.end(), b.data.begin(), result.data.begin(),
-                 [](double x, double y) { return x - y; });
+  std::ranges::transform(a.data, b.data, result.data.begin(), [](double x, double y) { return x - y; });
 
   return result;
 }
