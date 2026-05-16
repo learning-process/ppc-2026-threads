@@ -9,6 +9,7 @@
 
 #include "util/include/perf_test_util.hpp"
 #include "volkov_a_sparse_mat_mul_ccs/common/include/common.hpp"
+#include "volkov_a_sparse_mat_mul_ccs/omp/include/ops_omp.hpp"
 #include "volkov_a_sparse_mat_mul_ccs/seq/include/ops_seq.hpp"
 
 namespace volkov_a_sparse_mat_mul_ccs {
@@ -121,8 +122,8 @@ TEST_P(VolkovAPerfTests, RunPerfTest) {
 }
 
 namespace {
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, VolkovASparseMatMulCcsSeq>(PPC_SETTINGS_volkov_a_sparse_mat_mul_ccs);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, VolkovASparseMatMulCcsSeq, VolkovASparseMatMulCcsOmp>(
+    PPC_SETTINGS_volkov_a_sparse_mat_mul_ccs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = VolkovAPerfTests::CustomPerfTestName;

@@ -5,9 +5,12 @@
 #include <string>
 #include <tuple>
 
+#include "dergachev_a_graham_scan/all/include/ops_all.hpp"
 #include "dergachev_a_graham_scan/common/include/common.hpp"
 #include "dergachev_a_graham_scan/omp/include/ops_omp.hpp"
 #include "dergachev_a_graham_scan/seq/include/ops_seq.hpp"
+#include "dergachev_a_graham_scan/stl/include/ops_stl.hpp"
+#include "dergachev_a_graham_scan/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -51,8 +54,11 @@ const std::array<TestType, 13> kTestParam = {
     std::make_tuple(1000, "circle_1000")};
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<DergachevAGrahamScanALL, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan),
     ppc::util::AddFuncTask<DergachevAGrahamScanOMP, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan),
-    ppc::util::AddFuncTask<DergachevAGrahamScanSEQ, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan));
+    ppc::util::AddFuncTask<DergachevAGrahamScanSEQ, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan),
+    ppc::util::AddFuncTask<DergachevAGrahamScanSTL, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan),
+    ppc::util::AddFuncTask<DergachevAGrahamScanTBB, InType>(kTestParam, PPC_SETTINGS_dergachev_a_graham_scan));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

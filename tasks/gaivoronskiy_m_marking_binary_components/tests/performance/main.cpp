@@ -4,7 +4,9 @@
 #include <cstddef>
 
 #include "gaivoronskiy_m_marking_binary_components/common/include/common.hpp"
+#include "gaivoronskiy_m_marking_binary_components/omp/include/ops_omp.hpp"
 #include "gaivoronskiy_m_marking_binary_components/seq/include/ops_seq.hpp"
+#include "gaivoronskiy_m_marking_binary_components/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace gaivoronskiy_m_marking_binary_components {
@@ -44,8 +46,10 @@ TEST_P(GaivoronskiyMMarkingPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, GaivoronskiyMMarkingBinaryComponentsSEQ>(
-    PPC_SETTINGS_gaivoronskiy_m_marking_binary_components);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, GaivoronskiyMMarkingBinaryComponentsSEQ,
+                                GaivoronskiyMMarkingBinaryComponentsOMP, GaivoronskiyMMarkingBinaryComponentsTBB>(
+        PPC_SETTINGS_gaivoronskiy_m_marking_binary_components);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
