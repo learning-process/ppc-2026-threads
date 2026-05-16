@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <utility>
 #include <vector>
 
 #include "chyokotov_a_dense_matrix_mul_foxs_algorithm/common/include/common.hpp"
@@ -141,7 +142,7 @@ void ChyokotovADenseMatMulFoxAlgorithmALL::CollectResult(MPI_Comm comm, int work
                                                          const std::vector<double> &local_c) {
   int padded_n = q * block_size;
 
-  auto FillResultFromBuffer = [&](const std::vector<double> &buffer, int row, int col) {
+  auto fillres = [&](const std::vector<double> &buffer, int row, int col) {
     for (int i = 0; i < block_size; ++i) {
       for (int j = 0; j < block_size; ++j) {
         int global_row = (row * block_size) + i;
@@ -152,12 +153,12 @@ void ChyokotovADenseMatMulFoxAlgorithmALL::CollectResult(MPI_Comm comm, int work
   };
 
   if (worker_rank == 0) {
-    FillResultFromBuffer(local_c, 0, 0);
+    fillres(local_c, 0, 0);
 
     std::vector<double> recv_buf(static_cast<size_t>(block_size) * block_size);
     for (int proc = 1; proc < worker_size; ++proc) {
       MPI_Recv(recv_buf.data(), static_cast<int>(recv_buf.size()), MPI_DOUBLE, proc, 20, comm, MPI_STATUS_IGNORE);
-      FillResultFromBuffer(recv_buf, proc / q, proc % q);
+      fillres(recv_buf, proc / q, proc % q);
     }
   } else {
     MPI_Send(local_c.data(), static_cast<int>(local_c.size()), MPI_DOUBLE, 0, 20, comm);
