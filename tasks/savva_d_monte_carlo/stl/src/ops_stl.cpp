@@ -1,10 +1,11 @@
 #include "savva_d_monte_carlo/stl/include/ops_stl.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <numeric>
 #include <random>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "savva_d_monte_carlo/common/include/common.hpp"
@@ -53,13 +54,8 @@ bool SavvaDMonteCarloSTL::RunImpl() {
   const auto &func = input.f;
 
   unsigned int num_threads = std::thread::hardware_concurrency();
-  if (num_threads == 0) {
-    num_threads = 1;
-  }
 
-  if (static_cast<unsigned int>(n) < num_threads) {
-    num_threads = static_cast<unsigned int>(n);
-  }
+  num_threads = std::max(1u, std::min<unsigned int>(static_cast<unsigned int>(n), num_threads));
 
   std::vector<double> partial_sums(num_threads, 0.0);
   std::vector<std::thread> threads;
@@ -92,7 +88,7 @@ bool SavvaDMonteCarloSTL::RunImpl() {
   };
 
   for (unsigned int i = 0; i < num_threads; ++i) {
-    int64_t pts = points_per_thread + (i < static_cast<unsigned int>(tail) ? 1 : 0);
+    int64_t pts = points_per_thread + (std::cmp_less(i, tail) ? 1 : 0);
     threads.emplace_back(worker, i, pts);
   }
 
