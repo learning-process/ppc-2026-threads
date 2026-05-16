@@ -17,6 +17,7 @@
 #include "galkin_d_multidim_integrals_rectangles/common/include/common.hpp"
 #include "galkin_d_multidim_integrals_rectangles/omp/include/ops_omp.hpp"
 #include "galkin_d_multidim_integrals_rectangles/seq/include/ops_seq.hpp"
+#include "galkin_d_multidim_integrals_rectangles/stl/include/ops_stl.hpp"
 #include "galkin_d_multidim_integrals_rectangles/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -51,16 +52,16 @@ class GalkinDRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, 
 
 namespace {
 
-InType MakeOmpInput(const std::function<double(const std::vector<double> &)> &func,
-                    std::vector<std::pair<double, double>> borders, int n) {
+InType MakeInput(const std::function<double(const std::vector<double> &)> &func,
+                 std::vector<std::pair<double, double>> borders, int n) {
   return InType{func, std::move(borders), n};
 }
 
-std::optional<OutType> RunOmpTaskWithZeroThreadsEnv() {
+std::optional<OutType> RunStlTaskWithZeroThreadsEnv() {
   env::detail::set_scoped_environment_variable scoped_threads("PPC_NUM_THREADS", "0");
   const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &) { return 1.0; };
-  InType input = MakeOmpInput(func, {{0.0, 1.0}}, 10);
-  GalkinDMultidimIntegralsRectanglesOMP task(input);
+  InType input = MakeInput(func, {{0.0, 1.0}}, 10);
+  GalkinDMultidimIntegralsRectanglesSTL task(input);
 
   if (!task.Validation()) {
     return std::nullopt;
@@ -78,43 +79,112 @@ std::optional<OutType> RunOmpTaskWithZeroThreadsEnv() {
   return task.GetOutput();
 }
 
-TEST(GalkinDOmpDirectTests, ValidationFailsForEmptyBorders) {
+TEST(GalkinDStlDirectTests, ValidationFailsForEmptyBorders) {
   const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &) { return 1.0; };
-  InType input = MakeOmpInput(func, std::vector<std::pair<double, double>>{}, 10);
-  GalkinDMultidimIntegralsRectanglesOMP task(input);
+  InType input = MakeInput(func, std::vector<std::pair<double, double>>{}, 10);
+  GalkinDMultidimIntegralsRectanglesSTL task(input);
   EXPECT_FALSE(task.Validation());
 }
 
-TEST(GalkinDOmpDirectTests, ValidationFailsForNonFiniteBorder) {
+TEST(GalkinDStlDirectTests, ValidationFailsForNonFiniteBorder) {
   const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &) { return 1.0; };
-  InType input = MakeOmpInput(func, {{0.0, std::numeric_limits<double>::infinity()}}, 10);
-  GalkinDMultidimIntegralsRectanglesOMP task(input);
+  InType input = MakeInput(func, {{0.0, std::numeric_limits<double>::infinity()}}, 10);
+  GalkinDMultidimIntegralsRectanglesSTL task(input);
   EXPECT_FALSE(task.Validation());
 }
 
-TEST(GalkinDOmpDirectTests, ValidationFailsForInvalidInterval) {
+TEST(GalkinDStlDirectTests, ValidationFailsForInvalidInterval) {
   const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &) { return 1.0; };
-  InType input = MakeOmpInput(func, {{2.0, 1.0}}, 10);
-  GalkinDMultidimIntegralsRectanglesOMP task(input);
+  InType input = MakeInput(func, {{2.0, 1.0}}, 10);
+  GalkinDMultidimIntegralsRectanglesSTL task(input);
   EXPECT_FALSE(task.Validation());
 }
 
-TEST(GalkinDOmpDirectTests, RunFailsForNonFiniteFunctionValue) {
+TEST(GalkinDStlDirectTests, ValidationFailsForZeroN) {
+  const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &) { return 1.0; };
+  InType input = MakeInput(func, {{0.0, 1.0}}, 0);
+  GalkinDMultidimIntegralsRectanglesSTL task(input);
+  EXPECT_FALSE(task.Validation());
+}
+
+TEST(GalkinDStlDirectTests, ValidationFailsForNullFunc) {
+  InType input = MakeInput(nullptr, {{0.0, 1.0}}, 10);
+  GalkinDMultidimIntegralsRectanglesSTL task(input);
+  EXPECT_FALSE(task.Validation());
+}
+
+TEST(GalkinDStlDirectTests, RunFailsForNonFiniteFunctionValue) {
   const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &) {
     return std::numeric_limits<double>::quiet_NaN();
   };
-  InType input = MakeOmpInput(func, {{0.0, 1.0}}, 10);
-  GalkinDMultidimIntegralsRectanglesOMP task(input);
+  InType input = MakeInput(func, {{0.0, 1.0}}, 10);
+  GalkinDMultidimIntegralsRectanglesSTL task(input);
   ASSERT_TRUE(task.Validation());
   ASSERT_TRUE(task.PreProcessing());
   EXPECT_FALSE(task.Run());
 }
 
-TEST(GalkinDOmpDirectTests, RunSucceedsWhenNumThreadsEnvIsZeroOrNegative) {
-  const auto result = RunOmpTaskWithZeroThreadsEnv();
+TEST(GalkinDStlDirectTests, RunSucceedsWhenNumThreadsEnvIsZeroOrNegative) {
+  const auto result = RunStlTaskWithZeroThreadsEnv();
   const OutType output = result.value_or(std::numeric_limits<double>::quiet_NaN());
   ASSERT_TRUE(result.has_value());
   EXPECT_NEAR(output, 1.0, 1e-9);
+}
+
+namespace {
+bool RunPipeline(BaseTask &task) {
+  return task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing();
+}
+}  // namespace
+
+TEST(GalkinDStlDirectTests, RunProducesCorrect1DIntegral) {
+  const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &x) {
+    return x[0] * x[0];
+  };
+  InType input = MakeInput(func, {{0.0, 1.0}}, 1000);
+  GalkinDMultidimIntegralsRectanglesSTL task(input);
+  ASSERT_TRUE(RunPipeline(task));
+  EXPECT_NEAR(task.GetOutput(), 1.0 / 3.0, 1e-4);
+}
+
+TEST(GalkinDStlDirectTests, RunProducesCorrect2DIntegral) {
+  const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &x) {
+    return x[0] + x[1];
+  };
+  InType input = MakeInput(func, {{0.0, 1.0}, {0.0, 1.0}}, 200);
+  GalkinDMultidimIntegralsRectanglesSTL task(input);
+  ASSERT_TRUE(RunPipeline(task));
+  EXPECT_NEAR(task.GetOutput(), 1.0, 1e-4);
+}
+
+TEST(GalkinDStlDirectTests, ResultMatchesSeqForSinIntegral) {
+  const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &x) {
+    return std::sin(x[0]);
+  };
+  InType input = MakeInput(func, {{0.0, std::numbers::pi}}, 500);
+
+  GalkinDMultidimIntegralsRectanglesSEQ seq_task(input);
+  ASSERT_TRUE(RunPipeline(seq_task));
+
+  GalkinDMultidimIntegralsRectanglesSTL stl_task(input);
+  ASSERT_TRUE(RunPipeline(stl_task));
+
+  EXPECT_NEAR(stl_task.GetOutput(), seq_task.GetOutput(), 1e-9);
+}
+
+TEST(GalkinDStlDirectTests, ResultMatchesSeqFor3DIntegral) {
+  const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &x) {
+    return x[0] * x[1] * x[2];
+  };
+  InType input = MakeInput(func, {{0.0, 1.0}, {0.0, 2.0}, {0.0, 3.0}}, 50);
+
+  GalkinDMultidimIntegralsRectanglesSEQ seq_task(input);
+  ASSERT_TRUE(RunPipeline(seq_task));
+
+  GalkinDMultidimIntegralsRectanglesSTL stl_task(input);
+  ASSERT_TRUE(RunPipeline(stl_task));
+
+  EXPECT_NEAR(stl_task.GetOutput(), seq_task.GetOutput(), 1e-9);
 }
 
 InType MakeTbbInput(const std::function<double(const std::vector<double> &)> &func,
@@ -236,6 +306,8 @@ const std::array<TestType, 23> kTestParam = {
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<GalkinDMultidimIntegralsRectanglesOMP, InType>(
                                                kTestParam, PPC_SETTINGS_galkin_d_multidim_integrals_rectangles),
                                            ppc::util::AddFuncTask<GalkinDMultidimIntegralsRectanglesSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_galkin_d_multidim_integrals_rectangles),
+                                           ppc::util::AddFuncTask<GalkinDMultidimIntegralsRectanglesSTL, InType>(
                                                kTestParam, PPC_SETTINGS_galkin_d_multidim_integrals_rectangles),
                                            ppc::util::AddFuncTask<GalkinDMultidimIntegralsRectanglesTBB, InType>(
                                                kTestParam, PPC_SETTINGS_galkin_d_multidim_integrals_rectangles));

@@ -2,15 +2,13 @@
 
 #include <oneapi/tbb/blocked_range.h>
 #include <oneapi/tbb/parallel_for.h>
+#include <oneapi/tbb/parallel_reduce.h>
 
 #include <algorithm>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <limits>
-#include <mutex>
-#include <queue>
 #include <utility>
 #include <vector>
 
@@ -20,143 +18,95 @@ namespace nalitov_d_dijkstras_algorithm {
 
 namespace {
 
-using OutgoingTable = std::vector<std::vector<std::pair<NodeId, Cost>>>;
+struct BestVertex {
+  Cost cost{kInf};
+  NodeId vtx{-1};
 
-struct QueueItem {
-  Cost dist{};
-  NodeId node{};
-  friend bool operator<(const QueueItem &a, const QueueItem &b) {
-    if (a.dist != b.dist) {
-      return a.dist < b.dist;
-    }
-    return a.node < b.node;
+  [[nodiscard]] bool IsBetterThan(const BestVertex &other) const {
+    return cost < other.cost || (cost == other.cost && vtx != -1 && (other.vtx == -1 || vtx < other.vtx));
   }
-  friend bool operator>(const QueueItem &a, const QueueItem &b) {
-    return b < a;
+
+  void Merge(const BestVertex &other) {
+    if (other.IsBetterThan(*this)) {
+      cost = other.cost;
+      vtx = other.vtx;
+    }
   }
 };
 
-using DijkstraHeap = std::priority_queue<QueueItem, std::vector<QueueItem>, std::greater<>>;
+BestVertex FindLocalBestVertex(const std::vector<char> &visited, const std::vector<std::atomic<Cost>> &atomic_dist,
+                               const tbb::blocked_range<int> &range, BestVertex acc) {
+  for (int vi = range.begin(); vi < range.end(); ++vi) {
+    const auto idx = static_cast<std::size_t>(vi);
 
-bool SafeAdd(std::int64_t acc, Cost value, std::int64_t &result) {
-  const auto v = static_cast<std::int64_t>(value);
-  if (v > 0 && acc > std::numeric_limits<std::int64_t>::max() - v) {
-    return false;
+    if (visited[idx] != 0) {
+      continue;
+    }
+
+    const Cost dist = atomic_dist[idx].load(std::memory_order_relaxed);
+
+    const BestVertex candidate{
+        .cost = dist,
+        .vtx = vi,
+    };
+
+    if (candidate.IsBetterThan(acc)) {
+      acc = candidate;
+    }
   }
-  if (v < 0 && acc < std::numeric_limits<std::int64_t>::min() - v) {
-    return false;
-  }
-  result = acc + v;
-  return true;
+
+  return acc;
 }
 
-void BuildGraphParallel(const InType &input, OutgoingTable &graph) {
-  const int vn = input.n;
-  const std::size_t arc_count = input.arcs.size();
+BestVertex SelectBestVertex(const std::vector<char> &visited, const std::vector<std::atomic<Cost>> &atomic_dist,
+                            int n) {
+  return tbb::parallel_reduce(tbb::blocked_range<int>(0, n), BestVertex{}, [&](const auto &range, BestVertex acc) {
+    return FindLocalBestVertex(visited, atomic_dist, range, acc);
+  }, [](BestVertex lhs, const BestVertex &rhs) {
+    lhs.Merge(rhs);
+    return lhs;
+  });
+}
 
-  std::vector<std::size_t> outdegree(static_cast<std::size_t>(vn), 0);
-  for (const Arc &a : input.arcs) {
-    ++outdegree[static_cast<std::size_t>(a.from)];
+void RelaxEdge(std::atomic<Cost> &target, Cost candidate) {
+  Cost old = target.load(std::memory_order_relaxed);
+
+  while (candidate < old) {
+    if (target.compare_exchange_weak(old, candidate, std::memory_order_relaxed)) {
+      break;
+    }
   }
+}
 
-  graph.assign(static_cast<std::size_t>(vn), {});
-  for (int vx = 0; vx < vn; ++vx) {
-    graph[static_cast<std::size_t>(vx)].resize(outdegree[static_cast<std::size_t>(vx)]);
-  }
+void RelaxNeighbors(const std::vector<std::pair<NodeId, Cost>> &neighbors, Cost pivot_cost,
+                    const std::vector<char> &visited, std::vector<std::atomic<Cost>> &atomic_dist) {
+  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, neighbors.size()), [&](const auto &range) {
+    for (std::size_t ei = range.begin(); ei < range.end(); ++ei) {
+      const auto [target, weight] = neighbors[ei];
+      const auto target_idx = static_cast<std::size_t>(target);
 
-  const auto vn_u = static_cast<std::size_t>(vn);
-  std::vector<std::atomic<std::size_t>> slot_counter(vn_u);
-  for (std::size_t vx = 0; vx < vn_u; ++vx) {
-    slot_counter[vx].store(0, std::memory_order_relaxed);
-  }
+      if (visited[target_idx] != 0 || pivot_cost > kInf - weight) {
+        continue;
+      }
 
-  OutgoingTable &g = graph;
-  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, arc_count), [&](const tbb::blocked_range<std::size_t> &range) {
-    for (std::size_t i = range.begin(); i < range.end(); ++i) {
-      const Arc &arc = input.arcs[i];
-      const auto from = static_cast<std::size_t>(arc.from);
-      const std::size_t pos = slot_counter[from].fetch_add(1, std::memory_order_relaxed);
-      g[from][pos] = {arc.to, arc.weight};
+      RelaxEdge(atomic_dist[target_idx], pivot_cost + weight);
     }
   });
 }
 
-void RelaxEdgesParallel(Cost d_u, const std::vector<std::pair<NodeId, Cost>> &out_edges, std::vector<Cost> &distance,
-                        std::vector<std::pair<NodeId, Cost>> &updates) {
-  const auto edge_cnt = out_edges.size();
-  std::mutex upd_mutex;
+std::int64_t SumDistances(const std::vector<std::atomic<Cost>> &atomic_dist, std::size_t n) {
+  return tbb::parallel_reduce(tbb::blocked_range<std::size_t>(0, n), std::int64_t{0},
+                              [&](const auto &range, std::int64_t acc) {
+    for (std::size_t i = range.begin(); i < range.end(); ++i) {
+      const Cost dist = atomic_dist[i].load(std::memory_order_relaxed);
 
-  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, edge_cnt), [&](const tbb::blocked_range<std::size_t> &r) {
-    for (std::size_t j = r.begin(); j < r.end(); ++j) {
-      const auto &[v, w] = out_edges[j];
-      if (d_u <= kInf - w) {
-        const Cost cand = d_u + w;
-        if (cand < distance[v]) {
-          std::scoped_lock lock(upd_mutex);
-          updates.emplace_back(v, cand);
-        }
+      if (dist != kInf) {
+        acc += static_cast<std::int64_t>(dist);
       }
     }
-  });
-}
 
-void ApplyUpdates(const std::vector<std::pair<NodeId, Cost>> &updates, std::vector<Cost> &distance,
-                  DijkstraHeap &heap) {
-  for (const auto &[v, cand] : updates) {
-    if (cand < distance[v]) {
-      distance[v] = cand;
-      heap.push({cand, v});
-    }
-  }
-}
-
-std::vector<Cost> ComputeShortestPaths(NodeId source, const OutgoingTable &graph) {
-  const auto vertex_count = static_cast<NodeId>(graph.size());
-  std::vector<Cost> distance(vertex_count, kInf);
-  DijkstraHeap heap;
-  std::vector<char> visited(vertex_count, 0);
-
-  distance[source] = 0;
-  heap.push({0, source});
-
-  while (!heap.empty()) {
-    const auto [d_u, u] = heap.top();
-    heap.pop();
-
-    if (visited[u] != 0) {
-      continue;
-    }
-    visited[u] = 1;
-
-    const auto &out_edges = graph[u];
-    if (out_edges.empty()) {
-      continue;
-    }
-
-    std::vector<std::pair<NodeId, Cost>> updates;
-    updates.reserve(out_edges.size());
-    RelaxEdgesParallel(d_u, out_edges, distance, updates);
-    ApplyUpdates(updates, distance, heap);
-  }
-
-  return distance;
-}
-
-bool SumReachableDistances(const std::vector<Cost> &distance, OutType &total) {
-  std::int64_t accumulator = 0;
-  for (Cost d : distance) {
-    if (d == kInf) {
-      continue;
-    }
-    if (!SafeAdd(accumulator, d, accumulator)) {
-      return false;
-    }
-  }
-  if (accumulator < 0 || accumulator > std::numeric_limits<OutType>::max()) {
-    return false;
-  }
-  total = accumulator;
-  return true;
+    return acc;
+  }, std::plus<>());
 }
 
 }  // namespace
@@ -168,48 +118,78 @@ NalitovDDijkstrasAlgorithmTBB::NalitovDDijkstrasAlgorithmTBB(const InType &in) {
 }
 
 bool NalitovDDijkstrasAlgorithmTBB::ValidationImpl() {
-  if (GetOutput() != 0) {
-    return false;
-  }
-
   const InType &in = GetInput();
-  constexpr int kMaxVertices = 10000;
-  if (in.n <= 0 || in.n > kMaxVertices) {
-    return false;
-  }
-  if (in.source < 0 || in.source >= in.n) {
+
+  if (in.n <= 0 || in.n > 10000 || in.source < 0 || in.source >= in.n) {
     return false;
   }
 
-  const auto arc_valid = [&in](const Arc &a) {
-    return a.from >= 0 && a.to >= 0 && a.from < in.n && a.to < in.n && a.weight >= 0;
-  };
-  return std::ranges::all_of(in.arcs, arc_valid);
+  return std::ranges::all_of(in.arcs, [&in](const Arc &arc) {
+    return arc.from >= 0 && arc.to >= 0 && arc.from < in.n && arc.to < in.n && arc.weight >= 0;
+  });
 }
 
 bool NalitovDDijkstrasAlgorithmTBB::PreProcessingImpl() {
   const InType &in = GetInput();
-  BuildGraphParallel(in, graph_);
-  GetOutput() = 0;
+  const auto vertex_count = static_cast<std::size_t>(in.n);
+
+  std::vector<std::size_t> out_degree(vertex_count, 0);
+
+  for (const Arc &arc : in.arcs) {
+    ++out_degree[static_cast<std::size_t>(arc.from)];
+  }
+
+  graph_.assign(vertex_count, {});
+
+  std::vector<std::atomic<std::size_t>> row_next(vertex_count);
+
+  for (std::size_t vi = 0; vi < vertex_count; ++vi) {
+    graph_[vi].resize(out_degree[vi]);
+    row_next[vi].store(0, std::memory_order_relaxed);
+  }
+
+  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, in.arcs.size()), [&](const auto &range) {
+    for (std::size_t ei = range.begin(); ei < range.end(); ++ei) {
+      const Arc &arc = in.arcs[ei];
+      const auto from = static_cast<std::size_t>(arc.from);
+
+      const std::size_t slot = row_next[from].fetch_add(1, std::memory_order_relaxed);
+      graph_[from][slot] = {arc.to, arc.weight};
+    }
+  });
+
+  dist_.assign(vertex_count, kInf);
+  visited_.assign(vertex_count, 0);
+  dist_[static_cast<std::size_t>(in.source)] = 0;
+
   return true;
 }
 
 bool NalitovDDijkstrasAlgorithmTBB::RunImpl() {
-  const InType &in = GetInput();
-  if (graph_.size() != static_cast<std::size_t>(in.n)) {
-    return false;
+  const int n = GetInput().n;
+  const auto vertex_count = static_cast<std::size_t>(n);
+
+  std::vector<std::atomic<Cost>> atomic_dist(vertex_count);
+
+  for (std::size_t vi = 0; vi < vertex_count; ++vi) {
+    atomic_dist[vi].store(dist_[vi], std::memory_order_relaxed);
   }
 
-  const std::vector<Cost> result = ComputeShortestPaths(in.source, graph_);
-  if (result.size() != static_cast<std::size_t>(in.n)) {
-    return false;
+  for (int step = 0; step < n; ++step) {
+    const BestVertex pivot = SelectBestVertex(visited_, atomic_dist, n);
+
+    if (pivot.vtx == -1 || pivot.cost == kInf) {
+      break;
+    }
+
+    visited_[static_cast<std::size_t>(pivot.vtx)] = 1;
+
+    const auto &neighbors = graph_[static_cast<std::size_t>(pivot.vtx)];
+    RelaxNeighbors(neighbors, pivot.cost, visited_, atomic_dist);
   }
 
-  OutType total = 0;
-  if (!SumReachableDistances(result, total)) {
-    return false;
-  }
-  GetOutput() = total;
+  GetOutput() = static_cast<OutType>(SumDistances(atomic_dist, vertex_count));
+
   return true;
 }
 

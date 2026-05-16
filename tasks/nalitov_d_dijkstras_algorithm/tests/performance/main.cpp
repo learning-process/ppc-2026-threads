@@ -7,6 +7,7 @@
 #include "nalitov_d_dijkstras_algorithm/common/include/common.hpp"
 #include "nalitov_d_dijkstras_algorithm/omp/include/ops_omp.hpp"
 #include "nalitov_d_dijkstras_algorithm/seq/include/ops_seq.hpp"
+#include "nalitov_d_dijkstras_algorithm/stl/include/ops_stl.hpp"
 #include "nalitov_d_dijkstras_algorithm/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -58,7 +59,9 @@ const auto kOmpPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, NalitovDDijkstrasAlgorithmOmp>(PPC_SETTINGS_nalitov_d_dijkstras_algorithm);
 const auto kTbbPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, NalitovDDijkstrasAlgorithmTBB>(PPC_SETTINGS_nalitov_d_dijkstras_algorithm);
-const auto kAllPerfTasks = std::tuple_cat(kSeqPerfTasks, kOmpPerfTasks, kTbbPerfTasks);
+const auto kStlPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, NalitovDDijkstrasAlgorithmSTL>(PPC_SETTINGS_nalitov_d_dijkstras_algorithm);
+const auto kAllPerfTasks = std::tuple_cat(kSeqPerfTasks, kOmpPerfTasks, kTbbPerfTasks, kStlPerfTasks);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
