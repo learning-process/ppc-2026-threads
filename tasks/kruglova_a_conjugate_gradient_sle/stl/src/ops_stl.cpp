@@ -91,7 +91,8 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
   for (int iter = 0; iter < max_iter; ++iter) {
     // 1. Матрично-векторное умножение: ap = A * p
     if (num_threads > 1) {
-      launch_parallel(n, num_threads, [&](int start, int end, int tid) {
+      // Имя tid закомментировано, чтобы избежать предупреждения unused-parameter
+      launch_parallel(n, num_threads, [&](int start, int end, int /*tid*/) {
         for (int i = start; i < end; ++i) {
           double sum = 0.0;
           size_t row_offset = static_cast<size_t>(i) * n;
@@ -169,7 +170,8 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
     // 4. Расчет коэффициента beta и обновление вектора направлений p
     const double beta = rsnew / rsold;
     if (num_threads > 1) {
-      launch_parallel(n, num_threads, [&](int start, int end, int tid) {
+      // Имя tid закомментировано, чтобы избежать предупреждения unused-parameter
+      launch_parallel(n, num_threads, [&](int start, int end, int /*tid*/) {
         for (int i = start; i < end; ++i) {
           p[i] = r[i] + beta * p[i];
         }
