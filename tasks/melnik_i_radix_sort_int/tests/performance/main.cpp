@@ -8,6 +8,7 @@
 #include "melnik_i_radix_sort_int/common/include/common.hpp"
 #include "melnik_i_radix_sort_int/omp/include/ops_omp.hpp"
 #include "melnik_i_radix_sort_int/seq/include/ops_seq.hpp"
+#include "melnik_i_radix_sort_int/stl/include/ops_stl.hpp"
 #include "melnik_i_radix_sort_int/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -55,8 +56,8 @@ TEST_P(MelnikIRadixSortIntPerfTests, SortPerformance) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, MelnikIRadixSortIntSEQ, MelnikIRadixSortIntOMP, MelnikIRadixSortIntTBB>(
-        PPC_SETTINGS_melnik_i_radix_sort_int);
+    ppc::util::MakeAllPerfTasks<InType, MelnikIRadixSortIntSEQ, MelnikIRadixSortIntOMP, MelnikIRadixSortIntSTL,
+                                MelnikIRadixSortIntTBB>(PPC_SETTINGS_melnik_i_radix_sort_int);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

@@ -6,6 +6,7 @@
 #include <string>
 #include <tuple>
 
+#include "afanasyev_a_integ_rect_method/all/include/ops_all.hpp"
 #include "afanasyev_a_integ_rect_method/common/include/common.hpp"
 #include "afanasyev_a_integ_rect_method/omp/include/ops_omp.hpp"
 #include "afanasyev_a_integ_rect_method/seq/include/ops_seq.hpp"
@@ -69,6 +70,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<AfanasyevAInte
                                            ppc::util::AddFuncTask<AfanasyevAIntegRectMethodSTL, InType>(
                                                kTestParam, PPC_SETTINGS_afanasyev_a_integ_rect_method),
                                            ppc::util::AddFuncTask<AfanasyevAIntegRectMethodTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_afanasyev_a_integ_rect_method),
+                                           ppc::util::AddFuncTask<AfanasyevAIntegRectMethodALL, InType>(
                                                kTestParam, PPC_SETTINGS_afanasyev_a_integ_rect_method));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
