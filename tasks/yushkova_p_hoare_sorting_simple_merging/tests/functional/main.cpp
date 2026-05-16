@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <functional>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -43,7 +44,7 @@ class YushkovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
   }
 
   [[nodiscard]] static bool IsSorted(const OutType &data) {
-    return std::ranges::adjacent_find(data, [](const int &a, const int &b) { return a > b; }) == data.end();
+    return std::ranges::adjacent_find(data, std::greater<>()) == data.end();
   }
 
   InType GetTestInputData() final {

@@ -18,6 +18,9 @@ class YushkovaPHoareSortingSimpleMergingSTL : public BaseTask {
   static int HoarePartition(std::vector<int> &values, int left, int right);
   static void HoareQuickSort(std::vector<int> &values, int left, int right);
   static std::vector<int> SimpleMerge(const std::vector<int> &left, const std::vector<int> &right);
+  static void SortHalfIfNeeded(std::vector<int> &values);
+  static void SortHalvesSequential(std::vector<int> &left, std::vector<int> &right);
+  static void SortHalvesParallel(std::vector<int> &left, std::vector<int> &right);
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;

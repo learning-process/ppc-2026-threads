@@ -75,6 +75,42 @@ std::vector<int> YushkovaPHoareSortingSimpleMergingSTL::SimpleMerge(const std::v
   return merged;
 }
 
+void YushkovaPHoareSortingSimpleMergingSTL::SortHalfIfNeeded(std::vector<int> &values) {
+  if (values.size() > 1) {
+    HoareQuickSort(values, 0, static_cast<int>(values.size()) - 1);
+  }
+}
+
+void YushkovaPHoareSortingSimpleMergingSTL::SortHalvesSequential(std::vector<int> &left, std::vector<int> &right) {
+  SortHalfIfNeeded(left);
+  SortHalfIfNeeded(right);
+}
+
+void YushkovaPHoareSortingSimpleMergingSTL::SortHalvesParallel(std::vector<int> &left, std::vector<int> &right) {
+  std::exception_ptr exception_ptr;
+  std::thread left_worker([&] {
+    try {
+      SortHalfIfNeeded(left);
+    } catch (...) {
+      exception_ptr = std::current_exception();
+    }
+  });
+
+  try {
+    SortHalfIfNeeded(right);
+  } catch (...) {
+    if (!exception_ptr) {
+      exception_ptr = std::current_exception();
+    }
+  }
+
+  left_worker.join();
+
+  if (exception_ptr) {
+    std::rethrow_exception(exception_ptr);
+  }
+}
+
 bool YushkovaPHoareSortingSimpleMergingSTL::ValidationImpl() {
   return !GetInput().empty();
 }
@@ -96,38 +132,9 @@ bool YushkovaPHoareSortingSimpleMergingSTL::RunImpl() {
 
   const int concurrency = std::max(1, ppc::util::GetNumThreads());
   if (concurrency == 1) {
-    if (left.size() > 1) {
-      HoareQuickSort(left, 0, static_cast<int>(left.size()) - 1);
-    }
-    if (right.size() > 1) {
-      HoareQuickSort(right, 0, static_cast<int>(right.size()) - 1);
-    }
+    SortHalvesSequential(left, right);
   } else {
-    std::exception_ptr exception_ptr;
-    std::thread left_worker([&] {
-      try {
-        if (left.size() > 1) {
-          HoareQuickSort(left, 0, static_cast<int>(left.size()) - 1);
-        }
-      } catch (...) {
-        exception_ptr = std::current_exception();
-      }
-    });
-
-    try {
-      if (right.size() > 1) {
-        HoareQuickSort(right, 0, static_cast<int>(right.size()) - 1);
-      }
-    } catch (...) {
-      if (!exception_ptr) {
-        exception_ptr = std::current_exception();
-      }
-    }
-    left_worker.join();
-
-    if (exception_ptr) {
-      std::rethrow_exception(exception_ptr);
-    }
+    SortHalvesParallel(left, right);
   }
 
   values = SimpleMerge(left, right);
