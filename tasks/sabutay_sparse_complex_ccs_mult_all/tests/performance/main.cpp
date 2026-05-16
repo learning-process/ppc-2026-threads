@@ -1,7 +1,12 @@
 #include <gtest/gtest.h>
 
+#include <mpi.h>
+#include <omp.h>
+
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <random>
 #include <set>
 #include <tuple>
@@ -15,9 +20,30 @@
 #include "sabutay_sparse_complex_ccs_mult_all/stl/include/ops_stl.hpp"
 #include "sabutay_sparse_complex_ccs_mult_all/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace sabutay_sparse_complex_ccs_mult_all {
 namespace {
+
+void SetPerfAttributesForTask(ppc::task::TypeOfTask kind, ppc::performance::PerfAttr &perf_attrs) {
+  if (kind == ppc::task::TypeOfTask::kMPI || kind == ppc::task::TypeOfTask::kALL) {
+    const double t0 = ppc::util::GetTimeMPI();
+    perf_attrs.current_timer = std::function<double()>([t0]() { return ppc::util::GetTimeMPI() - t0; });
+  } else if (kind == ppc::task::TypeOfTask::kOMP) {
+    const double t0 = omp_get_wtime();
+    perf_attrs.current_timer = std::function<double()>([t0]() { return omp_get_wtime() - t0; });
+  } else if (kind == ppc::task::TypeOfTask::kSEQ || kind == ppc::task::TypeOfTask::kSTL ||
+             kind == ppc::task::TypeOfTask::kTBB) {
+    const auto t0 = std::chrono::high_resolution_clock::now();
+    perf_attrs.current_timer = std::function<double()>([t0]() {
+      const auto now = std::chrono::high_resolution_clock::now();
+      return std::chrono::duration<double>(now - t0).count();
+    });
+  } else {
+    throw std::runtime_error("The task type is not supported for performance testing.");
+  }
+}
+
 
 CCS BuildRandomCcs(int rows, int cols, int seed, int max_per_col) {
   std::mt19937 gen(static_cast<std::uint32_t>(seed));
@@ -50,6 +76,40 @@ CCS BuildRandomCcs(int rows, int cols, int seed, int max_per_col) {
 }  // namespace
 
 class SabutayRunPerfTestThreadsALL : public ppc::util::BaseRunPerfTests<InType, OutType> {
+ public:
+  void ExecuteTest(const ppc::util::PerfTestParam<InType, OutType> &perf_test_param) {
+    auto task_getter = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTaskGetter)>(perf_test_param);
+    auto test_name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(perf_test_param);
+    auto mode = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(perf_test_param);
+
+    ASSERT_FALSE(test_name.find("unknown") != std::string::npos);
+    if (test_name.find("disabled") != std::string::npos) {
+      GTEST_SKIP();
+    }
+
+    const auto test_env_scope = ppc::util::test::MakePerTestEnvForCurrentGTest(test_name);
+
+    auto task = task_getter(GetTestInputData());
+    ppc::performance::Perf perf(task);
+    ppc::performance::PerfAttr perf_attr;
+    SetPerfAttributesForTask(task->GetDynamicTypeOfTask(), perf_attr);
+
+    if (mode == ppc::performance::PerfResults::TypeOfRunning::kPipeline) {
+      perf.PipelineRun(perf_attr);
+    } else if (mode == ppc::performance::PerfResults::TypeOfRunning::kTaskRun) {
+      perf.TaskRun(perf_attr);
+    } else {
+      throw std::runtime_error("The type of performance check for the task was not selected.");
+    }
+
+    if (ppc::util::GetMPIRank() == 0) {
+      perf.PrintPerfStatistic(test_name);
+    }
+
+    OutType output_data = task->GetOutput();
+    ASSERT_TRUE(CheckTestOutputData(output_data));
+  }
+
  protected:
   void SetUp() override {
     in_ = std::make_tuple(BuildRandomCcs(80, 90, 2027, 7), BuildRandomCcs(90, 70, 4044, 6));
