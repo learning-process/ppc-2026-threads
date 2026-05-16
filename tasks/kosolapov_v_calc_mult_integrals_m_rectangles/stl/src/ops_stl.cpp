@@ -2,8 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <future>
-#include <numeric>
+#include <thread>
 #include <tuple>
 #include <vector>
 
@@ -93,19 +94,19 @@ double KosolapovVCalcMultIntegralsMRectanglesSTL::RectanglesIntegral(int func_id
   double hx = (b - a) / steps;
   double hy = (d - c) / steps;
   size_t total = static_cast<size_t>(steps) * steps;
-  unsigned int num_threads = std::max(1u, std::thread::hardware_concurrency());
+  unsigned int num_threads = std::max(1U, std::thread::hardware_concurrency());
   size_t chunk_size = (total + num_threads - 1) / num_threads;
   std::vector<std::future<double>> futures;
   futures.reserve(num_threads);
-  for (unsigned int t = 0; t < num_threads; ++t) {
-    size_t start = t * chunk_size;
+  for (unsigned int thread_idx = 0; thread_idx < num_threads; thread_idx++) {
+    size_t start = thread_idx * chunk_size;
     size_t end = std::min(start + chunk_size, total);
     if (start >= end) {
       continue;
     }
     futures.push_back(std::async(std::launch::async, [=]() -> double {
       double local_sum = 0.0;
-      for (size_t idx = start; idx < end; ++idx) {
+      for (size_t idx = start; idx < end; idx++) {
         int i = static_cast<int>(idx / steps);
         int j = static_cast<int>(idx % steps);
         double x = a + ((i + 0.5) * hx);
