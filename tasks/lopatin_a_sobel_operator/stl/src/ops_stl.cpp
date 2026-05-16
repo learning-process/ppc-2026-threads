@@ -1,10 +1,13 @@
 #include "lopatin_a_sobel_operator/stl/include/ops_stl.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <thread>
+#include <vector>
 
 #include "lopatin_a_sobel_operator/common/include/common.hpp"
 #include "util/include/util.hpp"
