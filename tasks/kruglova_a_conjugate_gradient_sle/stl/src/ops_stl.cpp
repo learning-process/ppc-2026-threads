@@ -66,13 +66,12 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
   const int max_iter = n;
 
   for (int iter = 0; iter < max_iter; ++iter) {
-    // 1. ap = A * p
     if (num_threads > 1) {
       launch_parallel(n, [&](int start, int end, int /*tid*/) {
         for (int i = start; i < end; ++i) {
           double sum = 0.0;
           for (int j = 0; j < n; ++j) {
-            sum += a[i * n + j] * p[j];
+            sum += a[(i * n) + j] * p[j];
           }
           ap[i] = sum;
         }
@@ -81,13 +80,12 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
       for (int i = 0; i < n; ++i) {
         double sum = 0.0;
         for (int j = 0; j < n; ++j) {
-          sum += a[i * n + j] * p[j];
+          sum += a[(i * n) + j] * p[j];
         }
         ap[i] = sum;
       }
     }
 
-    // 2. p_ap = p * ap
     double p_ap = 0.0;
     if (num_threads > 1) {
       launch_parallel(n, [&](int start, int end, int tid) {
@@ -138,17 +136,16 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
       break;
     }
 
-    // 4. p = r + beta * p
     const double beta = rsnew / rsold;
     if (num_threads > 1) {
       launch_parallel(n, [&](int start, int end, int /*tid*/) {
         for (int i = start; i < end; ++i) {
-          p[i] = r[i] + beta * p[i];
+          p[i] = r[i] + (beta * p[i]);
         }
       });
     } else {
       for (int i = 0; i < n; ++i) {
-        p[i] = r[i] + beta * p[i];
+        p[i] = r[i] + (beta * p[i]);
       }
     }
 
