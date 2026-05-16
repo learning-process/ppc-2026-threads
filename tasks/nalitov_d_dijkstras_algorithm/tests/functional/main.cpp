@@ -91,7 +91,8 @@ const auto kTestTasksListStl = ppc::util::AddFuncTask<NalitovDDijkstrasAlgorithm
 const auto kTestTasksListAll = ppc::util::AddFuncTask<NalitovDDijkstrasAlgorithmALL, InType>(
     kTestParam, PPC_SETTINGS_nalitov_d_dijkstras_algorithm);
 
-const auto kTestTasksList = std::tuple_cat(kTestTasksListSeq, kTestTasksListOmp, kTestTasksListTbb, kTestTasksListStl, kTestTasksListAll);
+const auto kTestTasksList =
+    std::tuple_cat(kTestTasksListSeq, kTestTasksListOmp, kTestTasksListTbb, kTestTasksListStl, kTestTasksListAll);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
