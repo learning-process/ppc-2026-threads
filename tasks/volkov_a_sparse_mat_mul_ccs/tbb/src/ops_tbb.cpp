@@ -11,6 +11,39 @@
 
 namespace volkov_a_sparse_mat_mul_ccs {
 
+namespace {
+template <typename MatrixType>
+void ProcessColumn(int col_idx, const MatrixType &matrix_a, const MatrixType &matrix_b,
+                   std::vector<double> &col_accumulator, std::vector<int> &local_row_indices,
+                   std::vector<double> &local_values) {
+  int b_start = matrix_b.col_ptrs[col_idx];
+  int b_end = matrix_b.col_ptrs[col_idx + 1];
+
+  for (int k = b_start; k < b_end; ++k) {
+    int b_row = matrix_b.row_indices[k];
+    double b_val = matrix_b.values[k];
+
+    int a_start = matrix_a.col_ptrs[b_row];
+    int a_end = matrix_a.col_ptrs[b_row + 1];
+
+    for (int idx = a_start; idx < a_end; ++idx) {
+      int a_row = matrix_a.row_indices[idx];
+      double a_val = matrix_a.values[idx];
+      col_accumulator[a_row] += a_val * b_val;
+    }
+  }
+
+  for (int i = 0; i < matrix_a.rows_count; ++i) {
+    if (std::abs(col_accumulator[i]) > 1e-10) {
+      local_row_indices.push_back(i);
+      local_values.push_back(col_accumulator[i]);
+    }
+    col_accumulator[i] = 0.0;
+  }
+}
+
+}  // namespace
+
 VolkovASparseMatMulCcsTbb::VolkovASparseMatMulCcsTbb(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -41,30 +74,7 @@ bool VolkovASparseMatMulCcsTbb::RunImpl() {
     std::vector<double> col_accumulator(matrix_a.rows_count, 0.0);
 
     for (int j = range.begin(); j != range.end(); ++j) {
-      int b_start = matrix_b.col_ptrs[j];
-      int b_end = matrix_b.col_ptrs[j + 1];
-
-      for (int k = b_start; k < b_end; ++k) {
-        int b_row = matrix_b.row_indices[k];
-        double b_val = matrix_b.values[k];
-
-        int a_start = matrix_a.col_ptrs[b_row];
-        int a_end = matrix_a.col_ptrs[b_row + 1];
-
-        for (int idx = a_start; idx < a_end; ++idx) {
-          int a_row = matrix_a.row_indices[idx];
-          double a_val = matrix_a.values[idx];
-          col_accumulator[a_row] += a_val * b_val;
-        }
-      }
-
-      for (int i = 0; i < matrix_a.rows_count; ++i) {
-        if (std::abs(col_accumulator[i]) > 1e-10) {
-          local_row_indices[j].push_back(i);
-          local_values[j].push_back(col_accumulator[i]);
-        }
-        col_accumulator[i] = 0.0;
-      }
+      ProcessColumn(j, matrix_a, matrix_b, col_accumulator, local_row_indices[j], local_values[j]);
     }
   });
 
