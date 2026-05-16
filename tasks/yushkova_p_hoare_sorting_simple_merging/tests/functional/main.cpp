@@ -43,7 +43,7 @@ class YushkovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
   }
 
   [[nodiscard]] static bool IsSorted(const OutType &data) {
-    return std::ranges::adjacent_find(data, std::greater<int>()) == data.end();
+    return std::ranges::adjacent_find(data, std::greater<>()) == data.end();
   }
 
   InType GetTestInputData() final {
@@ -72,13 +72,12 @@ const std::array<TestType, 10U> kTestParam = {
     std::make_tuple(std::vector<int>{9, 9, 8, 8, 7, 7, 6, 6, 5, 5}, "pair_duplicates"),
     std::make_tuple(std::vector<int>{1000, -1000, 500, -500, 0, 250, -250}, "wide_range")};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<YushkovaPHoareSortingSimpleMergingSEQ, InType>(
-        kTestParam, PPC_SETTINGS_yushkova_p_hoare_sorting_simple_merging),
-    ppc::util::AddFuncTask<YushkovaPHoareSortingSimpleMergingOMP, InType>(
-        kTestParam, PPC_SETTINGS_yushkova_p_hoare_sorting_simple_merging),
-    ppc::util::AddFuncTask<YushkovaPHoareSortingSimpleMergingTBB, InType>(
-        kTestParam, PPC_SETTINGS_yushkova_p_hoare_sorting_simple_merging));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<YushkovaPHoareSortingSimpleMergingSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_yushkova_p_hoare_sorting_simple_merging),
+                                           ppc::util::AddFuncTask<YushkovaPHoareSortingSimpleMergingOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_yushkova_p_hoare_sorting_simple_merging),
+                                           ppc::util::AddFuncTask<YushkovaPHoareSortingSimpleMergingTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_yushkova_p_hoare_sorting_simple_merging));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
