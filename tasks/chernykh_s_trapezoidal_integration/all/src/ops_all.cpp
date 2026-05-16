@@ -1,7 +1,7 @@
 #include "chernykh_s_trapezoidal_integration/all/include/ops_all.hpp"
 
-#include <omp.h>
 #include <mpi.h>
+#include <omp.h>
 
 #include <algorithm>
 #include <cmath>
@@ -49,9 +49,10 @@ double ChernykhSTrapezoidalIntegrationALL::CalculatePointAndWeight(const Integra
   return weight;
 }
 
-double ChernykhSTrapezoidalIntegrationALL::OnProcessCalculate(const IntegrationInType &input, std::size_t dims, int64_t start, int64_t end) {
+double ChernykhSTrapezoidalIntegrationALL::OnProcessCalculate(const IntegrationInType &input, std::size_t dims,
+                                                              int64_t start, int64_t end) {
   double total_sum = 0.0;
-  
+
 #pragma omp parallel default(none) shared(input, dims, start, end) reduction(+ : total_sum)
   {
     std::vector<std::size_t> local_counters(dims);
@@ -77,42 +78,46 @@ bool ChernykhSTrapezoidalIntegrationALL::RunImpl() {
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-
   auto &input = this->GetInput();
-
   std::size_t dims = 0;
   if (rank == 0) {
     dims = input.limits.size();
   }
   MPI_Bcast(&dims, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
-
   if (rank != 0) {
     input.steps.resize(dims);
     input.limits.resize(dims);
   }
-
   MPI_Bcast(input.steps.data(), dims, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(input.limits.data(), dims * 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
+  // придется захардкодить выбор функции, чтобы передать их на другие процессы
   int func_id = 0;
   if (rank == 0) {
     if (dims == 1) {
       if (input.steps[0] == 1000) {
-        if (input.limits[0].second > 3.0) func_id = 5; // Sin_1D
-        else {
+        if (input.limits[0].second > 3.0) {
+          func_id = 5;  // Sin_1D
+        } else {
           std::vector<double> test_pt = {2.0};
           double val = input.func(test_pt);
-          if (std::abs(val - 2.0) < 1e-5) func_id = 1;      // FLinear
-          else if (std::abs(val - 4.0) < 1e-5) func_id = 4; // FParabola
+          if (std::abs(val - 2.0) < 1e-5) {
+            func_id = 1;  // FLinear
+          } else if (std::abs(val - 4.0) < 1e-5) {
+            func_id = 4;  // FParabola
+          }
         }
       } else if (input.steps[0] == 100) {
-        func_id = 6; // Zero_Range
+        func_id = 6;  // Zero_Range
       }
     } else if (dims == 2) {
-      func_id = 2; // Sum_2D
+      func_id = 2;  // Sum_2D
     } else if (dims == 3) {
-      if (input.steps[0] == 400) func_id = 7; // Perf test
-      else func_id = 3;                       // Constant_3D
+      if (input.steps[0] == 400) {
+        func_id = 7;  // perfomans
+      } else {
+        func_id = 3;  // Constant_3D
+      }
     }
   }
 
@@ -129,8 +134,8 @@ bool ChernykhSTrapezoidalIntegrationALL::RunImpl() {
   } else if (func_id == 5) {
     input.func = [](const std::vector<double> &x) { return std::sin(x[0]); };
   } else if (func_id == 7) {
-    input.func = [](const std::vector<double> &x) -> double { 
-      return std::sin(x[0]) * std::cos(x[1]) * std::exp(x[2]); 
+    input.func = [](const std::vector<double> &x) -> double {
+      return std::sin(x[0]) * std::cos(x[1]) * std::exp(x[2]);
     };
   }
 
@@ -159,36 +164,20 @@ bool ChernykhSTrapezoidalIntegrationALL::RunImpl() {
 
   int64_t my_borders[2] = {0, 0};
 
-  MPI_Scatter(
-      rank == 0 ? borders.data() : nullptr,
-      2,
-      MPI_INT64_T,
-      my_borders,
-      2,
-      MPI_INT64_T,
-      0,
-      MPI_COMM_WORLD
-  );
-
+  MPI_Scatter(rank == 0 ? borders.data() : nullptr, 2, MPI_INT64_T, my_borders, 2, MPI_INT64_T, 0, MPI_COMM_WORLD);
   int64_t my_start = my_borders[0];
   int64_t my_end = my_borders[1];
-
   double local_sum = OnProcessCalculate(input, dims, my_start, my_end);
-
   double global_sum = 0.0;
-  MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-
-  if (rank == 0) {
-    double h_prod = 1.0;
-    for (std::size_t i = 0; i < dims; ++i) {
-      h_prod *= (input.limits[i].second - input.limits[i].first) / static_cast<double>(input.steps[i]);
-    }
-    this->GetOutput() = global_sum * h_prod;
+  MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  double h_prod = 1.0;
+  for (std::size_t i = 0; i < dims; ++i) {
+    h_prod *= (input.limits[i].second - input.limits[i].first) / static_cast<double>(input.steps[i]);
   }
+  this->GetOutput() = global_sum * h_prod;
 
   return true;
 }
-
 bool ChernykhSTrapezoidalIntegrationALL::PostProcessingImpl() {
   return true;
 }
