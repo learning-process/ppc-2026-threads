@@ -22,9 +22,9 @@ namespace {
 std::vector<NeighborOffsetAll> GetFirstPassNeighbors() {
   std::vector<NeighborOffsetAll> neighbors(4);
   neighbors[0] = {.di = -1, .dj = -1, .check_i_min = 1, .check_i_max = 0, .check_j_min = 1, .check_j_max = 0};
-  neighbors[1] = {.di = -1, .dj = 0,  .check_i_min = 1, .check_i_max = 0, .check_j_min = 0, .check_j_max = 0};
-  neighbors[2] = {.di = -1, .dj = 1,  .check_i_min = 1, .check_i_max = 0, .check_j_min = 0, .check_j_max = 1};
-  neighbors[3] = {.di = 0,  .dj = -1, .check_i_min = 0, .check_i_max = 0, .check_j_min = 1, .check_j_max = 0};
+  neighbors[1] = {.di = -1, .dj = 0, .check_i_min = 1, .check_i_max = 0, .check_j_min = 0, .check_j_max = 0};
+  neighbors[2] = {.di = -1, .dj = 1, .check_i_min = 1, .check_i_max = 0, .check_j_min = 0, .check_j_max = 1};
+  neighbors[3] = {.di = 0, .dj = -1, .check_i_min = 0, .check_i_max = 0, .check_j_min = 1, .check_j_max = 0};
   return neighbors;
 }
 
@@ -100,51 +100,57 @@ bool MarkingComponentsALL::IsValidNeighbor(int i, int j, const NeighborOffsetAll
   return true;
 }
 
-void MarkingComponentsALL::ProcessNeighborFirstPass(int i, int j, const NeighborOffsetAll &offset,
-                                                    std::vector<int> &neighbor_labels, int &min_label) {
-  if (!IsValidNeighbor(i, j, offset)) {
-    return;
-  }
-
-  int ni = i + offset.di;
-  int nj = j + offset.dj;
-
-  if (labels_[static_cast<size_t>(ni)][static_cast<size_t>(nj)] != 0) {
-    int label = labels_[static_cast<size_t>(ni)][static_cast<size_t>(nj)];
-    neighbor_labels.push_back(label);
-    min_label = std::min(label, min_label);
-  }
-}
-
 void MarkingComponentsALL::FirstPass() {
   const auto &input = GetInput();
   int next_label = 1;
-  std::vector<NeighborOffsetAll> first_pass_neighbors = GetFirstPassNeighbors();
+  auto neighbors = GetFirstPassNeighbors();
 
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
-      size_t idx = (static_cast<size_t>(i) * static_cast<size_t>(cols_)) + static_cast<size_t>(j) + 2;
+      size_t idx = static_cast<size_t>(i) * static_cast<size_t>(cols_) + static_cast<size_t>(j) + 2;
 
       if (input[idx] != 0) {
         continue;
       }
-      
-      std::vector<int> neighbor_labels;
-      int min_label = next_label;
 
-      for (const auto &neighbor : first_pass_neighbors) {
-        ProcessNeighborFirstPass(i, j, neighbor, neighbor_labels, min_label);
+      int min_label = next_label;
+      bool has_neighbors = false;
+
+      for (const auto &neighbor : neighbors) {
+        if (!IsValidNeighbor(i, j, neighbor)) {
+          continue;
+        }
+
+        int ni = i + neighbor.di;
+        int nj = j + neighbor.dj;
+        int neighbor_label = labels_[static_cast<size_t>(ni)][static_cast<size_t>(nj)];
+
+        if (neighbor_label != 0) {
+          has_neighbors = true;
+          if (neighbor_label < min_label) {
+            min_label = neighbor_label;
+          }
+        }
       }
 
-      if (neighbor_labels.empty()) {
+      if (!has_neighbors) {
         labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = next_label;
         equivalent_labels_.push_back(next_label);
         ++next_label;
       } else {
         labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = min_label;
-        for (int label : neighbor_labels) {
-          if (label != min_label) {
-            UnionLabels(equivalent_labels_, label, min_label);
+
+        for (const auto &neighbor : neighbors) {
+          if (!IsValidNeighbor(i, j, neighbor)) {
+            continue;
+          }
+
+          int ni = i + neighbor.di;
+          int nj = j + neighbor.dj;
+          int neighbor_label = labels_[static_cast<size_t>(ni)][static_cast<size_t>(nj)];
+
+          if (neighbor_label != 0 && neighbor_label != min_label) {
+            UnionLabels(equivalent_labels_, neighbor_label, min_label);
           }
         }
       }
