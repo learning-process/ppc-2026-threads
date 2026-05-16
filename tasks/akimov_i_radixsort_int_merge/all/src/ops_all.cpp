@@ -9,7 +9,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
-#include <thread>
 #include <utility>
 #include <vector>
 
@@ -39,7 +38,7 @@ void CountingSortStep(std::vector<int>::iterator in_begin, std::vector<int>::ite
   for (auto it = in_begin; it != in_end; ++it) {
     auto raw_val = static_cast<unsigned int>(*it);
     unsigned int byte_val = (raw_val >> shift) & 0xFF;
-    *(out_begin + static_cast<int64_t>(prefix.at(byte_val))) = *it;
+    *(out_begin + prefix.at(byte_val)) = *it;
     prefix.at(byte_val)++;
   }
 }
@@ -63,7 +62,7 @@ void RadixSortLocal(std::vector<int>::iterator begin, std::vector<int>::iterator
 
 void ParallelMerge(std::vector<int> &arr, const std::vector<int> &offsets, int num_blocks) {
   for (int step = 1; step < num_blocks; step *= 2) {
-    tbb::parallel_for(0, num_blocks, [&](int i) {
+    tbb::parallel_for(0, num_blocks, [&, step](int i) {
       if (i % (2 * step) == 0 && i + step < num_blocks) {
         auto begin = arr.begin() + offsets[i];
         auto middle = arr.begin() + offsets[i + step];
@@ -135,22 +134,6 @@ bool AkimovIRadixSortIntMergeALL::RunImpl() {
     local_data[i] ^= kSignMask;
   }
 
-  std::vector<int> temp_copy(local_size);
-  int num_stl_threads = std::min(4, local_size);
-  int chunk = (local_size + num_stl_threads - 1) / num_stl_threads;
-  std::vector<std::thread> stl_threads;
-  for (int thread_idx = 0; thread_idx < num_stl_threads; ++thread_idx) {
-    int start = thread_idx * chunk;
-    int end = std::min(start + chunk, local_size);
-    stl_threads.emplace_back([&local_data, &temp_copy, start, end]() {
-      std::copy(local_data.begin() + start, local_data.begin() + end, temp_copy.begin() + start);
-    });
-  }
-  for (auto &th : stl_threads) {
-    th.join();
-  }
-  local_data.swap(temp_copy);
-
   std::vector<int> global_data;
   if (rank == 0) {
     global_data.resize(n);
@@ -176,7 +159,6 @@ bool AkimovIRadixSortIntMergeALL::RunImpl() {
   }
   MPI_Bcast(GetOutput().data(), output_size, MPI_INT, 0, MPI_COMM_WORLD);
 
-  MPI_Barrier(MPI_COMM_WORLD);
   return true;
 }
 
