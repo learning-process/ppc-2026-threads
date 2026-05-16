@@ -9,7 +9,9 @@
 #include <vector>
 
 #include "ilin_a_algorithm_graham/common/include/common.hpp"
+#include "ilin_a_algorithm_graham/omp/include/ops_omp.hpp"
 #include "ilin_a_algorithm_graham/seq/include/ops_seq.hpp"
+#include "ilin_a_algorithm_graham/stl/include/ops_stl.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -66,7 +68,9 @@ const std::array<TestType, 3> kTestCases = {
                     OutType{{0, 0}, {3, 0}, {3, 3}, {0, 3}})};
 
 const auto kTestTasksList =
-    ppc::util::AddFuncTask<IlinAGrahamSEQ, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham);
+    std::tuple_cat(ppc::util::AddFuncTask<IlinAGrahamSEQ, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham),
+                   ppc::util::AddFuncTask<IlinAGrahamOMP, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham),
+                   ppc::util::AddFuncTask<IlinAGrahamSTL, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "agafonov_i_matrix_ccs_seq/common/include/common.hpp"
+#include "agafonov_i_matrix_ccs_seq/omp/include/ops_omp.hpp"
 #include "agafonov_i_matrix_ccs_seq/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -107,12 +108,16 @@ const std::array<TestType, 4> kTestParams = {std::make_tuple(0, "Basic_2x2"), st
                                              std::make_tuple(2, "Zero_Result"),
                                              std::make_tuple(3, "Rectangular_Check")};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<AgafonovIMatrixCCSSeq, InType>(kTestParams, PPC_SETTINGS_agafonov_i_matrix_ccs_seq));
+const auto kSeqTasks =
+    ppc::util::AddFuncTask<AgafonovIMatrixCCSSeq, InType>(kTestParams, PPC_SETTINGS_agafonov_i_matrix_ccs_seq);
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+const auto kOmpTasks =
+    ppc::util::AddFuncTask<AgafonovIMatrixCCSOMP, InType>(kTestParams, PPC_SETTINGS_agafonov_i_matrix_ccs_seq);
 
-INSTANTIATE_TEST_SUITE_P(AgafonovIndependentTests, AgafonovIFuncTests, kGtestValues,
+INSTANTIATE_TEST_SUITE_P(AgafonovSeqTests, AgafonovIFuncTests, ppc::util::ExpandToValues(kSeqTasks),
+                         AgafonovIFuncTests::PrintTestParam);
+
+INSTANTIATE_TEST_SUITE_P(AgafonovOmpTests, AgafonovIFuncTests, ppc::util::ExpandToValues(kOmpTasks),
                          AgafonovIFuncTests::PrintTestParam);
 }  // namespace
 
