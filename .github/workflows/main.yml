@@ -19,16 +19,16 @@ jobs:
   pre-commit:
     uses: ./.github/workflows/pre-commit.yml
   ubuntu:
-      needs:
-        - pre-commit
-      uses: ./.github/workflows/ubuntu.yml
-      with:
-        is_nightly: ${{ github.event_name == 'schedule' }}
-      permissions:
-        contents: read
-        packages: read
-        issues: write
-        pull-requests: write
+    needs:
+      - pre-commit
+    uses: ./.github/workflows/ubuntu.yml
+    with:
+      is_nightly: ${{ github.event_name == 'schedule' }}
+    permissions:
+      contents: read
+      packages: read
+      issues: write
+      pull-requests: write
   mac:
     needs:
       - pre-commit
