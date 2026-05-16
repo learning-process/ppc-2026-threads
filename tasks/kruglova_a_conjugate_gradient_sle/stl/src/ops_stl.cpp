@@ -1,5 +1,6 @@
 #include "kruglova_a_conjugate_gradient_sle/stl/include/ops_stl.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <numeric>
@@ -8,31 +9,33 @@
 
 namespace kruglova_a_conjugate_gradient_sle {
 
-namespace {
-
 template <typename Func>
-void launch_parallel_tasks(int total, int num_threads, Func &&func) {
+void LaunchParallelTasks(int total, int num_threads, Func &&func) {
   if (num_threads <= 1) {
     func(0, total, 0);
     return;
   }
 
-  std::vector<std::thread> workers;
-  int chunk = total / num_threads;
-  workers.reserve(num_threads);
+  std::vector<std::thread> threads;
+  threads.reserve(num_threads);
+  int chunk = (total + num_threads - 1) / num_threads;
 
   for (int i = 0; i < num_threads; ++i) {
     int start = i * chunk;
-    int end = (i == num_threads - 1) ? total : (i + 1) * chunk;
-    workers.emplace_back(func, start, end, i);
+    int end = std::min(start + chunk, total);
+    if (start >= total) {
+      break;
+    }
+
+    threads.emplace_back([&func, start, end, i]() { std::forward<Func>(func)(start, end, i); });
   }
-  for (auto &w : workers) {
-    w.join();
+
+  for (auto &t : threads) {
+    if (t.joinable()) {
+      t.join();
+    }
   }
 }
-
-}  // namespace
-
 KruglovaAConjGradSleSTL::KruglovaAConjGradSleSTL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -60,9 +63,7 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
   }
 
   int num_threads = (n >= 250) ? static_cast<int>(std::thread::hardware_concurrency()) : 1;
-  if (num_threads < 1) {
-    num_threads = 1;
-  }
+  num_threads = std::max(num_threads, 1);
 
   std::vector<double> r = b;
   std::vector<double> p = r;
@@ -73,7 +74,7 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
   const double tolerance = 1e-8;
 
   for (int iter = 0; iter < n; ++iter) {
-    launch_parallel_tasks(n, num_threads, [&](int start, int end, int) {
+    LaunchParallelTasks(n, num_threads, [&](int start, int end, int) {
       for (int i = start; i < end; ++i) {
         double sum = 0.0;
         for (int j = 0; j < n; ++j) {
@@ -84,7 +85,7 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
     });
 
     double p_ap = 0.0;
-    launch_parallel_tasks(n, num_threads, [&](int start, int end, int tid) {
+    LaunchParallelTasks(n, num_threads, [&](int start, int end, int tid) {
       double local = 0.0;
       for (int i = start; i < end; ++i) {
         local += p[i] * ap[i];
@@ -100,7 +101,7 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
     const double alpha = rsold / p_ap;
 
     double rsnew = 0.0;
-    launch_parallel_tasks(n, num_threads, [&](int start, int end, int tid) {
+    LaunchParallelTasks(n, num_threads, [&](int start, int end, int tid) {
       double local_rs = 0.0;
       for (int i = start; i < end; ++i) {
         x[i] += alpha * p[i];
@@ -116,7 +117,7 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
     }
 
     const double beta = rsnew / rsold;
-    launch_parallel_tasks(n, num_threads, [&](int start, int end, int) {
+    LaunchParallelTasks(n, num_threads, [&](int start, int end, int) {
       for (int i = start; i < end; ++i) {
         p[i] = r[i] + (beta * p[i]);
       }
