@@ -30,8 +30,8 @@ class YushkovaPRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, 
 
   bool CheckTestOutputData(OutType &output_data) final {
     return output_data.size() == input_data_.size() &&
-           std::adjacent_find(output_data.begin(), output_data.end(),
-                              [](const int &a, const int &b) { return a > b; }) == output_data.end();
+           std::ranges::adjacent_find(output_data, [](const int &a, const int &b) { return a > b; }) ==
+               output_data.end();
   }
 
   InType GetTestInputData() final {
