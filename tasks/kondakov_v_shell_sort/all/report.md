@@ -1,6 +1,6 @@
 # Сортировка Шелла с простым слиянием - ALL
 - Student: Кондаков Владислав Сергеевич
-- Technology: ALL
+- Technology: MPI+STL
 - Variant: 15
 
 ## 1. Контекст
