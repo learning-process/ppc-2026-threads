@@ -80,7 +80,6 @@ const std::vector<ActualParamType> kSeqParams = {{CreateSeqTask, "seq_size_128",
 const std::vector<ActualParamType> kOmpParams = {{CreateOmpTask, "omp_size_128", TestType{128, "size_128"}},
                                                  {CreateOmpTask, "omp_size_512", TestType{512, "size_512"}},
                                                  {CreateOmpTask, "omp_size_1024", TestType{1024, "size_1024"}}};
-}  // namespace
 
 INSTANTIATE_TEST_SUITE_P(SequentialTests, TitaevBatcherRadixFuncTests, ::testing::ValuesIn(kSeqParams),
                          TitaevBatcherRadixFuncTests::PrintTestParam);
@@ -88,4 +87,5 @@ INSTANTIATE_TEST_SUITE_P(SequentialTests, TitaevBatcherRadixFuncTests, ::testing
 INSTANTIATE_TEST_SUITE_P(OpenMPTests, TitaevBatcherRadixFuncTests, ::testing::ValuesIn(kOmpParams),
                          TitaevBatcherRadixFuncTests::PrintTestParam);
 
+}  // namespace
 }  // namespace titaev_m_sortirovka_betchera
