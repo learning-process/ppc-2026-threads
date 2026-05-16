@@ -19,6 +19,11 @@ jobs:
   pre-commit:
     uses: ./.github/workflows/pre-commit.yml
   ubuntu:
+    permissions:
+      contents: read
+      packages: read
+      issues: write
+      pull-requests: write 
     needs:
       - pre-commit
     uses: ./.github/workflows/ubuntu.yml
@@ -39,7 +44,11 @@ jobs:
       - windows
     uses: ./.github/workflows/perf.yml
 
-  pages:
+   pages:
     needs:
       - perf
     uses: ./.github/workflows/pages.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
