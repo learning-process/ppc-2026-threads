@@ -170,9 +170,7 @@ bool GonozovLBitSortBatcherMergeALL::RunImpl() {
 
   size_t chunk_size = new_size / num_chunks;
   chunk_size = std::max<size_t>(1, chunk_size);
-
   double *raw_data = local_data_.data();
-
   int num_chunks_int = static_cast<int>(num_chunks);
 
   tbb::parallel_for(0, num_chunks_int, [&](int i) { SortChunkALL(raw_data, i, chunk_size); });
