@@ -52,7 +52,6 @@ const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<Image, LinearImageFilteringVerticalSeq, LinearImageFilteringVerticalOMP,
                                 LinearImageFilteringVerticalSTL, LinearImageFilteringVerticalTBB>(
         PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
-> (PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = FedoseevPerfTest::CustomPerfTestName;
