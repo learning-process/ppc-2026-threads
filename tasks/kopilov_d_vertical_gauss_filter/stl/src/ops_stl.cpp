@@ -30,7 +30,7 @@ uint8_t GetPixelMirroredSTL(const std::vector<uint8_t> &src, int column, int row
   } else if (new_row >= height) {
     new_row = (2 * height) - new_row - 1;
   }
-  auto idx = static_cast<size_t>(new_row) * static_cast<size_t>(width) + static_cast<size_t>(new_col);
+  auto idx = (static_cast<size_t>(new_row) * static_cast<size_t>(width)) + static_cast<size_t>(new_col);
   return src[idx];
 }
 
@@ -89,7 +89,7 @@ bool KopilovDVerticalGaussFilterSTL::RunImpl() {
     threads.emplace_back([&, start_column, end_column]() {
       for (int col_idx = start_column; col_idx < end_column; ++col_idx) {
         for (int row_idx = 0; row_idx < height; ++row_idx) {
-          auto out_idx = static_cast<size_t>(row_idx) * static_cast<size_t>(width) + static_cast<size_t>(col_idx);
+          auto out_idx = (static_cast<size_t>(row_idx) * static_cast<size_t>(width)) + static_cast<size_t>(col_idx);
           result[out_idx] = ApplyGaussKernel(matrix, col_idx, row_idx, width, height);
         }
       }
