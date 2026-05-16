@@ -7,6 +7,7 @@
 #include <tuple>
 #include <vector>
 
+#include "sabirov_s_monte_carlo/all/include/ops_all.hpp"
 #include "sabirov_s_monte_carlo/common/include/common.hpp"
 #include "sabirov_s_monte_carlo/omp/include/ops_omp.hpp"
 #include "sabirov_s_monte_carlo/seq/include/ops_seq.hpp"
@@ -200,7 +201,8 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<SabirovSMonteCarloSEQ, InType>(kTestParam, PPC_SETTINGS_sabirov_s_monte_carlo),
     ppc::util::AddFuncTask<SabirovSMonteCarloOMP, InType>(kTestParam, PPC_SETTINGS_sabirov_s_monte_carlo),
     ppc::util::AddFuncTask<SabirovSMonteCarloSTL, InType>(kTestParam, PPC_SETTINGS_sabirov_s_monte_carlo),
-    ppc::util::AddFuncTask<SabirovSMonteCarloTBB, InType>(kTestParam, PPC_SETTINGS_sabirov_s_monte_carlo));
+    ppc::util::AddFuncTask<SabirovSMonteCarloTBB, InType>(kTestParam, PPC_SETTINGS_sabirov_s_monte_carlo),
+    ppc::util::AddFuncTask<SabirovSMonteCarloALL, InType>(kTestParam, PPC_SETTINGS_sabirov_s_monte_carlo));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
