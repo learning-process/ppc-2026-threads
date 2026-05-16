@@ -237,15 +237,18 @@ bool OvchinnikovMShellSortBatcherMergeALL::RunImpl() {
   MPI_Bcast(&original_size_int, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   const auto original_size = static_cast<std::size_t>(original_size_int);
-  if (original_size <= 1) {
-    std::vector<int> result(original_size);
-    if (rank == 0 && original_size == 1) {
-      result[0] = GetInput()[0];
+  if (original_size == 0) {
+    GetOutput().clear();
+    return true;
+  }
+
+  if (original_size == 1) {
+    if (rank == 0) {
+      GetOutput() = GetInput();
+    } else {
+      GetOutput().assign(1, 0);
     }
-    if (original_size == 1) {
-      MPI_Bcast(result.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
-    }
-    GetOutput() = result;
+    MPI_Bcast(GetOutput().data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
     return true;
   }
 
