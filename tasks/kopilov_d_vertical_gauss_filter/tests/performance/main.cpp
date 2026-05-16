@@ -1,60 +1,61 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <random>
 #include <vector>
 
 #include "kopilov_d_vertical_gauss_filter/common/include/common.hpp"
+#include "kopilov_d_vertical_gauss_filter/omp/include/ops_omp.hpp"
 #include "kopilov_d_vertical_gauss_filter/seq/include/ops_seq.hpp"
+#include "kopilov_d_vertical_gauss_filter/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace kopilov_d_vertical_gauss_filter {
 
-class KopilovDVerticalGaussFilterPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr int kWidth = 8192;
-  static constexpr int kHeight = 8192;
-  InType input_data_{};
-
+class GaussFilterPerfTester : public ppc::util::BaseRunPerfTests<InType, OutType> {
+ protected:
   void SetUp() override {
+    constexpr int kTargetWidth = 8192;
+    constexpr int kTargetHeight = 8192;
+
+    source_image_.width = kTargetWidth;
+    source_image_.height = kTargetHeight;
+    source_image_.data.resize(static_cast<size_t>(kTargetWidth) * static_cast<size_t>(kTargetHeight));
+
     std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist(0, 255);
+    std::mt19937 rand_engine(rd());
+    std::uniform_int_distribution<int> color_dist(0, 255);
 
-    input_data_.width = kWidth;
-    input_data_.height = kHeight;
-
-    input_data_.data.resize(static_cast<size_t>(kWidth) * static_cast<size_t>(kHeight));
-    for (auto &val : input_data_.data) {
-      val = static_cast<std::uint8_t>(dist(gen));
-    }
+    std::ranges::generate(source_image_.data, [&]() { return static_cast<uint8_t>(color_dist(rand_engine)); });
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return output_data.width == input_data_.width && output_data.height == input_data_.height &&
-           output_data.data.size() == input_data_.data.size();
+  bool CheckTestOutputData(OutType &out) final {
+    return out.width == source_image_.width && out.height == source_image_.height &&
+           out.data.size() == source_image_.data.size();
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return source_image_;
   }
+
+ private:
+  InType source_image_;
 };
 
-TEST_P(KopilovDVerticalGaussFilterPerfTests, RunPerfModes) {
+TEST_P(GaussFilterPerfTester, MeasurePerformance) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KopilovDVerticalGaussFilterSEQ>(PPC_SETTINGS_kopilov_d_vertical_gauss_filter);
+const auto kPerformanceTasks =
+    ppc::util::MakeAllPerfTasks<InType, KopilovDVerticalGaussFilterSEQ, KopilovDVerticalGaussFilterOMP,
+                                KopilovDVerticalGaussFilterTBB>(PPC_SETTINGS_kopilov_d_vertical_gauss_filter);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-
-const auto kPerfTestName = KopilovDVerticalGaussFilterPerfTests::CustomPerfTestName;
-
-INSTANTIATE_TEST_SUITE_P(RunModeTests, KopilovDVerticalGaussFilterPerfTests, kGtestValues, kPerfTestName);
-
+INSTANTIATE_TEST_SUITE_P(GaussFilterPerf, GaussFilterPerfTester, ppc::util::TupleToGTestValues(kPerformanceTasks),
+                         GaussFilterPerfTester::CustomPerfTestName);
 }  // namespace
 
 }  // namespace kopilov_d_vertical_gauss_filter
