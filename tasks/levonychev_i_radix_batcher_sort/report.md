@@ -152,7 +152,7 @@ cmake --build build --parallel
 **Функциональное тестирование:**
 
 ```bash
-mpirun -n 4 ./build/bin/ppc_func_tests --gtest_filter="*baldin_a_radix_sort*"
+mpirun -n 4 ./build/bin/ppc_func_tests --gtest_filter="*Levonychev*"
 ```
 
 **Бенчмаркинг:**
@@ -160,11 +160,11 @@ mpirun -n 4 ./build/bin/ppc_func_tests --gtest_filter="*baldin_a_radix_sort*"
 ```bash
 # Для потоковых технологий (SEQ, OMP, TBB, STL)
 export PPC_NUM_THREADS=4
-mpirun -n 1 ./build/bin/ppc_perf_tests --gtest_filter="*baldin_a_radix_sort_omp*"
+mpirun -n 1 ./build/bin/ppc_perf_tests --gtest_filter="*Levonychev*"
 
 # Для гибридной технологии (ALL)
 export PPC_NUM_THREADS=2
-mpirun -n 4 ./build/bin/ppc_perf_tests --gtest_filter="*baldin_a_radix_sort_all*"
+mpirun -n 4 ./build/bin/ppc_perf_tests --gtest_filter="*Levonychev*"
 ```
 
 ## 8. Заключение
