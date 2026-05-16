@@ -24,7 +24,7 @@ int ComputePixel(const std::vector<int> &src, int w, int h, int col, int row,
     for (int kx = 0; kx < 3; ++kx) {
       int px = col + kx - 1;
       int py = row + ky - 1;
-      sum += GetPixel(src, w, h, px, py) * kernel[ky][kx];
+      sum += GetPixel(src, w, h, px, py) * kernel.at(ky).at(kx);
     }
   }
   return sum / kernel_sum;
