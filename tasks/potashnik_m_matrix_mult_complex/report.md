@@ -2,7 +2,7 @@
 
 - **Student:** Поташник Максим Ярославович
 - **Variant:** 7
-- **Local reports:** [seq/report.md](seq/report.md), [omp/report.md](omp/report.md), [tbb/report.md](tbb/report.md), 
+- **Local reports:** [seq/report.md](seq/report.md), [omp/report.md](omp/report.md), [tbb/report.md](tbb/report.md),
 [stl/report.md](stl/report.md), [all/report.md](all/report.md)
 
 ## 1. Введение
@@ -32,7 +32,7 @@
 - Нулевые элементы не хранятся.
 - Комплексные числа умножаются по правилу (a+bi)(c+di) = (ac-bd) + (ad+bc)i.
 
-**Критерий корректности:** результат каждой параллельной реализации должен 
+**Критерий корректности:** результат каждой параллельной реализации должен
 побитово совпадать с результатом последовательной версии.
 
 ## 3. Единая методика эксперимента
@@ -76,7 +76,7 @@ Build:     Release
 
 **Ускорение (Speedup):** Speedup = T_seq / T_parallel, где T_seq = 149 мс (медиана SEQ)
 
-**Эффективность (Efficiency):** Efficiency = Speedup / total_workers, 
+**Эффективность (Efficiency):** Efficiency = Speedup / total_workers,
 где total_workers — число потоков (для OMP, TBB, STL) или ranks × threads (для ALL)
 
 ### Процедура измерений
