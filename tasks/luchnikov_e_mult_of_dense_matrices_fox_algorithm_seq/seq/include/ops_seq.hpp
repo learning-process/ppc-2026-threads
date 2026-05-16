@@ -5,25 +5,25 @@
 namespace luchnikov_e_mult_of_dense_matrices_fox_algorithm_seq {
 
 class LuchnikovEMultOfDenseMatrixFoxAlgoritmSeq : public BaseTask {
-public:
-    static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-        return ppc::task::TypeOfTask::kSEQ;
-    }
+ public:
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kSEQ;
+  }
 
-    explicit LuchnikovEMultOfDenseMatrixFoxAlgoritmSeq(const InType &in);
+  explicit LuchnikovEMultOfDenseMatrixFoxAlgoritmSeq(const InType &in);
 
-private:
-    bool ValidationImpl() override;
-    bool PreProcessingImpl() override;
-    bool RunImpl() override;
-    bool PostProcessingImpl() override;
+ private:
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
 
-    DenseMatrix matrix_a_;
-    DenseMatrix matrix_b_;
-    DenseMatrix result_matrix_;
-    int block_size_ = 32;
-    std::string path_a_;
-    std::string path_b_;
+  DenseMatrix matrix_a_;
+  DenseMatrix matrix_b_;
+  DenseMatrix result_matrix_;
+  int block_size_ = 32;
+  std::string path_a_;
+  std::string path_b_;
 };
 
 }  // namespace luchnikov_e_mult_of_dense_matrices_fox_algorithm_seq
