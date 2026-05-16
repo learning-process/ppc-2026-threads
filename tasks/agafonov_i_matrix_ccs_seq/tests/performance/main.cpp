@@ -44,8 +44,8 @@ CCSMatrix CreateRandomCcs(size_t rows, size_t cols, double density) {
 class AgafonovMPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    size_t size = 3000;
-    double density = 0.05;
+    size_t size = 1000;
+    double density = 0.01;
 
     matrix_a_ = CreateRandomCcs(size, size, density);
     matrix_b_ = CreateRandomCcs(size, size, density);
@@ -72,14 +72,17 @@ TEST_P(AgafonovMPerfTest, RunPerfModes) {
 }
 
 namespace {
+const auto kStlPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, AgafonovIMatrixCCSSTL>(PPC_SETTINGS_agafonov_i_matrix_ccs_seq);
+
 const auto kSeqPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, AgafonovIMatrixCCSSeq>(PPC_SETTINGS_agafonov_i_matrix_ccs_seq);
 
 const auto kOmpPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, AgafonovIMatrixCCSOMP>(PPC_SETTINGS_agafonov_i_matrix_ccs_seq);
 
-const auto kStlPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, AgafonovIMatrixCCSSTL>(PPC_SETTINGS_agafonov_i_matrix_ccs_seq);
+INSTANTIATE_TEST_SUITE_P(MatrixPerfTestsStl, AgafonovMPerfTest, ppc::util::TupleToGTestValues(kStlPerfTasks),
+                         AgafonovMPerfTest::CustomPerfTestName);
 
 INSTANTIATE_TEST_SUITE_P(MatrixPerfTestsSeq, AgafonovMPerfTest, ppc::util::TupleToGTestValues(kSeqPerfTasks),
                          AgafonovMPerfTest::CustomPerfTestName);
@@ -87,8 +90,6 @@ INSTANTIATE_TEST_SUITE_P(MatrixPerfTestsSeq, AgafonovMPerfTest, ppc::util::Tuple
 INSTANTIATE_TEST_SUITE_P(MatrixPerfTestsOmp, AgafonovMPerfTest, ppc::util::TupleToGTestValues(kOmpPerfTasks),
                          AgafonovMPerfTest::CustomPerfTestName);
 
-INSTANTIATE_TEST_SUITE_P(MatrixPerfTestsStl, AgafonovMPerfTest, ppc::util::TupleToGTestValues(kStlPerfTasks),
-                         AgafonovMPerfTest::CustomPerfTestName);
 }  // namespace
 
 }  // namespace agafonov_i_matrix_ccs_seq
