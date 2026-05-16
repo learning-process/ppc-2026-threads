@@ -22,7 +22,11 @@ class NalitovDDijkstrasAlgorithmOmp : public BaseTask {
   bool PostProcessingImpl() override;
 
   using OutgoingTable = std::vector<std::vector<std::pair<NodeId, Cost>>>;
+
   OutgoingTable graph_;
+  std::vector<Cost> dist_;
+  std::vector<char> visited_;
+  int omp_threads_{1};
 };
 
 }  // namespace nalitov_d_dijkstras_algorithm
