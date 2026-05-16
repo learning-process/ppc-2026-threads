@@ -39,7 +39,7 @@ class YushkovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
     }
 
     std::vector<int> expected = input_data_;
-    std::sort(expected.begin(), expected.end());
+    std::ranges::sort(expected);
     return output_data == expected;
   }
 
