@@ -32,8 +32,8 @@ class ChyokotovADenseMatMulFoxAlgorithmALL : public BaseTask {
                              const std::vector<double> &matrix_a_full, const std::vector<double> &matrix_b_full,
                              std::vector<double> &local_a, std::vector<double> &local_b);
 
-  void FoxAlgorithm(MPI_Comm comm, int worker_rank, int q, int block_size, std::vector<double> &local_a,
-                    std::vector<double> &local_b, std::vector<double> &local_c);
+  static void FoxAlgorithm(MPI_Comm comm, int worker_rank, int q, int block_size, std::vector<double> &local_a,
+                           std::vector<double> &local_b, std::vector<double> &local_c);
 
   static void CollectResult(MPI_Comm comm, int worker_rank, int worker_size, int q, int block_size,
                             std::vector<double> &flat_result, const std::vector<double> &local_c);
