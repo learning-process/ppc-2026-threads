@@ -54,7 +54,7 @@
 - **Оценка сложности**: Алгоритм работает за $O(d \cdot (n + k))$, где $d$ — количество разрядов,
   $n$ — размер массива, $k$ — основание системы счисления (10).
 
-## 6. Подготовка экспериментов
+## 6. Окружение
 
 - **Оборудование**:
   - ЦП: Intel(R) Core(TM) i5-8400 CPU @ 2.80GHz (6 ядер)
@@ -65,7 +65,7 @@
 
 ## 7. Результаты
 
-## 7.0 Репродуцируемость
+## 7.0 Воспроизводимость
 
 Для запуска используются команды:
 
@@ -73,7 +73,7 @@
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 2) Func тесты
-python scripts/run_tests.py --running-type=threads --counts 4
+python scripts/run_tests.py --running-type=threads --counts 1
 3) Perf тесты
 $env:PPC_NUM_THREADS = "4"
 $env:PPC_NUM_PROC = "2"
@@ -97,6 +97,8 @@ python scripts/run_tests.py --running-type="performance"
 
 Результаты замера времени для последовательной версии:
 
+Время замеров - среднее. Режим task (не pipeline).
+
 | Режим | Количество элементов | Время, сек | Ускорение | Эффективность |
 |-------|----------------------|------------|-----------|---------------|
 | seq   | 1,000,000            | 2.414      | 1.00      | N/A           |
@@ -112,11 +114,30 @@ python scripts/run_tests.py --running-type="performance"
 1. Сысоев А. В. Курс лекций "Параллельное программирование".
 2. Практические занятия по курсу "Технологии параллельного программирования".
 3. Поразрядная сортировка (Radix Sort) — теоретическое описание алгоритмов.
-"""
+
 
 ## Приложение
 
 ```cpp
+
+
+// Если массив пустой - сортировать нечего
+bool VotincevDRadixMergeSortSEQ::ValidationImpl() {
+  return !GetInput().empty();
+}
+
+// Препроцессинга нет для сортировки
+// (для изображений могло бы быть что-то вроде перевода в ч/б)
+bool VotincevDRadixMergeSortSEQ::PreProcessingImpl() {
+  return true;
+}
+
+// Постобработка не проводится
+bool VotincevDRadixMergeSortSEQ::PostProcessingImpl() {
+  return true;
+}
+
+
 bool VotincevDRadixMergeSortSEQ::RunImpl() {
   std::vector<int32_t> working_array = GetInput();
 

@@ -44,16 +44,35 @@
    барьерная синхронизация (`#pragma omp barrier`), чтобы гарантировать завершение этапов слияния перед
    переходом к следующему уровню "дерева" слияния.
 
+
 ## 5. Детали реализации
 
-- **Класс**: `VotincevDRadixMergeSortOMP`.
-- **Метод Merge**: Выполняет слияние двух отсортированных подмассивов во временный буфер `temp_buffer`.
-- **Управление потоками**: Индексы начала и конца локальных участков вычисляются на основе
-  `omp_get_thread_num()` и общего размера массива.
-- **Память**: Для слияния требуется дополнительный вектор того же размера, что и входные данные,
-  что увеличивает требования к памяти до $O(n)$.
+Параллельная версия реализована с использованием директив OpenMP для распределения блоков массива между потоками и последующего древовидного слияния.
 
-## 6. Подготовка экспериментов
+* **Директива параллельной области:**
+Использована конструкция `#pragma omp parallel default(none) shared(n, working_array, temp_buffer)`.
+Явное указание `default(none)` исключает случайное разделение переменных и гарантирует строгий контроль над памятью.
+* **Shared-переменные:** 
+1) исходный/выходной массив `working_array`
+2) временный буфер для слияния `temp_buffer`
+3) общий размер массива `n`.
+* **Private-переменные:** 
+1) идентификатор потока `tid`
+2) общее число запущенных потоков `n_threads`
+3) границы ответственности потока `l` и `r`
+4) переменные `items` и `rem` 
+Эти переменные создаются внутри параллельного блока.
+
+* **Reduction (Редукция):** 
+Для нахождения минимального элемента вектора используется параллельный цикл с явным указанием редукции:
+```cpp
+#pragma omp parallel for reduction(min : min_val) default(none) shared(n, input)
+for (int32_t i = 0; i < n; ++i) {
+    min_val = std::min(input[i], min_val);
+}
+* **Политика планирования (Schedule):** Распределение элементов массива по потокам выполнено вручную на основе статического деления индексов (`int32_t items = n / n_threads`). Это эквивалентно политике `schedule(static)`, которая является оптимальной для данной задачи. Так как каждый поток получает на вход регулярную, предсказуемую вычислительную нагрузку одинакового объема (блок элементов для локальной поразрядной сортировки), статический подход полностью устраняет накладные расходы на динамическое планирование в процессе работы.
+
+## 6. Окружение
 
 - **Оборудование**:
   - ЦП: Intel(R) Core(TM) i5-8400 CPU @ 2.80GHz (6 ядер)
@@ -64,7 +83,7 @@
 
 ## 7. Результаты
 
-### 7.0 Репродуцируемость
+### 7.0 Воспроизводимость
 
 Для запуска используются команды:
 
@@ -87,6 +106,10 @@ python scripts/run_tests.py --running-type="performance"
 
 На основе проведенных замеров рассчитаны показатели ускорения и эффективности.
 
+Количество элементов в массиве: 1 000 000
+
+Время замеров - среднее. Режим task (не pipeline).
+
 | Режим | Потоки | Время, сек | Ускорение | Эффективность |
 |-------|--------|------------|-----------|---------------|
 | seq   | 1      | 2.414      | 1.00      | N/A           |
@@ -108,8 +131,46 @@ python scripts/run_tests.py --running-type="performance"
 ## Приложение
 
 ```cpp
+
+
+// Если массив пустой - сортировать нечего
+bool VotincevDRadixMergeSortOMP::ValidationImpl() {
+  return !GetInput().empty();
+}
+
+// Препроцессинга нет для сортировки
+// (для изображений могло бы быть что-то вроде перевода в ч/б)
+bool VotincevDRadixMergeSortOMP::PreProcessingImpl() {
+  return true;
+}
+
+// Постобработка не проводится
+bool VotincevDRadixMergeSortOMP::PostProcessingImpl() {
+  return true;
+}
+
+
+bool VotincevDRadixMergeSortOMP::RunImpl() {
+  const auto &input = GetInput();
+  auto n = static_cast<int32_t>(input.size());
+
+  std::vector<uint32_t> working_array(static_cast<size_t>(n));
+  int32_t min_val = input[0];
+
+#pragma omp parallel for reduction(min : min_val) default(none) shared(n, input)
+  for (int32_t i = 0; i < n; ++i) {
+    min_val = std::min(input[i], min_val);
+  }
+
+#pragma omp parallel for default(none) shared(n, working_array, input, min_val)
+  for (int32_t i = 0; i < n; ++i) {
+    working_array[static_cast<size_t>(i)] = static_cast<uint32_t>(input[i]) - static_cast<uint32_t>(min_val);
+  }
+
+  std::vector<uint32_t> temp_buffer(static_cast<size_t>(n));
+
 #pragma omp parallel default(none) shared(n, working_array, temp_buffer)
-{
+  {
     int tid = omp_get_thread_num();
     int n_threads = omp_get_num_threads();
 
@@ -123,9 +184,25 @@ python scripts/run_tests.py --running-type="performance"
     }
 
     for (int32_t step = 1; step < n_threads; step *= 2) {
-        #pragma omp barrier
-        if ((tid % (2 * step) == 0) && (tid + step < n_threads)) {
-            Merge(working_array.data(), temp_buffer.data(), l, m, next_r);
-        }
+#pragma omp barrier
+      if ((tid % (2 * step) == 0) && (tid + step < n_threads)) {
+        int32_t m = ((tid + step) * items) + std::min(tid + step, rem);
+        int32_t next_tid = std::min(tid + (2 * step), n_threads);
+        int32_t next_r = (next_tid * items) + std::min(next_tid, rem);
+
+        Merge(working_array.data(), temp_buffer.data(), l, m, next_r);
+        std::copy(temp_buffer.data() + l, temp_buffer.data() + next_r, working_array.data() + l);
+      }
     }
+  }
+
+  std::vector<int32_t> result(static_cast<size_t>(n));
+#pragma omp parallel for default(none) shared(n, result, working_array, min_val)
+  for (int32_t i = 0; i < n; ++i) {
+    result[static_cast<size_t>(i)] =
+        static_cast<int32_t>(working_array[static_cast<size_t>(i)] + static_cast<uint32_t>(min_val));
+  }
+
+  GetOutput() = std::move(result);
+  return true;
 }

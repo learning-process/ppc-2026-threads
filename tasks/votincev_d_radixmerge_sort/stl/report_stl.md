@@ -55,7 +55,7 @@
   у объектов `std::future`.
 - **std::launch::async**: гарантирует создание потока, а не отложенное выполнение.
 
-## 6. Подготовка экспериментов
+## 6. Окружение
 
 - **Оборудование**:
   - ЦП: Intel(R) Core(TM) i5-8400 CPU @ 2.80GHz (6 ядер)
@@ -66,7 +66,7 @@
 
 ## 7. Результаты
 
-### 7.0 Репродуцируемость
+### 7.0 Воспроизводимость
 
 Для запуска используются команды:
 
@@ -90,6 +90,10 @@ python scripts/run_tests.py --running-type="performance"
 
 В таблице приведены результаты измерений для последовательной и параллельной версий:
 
+Количество элементов в массиве: 1 000 000
+
+Время замеров - среднее. Режим task (не pipeline).
+
 | Режим | Потоки | Время, сек | Ускорение | Эффективность |
 |-------|--------|------------|-----------|---------------|
 | seq   | 1      | 2.414      | 1.00      | 100.0%        |
@@ -112,6 +116,22 @@ OpenMP и TBB. Снижение эффективности при масштаб
 ## Приложение
 
 ```cpp
+// Если массив пустой - сортировать нечего
+bool VotincevDRadixMergeSortSTL::ValidationImpl() {
+  return !GetInput().empty();
+}
+
+// Препроцессинга нет для сортировки
+// (для изображений могло бы быть что-то вроде перевода в ч/б)
+bool VotincevDRadixMergeSortSTL::PreProcessingImpl() {
+  return true;
+}
+
+// Постобработка не проводится
+bool VotincevDRadixMergeSortSTL::PostProcessingImpl() {
+  return true;
+}
+
 bool VotincevDRadixMergeSortSTL::RunImpl() {
   const auto &input = GetInput();
   auto n = static_cast<int32_t>(input.size());
