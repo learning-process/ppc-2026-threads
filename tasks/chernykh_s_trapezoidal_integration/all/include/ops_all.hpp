@@ -21,7 +21,7 @@ class ChernykhSTrapezoidalIntegrationALL : public BaseTask {
                                         std::vector<double> &point);
   static double OnProcessCalculate(const IntegrationInType &input, std::size_t dims, int64_t start, int64_t end);
   static int DetectFunctionId(const IntegrationInType &input, std::size_t dims);
-  
+
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
