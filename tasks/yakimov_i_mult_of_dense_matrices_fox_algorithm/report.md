@@ -1,5 +1,5 @@
 # Умножение плотных матриц (алгоритм Фокса) — Сравнительный анализ технологий
-- Student: Якимов Илья Владимирович, группа 3823Б1ПР2
+- Student: Якимов Илья Владимирович
 - Variant: 2
 - Local reports: [seq/report.md](seq/report.md), [omp/report.md](omp/report.md), [tbb/report.md](tbb/report.md), [stl/report.md](stl/report.md), [all/report.md](all/report.md)
 - Group: 3823Б1ПР2
