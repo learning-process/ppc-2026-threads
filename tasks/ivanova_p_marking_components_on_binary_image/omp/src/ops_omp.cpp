@@ -72,30 +72,30 @@ bool IvanovaPMarkingComponentsOnBinaryImageOMP::PreProcessingImpl() {
 }
 
 int IvanovaPMarkingComponentsOnBinaryImageOMP::FindRoot(int i) {
-  while (parent_[i] != i) {
-    parent_[i] = parent_[parent_[i]];
-    i = parent_[i];
+  int root = i;
+  while (parent_[root] != root) {
+    root = parent_[root];
   }
-  return i;
+  return root;
 }
 
 void IvanovaPMarkingComponentsOnBinaryImageOMP::UnionLabels(int i, int j) {
-  int r_i = FindRoot(i);
-  int r_j = FindRoot(j);
-  if (r_i == r_j) {
-    return;  // Быстрый выход без блокировки
-  }
+  int root_i = FindRoot(i);
+  int root_j = FindRoot(j);
 
+  if (root_i != root_j) {
+// Критическая секция гарантирует, что запись в parent_ атомарна
 #pragma omp critical(dsu_union)
-  {
-    // Повторная проверка внутри блокировки (на случай, если за это время корень изменился)
-    r_i = FindRoot(i);
-    r_j = FindRoot(j);
-    if (r_i != r_j) {
-      if (r_i < r_j) {
-        parent_[r_j] = r_i;
-      } else {
-        parent_[r_i] = r_j;
+    {
+      // Повторная проверка корней внутри секции (Double-checked locking)
+      root_i = FindRoot(i);
+      root_j = FindRoot(j);
+      if (root_i != root_j) {
+        if (root_i < root_j) {
+          parent_[root_j] = root_i;
+        } else {
+          parent_[root_i] = root_j;
+        }
       }
     }
   }
@@ -111,46 +111,62 @@ void IvanovaPMarkingComponentsOnBinaryImageOMP::InitLabelsOmp(int total_pixels, 
 }
 
 void IvanovaPMarkingComponentsOnBinaryImageOMP::MergeHorizontalPairsOmp(int n_threads) {
-#pragma omp parallel for default(none) shared(n_threads) num_threads(n_threads)
-  for (int yy = 0; yy < height_; ++yy) {
-    for (int xx = 0; xx < width_ - 1; ++xx) {
-      const int idx = (yy * width_) + xx;
-      const int cur_label = labels_[idx];
-      if (cur_label == 0) {
-        continue;
-      }
+  // Локальные копии для MSVC
+  int w = width_;
+  int h = height_;
+  auto &labels = labels_;
+  auto *self = this;  // Локальный указатель на объект
 
-      const int right_label = labels_[idx + 1];
-      if (right_label != 0) {
-        UnionLabels(cur_label, right_label);
+#pragma omp parallel for default(none) shared(w, h, labels, self, n_threads) num_threads(n_threads)
+  for (int yy = 0; yy < h; ++yy) {
+    for (int xx = 0; xx < w - 1; ++xx) {
+      const int idx = (yy * w) + xx;
+      const int cur_label = labels[idx];
+      if (cur_label != 0) {
+        const int right_label = labels[idx + 1];
+        if (right_label != 0) {
+          // Вызываем через локальный указатель
+          self->UnionLabels(cur_label, right_label);
+        }
       }
     }
   }
 }
 
 void IvanovaPMarkingComponentsOnBinaryImageOMP::MergeVerticalPairsOmp(int n_threads) {
-#pragma omp parallel for default(none) shared(n_threads) num_threads(n_threads)
-  for (int yy = 0; yy < height_ - 1; ++yy) {
-    for (int xx = 0; xx < width_; ++xx) {
-      const int idx = (yy * width_) + xx;
-      const int cur_label = labels_[idx];
-      if (cur_label == 0) {
-        continue;
-      }
+  // 1. Локальные переменные для MSVC (чтобы не было ошибки C3028)
+  int w = width_;
+  int h = height_;
+  auto &labels = labels_;
+  auto *self = this;  // Указатель для вызова метода UnionLabels
 
-      const int bottom_label = labels_[idx + width_];
-      if (bottom_label != 0) {
-        UnionLabels(cur_label, bottom_label);
+#pragma omp parallel for default(none) shared(w, h, labels, self, n_threads) num_threads(n_threads)
+  for (int yy = 0; yy < h - 1; ++yy) {
+    for (int xx = 0; xx < w; ++xx) {
+      const int idx = (yy * w) + xx;
+      const int cur_label = labels[idx];
+
+      if (cur_label != 0) {
+        const int bottom_label = labels[idx + w];
+        if (bottom_label != 0) {
+          // Вызываем метод через локальный указатель self
+          self->UnionLabels(cur_label, bottom_label);
+        }
       }
     }
   }
 }
 
 void IvanovaPMarkingComponentsOnBinaryImageOMP::FinalizeRootsOmp(int total_pixels, int n_threads) {
-#pragma omp parallel for default(none) shared(total_pixels) num_threads(n_threads)
+  // 1. Локальные переменные
+  auto &labels = labels_;
+  auto *self = this;  // Указатель для вызова FindRoot
+
+#pragma omp parallel for default(none) shared(total_pixels, labels, self, n_threads) num_threads(n_threads)
   for (int i = 0; i < total_pixels; ++i) {
-    if (labels_[i] != 0) {
-      labels_[i] = FindRoot(labels_[i]);
+    if (labels[i] != 0) {
+      // FindRoot теперь только читает, поэтому гонки данных (Data Race) не будет
+      labels[i] = self->FindRoot(labels[i]);
     }
   }
 }

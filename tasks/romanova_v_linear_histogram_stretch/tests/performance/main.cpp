@@ -8,6 +8,7 @@
 #include "romanova_v_linear_histogram_stretch/common/include/common.hpp"
 #include "romanova_v_linear_histogram_stretch/omp/include/ops_omp.hpp"
 #include "romanova_v_linear_histogram_stretch/seq/include/ops_seq.hpp"
+#include "romanova_v_linear_histogram_stretch/stl/include/ops_stl.hpp"
 #include "romanova_v_linear_histogram_stretch/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -49,7 +50,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, RomanovaVLinHistogramStretchSEQ, RomanovaVLinHistogramStretchOMP,
-                                RomanovaVLinHistogramStretchTBB>(PPC_SETTINGS_romanova_v_linear_histogram_stretch);
+                                RomanovaVLinHistogramStretchTBB, RomanovaVLinHistogramStretchSTL>(
+        PPC_SETTINGS_romanova_v_linear_histogram_stretch);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
