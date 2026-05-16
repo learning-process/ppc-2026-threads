@@ -113,6 +113,7 @@ void MarkingComponentsALL::FirstPass() {
         continue;
       }
 
+      // Поиск минимальной метки среди соседей
       int min_label = next_label;
       bool has_neighbors = false;
 
@@ -134,12 +135,15 @@ void MarkingComponentsALL::FirstPass() {
       }
 
       if (!has_neighbors) {
+        // Новая компонента
         labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = next_label;
         equivalent_labels_.push_back(next_label);
         ++next_label;
       } else {
+        // Присоединение к существующей компоненте
         labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = min_label;
 
+        // Объединение всех меток соседей
         for (const auto &neighbor : neighbors) {
           if (!IsValidNeighbor(i, j, neighbor)) {
             continue;
@@ -161,6 +165,7 @@ void MarkingComponentsALL::FirstPass() {
 void MarkingComponentsALL::SecondPass() {
   int label_count = static_cast<int>(equivalent_labels_.size());
 
+  // Находим корни для всех меток
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
       if (labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] != 0) {
@@ -170,6 +175,7 @@ void MarkingComponentsALL::SecondPass() {
     }
   }
 
+  // Перемапинг для последовательной нумерации
   std::vector<int> remap(static_cast<size_t>(label_count), 0);
   int current_label = 1;
   for (int i = 1; i < label_count; ++i) {
@@ -179,6 +185,7 @@ void MarkingComponentsALL::SecondPass() {
     }
   }
 
+  // Применяем перемапинг
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
       if (labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] != 0) {
