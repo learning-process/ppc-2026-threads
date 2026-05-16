@@ -8,6 +8,7 @@
 #include <tuple>
 #include <vector>
 
+#include "maslova_u_mult_matr_crs/all/include/ops_all.hpp"
 #include "maslova_u_mult_matr_crs/common/include/common.hpp"
 #include "maslova_u_mult_matr_crs/omp/include/ops_omp.hpp"
 #include "maslova_u_mult_matr_crs/seq/include/ops_seq.hpp"
@@ -181,7 +182,8 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<MaslovaUMultMatrSEQ, InType>(kTestParams, PPC_SETTINGS_maslova_u_mult_matr_crs),
     ppc::util::AddFuncTask<MaslovaUMultMatrOMP, InType>(kTestParams, PPC_SETTINGS_maslova_u_mult_matr_crs),
     ppc::util::AddFuncTask<MaslovaUMultMatrTBB, InType>(kTestParams, PPC_SETTINGS_maslova_u_mult_matr_crs),
-    ppc::util::AddFuncTask<MaslovaUMultMatrSTL, InType>(kTestParams, PPC_SETTINGS_maslova_u_mult_matr_crs));
+    ppc::util::AddFuncTask<MaslovaUMultMatrSTL, InType>(kTestParams, PPC_SETTINGS_maslova_u_mult_matr_crs),
+    ppc::util::AddFuncTask<MaslovaUMultMatrALL, InType>(kTestParams, PPC_SETTINGS_maslova_u_mult_matr_crs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

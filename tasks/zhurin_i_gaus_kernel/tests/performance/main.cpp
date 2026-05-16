@@ -6,8 +6,12 @@
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
+#include "zhurin_i_gaus_kernel/all/include/ops_all.hpp"
 #include "zhurin_i_gaus_kernel/common/include/common.hpp"
+#include "zhurin_i_gaus_kernel/omp/include/ops_omp.hpp"
 #include "zhurin_i_gaus_kernel/seq/include/ops_seq.hpp"
+#include "zhurin_i_gaus_kernel/stl/include/ops_stl.hpp"
+#include "zhurin_i_gaus_kernel/tbb/include/ops_tbb.hpp"
 
 namespace zhurin_i_gaus_kernel {
 
@@ -48,9 +52,16 @@ TEST_P(ZhurinIGausKernelPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZhurinIGausKernelSEQ>(PPC_SETTINGS_zhurin_i_gaus_kernel);
+const auto kSeqPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZhurinIGausKernelSEQ>(PPC_SETTINGS_zhurin_i_gaus_kernel);
+const auto kOmpPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZhurinIGausKernelOMP>(PPC_SETTINGS_zhurin_i_gaus_kernel);
+const auto kTbbPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZhurinIGausKernelTBB>(PPC_SETTINGS_zhurin_i_gaus_kernel);
+const auto kStlPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZhurinIGausKernelSTL>(PPC_SETTINGS_zhurin_i_gaus_kernel);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZhurinIGausKernelALL>(PPC_SETTINGS_zhurin_i_gaus_kernel);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kAllPerfTasksList =
+    std::tuple_cat(kSeqPerfTasks, kOmpPerfTasks, kTbbPerfTasks, kStlPerfTasks, kAllPerfTasks);
+
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasksList);
 
 const auto kPerfTestName = ZhurinIGausKernelPerfTests::CustomPerfTestName;
 

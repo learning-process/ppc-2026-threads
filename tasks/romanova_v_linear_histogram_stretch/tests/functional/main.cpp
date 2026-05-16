@@ -13,6 +13,8 @@
 #include "romanova_v_linear_histogram_stretch/common/include/common.hpp"
 #include "romanova_v_linear_histogram_stretch/omp/include/ops_omp.hpp"
 #include "romanova_v_linear_histogram_stretch/seq/include/ops_seq.hpp"
+#include "romanova_v_linear_histogram_stretch/stl/include/ops_stl.hpp"
+#include "romanova_v_linear_histogram_stretch/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -94,6 +96,10 @@ const std::array<TestType, 6> kTestParam = {std::make_tuple(0, 1, ""),   std::ma
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<RomanovaVLinHistogramStretchSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_romanova_v_linear_histogram_stretch),
                                            ppc::util::AddFuncTask<RomanovaVLinHistogramStretchOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_romanova_v_linear_histogram_stretch),
+                                           ppc::util::AddFuncTask<RomanovaVLinHistogramStretchSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_romanova_v_linear_histogram_stretch),
+                                           ppc::util::AddFuncTask<RomanovaVLinHistogramStretchTBB, InType>(
                                                kTestParam, PPC_SETTINGS_romanova_v_linear_histogram_stretch));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
