@@ -30,9 +30,7 @@ bool TabalaevAMatrixMulStrassenALL::ValidationImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int hw_concurrency = omp_get_num_procs();
-  int threads_per_process = std::max(1, hw_concurrency / size);
-  omp_set_num_threads(threads_per_process);
+  omp_set_num_threads(ppc::util::GetNumThreads());
 
   int is_valid = 0;
   if (rank == 0) {
