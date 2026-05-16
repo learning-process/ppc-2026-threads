@@ -11,6 +11,12 @@
 
 #include "alekseev_a_mult_matrix_crs/common/include/common.hpp"
 
+#ifdef _MSC_VER
+#  define MPI_SIZE_T MPI_UNSIGNED_LONG_LONG
+#else
+#  define MPI_SIZE_T MPI_UNSIGNED_LONG
+#endif
+
 namespace alekseev_a_mult_matrix_crs {
 
 AlekseevAMultMatrixCRSALL::AlekseevAMultMatrixCRSALL(const InType &in) {
@@ -43,7 +49,7 @@ void AlekseevAMultMatrixCRSALL::BroadcastData(CRSMatrix &a, CRSMatrix &b, int ra
   if (rank == 0) {
     dims = {a.rows, a.cols, b.rows, b.cols};
   }
-  MPI_Bcast(dims.data(), 4, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(dims.data(), 4, MPI_SIZE_T, 0, MPI_COMM_WORLD);
 
   if (rank != 0) {
     a.rows = dims[0];
@@ -54,8 +60,8 @@ void AlekseevAMultMatrixCRSALL::BroadcastData(CRSMatrix &a, CRSMatrix &b, int ra
     b.row_ptr.resize(b.rows + 1);
   }
 
-  MPI_Bcast(a.row_ptr.data(), static_cast<int>(a.rows + 1), MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
-  MPI_Bcast(b.row_ptr.data(), static_cast<int>(b.rows + 1), MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(a.row_ptr.data(), static_cast<int>(a.rows + 1), MPI_SIZE_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(b.row_ptr.data(), static_cast<int>(b.rows + 1), MPI_SIZE_T, 0, MPI_COMM_WORLD);
 
   if (rank != 0) {
     a.values.resize(a.row_ptr.back());
@@ -65,9 +71,9 @@ void AlekseevAMultMatrixCRSALL::BroadcastData(CRSMatrix &a, CRSMatrix &b, int ra
   }
 
   MPI_Bcast(a.values.data(), static_cast<int>(a.values.size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(a.col_indices.data(), static_cast<int>(a.col_indices.size()), MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(a.col_indices.data(), static_cast<int>(a.col_indices.size()), MPI_SIZE_T, 0, MPI_COMM_WORLD);
   MPI_Bcast(b.values.data(), static_cast<int>(b.values.size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(b.col_indices.data(), static_cast<int>(b.col_indices.size()), MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(b.col_indices.data(), static_cast<int>(b.col_indices.size()), MPI_SIZE_T, 0, MPI_COMM_WORLD);
 }
 
 void AlekseevAMultMatrixCRSALL::GatherData(CRSMatrix &out, const InType &input,
@@ -113,16 +119,16 @@ void AlekseevAMultMatrixCRSALL::GatherData(CRSMatrix &out, const InType &input,
 
   MPI_Gatherv(flat_v.data(), local_total, MPI_DOUBLE, final_v.data(), all_total_counts.data(), v_displs.data(),
               MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Gatherv(flat_c.data(), local_total, MPI_UNSIGNED_LONG, final_c.data(), all_total_counts.data(), v_displs.data(),
-              MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+  MPI_Gatherv(flat_c.data(), local_total, MPI_SIZE_T, final_c.data(), all_total_counts.data(), v_displs.data(),
+              MPI_SIZE_T, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
     out.rows = std::get<0>(input).rows;
     out.cols = std::get<1>(input).cols;
   }
 
-  MPI_Bcast(&out.rows, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&out.cols, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&out.rows, 1, MPI_SIZE_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&out.cols, 1, MPI_SIZE_T, 0, MPI_COMM_WORLD);
   MPI_Bcast(&total_elements, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank != 0) {
@@ -132,7 +138,7 @@ void AlekseevAMultMatrixCRSALL::GatherData(CRSMatrix &out, const InType &input,
   }
 
   MPI_Bcast(final_v.data(), total_elements, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(final_c.data(), total_elements, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(final_c.data(), total_elements, MPI_SIZE_T, 0, MPI_COMM_WORLD);
   MPI_Bcast(all_row_sizes.data(), static_cast<int>(out.rows), MPI_INT, 0, MPI_COMM_WORLD);
 
   out.values = std::move(final_v);
@@ -175,16 +181,21 @@ bool AlekseevAMultMatrixCRSALL::RunImpl() {
   std::vector<std::vector<double>> local_v(local_n);
   std::vector<std::vector<std::size_t>> local_c(local_n);
 
-#pragma omp parallel default(none) shared(a, b, local_v, local_c, local_n, local_start)
+  auto *p_a = &a;
+  auto *p_b = &b;
+  auto *p_lv = &local_v;
+  auto *p_lc = &local_c;
+
+#pragma omp parallel default(none) shared(p_a, p_b, p_lv, p_lc, local_n, local_start)
   {
-    std::vector<double> accum(b.cols, 0.0);
-    std::vector<int> touched_flag(b.cols, -1);
+    std::vector<double> accum(p_b->cols, 0.0);
+    std::vector<int> touched_flag(p_b->cols, -1);
     std::vector<std::size_t> touched_cols;
-    touched_cols.reserve(b.cols);
+    touched_cols.reserve(p_b->cols);
 #pragma omp for schedule(dynamic)
     for (int i = 0; i < local_n; ++i) {
       auto g_row = static_cast<std::size_t>(local_start) + static_cast<std::size_t>(i);
-      ProcessRow(g_row, a, b, local_v[i], local_c[i], accum, touched_flag, touched_cols);
+      ProcessRow(g_row, *p_a, *p_b, (*p_lv)[i], (*p_lc)[i], accum, touched_flag, touched_cols);
     }
   }
 
