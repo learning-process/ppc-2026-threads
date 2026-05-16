@@ -2,13 +2,12 @@
 
 #include <omp.h>
 #include <tbb/parallel_for.h>
-#include <tbb/task_group.h>
 
 #include <algorithm>
-#include <array>
-#include <cmath>
+#include <bit>
+#include <cstddef>
 #include <cstdint>
-#include <cstring>
+#include <utility>
 #include <vector>
 
 namespace frolova_s_radix_sort_double {
@@ -18,75 +17,67 @@ FrolovaSRadixSortDoubleALL::FrolovaSRadixSortDoubleALL(const InType &in) {
   GetInput() = in;
 }
 
-uint64_t FrolovaSRadixSortDoubleALL::InBytes(double d) {
-  uint64_t bits;
-  std::memcpy(&bits, &d, sizeof(double));
-  if ((bits & kMask) != 0) {
-    bits = ~bits;
-  } else {
-    bits = bits ^ kMask;
-  }
-  return bits;
+bool FrolovaSRadixSortDoubleALL::ValidationImpl() {
+  return !GetInput().empty();
 }
 
-double FrolovaSRadixSortDoubleALL::FromBytes(uint64_t bits) {
-  if ((bits & kMask) != 0) {
-    bits = bits ^ kMask;
-  } else {
-    bits = ~bits;
-  }
-  double d;
-  std::memcpy(&d, &bits, sizeof(double));
-  return d;
+bool FrolovaSRadixSortDoubleALL::PreProcessingImpl() {
+  return true;
 }
 
-void FrolovaSRadixSortDoubleALL::SortByByte(uint64_t *bytes, uint64_t *out, int byte, int size) {
-  auto *byte_view = reinterpret_cast<unsigned char *>(bytes);
-  std::array<int, 256> counter = {0};
+void FrolovaSRadixSortDoubleALL::RadixSortChunk(std::vector<double> &chunk) {
+  const int radix = 256;
+  const int num_bits = 8;
+  const int num_passes = sizeof(uint64_t);
 
-  for (int i = 0; i < size; i++) {
-    int index = byte_view[(8 * i) + byte];
-    counter[index]++;
-  }
+  std::vector<double> temp(chunk.size());
 
-  int total = 0;
-  for (int j = 0; j < 256; j++) {
-    int old = counter[j];
-    counter[j] = total;
-    total += old;
-  }
-
-  for (int i = 0; i < size; i++) {
-    int index = byte_view[(8 * i) + byte];
-    out[counter[index]] = bytes[i];
-    counter[index]++;
+  for (int pass = 0; pass < num_passes; pass++) {
+    std::vector<int> count(radix, 0);
+    for (double value : chunk) {
+      auto bits = std::bit_cast<uint64_t>(value);
+      int byte = static_cast<int>((bits >> (pass * num_bits)) & 0xFF);
+      count[byte]++;
+    }
+    int total = 0;
+    for (int i = 0; i < radix; i++) {
+      int old = count[i];
+      count[i] = total;
+      total += old;
+    }
+    for (double value : chunk) {
+      auto bits = std::bit_cast<uint64_t>(value);
+      int byte = static_cast<int>((bits >> (pass * num_bits)) & 0xFF);
+      temp[count[byte]++] = value;
+    }
+    chunk.swap(temp);
   }
 }
 
-void FrolovaSRadixSortDoubleALL::RadixSort(double *arr, int size) {
-  if (size <= 1) {
-    return;
+void FrolovaSRadixSortDoubleALL::ProcessChunk(std::vector<double> &chunk) {
+  RadixSortChunk(chunk);
+
+  std::vector<double> negative;
+  std::vector<double> positive;
+  negative.reserve(chunk.size());
+  positive.reserve(chunk.size());
+
+  for (double val : chunk) {
+    if ((std::bit_cast<uint64_t>(val) >> 63) != 0U) {
+      negative.push_back(val);
+    } else {
+      positive.push_back(val);
+    }
   }
 
-  std::vector<uint64_t> bytes(size);
-  std::vector<uint64_t> out(size);
+  std::ranges::reverse(negative);
 
-#pragma omp parallel for
-  for (int i = 0; i < size; i++) {
-    bytes[i] = InBytes(arr[i]);
+  size_t pos = 0;
+  for (double val : negative) {
+    chunk[pos++] = val;
   }
-
-  uint64_t *src_ptr = bytes.data();
-  uint64_t *dst_ptr = out.data();
-
-  for (int byte = 0; byte < 8; byte++) {
-    SortByByte(src_ptr, dst_ptr, byte, size);
-    std::swap(src_ptr, dst_ptr);
-  }
-
-#pragma omp parallel for
-  for (int i = 0; i < size; i++) {
-    arr[i] = FromBytes(src_ptr[i]);
+  for (double val : positive) {
+    chunk[pos++] = val;
   }
 }
 
@@ -119,37 +110,35 @@ std::vector<double> FrolovaSRadixSortDoubleALL::ParallelMerge(std::vector<std::v
     return std::move(chunks[0]);
   }
 
-  tbb::task_group tg;
   std::vector<std::vector<double>> next_chunks;
-  next_chunks.reserve((chunks.size() + 1) / 2);
+  next_chunks.resize((chunks.size() + 1) / 2);
 
-  for (size_t i = 0; i < chunks.size(); i += 2) {
-    if (i + 1 < chunks.size()) {
-      next_chunks.emplace_back();
-      tg.run([&, i] { next_chunks.back() = SimpleMerge(chunks[i], chunks[i + 1]); });
-    } else {
-      next_chunks.push_back(std::move(chunks[i]));
-    }
+  int half_size = static_cast<int>(chunks.size() / 2);
+
+  // Использование OpenMP для параллельного древовидного слияния (OMP часть)
+#pragma omp parallel for default(none) shared(chunks, next_chunks, half_size)
+  for (int i = 0; i < half_size; ++i) {
+    next_chunks[i] = SimpleMerge(chunks[2 * i], chunks[2 * i + 1]);
   }
-  tg.wait();
+
+  if (chunks.size() % 2 != 0) {
+    next_chunks.back() = std::move(chunks.back());
+  }
 
   return ParallelMerge(next_chunks);
 }
 
-bool FrolovaSRadixSortDoubleALL::ValidationImpl() {
-  return true;
-}
-bool FrolovaSRadixSortDoubleALL::PreProcessingImpl() {
-  return true;
-}
-
 bool FrolovaSRadixSortDoubleALL::RunImpl() {
-  std::vector<double> &input = GetInput();
+  const std::vector<double> &input = GetInput();
   if (input.empty()) {
     return true;
   }
 
   int num_chunks = omp_get_max_threads();
+  if (num_chunks <= 0) {
+    num_chunks = 1;
+  }
+
   int total_size = static_cast<int>(input.size());
   int chunk_size = total_size / num_chunks;
   int remainder = total_size % num_chunks;
@@ -164,12 +153,16 @@ bool FrolovaSRadixSortDoubleALL::RunImpl() {
     }
   }
 
-  tbb::parallel_for(0, num_chunks, [&](int i) {
-    if (!chunks[i].empty()) {
-      RadixSort(chunks[i].data(), static_cast<int>(chunks[i].size()));
-    }
-  });
+  // Очистка от пустых чанков, если потоков больше, чем элементов
+  chunks.erase(std::remove_if(chunks.begin(), chunks.end(), [](const std::vector<double> &c) { return c.empty(); }),
+               chunks.end());
 
+  num_chunks = static_cast<int>(chunks.size());
+
+  // Использование TBB для параллельной сортировки кусков (TBB часть)
+  tbb::parallel_for(0, num_chunks, [&](int i) { ProcessChunk(chunks[i]); });
+
+  // Запуск слияния
   std::vector<double> sorted = ParallelMerge(chunks);
   GetOutput() = std::move(sorted);
 

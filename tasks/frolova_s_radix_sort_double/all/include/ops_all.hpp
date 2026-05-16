@@ -21,10 +21,8 @@ class FrolovaSRadixSortDoubleALL : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static void SortByByte(uint64_t *bytes, uint64_t *out, int byte, int size);
-  static uint64_t EncodeDouble(double d);
-  static double DecodeDouble(uint64_t bits);
-  static void RadixSort(double *arr, int size);
+  static void RadixSortChunk(std::vector<double> &chunk);
+  static void ProcessChunk(std::vector<double> &chunk);
   static std::vector<double> SimpleMerge(const std::vector<double> &a, const std::vector<double> &b);
   static std::vector<double> ParallelMerge(std::vector<std::vector<double>> &chunks);
 };
