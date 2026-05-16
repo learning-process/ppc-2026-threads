@@ -1,7 +1,6 @@
 #include "akimov_i_radixsort_int_merge/all/include/ops_all.hpp"
 
 #include <mpi.h>
-#include <omp.h>
 #include <oneapi/tbb/parallel_for.h>
 
 #include <algorithm>
@@ -48,9 +47,7 @@ void RadixSortLocal(std::vector<int>::iterator begin, std::vector<int>::iterator
   if (n < 2) {
     return;
   }
-
   std::vector<int> temp(n);
-
   for (size_t i = 0; i < sizeof(int); ++i) {
     if (i % 2 == 0) {
       CountingSortStep(begin, end, temp.begin(), i);
@@ -98,38 +95,32 @@ bool AkimovIRadixSortIntMergeALL::RunImpl() {
     return true;
   }
 
-  int rank = -1;
-  int world_size = -1;
+  int rank = -1, world_size = -1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  std::vector<int> send_counts(world_size);
-  std::vector<int> send_displs(world_size);
+  std::vector<int> send_counts(world_size), send_displs(world_size);
   int base = n / world_size;
-  int remainder = n % world_size;
-
+  int rem = n % world_size;
   int offset = 0;
   for (int i = 0; i < world_size; ++i) {
-    send_counts[i] = base + (i < remainder ? 1 : 0);
+    send_counts[i] = base + (i < rem ? 1 : 0);
     send_displs[i] = offset;
     offset += send_counts[i];
   }
 
   int local_size = send_counts[rank];
   std::vector<int> local_data(local_size);
-
   MPI_Scatterv(arr.data(), send_counts.data(), send_displs.data(), MPI_INT, local_data.data(), local_size, MPI_INT, 0,
                MPI_COMM_WORLD);
 
   constexpr int32_t kSignMask = INT32_MIN;
-#pragma omp parallel for default(none) shared(local_data, kSignMask, local_size)
   for (int i = 0; i < local_size; ++i) {
     local_data[i] ^= kSignMask;
   }
 
   RadixSortLocal(local_data.begin(), local_data.end());
 
-#pragma omp parallel for default(none) shared(local_data, kSignMask, local_size)
   for (int i = 0; i < local_size; ++i) {
     local_data[i] ^= kSignMask;
   }
