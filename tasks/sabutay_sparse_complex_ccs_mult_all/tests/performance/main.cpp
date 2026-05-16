@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-
 #include <mpi.h>
 #include <omp.h>
 
@@ -43,7 +42,6 @@ void SetPerfAttributesForTask(ppc::task::TypeOfTask kind, ppc::performance::Perf
     throw std::runtime_error("The task type is not supported for performance testing.");
   }
 }
-
 
 CCS BuildRandomCcs(int rows, int cols, int seed, int max_per_col) {
   std::mt19937 gen(static_cast<std::uint32_t>(seed));
