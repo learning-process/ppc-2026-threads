@@ -29,7 +29,6 @@ class KutuzovITestConvexHullALL : public BaseTask {
 
   int rank_ = 0;
   int size_ = 1;
-  MPI_Comm comm_ = MPI_COMM_WORLD;
   MPI_Op op_leftmost_ = MPI_OP_NULL;
   MPI_Op op_next_ = MPI_OP_NULL;
   MPI_Datatype type_leftmost_ = MPI_DATATYPE_NULL;
