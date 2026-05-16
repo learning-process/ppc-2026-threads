@@ -176,7 +176,7 @@ bool GonozovLBitSortBatcherMergeALL::RunImpl() {
   tbb::parallel_for(0, num_chunks_int, [&](int i) { SortChunkALL(raw_data, i, chunk_size); });
 
   for (size_t size = chunk_size; size < new_size; size *= 2) {
-    int merges_count = static_cast<int>(new_size / (size * 2 + 0.0000000001));
+    int merges_count = static_cast<int>(new_size / (size * 2));
 
     tbb::parallel_for(0, merges_count,
                       [&](int i) { OddEvenMergeIterative(raw_data, static_cast<size_t>(i) * 2 * size, 2 * size); });
@@ -187,12 +187,11 @@ bool GonozovLBitSortBatcherMergeALL::RunImpl() {
   }
 
   MPI_Barrier(MPI_COMM_WORLD);
+  GetOutput() = local_data_;
   return true;
 }
 
 bool GonozovLBitSortBatcherMergeALL::PostProcessingImpl() {
-  GetOutput() = local_data_;
-
   return true;
 }
 
