@@ -1,10 +1,12 @@
 # Сортировка Шелла с простым слиянием (целочисленный массив)
+
 - **Student:** Шкрылёва Светлана Алексеевна, 3823Б1ПР1
 - **Variant:** 15
 - **Local reports:** `seq/report.md`, `omp/report.md`, `tbb/report.md`,
   `stl/report.md`, `all/report.md`
 
 ## 1. Введение
+
 В работе реализованы и проанализированы параллельные версии алгоритма сортировки
 Шелла с простым слиянием для целочисленных массивов. Использованы технологии:
 OpenMP, TBB, STL (std::thread) и гибрид MPI+OpenMP. Цель – сравнить
@@ -13,13 +15,16 @@ OpenMP, TBB, STL (std::thread) и гибрид MPI+OpenMP. Цель – срав
 (слияние).
 
 ## 2. Единая постановка задачи
+
 - **Вход:** вектор целых чисел `int` размера $N = 10^6$.
 - **Выход:** отсортированный по возрастанию вектор.
 - **Критерий корректности:** для любых $i<j$ выполняется $result_i \le
   result_j$.
 
 ## 3. Единая методика эксперимента
+
 ### Окружение
+
 - **CPU:** 11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz
 - **RAM:** 16 ГБ
 - **OS:** Windows 10 + WSL, Ubuntu 24.04.1 LTS
@@ -29,6 +34,7 @@ OpenMP, TBB, STL (std::thread) и гибрид MPI+OpenMP. Цель – срав
   `PPC_NUM_PROC` (для MPI).
 
 ### Генерация данных
+
 Вектор случайных целых чисел в диапазоне $[-100, 100]$ с использованием
 `std::mt19937`. Объём данных – $10^6$ элементов.
 
@@ -36,7 +42,9 @@ OpenMP, TBB, STL (std::thread) и гибрид MPI+OpenMP. Цель – срав
 Ускорение: $S = T_{seq} / T_{p}$, эффективность: $E = S / \text{workers}$.
 
 ## 4. Сводка корректности
+
 Все реализации прошли 8 функциональных тестов, включающих:
+
 - упорядоченные и обратно упорядоченные массивы,
 - массивы с одним элементом,
 - все одинаковые элементы,
@@ -47,6 +55,7 @@ OpenMP, TBB, STL (std::thread) и гибрид MPI+OpenMP. Цель – срав
 Результаты сравнивались с `std::sort` и между собой – расхождений нет.
 
 ## 5. Агрегированные результаты
+
 | Backend | Потоки/Процессы | Время (ms) | Ускорение ($S$) |
 | :------ | :-------------- | :--------- | :-------------: |
 | **SEQ** | 1               | 250        |      1.00       |
@@ -64,6 +73,7 @@ OpenMP, TBB, STL (std::thread) и гибрид MPI+OpenMP. Цель – срав
 | **ALL** | 4/12            | 400        |      0.63       |
 
 ## 6. Интерпретация различий
+
 - **SEQ:** базовая линия. Время 250 мс на 1 млн элементов отражает сложность
   $O(N \log^2 N)$ сортировки Шелла.
 - **OMP:** ускорение до 1.92x. Эффективность падает с ростом потоков из-за
@@ -80,17 +90,21 @@ OpenMP, TBB, STL (std::thread) и гибрид MPI+OpenMP. Цель – срав
 ## 7. Репродуцируемость
 
 ### Сборка
+
 cmake -B build -DCMAKE_BUILD_TYPE=Release cmake --build build --config Release
 
 ### Функциональные тесты
+
 $env:PPC_NUM_THREADS = 4 ./build/bin/Release/ppc_func_tests.exe
 
 ### Перформанс-тесты для разных бэкендов
+
 $env:PPC_NUM_THREADS = 12 ./build/bin/Release/ppc_perf_tests.exe
 --gtest_filter=*omp* ./build/bin/Release/ppc_perf_tests.exe --gtest_filter=*tbb*
 ./build/bin/Release/ppc_perf_tests.exe --gtest_filter=*stl*
 
 ### MPI+OMP
+
 $env:PPC_NUM_PROC = 4 mpiexec -n 4 ./build/bin/Release/ppc_perf_tests.exe
 --gtest_filter=*all*
 
