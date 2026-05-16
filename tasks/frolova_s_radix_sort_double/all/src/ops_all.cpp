@@ -1,179 +1,177 @@
 #include "frolova_s_radix_sort_double/all/include/ops_all.hpp"
 
-#include <mpi.h>
 #include <omp.h>
+#include <tbb/parallel_for.h>
+#include <tbb/task_group.h>
 
 #include <algorithm>
-#include <bit>
-#include <cstddef>
+#include <array>
+#include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <vector>
 
-#include "frolova_s_radix_sort_double/common/include/common.hpp"
-
 namespace frolova_s_radix_sort_double {
-
-namespace {
-
-void ParallelRadixSortOpenMP(std::vector<double> &data) {
-  const std::size_t n = data.size();
-  if (n < 2) {
-    return;
-  }
-
-  constexpr int kRadix = 256;
-  constexpr int kNumBits = 8;
-  constexpr int kNumPasses = sizeof(std::uint64_t);
-
-  std::vector<double> temp(n);
-
-  for (int pass = 0; pass < kNumPasses; ++pass) {
-    std::vector<std::vector<int>> local_counts(omp_get_max_threads(), std::vector<int>(kRadix, 0));
-
-#pragma omp parallel
-    {
-      int tid = omp_get_thread_num();
-      std::vector<int> &count = local_counts[tid];
-
-#pragma omp for schedule(static)
-      for (std::size_t i = 0; i < n; ++i) {
-        auto bits = std::bit_cast<std::uint64_t>(data[i]);
-        int byte = static_cast<int>((bits >> (pass * kNumBits)) & 0xFF);
-        ++count[byte];
-      }
-    }
-
-    std::vector<int> total_count(kRadix, 0);
-    for (const auto &local : local_counts) {
-      for (int i = 0; i < kRadix; ++i) {
-        total_count[i] += local[i];
-      }
-    }
-
-    std::vector<int> offsets(kRadix, 0);
-    int sum = 0;
-    for (int i = 0; i < kRadix; ++i) {
-      offsets[i] = sum;
-      sum += total_count[i];
-    }
-
-    std::vector<int> current_offsets = offsets;
-#pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < n; ++i) {
-      auto bits = std::bit_cast<std::uint64_t>(data[i]);
-      int byte = static_cast<int>((bits >> (pass * kNumBits)) & 0xFF);
-      int pos = 0;
-#pragma omp atomic capture
-      pos = current_offsets[byte]++;
-      temp[pos] = data[i];
-    }
-
-    data.swap(temp);
-  }
-}
-
-void FixNegativeOrderOpenMP(std::vector<double> &data) {
-  std::size_t n = data.size();
-  std::size_t first_non_negative = 0;
-  while (first_non_negative < n && (std::bit_cast<std::uint64_t>(data[first_non_negative]) >> 63) != 0) {
-    ++first_non_negative;
-  }
-  std::size_t neg_count = first_non_negative;
-#pragma omp parallel for
-  for (std::size_t i = 0; i < neg_count / 2; ++i) {
-    std::swap(data[i], data[neg_count - 1 - i]);
-  }
-}
-
-}  // namespace
 
 FrolovaSRadixSortDoubleALL::FrolovaSRadixSortDoubleALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
-bool FrolovaSRadixSortDoubleALL::ValidationImpl() {
-  return !GetInput().empty();
+uint64_t FrolovaSRadixSortDoubleALL::InBytes(double d) {
+  uint64_t bits;
+  std::memcpy(&bits, &d, sizeof(double));
+  if ((bits & kMask) != 0) {
+    bits = ~bits;
+  } else {
+    bits = bits ^ kMask;
+  }
+  return bits;
 }
 
+double FrolovaSRadixSortDoubleALL::FromBytes(uint64_t bits) {
+  if ((bits & kMask) != 0) {
+    bits = bits ^ kMask;
+  } else {
+    bits = ~bits;
+  }
+  double d;
+  std::memcpy(&d, &bits, sizeof(double));
+  return d;
+}
+
+void FrolovaSRadixSortDoubleALL::SortByByte(uint64_t *bytes, uint64_t *out, int byte, int size) {
+  auto *byte_view = reinterpret_cast<unsigned char *>(bytes);
+  std::array<int, 256> counter = {0};
+
+  for (int i = 0; i < size; i++) {
+    int index = byte_view[(8 * i) + byte];
+    counter[index]++;
+  }
+
+  int total = 0;
+  for (int j = 0; j < 256; j++) {
+    int old = counter[j];
+    counter[j] = total;
+    total += old;
+  }
+
+  for (int i = 0; i < size; i++) {
+    int index = byte_view[(8 * i) + byte];
+    out[counter[index]] = bytes[i];
+    counter[index]++;
+  }
+}
+
+void FrolovaSRadixSortDoubleALL::RadixSort(double *arr, int size) {
+  if (size <= 1) {
+    return;
+  }
+
+  std::vector<uint64_t> bytes(size);
+  std::vector<uint64_t> out(size);
+
+#pragma omp parallel for
+  for (int i = 0; i < size; i++) {
+    bytes[i] = InBytes(arr[i]);
+  }
+
+  uint64_t *src_ptr = bytes.data();
+  uint64_t *dst_ptr = out.data();
+
+  for (int byte = 0; byte < 8; byte++) {
+    SortByByte(src_ptr, dst_ptr, byte, size);
+    std::swap(src_ptr, dst_ptr);
+  }
+
+#pragma omp parallel for
+  for (int i = 0; i < size; i++) {
+    arr[i] = FromBytes(src_ptr[i]);
+  }
+}
+
+std::vector<double> FrolovaSRadixSortDoubleALL::SimpleMerge(const std::vector<double> &a,
+                                                            const std::vector<double> &b) {
+  std::vector<double> res;
+  res.reserve(a.size() + b.size());
+  size_t i = 0, j = 0;
+  while (i < a.size() && j < b.size()) {
+    if (a[i] <= b[j]) {
+      res.push_back(a[i++]);
+    } else {
+      res.push_back(b[j++]);
+    }
+  }
+  while (i < a.size()) {
+    res.push_back(a[i++]);
+  }
+  while (j < b.size()) {
+    res.push_back(b[j++]);
+  }
+  return res;
+}
+
+std::vector<double> FrolovaSRadixSortDoubleALL::ParallelMerge(std::vector<std::vector<double>> &chunks) {
+  if (chunks.empty()) {
+    return {};
+  }
+  if (chunks.size() == 1) {
+    return std::move(chunks[0]);
+  }
+
+  tbb::task_group tg;
+  std::vector<std::vector<double>> next_chunks;
+  next_chunks.reserve((chunks.size() + 1) / 2);
+
+  for (size_t i = 0; i < chunks.size(); i += 2) {
+    if (i + 1 < chunks.size()) {
+      next_chunks.emplace_back();
+      tg.run([&, i] { next_chunks.back() = SimpleMerge(chunks[i], chunks[i + 1]); });
+    } else {
+      next_chunks.push_back(std::move(chunks[i]));
+    }
+  }
+  tg.wait();
+
+  return ParallelMerge(next_chunks);
+}
+
+bool FrolovaSRadixSortDoubleALL::ValidationImpl() {
+  return true;
+}
 bool FrolovaSRadixSortDoubleALL::PreProcessingImpl() {
   return true;
 }
 
 bool FrolovaSRadixSortDoubleALL::RunImpl() {
-  int mpi_initialized_flag = 0;
-  MPI_Initialized(&mpi_initialized_flag);
-
-  if (!mpi_initialized_flag) {
-    // Запуск без MPI — только OpenMP
-    std::vector<double> working = GetInput();
-    ParallelRadixSortOpenMP(working);
-    FixNegativeOrderOpenMP(working);
-    GetOutput() = std::move(working);
+  std::vector<double> &input = GetInput();
+  if (input.empty()) {
     return true;
   }
 
-  int rank, size;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  int num_chunks = omp_get_max_threads();
+  int total_size = static_cast<int>(input.size());
+  int chunk_size = total_size / num_chunks;
+  int remainder = total_size % num_chunks;
 
-  const InType &full_input = GetInput();
-  std::size_t total_n = full_input.size();
-
-  std::vector<int> sendcounts(size, 0);
-  std::vector<int> displs(size, 0);
-
-  std::size_t base = total_n / size;
-  int remainder = total_n % size;
-
-  for (int i = 0; i < size; ++i) {
-    sendcounts[i] = static_cast<int>(base + (i < remainder ? 1 : 0));
-    displs[i] = (i == 0) ? 0 : displs[i - 1] + sendcounts[i - 1];
-  }
-
-  std::vector<double> local_data(sendcounts[rank]);
-  MPI_Scatterv(full_input.data(), sendcounts.data(), displs.data(), MPI_DOUBLE, local_data.data(), sendcounts[rank],
-               MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-  ParallelRadixSortOpenMP(local_data);
-  FixNegativeOrderOpenMP(local_data);
-
-  if (rank == 0) {
-    std::vector<double> gathered(total_n);
-    MPI_Gatherv(local_data.data(), local_data.size(), MPI_DOUBLE, gathered.data(), sendcounts.data(), displs.data(),
-                MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-    std::vector<std::size_t> indices(size, 0);
-    OutType result;
-    result.reserve(total_n);
-
-    while (result.size() < total_n) {
-      int best_proc = -1;
-      double min_val = 0.0;
-      for (int p = 0; p < size; ++p) {
-        if (indices[p] < static_cast<std::size_t>(sendcounts[p])) {
-          double val = gathered[displs[p] + indices[p]];
-          if (best_proc == -1 || val < min_val) {
-            min_val = val;
-            best_proc = p;
-          }
-        }
-      }
-      if (best_proc == -1) {
-        break;
-      }
-      result.push_back(min_val);
-      ++indices[best_proc];
+  std::vector<std::vector<double>> chunks(num_chunks);
+  int offset = 0;
+  for (int i = 0; i < num_chunks; ++i) {
+    int cur_size = chunk_size + (i < remainder ? 1 : 0);
+    if (cur_size > 0) {
+      chunks[i].assign(input.begin() + offset, input.begin() + offset + cur_size);
+      offset += cur_size;
     }
-
-    GetOutput() = std::move(result);
-  } else {
-    MPI_Gatherv(local_data.data(), local_data.size(), MPI_DOUBLE, nullptr, nullptr, nullptr, MPI_DOUBLE, 0,
-                MPI_COMM_WORLD);
-    GetOutput().resize(total_n);
   }
 
-  MPI_Bcast(GetOutput().data(), total_n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  tbb::parallel_for(0, num_chunks, [&](int i) {
+    if (!chunks[i].empty()) {
+      RadixSort(chunks[i].data(), static_cast<int>(chunks[i].size()));
+    }
+  });
+
+  std::vector<double> sorted = ParallelMerge(chunks);
+  GetOutput() = std::move(sorted);
 
   return true;
 }
