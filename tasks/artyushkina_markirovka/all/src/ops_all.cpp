@@ -1,5 +1,6 @@
 #include "artyushkina_markirovka/all/include/ops_all.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <vector>
 
@@ -51,7 +52,7 @@ bool IsValidNeighborOffset(int i, int j, int rows, int cols, const NeighborOffse
 
 NeighborInfo GetNeighborInfo(int i, int j, int rows, int cols, const std::vector<std::vector<int>> &labels,
                              const NeighborOffsetAll &offset) {
-  NeighborInfo info = {-1, -1, 0};
+  NeighborInfo info = {.ni = -1, .nj = -1, .label = 0};
   if (!IsValidNeighborOffset(i, j, rows, cols, offset)) {
     return info;
   }
@@ -67,9 +68,7 @@ void FindMinLabelFromNeighbors(int i, int j, int rows, int cols, const std::vect
     NeighborInfo info = GetNeighborInfo(i, j, rows, cols, labels, offset);
     if (info.label != 0) {
       has_neighbors = true;
-      if (info.label < min_label) {
-        min_label = info.label;
-      }
+      min_label = std::min(info.label, min_label);
     }
   }
 }
@@ -158,7 +157,7 @@ void MarkingComponentsALL::FirstPass() {
 
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
-      size_t idx = static_cast<size_t>(i) * static_cast<size_t>(cols_) + static_cast<size_t>(j) + 2;
+      size_t idx = (static_cast<size_t>(i) * static_cast<size_t>(cols_)) + static_cast<size_t>(j) + 2;
       if (input[idx] != 0) {
         continue;
       }
