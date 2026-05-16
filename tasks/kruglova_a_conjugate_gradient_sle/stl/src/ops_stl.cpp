@@ -94,7 +94,6 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
         break;
       }
 
-      // Явно передаем векторы по ссылке, а индексы и размер — по значению
       futures.push_back(std::async(std::launch::async, [&a, &p, &ap, start, end, n]() {
         for (size_t i = start; i < end; ++i) {
           double sum = 0.0;
@@ -126,7 +125,6 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
         break;
       }
 
-      // Явно копируем alpha по значению во избежание data race
       futures.push_back(std::async(std::launch::async, [&x, &r, &p, &ap, start, end, alpha]() {
         for (size_t i = start; i < end; ++i) {
           x[i] += alpha * p[i];
@@ -138,6 +136,33 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
       f.get();
     }
     futures.clear();
+
+    // КОРРЕКЦИЯ: Периодически пересчитываем истинную невязку r = b - A*x,
+    // чтобы устранить погрешность округления в параллельных вычислениях
+    if ((iter + 1) % 10 == 0) {
+      for (unsigned int t = 0; t < num_threads; ++t) {
+        size_t start = t * chunk;
+        size_t end = std::min(start + chunk, static_cast<size_t>(n));
+        if (start >= static_cast<size_t>(n)) {
+          break;
+        }
+
+        futures.push_back(std::async(std::launch::async, [&a, &b, &x, &r, start, end, n]() {
+          for (size_t i = start; i < end; ++i) {
+            double sum = 0.0;
+            size_t row_off = i * n;
+            for (int j = 0; j < n; ++j) {
+              sum += a[row_off + j] * x[j];
+            }
+            r[i] = b[i] - sum;
+          }
+        }));
+      }
+      for (auto &f : futures) {
+        f.get();
+      }
+      futures.clear();
+    }
 
     const double rsnew = ParallelDotProduct(r, r);
     if (std::sqrt(rsnew) < tolerance) {
@@ -154,7 +179,6 @@ bool KruglovaAConjGradSleSTL::RunImpl() {
         break;
       }
 
-      // Явно копируем beta по значению
       futures.push_back(std::async(std::launch::async, [&p, &r, start, end, beta]() {
         for (size_t i = start; i < end; ++i) {
           p[i] = r[i] + beta * p[i];
