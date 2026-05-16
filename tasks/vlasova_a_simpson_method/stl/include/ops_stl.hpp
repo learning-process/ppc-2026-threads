@@ -24,8 +24,8 @@ class VlasovaASimpsonMethodSTL : public BaseTask {
   void ComputeWeight(const std::vector<int> &index, double &weight) const;
   void ComputePoint(const std::vector<int> &index, std::vector<double> &point) const;
   void ComputePartialSumRange(int start_idx, int end_idx, double &partial_sum) const;
-  double RunSequential() const;
-  double RunParallel() const;
+  void ProcessSequential(double &sum) const;
+  void ProcessParallel(double &sum) const;
 
   InType task_data_;
   double result_ = 0.0;

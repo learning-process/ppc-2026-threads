@@ -105,11 +105,11 @@ void VlasovaASimpsonMethodSTL::ComputePartialSumRange(int start_idx, int end_idx
   partial_sum = local_sum;
 }
 
-double VlasovaASimpsonMethodSTL::RunSequential() const {
+void VlasovaASimpsonMethodSTL::ProcessSequential(double &sum) const {
   size_t dim = task_data_.a.size();
   std::vector<int> cur_index(dim, 0);
   std::vector<double> cur_point;
-  double sum = 0.0;
+  sum = 0.0;
 
   size_t total_points = 1;
   for (size_t i = 0; i < dim; ++i) {
@@ -128,11 +128,9 @@ double VlasovaASimpsonMethodSTL::RunSequential() const {
     ComputePoint(cur_index, cur_point);
     sum += weight * task_data_.func(cur_point);
   }
-
-  return sum;
 }
 
-double VlasovaASimpsonMethodSTL::RunParallel() const {
+void VlasovaASimpsonMethodSTL::ProcessParallel(double &sum) const {
   size_t dim = task_data_.a.size();
 
   size_t total_points = 1;
@@ -175,7 +173,7 @@ double VlasovaASimpsonMethodSTL::RunParallel() const {
     }
   }
 
-  return std::accumulate(partial_sums.begin(), partial_sums.end(), 0.0);
+  sum = std::accumulate(partial_sums.begin(), partial_sums.end(), 0.0);
 }
 
 bool VlasovaASimpsonMethodSTL::RunImpl() {
@@ -188,9 +186,9 @@ bool VlasovaASimpsonMethodSTL::RunImpl() {
 
   double sum = 0.0;
   if (total_points < 10000) {
-    sum = RunSequential();
+    ProcessSequential(sum);
   } else {
-    sum = RunParallel();
+    ProcessParallel(sum);
   }
 
   double factor = 1.0;
