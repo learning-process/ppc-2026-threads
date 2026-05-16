@@ -1,8 +1,8 @@
 #include "kruglova_a_conjugate_gradient_sle/stl/include/ops_stl.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <functional>
 #include <numeric>
 #include <thread>
 #include <vector>
@@ -14,12 +14,13 @@ namespace kruglova_a_conjugate_gradient_sle {
 namespace {
 
 template <typename Func>
-void LaunchParallel(int total, int num_threads, Func &&func) {
+void LaunchParallel(int total, int num_threads, const Func &func) {
   if (num_threads <= 1) {
     func(0, total, 0);
     return;
   }
   std::vector<std::thread> workers;
+  workers.reserve(num_threads);
   int chunk = total / num_threads;
   for (int i = 0; i < num_threads; ++i) {
     int start = i * chunk;
@@ -31,21 +32,21 @@ void LaunchParallel(int total, int num_threads, Func &&func) {
   }
 }
 
-static void MatVec(int n, int num_threads, const std::vector<double> &a, const std::vector<double> &p,
-                   std::vector<double> &ap) {
+void MatVec(int n, int num_threads, const std::vector<double> &a, const std::vector<double> &p,
+            std::vector<double> &ap) {
   LaunchParallel(n, num_threads, [&](int start, int end, int) {
     for (int i = start; i < end; ++i) {
       double sum = 0.0;
       for (int j = 0; j < n; ++j) {
-        sum += a[(i * n) + j] * p[j];
+        sum += a[(static_cast<size_t>(i) * n) + j] * p[j];
       }
       ap[i] = sum;
     }
   });
 }
 
-static double Dot(int n, int num_threads, const std::vector<double> &v1, const std::vector<double> &v2,
-                  std::vector<double> &buffer) {
+double Dot(int n, int num_threads, const std::vector<double> &v1, const std::vector<double> &v2,
+           std::vector<double> &buffer) {
   LaunchParallel(n, num_threads, [&](int start, int end, int tid) {
     double local = 0.0;
     for (int i = start; i < end; ++i) {
@@ -56,9 +57,8 @@ static double Dot(int n, int num_threads, const std::vector<double> &v1, const s
   return std::accumulate(buffer.begin(), buffer.begin() + num_threads, 0.0);
 }
 
-static double UpdateXR(int n, int num_threads, double alpha, const std::vector<double> &p,
-                       const std::vector<double> &ap, std::vector<double> &x, std::vector<double> &r,
-                       std::vector<double> &buffer) {
+double UpdateXR(int n, int num_threads, double alpha, const std::vector<double> &p, const std::vector<double> &ap,
+                std::vector<double> &x, std::vector<double> &r, std::vector<double> &buffer) {
   LaunchParallel(n, num_threads, [&](int start, int end, int tid) {
     double local_rs = 0.0;
     for (int i = start; i < end; ++i) {
@@ -71,7 +71,7 @@ static double UpdateXR(int n, int num_threads, double alpha, const std::vector<d
   return std::accumulate(buffer.begin(), buffer.begin() + num_threads, 0.0);
 }
 
-static void UpdateP(int n, int num_threads, double beta, const std::vector<double> &r, std::vector<double> &p) {
+void UpdateP(int n, int num_threads, double beta, const std::vector<double> &r, std::vector<double> &p) {
   LaunchParallel(n, num_threads, [&](int start, int end, int) {
     for (int i = start; i < end; ++i) {
       p[i] = r[i] + (beta * p[i]);
@@ -98,17 +98,16 @@ bool KruglovaAConjGradSleSTL::PreProcessingImpl() {
 }
 
 bool KruglovaAConjGradSleSTL::RunImpl() {
-  const auto &a = GetInput().A;
-  const auto &b = GetInput().b;
-  const int n = GetInput().size;
+  const auto &input = GetInput();
+  const auto &a = input.A;
+  const auto &b = input.b;
+  const int n = input.size;
   if (n <= 0) {
     return true;
   }
 
   int num_threads = (n >= 250) ? static_cast<int>(std::thread::hardware_concurrency()) : 1;
-  if (num_threads < 1) {
-    num_threads = 1;
-  }
+  num_threads = std::max(num_threads, 1);
 
   auto &x = GetOutput();
   std::vector<double> r = b;
