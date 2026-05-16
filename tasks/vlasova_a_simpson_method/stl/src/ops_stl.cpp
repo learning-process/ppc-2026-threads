@@ -4,9 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <execution>
-#include <functional>
 #include <numeric>
-#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -85,19 +83,31 @@ void VlasovaASimpsonMethodSTL::ComputePoint(const std::vector<int> &index, std::
   }
 }
 
-double VlasovaASimpsonMethodSTL::TraverseFrom(size_t dim, std::vector<int> &cur_index, std::vector<double> &cur_point,
-                                              size_t d) const {
-  if (d == dim) {
+double VlasovaASimpsonMethodSTL::ComputePartialSum(int idx0) const {
+  size_t dim = task_data_.a.size();
+
+  size_t inner_total = 1;
+  for (size_t i = 1; i < dim; ++i) {
+    inner_total *= static_cast<size_t>(dimensions_[i]);
+  }
+
+  std::vector<int> cur_index(dim, 0);
+  std::vector<double> cur_point;
+  cur_index[0] = idx0;
+
+  double local_sum = 0.0;
+  for (size_t flat = 0; flat < inner_total; ++flat) {
+    size_t temp = flat;
+    for (size_t i = 1; i < dim; ++i) {
+      cur_index[i] = static_cast<int>(temp % static_cast<size_t>(dimensions_[i]));
+      temp /= static_cast<size_t>(dimensions_[i]);
+    }
     double weight = 0.0;
     ComputeWeight(cur_index, weight);
     ComputePoint(cur_index, cur_point);
-    return weight * task_data_.func(cur_point);
+    local_sum += weight * task_data_.func(cur_point);
   }
-  double local_sum = 0.0;
-  for (int i = 0; i < dimensions_[d]; ++i) {
-    cur_index[d] = i;
-    local_sum += TraverseFrom(dim, cur_index, cur_point, d + 1);
-  }
+
   return local_sum;
 }
 
@@ -106,17 +116,12 @@ bool VlasovaASimpsonMethodSTL::RunImpl() {
   int first_dim_size = dimensions_[0];
 
   std::vector<int> indices(first_dim_size);
-  std::ranges::iota(indices, 0);
+  int val = 0;
+  std::for_each(indices.begin(), indices.end(), [&val](int &x) { x = val++; });
 
   std::vector<double> partial_sums(first_dim_size, 0.0);
-
-  std::transform(std::execution::par, indices.begin(), indices.end(), partial_sums.begin(), [this, dim](int idx0) {
-    thread_local std::vector<int> cur_index;
-    thread_local std::vector<double> cur_point;
-    cur_index.assign(dim, 0);
-    cur_index[0] = idx0;
-    return TraverseFrom(dim, cur_index, cur_point, 1);
-  });
+  std::transform(std::execution::par, indices.begin(), indices.end(), partial_sums.begin(),
+                 [this](int idx0) { return ComputePartialSum(idx0); });
 
   double sum = std::reduce(std::execution::par_unseq, partial_sums.begin(), partial_sums.end(), 0.0);
 
