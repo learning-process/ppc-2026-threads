@@ -28,8 +28,6 @@ class MarkingComponentsALL : public BaseTask {
   void FirstPass();
   void SecondPass();
 
-  [[nodiscard]] bool IsValidNeighbor(int i, int j, const NeighborOffsetAll &offset) const;
-
   int rows_ = 0;
   int cols_ = 0;
   std::vector<std::vector<int>> labels_;

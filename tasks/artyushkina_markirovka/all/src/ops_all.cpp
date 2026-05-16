@@ -1,6 +1,5 @@
 #include "artyushkina_markirovka/all/include/ops_all.hpp"
 
-#include <algorithm>
 #include <cstddef>
 #include <vector>
 
@@ -19,6 +18,12 @@ struct NeighborOffsetAll {
 
 namespace {
 
+struct NeighborInfo {
+  int ni;
+  int nj;
+  int label;
+};
+
 std::vector<NeighborOffsetAll> GetFirstPassNeighbors() {
   std::vector<NeighborOffsetAll> neighbors(4);
   neighbors[0] = {.di = -1, .dj = -1, .check_i_min = 1, .check_i_max = 0, .check_j_min = 1, .check_j_max = 0};
@@ -26,6 +31,69 @@ std::vector<NeighborOffsetAll> GetFirstPassNeighbors() {
   neighbors[2] = {.di = -1, .dj = 1, .check_i_min = 1, .check_i_max = 0, .check_j_min = 0, .check_j_max = 1};
   neighbors[3] = {.di = 0, .dj = -1, .check_i_min = 0, .check_i_max = 0, .check_j_min = 1, .check_j_max = 0};
   return neighbors;
+}
+
+bool IsValidNeighborOffset(int i, int j, int rows, int cols, const NeighborOffsetAll &offset) {
+  if (offset.check_i_min == 1 && i <= 0) {
+    return false;
+  }
+  if (offset.check_i_max == 1 && i >= rows - 1) {
+    return false;
+  }
+  if (offset.check_j_min == 1 && j <= 0) {
+    return false;
+  }
+  if (offset.check_j_max == 1 && j >= cols - 1) {
+    return false;
+  }
+  return true;
+}
+
+NeighborInfo GetNeighborInfo(int i, int j, int rows, int cols, const std::vector<std::vector<int>> &labels,
+                             const NeighborOffsetAll &offset) {
+  NeighborInfo info = {-1, -1, 0};
+  if (!IsValidNeighborOffset(i, j, rows, cols, offset)) {
+    return info;
+  }
+  info.ni = i + offset.di;
+  info.nj = j + offset.dj;
+  info.label = labels[static_cast<size_t>(info.ni)][static_cast<size_t>(info.nj)];
+  return info;
+}
+
+void FindMinLabelFromNeighbors(int i, int j, int rows, int cols, const std::vector<std::vector<int>> &labels,
+                               const std::vector<NeighborOffsetAll> &neighbors, int &min_label, bool &has_neighbors) {
+  for (const auto &offset : neighbors) {
+    NeighborInfo info = GetNeighborInfo(i, j, rows, cols, labels, offset);
+    if (info.label != 0) {
+      has_neighbors = true;
+      if (info.label < min_label) {
+        min_label = info.label;
+      }
+    }
+  }
+}
+
+void UnionNeighborLabels(int i, int j, int rows, int cols, std::vector<std::vector<int>> &labels,
+                         std::vector<int> &equivalent_labels, const std::vector<NeighborOffsetAll> &neighbors,
+                         int min_label) {
+  for (const auto &offset : neighbors) {
+    NeighborInfo info = GetNeighborInfo(i, j, rows, cols, labels, offset);
+    if (info.label != 0 && info.label != min_label) {
+      MarkingComponentsALL::UnionLabels(equivalent_labels, info.label, min_label);
+    }
+  }
+}
+
+void AssignNewLabel(int i, int j, int &next_label, std::vector<std::vector<int>> &labels,
+                    std::vector<int> &equivalent_labels) {
+  labels[static_cast<size_t>(i)][static_cast<size_t>(j)] = next_label;
+  equivalent_labels.push_back(next_label);
+  ++next_label;
+}
+
+void AssignExistingLabel(int i, int j, int min_label, std::vector<std::vector<int>> &labels) {
+  labels[static_cast<size_t>(i)][static_cast<size_t>(j)] = min_label;
 }
 
 }  // namespace
@@ -74,7 +142,6 @@ int MarkingComponentsALL::FindRoot(std::vector<int> &parent, int label) {
 void MarkingComponentsALL::UnionLabels(std::vector<int> &parent, int label1, int label2) {
   int root1 = FindRoot(parent, label1);
   int root2 = FindRoot(parent, label2);
-
   if (root1 != root2) {
     if (root1 < root2) {
       parent[static_cast<size_t>(root2)] = root1;
@@ -82,22 +149,6 @@ void MarkingComponentsALL::UnionLabels(std::vector<int> &parent, int label1, int
       parent[static_cast<size_t>(root1)] = root2;
     }
   }
-}
-
-bool MarkingComponentsALL::IsValidNeighbor(int i, int j, const NeighborOffsetAll &offset) const {
-  if (offset.check_i_min == 1 && i <= 0) {
-    return false;
-  }
-  if (offset.check_i_max == 1 && i >= rows_ - 1) {
-    return false;
-  }
-  if (offset.check_j_min == 1 && j <= 0) {
-    return false;
-  }
-  if (offset.check_j_max == 1 && j >= cols_ - 1) {
-    return false;
-  }
-  return true;
 }
 
 void MarkingComponentsALL::FirstPass() {
@@ -108,55 +159,19 @@ void MarkingComponentsALL::FirstPass() {
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
       size_t idx = static_cast<size_t>(i) * static_cast<size_t>(cols_) + static_cast<size_t>(j) + 2;
-
       if (input[idx] != 0) {
         continue;
       }
 
-      // Поиск минимальной метки среди соседей
       int min_label = next_label;
       bool has_neighbors = false;
-
-      for (const auto &neighbor : neighbors) {
-        if (!IsValidNeighbor(i, j, neighbor)) {
-          continue;
-        }
-
-        int ni = i + neighbor.di;
-        int nj = j + neighbor.dj;
-        int neighbor_label = labels_[static_cast<size_t>(ni)][static_cast<size_t>(nj)];
-
-        if (neighbor_label != 0) {
-          has_neighbors = true;
-          if (neighbor_label < min_label) {
-            min_label = neighbor_label;
-          }
-        }
-      }
+      FindMinLabelFromNeighbors(i, j, rows_, cols_, labels_, neighbors, min_label, has_neighbors);
 
       if (!has_neighbors) {
-        // Новая компонента
-        labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = next_label;
-        equivalent_labels_.push_back(next_label);
-        ++next_label;
+        AssignNewLabel(i, j, next_label, labels_, equivalent_labels_);
       } else {
-        // Присоединение к существующей компоненте
-        labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = min_label;
-
-        // Объединение всех меток соседей
-        for (const auto &neighbor : neighbors) {
-          if (!IsValidNeighbor(i, j, neighbor)) {
-            continue;
-          }
-
-          int ni = i + neighbor.di;
-          int nj = j + neighbor.dj;
-          int neighbor_label = labels_[static_cast<size_t>(ni)][static_cast<size_t>(nj)];
-
-          if (neighbor_label != 0 && neighbor_label != min_label) {
-            UnionLabels(equivalent_labels_, neighbor_label, min_label);
-          }
-        }
+        AssignExistingLabel(i, j, min_label, labels_);
+        UnionNeighborLabels(i, j, rows_, cols_, labels_, equivalent_labels_, neighbors, min_label);
       }
     }
   }
@@ -165,7 +180,6 @@ void MarkingComponentsALL::FirstPass() {
 void MarkingComponentsALL::SecondPass() {
   int label_count = static_cast<int>(equivalent_labels_.size());
 
-  // Находим корни для всех меток
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
       if (labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] != 0) {
@@ -175,7 +189,6 @@ void MarkingComponentsALL::SecondPass() {
     }
   }
 
-  // Перемапинг для последовательной нумерации
   std::vector<int> remap(static_cast<size_t>(label_count), 0);
   int current_label = 1;
   for (int i = 1; i < label_count; ++i) {
@@ -185,7 +198,6 @@ void MarkingComponentsALL::SecondPass() {
     }
   }
 
-  // Применяем перемапинг
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
       if (labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] != 0) {
@@ -201,28 +213,22 @@ bool MarkingComponentsALL::RunImpl() {
   if (input.size() < 2 || rows_ == 0 || cols_ == 0) {
     return false;
   }
-
   FirstPass();
   SecondPass();
-
   return true;
 }
 
 bool MarkingComponentsALL::PostProcessingImpl() {
   OutType &output = GetOutput();
   output.clear();
-
   output.reserve((static_cast<size_t>(rows_) * static_cast<size_t>(cols_)) + 2);
-
   output.push_back(rows_);
   output.push_back(cols_);
-
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
       output.push_back(labels_[static_cast<size_t>(i)][static_cast<size_t>(j)]);
     }
   }
-
   return true;
 }
 
