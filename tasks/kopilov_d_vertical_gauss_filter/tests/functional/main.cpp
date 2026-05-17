@@ -3,7 +3,6 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -12,205 +11,102 @@
 #include "kopilov_d_vertical_gauss_filter/common/include/common.hpp"
 #include "kopilov_d_vertical_gauss_filter/omp/include/ops_omp.hpp"
 #include "kopilov_d_vertical_gauss_filter/seq/include/ops_seq.hpp"
+#include "kopilov_d_vertical_gauss_filter/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
 namespace kopilov_d_vertical_gauss_filter {
 
-class KopilovDVerticalGaussFilterFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class VerticalGaussFilterTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    const auto &input = std::get<0>(test_param);
-    std::string extra = input.data.empty() ? "empty" : std::to_string(input.data[0]);
-    return std::to_string(input.width) + "x" + std::to_string(input.height) + "_" + extra;
+  static std::string PrintTestParam(const TestType &param) {
+    const auto &input = std::get<0>(param);
+    std::string data_suffix = input.data.empty() ? "Empty" : "Fill" + std::to_string(input.data[0]);
+    return "Resolution_" + std::to_string(input.width) + "x" + std::to_string(input.height) + "_" + data_suffix;
   }
 
  protected:
   void SetUp() override {
-    const auto &params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = std::get<0>(params);
-    expected_data_ = std::get<1>(params);
+    const auto &test_params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    in_matrix_ = std::get<0>(test_params);
+    expected_matrix_ = std::get<1>(test_params);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return output_data.width == expected_data_.width && output_data.height == expected_data_.height &&
-           output_data.data == expected_data_.data;
+  bool CheckTestOutputData(OutType &actual_output) final {
+    if (actual_output.width != expected_matrix_.width || actual_output.height != expected_matrix_.height) {
+      return false;
+    }
+    return actual_output.data == expected_matrix_.data;
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return in_matrix_;
   }
 
  private:
-  InType input_data_;
-  OutType expected_data_;
+  InType in_matrix_;
+  OutType expected_matrix_;
 };
 
-TEST_P(KopilovDVerticalGaussFilterFuncTests, RunTest) {
+TEST_P(VerticalGaussFilterTest, CheckCorrectness) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
-Matrix MakeMatrix(int width, int height, const std::vector<uint8_t> &data) {
-  Matrix m;
-  m.width = width;
-  m.height = height;
-  m.data = data;
-  return m;
-}
+const std::array<TestType, 5> kValidationScenarios = {
+    std::make_tuple(Matrix{.width = 1, .height = 1, .data = {100}}, Matrix{.width = 1, .height = 1, .data = {100}}),
+    std::make_tuple(Matrix{.width = 2, .height = 2, .data = {1, 2, 3, 4}},
+                    Matrix{.width = 2, .height = 2, .data = {1, 2, 2, 3}}),
+    std::make_tuple(Matrix{.width = 3, .height = 3, .data = std::vector<uint8_t>(9, 16)},
+                    Matrix{.width = 3, .height = 3, .data = std::vector<uint8_t>(9, 16)}),
+    std::make_tuple(Matrix{.width = 3, .height = 3, .data = std::vector<uint8_t>(9, 42)},
+                    Matrix{.width = 3, .height = 3, .data = std::vector<uint8_t>(9, 42)}),
+    std::make_tuple(Matrix{.width = 4, .height = 4, .data = std::vector<uint8_t>(16, 100)},
+                    Matrix{.width = 4, .height = 4, .data = std::vector<uint8_t>(16, 100)})};
 
-const Matrix kInput1x1 = MakeMatrix(1, 1, {100});
-const Matrix kExpected1x1 = MakeMatrix(1, 1, {100});
+const auto kTaskGenerators = std::tuple_cat(ppc::util::AddFuncTask<KopilovDVerticalGaussFilterSEQ, InType>(
+                                                kValidationScenarios, PPC_SETTINGS_kopilov_d_vertical_gauss_filter),
+                                            ppc::util::AddFuncTask<KopilovDVerticalGaussFilterOMP, InType>(
+                                                kValidationScenarios, PPC_SETTINGS_kopilov_d_vertical_gauss_filter),
+                                            ppc::util::AddFuncTask<KopilovDVerticalGaussFilterTBB, InType>(
+                                                kValidationScenarios, PPC_SETTINGS_kopilov_d_vertical_gauss_filter));
 
-const Matrix kInput2x2 = MakeMatrix(2, 2, {1, 2, 3, 4});
-const Matrix kExpected2x2 = MakeMatrix(2, 2, {1, 2, 2, 3});
-
-const Matrix kInput3x316 = MakeMatrix(3, 3, std::vector<uint8_t>(9, 16));
-const Matrix kExpected3x316 = MakeMatrix(3, 3, std::vector<uint8_t>(9, 16));
-
-const Matrix kInput3x342 = MakeMatrix(3, 3, std::vector<uint8_t>(9, 42));
-const Matrix kExpected3x342 = MakeMatrix(3, 3, std::vector<uint8_t>(9, 42));
-
-const Matrix kInput4x4100 = MakeMatrix(4, 4, std::vector<uint8_t>(16, 100));
-const Matrix kExpected4x4100 = MakeMatrix(4, 4, std::vector<uint8_t>(16, 100));
-
-const std::array<TestType, 5> kTestCases = {
-    std::make_tuple(kInput1x1, kExpected1x1), std::make_tuple(kInput2x2, kExpected2x2),
-    std::make_tuple(kInput3x316, kExpected3x316), std::make_tuple(kInput3x342, kExpected3x342),
-    std::make_tuple(kInput4x4100, kExpected4x4100)};
-
-using ParamType = std::tuple<std::function<std::shared_ptr<BaseTask>(InType)>, std::string, TestType>;
-
-std::vector<ParamType> CreateTestParams() {
-  std::vector<ParamType> params;
-  params.reserve(kTestCases.size());
-  for (const auto &test_case : kTestCases) {
-    params.emplace_back([](const InType &in) -> std::shared_ptr<BaseTask> {
-      return std::make_shared<KopilovDVerticalGaussFilterSEQ>(in);
-    }, "seq", test_case);
-
-    params.emplace_back([](const InType &in) -> std::shared_ptr<BaseTask> {
-      return std::make_shared<KopilovDVerticalGaussFilterOMP>(in);
-    }, "omp", test_case);
-  }
-  return params;
-}
-
-const auto kTestParams = CreateTestParams();
-const auto kGtestValues = testing::ValuesIn(kTestParams);
-const auto kFuncTestName =
-    KopilovDVerticalGaussFilterFuncTests::PrintFuncTestName<KopilovDVerticalGaussFilterFuncTests>;
-
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, KopilovDVerticalGaussFilterFuncTests, kGtestValues, kFuncTestName);
+INSTANTIATE_TEST_SUITE_P(FilterFunctionality, VerticalGaussFilterTest, ppc::util::ExpandToValues(kTaskGenerators),
+                         VerticalGaussFilterTest::PrintFuncTestName<VerticalGaussFilterTest>);
 
 }  // namespace
 
-TEST(KopilovDVerticalGaussFilterInvalidInputTest, ZeroSizes) {
-  Matrix input;
-  input.width = 0;
-  input.height = 0;
-  input.data = {};
-  auto task = std::make_shared<KopilovDVerticalGaussFilterSEQ>(input);
-  EXPECT_FALSE(task->Validation());
+namespace {
+void AssertValidationFails(const Matrix &m) {
+  EXPECT_FALSE(std::make_shared<KopilovDVerticalGaussFilterSEQ>(m)->Validation());
+  EXPECT_FALSE(std::make_shared<KopilovDVerticalGaussFilterOMP>(m)->Validation());
+  EXPECT_FALSE(std::make_shared<KopilovDVerticalGaussFilterTBB>(m)->Validation());
+}
+}  // namespace
+
+TEST(VerticalGaussFilterValidation, ZeroWidthFails) {
+  AssertValidationFails(Matrix{.width = 0, .height = 10, .data = std::vector<uint8_t>(10, 0)});
 }
 
-TEST(KopilovDVerticalGaussFilterInvalidInputTest, ZeroWidthPositiveHeight) {
-  Matrix input;
-  input.width = 0;
-  input.height = 5;
-  input.data.resize(5);
-  auto task = std::make_shared<KopilovDVerticalGaussFilterSEQ>(input);
-  EXPECT_FALSE(task->Validation());
+TEST(VerticalGaussFilterValidation, ZeroHeightFails) {
+  AssertValidationFails(Matrix{.width = 10, .height = 0, .data = std::vector<uint8_t>(10, 0)});
 }
 
-TEST(KopilovDVerticalGaussFilterInvalidInputTest, ZeroHeightPositiveWidth) {
-  Matrix input;
-  input.width = 5;
-  input.height = 0;
-  input.data.resize(5);
-  auto task = std::make_shared<KopilovDVerticalGaussFilterSEQ>(input);
-  EXPECT_FALSE(task->Validation());
+TEST(VerticalGaussFilterValidation, NegativeWidthFails) {
+  AssertValidationFails(Matrix{.width = -5, .height = 5, .data = std::vector<uint8_t>(25, 0)});
 }
 
-TEST(KopilovDVerticalGaussFilterInvalidInputTest, DataSizeMismatch) {
-  Matrix input;
-  input.width = 3;
-  input.height = 3;
-  input.data = {1, 2, 3};
-  auto task = std::make_shared<KopilovDVerticalGaussFilterSEQ>(input);
-  EXPECT_FALSE(task->Validation());
+TEST(VerticalGaussFilterValidation, NegativeHeightFails) {
+  AssertValidationFails(Matrix{.width = 5, .height = -5, .data = std::vector<uint8_t>(25, 0)});
 }
 
-TEST(KopilovDVerticalGaussFilterInvalidInputTest, NegativeWidth) {
-  Matrix input;
-  input.width = -1;
-  input.height = 5;
-  input.data.resize(5);
-  auto task = std::make_shared<KopilovDVerticalGaussFilterSEQ>(input);
-  EXPECT_FALSE(task->Validation());
+TEST(VerticalGaussFilterValidation, DataSizeMismatchFails) {
+  AssertValidationFails(Matrix{.width = 5, .height = 5, .data = std::vector<uint8_t>(15, 0)});
 }
 
-TEST(KopilovDVerticalGaussFilterInvalidInputTest, NegativeHeight) {
-  Matrix input;
-  input.width = 5;
-  input.height = -1;
-  input.data.resize(5);
-  auto task = std::make_shared<KopilovDVerticalGaussFilterSEQ>(input);
-  EXPECT_FALSE(task->Validation());
+TEST(VerticalGaussFilterValidation, EmptyDataFails) {
+  AssertValidationFails(Matrix{.width = 0, .height = 0, .data = {}});
 }
 
-TEST(KopilovDVerticalGaussFilterInvalidInputTestOMP, ZeroSizes) {
-  Matrix input;
-  input.width = 0;
-  input.height = 0;
-  input.data = {};
-  auto task = std::make_shared<KopilovDVerticalGaussFilterOMP>(input);
-  EXPECT_FALSE(task->Validation());
-}
-
-TEST(KopilovDVerticalGaussFilterInvalidInputTestOMP, ZeroWidthPositiveHeight) {
-  Matrix input;
-  input.width = 0;
-  input.height = 5;
-  input.data.resize(5);
-  auto task = std::make_shared<KopilovDVerticalGaussFilterOMP>(input);
-  EXPECT_FALSE(task->Validation());
-}
-
-TEST(KopilovDVerticalGaussFilterInvalidInputTestOMP, ZeroHeightPositiveWidth) {
-  Matrix input;
-  input.width = 5;
-  input.height = 0;
-  input.data.resize(5);
-  auto task = std::make_shared<KopilovDVerticalGaussFilterOMP>(input);
-  EXPECT_FALSE(task->Validation());
-}
-
-TEST(KopilovDVerticalGaussFilterInvalidInputTestOMP, DataSizeMismatch) {
-  Matrix input;
-  input.width = 3;
-  input.height = 3;
-  input.data = {1, 2, 3};
-  auto task = std::make_shared<KopilovDVerticalGaussFilterOMP>(input);
-  EXPECT_FALSE(task->Validation());
-}
-
-TEST(KopilovDVerticalGaussFilterInvalidInputTestOMP, NegativeWidth) {
-  Matrix input;
-  input.width = -1;
-  input.height = 5;
-  input.data.resize(5);
-  auto task = std::make_shared<KopilovDVerticalGaussFilterOMP>(input);
-  EXPECT_FALSE(task->Validation());
-}
-
-TEST(KopilovDVerticalGaussFilterInvalidInputTestOMP, NegativeHeight) {
-  Matrix input;
-  input.width = 5;
-  input.height = -1;
-  input.data.resize(5);
-  auto task = std::make_shared<KopilovDVerticalGaussFilterOMP>(input);
-  EXPECT_FALSE(task->Validation());
-}
 }  // namespace kopilov_d_vertical_gauss_filter

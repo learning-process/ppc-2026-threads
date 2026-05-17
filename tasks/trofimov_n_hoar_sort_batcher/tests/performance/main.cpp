@@ -5,9 +5,12 @@
 #include <random>
 #include <vector>
 
+#include "trofimov_n_hoar_sort_batcher/all/include/ops_all.hpp"
 #include "trofimov_n_hoar_sort_batcher/common/include/common.hpp"
 #include "trofimov_n_hoar_sort_batcher/omp/include/ops_omp.hpp"
 #include "trofimov_n_hoar_sort_batcher/seq/include/ops_seq.hpp"
+#include "trofimov_n_hoar_sort_batcher/stl/include/ops_stl.hpp"
+#include "trofimov_n_hoar_sort_batcher/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace trofimov_n_hoar_sort_batcher {
@@ -44,7 +47,8 @@ TEST_P(TrofimovNHoarSortBatcherPerfTests, RunPerfTests) {
 
 namespace {
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, TrofimovNHoarSortBatcherOMP, TrofimovNHoarSortBatcherSEQ>(
+    ppc::util::MakeAllPerfTasks<InType, TrofimovNHoarSortBatcherOMP, TrofimovNHoarSortBatcherSEQ,
+                                TrofimovNHoarSortBatcherSTL, TrofimovNHoarSortBatcherTBB, TrofimovNHoarSortBatcherALL>(
         PPC_SETTINGS_trofimov_n_hoar_sort_batcher);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

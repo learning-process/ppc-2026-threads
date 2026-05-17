@@ -3,9 +3,11 @@
 #include <cmath>
 #include <tuple>
 
+#include "telnov_a_integral_rectangle/all/include/ops_all.hpp"
 #include "telnov_a_integral_rectangle/common/include/common.hpp"
 #include "telnov_a_integral_rectangle/omp/include/ops_omp.hpp"
 #include "telnov_a_integral_rectangle/seq/include/ops_seq.hpp"
+#include "telnov_a_integral_rectangle/stl/include/ops_stl.hpp"
 #include "telnov_a_integral_rectangle/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -45,9 +47,15 @@ const auto kOmpPerfTasks =
 const auto kTbbPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, TelnovAIntegralRectangleTBB>(PPC_SETTINGS_telnov_a_integral_rectangle);
 
-const auto kAllPerfTasks = std::tuple_cat(kSeqPerfTasks, kOmpPerfTasks, kTbbPerfTasks);
+const auto kStlPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, TelnovAIntegralRectangleSTL>(PPC_SETTINGS_telnov_a_integral_rectangle);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, TelnovAIntegralRectangleALL>(PPC_SETTINGS_telnov_a_integral_rectangle);
+
+const auto kPerfTasks = std::tuple_cat(kSeqPerfTasks, kOmpPerfTasks, kTbbPerfTasks, kStlPerfTasks, kAllPerfTasks);
+
+const auto kGtestValues = ppc::util::TupleToGTestValues(kPerfTasks);
 
 const auto kPerfTestName = TelnovAIntegralRectanglePerfTests::CustomPerfTestName;
 
