@@ -114,40 +114,37 @@ bool VlasovaASimpsonMethodALL::RunImpl() {
   }
 
   size_t chunk = total_points / static_cast<size_t>(size);
-  size_t rem   = total_points % static_cast<size_t>(size);
+  size_t rem = total_points % static_cast<size_t>(size);
 
   size_t begin = 0;
-  size_t end   = 0;
+  size_t end = 0;
   if (static_cast<size_t>(rank) < rem) {
     begin = static_cast<size_t>(rank) * (chunk + 1);
-    end   = begin + chunk + 1;
+    end = begin + chunk + 1;
   } else {
     begin = rem * (chunk + 1) + (static_cast<size_t>(rank) - rem) * chunk;
-    end   = begin + chunk;
+    end = begin + chunk;
   }
 
-  double local_sum = tbb::parallel_reduce(
-      tbb::blocked_range<size_t>(begin, end),
-      0.0,
-      [this, dim](const tbb::blocked_range<size_t> &range, double acc) {
-        std::vector<int> cur_index(dim, 0);
-        std::vector<double> cur_point;
-        double local_weight = 0.0;
+  double local_sum = tbb::parallel_reduce(tbb::blocked_range<size_t>(begin, end), 0.0,
+                                          [this, dim](const tbb::blocked_range<size_t> &range, double acc) {
+    std::vector<int> cur_index(dim, 0);
+    std::vector<double> cur_point;
+    double local_weight = 0.0;
 
-        for (size_t idx = range.begin(); idx != range.end(); ++idx) {
-          size_t temp = idx;
-          for (size_t i = 0; i < dim; ++i) {
-            cur_index[i] = static_cast<int>(temp % static_cast<size_t>(dimensions_[i]));
-            temp         /= static_cast<size_t>(dimensions_[i]);
-          }
+    for (size_t idx = range.begin(); idx != range.end(); ++idx) {
+      size_t temp = idx;
+      for (size_t i = 0; i < dim; ++i) {
+        cur_index[i] = static_cast<int>(temp % static_cast<size_t>(dimensions_[i]));
+        temp /= static_cast<size_t>(dimensions_[i]);
+      }
 
-          ComputeWeight(cur_index, local_weight);
-          ComputePoint(cur_index, cur_point);
-          acc += local_weight * task_data_.func(cur_point);
-        }
-        return acc;
-      },
-      [](double x, double y) { return x + y; });
+      ComputeWeight(cur_index, local_weight);
+      ComputePoint(cur_index, cur_point);
+      acc += local_weight * task_data_.func(cur_point);
+    }
+    return acc;
+  }, [](double x, double y) { return x + y; });
 
   double global_sum = 0.0;
   MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -156,7 +153,7 @@ bool VlasovaASimpsonMethodALL::RunImpl() {
   for (size_t i = 0; i < dim; ++i) {
     factor *= h_[i] / 3.0;
   }
-  result_     = global_sum * factor;
+  result_ = global_sum * factor;
   GetOutput() = result_;
 
   return true;
