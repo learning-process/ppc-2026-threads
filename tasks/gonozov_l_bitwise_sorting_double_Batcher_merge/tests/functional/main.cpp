@@ -8,7 +8,9 @@
 #include <vector>
 
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/common/include/common.hpp"
+#include "gonozov_l_bitwise_sorting_double_Batcher_merge/omp/include/ops_omp.hpp"
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/seq/include/ops_seq.hpp"
+#include "gonozov_l_bitwise_sorting_double_Batcher_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -62,8 +64,13 @@ const std::array<TestType, 4> kTestParam = {
                     std::vector<double>{-7.6, -5.8, -1.1, 3.5, 5.2, 7.1}, "sorting_pos_and_neg_double"),
 };
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<GonozovLBitSortBatcherMergeSEQ, InType>(
-    kTestParam, PPC_SETTINGS_gonozov_l_bitwise_sorting_double_Batcher_merge));
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<GonozovLBitSortBatcherMergeSEQ, InType>(
+                       kTestParam, PPC_SETTINGS_gonozov_l_bitwise_sorting_double_Batcher_merge),
+                   ppc::util::AddFuncTask<GonozovLBitSortBatcherMergeOMP, InType>(
+                       kTestParam, PPC_SETTINGS_gonozov_l_bitwise_sorting_double_Batcher_merge),
+                   ppc::util::AddFuncTask<GonozovLBitSortBatcherMergeTBB, InType>(
+                       kTestParam, PPC_SETTINGS_gonozov_l_bitwise_sorting_double_Batcher_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

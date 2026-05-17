@@ -6,10 +6,10 @@
 
 // #include "golovanov_d_radix_merge/all/include/ops_all.hpp"
 #include "golovanov_d_radix_merge/common/include/common.hpp"
-// #include "golovanov_d_radix_merge/omp/include/ops_omp.hpp"
+#include "golovanov_d_radix_merge/omp/include/ops_omp.hpp"
 #include "golovanov_d_radix_merge/seq/include/ops_seq.hpp"
 // #include "golovanov_d_radix_merge/stl/include/ops_stl.hpp"
-// #include "golovanov_d_radix_merge/tbb/include/ops_tbb.hpp"
+#include "golovanov_d_radix_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace golovanov_d_radix_merge {
@@ -44,7 +44,8 @@ TEST_P(GolovanovDRunPerfTestsThreads, RadixMergePerf) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, GolovanovDRadixMergeSEQ>(PPC_SETTINGS_golovanov_d_radix_merge);
+    ppc::util::MakeAllPerfTasks<InType, GolovanovDRadixMergeSEQ, GolovanovDRadixMergeOMP, GolovanovDRadixMergeTBB>(
+        PPC_SETTINGS_golovanov_d_radix_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

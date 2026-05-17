@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <algorithm>
 #include <array>
@@ -8,7 +9,10 @@
 #include <tuple>
 
 #include "smetanin_d_hoare_even_odd_batchelor/common/include/common.hpp"
+#include "smetanin_d_hoare_even_odd_batchelor/omp/include/ops_omp.hpp"
 #include "smetanin_d_hoare_even_odd_batchelor/seq/include/ops_seq.hpp"
+#include "smetanin_d_hoare_even_odd_batchelor/stl/include/ops_stl.hpp"
+#include "smetanin_d_hoare_even_odd_batchelor/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -24,11 +28,24 @@ class SmetaninDRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
   void SetUp() override {
     const TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     const int size = std::get<0>(params);
-    std::mt19937 rng(std::random_device{}());
-    std::uniform_int_distribution<int> dist(-10000, 10000);
     input_data_.resize(static_cast<std::size_t>(size));
-    for (int &val : input_data_) {
-      val = dist(rng);
+    if (ppc::util::IsUnderMpirun()) {
+      int rank = 0;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      if (rank == 0) {
+        std::mt19937 rng(std::random_device{}());
+        std::uniform_int_distribution<int> dist(-10000, 10000);
+        for (int &val : input_data_) {
+          val = dist(rng);
+        }
+      }
+      MPI_Bcast(input_data_.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
+    } else {
+      std::mt19937 rng(std::random_device{}());
+      std::uniform_int_distribution<int> dist(-10000, 10000);
+      for (int &val : input_data_) {
+        val = dist(rng);
+      }
     }
     expected_ = input_data_;
     std::ranges::sort(expected_);
@@ -59,8 +76,11 @@ const std::array<TestType, 7> kTestParam = {
     std::make_tuple(10000, "big"),
 };
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<SmetaninDHoarSortSEQ, InType>(kTestParam, PPC_SETTINGS_smetanin_d_hoare_even_odd_batchelor);
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<SmetaninDHoarSortOMP, InType>(kTestParam, PPC_SETTINGS_smetanin_d_hoare_even_odd_batchelor),
+    ppc::util::AddFuncTask<SmetaninDHoarSortSEQ, InType>(kTestParam, PPC_SETTINGS_smetanin_d_hoare_even_odd_batchelor),
+    ppc::util::AddFuncTask<SmetaninDHoarSortSTL, InType>(kTestParam, PPC_SETTINGS_smetanin_d_hoare_even_odd_batchelor),
+    ppc::util::AddFuncTask<SmetaninDHoarSortTBB, InType>(kTestParam, PPC_SETTINGS_smetanin_d_hoare_even_odd_batchelor));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

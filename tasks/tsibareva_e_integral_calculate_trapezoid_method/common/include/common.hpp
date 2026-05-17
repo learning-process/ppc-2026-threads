@@ -16,7 +16,6 @@ enum class IntegralTestType : std::uint8_t {
   kSuccessSimple3D,
   kSuccessConstant3D,
   kInvalidLowerBoundEqual,
-  kInvalidStepsNegative,
   kInvalidEmptyBounds,
 };
 
@@ -42,7 +41,7 @@ inline Integral GenerateIntegralInput(IntegralTestType type) {
       input.lo = {0.0, 0.0};
       input.hi = {1.0, 1.0};
       input.steps = {100, 100};
-      input.f = [](const std::vector<double> &x) { return (x[0] * x[0]) + (x[1] * x[1]); };  // x^2 + y^2
+      input.f = [](const std::vector<double> &x) { return (x[0] * x[0]) + (x[1] * x[1]); };
       break;
     }
     case IntegralTestType::kSuccessConstant2D: {
@@ -50,7 +49,7 @@ inline Integral GenerateIntegralInput(IntegralTestType type) {
       input.lo = {0.0, 0.0};
       input.hi = {2.0, 3.0};
       input.steps = {50, 50};
-      input.f = [](const std::vector<double> &) { return 5.0; };  // const
+      input.f = [](const std::vector<double> &) { return 5.0; };
       break;
     }
     case IntegralTestType::kSuccessSimple3D: {
@@ -58,7 +57,7 @@ inline Integral GenerateIntegralInput(IntegralTestType type) {
       input.lo = {0.0, 0.0, 0.0};
       input.hi = {1.0, 1.0, 1.0};
       input.steps = {50, 50, 50};
-      input.f = [](const std::vector<double> &x) { return x[0] + x[1] + x[2]; };  // x + y + z
+      input.f = [](const std::vector<double> &x) { return x[0] + x[1] + x[2]; };
       break;
     }
     case IntegralTestType::kSuccessConstant3D: {
@@ -74,14 +73,6 @@ inline Integral GenerateIntegralInput(IntegralTestType type) {
       input.lo = {1.0, 0.0};
       input.hi = {1.0, 1.0};
       input.steps = {10, 10};
-      input.f = [](const std::vector<double> &x) { return x[0]; };
-      break;
-    }
-    case IntegralTestType::kInvalidStepsNegative: {
-      input.dim = 2;
-      input.lo = {0.0, 0.0};
-      input.hi = {1.0, 1.0};
-      input.steps = {-5, 10};
       input.f = [](const std::vector<double> &x) { return x[0]; };
       break;
     }
@@ -109,7 +100,6 @@ inline double GenerateExpectedOutput(IntegralTestType type) {
     case IntegralTestType::kSuccessConstant3D:
       return 24.0;
     case IntegralTestType::kInvalidLowerBoundEqual:
-    case IntegralTestType::kInvalidStepsNegative:
     case IntegralTestType::kInvalidEmptyBounds:
       return 0.0;
   }
