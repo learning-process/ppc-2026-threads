@@ -19,13 +19,82 @@ KrasnopevtsevaVHoareBatcherSortSTL::KrasnopevtsevaVHoareBatcherSortSTL(const InT
 }
 
 bool KrasnopevtsevaVHoareBatcherSortSTL::ValidationImpl() {
-  const auto &input = GetInput();
-  return !input.empty();
+  return !GetInput().empty();
 }
 
 bool KrasnopevtsevaVHoareBatcherSortSTL::PreProcessingImpl() {
   GetOutput() = std::vector<int>();
   return true;
+}
+
+int KrasnopevtsevaVHoareBatcherSortSTL::GetNumThreads(int n) {
+  int numthreads = static_cast<int>(std::thread::hardware_concurrency());
+  if (numthreads == 0) {
+    numthreads = 1;
+  }
+  return std::min(n, numthreads);
+}
+
+void KrasnopevtsevaVHoareBatcherSortSTL::SetupChunks(std::vector<Chunk> &chunks, int n, int numthreads) {
+  int thread_input_size = n / numthreads;
+  int remainder = n % numthreads;
+
+  int current_start = 0;
+  for (int i = 0; i < numthreads; ++i) {
+    int chunk_size = thread_input_size;
+    if (i == numthreads - 1) {
+      chunk_size += remainder;
+    }
+    chunks.push_back({nullptr, chunk_size, current_start, current_start + chunk_size - 1});
+    current_start += chunk_size;
+  }
+}
+
+void KrasnopevtsevaVHoareBatcherSortSTL::ParallelSortChunks(std::vector<int> &arr, std::vector<Chunk> &chunks) {
+  std::vector<std::future<void>> futures;
+  futures.reserve(chunks.size());
+
+  for (auto &chunk : chunks) {
+    futures.push_back(std::async(std::launch::async, [&arr, &chunk]() { QuickSort(arr, chunk.left, chunk.right); }));
+  }
+
+  for (auto &f : futures) {
+    f.wait();
+  }
+}
+
+void KrasnopevtsevaVHoareBatcherSortSTL::BatcherMergeBlocksStep(int *left_ptr, int &left_sz, int *right_ptr,
+                                                                int &right_sz) {
+  std::inplace_merge(left_ptr, right_ptr, right_ptr + right_sz);
+  left_sz += right_sz;
+}
+
+void KrasnopevtsevaVHoareBatcherSortSTL::BatcherMergeLevel(int step, std::vector<Chunk> &chunks, int thread_input_size,
+                                                           int par_if_greater) {
+  int pack = static_cast<int>(chunks.size());
+  bool do_parallel = (thread_input_size / step) > par_if_greater;
+
+  auto merge_pair = [&](int off) {
+    size_t idx1 = static_cast<size_t>(2 * step) * static_cast<size_t>(off);
+    size_t idx2 = idx1 + static_cast<size_t>(step);
+    BatcherMergeBlocksStep(chunks[idx1].ptr, chunks[idx1].size, chunks[idx2].ptr, chunks[idx2].size);
+    chunks[idx1].right = chunks[idx2].right;
+  };
+
+  if (do_parallel) {
+    std::vector<std::future<void>> futures;
+    futures.reserve(pack / 2);
+    for (int off = 0; off < pack / 2; ++off) {
+      futures.push_back(std::async(std::launch::async, merge_pair, off));
+    }
+    for (auto &f : futures) {
+      f.wait();
+    }
+  } else {
+    for (int off = 0; off < pack / 2; ++off) {
+      merge_pair(off);
+    }
+  }
 }
 
 bool KrasnopevtsevaVHoareBatcherSortSTL::RunImpl() {
@@ -38,78 +107,35 @@ bool KrasnopevtsevaVHoareBatcherSortSTL::RunImpl() {
   }
 
   std::vector<int> res = input;
-
   int n = static_cast<int>(size);
-  int numthreads = static_cast<int>(std::thread::hardware_concurrency());
-  if (numthreads == 0) {
-    numthreads = 1;
-  }
-  numthreads = std::min(n, numthreads);
+  int numthreads = GetNumThreads(n);
 
-  if (n < 1000) {
-    QuickSort(res, 0, n - 1);
-    GetOutput() = std::move(res);
-    return true;
+  std::vector<Chunk> chunks;
+  SetupChunks(chunks, n, numthreads);
+
+  for (auto &chunk : chunks) {
+    chunk.ptr = res.data() + chunk.left;
   }
 
-  int thread_input_size = n / numthreads;
-  int thread_input_remainder_size = n % numthreads;
+  ParallelSortChunks(res, chunks);
 
-  std::vector<int *> pointers(numthreads);
-  std::vector<int> sizes(numthreads);
-  for (int i = 0; i < numthreads; ++i) {
-    auto offset = static_cast<std::ptrdiff_t>(i) * static_cast<std::ptrdiff_t>(thread_input_size);
-    pointers[i] = res.data() + offset;
-    sizes[i] = thread_input_size;
-  }
-  sizes[sizes.size() - 1] += thread_input_remainder_size;
+  for (int step = 1; static_cast<int>(chunks.size()) > 1; step *= 2) {
+    int pack = static_cast<int>(chunks.size());
+    BatcherMergeLevel(step, chunks, n / numthreads, 32);
 
-  std::vector<std::thread> threads;
-  threads.reserve(numthreads);
-
-  for (int i = 0; i < numthreads; ++i) {
-    threads.emplace_back([&res, &pointers, &sizes, i]() {
-      int left = static_cast<int>(pointers[i] - res.data());
-      int right = left + sizes[i] - 1;
-      QuickSort(res, left, right);
-    });
-  }
-
-  for (auto &t : threads) {
-    t.join();
-  }
-
-  std::vector<int> temp(n);
-  int step = 1;
-
-  while (step < numthreads) {
-    for (int i = 0; i < numthreads; i += 2 * step) {
-      int left_block = i;
-      int mid_block = std::min(i + step, numthreads);
-      int right_block = std::min(i + 2 * step, numthreads);
-
-      int left_start = (left_block == 0) ? 0 : static_cast<int>(pointers[left_block] - res.data());
-      int left_end = static_cast<int>(pointers[mid_block] - res.data()) - 1;
-      int right_start = left_end + 1;
-      int right_end = (right_block == numthreads) ? n - 1 : static_cast<int>(pointers[right_block] - res.data()) - 1;
-
-      int i1 = left_start, i2 = right_start, pos = left_start;
-      while (i1 <= left_end && i2 <= right_end) {
-        if (res[i1] <= res[i2]) {
-          temp[pos++] = res[i1++];
-        } else {
-          temp[pos++] = res[i2++];
-        }
-      }
-      while (i1 <= left_end) {
-        temp[pos++] = res[i1++];
-      }
-      while (i2 <= right_end) {
-        temp[pos++] = res[i2++];
-      }
+    if ((pack / 2) - 1 == 0) {
+      BatcherMergeBlocksStep(chunks[0].ptr, chunks[0].size, chunks.back().ptr, chunks.back().size);
+      chunks[0].right = chunks.back().right;
+      chunks.resize(1);
+    } else if ((pack / 2) % 2 != 0) {
+      size_t idx1 = static_cast<size_t>(2 * step) * static_cast<size_t>((pack / 2) - 2);
+      size_t idx2 = idx1 + static_cast<size_t>(step);
+      BatcherMergeBlocksStep(chunks[idx1].ptr, chunks[idx1].size, chunks[idx2].ptr, chunks[idx2].size);
+      chunks.erase(chunks.begin() + static_cast<ptrdiff_t>(idx2));
+    } else {
+      int new_size = pack / 2;
+      chunks.resize(new_size);
     }
-    std::copy(temp.begin(), temp.end(), res.begin());
-    step *= 2;
   }
 
   GetOutput() = std::move(res);
@@ -171,47 +197,6 @@ void KrasnopevtsevaVHoareBatcherSortSTL::QuickSort(std::vector<int> &arr, int fi
     } else {
       stack.emplace(l, iter - 1);
       stack.emplace(iter + 1, r);
-    }
-  }
-}
-
-void KrasnopevtsevaVHoareBatcherSortSTL::BatcherMergeBlocksStep(int *left_pointer, int &left_size, int *right_pointer,
-                                                                int &right_size) {
-  std::inplace_merge(left_pointer, right_pointer, right_pointer + right_size);
-  left_size += right_size;
-}
-
-void KrasnopevtsevaVHoareBatcherSortSTL::BatcherMerge(int thread_input_size, std::vector<int *> &pointers,
-                                                      std::vector<int> &sizes, int par_if_greater) {
-  int pack = static_cast<int>(pointers.size());
-  for (int step = 1; pack > 1; step *= 2, pack /= 2) {
-    if ((thread_input_size / step) > par_if_greater) {
-      std::vector<std::future<void>> futures;
-      for (int off = 0; off < pack / 2; ++off) {
-        futures.push_back(std::async(std::launch::async, [&pointers, &sizes, step, off]() {
-          auto idx1 = static_cast<std::size_t>(2 * step) * static_cast<std::size_t>(off);
-          auto idx2 = idx1 + static_cast<std::size_t>(step);
-          BatcherMergeBlocksStep(pointers[idx1], sizes[idx1], pointers[idx2], sizes[idx2]);
-        }));
-      }
-      for (auto &f : futures) {
-        f.wait();
-      }
-    } else {
-      for (int off = 0; off < pack / 2; ++off) {
-        auto idx1 = static_cast<std::size_t>(2 * step) * static_cast<std::size_t>(off);
-        auto idx2 = idx1 + static_cast<std::size_t>(step);
-        BatcherMergeBlocksStep(pointers[idx1], sizes[idx1], pointers[idx2], sizes[idx2]);
-      }
-    }
-
-    if ((pack / 2) - 1 == 0) {
-      BatcherMergeBlocksStep(pointers[0], sizes[sizes.size() - 1], pointers[pointers.size() - 1],
-                             sizes[sizes.size() - 1]);
-    } else if ((pack / 2) % 2 != 0) {
-      auto idx1 = static_cast<std::size_t>(2 * step) * static_cast<std::size_t>((pack / 2) - 2);
-      auto idx2 = static_cast<std::size_t>(2 * step) * static_cast<std::size_t>((pack / 2) - 1);
-      BatcherMergeBlocksStep(pointers[idx1], sizes[idx1], pointers[idx2], sizes[idx2]);
     }
   }
 }
