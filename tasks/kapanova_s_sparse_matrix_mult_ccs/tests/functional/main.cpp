@@ -9,9 +9,11 @@
 #include <utility>
 #include <vector>
 
+#include "kapanova_s_sparse_matrix_mult_ccs/all/include/ops_all.hpp"
 #include "kapanova_s_sparse_matrix_mult_ccs/common/include/common.hpp"
 #include "kapanova_s_sparse_matrix_mult_ccs/omp/include/ops_omp.hpp"
 #include "kapanova_s_sparse_matrix_mult_ccs/seq/include/ops_seq.hpp"
+#include "kapanova_s_sparse_matrix_mult_ccs/stl/include/ops_stl.hpp"
 #include "kapanova_s_sparse_matrix_mult_ccs/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -215,6 +217,10 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KapanovaSSpars
                                            ppc::util::AddFuncTask<KapanovaSSparseMatrixMultCCSOMP, InType>(
                                                kFixedTestParams, PPC_SETTINGS_kapanova_s_sparse_matrix_mult_ccs),
                                            ppc::util::AddFuncTask<KapanovaSSparseMatrixMultCCSTBB, InType>(
+                                               kFixedTestParams, PPC_SETTINGS_kapanova_s_sparse_matrix_mult_ccs),
+                                           ppc::util::AddFuncTask<KapanovaSSparseMatrixMultCCSSTL, InType>(
+                                               kFixedTestParams, PPC_SETTINGS_kapanova_s_sparse_matrix_mult_ccs),
+                                           ppc::util::AddFuncTask<KapanovaSSparseMatrixMultCCSALL, InType>(
                                                kFixedTestParams, PPC_SETTINGS_kapanova_s_sparse_matrix_mult_ccs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

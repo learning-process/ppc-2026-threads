@@ -2,16 +2,18 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <iostream>
 #include <utility>
 
 #include "artyushkina_markirovka/all/include/ops_all.hpp"
 #include "artyushkina_markirovka/common/include/common.hpp"
+#include "artyushkina_markirovka/omp/include/ops_omp.hpp"
 #include "artyushkina_markirovka/seq/include/ops_seq.hpp"
+#include "artyushkina_markirovka/stl/include/ops_stl.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace artyushkina_markirovka {
 
-// Существующие тесты для SEQ
 class ArtyushkinaMarkirovkaPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
 
@@ -26,7 +28,7 @@ class ArtyushkinaMarkirovkaPerfTests : public ppc::util::BaseRunPerfTests<InType
       for (int j = 0; j < k_size; ++j) {
         std::size_t idx =
             (static_cast<std::size_t>(i) * static_cast<std::size_t>(k_size)) + static_cast<std::size_t>(j) + 2;
-        input_data_[idx] = static_cast<uint8_t>(((i + j) % 2 == 0) ? 0 : 1);
+        input_data_[idx] = static_cast<uint8_t>(((i + j) % 2 == 0) ? 0 : 255);
       }
     }
   }
@@ -36,9 +38,12 @@ class ArtyushkinaMarkirovkaPerfTests : public ppc::util::BaseRunPerfTests<InType
     int cols = static_cast<int>(output_data[1]);
 
     if (std::cmp_not_equal(rows, input_data_[0]) || std::cmp_not_equal(cols, input_data_[1])) {
+      std::cerr << "Size mismatch: expected " << static_cast<int>(input_data_[0]) << "x"
+                << static_cast<int>(input_data_[1]) << ", got " << rows << "x" << cols << '\n';
       return false;
     }
 
+    bool valid = true;
     for (int i = 0; i < rows; ++i) {
       for (int j = 0; j < cols; ++j) {
         std::size_t output_idx =
@@ -47,14 +52,16 @@ class ArtyushkinaMarkirovkaPerfTests : public ppc::util::BaseRunPerfTests<InType
             (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
 
         if (input_data_[input_idx] == 0 && output_data[output_idx] == 0) {
-          return false;
+          std::cerr << "Object pixel at (" << i << "," << j << ") not labeled!\n";
+          valid = false;
         }
         if (input_data_[input_idx] != 0 && output_data[output_idx] != 0) {
-          return false;
+          std::cerr << "Background pixel at (" << i << "," << j << ") incorrectly labeled!\n";
+          valid = false;
         }
       }
     }
-    return true;
+    return valid;
   }
 
   InType GetTestInputData() final {
@@ -62,7 +69,6 @@ class ArtyushkinaMarkirovkaPerfTests : public ppc::util::BaseRunPerfTests<InType
   }
 };
 
-// Новые тесты для ALL
 class ArtyushkinaMarkirovkaAllPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
 
@@ -77,7 +83,7 @@ class ArtyushkinaMarkirovkaAllPerfTests : public ppc::util::BaseRunPerfTests<InT
       for (int j = 0; j < k_size; ++j) {
         std::size_t idx =
             (static_cast<std::size_t>(i) * static_cast<std::size_t>(k_size)) + static_cast<std::size_t>(j) + 2;
-        input_data_[idx] = static_cast<uint8_t>(((i + j) % 2 == 0) ? 0 : 1);
+        input_data_[idx] = static_cast<uint8_t>(((i + j) % 2 == 0) ? 0 : 255);
       }
     }
   }
@@ -87,9 +93,12 @@ class ArtyushkinaMarkirovkaAllPerfTests : public ppc::util::BaseRunPerfTests<InT
     int cols = static_cast<int>(output_data[1]);
 
     if (std::cmp_not_equal(rows, input_data_[0]) || std::cmp_not_equal(cols, input_data_[1])) {
+      std::cerr << "ALL Size mismatch: expected " << static_cast<int>(input_data_[0]) << "x"
+                << static_cast<int>(input_data_[1]) << ", got " << rows << "x" << cols << '\n';
       return false;
     }
 
+    bool valid = true;
     for (int i = 0; i < rows; ++i) {
       for (int j = 0; j < cols; ++j) {
         std::size_t output_idx =
@@ -98,14 +107,16 @@ class ArtyushkinaMarkirovkaAllPerfTests : public ppc::util::BaseRunPerfTests<InT
             (static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j) + 2;
 
         if (input_data_[input_idx] == 0 && output_data[output_idx] == 0) {
-          return false;
+          std::cerr << "ALL Object pixel at (" << i << "," << j << ") not labeled!\n";
+          valid = false;
         }
         if (input_data_[input_idx] != 0 && output_data[output_idx] != 0) {
-          return false;
+          std::cerr << "ALL Background pixel at (" << i << "," << j << ") incorrectly labeled!\n";
+          valid = false;
         }
       }
     }
-    return true;
+    return valid;
   }
 
   InType GetTestInputData() final {
@@ -123,25 +134,41 @@ TEST_P(ArtyushkinaMarkirovkaAllPerfTests, RunPerfModesALL) {
 
 namespace {
 
-// Существующие тесты для SEQ
-const auto kAllPerfTasks =
+const auto kAllPerfTasksSEQ =
     ppc::util::MakeAllPerfTasks<InType, MarkingComponentsSEQ>(PPC_SETTINGS_artyushkina_markirovka);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kGtestValuesSEQ = ppc::util::TupleToGTestValues(kAllPerfTasksSEQ);
 
-const auto kPerfTestName = ArtyushkinaMarkirovkaPerfTests::CustomPerfTestName;
+const auto kPerfTestNameSEQ = ArtyushkinaMarkirovkaPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ArtyushkinaMarkirovkaPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTestsSEQ, ArtyushkinaMarkirovkaPerfTests, kGtestValuesSEQ, kPerfTestNameSEQ);
 
-// Новые тесты для ALL
-const auto kAllPerfTasksAll =
+const auto kAllPerfTasksOMP =
+    ppc::util::MakeAllPerfTasks<InType, MarkingComponentsOMP>(PPC_SETTINGS_artyushkina_markirovka);
+
+const auto kGtestValuesOMP = ppc::util::TupleToGTestValues(kAllPerfTasksOMP);
+
+const auto kPerfTestNameOMP = ArtyushkinaMarkirovkaPerfTests::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(RunModeTestsOMP, ArtyushkinaMarkirovkaPerfTests, kGtestValuesOMP, kPerfTestNameOMP);
+
+const auto kAllPerfTasksSTL =
+    ppc::util::MakeAllPerfTasks<InType, MarkingComponentsSTL>(PPC_SETTINGS_artyushkina_markirovka);
+
+const auto kGtestValuesSTL = ppc::util::TupleToGTestValues(kAllPerfTasksSTL);
+
+const auto kPerfTestNameSTL = ArtyushkinaMarkirovkaPerfTests::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(RunModeTestsSTL, ArtyushkinaMarkirovkaPerfTests, kGtestValuesSTL, kPerfTestNameSTL);
+
+const auto kAllPerfTasksALL =
     ppc::util::MakeAllPerfTasks<InType, MarkingComponentsALL>(PPC_SETTINGS_artyushkina_markirovka);
 
-const auto kGtestValuesAll = ppc::util::TupleToGTestValues(kAllPerfTasksAll);
+const auto kGtestValuesALL = ppc::util::TupleToGTestValues(kAllPerfTasksALL);
 
-const auto kPerfTestNameAll = ArtyushkinaMarkirovkaAllPerfTests::CustomPerfTestName;
+const auto kPerfTestNameALL = ArtyushkinaMarkirovkaAllPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTestsALL, ArtyushkinaMarkirovkaAllPerfTests, kGtestValuesAll, kPerfTestNameAll);
+INSTANTIATE_TEST_SUITE_P(RunModeTestsALL, ArtyushkinaMarkirovkaAllPerfTests, kGtestValuesALL, kPerfTestNameALL);
 
 }  // namespace
 

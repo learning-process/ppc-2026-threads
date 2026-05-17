@@ -3,7 +3,7 @@
     "all": "enabled",
     "omp": "enabled",
     "seq": "enabled",
-    "stl": "disabled",
+    "stl": "enabled",
     "tbb": "enabled"
   },
   "tasks_type": "threads"

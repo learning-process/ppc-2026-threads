@@ -5,6 +5,7 @@
 #include <tuple>
 #include <vector>
 
+#include "safronov_m_multiplication_matrix_blockscheme_cannon/all/include/ops_all.hpp"
 #include "safronov_m_multiplication_matrix_blockscheme_cannon/common/include/common.hpp"
 #include "safronov_m_multiplication_matrix_blockscheme_cannon/omp/include/ops_omp.hpp"
 #include "safronov_m_multiplication_matrix_blockscheme_cannon/seq/include/ops_seq.hpp"
@@ -54,7 +55,8 @@ namespace {
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<
     InType, SafronovMMultiplicationMatrixBlockSchemeCannon, SafronovMMultiplicationMatrixBlockSchemeCannonOMP,
-    SafronovMMultiplicationMatrixBlockSchemeCannonTBB, SafronovMMultiplicationMatrixBlockSchemeCannonSTL>(
+    SafronovMMultiplicationMatrixBlockSchemeCannonTBB, SafronovMMultiplicationMatrixBlockSchemeCannonSTL,
+    SafronovMMultiplicationMatrixBlockSchemeCannonALL>(
     PPC_SETTINGS_safronov_m_multiplication_matrix_blockscheme_cannon);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
