@@ -27,7 +27,7 @@ class MatmulDoubleAllPerfTest : public ppc::util::BaseRunPerfTests<InType, OutTy
     expected_output_.assign(size, 3.0 * static_cast<double>(n));
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     if (expected_output_.size() != output_data.size()) {
       return false;
     }
@@ -52,8 +52,8 @@ TEST_P(MatmulDoubleAllPerfTest, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, MatmulDoubleAllTask>(
-    PPC_SETTINGS_makoveeva_matmul_double_all);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, MatmulDoubleAllTask>(PPC_SETTINGS_makoveeva_matmul_double_all);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
