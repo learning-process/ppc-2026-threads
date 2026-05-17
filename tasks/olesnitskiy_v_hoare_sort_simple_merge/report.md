@@ -14,8 +14,9 @@ Performance-тест генерирует `N=100000` случайных `int` и
 ([`modules/util/include/perf_test_util.hpp`](../../modules/util/include/perf_test_util.hpp#L87)). Speedup считался как
 `T_seq / T_backend`, efficiency как `speedup / workers`. Baseline: `seq`, `PPC_NUM_THREADS=1`,
 `T_seq = 0.0058254364 s`. Для OMP/TBB применялись `PPC_NUM_THREADS=1,2,4`; TBB дополнительно ограничивается
-`tbb::global_control` ([`modules/runners/src/runners.cpp`](../../modules/runners/src/runners.cpp#L150)). STL и ALL
-берут число локальных потоков из `std::thread::hardware_concurrency()`; на этой машине `nproc = 12`.
+`tbb::global_control` ([`modules/runners/src/runners.cpp`](../../modules/runners/src/runners.cpp#L150)). STL и локальная
+часть ALL берут число потоков из `std::thread::hardware_concurrency()`; на этой машине `nproc = 12`, поэтому такие
+строки обозначены как auto workers.
 Число повторов по умолчанию равно 5 ([`modules/performance/include/performance.hpp`](../../modules/performance/include/performance.hpp#L21)).
 Ограничение методики: `TaskRun` повторяет только `Run()` после одного `PreProcessing()`
 ([`modules/performance/include/performance.hpp`](../../modules/performance/include/performance.hpp#L62)), а вход
@@ -46,7 +47,7 @@ Performance-тест генерирует `N=100000` случайных `int` и
 | tbb, 1 worker | 0.0024417256 s | 2.386 | 2.386 | `blocked_range`, `parallel_for` |
 | tbb, 2 workers | 0.0014976288 s | 3.889 | 1.945 | `PPC_NUM_THREADS=2` |
 | tbb, 4 workers | 0.0011774682 s | 4.947 | 1.237 | лучший потоковый backend |
-| stl, 12 workers | 0.0047718214 s | 1.221 | 0.102 | `hardware_concurrency`, `nproc=12` |
+| stl, auto workers (12 на тестовой машине) | 0.0047718214 s | 1.221 | 0.102 | `hardware_concurrency`, `PPC_NUM_THREADS` не используется STL-кодом |
 | all, 1 rank x 12 threads | 0.0126647332 s | 0.460 | 0.038 | total_workers=12 |
 | all, 2 ranks x 12 threads | 0.0088037862 s | 0.662 | 0.028 | total_workers=24 |
 | all, 4 ranks x 12 threads | 0.0043261284 s | 1.347 | 0.028 | total_workers=48 |
@@ -58,7 +59,7 @@ Performance-тест генерирует `N=100000` случайных `int` и
 | seq | 0.0068995056 s | 1.000 | 1.000 | `pipeline`, baseline |
 | omp, 1 thread | 0.1145523454 s | 0.060 | 0.060 | `pipeline` |
 | omp, 4 threads | 0.1193738506 s | 0.058 | 0.014 | `pipeline` |
-| stl, 12 workers | 0.0055675704 s | 1.239 | 0.103 | `pipeline`, `PPC_NUM_THREADS=1`, фактически auto-threads |
+| stl, auto workers (12 на тестовой машине) | 0.0055675704 s | 1.239 | 0.103 | `pipeline`, `PPC_NUM_THREADS=1`, фактически auto-workers |
 | tbb, 1 worker | 0.0067520042 s | 1.022 | 1.022 | `pipeline` |
 | tbb, 4 workers | 0.0026312252 s | 2.622 | 0.656 | `pipeline` |
 | all, 4 ranks x 12 threads | 0.0516886980 s | 0.133 | 0.003 | `pipeline`, total_workers=48 |
