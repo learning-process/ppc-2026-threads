@@ -22,8 +22,8 @@ void CountingSortStep(std::vector<int>::iterator in_begin, std::vector<int>::ite
   std::array<size_t, 256> count = {0};
 
   for (auto it = in_begin; it != in_end; ++it) {
-    auto raw_val = static_cast<unsigned int>(*it);
-    unsigned int byte_val = (raw_val >> shift) & 0xFF;
+    auto raw_val = static_cast<uint32_t>(*it);
+    uint32_t byte_val = (raw_val >> shift) & 0xFF;
     count.at(byte_val)++;
   }
 
@@ -34,8 +34,8 @@ void CountingSortStep(std::vector<int>::iterator in_begin, std::vector<int>::ite
   }
 
   for (auto it = in_begin; it != in_end; ++it) {
-    auto raw_val = static_cast<unsigned int>(*it);
-    unsigned int byte_val = (raw_val >> shift) & 0xFF;
+    auto raw_val = static_cast<uint32_t>(*it);
+    uint32_t byte_val = (raw_val >> shift) & 0xFF;
     *(out_begin + static_cast<std::ptrdiff_t>(prefix.at(byte_val))) = *it;
     prefix.at(byte_val)++;
   }
@@ -128,10 +128,8 @@ bool AkimovIRadixSortIntMergeALL::RunImpl() {
     local_data[i] ^= kSignMask;
   }
 
-  std::vector<int> global_data;
-  if (rank == 0) {
-    global_data.resize(n);
-  }
+  std::vector<int> global_data(rank == 0 ? n : 1);
+
   MPI_Gatherv(local_data.data(), local_size, MPI_INT, global_data.data(), send_counts.data(), send_displs.data(),
               MPI_INT, 0, MPI_COMM_WORLD);
 
