@@ -1,4 +1,4 @@
-#pragma once
+#include "kamalagin_a_binary_image_convex_hull/tbb/include/ops_tbb.hpp"
 
 #include <algorithm>
 #include <array>
@@ -7,25 +7,27 @@
 #include <utility>
 #include <vector>
 
-#include "kamalagin_a_binary_image_convex_hull_omp/common/include/common.hpp"
+#include "kamalagin_a_binary_image_convex_hull/common/include/common.hpp"
+#include "oneapi/tbb/blocked_range.h"
+#include "oneapi/tbb/parallel_for.h"
 
-namespace kamalagin_a_binary_image_convex_hull_omp {
+namespace kamalagin_a_binary_image_convex_hull {
 
-namespace detail {
+namespace {
 
 constexpr std::array<std::pair<int, int>, 4> kFourNeighbors = {{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}};
 
-inline int64_t Cross(const Point &o, const Point &a, const Point &b) {
+int64_t Cross(const Point &o, const Point &a, const Point &b) {
   return (static_cast<int64_t>(a.x - o.x) * (b.y - o.y)) - (static_cast<int64_t>(a.y - o.y) * (b.x - o.x));
 }
 
-inline int64_t DistSq(const Point &a, const Point &b) {
-  int dx = a.x - b.x;
-  int dy = a.y - b.y;
+int64_t DistSq(const Point &a, const Point &b) {
+  const int dx = a.x - b.x;
+  const int dy = a.y - b.y;
   return (static_cast<int64_t>(dx) * dx) + (static_cast<int64_t>(dy) * dy);
 }
 
-inline size_t GrahamFindPivot(std::vector<Point> &pts) {
+size_t GrahamFindPivot(std::vector<Point> &pts) {
   size_t pivot = 0;
   const size_t n = pts.size();
   for (size_t i = 1; i < n; ++i) {
@@ -36,7 +38,7 @@ inline size_t GrahamFindPivot(std::vector<Point> &pts) {
   return pivot;
 }
 
-inline void GrahamCollinearReduce(std::vector<Point> &pts) {
+void GrahamCollinearReduce(std::vector<Point> &pts) {
   size_t m = 1;
   const size_t n = pts.size();
   for (size_t i = 2; i < n; ++i) {
@@ -49,7 +51,7 @@ inline void GrahamCollinearReduce(std::vector<Point> &pts) {
   pts.resize(m + 1);
 }
 
-inline void GrahamScan(std::vector<Point> &pts, Hull &out) {
+void GrahamScan(std::vector<Point> &pts, Hull &out) {
   out.push_back(pts[0]);
   if (pts.size() <= 2) {
     if (pts.size() == 2) {
@@ -66,7 +68,7 @@ inline void GrahamScan(std::vector<Point> &pts, Hull &out) {
   }
 }
 
-inline void GrahamHull(std::vector<Point> &pts, Hull &out) {
+void GrahamHull(std::vector<Point> &pts, Hull &out) {
   out.clear();
   const size_t n = pts.size();
   if (n <= 1) {
@@ -75,11 +77,11 @@ inline void GrahamHull(std::vector<Point> &pts, Hull &out) {
     }
     return;
   }
-  size_t pivot = GrahamFindPivot(pts);
+  const size_t pivot = GrahamFindPivot(pts);
   std::swap(pts[0], pts[pivot]);
   const Point &p0 = pts[0];
   std::sort(pts.begin() + 1, pts.end(), [&p0](const Point &a, const Point &b) {
-    int64_t c = Cross(p0, a, b);
+    const int64_t c = Cross(p0, a, b);
     if (c != 0) {
       return c > 0;
     }
@@ -89,8 +91,8 @@ inline void GrahamHull(std::vector<Point> &pts, Hull &out) {
   GrahamScan(pts, out);
 }
 
-inline void FloodFillComponent(const BinaryImage &img, int start_row, int start_col, std::vector<int> &label,
-                               std::vector<Point> &component_pts) {
+void FloodFillComponent(const BinaryImage &img, int start_row, int start_col, std::vector<int> &label,
+                        std::vector<Point> &component_pts) {
   const int rows = img.rows;
   const int cols = img.cols;
   component_pts.clear();
@@ -99,16 +101,16 @@ inline void FloodFillComponent(const BinaryImage &img, int start_row, int start_
   const size_t start_idx = img.Index(start_row, start_col);
   label[start_idx] = 1;
   while (!stack.empty()) {
-    auto [cur_r, cur_c] = stack.back();
+    const auto [cur_r, cur_c] = stack.back();
     stack.pop_back();
     component_pts.push_back(Point{.x = cur_c, .y = cur_r});
     for (const auto &[dr, dc] : kFourNeighbors) {
-      int nr = cur_r + dr;
-      int nc = cur_c + dc;
+      const int nr = cur_r + dr;
+      const int nc = cur_c + dc;
       if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) {
         continue;
       }
-      size_t nidx = (static_cast<size_t>(nr) * static_cast<size_t>(cols)) + static_cast<size_t>(nc);
+      const size_t nidx = (static_cast<size_t>(nr) * static_cast<size_t>(cols)) + static_cast<size_t>(nc);
       if (img.data[nidx] != 0 && label[nidx] == 0) {
         label[nidx] = 1;
         stack.emplace_back(nr, nc);
@@ -117,7 +119,7 @@ inline void FloodFillComponent(const BinaryImage &img, int start_row, int start_
   }
 }
 
-inline void CollectComponents(const BinaryImage &img, std::vector<std::vector<Point>> &components) {
+void CollectComponents(const BinaryImage &img, std::vector<std::vector<Point>> &components) {
   components.clear();
   const int rows = img.rows;
   const int cols = img.cols;
@@ -125,7 +127,7 @@ inline void CollectComponents(const BinaryImage &img, std::vector<std::vector<Po
   std::vector<int> label(total, 0);
   for (int row = 0; row < rows; ++row) {
     for (int col = 0; col < cols; ++col) {
-      size_t idx = img.Index(row, col);
+      const size_t idx = img.Index(row, col);
       if (img.data[idx] == 0 || label[idx] != 0) {
         continue;
       }
@@ -135,19 +137,53 @@ inline void CollectComponents(const BinaryImage &img, std::vector<std::vector<Po
   }
 }
 
-}  // namespace detail
-
-inline void RunBinaryImageConvexHullOmp(const BinaryImage &img, HullList &hulls) {
+void RunBinaryImageConvexHullTbb(const BinaryImage &img, HullList &hulls) {
   hulls.clear();
   std::vector<std::vector<Point>> components;
-  detail::CollectComponents(img, components);
-  const int count = static_cast<int>(components.size());
-  hulls.resize(components.size());
-#pragma omp parallel for default(none) shared(components, hulls, count) schedule(dynamic)
-  for (int i = 0; i < count; ++i) {
-    const auto idx = static_cast<size_t>(i);
-    detail::GrahamHull(components[idx], hulls[idx]);
-  }
+  CollectComponents(img, components);
+  const size_t count = components.size();
+  hulls.resize(count);
+  tbb::parallel_for(tbb::blocked_range<size_t>(0, count), [&](const tbb::blocked_range<size_t> &range) {
+    for (size_t i = range.begin(); i != range.end(); ++i) {
+      GrahamHull(components[i], hulls[i]);
+    }
+  });
 }
 
-}  // namespace kamalagin_a_binary_image_convex_hull_omp
+}  // namespace
+
+KamalaginABinaryImageConvexHullTBB::KamalaginABinaryImageConvexHullTBB(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = HullList{};
+}
+
+bool KamalaginABinaryImageConvexHullTBB::ValidationImpl() {
+  const auto &img = GetInput();
+  if (img.rows < 0 || img.cols < 0) {
+    return false;
+  }
+  if (img.rows == 0 || img.cols == 0) {
+    return img.data.empty();
+  }
+  if (img.rows > 1000 || img.cols > 1000) {
+    return false;
+  }
+  return (static_cast<size_t>(img.rows) * static_cast<size_t>(img.cols)) == img.data.size();
+}
+
+bool KamalaginABinaryImageConvexHullTBB::PreProcessingImpl() {
+  GetOutput().clear();
+  return true;
+}
+
+bool KamalaginABinaryImageConvexHullTBB::RunImpl() {
+  RunBinaryImageConvexHullTbb(GetInput(), GetOutput());
+  return true;
+}
+
+bool KamalaginABinaryImageConvexHullTBB::PostProcessingImpl() {
+  return true;
+}
+
+}  // namespace kamalagin_a_binary_image_convex_hull
