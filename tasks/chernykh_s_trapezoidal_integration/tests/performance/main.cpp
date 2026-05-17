@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "chernykh_s_trapezoidal_integration/all/include/ops_all.hpp"
 #include "chernykh_s_trapezoidal_integration/common/include/common.hpp"
 #include "chernykh_s_trapezoidal_integration/omp/include/ops_omp.hpp"
 #include "chernykh_s_trapezoidal_integration/seq/include/ops_seq.hpp"
@@ -54,6 +55,8 @@ const auto kAllPerfTasks = std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, Ch
                                           ppc::util::MakeAllPerfTasks<InType, ChernykhSTrapezoidalIntegrationTBB>(
                                               PPC_SETTINGS_chernykh_s_trapezoidal_integration),
                                           ppc::util::MakeAllPerfTasks<InType, ChernykhSTrapezoidalIntegrationSTL>(
+                                              PPC_SETTINGS_chernykh_s_trapezoidal_integration),
+                                          ppc::util::MakeAllPerfTasks<InType, ChernykhSTrapezoidalIntegrationALL>(
                                               PPC_SETTINGS_chernykh_s_trapezoidal_integration));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

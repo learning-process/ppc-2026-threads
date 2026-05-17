@@ -8,6 +8,7 @@
 #include <tuple>
 #include <vector>
 
+#include "chernykh_s_trapezoidal_integration/all/include/ops_all.hpp"
 #include "chernykh_s_trapezoidal_integration/common/include/common.hpp"
 #include "chernykh_s_trapezoidal_integration/omp/include/ops_omp.hpp"
 #include "chernykh_s_trapezoidal_integration/seq/include/ops_seq.hpp"
@@ -81,6 +82,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ChernykhSTrape
                                            ppc::util::AddFuncTask<ChernykhSTrapezoidalIntegrationTBB, InType>(
                                                kTestParam, PPC_SETTINGS_chernykh_s_trapezoidal_integration),
                                            ppc::util::AddFuncTask<ChernykhSTrapezoidalIntegrationSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_chernykh_s_trapezoidal_integration),
+                                           ppc::util::AddFuncTask<ChernykhSTrapezoidalIntegrationALL, InType>(
                                                kTestParam, PPC_SETTINGS_chernykh_s_trapezoidal_integration));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
