@@ -82,6 +82,94 @@ KutuzovITestConvexHullALL::KutuzovITestConvexHullALL(const InType &in) {
   GetOutput() = {};
 }
 
+size_t KutuzovITestConvexHullALL::FindLeftmostPoint(const InType &input, size_t start, size_t end) {
+  std::array<double, 3> local_lm{};
+  std::array<double, 3> global_lm{};
+  local_lm[0] = std::get<0>(input[0]);
+  local_lm[1] = std::get<1>(input[0]);
+  local_lm[2] = 0.0;
+
+#pragma omp parallel default(none) shared(input, start, end, local_lm)
+  {
+    size_t li = 0;
+    double lx = std::get<0>(input[li]);
+    double ly = std::get<1>(input[li]);
+
+#pragma omp for nowait
+    for (size_t i = start; i < end; ++i) {
+      double x = std::get<0>(input[i]);
+      double y = std::get<1>(input[i]);
+      if (x < lx || (x == lx && y < ly)) {
+        li = i;
+        lx = x;
+        ly = y;
+      }
+    }
+#pragma omp critical
+    {
+      if (lx < local_lm[0] || (lx == local_lm[0] && ly < local_lm[1])) {
+        local_lm[0] = lx;
+        local_lm[1] = ly;
+        local_lm[2] = static_cast<double>(li);
+      }
+    }
+  }
+
+  MPI_Allreduce(local_lm.data(), global_lm.data(), 1, type_leftmost_, op_leftmost_, MPI_COMM_WORLD);
+  return static_cast<size_t>(global_lm[2]);
+}
+
+size_t KutuzovITestConvexHullALL::FindNextPoint(const InType &input, size_t n, size_t current, double current_x,
+                                                double current_y, double epsilon, size_t start, size_t end) {
+  size_t next = (current + 1) % n;
+  double next_x = std::get<0>(input[next]);
+  double next_y = std::get<1>(input[next]);
+
+#pragma omp parallel default(none) \
+    shared(input, n, current, current_x, current_y, start, end, epsilon, next, next_x, next_y)
+  {
+    size_t local_next = (current + 1) % n;
+    double local_next_x = std::get<0>(input[local_next]);
+    double local_next_y = std::get<1>(input[local_next]);
+
+#pragma omp for nowait
+    for (size_t i = start; i < end; ++i) {
+      if (i == current) {
+        continue;
+      }
+      double i_x = std::get<0>(input[i]);
+      double i_y = std::get<1>(input[i]);
+      double cross = CrossProduct(current_x, current_y, local_next_x, local_next_y, i_x, i_y);
+      if (IsBetterPoint(cross, epsilon, current_x, current_y, i_x, i_y, local_next_x, local_next_y)) {
+        local_next = i;
+        local_next_x = i_x;
+        local_next_y = i_y;
+      }
+    }
+
+#pragma omp critical
+    {
+      double cross = CrossProduct(current_x, current_y, next_x, next_y, local_next_x, local_next_y);
+      if (IsBetterPoint(cross, epsilon, current_x, current_y, local_next_x, local_next_y, next_x, next_y)) {
+        next = local_next;
+        next_x = local_next_x;
+        next_y = local_next_y;
+      }
+    }
+  }
+
+  s_curr_x = current_x;
+  s_curr_y = current_y;
+  s_epsilon = epsilon;
+
+  std::array<double, 3> local_cand{next_x, next_y, static_cast<double>(next)};
+  std::array<double, 3> global_cand{};
+
+  MPI_Allreduce(local_cand.data(), global_cand.data(), 1, type_next_, op_next_, MPI_COMM_WORLD);
+
+  return static_cast<size_t>(global_cand[2]);
+}
+
 bool KutuzovITestConvexHullALL::ValidationImpl() {
   return true;
 }
@@ -137,48 +225,15 @@ bool KutuzovITestConvexHullALL::RunImpl() {
     return true;
   }
 
-  size_t start = (n * static_cast<size_t>(rank_)) / static_cast<size_t>(size_);
-  size_t end = (n * (static_cast<size_t>(rank_) + 1)) / static_cast<size_t>(size_);
+  const size_t start = (n * static_cast<size_t>(rank_)) / static_cast<size_t>(size_);
+  const size_t end = (n * (static_cast<size_t>(rank_) + 1)) / static_cast<size_t>(size_);
+  const double epsilon = 1e-9;
 
-  std::array<double, 3> local_lm{};
-  std::array<double, 3> global_lm{};
-  local_lm[0] = std::get<0>(input[0]);
-  local_lm[1] = std::get<1>(input[0]);
-  local_lm[2] = 0.0;
-
-#pragma omp parallel default(none) shared(input, start, end, local_lm)
-  {
-    size_t li = 0;
-    double lx = std::get<0>(input[li]);
-    double ly = std::get<1>(input[li]);
-
-#pragma omp for nowait
-    for (size_t i = start; i < end; ++i) {
-      double x = std::get<0>(input[i]);
-      double y = std::get<1>(input[i]);
-      if (x < lx || (x == lx && y < ly)) {
-        li = i;
-        lx = x;
-        ly = y;
-      }
-    }
-#pragma omp critical
-    {
-      if (lx < local_lm[0] || (lx == local_lm[0] && ly < local_lm[1])) {
-        local_lm[0] = lx;
-        local_lm[1] = ly;
-        local_lm[2] = static_cast<double>(li);
-      }
-    }
-  }
-
-  MPI_Allreduce(local_lm.data(), global_lm.data(), 1, type_leftmost_, op_leftmost_, MPI_COMM_WORLD);
-  auto leftmost = static_cast<size_t>(global_lm[2]);
+  const size_t leftmost = FindLeftmostPoint(input, start, end);
 
   size_t current = leftmost;
   double current_x = std::get<0>(input[current]);
   double current_y = std::get<1>(input[current]);
-  const double epsilon = 1e-9;
 
   auto &output = GetOutput();
   output.clear();
@@ -186,59 +241,15 @@ bool KutuzovITestConvexHullALL::RunImpl() {
   while (true) {
     output.push_back(input[current]);
 
-    size_t next = (current + 1) % n;
-    double next_x = std::get<0>(input[next]);
-    double next_y = std::get<1>(input[next]);
+    const size_t next = FindNextPoint(input, n, current, current_x, current_y, epsilon, start, end);
 
-#pragma omp parallel default(none) \
-    shared(input, n, current, current_x, current_y, start, end, epsilon, next, next_x, next_y)
-    {
-      size_t local_next = (current + 1) % n;
-      double local_next_x = std::get<0>(input[local_next]);
-      double local_next_y = std::get<1>(input[local_next]);
-
-#pragma omp for nowait
-      for (size_t i = start; i < end; ++i) {
-        if (i == current) {
-          continue;
-        }
-        double i_x = std::get<0>(input[i]);
-        double i_y = std::get<1>(input[i]);
-        double cross = CrossProduct(current_x, current_y, local_next_x, local_next_y, i_x, i_y);
-        if (IsBetterPoint(cross, epsilon, current_x, current_y, i_x, i_y, local_next_x, local_next_y)) {
-          local_next = i;
-          local_next_x = i_x;
-          local_next_y = i_y;
-        }
-      }
-
-#pragma omp critical
-      {
-        double cross = CrossProduct(current_x, current_y, next_x, next_y, local_next_x, local_next_y);
-        if (IsBetterPoint(cross, epsilon, current_x, current_y, local_next_x, local_next_y, next_x, next_y)) {
-          next = local_next;
-          next_x = local_next_x;
-          next_y = local_next_y;
-        }
-      }
-    }
-
-    s_curr_x = current_x;
-    s_curr_y = current_y;
-    s_epsilon = epsilon;
-
-    std::array<double, 3> local_cand{next_x, next_y, static_cast<double>(next)};
-    std::array<double, 3> global_cand{};
-
-    MPI_Allreduce(local_cand.data(), global_cand.data(), 1, type_next_, op_next_, MPI_COMM_WORLD);
-
-    current = static_cast<size_t>(global_cand[2]);
-    current_x = global_cand[0];
-    current_y = global_cand[1];
-
-    if (current == leftmost) {
+    if (next == leftmost) {
       break;
     }
+
+    current = next;
+    current_x = std::get<0>(input[current]);
+    current_y = std::get<1>(input[current]);
   }
 
   return true;

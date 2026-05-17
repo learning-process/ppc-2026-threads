@@ -25,6 +25,10 @@ class KutuzovITestConvexHullALL : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
+  size_t FindLeftmostPoint(const InType &input, size_t start, size_t end);
+  size_t FindNextPoint(const InType &input, size_t n, size_t current, double current_x, double current_y,
+                       double epsilon, size_t start, size_t end);
+
   int rank_ = 0;
   int size_ = 1;
   MPI_Op op_leftmost_ = MPI_OP_NULL;
