@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <vector>
 
 #include "ovchinnikov_m_shell_sort_batcher_merge/common/include/common.hpp"

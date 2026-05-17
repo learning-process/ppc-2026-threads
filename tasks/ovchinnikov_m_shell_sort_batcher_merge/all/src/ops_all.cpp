@@ -183,7 +183,7 @@ void OvchinnikovMShellSortBatcherMergeALL::TreeMerge(int rank, int active_proces
         continue;
       }
 
-      std::vector<int> received_data(chunk_size * step);
+      std::vector<int> received_data(static_cast<std::size_t>(chunk_size) * static_cast<std::size_t>(step));
       MPI_Recv(received_data.data(), static_cast<int>(received_data.size()), MPI_INT, sender, 0, MPI_COMM_WORLD,
                MPI_STATUS_IGNORE);
       local_data = BatcherOddEvenMerge(local_data, received_data);
@@ -205,7 +205,7 @@ void OvchinnikovMShellSortBatcherMergeALL::ScatterData(int rank, int active_proc
     std::copy(padded_data.begin(), padded_data.begin() + chunk_size_diff, local_data.begin());
 
     for (int process = 1; process < active_processes; ++process) {
-      const auto offset = static_cast<std::ptrdiff_t>(process * chunk_size);
+      const auto offset = static_cast<std::ptrdiff_t>(process) * static_cast<std::ptrdiff_t>(chunk_size);
       MPI_Send(padded_data.data() + offset, chunk_size, MPI_INT, process, 0, MPI_COMM_WORLD);
     }
   } else {
@@ -254,7 +254,7 @@ bool OvchinnikovMShellSortBatcherMergeALL::RunImpl() {
 
   const int active_processes = LargestPowerOfTwoNotGreaterThan(process_count);
   std::size_t padded_size = NextPowerOfTwo(original_size);
-  while (padded_size < static_cast<std::size_t>(active_processes)) {
+  while (std::cmp_less(padded_size, active_processes)) {
     padded_size <<= 1;
   }
 
