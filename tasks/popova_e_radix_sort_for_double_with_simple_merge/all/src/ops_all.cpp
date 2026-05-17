@@ -129,6 +129,37 @@ bool SameData(const std::vector<double> &original, const std::vector<double> &re
   return hash_original == hash_result;
 }
 
+void SplitMpiData(int total_elements, int size, std::vector<int> &elem_count, std::vector<int> &start_index) {
+  int elems_per_proc = total_elements / size;
+  int ostat = total_elements % size;
+  int curr_index = 0;
+
+  for (int i = 0; i < size; i++) {
+    if (i < ostat) {
+      elem_count[i] = elems_per_proc + 1;
+    } else {
+      elem_count[i] = elems_per_proc;
+    }
+    start_index[i] = curr_index;
+    curr_index += elem_count[i];
+  }
+}
+
+void MergeChunks(const std::vector<double> &gathered, const std::vector<int> &counts, const std::vector<int> &starts,
+                 int size, std::vector<double> &output) {
+  output.clear();
+  for (int i = 0; i < size; i++) {
+    std::vector<double> piece(gathered.begin() + starts[i], gathered.begin() + starts[i] + counts[i]);
+    if (!piece.empty()) {
+      if (output.empty()) {
+        output = std::move(piece);
+      } else {
+        output = MergeSorted(output, piece);
+      }
+    }
+  }
+}
+
 }  // namespace
 
 PopovaERadixSorForDoubleWithSimpleMergeALL::PopovaERadixSorForDoubleWithSimpleMergeALL(const InType &in) {
@@ -156,7 +187,8 @@ bool PopovaERadixSorForDoubleWithSimpleMergeALL::PreProcessingImpl() {
 }
 
 bool PopovaERadixSorForDoubleWithSimpleMergeALL::RunImpl() {
-  int rank = 0, size = 0;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -168,19 +200,7 @@ bool PopovaERadixSorForDoubleWithSimpleMergeALL::RunImpl() {
 
   std::vector<int> elem_count(size);
   std::vector<int> start_index(size);
-  int elems_per_proc = total_elements / size;
-  int ostat = total_elements % size;
-  int curr_index = 0;
-
-  for (int i = 0; i < size; ++i) {
-    if (i < ostat) {
-      elem_count[i] = elems_per_proc + 1;
-    } else {
-      elem_count[i] = elems_per_proc;
-    }
-    start_index[i] = curr_index;
-    curr_index += elem_count[i];
-  }
+  SplitMpiData(total_elements, size, elem_count, start_index);
 
   int my_elem_count = elem_count[rank];
   std::vector<double> local_array(my_elem_count);
@@ -190,15 +210,22 @@ bool PopovaERadixSorForDoubleWithSimpleMergeALL::RunImpl() {
 
   std::vector<uint64_t> local_bits(my_elem_count);
 
-#pragma omp parallel for
-  for (int i = 0; i < my_elem_count; i++) {
-    local_bits[i] = DoubleToSortable(local_array[i]);
+#pragma omp parallel default(none) shared(my_elem_count, local_bits, local_array)
+  {
+#pragma omp for
+    for (int i = 0; i < my_elem_count; i++) {
+      local_bits[i] = DoubleToSortable(local_array[i]);
+    }
   }
+
   RadixSortUInt(local_bits);
 
-#pragma omp parallel for
-  for (int i = 0; i < my_elem_count; i++) {
-    local_array[i] = SortableToDouble(local_bits[i]);
+#pragma omp parallel default(none) shared(my_elem_count, local_array, local_bits)
+  {
+#pragma omp for
+    for (int i = 0; i < my_elem_count; i++) {
+      local_array[i] = SortableToDouble(local_bits[i]);
+    }
   }
 
   std::vector<double> gathered_array;
@@ -210,18 +237,7 @@ bool PopovaERadixSorForDoubleWithSimpleMergeALL::RunImpl() {
               start_index.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
-    result_.clear();
-    for (int i = 0; i < size; i++) {
-      std::vector<double> proc_piece(gathered_array.begin() + start_index[i],
-                                     gathered_array.begin() + start_index[i] + elem_count[i]);
-      if (!proc_piece.empty()) {
-        if (result_.empty()) {
-          result_ = std::move(proc_piece);
-        } else {
-          result_ = MergeSorted(result_, proc_piece);
-        }
-      }
-    }
+    MergeChunks(gathered_array, elem_count, start_index, size, result_);
   }
 
   return true;
