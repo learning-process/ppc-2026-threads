@@ -79,8 +79,7 @@ bool PylaevaSIncContrastImgByLshALL::RunImpl() {
   uint8_t loc_min_v = 255;
   uint8_t loc_max_v = 0;
 
-#pragma omp parallel for default(none) /*shared(local_data_, local_size_)*/ reduction(min : loc_min_v) \
-    reduction(max : loc_max_v)
+#pragma omp parallel for default(none) reduction(min : loc_min_v) reduction(max : loc_max_v)
   for (size_t i = 0; i < local_size_; i++) {
     loc_min_v = std::min(loc_min_v, local_data_[i]);
     loc_max_v = std::max(loc_max_v, local_data_[i]);
@@ -95,7 +94,7 @@ bool PylaevaSIncContrastImgByLshALL::RunImpl() {
                 MPI_COMM_WORLD);
 
   if (global_min == global_max) {
-#pragma omp parallel for default(none)  // shared(local_out_, local_data_, local_size_)
+#pragma omp parallel for default(none)
     for (size_t i = 0; i < local_size_; i++) {
       local_out_[i] = local_data_[i];
     }
@@ -105,7 +104,7 @@ bool PylaevaSIncContrastImgByLshALL::RunImpl() {
   const int diff = global_max - global_min;
   const double scale = 255.0 / diff;
 
-#pragma omp parallel for default(none) shared(local_data_, local_out_, global_min, scale)
+#pragma omp parallel for default(none) shared(global_min, scale)
   for (size_t i = 0; i < local_size_; i++) {
     int pixel = local_data_[i];
     int result = static_cast<int>((pixel - static_cast<int>(global_min)) * scale + 0.5);
