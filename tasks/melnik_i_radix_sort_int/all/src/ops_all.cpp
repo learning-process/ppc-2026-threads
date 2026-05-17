@@ -23,8 +23,8 @@ constexpr std::size_t kBuckets = 1U << kBitsPerPass;
 std::pair<std::size_t, std::size_t> ChunkBounds(std::size_t n, int num_ranks, int rank) {
   const auto nz = static_cast<std::size_t>(num_ranks);
   const auto rz = static_cast<std::size_t>(rank);
-  const std::size_t base = (n / nz) * rz + std::min(rz, n % nz);
-  const std::size_t size = n / nz + (rz < n % nz ? 1U : 0U);
+  const std::size_t base = ((n / nz) * rz) + std::min(rz, n % nz);
+  const std::size_t size = (n / nz) + (rz < n % nz ? 1U : 0U);
   return {base, base + size};
 }
 
@@ -62,20 +62,20 @@ void MelnikIRadixSortIntALL::CountingSortByByte(const std::vector<int> &source, 
   for (std::size_t i = begin; i < end; ++i) {
     const std::int64_t val = static_cast<std::int64_t>(source[i]) + offset;
     const auto bucket = static_cast<std::size_t>((val / exp) % static_cast<std::int64_t>(kBuckets));
-    ++count[bucket];
+    ++count.at(bucket);
   }
 
   std::array<std::size_t, kBuckets> pos{};
-  pos[0] = begin;
-  for (std::size_t b = 1; b < kBuckets; ++b) {
-    pos[b] = pos[b - 1U] + count[b - 1U];
+  pos.at(0) = begin;
+  for (std::size_t bucket_idx = 1; bucket_idx < kBuckets; ++bucket_idx) {
+    pos.at(bucket_idx) = pos.at(bucket_idx - 1U) + count.at(bucket_idx - 1U);
   }
 
   for (std::size_t i = begin; i < end; ++i) {
     const std::int64_t val = static_cast<std::int64_t>(source[i]) + offset;
     const auto bucket = static_cast<std::size_t>((val / exp) % static_cast<std::int64_t>(kBuckets));
-    destination[pos[bucket]] = source[i];
-    ++pos[bucket];
+    destination[pos.at(bucket)] = source[i];
+    ++pos.at(bucket);
   }
 }
 
@@ -131,6 +131,7 @@ void MelnikIRadixSortIntALL::MergeRanges(const std::vector<int> &source, std::ve
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void MelnikIRadixSortIntALL::MergeSortedRangesParallel(std::vector<int> &data, std::vector<int> &buffer,
                                                        const std::vector<Range> &ranges, int num_threads) {
   if (ranges.empty()) {
@@ -150,20 +151,19 @@ void MelnikIRadixSortIntALL::MergeSortedRangesParallel(std::vector<int> &data, s
 
     if (active <= 1) {
       // Sequential path – avoids thread overhead for tiny workloads.
-      for (std::size_t p = 0; p < pairs; ++p) {
-        const std::size_t lp = p * 2U;
+      for (std::size_t pair_idx = 0; pair_idx < pairs; ++pair_idx) {
+        const std::size_t lp = pair_idx * 2U;
         const Range left = cur[lp];
         if (lp + 1U >= cur.size()) {
-          // Odd range out – copy to dst to keep buffers consistent.
           std::copy(src->begin() + static_cast<std::ptrdiff_t>(left.begin),
                     src->begin() + static_cast<std::ptrdiff_t>(left.end),
                     dst->begin() + static_cast<std::ptrdiff_t>(left.begin));
-          next[p] = left;
+          next[pair_idx] = left;
           continue;
         }
         const Range right = cur[lp + 1U];
         MergeRanges(*src, *dst, left, right, left.begin);
-        next[p] = Range{.begin = left.begin, .end = right.end};
+        next[pair_idx] = Range{.begin = left.begin, .end = right.end};
       }
     } else {
       // Parallel path – distribute pairs across threads.
@@ -173,19 +173,19 @@ void MelnikIRadixSortIntALL::MergeSortedRangesParallel(std::vector<int> &data, s
       for (int tid = 0; tid < active; ++tid) {
         workers.emplace_back([&, tid]() {
           auto [p_begin, p_end] = ThreadChunkBounds(pairs, active, tid);
-          for (std::size_t p = p_begin; p < p_end; ++p) {
-            const std::size_t lp = p * 2U;
+          for (std::size_t pair_idx = p_begin; pair_idx < p_end; ++pair_idx) {
+            const std::size_t lp = pair_idx * 2U;
             const Range left = cur[lp];
             if (lp + 1U >= cur.size()) {
               std::copy(src->begin() + static_cast<std::ptrdiff_t>(left.begin),
                         src->begin() + static_cast<std::ptrdiff_t>(left.end),
                         dst->begin() + static_cast<std::ptrdiff_t>(left.begin));
-              next[p] = left;
+              next[pair_idx] = left;
               return;
             }
             const Range right = cur[lp + 1U];
             MergeRanges(*src, *dst, left, right, left.begin);
-            next[p] = Range{.begin = left.begin, .end = right.end};
+            next[pair_idx] = Range{.begin = left.begin, .end = right.end};
           }
         });
       }
@@ -203,6 +203,7 @@ void MelnikIRadixSortIntALL::MergeSortedRangesParallel(std::vector<int> &data, s
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 bool MelnikIRadixSortIntALL::RunImpl() {
   auto &output = GetOutput();
   if (output.empty()) {
@@ -220,10 +221,10 @@ bool MelnikIRadixSortIntALL::RunImpl() {
   std::vector<int> send_counts(static_cast<std::size_t>(num_ranks));
   std::vector<int> displacements(static_cast<std::size_t>(num_ranks));
   if (rank == 0) {
-    for (int r = 0; r < num_ranks; ++r) {
-      auto [b, e] = ChunkBounds(static_cast<std::size_t>(total_size), num_ranks, r);
-      send_counts[static_cast<std::size_t>(r)] = static_cast<int>(e - b);
-      displacements[static_cast<std::size_t>(r)] = static_cast<int>(b);
+    for (int rank_idx = 0; rank_idx < num_ranks; ++rank_idx) {
+      auto [b, e] = ChunkBounds(static_cast<std::size_t>(total_size), num_ranks, rank_idx);
+      send_counts[static_cast<std::size_t>(rank_idx)] = static_cast<int>(e - b);
+      displacements[static_cast<std::size_t>(rank_idx)] = static_cast<int>(b);
     }
   }
 
@@ -280,9 +281,9 @@ bool MelnikIRadixSortIntALL::RunImpl() {
     // Build per-rank ranges (already sorted sub-arrays in output).
     std::vector<Range> rank_ranges;
     rank_ranges.reserve(static_cast<std::size_t>(num_ranks));
-    for (int r = 0; r < num_ranks; ++r) {
-      const auto b = static_cast<std::size_t>(displacements[static_cast<std::size_t>(r)]);
-      const auto e = b + static_cast<std::size_t>(send_counts[static_cast<std::size_t>(r)]);
+    for (int rank_idx = 0; rank_idx < num_ranks; ++rank_idx) {
+      const auto b = static_cast<std::size_t>(displacements[static_cast<std::size_t>(rank_idx)]);
+      const auto e = b + static_cast<std::size_t>(send_counts[static_cast<std::size_t>(rank_idx)]);
       if (b < e) {
         rank_ranges.push_back(Range{.begin = b, .end = e});
       }
