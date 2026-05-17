@@ -25,7 +25,7 @@ bool YurkinGGrahamScanSTL::PreProcessingImpl() {
     return true;
   }
 
-  std::sort(pts.begin(), pts.end(), [](const Point &a, const Point &b) {
+  std::ranges::sort(pts, [](const Point &a, const Point &b) {
     if (a.x != b.x) {
       return a.x < b.x;
     }
@@ -64,7 +64,7 @@ bool YurkinGGrahamScanSTL::RunImpl() {
   }
 
   InType pts = pts_in;
-  std::sort(pts.begin(), pts.end(), [](const Point &a, const Point &b) {
+  std::ranges::sort(pts, [](const Point &a, const Point &b) {
     if (a.x != b.x) {
       return a.x < b.x;
     }
