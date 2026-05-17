@@ -49,7 +49,7 @@ inline float VerticalFilterAtSTL(const std::vector<float> &temp, int n, int m, i
   return (temp[idx - n] + (2.F * temp[idx]) + temp[idx + n]) / 4.F;
 }
 
-inline void ProcessHorizontalSTL(int thread_idx, int num_threads, int m, int n, const std::vector<float> &image,
+static inline void ProcessHorizontalSTL(int thread_idx, int num_threads, int m, int n, const std::vector<float> &image,
                                  std::vector<float> &temp) {
   for (int yi = thread_idx; yi < m; yi += num_threads) {
     for (int xf = 0; xf < n; ++xf) {
@@ -58,7 +58,7 @@ inline void ProcessHorizontalSTL(int thread_idx, int num_threads, int m, int n, 
   }
 }
 
-inline void ProcessVerticalSTL(int thread_idx, int num_threads, int m, int n, const std::vector<float> &temp,
+static inline void ProcessVerticalSTL(int thread_idx, int num_threads, int m, int n, const std::vector<float> &temp,
                                std::vector<float> &out) {
   for (int yi = thread_idx; yi < m; yi += num_threads) {
     for (int xy = 0; xy < n; ++xy) {
