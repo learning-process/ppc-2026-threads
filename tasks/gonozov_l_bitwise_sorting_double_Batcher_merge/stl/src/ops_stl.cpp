@@ -1,7 +1,6 @@
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/stl/include/ops_stl.hpp"
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
