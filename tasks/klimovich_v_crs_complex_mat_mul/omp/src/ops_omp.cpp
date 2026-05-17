@@ -86,7 +86,7 @@ bool KlimovichVCrsComplexMatMulOmp::PreProcessingImpl() {
 CrsMatrix KlimovichVCrsComplexMatMulOmp::MultiplyCrs(const CrsMatrix &lhs, const CrsMatrix &rhs) {
   std::vector<RowStage> per_row(static_cast<std::size_t>(lhs.n_rows));
 
-#pragma omp parallel default(none) shared(lhs, rhs, per_row)
+#pragma omp parallel shared(lhs, rhs, per_row)
   {
     std::vector<Cplx> spa(static_cast<std::size_t>(rhs.n_cols), Cplx(0.0, 0.0));
     std::vector<int> touched_by_row(static_cast<std::size_t>(rhs.n_cols), -1);
