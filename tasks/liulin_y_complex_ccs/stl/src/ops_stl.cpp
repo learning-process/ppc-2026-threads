@@ -4,6 +4,7 @@
 #include <cmath>
 #include <complex>
 #include <cstddef>
+#include <functional>
 #include <map>
 #include <thread>
 #include <utility>
@@ -84,12 +85,43 @@ void ProcessChunk(int start_idx, int end_idx, const CCSMatrix &mat_a, const std:
     const int b_start = mat_b_t.col_index[static_cast<size_t>(col_left)];
     const int b_end = mat_b_t.col_index[static_cast<size_t>(col_left) + 1];
 
-    for (int p = b_start; p < b_end; ++p) {
-      const int col_right = mat_b_t.row_index[static_cast<size_t>(p)];
-      const std::complex<double> val_right = mat_b_t.values[static_cast<size_t>(p)];
+    for (int idx_p = b_start; idx_p < b_end; ++idx_p) {
+      const int col_right = mat_b_t.row_index[static_cast<size_t>(idx_p)];
+      const std::complex<double> val_right = mat_b_t.values[static_cast<size_t>(idx_p)];
 
       local_map[{col_right, row_left}] += val_left * val_right;
     }
+  }
+}
+
+void AggregateLocalMaps(const std::vector<LocalDict> &local_maps, LocalDict &global_map) {
+  for (const auto &local_map : local_maps) {
+    for (const auto &[key, value] : local_map) {
+      global_map[key] += value;
+    }
+  }
+}
+
+void ConstructResultMatrix(const LocalDict &global_map, int rows, int cols, CCSMatrix &mat_res) {
+  mat_res.count_rows = rows;
+  mat_res.count_cols = cols;
+  mat_res.values.clear();
+  mat_res.row_index.clear();
+  mat_res.col_index.assign(static_cast<size_t>(cols) + 1, 0);
+
+  for (const auto &[key, value] : global_map) {
+    if (std::abs(value.real()) > kEpsilon || std::abs(value.imag()) > kEpsilon) {
+      const int col = key.first;
+      const int row = key.second;
+
+      mat_res.values.push_back(value);
+      mat_res.row_index.push_back(row);
+      mat_res.col_index[static_cast<size_t>(col) + 1]++;
+    }
+  }
+
+  for (int i = 0; i < cols; ++i) {
+    mat_res.col_index[static_cast<size_t>(i) + 1] += mat_res.col_index[static_cast<size_t>(i)];
   }
 }
 
@@ -103,15 +135,7 @@ LiulinYComplexCcsStl::LiulinYComplexCcsStl(const InType &in) : BaseTask() {
 bool LiulinYComplexCcsStl::ValidationImpl() {
   const auto &mat_a = GetInput().first;
   const auto &mat_b = GetInput().second;
-
-  if (!IsValidCCS(mat_a) || !IsValidCCS(mat_b)) {
-    return false;
-  }
-  if (mat_a.count_cols != mat_b.count_rows) {
-    return false;
-  }
-
-  return true;
+  return IsValidCCS(mat_a) && IsValidCCS(mat_b) && (mat_a.count_cols == mat_b.count_rows);
 }
 
 bool LiulinYComplexCcsStl::PreProcessingImpl() {
@@ -124,7 +148,6 @@ bool LiulinYComplexCcsStl::RunImpl() {
   auto &mat_res = GetOutput();
 
   const int nnz_a = static_cast<int>(mat_a.values.size());
-
   if (nnz_a == 0) {
     mat_res.count_rows = mat_a.count_rows;
     mat_res.count_cols = mat_b.count_cols;
@@ -134,25 +157,22 @@ bool LiulinYComplexCcsStl::RunImpl() {
 
   CCSMatrix mat_b_t;
   TransposeCCS(mat_b, mat_b_t);
-
   std::vector<int> a_cols = BuildColumnIndices(mat_a);
 
-  unsigned int hw_threads = std::thread::hardware_concurrency();
-  int num_threads = (hw_threads == 0) ? 1 : static_cast<int>(hw_threads);
-  num_threads = std::min(num_threads, nnz_a);
-
-  const int chunk_size = nnz_a / num_threads;
-  const int remainder = nnz_a % num_threads;
+  unsigned int hw = std::thread::hardware_concurrency();
+  int num_threads = std::min(nnz_a, (hw == 0) ? 1 : static_cast<int>(hw));
 
   std::vector<std::thread> threads;
   std::vector<LocalDict> local_maps(static_cast<size_t>(num_threads));
+  int chunk = nnz_a / num_threads;
+  int rem = nnz_a % num_threads;
 
-  int current_start = 0;
+  int start = 0;
   for (int i = 0; i < num_threads; ++i) {
-    int current_end = current_start + chunk_size + (i < remainder ? 1 : 0);
-    threads.emplace_back(ProcessChunk, current_start, current_end, std::ref(mat_a), std::ref(a_cols), std::ref(mat_b_t),
+    int end = start + chunk + (i < rem ? 1 : 0);
+    threads.emplace_back(ProcessChunk, start, end, std::ref(mat_a), std::ref(a_cols), std::ref(mat_b_t),
                          std::ref(local_maps[static_cast<size_t>(i)]));
-    current_start = current_end;
+    start = end;
   }
 
   for (auto &t : threads) {
@@ -162,32 +182,8 @@ bool LiulinYComplexCcsStl::RunImpl() {
   }
 
   LocalDict global_map;
-  for (const auto &local_map : local_maps) {
-    for (const auto &[key, value] : local_map) {
-      global_map[key] += value;
-    }
-  }
-
-  mat_res.count_rows = mat_a.count_rows;
-  mat_res.count_cols = mat_b.count_cols;
-  mat_res.values.clear();
-  mat_res.row_index.clear();
-  mat_res.col_index.assign(static_cast<size_t>(mat_res.count_cols) + 1, 0);
-
-  for (const auto &[key, value] : global_map) {
-    if (std::abs(value.real()) > kEpsilon || std::abs(value.imag()) > kEpsilon) {
-      const int col = key.first;
-      const int row = key.second;
-
-      mat_res.values.push_back(value);
-      mat_res.row_index.push_back(row);
-      mat_res.col_index[static_cast<size_t>(col) + 1]++;
-    }
-  }
-
-  for (int i = 0; i < mat_res.count_cols; ++i) {
-    mat_res.col_index[static_cast<size_t>(i) + 1] += mat_res.col_index[static_cast<size_t>(i)];
-  }
+  AggregateLocalMaps(local_maps, global_map);
+  ConstructResultMatrix(global_map, mat_a.count_rows, mat_b.count_cols, mat_res);
 
   return true;
 }
