@@ -60,7 +60,7 @@ bool NikolaevDBlockLinearImageFilteringSTL::RunImpl() {
   std::vector<int> row_indices(height);
   std::iota(row_indices.begin(), row_indices.end(), 0);
 
-  std::for_each(std::execution::par, row_indices.begin(), row_indices.end(), [&](int ny) {
+  std::for_each(std::execution::par_unseq, row_indices.begin(), row_indices.end(), [&](int ny) {
     for (int nx = 0; nx < width; ++nx) {
       for (int ch = 0; ch < 3; ++ch) {
         dst[((ny * width + nx) * 3) + ch] = ApplyKernel(src, width, height, nx, ny, ch);
