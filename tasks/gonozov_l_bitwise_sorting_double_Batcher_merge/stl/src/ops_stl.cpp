@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace gonozov_l_bitwise_sorting_double_batcher_merge {
 
@@ -68,12 +69,12 @@ void RadixSortDouble(std::vector<double> &data) {
   std::vector<uint64_t> temp_keys(data.size());
 
   for (size_t byte_id = 0; byte_id < 8; ++byte_id) {
-    std::array<size_t, kByteRange> count{};
+    std::vector<size_t> count(kByteRange, 0);
 
     size_t shift = byte_id * 8;
 
     for (uint64_t key : keys) {
-      uint8_t byte = static_cast<uint8_t>((key >> shift) & 0xFF);
+      auto byte = static_cast<uint8_t>((key >> shift) & 0xFF);
       ++count[byte];
     }
 
@@ -82,7 +83,7 @@ void RadixSortDouble(std::vector<double> &data) {
     }
 
     for (size_t i = keys.size(); i-- > 0;) {
-      uint8_t byte = static_cast<uint8_t>((keys[i] >> shift) & 0xFF);
+      auto byte = static_cast<uint8_t>((keys[i] >> shift) & 0xFF);
       temp_keys[--count[byte]] = keys[i];
     }
 
@@ -105,7 +106,7 @@ void SortChunk(double *data, size_t start, size_t size) {
 void MergeSortedChunks(double *data, size_t total_size, size_t chunk_size) {
   for (size_t current_size = chunk_size; current_size < total_size; current_size *= 2) {
     for (size_t left = 0; left < total_size; left += current_size * 2) {
-      std::inplace_merge(data + left, data + left + current_size, data + left + current_size * 2);
+      std::inplace_merge(data + left, data + left + current_size, data + left + (current_size * 2));
     }
   }
 }
