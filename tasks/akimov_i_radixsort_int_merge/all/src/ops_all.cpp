@@ -1,7 +1,6 @@
 #include "akimov_i_radixsort_int_merge/all/include/ops_all.hpp"
 
 #include <mpi.h>
-#include <oneapi/tbb/parallel_for.h>
 
 #include <algorithm>
 #include <array>
@@ -49,7 +48,6 @@ void RadixSortLocal(std::vector<int>::iterator begin, std::vector<int>::iterator
   }
 
   std::vector<int> temp(n);
-
   for (size_t i = 0; i < sizeof(int); ++i) {
     if (i % 2 == 0) {
       CountingSortStep(begin, end, temp.begin(), i);
@@ -104,7 +102,6 @@ bool AkimovIRadixSortIntMergeALL::RunImpl() {
 
   std::vector<int> send_counts(world_size);
   std::vector<int> send_displs(world_size);
-
   int base = n / world_size;
   int rem = n % world_size;
   int offset = 0;
@@ -135,7 +132,6 @@ bool AkimovIRadixSortIntMergeALL::RunImpl() {
   if (rank == 0) {
     global_data.resize(n);
   }
-
   MPI_Gatherv(local_data.data(), local_size, MPI_INT, global_data.data(), send_counts.data(), send_displs.data(),
               MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -152,6 +148,7 @@ bool AkimovIRadixSortIntMergeALL::RunImpl() {
 
   int output_size = static_cast<int>(GetOutput().size());
   MPI_Bcast(&output_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
   if (rank != 0) {
     GetOutput().resize(output_size);
   }
