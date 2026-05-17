@@ -1,4 +1,3 @@
-#include "tsyplakov_k_mul_double_crs_matrix/common/include/common.hpp"
 #include "tsyplakov_k_mul_double_crs_matrix/all/include/ops_all.hpp"
 
 #include <mpi.h>
@@ -10,6 +9,8 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include "tsyplakov_k_mul_double_crs_matrix/common/include/common.hpp"
 
 namespace tsyplakov_k_mul_double_crs_matrix {
 
