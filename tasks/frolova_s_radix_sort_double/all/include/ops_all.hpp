@@ -22,8 +22,7 @@ class FrolovaSRadixSortDoubleALL : public BaseTask {
 
   static void RadixSortChunk(std::vector<double> &chunk);
   static void ProcessChunk(std::vector<double> &chunk);
-  static std::vector<double> SimpleMerge(const std::vector<double> &a,
-                                         const std::vector<double> &b);
+  static std::vector<double> SimpleMerge(const std::vector<double> &a, const std::vector<double> &b);
   static std::vector<double> ParallelMerge(std::vector<std::vector<double>> &chunks);
 };
 

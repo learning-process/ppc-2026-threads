@@ -52,7 +52,7 @@ const auto kAllPerfTasks =
     std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, FrolovaSRadixSortDoubleSEQ>(PPC_SETTINGS_example_threads),
                    ppc::util::MakeAllPerfTasks<InType, FrolovaSRadixSortDoubleOMP>(PPC_SETTINGS_example_threads),
                    ppc::util::MakeAllPerfTasks<InType, FrolovaSRadixSortDoubleTBB>(PPC_SETTINGS_example_threads),
-                   ppc::util::MakeAllPerfTasks<InType, FrolovaSRadixSortDoubleSTL>(PPC_SETTINGS_example_threads), 
+                   ppc::util::MakeAllPerfTasks<InType, FrolovaSRadixSortDoubleSTL>(PPC_SETTINGS_example_threads),
                    ppc::util::MakeAllPerfTasks<InType, FrolovaSRadixSortDoubleALL>(PPC_SETTINGS_example_threads));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
