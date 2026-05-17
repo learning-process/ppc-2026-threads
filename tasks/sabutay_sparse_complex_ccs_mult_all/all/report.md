@@ -4,7 +4,6 @@
 - Technology: ALL
 - Variant: 7
 
-
 ## 1. Контекст
 
 Технология **ALL** объединяет несколько средств курса в одном классе `SabutaySparseComplexCcsMultAll`:
