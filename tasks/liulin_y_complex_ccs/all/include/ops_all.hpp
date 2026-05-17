@@ -1,7 +1,5 @@
 #pragma once
 
-#include <mpi.h>
-
 #include "liulin_y_complex_ccs/common/include/common.hpp"
 #include "task/include/task.hpp"
 
