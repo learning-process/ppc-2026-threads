@@ -34,22 +34,23 @@ std::pair<std::size_t, std::size_t> ThreadChunkBounds(std::size_t n, int num_thr
 
 }  // namespace
 
-
 MelnikIRadixSortIntALL::MelnikIRadixSortIntALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};
 }
 
-bool MelnikIRadixSortIntALL::ValidationImpl() { return !GetInput().empty(); }
+bool MelnikIRadixSortIntALL::ValidationImpl() {
+  return !GetInput().empty();
+}
 
 bool MelnikIRadixSortIntALL::PreProcessingImpl() {
   GetOutput() = GetInput();
   return !GetOutput().empty();
 }
 
-bool MelnikIRadixSortIntALL::PostProcessingImpl() { 
-    return std::ranges::is_sorted(GetOutput());
+bool MelnikIRadixSortIntALL::PostProcessingImpl() {
+  return std::ranges::is_sorted(GetOutput());
 }
 
 void MelnikIRadixSortIntALL::CountingSortByByte(const std::vector<int> &source, std::vector<int> &destination,
@@ -122,12 +123,10 @@ void MelnikIRadixSortIntALL::MergeRanges(const std::vector<int> &source, std::ve
   }
 
   if (li < left.end) {
-    std::copy(source.begin() + static_cast<std::ptrdiff_t>(li),
-              source.begin() + static_cast<std::ptrdiff_t>(left.end),
+    std::copy(source.begin() + static_cast<std::ptrdiff_t>(li), source.begin() + static_cast<std::ptrdiff_t>(left.end),
               destination.begin() + static_cast<std::ptrdiff_t>(wi));
   } else if (ri < right.end) {
-    std::copy(source.begin() + static_cast<std::ptrdiff_t>(ri),
-              source.begin() + static_cast<std::ptrdiff_t>(right.end),
+    std::copy(source.begin() + static_cast<std::ptrdiff_t>(ri), source.begin() + static_cast<std::ptrdiff_t>(right.end),
               destination.begin() + static_cast<std::ptrdiff_t>(wi));
   }
 }
@@ -237,7 +236,7 @@ bool MelnikIRadixSortIntALL::RunImpl() {
   MPI_Scatterv(output.data(), send_counts.data(), displacements.data(), MPI_INT, local.data(), local_count, MPI_INT, 0,
                MPI_COMM_WORLD);
 
-  const int local_threads = std::min(num_threads, local_count);
+  const int local_threads = num_threads;
 
   if (local_count > 0) {
     std::vector<int> local_buf(static_cast<std::size_t>(local_count));

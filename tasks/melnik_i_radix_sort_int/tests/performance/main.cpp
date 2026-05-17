@@ -17,7 +17,7 @@ namespace melnik_i_radix_sort_int {
 
 namespace {
 
-constexpr std::size_t kArraySize = 8'000'000;
+constexpr std::size_t kArraySize = 10'000'000;
 constexpr unsigned int kSeed = 42;
 
 std::vector<int> GenerateRandomData(std::size_t size, unsigned int seed) {
