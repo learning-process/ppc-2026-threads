@@ -37,7 +37,7 @@ void CountingSortStep(std::vector<int>::iterator in_begin, std::vector<int>::ite
   for (auto it = in_begin; it != in_end; ++it) {
     auto raw_val = static_cast<unsigned int>(*it);
     unsigned int byte_val = (raw_val >> shift) & 0xFF;
-    *(out_begin + prefix.at(byte_val)) = *it;
+    *(out_begin + static_cast<std::ptrdiff_t>(prefix.at(byte_val))) = *it;
     prefix.at(byte_val)++;
   }
 }
@@ -47,7 +47,9 @@ void RadixSortLocal(std::vector<int>::iterator begin, std::vector<int>::iterator
   if (n < 2) {
     return;
   }
+
   std::vector<int> temp(n);
+
   for (size_t i = 0; i < sizeof(int); ++i) {
     if (i % 2 == 0) {
       CountingSortStep(begin, end, temp.begin(), i);
@@ -59,15 +61,15 @@ void RadixSortLocal(std::vector<int>::iterator begin, std::vector<int>::iterator
 
 void ParallelMerge(std::vector<int> &arr, const std::vector<int> &offsets, int num_blocks) {
   for (int step = 1; step < num_blocks; step *= 2) {
-    tbb::parallel_for(0, num_blocks, [&, step](int i) {
-      if (i % (2 * step) == 0 && i + step < num_blocks) {
+    for (int i = 0; i < num_blocks; i += 2 * step) {
+      if (i + step < num_blocks) {
         auto begin = arr.begin() + offsets[i];
         auto middle = arr.begin() + offsets[i + step];
         int end_idx = std::min(i + (2 * step), num_blocks);
         auto end = arr.begin() + offsets[end_idx];
         std::inplace_merge(begin, middle, end);
       }
-    });
+    }
   }
 }
 
@@ -95,11 +97,14 @@ bool AkimovIRadixSortIntMergeALL::RunImpl() {
     return true;
   }
 
-  int rank = -1, world_size = -1;
+  int rank = -1;
+  int world_size = -1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  std::vector<int> send_counts(world_size), send_displs(world_size);
+  std::vector<int> send_counts(world_size);
+  std::vector<int> send_displs(world_size);
+
   int base = n / world_size;
   int rem = n % world_size;
   int offset = 0;
@@ -111,6 +116,7 @@ bool AkimovIRadixSortIntMergeALL::RunImpl() {
 
   int local_size = send_counts[rank];
   std::vector<int> local_data(local_size);
+
   MPI_Scatterv(arr.data(), send_counts.data(), send_displs.data(), MPI_INT, local_data.data(), local_size, MPI_INT, 0,
                MPI_COMM_WORLD);
 
@@ -129,6 +135,7 @@ bool AkimovIRadixSortIntMergeALL::RunImpl() {
   if (rank == 0) {
     global_data.resize(n);
   }
+
   MPI_Gatherv(local_data.data(), local_size, MPI_INT, global_data.data(), send_counts.data(), send_displs.data(),
               MPI_INT, 0, MPI_COMM_WORLD);
 
