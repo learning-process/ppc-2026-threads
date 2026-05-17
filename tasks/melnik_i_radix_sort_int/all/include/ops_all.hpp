@@ -37,6 +37,18 @@ class MelnikIRadixSortIntALL : public BaseTask {
 
   static void MergeSortedRangesParallel(std::vector<int> &data, std::vector<int> &buffer,
                                         const std::vector<Range> &ranges, int num_threads);
+
+  static void MergeLevelSequential(std::vector<Range> &next, const std::vector<Range> &cur, std::vector<int> *src,
+                                   std::vector<int> *dst, std::size_t pairs);
+
+  static void MergeLevelParallel(std::vector<Range> &next, const std::vector<Range> &cur, std::vector<int> *src,
+                                 std::vector<int> *dst, std::size_t pairs, int active);
+
+  static void LocalSortChunk(std::vector<int> &local, int local_count, int local_threads, int num_threads);
+
+  static void GlobalMergeChunks(std::vector<int> &output, int total_size, int num_ranks,
+                                const std::vector<int> &send_counts, const std::vector<int> &displacements,
+                                int num_threads);
 };
 
 }  // namespace melnik_i_radix_sort_int

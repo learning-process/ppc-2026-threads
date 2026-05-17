@@ -131,7 +131,6 @@ void MelnikIRadixSortIntALL::MergeRanges(const std::vector<int> &source, std::ve
   }
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void MelnikIRadixSortIntALL::MergeSortedRangesParallel(std::vector<int> &data, std::vector<int> &buffer,
                                                        const std::vector<Range> &ranges, int num_threads) {
   if (ranges.empty()) {
@@ -150,48 +149,9 @@ void MelnikIRadixSortIntALL::MergeSortedRangesParallel(std::vector<int> &data, s
     const int active = std::min(num_threads, static_cast<int>(pairs));
 
     if (active <= 1) {
-      // Sequential path – avoids thread overhead for tiny workloads.
-      for (std::size_t pair_idx = 0; pair_idx < pairs; ++pair_idx) {
-        const std::size_t lp = pair_idx * 2U;
-        const Range left = cur[lp];
-        if (lp + 1U >= cur.size()) {
-          std::copy(src->begin() + static_cast<std::ptrdiff_t>(left.begin),
-                    src->begin() + static_cast<std::ptrdiff_t>(left.end),
-                    dst->begin() + static_cast<std::ptrdiff_t>(left.begin));
-          next[pair_idx] = left;
-          continue;
-        }
-        const Range right = cur[lp + 1U];
-        MergeRanges(*src, *dst, left, right, left.begin);
-        next[pair_idx] = Range{.begin = left.begin, .end = right.end};
-      }
+      MergeLevelSequential(next, cur, src, dst, pairs);
     } else {
-      // Parallel path – distribute pairs across threads.
-      std::vector<std::thread> workers;
-      workers.reserve(static_cast<std::size_t>(active));
-
-      for (int tid = 0; tid < active; ++tid) {
-        workers.emplace_back([&, tid]() {
-          auto [p_begin, p_end] = ThreadChunkBounds(pairs, active, tid);
-          for (std::size_t pair_idx = p_begin; pair_idx < p_end; ++pair_idx) {
-            const std::size_t lp = pair_idx * 2U;
-            const Range left = cur[lp];
-            if (lp + 1U >= cur.size()) {
-              std::copy(src->begin() + static_cast<std::ptrdiff_t>(left.begin),
-                        src->begin() + static_cast<std::ptrdiff_t>(left.end),
-                        dst->begin() + static_cast<std::ptrdiff_t>(left.begin));
-              next[pair_idx] = left;
-              return;
-            }
-            const Range right = cur[lp + 1U];
-            MergeRanges(*src, *dst, left, right, left.begin);
-            next[pair_idx] = Range{.begin = left.begin, .end = right.end};
-          }
-        });
-      }
-      for (auto &w : workers) {
-        w.join();
-      }
+      MergeLevelParallel(next, cur, src, dst, pairs, active);
     }
 
     cur = std::move(next);
@@ -203,7 +163,54 @@ void MelnikIRadixSortIntALL::MergeSortedRangesParallel(std::vector<int> &data, s
   }
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+void MelnikIRadixSortIntALL::MergeLevelSequential(std::vector<Range> &next, const std::vector<Range> &cur,
+                                                  std::vector<int> *src, std::vector<int> *dst, std::size_t pairs) {
+  for (std::size_t pair_idx = 0; pair_idx < pairs; ++pair_idx) {
+    const std::size_t lp = pair_idx * 2U;
+    const Range left = cur[lp];
+    if (lp + 1U >= cur.size()) {
+      std::copy(src->begin() + static_cast<std::ptrdiff_t>(left.begin),
+                src->begin() + static_cast<std::ptrdiff_t>(left.end),
+                dst->begin() + static_cast<std::ptrdiff_t>(left.begin));
+      next[pair_idx] = left;
+      continue;
+    }
+    const Range right = cur[lp + 1U];
+    MergeRanges(*src, *dst, left, right, left.begin);
+    next[pair_idx] = Range{.begin = left.begin, .end = right.end};
+  }
+}
+
+void MelnikIRadixSortIntALL::MergeLevelParallel(std::vector<Range> &next, const std::vector<Range> &cur,
+                                                std::vector<int> *src, std::vector<int> *dst, std::size_t pairs,
+                                                int active) {
+  std::vector<std::thread> workers;
+  workers.reserve(static_cast<std::size_t>(active));
+
+  for (int tid = 0; tid < active; ++tid) {
+    workers.emplace_back([&, tid]() {
+      auto [p_begin, p_end] = ThreadChunkBounds(pairs, active, tid);
+      for (std::size_t pair_idx = p_begin; pair_idx < p_end; ++pair_idx) {
+        const std::size_t lp = pair_idx * 2U;
+        const Range left = cur[lp];
+        if (lp + 1U >= cur.size()) {
+          std::copy(src->begin() + static_cast<std::ptrdiff_t>(left.begin),
+                    src->begin() + static_cast<std::ptrdiff_t>(left.end),
+                    dst->begin() + static_cast<std::ptrdiff_t>(left.begin));
+          next[pair_idx] = left;
+          return;
+        }
+        const Range right = cur[lp + 1U];
+        MergeRanges(*src, *dst, left, right, left.begin);
+        next[pair_idx] = Range{.begin = left.begin, .end = right.end};
+      }
+    });
+  }
+  for (auto &w : workers) {
+    w.join();
+  }
+}
+
 bool MelnikIRadixSortIntALL::RunImpl() {
   auto &output = GetOutput();
   if (output.empty()) {
@@ -239,61 +246,69 @@ bool MelnikIRadixSortIntALL::RunImpl() {
 
   const int local_threads = num_threads;
 
-  if (local_count > 0) {
-    std::vector<int> local_buf(static_cast<std::size_t>(local_count));
-
-    if (local_threads <= 1) {
-      RadixSortRange(local, local_buf, 0, static_cast<std::size_t>(local_count));
-    } else {
-      // Sort each thread's sub-chunk in parallel.
-      std::vector<std::thread> workers;
-      workers.reserve(static_cast<std::size_t>(local_threads));
-      for (int tid = 0; tid < local_threads; ++tid) {
-        workers.emplace_back([&, tid]() {
-          auto [b, e] = ThreadChunkBounds(static_cast<std::size_t>(local_count), local_threads, tid);
-          RadixSortRange(local, local_buf, b, e);
-        });
-      }
-      for (auto &w : workers) {
-        w.join();
-      }
-
-      // Build ranges for the thread-level merge.
-      std::vector<Range> thread_ranges;
-      thread_ranges.reserve(static_cast<std::size_t>(local_threads));
-      for (int tid = 0; tid < local_threads; ++tid) {
-        auto [b, e] = ThreadChunkBounds(static_cast<std::size_t>(local_count), local_threads, tid);
-        if (b < e) {
-          thread_ranges.push_back(Range{.begin = b, .end = e});
-        }
-      }
-
-      MergeSortedRangesParallel(local, local_buf, thread_ranges, num_threads);
-    }
-  }
+  LocalSortChunk(local, local_count, local_threads, num_threads);
 
   MPI_Gatherv(local.data(), local_count, MPI_INT, output.data(), send_counts.data(), displacements.data(), MPI_INT, 0,
               MPI_COMM_WORLD);
 
   if (rank == 0 && num_ranks > 1) {
-    std::vector<int> global_buf(static_cast<std::size_t>(total_size));
-
-    // Build per-rank ranges (already sorted sub-arrays in output).
-    std::vector<Range> rank_ranges;
-    rank_ranges.reserve(static_cast<std::size_t>(num_ranks));
-    for (int rank_idx = 0; rank_idx < num_ranks; ++rank_idx) {
-      const auto b = static_cast<std::size_t>(displacements[static_cast<std::size_t>(rank_idx)]);
-      const auto e = b + static_cast<std::size_t>(send_counts[static_cast<std::size_t>(rank_idx)]);
-      if (b < e) {
-        rank_ranges.push_back(Range{.begin = b, .end = e});
-      }
-    }
-
-    MergeSortedRangesParallel(output, global_buf, rank_ranges, num_threads);
+    GlobalMergeChunks(output, total_size, num_ranks, send_counts, displacements, num_threads);
   }
 
   MPI_Bcast(output.data(), total_size, MPI_INT, 0, MPI_COMM_WORLD);
   return true;
+}
+
+void MelnikIRadixSortIntALL::LocalSortChunk(std::vector<int> &local, int local_count, int local_threads,
+                                            int num_threads) {
+  if (local_count <= 0) {
+    return;
+  }
+  std::vector<int> local_buf(static_cast<std::size_t>(local_count));
+
+  if (local_threads <= 1) {
+    RadixSortRange(local, local_buf, 0, static_cast<std::size_t>(local_count));
+  } else {
+    std::vector<std::thread> workers;
+    workers.reserve(static_cast<std::size_t>(local_threads));
+    for (int tid = 0; tid < local_threads; ++tid) {
+      workers.emplace_back([&, tid]() {
+        auto [b, e] = ThreadChunkBounds(static_cast<std::size_t>(local_count), local_threads, tid);
+        RadixSortRange(local, local_buf, b, e);
+      });
+    }
+    for (auto &w : workers) {
+      w.join();
+    }
+
+    std::vector<Range> thread_ranges;
+    thread_ranges.reserve(static_cast<std::size_t>(local_threads));
+    for (int tid = 0; tid < local_threads; ++tid) {
+      auto [b, e] = ThreadChunkBounds(static_cast<std::size_t>(local_count), local_threads, tid);
+      if (b < e) {
+        thread_ranges.push_back(Range{.begin = b, .end = e});
+      }
+    }
+
+    MergeSortedRangesParallel(local, local_buf, thread_ranges, num_threads);
+  }
+}
+
+void MelnikIRadixSortIntALL::GlobalMergeChunks(std::vector<int> &output, int total_size, int num_ranks,
+                                               const std::vector<int> &send_counts,
+                                               const std::vector<int> &displacements, int num_threads) {
+  std::vector<int> global_buf(static_cast<std::size_t>(total_size));
+  std::vector<Range> rank_ranges;
+  rank_ranges.reserve(static_cast<std::size_t>(num_ranks));
+  for (int rank_idx = 0; rank_idx < num_ranks; ++rank_idx) {
+    const auto b = static_cast<std::size_t>(displacements[static_cast<std::size_t>(rank_idx)]);
+    const auto e = b + static_cast<std::size_t>(send_counts[static_cast<std::size_t>(rank_idx)]);
+    if (b < e) {
+      rank_ranges.push_back(Range{.begin = b, .end = e});
+    }
+  }
+
+  MergeSortedRangesParallel(output, global_buf, rank_ranges, num_threads);
 }
 
 }  // namespace melnik_i_radix_sort_int
