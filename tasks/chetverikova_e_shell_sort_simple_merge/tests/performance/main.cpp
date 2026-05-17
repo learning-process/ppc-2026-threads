@@ -1,9 +1,11 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <algorithm>
 #include <cstddef>
 #include <random>
 
+#include "chetverikova_e_shell_sort_simple_merge/all/include/ops_all.hpp"
 #include "chetverikova_e_shell_sort_simple_merge/common/include/common.hpp"
 #include "chetverikova_e_shell_sort_simple_merge/omp/include/ops_omp.hpp"
 #include "chetverikova_e_shell_sort_simple_merge/seq/include/ops_seq.hpp"
@@ -32,6 +34,12 @@ class ChetverikovaERunPerfTestThreads : public ppc::util::BaseRunPerfTests<InTyp
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    if (rank != 0) {
+      return true;
+    }
     return expected_data_ == output_data;
   }
 
@@ -48,7 +56,7 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ChetverikovaEShellSortSimpleMergeSEQ, ChetverikovaEShellSortSimpleMergeOMP,
-                                ChetverikovaEShellSortSimpleMergeTBB>(
+                                ChetverikovaEShellSortSimpleMergeTBB, ChetverikovaEShellSortSimpleMergeALL>(
         PPC_SETTINGS_chetverikova_e_shell_sort_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
