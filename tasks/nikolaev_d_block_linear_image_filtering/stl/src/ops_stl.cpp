@@ -4,11 +4,11 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <execution>
-#include <numeric>
+#include <thread>
 #include <vector>
 
 #include "nikolaev_d_block_linear_image_filtering/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace nikolaev_d_block_linear_image_filtering {
 
@@ -57,16 +57,43 @@ bool NikolaevDBlockLinearImageFilteringSTL::RunImpl() {
   auto &dst = GetOutput();
   dst.assign(src.size(), 0);
 
-  std::vector<int> row_indices(height);
-  std::iota(row_indices.begin(), row_indices.end(), 0);
+  int num_threads = ppc::util::GetNumThreads();
+  if (num_threads == 0) {
+    num_threads = 4;
+  }
 
-  std::for_each(std::execution::par_unseq, row_indices.begin(), row_indices.end(), [&](int ny) {
-    for (int nx = 0; nx < width; ++nx) {
-      for (int ch = 0; ch < 3; ++ch) {
-        dst[((ny * width + nx) * 3) + ch] = ApplyKernel(src, width, height, nx, ny, ch);
+  if (height < static_cast<int>(num_threads)) {
+    num_threads = height;
+  }
+
+  std::vector<std::thread> threads;
+  threads.reserve(num_threads);
+
+  int rows_per_thread = height / num_threads;
+  int remainder = height % num_threads;
+
+  int start_row = 0;
+  for (int i = 0; i < num_threads; ++i) {
+    int end_row = start_row + rows_per_thread + (static_cast<int>(i) < remainder ? 1 : 0);
+
+    threads.emplace_back([&src, width, height, start_row, end_row, &dst]() {
+      for (int ny = start_row; ny < end_row; ++ny) {
+        for (int nx = 0; nx < width; ++nx) {
+          for (int ch = 0; ch < 3; ++ch) {
+            dst[((ny * width + nx) * 3) + ch] = ApplyKernel(src, width, height, nx, ny, ch);
+          }
+        }
       }
+    });
+
+    start_row = end_row;
+  }
+
+  for (auto &t : threads) {
+    if (t.joinable()) {
+      t.join();
     }
-  });
+  }
 
   return true;
 }
