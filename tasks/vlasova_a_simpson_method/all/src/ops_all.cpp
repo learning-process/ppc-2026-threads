@@ -3,7 +3,6 @@
 #include <mpi.h>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_reduce.h>
-#include <tbb/partitioner.h>
 
 #include <cmath>
 #include <cstddef>
@@ -20,41 +19,26 @@ VlasovaASimpsonMethodALL::VlasovaASimpsonMethodALL(InType in) : task_data_(std::
 }
 
 bool VlasovaASimpsonMethodALL::ValidationImpl() {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  size_t dim = task_data_.a.size();
 
-  int valid = 0;
-
-  if (rank == 0) {
-    size_t dim = task_data_.a.size();
-
-    bool ok = true;
-    if (dim == 0 || dim != task_data_.b.size() || dim != task_data_.n.size()) {
-      ok = false;
-    }
-    if (ok) {
-      for (size_t i = 0; i < dim; ++i) {
-        if (task_data_.a[i] >= task_data_.b[i]) {
-          ok = false;
-          break;
-        }
-        if (task_data_.n[i] <= 0 || task_data_.n[i] % 2 != 0) {
-          ok = false;
-          break;
-        }
-      }
-    }
-    if (ok && !task_data_.func) {
-      ok = false;
-    }
-    if (ok && GetOutput() != 0.0) {
-      ok = false;
-    }
-    valid = ok ? 1 : 0;
+  if (dim == 0 || dim != task_data_.b.size() || dim != task_data_.n.size()) {
+    return false;
   }
 
-  MPI_Bcast(&valid, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  return valid != 0;
+  for (size_t i = 0; i < dim; ++i) {
+    if (task_data_.a[i] >= task_data_.b[i]) {
+      return false;
+    }
+    if (task_data_.n[i] <= 0 || task_data_.n[i] % 2 != 0) {
+      return false;
+    }
+  }
+
+  if (!task_data_.func) {
+    return false;
+  }
+
+  return GetOutput() == 0.0;
 }
 
 bool VlasovaASimpsonMethodALL::PreProcessingImpl() {
@@ -113,16 +97,18 @@ bool VlasovaASimpsonMethodALL::RunImpl() {
     total_points *= static_cast<size_t>(dimensions_[i]);
   }
 
-  size_t chunk = total_points / static_cast<size_t>(size);
-  size_t rem = total_points % static_cast<size_t>(size);
+  const size_t urank = static_cast<size_t>(rank);
+  const size_t usize = static_cast<size_t>(size);
+  const size_t chunk = total_points / usize;
+  const size_t rem = total_points % usize;
 
   size_t begin = 0;
   size_t end = 0;
-  if (static_cast<size_t>(rank) < rem) {
-    begin = static_cast<size_t>(rank) * (chunk + 1);
-    end = begin + chunk + 1;
+  if (urank < rem) {
+    begin = urank * (chunk + 1);
+    end = begin + (chunk + 1);
   } else {
-    begin = rem * (chunk + 1) + (static_cast<size_t>(rank) - rem) * chunk;
+    begin = (rem * (chunk + 1)) + ((urank - rem) * chunk);
     end = begin + chunk;
   }
 
@@ -138,7 +124,6 @@ bool VlasovaASimpsonMethodALL::RunImpl() {
         cur_index[i] = static_cast<int>(temp % static_cast<size_t>(dimensions_[i]));
         temp /= static_cast<size_t>(dimensions_[i]);
       }
-
       ComputeWeight(cur_index, local_weight);
       ComputePoint(cur_index, cur_point);
       acc += local_weight * task_data_.func(cur_point);
