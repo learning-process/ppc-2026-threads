@@ -141,6 +141,7 @@ result = clamp((sum + 8) / 16, 0, 255)
 одинаковые данные.
 
 **Команда запуска func-тестов:**
+
 ```bash
 mpirun --allow-run-as-root --oversubscribe -np 4 \
   ./build/bin/ppc_func_tests --gtest_filter=*romanov_a_gauss_block*all*
