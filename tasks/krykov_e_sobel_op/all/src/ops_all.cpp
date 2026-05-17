@@ -3,10 +3,10 @@
 #include <mpi.h>
 #include <omp.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <thread>
 #include <vector>
 
 #include "krykov_e_sobel_op/common/include/common.hpp"
@@ -40,6 +40,42 @@ bool KrykovESobelOpALL::PreProcessingImpl() {
   return true;
 }
 
+namespace {
+
+int ComputeSobelMagnitude(const std::vector<int> &gray, int row, int col, int w,
+                          const std::array<std::array<int, 3>, 3> &gx_kernel,
+                          const std::array<std::array<int, 3>, 3> &gy_kernel) {
+  int gx = 0;
+  int gy = 0;
+
+  for (int ky = -1; ky <= 1; ++ky) {
+    for (int kx = -1; kx <= 1; ++kx) {
+      const int idx = ((row + ky) * w) + (col + kx);
+      if (idx < 0 || static_cast<size_t>(idx) >= gray.size()) {
+        continue;
+      }
+      const int pixel = gray.at(static_cast<size_t>(idx));
+      const auto ky_idx = static_cast<size_t>(ky) + 1U;
+      const auto kx_idx = static_cast<size_t>(kx) + 1U;
+      gx += pixel * gx_kernel.at(ky_idx).at(kx_idx);
+      gy += pixel * gy_kernel.at(ky_idx).at(kx_idx);
+    }
+  }
+
+  return static_cast<int>(std::sqrt(static_cast<double>((gx * gx) + (gy * gy))));
+}
+
+void BuildMpiLayout(int nproc, int w, int base, int extra, std::vector<int> &counts, std::vector<int> &displs) {
+  for (int i = 0; i < nproc; ++i) {
+    const int cnt = base + (i < extra ? 1 : 0);
+    const int start = 1 + (base * i) + std::min(i, extra);
+    counts[i] = cnt * w;
+    displs[i] = start * w;
+  }
+}
+
+}  // namespace
+
 bool KrykovESobelOpALL::RunImpl() {
   const std::array<std::array<int, 3>, 3> gx_kernel = {{{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}}};
   const std::array<std::array<int, 3>, 3> gy_kernel = {{{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}}};
@@ -58,43 +94,30 @@ bool KrykovESobelOpALL::RunImpl() {
   const int extra = (h - 2) % nproc;
 
   const int local_count = base + (rank < extra ? 1 : 0);
-  const int local_start = 1 + base * rank + std::min(rank, extra);
+  const int local_start = 1 + (base * rank) + std::min(rank, extra);
 
   std::vector<int> local_output(static_cast<size_t>(local_count) * static_cast<size_t>(w), 0);
 
   std::vector<int> counts(nproc);
   std::vector<int> displs(nproc);
-  for (int i = 0; i < nproc; ++i) {
-    const int cnt = base + (i < extra ? 1 : 0);
-    const int start = 1 + base * i + std::min(i, extra);
-    counts[i] = cnt * w;
-    displs[i] = start * w;
-  }
+  BuildMpiLayout(nproc, w, base, extra, counts, displs);
 
 #pragma omp parallel for default(none) shared(local_output, gray, gx_kernel, gy_kernel) \
     firstprivate(local_start, local_count, w) schedule(static)
   for (int li = 0; li < local_count; ++li) {
     const int row = local_start + li;
     for (int col = 1; col < w - 1; ++col) {
-      int gx = 0;
-      int gy = 0;
-
-      for (int ky = -1; ky <= 1; ++ky) {
-        for (int kx = -1; kx <= 1; ++kx) {
-          int pixel = gray[static_cast<size_t>((row + ky) * w + (col + kx))];
-          gx += pixel * gx_kernel.at(static_cast<size_t>(ky + 1)).at(static_cast<size_t>(kx + 1));
-          gy += pixel * gy_kernel.at(static_cast<size_t>(ky + 1)).at(static_cast<size_t>(kx + 1));
-        }
+      const auto out_idx = (static_cast<size_t>(li) * static_cast<size_t>(w)) + static_cast<size_t>(col);
+      if (out_idx < local_output.size()) {
+        local_output[out_idx] = ComputeSobelMagnitude(gray, row, col, w, gx_kernel, gy_kernel);
       }
-
-      int magnitude = static_cast<int>(std::sqrt(static_cast<double>((gx * gx) + (gy * gy))));
-      local_output[static_cast<size_t>(li * w + col)] = magnitude;
     }
   }
 
   MPI_Gatherv(local_output.data(), counts[rank], MPI_INT, output.data(), counts.data(), displs.data(), MPI_INT, 0,
               MPI_COMM_WORLD);
-  MPI_Bcast(output.data(), w * h, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(output.data(), static_cast<int>(static_cast<size_t>(w) * static_cast<size_t>(h)), MPI_INT, 0,
+            MPI_COMM_WORLD);
 
   return true;
 }
