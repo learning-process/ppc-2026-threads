@@ -31,46 +31,48 @@ $O\!\left(\sum_{i}\sum_{(i,k)\in A} nnz(B_k)\right) + O\!\left(\sum_i u_i \log u
 **Память:** $O(B.cols)$ на `row_acc` и `row_used`.
 
 ## 4. Детали реализации  
-Файлы:  
-- common.hpp  
-- ops_seq.hpp  
-- ops_seq.cpp
+Файлы: tasks/kurpiakov_a_sp_comp_mat_mul/seq/src/ops_seq.cpp, tasks/kurpiakov_a_sp_comp_mat_mul/common/include/common.hpp.  
 
-Ключевые моменты:
-- Типы `Complex<T>` и `CSRMatrix<T>` определены в common; сравнение комплексных чисел идет с $\epsilon = 10^{-9}$.  
-- `CSRMatrix::Multiply` реализует основное вычисление.  
-- Класс `KurpiskovACRSMatMulSEQ` наследует `BaseTask` и переопределяет `ValidationImpl`, `PreProcessingImpl`, `RunImpl`, `PostProcessingImpl`.  
-- `ValidationImpl` использует `ValidateCSR` и проверяет согласованность размерностей, `RunImpl` вызывает `Multiply`.
+Кодовый фрагмент (валидация и вызов вычисления):  
+```cpp
+bool KurpiskovACRSMatMulSEQ::ValidationImpl() {
+  const auto &[a, b] = GetInput();
+
+  if (!ValidateCSR(a) || !ValidateCSR(b)) {
+    return false;
+  }
+
+  return a.cols == b.rows;
+}
+
+bool KurpiskovACRSMatMulSEQ::RunImpl() {
+  const auto &[a, b] = GetInput();
+  GetOutput() = a.Multiply(b);
+  return true;
+}
+```
 
 ## 5. Проверка корректности  
-Функциональные тесты определены в main.cpp. Набор покрывает:
-- умножение на единичную матрицу;  
-- умножение на нулевую;  
-- диагональные и общие 2x2 случаи;  
-- скалярные 1x1 тесты (включая $i \cdot i$);  
-- прямоугольные 2x3 и 3x2;  
-- пустые структуры (без ненулевых значений);  
-- плотный 2x2;  
-- вектор-строка $\times$ вектор-столбец.  
-
-Производительный тест задается как трёхдиагональные матрицы размера `kSize = 500000`. Ожидаемый результат вычисляется через `Multiply`, что обеспечивает детерминированную проверку на равенство.
+Функциональные тесты SEQ: tasks/kurpiakov_a_sp_comp_mat_mul/tests/functional/main.cpp.  
+Perf‑тесты сравнивают с эталоном `Multiply` в tasks/kurpiakov_a_sp_comp_mat_mul/tests/performance/main.cpp.
 
 ## 6. Экспериментальная среда  
-- CPU: AMD Ryzen 7 7840HS  
-- RAM: 4 GB  
-- OS: Ubuntu 22.04
-- Compiler: GCC 13  
-- Build type: Release   
-- Наборы данных: трёхдиагональные матрицы размера 500000 для perf‑теста  
-
-Команды запуска: PPC_NUM_THREADS=4 ./build/bin/ppc_perf_tests --gtest_filter='*kurpiakov*seq*'
+CPU: AMD Ryzen 7 7840HS, RAM: 4 GB, OS: Ubuntu 22.04, Compiler: GCC 13, build type: Release.  
+`PPC_NUM_THREADS = 4` (для SEQ фактически 1).  
+Данные perf‑теста: трехдиагональные матрицы $N = 5{,}000{,}000$.  
 
 ## 7. Результаты  
-Базовый результат SEQ (из perf‑теста):
+Единицы времени — как в логах perf‑теста (сравнение корректно внутри набора).
 
-| Режим | Данные | Время, c |
-|---|---|---:|
-| task_run | 500000 | 0.0723366261 | 
+**pipeline**  
+| Время | Speedup | Efficiency |
+|---:|---:|---:|
+| 8125 | 1.000 | 1.000 |
+
+**task_run**  
+| Время | Speedup | Efficiency |
+|---:|---:|---:|
+| 8509 | 1.000 | 1.000 |
 
 ## 8. Выводы  
 SEQ‑версия корректно реализует умножение CSR‑матриц с комплексными значениями и задает базовый эталон для сравнения. Алгоритм использует плотный построчный аккумулятор, что дает предсказуемую корректность и удобное формирование CSR‑строк, но накладывает $O(B.cols)$ память на каждый запуск. Это следует учитывать при оценке масштабируемости и в сравнении с параллельными версиями.
