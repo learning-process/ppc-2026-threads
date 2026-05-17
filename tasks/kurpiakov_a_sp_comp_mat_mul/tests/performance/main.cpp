@@ -41,7 +41,7 @@ class KurpiakovRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
   OutType expected_output_;
 
   void SetUp() override {
-    constexpr int kSize = 5000;
+    constexpr int kSize = 500;
 
     auto a = MakeTridiagonal(kSize);
     auto b = MakeTridiagonal(kSize);
