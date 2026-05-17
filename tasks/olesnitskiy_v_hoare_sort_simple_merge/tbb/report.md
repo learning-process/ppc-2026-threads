@@ -47,7 +47,8 @@ for (size_t merge_width = kBlockSize; merge_width < size; merge_width *= 2) {
 
 ## Корректность и среда
 
-Функциональный тест сравнивает результат с `std::ranges::sort` ([`tests/functional/main.cpp`](../tests/functional/main.cpp#L35)).
+Функциональный тест сравнивает результат с `std::ranges::sort`
+([`tests/functional/main.cpp`](../tests/functional/main.cpp#L35)).
 Запуск текущего `build_olesnitskiy/bin/ppc_func_tests` прошел для `seq/omp/stl/tbb`: 60 passed; ALL отдельно прошел
 под `mpirun -np 2`: 15 passed. Performance-вход: `N=100000`
 ([`tests/performance/main.cpp`](../tests/performance/main.cpp#L20)).
@@ -55,10 +56,11 @@ for (size_t merge_width = kBlockSize; merge_width < size; merge_width *= 2) {
 ## Результаты
 
 Baseline: `seq` `TaskRun = 0.0058254364 s`; для pipeline baseline `0.0068995056 s`. Framework выполняет 5 повторов
-по умолчанию ([`modules/performance/include/performance.hpp`](../../../modules/performance/include/performance.hpp#L21)).
+по умолчанию
+([`modules/performance/include/performance.hpp`](../../../modules/performance/include/performance.hpp#L21)).
 
 | threads | time | speedup | efficiency | notes |
-|---:|---:|---:|---:|---|
+| ---: | ---: | ---: | ---: | --- |
 | 1 | 0.0024417256 s | 2.386 | 2.386 | `TaskRun`, `PPC_NUM_THREADS=1` |
 | 2 | 0.0014976288 s | 3.889 | 1.945 | `TaskRun`, `PPC_NUM_THREADS=2` |
 | 4 | 0.0011774682 s | 4.947 | 1.237 | `TaskRun`, `PPC_NUM_THREADS=4` |

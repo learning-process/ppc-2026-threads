@@ -2,8 +2,9 @@
 
 ## Контекст и базовый алгоритм
 
-Вход и выход: `std::vector<int>` ([`common/include/common.hpp`](../common/include/common.hpp#L11)). Последовательное ядро:
-разбиение Хоара и quicksort по локальным диапазонам ([`omp/src/ops_omp.cpp`](src/ops_omp.cpp#L21)). После локальной
+Вход и выход: `std::vector<int>` ([`common/include/common.hpp`](../common/include/common.hpp#L11)).
+Последовательное ядро: разбиение Хоара и quicksort по локальным диапазонам
+([`omp/src/ops_omp.cpp`](src/ops_omp.cpp#L21)). После локальной
 сортировки блоков по 64 элемента выполняется попарное простое слияние до полного массива
 ([`omp/src/ops_omp.cpp`](src/ops_omp.cpp#L115)). Средняя сложность локальной quicksort-части `O(n log n)`, слияния по
 уровням дают дополнительный линейный проход на каждом уровне.
@@ -55,8 +56,10 @@ OpenMP используется в двух `parallel for`: сортировка
 
 ## Корректность и среда
 
-Эталон в функциональных тестах строится `std::ranges::sort` ([`tests/functional/main.cpp`](../tests/functional/main.cpp#L35)).
-Запуск `PPC_NUM_THREADS=4 ./build_olesnitskiy/bin/ppc_func_tests --gtest_filter='*olesnitskiy_v_hoare_sort_simple_merge*'`
+Эталон в функциональных тестах строится `std::ranges::sort`
+([`tests/functional/main.cpp`](../tests/functional/main.cpp#L35)).
+Запуск `PPC_NUM_THREADS=4 ./build_olesnitskiy/bin/ppc_func_tests`
+с фильтром `*olesnitskiy_v_hoare_sort_simple_merge*`
 прошел: 75 tests, 60 passed, 15 ALL-tests skipped вне `mpirun`. ALL отдельно прошел под `mpirun -np 2`: 15 passed.
 Performance-вход: 100000 случайных чисел ([`tests/performance/main.cpp`](../tests/performance/main.cpp#L20)).
 
@@ -64,10 +67,11 @@ Performance-вход: 100000 случайных чисел ([`tests/performance/
 
 Baseline: `seq` `TaskRun = 0.0058254364 s`; для pipeline baseline `0.0068995056 s`. Потоки задавались через
 `PPC_NUM_THREADS`; раннер ограничивает TBB этой же переменной, а OpenMP использует ее через окружение сборки/запуска.
-Framework выполняет 5 повторов по умолчанию ([`modules/performance/include/performance.hpp`](../../../modules/performance/include/performance.hpp#L21)).
+Framework выполняет 5 повторов по умолчанию
+([`modules/performance/include/performance.hpp`](../../../modules/performance/include/performance.hpp#L21)).
 
 | threads | time | speedup | efficiency | notes |
-|---:|---:|---:|---:|---|
+| ---: | ---: | ---: | ---: | --- |
 | 1 | 0.2042550788 s | 0.029 | 0.029 | `TaskRun`, `N=100000` |
 | 2 | 0.2022266690 s | 0.029 | 0.014 | `TaskRun`, `N=100000` |
 | 4 | 0.1880041056 s | 0.031 | 0.008 | `TaskRun`, `N=100000` |

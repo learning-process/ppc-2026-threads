@@ -17,14 +17,17 @@ Performance-тест генерирует `N=100000` случайных `int` и
 `tbb::global_control` ([`modules/runners/src/runners.cpp`](../../modules/runners/src/runners.cpp#L150)). STL и локальная
 часть ALL берут число потоков из `std::thread::hardware_concurrency()`; на этой машине `nproc = 12`, поэтому такие
 строки обозначены как auto workers.
-Число повторов по умолчанию равно 5 ([`modules/performance/include/performance.hpp`](../../modules/performance/include/performance.hpp#L21)).
+Число повторов по умолчанию равно 5
+([`modules/performance/include/performance.hpp`](../../modules/performance/include/performance.hpp#L21)).
 Ограничение методики: `TaskRun` повторяет только `Run()` после одного `PreProcessing()`
 ([`modules/performance/include/performance.hpp`](../../modules/performance/include/performance.hpp#L62)), а вход
-создается заново для каждого gtest-параметра через `std::random_device` ([`tests/performance/main.cpp`](tests/performance/main.cpp#L24)).
+создается заново для каждого gtest-параметра через `std::random_device`
+([`tests/performance/main.cpp`](tests/performance/main.cpp#L24)).
 Поэтому дополнительно сняты pipeline-замеры, где каждый повтор проходит полный pipeline.
 
 Среда: свежая Release-сборка `build_olesnitskiy`, `g++-14`, `-O3 -DNDEBUG`, `std=gnu++23`; эти флаги видны в
-[`build_olesnitskiy/compile_commands.json`](../../build_olesnitskiy/compile_commands.json). Число повторов задается framework-ом
+[`build_olesnitskiy/compile_commands.json`](../../build_olesnitskiy/compile_commands.json).
+Число повторов задается framework-ом
 `Perf::TaskRun`; отчет опирается на напечатанные строки `backend:task_run:time`.
 
 ## Сводка корректности
@@ -33,13 +36,14 @@ Performance-тест генерирует `N=100000` случайных `int` и
 ([`tests/functional/main.cpp`](tests/functional/main.cpp#L80)). Запуск
 `PPC_NUM_THREADS=4 ./build_olesnitskiy/bin/ppc_func_tests --gtest_filter='*olesnitskiy_v_hoare_sort_simple_merge*'`
 выполнил 75 тестов: 60 passed для `seq/omp/stl/tbb`, 15 ALL skipped вне MPI. Отдельный запуск
-`mpirun -np 2 ./build_olesnitskiy/bin/ppc_func_tests --gtest_filter='*olesnitskiy_v_hoare_sort_simple_merge_all_enabled*'`
+`mpirun -np 2 ./build_olesnitskiy/bin/ppc_func_tests`
+с фильтром `*olesnitskiy_v_hoare_sort_simple_merge_all_enabled*`
 прошел 15/15 ALL-тестов.
 
 ## Агрегированные результаты
 
 | backend | time | speedup | efficiency | notes |
-|---|---:|---:|---:|---|
+| --- | ---: | ---: | ---: | --- |
 | seq | 0.0058254364 s | 1.000 | 1.000 | `TaskRun`, `N=100000`, baseline |
 | omp, 1 thread | 0.2042550788 s | 0.029 | 0.029 | много мелких блоков `kBlockSize=64` |
 | omp, 2 threads | 0.2022266690 s | 0.029 | 0.014 | `PPC_NUM_THREADS=2` |
@@ -55,7 +59,7 @@ Performance-тест генерирует `N=100000` случайных `int` и
 Дополнительные pipeline-замеры:
 
 | backend | time | speedup | efficiency | notes |
-|---|---:|---:|---:|---|
+| --- | ---: | ---: | ---: | --- |
 | seq | 0.0068995056 s | 1.000 | 1.000 | `pipeline`, baseline |
 | omp, 1 thread | 0.1145523454 s | 0.060 | 0.060 | `pipeline` |
 | omp, 4 threads | 0.1193738506 s | 0.058 | 0.014 | `pipeline` |
@@ -88,16 +92,23 @@ cmake --build build_olesnitskiy --target ppc_func_tests ppc_perf_tests -j 4
 
 ```bash
 PPC_NUM_THREADS=4 ./build_olesnitskiy/bin/ppc_func_tests --gtest_filter='*olesnitskiy_v_hoare_sort_simple_merge*'
-OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 mpirun -np 2 ./build_olesnitskiy/bin/ppc_func_tests --gtest_filter='*olesnitskiy_v_hoare_sort_simple_merge_all_enabled*'
+OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 \
+  mpirun -np 2 ./build_olesnitskiy/bin/ppc_func_tests \
+  --gtest_filter='*olesnitskiy_v_hoare_sort_simple_merge_all_enabled*'
 ```
 
 Запуск замеров:
 
 ```bash
-PPC_NUM_THREADS=1 ./build_olesnitskiy/bin/ppc_perf_tests --gtest_filter='*task_run*olesnitskiy_v_hoare_sort_simple_merge_seq_enabled'
-PPC_NUM_THREADS=4 ./build_olesnitskiy/bin/ppc_perf_tests --gtest_filter='*task_run*olesnitskiy_v_hoare_sort_simple_merge_tbb_enabled'
-OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 PPC_NUM_THREADS=1 mpirun -np 4 ./build_olesnitskiy/bin/ppc_perf_tests --gtest_filter='*task_run*olesnitskiy_v_hoare_sort_simple_merge_all_enabled'
-PPC_NUM_THREADS=4 ./build_olesnitskiy/bin/ppc_perf_tests --gtest_filter='*pipeline*olesnitskiy_v_hoare_sort_simple_merge_tbb_enabled'
+PPC_NUM_THREADS=1 ./build_olesnitskiy/bin/ppc_perf_tests \
+  --gtest_filter='*task_run*olesnitskiy_v_hoare_sort_simple_merge_seq_enabled'
+PPC_NUM_THREADS=4 ./build_olesnitskiy/bin/ppc_perf_tests \
+  --gtest_filter='*task_run*olesnitskiy_v_hoare_sort_simple_merge_tbb_enabled'
+OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 PPC_NUM_THREADS=1 \
+  mpirun -np 4 ./build_olesnitskiy/bin/ppc_perf_tests \
+  --gtest_filter='*task_run*olesnitskiy_v_hoare_sort_simple_merge_all_enabled'
+PPC_NUM_THREADS=4 ./build_olesnitskiy/bin/ppc_perf_tests \
+  --gtest_filter='*pipeline*olesnitskiy_v_hoare_sort_simple_merge_tbb_enabled'
 ```
 
 ## Заключение
@@ -109,7 +120,8 @@ workers и MPI-обменов. OMP на этом входе проигрывае
 ## Источники
 
 1. OpenMP API Specification 5.2, разделы data-sharing и schedule: https://www.openmp.org/spec-html/5.2/openmp.html
-2. oneTBB `parallel_for`: https://www.intel.com/content/www/us/en/docs/onetbb/developer-guide-api-reference/2021-9/parallel-for.html
-3. oneTBB `blocked_range`: https://oneapi-spec.uxlfoundation.org/specifications/oneapi/latest/elements/onetbb/source/algorithms/blocked_ranges/blocked_range_cls
+2. oneTBB `parallel_for`:
+   https://www.intel.com/content/www/us/en/docs/onetbb/developer-guide-api-reference/2021-9/parallel-for.html
+3. oneTBB `blocked_range`: https://oneapi-spec.uxlfoundation.org/
 4. MPI Standard, коллективные операции: https://www.mpi-forum.org/docs/
 5. `std::thread::join`: https://en.cppreference.com/w/cpp/thread/thread/join.html

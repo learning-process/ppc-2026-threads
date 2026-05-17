@@ -51,7 +51,8 @@ for (auto &thread : threads) {
 
 ## Корректность и среда
 
-В исходном тесте STL-backend добавлен в общий список задач ([`tests/functional/main.cpp`](../tests/functional/main.cpp#L84)),
+В исходном тесте STL-backend добавлен в общий список задач
+([`tests/functional/main.cpp`](../tests/functional/main.cpp#L84)),
 а эталон строится через `std::ranges::sort` ([`tests/functional/main.cpp`](../tests/functional/main.cpp#L35)). Свежий
 запуск `build_olesnitskiy/bin/ppc_func_tests` подтвердил `seq/omp/stl/tbb`: 60 passed; ALL отдельно прошел под
 `mpirun -np 2`: 15 passed.
@@ -63,7 +64,7 @@ Baseline: `seq` `TaskRun = 0.0058254364 s`; для pipeline baseline `0.00689950
 ([`modules/performance/include/performance.hpp`](../../../modules/performance/include/performance.hpp#L21)).
 
 | workers | time | speedup | efficiency | notes |
-|---|---:|---:|---:|---|
+| --- | ---: | ---: | ---: | --- |
 | auto (12 на тестовой машине) | 0.0047718214 s | 1.221 | 0.102 | `TaskRun`; число workers взято из `hardware_concurrency()` |
 | auto (12 на тестовой машине) | 0.0055675704 s | 1.239 | 0.103 | `pipeline`; запуск с `PPC_NUM_THREADS=1`, но STL-код его не использует |
 | auto (12 на тестовой машине) | 0.0081357990 s | 0.848 | 0.071 | `pipeline`; запуск с `PPC_NUM_THREADS=4`, но STL-код его не использует |

@@ -8,7 +8,8 @@ rank 0 и последовательно досливаются ([`all/src/ops_a
 
 ## Межпроцессная схема
 
-`MPI_Comm_rank` и `MPI_Comm_size` определяют роль процесса и число rank-ов ([`all/src/ops_all.cpp`](src/ops_all.cpp#L228)).
+`MPI_Comm_rank` и `MPI_Comm_size` определяют роль процесса и число rank-ов
+([`all/src/ops_all.cpp`](src/ops_all.cpp#L228)).
 `BuildDistribution` делит `total_size` почти поровну: первые `remainder` rank-ов получают на один элемент больше
 ([`all/src/ops_all.cpp`](src/ops_all.cpp#L64)). `MPI_Scatterv` отправляет локальные куски, `MPI_Gatherv` собирает
 отсортированные куски на rank 0, затем `BroadcastVector` рассылает итог всем rank-ам через `MPI_Bcast`
@@ -65,7 +66,7 @@ Baseline: `seq` `TaskRun = 0.0058254364 s`; для pipeline baseline `0.00689950
 ([`modules/performance/include/performance.hpp`](../../../modules/performance/include/performance.hpp#L21)).
 
 | backend | ranks | threads_per_rank | total_workers | time | speedup | efficiency | notes |
-|---|---:|---:|---:|---:|---:|---:|---|
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | all | 1 | 12 | 12 | 0.0126647332 s | 0.460 | 0.038 | `mpirun -np 1`, `PPC_NUM_THREADS=1`, local STL auto-threads |
 | all | 2 | 12 | 24 | 0.0088037862 s | 0.662 | 0.028 | `mpirun -np 2`, local STL auto-threads |
 | all | 4 | 12 | 48 | 0.0043261284 s | 1.347 | 0.028 | `mpirun -np 4`, local STL auto-threads |
