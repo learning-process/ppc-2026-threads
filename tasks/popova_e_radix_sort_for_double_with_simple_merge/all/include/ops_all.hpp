@@ -17,6 +17,9 @@ class PopovaERadixSorForDoubleWithSimpleMergeALL : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  std::vector<double> array_;   // массив для сортировки
+  std::vector<double> result_;  // результат сортировки
 };
 
 }  // namespace popova_e_radix_sort_for_double_with_simple_merge_threads
