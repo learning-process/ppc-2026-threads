@@ -97,8 +97,8 @@ bool VlasovaASimpsonMethodALL::RunImpl() {
     total_points *= static_cast<size_t>(dimensions_[i]);
   }
 
-  const size_t urank = static_cast<size_t>(rank);
-  const size_t usize = static_cast<size_t>(size);
+  const auto urank = static_cast<size_t>(rank);
+  const auto usize = static_cast<size_t>(size);
   const size_t chunk = total_points / usize;
   const size_t rem = total_points % usize;
 
