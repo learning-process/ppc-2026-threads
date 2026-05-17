@@ -3,8 +3,12 @@
 #include <cstddef>
 #include <random>
 
+#include "klimenko_v_lsh_contrast_incr/all/include/ops_all.hpp"
 #include "klimenko_v_lsh_contrast_incr/common/include/common.hpp"
+#include "klimenko_v_lsh_contrast_incr/omp/include/ops_omp.hpp"
 #include "klimenko_v_lsh_contrast_incr/seq/include/ops_seq.hpp"
+#include "klimenko_v_lsh_contrast_incr/stl/include/ops_stl.hpp"
+#include "klimenko_v_lsh_contrast_incr/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace klimenko_v_lsh_contrast_incr {
@@ -42,7 +46,9 @@ TEST_P(KlimenkoVRunPerfTestsLSH, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KlimenkoVLSHContrastIncrSEQ>(PPC_SETTINGS_klimenko_v_lsh_contrast_incr);
+    ppc::util::MakeAllPerfTasks<InType, KlimenkoVLSHContrastIncrALL, KlimenkoVLSHContrastIncrOMP,
+                                KlimenkoVLSHContrastIncrSEQ, KlimenkoVLSHContrastIncrSTL, KlimenkoVLSHContrastIncrTBB>(
+        PPC_SETTINGS_klimenko_v_lsh_contrast_incr);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
