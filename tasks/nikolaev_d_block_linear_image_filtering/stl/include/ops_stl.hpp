@@ -8,12 +8,12 @@
 
 namespace nikolaev_d_block_linear_image_filtering {
 
-class NikolaevDBlockLinearImageFilteringOMP : public BaseTask {
+class NikolaevDBlockLinearImageFilteringSTL : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kOMP;
+    return ppc::task::TypeOfTask::kSTL;
   }
-  explicit NikolaevDBlockLinearImageFilteringOMP(const InType &in);
+  explicit NikolaevDBlockLinearImageFilteringSTL(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -22,6 +22,7 @@ class NikolaevDBlockLinearImageFilteringOMP : public BaseTask {
   bool PostProcessingImpl() override;
 
   static std::uint8_t GetPixel(const std::vector<uint8_t> &data, int w, int h, int x, int y, int ch);
+  static std::uint8_t ApplyKernel(const std::vector<uint8_t> &src, int w, int h, int nx, int ny, int ch);
 };
 
 }  // namespace nikolaev_d_block_linear_image_filtering
