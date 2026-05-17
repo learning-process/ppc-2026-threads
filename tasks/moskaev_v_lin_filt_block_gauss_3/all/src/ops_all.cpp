@@ -8,10 +8,6 @@
 #include <cstdint>
 #include <vector>
 
-#ifdef _OPENMP
-#  include <omp.h>
-#endif
-
 #include "moskaev_v_lin_filt_block_gauss_3/common/include/common.hpp"
 
 namespace moskaev_v_lin_filt_block_gauss_3 {
@@ -90,12 +86,13 @@ void CopyBlockWithPadding(const std::vector<uint8_t> &source_image, std::vector<
 
 void CopyProcessedBlockToOutput(const std::vector<uint8_t> &processed_block, std::vector<uint8_t> &output_image,
                                 int width, int channels, int block_x, int block_y, int current_block_width,
-                                int current_block_height) {
+                                int current_block_height, int output_start_row) {
   for (int row = 0; row < current_block_height; ++row) {
     for (int col = 0; col < current_block_width; ++col) {
       for (int channel = 0; channel < channels; ++channel) {
         int src_idx = (((row * current_block_width) + col) * channels) + channel;
-        int dst_idx = ((((block_y + row) * width) + (block_x + col)) * channels) + channel;
+        int dst_row = output_start_row + (block_y + row);
+        int dst_idx = ((dst_row * width) + (block_x + col)) * channels + channel;
         output_image[dst_idx] = processed_block[src_idx];
       }
     }
@@ -103,53 +100,64 @@ void CopyProcessedBlockToOutput(const std::vector<uint8_t> &processed_block, std
 }
 
 int ComputeStartBlock(int rank, int blocks_per_proc, int remainder) {
-  return (rank < remainder) ? rank * (blocks_per_proc + 1) : (rank * blocks_per_proc) + remainder;
+  if (rank < remainder) {
+    return rank * (blocks_per_proc + 1);
+  }
+  return rank * blocks_per_proc + remainder;
 }
 
 int ComputeEndBlock(int rank, int blocks_per_proc, int remainder) {
-  return ComputeStartBlock(rank, blocks_per_proc, remainder) + blocks_per_proc + (rank < remainder ? 1 : 0);
+  int start = ComputeStartBlock(rank, blocks_per_proc, remainder);
+  int extra = (rank < remainder) ? 1 : 0;
+  return start + blocks_per_proc + extra;
 }
 
-void ProcessBlocks(const std::vector<uint8_t> &local_image, std::vector<uint8_t> &output, int width, int height,
-                   int channels, int block_size, int start_block_y, int end_block_y) {
+void ProcessSingleBlock(const std::vector<uint8_t> &image, std::vector<uint8_t> &output, int width, int height,
+                        int channels, int block_size, int bx, int by, int output_start_row) {
+  int block_x = bx * block_size;
+  int block_y = by * block_size;
+  int current_block_width = std::min(block_size, width - block_x);
+  int current_block_height = std::min(block_size, height - block_y);
+  int pw = current_block_width + 2;
+  int ph = current_block_height + 2;
+
+  std::vector<uint8_t> in_block(static_cast<size_t>(pw) * ph * channels, 0);
+  std::vector<uint8_t> out_block(static_cast<size_t>(current_block_width) * current_block_height * channels, 0);
+
+  CopyBlockWithPadding(image, in_block, width, height, channels, block_x, block_y, current_block_width,
+                       current_block_height, pw);
+  MoskaevVLinFiltBlockGauss3ALL::ApplyGaussianFilterToBlock(in_block, out_block, pw, ph, channels);
+  CopyProcessedBlockToOutput(out_block, output, width, channels, block_x, block_y, current_block_width,
+                             current_block_height, output_start_row);
+}
+
+void ProcessBlockRange(const std::vector<uint8_t> &image, std::vector<uint8_t> &output, int width, int height,
+                       int channels, int block_size, int start_block_y, int end_block_y, int output_start_row) {
+  int blocks_x = (width + block_size - 1) / block_size;
   for (int by = start_block_y; by < end_block_y; ++by) {
-    for (int bx = 0; bx < (width + block_size - 1) / block_size; ++bx) {
-      int block_x = bx * block_size;
-      int block_y = by * block_size;
-      int current_block_width = std::min(block_size, width - block_x);
-      int current_block_height = std::min(block_size, height - block_y);
-      int pw = current_block_width + 2;
-      int ph = current_block_height + 2;
-
-      std::vector<uint8_t> in_block(static_cast<size_t>(pw) * ph * channels, 0);
-      std::vector<uint8_t> out_block(static_cast<size_t>(current_block_width) * current_block_height * channels, 0);
-
-      CopyBlockWithPadding(local_image, in_block, width, height, channels, block_x, block_y, current_block_width,
-                           current_block_height, pw);
-      MoskaevVLinFiltBlockGauss3ALL::ApplyGaussianFilterToBlock(in_block, out_block, pw, ph, channels);
-      CopyProcessedBlockToOutput(out_block, output, width, channels, block_x, block_y, current_block_width,
-                                 current_block_height);
+    for (int bx = 0; bx < blocks_x; ++bx) {
+      ProcessSingleBlock(image, output, width, height, channels, block_size, bx, by, output_start_row);
     }
   }
 }
 
-void GatherResults(std::vector<uint8_t> &output, int width, int channels, int block_size, int num_procs, int rank,
-                   int blocks_per_proc, int remainder, int start_block_y, int end_block_y) {
+void BroadcastImage(int rank, const std::vector<uint8_t> &image_data, std::vector<uint8_t> &local_image) {
+  int total_size = static_cast<int>(image_data.size());
+  MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  local_image.resize(total_size);
   if (rank == 0) {
-    std::vector<uint8_t> recv_buf;
-    for (int proc = 1; proc < num_procs; ++proc) {
-      int proc_start = ComputeStartBlock(proc, blocks_per_proc, remainder);
-      int proc_end = ComputeEndBlock(proc, blocks_per_proc, remainder);
-      int recv_count = width * (proc_end - proc_start) * block_size * channels;
-      recv_buf.resize(recv_count);
-      MPI_Recv(recv_buf.data(), recv_count, MPI_UNSIGNED_CHAR, proc, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      int offset = proc_start * block_size * width * channels;
-      std::ranges::copy(recv_buf, output.begin() + offset);
-    }
-  } else {
-    int send_count = width * (end_block_y - start_block_y) * block_size * channels;
-    MPI_Send(output.data(), send_count, MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
+    local_image = image_data;
   }
+  MPI_Bcast(local_image.data(), total_size, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+}
+
+void SendResults(int rank, int dest, const std::vector<uint8_t> &data, size_t size) {
+  MPI_Send(const_cast<uint8_t *>(data.data()), static_cast<int>(size), MPI_UNSIGNED_CHAR, dest, 0, MPI_COMM_WORLD);
+}
+
+void ReceiveResults(int src, std::vector<uint8_t> &buffer, size_t size) {
+  buffer.resize(size);
+  MPI_Recv(buffer.data(), static_cast<int>(size), MPI_UNSIGNED_CHAR, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 }
 
 }  // namespace
@@ -168,18 +176,8 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
   block_size_ = 64;
   int block_size = block_size_;
 
-  if (rank_ == 0) {
-    GetOutput().resize(static_cast<size_t>(width) * height * channels);
-  }
-
-  int total_size = static_cast<int>(image_data.size());
-  MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  std::vector<uint8_t> local_image(total_size);
-  if (rank_ == 0) {
-    local_image = image_data;
-  }
-  MPI_Bcast(local_image.data(), total_size, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+  std::vector<uint8_t> local_image;
+  BroadcastImage(rank_, image_data, local_image);
 
   int blocks_y = (height + block_size - 1) / block_size;
   int blocks_per_proc = blocks_y / num_procs_;
@@ -188,19 +186,46 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
   int start_block_y = ComputeStartBlock(rank_, blocks_per_proc, remainder);
   int end_block_y = ComputeEndBlock(rank_, blocks_per_proc, remainder);
 
-  if (rank_ != 0) {
-    GetOutput().resize(static_cast<size_t>(width) * (end_block_y - start_block_y) * block_size * channels);
-  }
+  int start_row = start_block_y * block_size;
+  int end_row = std::min(end_block_y * block_size, height);
+  int local_height = end_row - start_row;
 
-  ProcessBlocks(local_image, GetOutput(), width, height, channels, block_size, start_block_y, end_block_y);
-  GatherResults(GetOutput(), width, channels, block_size, num_procs_, rank_, blocks_per_proc, remainder, start_block_y,
-                end_block_y);
+  size_t total_size = static_cast<size_t>(width) * height * channels;
+  size_t local_size = static_cast<size_t>(width) * local_height * channels;
+
+  if (rank_ == 0) {
+    GetOutput().resize(total_size);
+    ProcessBlockRange(local_image, GetOutput(), width, height, channels, block_size, start_block_y, end_block_y, 0);
+
+    for (int proc = 1; proc < num_procs_; ++proc) {
+      int p_start = ComputeStartBlock(proc, blocks_per_proc, remainder);
+      int p_end = ComputeEndBlock(proc, blocks_per_proc, remainder);
+      int p_start_row = p_start * block_size;
+      int p_end_row = std::min(p_end * block_size, height);
+      size_t p_size = static_cast<size_t>(width) * (p_end_row - p_start_row) * channels;
+
+      std::vector<uint8_t> proc_data;
+      ReceiveResults(proc, proc_data, p_size);
+
+      int dst_offset = p_start_row * width * channels;
+      std::copy(proc_data.begin(), proc_data.end(), GetOutput().begin() + dst_offset);
+    }
+  } else {
+    std::vector<uint8_t> local_output(local_size);
+    ProcessBlockRange(local_image, local_output, width, height, channels, block_size, start_block_y, end_block_y,
+                      start_row);
+    SendResults(rank_, 0, local_output, local_size);
+    GetOutput().clear();
+  }
 
   return true;
 }
 
 bool MoskaevVLinFiltBlockGauss3ALL::PostProcessingImpl() {
-  return rank_ == 0 ? !GetOutput().empty() : true;
+  if (rank_ == 0) {
+    return !GetOutput().empty();
+  }
+  return true;
 }
 
 }  // namespace moskaev_v_lin_filt_block_gauss_3
