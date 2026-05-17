@@ -8,8 +8,7 @@
 #include <vector>
 
 #include "muhammadkhon_i_stressen_alg/common/include/common.hpp"
-#include "muhammadkhon_i_stressen_alg/omp/include/ops_omp.hpp"  // <-- добавил
-#include "muhammadkhon_i_stressen_alg/seq/include/ops_seq.hpp"
+#include "muhammadkhon_i_stressen_alg/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -88,10 +87,8 @@ const std::array<TestType, 6> kTestParam = {
     std::make_tuple(15, 5, 15, 150, "MediumPadded"), std::make_tuple(16, 16, 16, 150, "MediumPowerOfTwo_16x16"),
     std::make_tuple(63, 63, 63, 300, "LargePadded"), std::make_tuple(64, 64, 64, 300, "LargePowerOfTwo_64x64")};
 
-// SEQ + OMP задачи объединяем через tuple_cat
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<MuhammadkhonIStressenAlgSEQ, InType>(kTestParam, PPC_SETTINGS_muhammadkhon_i_stressen_alg),
-    ppc::util::AddFuncTask<MuhammadkhonIStressenAlgOMP, InType>(kTestParam, PPC_SETTINGS_muhammadkhon_i_stressen_alg));
+const auto kTestTasksList =
+    ppc::util::AddFuncTask<MuhammadkhonIStressenAlgTBB, InType>(kTestParam, PPC_SETTINGS_muhammadkhon_i_stressen_alg);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

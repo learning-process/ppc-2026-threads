@@ -1,4 +1,7 @@
-#include "muhammadkhon_i_stressen_alg/omp/include/ops_omp.hpp"
+#include "muhammadkhon_i_stressen_alg/tbb/include/ops_tbb.hpp"
+
+#include <oneapi/tbb/global_control.h>
+#include <oneapi/tbb/parallel_invoke.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -6,6 +9,7 @@
 #include <vector>
 
 #include "muhammadkhon_i_stressen_alg/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace muhammadkhon_i_stressen_alg {
 
@@ -40,18 +44,29 @@ void AddToBuffer(const double *a, std::size_t a_stride, const double *b, std::si
   }
 }
 
-void MulIKJ(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c,
-            std::size_t c_stride, std::size_t ii, std::size_t i_end, std::size_t kk, std::size_t k_end, std::size_t jj,
-            std::size_t j_end) {
-  for (std::size_t i = ii; i < i_end; ++i) {
+void MulMicroBlock(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c,
+                   std::size_t c_stride, std::size_t i_begin, std::size_t i_end, std::size_t k_begin,
+                   std::size_t k_end, std::size_t j_begin, std::size_t j_end) {
+  for (std::size_t i = i_begin; i < i_end; ++i) {
     double *c_row = c + (i * c_stride);
     const double *a_row = a + (i * a_stride);
-    for (std::size_t k = kk; k < k_end; ++k) {
+    for (std::size_t k = k_begin; k < k_end; ++k) {
       const double aik = a_row[k];
       const double *b_row = b + (k * b_stride);
-      for (std::size_t j = jj; j < j_end; ++j) {
+      for (std::size_t j = j_begin; j < j_end; ++j) {
         c_row[j] += aik * b_row[j];
       }
+    }
+  }
+}
+
+void MulKBlocks(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c,
+                std::size_t c_stride, std::size_t n, std::size_t ii, std::size_t i_end) {
+  for (std::size_t kk = 0; kk < n; kk += kBlockSize) {
+    const std::size_t k_end = std::min(kk + kBlockSize, n);
+    for (std::size_t jj = 0; jj < n; jj += kBlockSize) {
+      const std::size_t j_end = std::min(jj + kBlockSize, n);
+      MulMicroBlock(a, a_stride, b, b_stride, c, c_stride, ii, i_end, kk, k_end, jj, j_end);
     }
   }
 }
@@ -61,13 +76,7 @@ void NaiveMulBlocked(const double *a, std::size_t a_stride, const double *b, std
   ZeroMatrix(c, c_stride, n);
   for (std::size_t ii = 0; ii < n; ii += kBlockSize) {
     const std::size_t i_end = std::min(ii + kBlockSize, n);
-    for (std::size_t kk = 0; kk < n; kk += kBlockSize) {
-      const std::size_t k_end = std::min(kk + kBlockSize, n);
-      for (std::size_t jj = 0; jj < n; jj += kBlockSize) {
-        const std::size_t j_end = std::min(jj + kBlockSize, n);
-        MulIKJ(a, a_stride, b, b_stride, c, c_stride, ii, i_end, kk, k_end, jj, j_end);
-      }
-    }
+    MulKBlocks(a, a_stride, b, b_stride, c, c_stride, n, ii, i_end);
   }
 }
 
@@ -119,33 +128,26 @@ void StrassenSeq(const double *a_in, std::size_t a_stride_in, const double *b_in
         std::vector<double> m6(half * half);
         std::vector<double> m7(half * half);
 
-        // M1 = (A11+A22)(B11+B22)
         AddToBuffer(a11, a_stride, a22, a_stride, lhs.data(), half, 1.0);
         AddToBuffer(b11, b_stride, b22, b_stride, rhs.data(), half, 1.0);
         impl(lhs.data(), half, rhs.data(), half, m1.data(), half, half);
 
-        // M2 = (A21+A22)B11
         AddToBuffer(a21, a_stride, a22, a_stride, lhs.data(), half, 1.0);
         impl(lhs.data(), half, b11, b_stride, m2.data(), half, half);
 
-        // M3 = A11(B12-B22)
         AddToBuffer(b12, b_stride, b22, b_stride, rhs.data(), half, -1.0);
         impl(a11, a_stride, rhs.data(), half, m3.data(), half, half);
 
-        // M4 = A22(B21-B11)
         AddToBuffer(b21, b_stride, b11, b_stride, rhs.data(), half, -1.0);
         impl(a22, a_stride, rhs.data(), half, m4.data(), half, half);
 
-        // M5 = (A11+A12)B22
         AddToBuffer(a11, a_stride, a12, a_stride, lhs.data(), half, 1.0);
         impl(lhs.data(), half, b22, b_stride, m5.data(), half, half);
 
-        // M6 = (A21-A11)(B11+B12)
         AddToBuffer(a21, a_stride, a11, a_stride, lhs.data(), half, -1.0);
         AddToBuffer(b11, b_stride, b12, b_stride, rhs.data(), half, 1.0);
         impl(lhs.data(), half, rhs.data(), half, m6.data(), half, half);
 
-        // M7 = (A12-A22)(B21+B22)
         AddToBuffer(a12, a_stride, a22, a_stride, lhs.data(), half, -1.0);
         AddToBuffer(b21, b_stride, b22, b_stride, rhs.data(), half, 1.0);
         impl(lhs.data(), half, rhs.data(), half, m7.data(), half, half);
@@ -156,10 +158,10 @@ void StrassenSeq(const double *a_in, std::size_t a_stride_in, const double *b_in
   impl(a_in, a_stride_in, b_in, b_stride_in, c_in, c_stride_in, n_in);
 }
 
-void StrassenTopOmp(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c,
+void StrassenTopTbb(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c,
                     std::size_t c_stride, std::size_t n) {
-  if (n <= kCutoff) {
-    NaiveMulBlocked(a, a_stride, b, b_stride, c, c_stride, n);
+  if (n <= kCutoff || ppc::util::GetNumThreads() <= 1) {
+    StrassenSeq(a, a_stride, b, b_stride, c, c_stride, n);
     return;
   }
 
@@ -174,97 +176,83 @@ void StrassenTopOmp(const double *a, std::size_t a_stride, const double *b, std:
   const double *b21 = b + (half * b_stride);
   const double *b22 = b21 + half;
 
-  std::vector<double> m1(half * half);
-  std::vector<double> m2(half * half);
-  std::vector<double> m3(half * half);
-  std::vector<double> m4(half * half);
-  std::vector<double> m5(half * half);
-  std::vector<double> m6(half * half);
-  std::vector<double> m7(half * half);
+  std::vector<double> m1;
+  std::vector<double> m2;
+  std::vector<double> m3;
+  std::vector<double> m4;
+  std::vector<double> m5;
+  std::vector<double> m6;
+  std::vector<double> m7;
 
-#pragma omp parallel default(none) \
-    shared(m1, m2, m3, m4, m5, m6, m7, a11, a12, a21, a22, b11, b12, b21, b22, a_stride, b_stride, half)
-  {
-#pragma omp single nowait
-    {
-// M1 = (A11+A22)(B11+B22)
-#pragma omp task default(none) shared(m1, a11, a22, b11, b22, a_stride, b_stride, half)
-      {
+  oneapi::tbb::parallel_invoke(
+      [&] {
         std::vector<double> lhs(half * half);
         std::vector<double> rhs(half * half);
         AddToBuffer(a11, a_stride, a22, a_stride, lhs.data(), half, 1.0);
         AddToBuffer(b11, b_stride, b22, b_stride, rhs.data(), half, 1.0);
+        m1.assign(half * half, 0.0);
         StrassenSeq(lhs.data(), half, rhs.data(), half, m1.data(), half, half);
-      }
-// M2 = (A21+A22)B11
-#pragma omp task default(none) shared(m2, a21, a22, b11, a_stride, b_stride, half)
-      {
+      },
+      [&] {
         std::vector<double> lhs(half * half);
         AddToBuffer(a21, a_stride, a22, a_stride, lhs.data(), half, 1.0);
+        m2.assign(half * half, 0.0);
         StrassenSeq(lhs.data(), half, b11, b_stride, m2.data(), half, half);
-      }
-// M3 = A11(B12-B22)
-#pragma omp task default(none) shared(m3, a11, b12, b22, a_stride, b_stride, half)
-      {
+      },
+      [&] {
         std::vector<double> rhs(half * half);
         AddToBuffer(b12, b_stride, b22, b_stride, rhs.data(), half, -1.0);
+        m3.assign(half * half, 0.0);
         StrassenSeq(a11, a_stride, rhs.data(), half, m3.data(), half, half);
-      }
-// M4 = A22(B21-B11)
-#pragma omp task default(none) shared(m4, a22, b21, b11, a_stride, b_stride, half)
-      {
+      },
+      [&] {
         std::vector<double> rhs(half * half);
         AddToBuffer(b21, b_stride, b11, b_stride, rhs.data(), half, -1.0);
+        m4.assign(half * half, 0.0);
         StrassenSeq(a22, a_stride, rhs.data(), half, m4.data(), half, half);
-      }
-// M5 = (A11+A12)B22
-#pragma omp task default(none) shared(m5, a11, a12, b22, a_stride, b_stride, half)
-      {
+      },
+      [&] {
         std::vector<double> lhs(half * half);
         AddToBuffer(a11, a_stride, a12, a_stride, lhs.data(), half, 1.0);
+        m5.assign(half * half, 0.0);
         StrassenSeq(lhs.data(), half, b22, b_stride, m5.data(), half, half);
-      }
-// M6 = (A21-A11)(B11+B12)
-#pragma omp task default(none) shared(m6, a21, a11, b11, b12, a_stride, b_stride, half)
-      {
+      },
+      [&] {
         std::vector<double> lhs(half * half);
         std::vector<double> rhs(half * half);
         AddToBuffer(a21, a_stride, a11, a_stride, lhs.data(), half, -1.0);
         AddToBuffer(b11, b_stride, b12, b_stride, rhs.data(), half, 1.0);
+        m6.assign(half * half, 0.0);
         StrassenSeq(lhs.data(), half, rhs.data(), half, m6.data(), half, half);
-      }
-// M7 = (A12-A22)(B21+B22)
-#pragma omp task default(none) shared(m7, a12, a22, b21, b22, a_stride, b_stride, half)
-      {
+      },
+      [&] {
         std::vector<double> lhs(half * half);
         std::vector<double> rhs(half * half);
         AddToBuffer(a12, a_stride, a22, a_stride, lhs.data(), half, -1.0);
         AddToBuffer(b21, b_stride, b22, b_stride, rhs.data(), half, 1.0);
+        m7.assign(half * half, 0.0);
         StrassenSeq(lhs.data(), half, rhs.data(), half, m7.data(), half, half);
-      }
-#pragma omp taskwait
-    }
-  }
+      });
 
   CombineQuadrants(m1, m2, m3, m4, m5, m6, m7, c, c_stride, half);
 }
 
 }  // namespace
 
-MuhammadkhonIStressenAlgOMP::MuhammadkhonIStressenAlgOMP(const InType &in) {
+MuhammadkhonIStressenAlgTBB::MuhammadkhonIStressenAlgTBB(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};
 }
 
-bool MuhammadkhonIStressenAlgOMP::ValidationImpl() {
+bool MuhammadkhonIStressenAlgTBB::ValidationImpl() {
   const auto &in = GetInput();
   return in.a_rows > 0 && in.a_cols_b_rows > 0 && in.b_cols > 0 &&
          in.a.size() == static_cast<size_t>(in.a_rows * in.a_cols_b_rows) &&
          in.b.size() == static_cast<size_t>(in.a_cols_b_rows * in.b_cols);
 }
 
-bool MuhammadkhonIStressenAlgOMP::PreProcessingImpl() {
+bool MuhammadkhonIStressenAlgTBB::PreProcessingImpl() {
   GetOutput() = {};
   const auto &in = GetInput();
   a_rows_ = in.a_rows;
@@ -292,10 +280,14 @@ bool MuhammadkhonIStressenAlgOMP::PreProcessingImpl() {
   return true;
 }
 
-bool MuhammadkhonIStressenAlgOMP::RunImpl() {
+bool MuhammadkhonIStressenAlgTBB::RunImpl() {
   result_c_.assign(padded_n_ * padded_n_, 0.0);
 
-  StrassenTopOmp(padded_a_.data(), padded_n_, padded_b_.data(), padded_n_, result_c_.data(), padded_n_, padded_n_);
+  oneapi::tbb::global_control control(oneapi::tbb::global_control::max_allowed_parallelism,
+                                      static_cast<std::size_t>(std::max(1, ppc::util::GetNumThreads())));
+  (void)control;
+
+  StrassenTopTbb(padded_a_.data(), padded_n_, padded_b_.data(), padded_n_, result_c_.data(), padded_n_, padded_n_);
 
   auto &out = GetOutput();
   out.assign(a_rows_ * b_cols_, 0.0);
@@ -308,7 +300,7 @@ bool MuhammadkhonIStressenAlgOMP::RunImpl() {
   return true;
 }
 
-bool MuhammadkhonIStressenAlgOMP::PostProcessingImpl() {
+bool MuhammadkhonIStressenAlgTBB::PostProcessingImpl() {
   return true;
 }
 
