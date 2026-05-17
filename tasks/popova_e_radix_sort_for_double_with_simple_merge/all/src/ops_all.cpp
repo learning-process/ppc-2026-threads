@@ -3,11 +3,11 @@
 #include <mpi.h>
 #include <omp.h>
 
-#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <cstring>
 #include <random>
+#include <utility>
 #include <vector>
 
 #include "popova_e_radix_sort_for_double_with_simple_merge/common/include/common.hpp"
@@ -156,8 +156,7 @@ bool PopovaERadixSorForDoubleWithSimpleMergeALL::PreProcessingImpl() {
 }
 
 bool PopovaERadixSorForDoubleWithSimpleMergeALL::RunImpl() {
-  int rank = 0;
-  int size = 0;
+  int rank = 0, size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -165,12 +164,10 @@ bool PopovaERadixSorForDoubleWithSimpleMergeALL::RunImpl() {
   if (rank == 0) {
     total_elements = static_cast<int>(array_.size());
   }
-
   MPI_Bcast(&total_elements, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   std::vector<int> elem_count(size);
   std::vector<int> start_index(size);
-
   int elems_per_proc = total_elements / size;
   int ostat = total_elements % size;
   int curr_index = 0;
@@ -186,49 +183,22 @@ bool PopovaERadixSorForDoubleWithSimpleMergeALL::RunImpl() {
   }
 
   int my_elem_count = elem_count[rank];
-  std::vector<double> local_process_array(my_elem_count);
+  std::vector<double> local_array(my_elem_count);
 
-  MPI_Scatterv(array_.data(), elem_count.data(), start_index.data(), MPI_DOUBLE, local_process_array.data(),
-               my_elem_count, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(array_.data(), elem_count.data(), start_index.data(), MPI_DOUBLE, local_array.data(), my_elem_count,
+               MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  int n_threads = omp_get_max_threads();
-  std::vector<std::vector<double>> local_thread_results(n_threads);
+  std::vector<uint64_t> local_bits(my_elem_count);
 
-  auto &ref_local_array = local_process_array;
-  auto &ref_thread_results = local_thread_results;
-
-#pragma omp parallel num_threads(n_threads) default(none) \
-    shared(my_elem_count, n_threads, ref_local_array, ref_thread_results)
-  {
-    int thread_id = omp_get_thread_num();
-    int left_idx = (thread_id * my_elem_count) / n_threads;
-    int right_idx = ((thread_id + 1) * my_elem_count) / n_threads;
-
-    if (left_idx < right_idx) {
-      int local_size = right_idx - left_idx;
-      std::vector<uint64_t> local_bits(local_size);
-
-      for (int i = 0; i < local_size; i++) {
-        local_bits.at(i) = DoubleToSortable(ref_local_array.at(left_idx + i));
-      }
-
-      RadixSortUInt(local_bits);
-
-      ref_thread_results.at(thread_id).resize(local_size);
-      for (int i = 0; i < local_size; i++) {
-        ref_thread_results.at(thread_id).at(i) = SortableToDouble(local_bits.at(i));
-      }
-    }
+#pragma omp parallel for
+  for (int i = 0; i < my_elem_count; i++) {
+    local_bits[i] = DoubleToSortable(local_array[i]);
   }
+  RadixSortUInt(local_bits);
 
-  std::vector<double> local_merged_result;
-  if (!local_thread_results.empty()) {
-    local_merged_result = local_thread_results.at(0);
-    for (int i = 1; i < n_threads; i++) {
-      if (!local_thread_results.at(i).empty()) {
-        local_merged_result = MergeSorted(local_merged_result, local_thread_results.at(i));
-      }
-    }
+#pragma omp parallel for
+  for (int i = 0; i < my_elem_count; i++) {
+    local_array[i] = SortableToDouble(local_bits[i]);
   }
 
   std::vector<double> gathered_array;
@@ -236,7 +206,7 @@ bool PopovaERadixSorForDoubleWithSimpleMergeALL::RunImpl() {
     gathered_array.resize(total_elements);
   }
 
-  MPI_Gatherv(local_merged_result.data(), my_elem_count, MPI_DOUBLE, gathered_array.data(), elem_count.data(),
+  MPI_Gatherv(local_array.data(), my_elem_count, MPI_DOUBLE, gathered_array.data(), elem_count.data(),
               start_index.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
