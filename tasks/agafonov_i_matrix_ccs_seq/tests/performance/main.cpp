@@ -8,6 +8,7 @@
 #include "agafonov_i_matrix_ccs_seq/common/include/common.hpp"
 #include "agafonov_i_matrix_ccs_seq/omp/include/ops_omp.hpp"
 #include "agafonov_i_matrix_ccs_seq/seq/include/ops_seq.hpp"
+#include "agafonov_i_matrix_ccs_seq/stl/include/ops_stl.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace agafonov_i_matrix_ccs_seq {
@@ -71,17 +72,24 @@ TEST_P(AgafonovMPerfTest, RunPerfModes) {
 }
 
 namespace {
+const auto kStlPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, AgafonovIMatrixCCSSTL>(PPC_SETTINGS_agafonov_i_matrix_ccs_seq);
+
 const auto kSeqPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, AgafonovIMatrixCCSSeq>(PPC_SETTINGS_agafonov_i_matrix_ccs_seq);
 
 const auto kOmpPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, AgafonovIMatrixCCSOMP>(PPC_SETTINGS_agafonov_i_matrix_ccs_seq);
 
+INSTANTIATE_TEST_SUITE_P(MatrixPerfTestsStl, AgafonovMPerfTest, ppc::util::TupleToGTestValues(kStlPerfTasks),
+                         AgafonovMPerfTest::CustomPerfTestName);
+
 INSTANTIATE_TEST_SUITE_P(MatrixPerfTestsSeq, AgafonovMPerfTest, ppc::util::TupleToGTestValues(kSeqPerfTasks),
                          AgafonovMPerfTest::CustomPerfTestName);
 
 INSTANTIATE_TEST_SUITE_P(MatrixPerfTestsOmp, AgafonovMPerfTest, ppc::util::TupleToGTestValues(kOmpPerfTasks),
                          AgafonovMPerfTest::CustomPerfTestName);
+
 }  // namespace
 
 }  // namespace agafonov_i_matrix_ccs_seq
