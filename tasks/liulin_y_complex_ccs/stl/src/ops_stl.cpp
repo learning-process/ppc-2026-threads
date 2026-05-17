@@ -85,7 +85,7 @@ void ProcessChunk(int start_idx, int end_idx, const CCSMatrix &mat_a, const std:
     const int b_end = mat_b_t.col_index[static_cast<size_t>(col_left) + 1];
 
     for (int p = b_start; p < b_end; ++p) {
-      const int col_right = mat_b_t.row_index[static_cast<size_t>(p)];  
+      const int col_right = mat_b_t.row_index[static_cast<size_t>(p)];
       const std::complex<double> val_right = mat_b_t.values[static_cast<size_t>(p)];
 
       local_map[{col_right, row_left}] += val_left * val_right;
@@ -108,14 +108,14 @@ bool LiulinYComplexCcsStl::ValidationImpl() {
     return false;
   }
   if (mat_a.count_cols != mat_b.count_rows) {
-    return false; 
+    return false;
   }
 
   return true;
 }
 
 bool LiulinYComplexCcsStl::PreProcessingImpl() {
-  return true; 
+  return true;
 }
 
 bool LiulinYComplexCcsStl::RunImpl() {
@@ -124,7 +124,7 @@ bool LiulinYComplexCcsStl::RunImpl() {
   auto &mat_res = GetOutput();
 
   const int nnz_a = static_cast<int>(mat_a.values.size());
-  
+
   if (nnz_a == 0) {
     mat_res.count_rows = mat_a.count_rows;
     mat_res.count_cols = mat_b.count_cols;
@@ -193,7 +193,7 @@ bool LiulinYComplexCcsStl::RunImpl() {
 }
 
 bool LiulinYComplexCcsStl::PostProcessingImpl() {
-  return true;  
+  return true;
 }
 
 }  // namespace liulin_y_complex_ccs
