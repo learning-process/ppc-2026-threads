@@ -55,7 +55,7 @@ bool SavvaDMonteCarloSTL::RunImpl() {
 
   unsigned int num_threads = std::thread::hardware_concurrency();
 
-  num_threads = std::max(1u, std::min<unsigned int>(static_cast<unsigned int>(n), num_threads));
+  num_threads = std::max(1U, std::min<unsigned int>(static_cast<unsigned int>(n), num_threads));
 
   std::vector<double> partial_sums(num_threads, 0.0);
   std::vector<std::thread> threads;
