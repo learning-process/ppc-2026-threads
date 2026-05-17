@@ -1,19 +1,17 @@
 #include "pikhotskiy_r_vertical_gauss_filter/tbb/include/ops_tbb.hpp"
 
 #include <oneapi/tbb/blocked_range.h>
-#include <oneapi/tbb/global_control.h>
 #include <oneapi/tbb/parallel_for.h>
 
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
 
-#include "util/include/util.hpp"
-
 namespace pikhotskiy_r_vertical_gauss_filter {
 
 namespace {
 constexpr int kKernelNorm = 16;
+constexpr int kStripeDivider = 8;
 
 constexpr int ClampIndex(int value, int upper_bound) noexcept {
   if (upper_bound <= 0) {
@@ -57,9 +55,7 @@ bool PikhotskiyRVerticalGaussFilterTBB::PreProcessingImpl() {
   const auto &in = GetInput();
   width_ = in.width;
   height_ = in.height;
-
-  const int num_threads = std::max(1, ppc::util::GetNumThreads());
-  stripe_width_ = std::max(1, width_ / num_threads);
+  stripe_width_ = std::max(1, width_ / kStripeDivider);
 
   source_ = in.data;
   vertical_buffer_.assign(source_.size(), 0);
@@ -74,13 +70,10 @@ bool PikhotskiyRVerticalGaussFilterTBB::RunImpl() {
     return false;
   }
 
-  const int num_threads = std::max(1, ppc::util::GetNumThreads());
   const int stripe_count = (width_ + stripe_width_ - 1) / stripe_width_;
-  [[maybe_unused]] const oneapi::tbb::global_control threads_limit(oneapi::tbb::global_control::max_allowed_parallelism,
-                                                                   static_cast<std::size_t>(num_threads));
 
   oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<int>(0, stripe_count),
-                            [&](const oneapi::tbb::blocked_range<int> &range) {
+                            [this](const oneapi::tbb::blocked_range<int> &range) {
     for (int stripe_index = range.begin(); stripe_index != range.end(); ++stripe_index) {
       const int x_begin = stripe_index * stripe_width_;
       const int x_end = std::min(width_, x_begin + stripe_width_);
@@ -89,7 +82,7 @@ bool PikhotskiyRVerticalGaussFilterTBB::RunImpl() {
   });
 
   oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<int>(0, stripe_count),
-                            [&](const oneapi::tbb::blocked_range<int> &range) {
+                            [this](const oneapi::tbb::blocked_range<int> &range) {
     for (int stripe_index = range.begin(); stripe_index != range.end(); ++stripe_index) {
       const int x_begin = stripe_index * stripe_width_;
       const int x_end = std::min(width_, x_begin + stripe_width_);
