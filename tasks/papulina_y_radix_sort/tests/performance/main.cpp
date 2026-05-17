@@ -4,9 +4,12 @@
 #include <random>
 #include <vector>
 
+#include "papulina_y_radix_sort/all/include/ops_all.hpp"
 #include "papulina_y_radix_sort/common/include/common.hpp"
 #include "papulina_y_radix_sort/omp/include/ops_omp.hpp"
 #include "papulina_y_radix_sort/seq/include/ops_seq.hpp"
+#include "papulina_y_radix_sort/stl/include/ops_stl.hpp"
+#include "papulina_y_radix_sort/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace papulina_y_radix_sort {
@@ -44,8 +47,9 @@ TEST_P(PapulinaYRunPerfTestThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, PapulinaYRadixSortSEQ, PapulinaYRadixSortOMP>(
-    PPC_SETTINGS_papulina_y_radix_sort);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, PapulinaYRadixSortSEQ, PapulinaYRadixSortOMP, PapulinaYRadixSortTBB,
+                                PapulinaYRadixSortSTL, PapulinaYRadixSortALL>(PPC_SETTINGS_papulina_y_radix_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

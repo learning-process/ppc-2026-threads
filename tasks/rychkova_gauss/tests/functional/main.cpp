@@ -98,6 +98,7 @@ const std::array<TestType, 8> kTestParam = {"high_freq_noize", "img_1", "img_2",
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<RychkovaGaussSEQ, InType>(kTestParam, PPC_SETTINGS_rychkova_gauss),
+                   ppc::util::AddFuncTask<RychkovaGaussSTL, InType>(kTestParam, PPC_SETTINGS_rychkova_gauss),
                    ppc::util::AddFuncTask<RychkovaGaussOMP, InType>(kTestParam, PPC_SETTINGS_rychkova_gauss),
                    ppc::util::AddFuncTask<RychkovaGaussALL, InType>(kTestParam, PPC_SETTINGS_rychkova_gauss),
                    ppc::util::AddFuncTask<RychkovaGaussSTL, InType>(kTestParam, PPC_SETTINGS_rychkova_gauss),

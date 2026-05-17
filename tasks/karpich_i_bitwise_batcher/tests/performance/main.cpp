@@ -2,6 +2,7 @@
 
 #include <tuple>
 
+#include "karpich_i_bitwise_batcher/all/include/ops_all.hpp"
 #include "karpich_i_bitwise_batcher/common/include/common.hpp"
 #include "karpich_i_bitwise_batcher/omp/include/ops_omp.hpp"
 #include "karpich_i_bitwise_batcher/seq/include/ops_seq.hpp"
@@ -36,9 +37,10 @@ namespace {
 
 const auto kAllPerfTasks = std::tuple_cat(
     ppc::util::MakeAllPerfTasks<InType, KarpichIBitwiseBatcherSEQ>(PPC_SETTINGS_karpich_i_bitwise_batcher),
+    ppc::util::MakeAllPerfTasks<InType, KarpichIBitwiseBatcherSTL>(PPC_SETTINGS_karpich_i_bitwise_batcher),
     ppc::util::MakeAllPerfTasks<InType, KarpichIBitwiseBatcherOMP>(PPC_SETTINGS_karpich_i_bitwise_batcher),
     ppc::util::MakeAllPerfTasks<InType, KarpichIBitwiseBatcherTBB>(PPC_SETTINGS_karpich_i_bitwise_batcher),
-    ppc::util::MakeAllPerfTasks<InType, KarpichIBitwiseBatcherSTL>(PPC_SETTINGS_karpich_i_bitwise_batcher));
+    ppc::util::MakeAllPerfTasks<InType, KarpichIBitwiseBatcherALL>(PPC_SETTINGS_karpich_i_bitwise_batcher));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

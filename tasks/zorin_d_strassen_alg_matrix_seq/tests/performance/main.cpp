@@ -4,9 +4,11 @@
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
+#include "zorin_d_strassen_alg_matrix_seq/all/include/ops_all.hpp"
 #include "zorin_d_strassen_alg_matrix_seq/common/include/common.hpp"
 #include "zorin_d_strassen_alg_matrix_seq/omp/include/ops_omp.hpp"
 #include "zorin_d_strassen_alg_matrix_seq/seq/include/ops_seq.hpp"
+#include "zorin_d_strassen_alg_matrix_seq/stl/include/ops_stl.hpp"
 #include "zorin_d_strassen_alg_matrix_seq/tbb/include/ops_tbb.hpp"
 
 namespace zorin_d_strassen_alg_matrix_seq {
@@ -44,7 +46,8 @@ TEST_P(ZorinDRunPerfTests, ZorinDSEQStrassenRunPerfModes) {
 
 const auto kPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ZorinDStrassenAlgMatrixSEQ, ZorinDStrassenAlgMatrixOMP,
-                                ZorinDStrassenAlgMatrixTBB>(PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq);
+                                ZorinDStrassenAlgMatrixSTL, ZorinDStrassenAlgMatrixTBB, ZorinDStrassenAlgMatrixALL>(
+        PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq);
 
 const auto kValues = ppc::util::TupleToGTestValues(kPerfTasks);
 const auto kName = ZorinDRunPerfTests::CustomPerfTestName;

@@ -5,6 +5,7 @@
 #include <string>
 #include <tuple>
 
+#include "karpich_i_bitwise_batcher/all/include/ops_all.hpp"
 #include "karpich_i_bitwise_batcher/common/include/common.hpp"
 #include "karpich_i_bitwise_batcher/omp/include/ops_omp.hpp"
 #include "karpich_i_bitwise_batcher/seq/include/ops_seq.hpp"
@@ -54,9 +55,10 @@ const std::array<TestType, 12> kTestParam = {
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KarpichIBitwiseBatcherSEQ, InType>(kTestParam, PPC_SETTINGS_karpich_i_bitwise_batcher),
+    ppc::util::AddFuncTask<KarpichIBitwiseBatcherSTL, InType>(kTestParam, PPC_SETTINGS_karpich_i_bitwise_batcher),
     ppc::util::AddFuncTask<KarpichIBitwiseBatcherOMP, InType>(kTestParam, PPC_SETTINGS_karpich_i_bitwise_batcher),
     ppc::util::AddFuncTask<KarpichIBitwiseBatcherTBB, InType>(kTestParam, PPC_SETTINGS_karpich_i_bitwise_batcher),
-    ppc::util::AddFuncTask<KarpichIBitwiseBatcherSTL, InType>(kTestParam, PPC_SETTINGS_karpich_i_bitwise_batcher));
+    ppc::util::AddFuncTask<KarpichIBitwiseBatcherALL, InType>(kTestParam, PPC_SETTINGS_karpich_i_bitwise_batcher));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
