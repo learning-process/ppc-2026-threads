@@ -7,6 +7,8 @@
 #include "chyokotov_a_dense_matrix_mul_foxs_algorithm/common/include/common.hpp"
 #include "chyokotov_a_dense_matrix_mul_foxs_algorithm/omp/include/ops_omp.hpp"
 #include "chyokotov_a_dense_matrix_mul_foxs_algorithm/seq/include/ops_seq.hpp"
+#include "chyokotov_a_dense_matrix_mul_foxs_algorithm/stl/include/ops_stl.hpp"
+#include "chyokotov_a_dense_matrix_mul_foxs_algorithm/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace chyokotov_a_dense_matrix_mul_foxs_algorithm {
@@ -64,8 +66,9 @@ TEST_P(ChyokotovARunPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ChyokotovADenseMatMulFoxAlgorithmSEQ, ChyokotovADenseMatMulFoxAlgorithmOMP>(
-        PPC_SETTINGS_example_threads);
+    ppc::util::MakeAllPerfTasks<InType, ChyokotovADenseMatMulFoxAlgorithmSEQ, ChyokotovADenseMatMulFoxAlgorithmOMP,
+                                ChyokotovADenseMatMulFoxAlgorithmSTL, ChyokotovADenseMatMulFoxAlgorithmTBB>(
+        PPC_SETTINGS_chyokotov_a_dense_matrix_mul_foxs_algorithm);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

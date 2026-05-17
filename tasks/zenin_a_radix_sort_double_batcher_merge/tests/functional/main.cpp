@@ -11,13 +11,13 @@
 // #include <utility>
 // #include <vector>
 
-// #include "zenin_a_radix_sort_double_batcher_merge/all/include/ops_all.hpp"
+#include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
+#include "zenin_a_radix_sort_double_batcher_merge/all/include/ops_all.hpp"
 #include "zenin_a_radix_sort_double_batcher_merge/common/include/common.hpp"
 #include "zenin_a_radix_sort_double_batcher_merge/omp/include/ops_omp.hpp"
 #include "zenin_a_radix_sort_double_batcher_merge/seq/include/ops_seq.hpp"
-// #include "zenin_a_radix_sort_double_batcher_merge/stl/include/ops_stl.hpp"
-#include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
+#include "zenin_a_radix_sort_double_batcher_merge/stl/include/ops_stl.hpp"
 #include "zenin_a_radix_sort_double_batcher_merge/tbb/include/ops_tbb.hpp"
 
 namespace zenin_a_radix_sort_double_batcher_merge {
@@ -73,7 +73,7 @@ const std::array<TestType, 12> kTestParam = {
     TestType{InType{1e-20, 5e-6, 3e-12, 2e-3, 4e-9}, OutType{1e-20, 3e-12, 4e-9, 5e-6, 2e-3}, "Small"},
     TestType{InType{-8.0, -2.0, 0.5, 8.0, 9.0}, OutType{-8.0, -2.0, 0.5, 8.0, 9.0}, "Sorted"},
     TestType{InType{-3.3, 6.6, -10.9, 0.0, 2.2, -1.1}, OutType{-10.9, -3.3, -1.1, 0.0, 2.2, 6.6}, "DifferentSigns"},
-    TestType{InType{7.7, 3.3, 7.7, 3.3, 7.7}, OutType{3.3, 3.3, 7.7, 7.7, 7.7}, "duplicates"},
+    TestType{InType{7.7, 3.3, 7.7, 3.3, 7.7}, OutType{3.3, 3.3, 7.7, 7.7, 7.7}, "Duplicates"},
     TestType{InType{36.6, 25.5, 10.0, 8.9, 6.7, 4.5, 2.2}, OutType{2.2, 4.5, 6.7, 8.9, 10.0, 25.5, 36.6},
              "ReverseSeven"},
     TestType{InType{0.0, -0.0}, OutType{-0.0, 0.0}, "ZeroAndNegativeZero"}};
@@ -83,6 +83,10 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ZeninARadixSor
                                            ppc::util::AddFuncTask<ZeninARadixSortDoubleBatcherMergeOMP, InType>(
                                                kTestParam, PPC_SETTINGS_zenin_a_radix_sort_double_batcher_merge),
                                            ppc::util::AddFuncTask<ZeninARadixSortDoubleBatcherMergeTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_zenin_a_radix_sort_double_batcher_merge),
+                                           ppc::util::AddFuncTask<ZeninARadixSortDoubleBatcherMergeSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_zenin_a_radix_sort_double_batcher_merge),
+                                           ppc::util::AddFuncTask<ZeninARadixSortDoubleBatcherMergeALL, InType>(
                                                kTestParam, PPC_SETTINGS_zenin_a_radix_sort_double_batcher_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

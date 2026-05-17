@@ -3,126 +3,86 @@
 #include <omp.h>
 
 #include <algorithm>
+#include <atomic>
+#include <cstddef>
 #include <cstdint>
-#include <limits>
+#include <utility>
 #include <vector>
 
 #include "nalitov_d_dijkstras_algorithm/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace nalitov_d_dijkstras_algorithm {
 
 namespace {
 
-inline bool SafeAdd(InType a, InType b, InType &result) {
-  if (a > 0 && b > std::numeric_limits<InType>::max() - a) {
-    return false;
-  }
-  if (a < 0 && b < std::numeric_limits<InType>::min() - a) {
-    return false;
-  }
-  result = a + b;
-  return true;
-}
+using VertexChoice = std::pair<Cost, NodeId>;
 
-inline InType GetEdgeWeight(InType from, InType to) {
-  if (from == to) {
-    return 0;
-  }
-  return (from > to) ? (from - to) : (to - from);
-}
+VertexChoice SelectBestVertex(const std::vector<char> &visited, const std::vector<Cost> &dist, int n, int threads) {
+  Cost best_cost = kInf;
+  NodeId best_vtx = -1;
 
-int GetWorkerCount() {
-  int worker_count = 1;
-#pragma omp parallel default(none) shared(worker_count)
+#pragma omp parallel default(none) num_threads(threads) shared(visited, dist, n, best_cost, best_vtx)
   {
-#pragma omp single
-    worker_count = omp_get_num_threads();
-  }
-  return worker_count;
-}
-
-InType SelectNextVertexOmp(std::vector<InType> &distances, std::vector<char> &processed, InType k_infinity,
-                           int worker_count) {
-  const auto vertex_count = static_cast<InType>(distances.size());
-  std::vector<InType> thread_best_distance(worker_count, k_infinity);
-  std::vector<InType> thread_best_vertex(worker_count, -1);
-  InType selected_vertex = -1;
-
-#pragma omp parallel default(none) shared(vertex_count, distances, processed, thread_best_distance, \
-                                              thread_best_vertex, worker_count, selected_vertex, k_infinity)
-  {
-    const int tid = omp_get_thread_num();
-    InType best_distance = std::numeric_limits<InType>::max();
-    InType best_vertex = -1;
+    Cost thr_cost = kInf;
+    NodeId thr_vtx = -1;
 
 #pragma omp for nowait
-    for (InType vertex_idx = 0; vertex_idx < vertex_count; ++vertex_idx) {
-      if (processed[vertex_idx] == 0 && distances[vertex_idx] < best_distance) {
-        best_distance = distances[vertex_idx];
-        best_vertex = vertex_idx;
+    for (int vi = 0; vi < n; ++vi) {
+      const auto idx = static_cast<std::size_t>(vi);
+      if (visited[idx] == 0 && dist[idx] < thr_cost) {
+        thr_cost = dist[idx];
+        thr_vtx = vi;
       }
     }
 
-    thread_best_distance[tid] = best_distance;
-    thread_best_vertex[tid] = best_vertex;
-
-#pragma omp barrier
-#pragma omp single
+#pragma omp critical
     {
-      InType best_global_distance = std::numeric_limits<InType>::max();
-      for (int thread_idx = 0; thread_idx < worker_count; ++thread_idx) {
-        if (thread_best_vertex[thread_idx] != -1 && (thread_best_distance[thread_idx] < best_global_distance ||
-                                                     (thread_best_distance[thread_idx] == best_global_distance &&
-                                                      thread_best_vertex[thread_idx] < selected_vertex))) {
-          best_global_distance = thread_best_distance[thread_idx];
-          selected_vertex = thread_best_vertex[thread_idx];
+      if (thr_cost < best_cost || (thr_cost == best_cost && thr_vtx != -1 && (best_vtx == -1 || thr_vtx < best_vtx))) {
+        best_cost = thr_cost;
+        best_vtx = thr_vtx;
+      }
+    }
+  }
+
+  return {best_cost, best_vtx};
+}
+
+void RelaxNeighbors(const std::vector<std::pair<NodeId, Cost>> &nbrs, Cost best_cost, const std::vector<char> &visited,
+                    std::vector<Cost> &dist, int threads) {
+  const std::size_t sz = nbrs.size();
+#pragma omp parallel for default(none) num_threads(threads) shared(nbrs, best_cost, visited, dist, sz) schedule(static)
+  for (std::size_t i = 0; i < sz; ++i) {
+    const NodeId tgt = nbrs[i].first;
+    const Cost w = nbrs[i].second;
+    const auto tgt_idx = static_cast<std::size_t>(tgt);
+
+    if (visited[tgt_idx] == 0 && best_cost <= kInf - w) {
+      const Cost cand = best_cost + w;
+      std::atomic_ref<Cost> target(dist[tgt_idx]);
+      Cost old_val = target.load(std::memory_order_relaxed);
+
+      while (cand < old_val) {
+        if (target.compare_exchange_weak(old_val, cand, std::memory_order_relaxed)) {
+          break;
         }
       }
-      if (selected_vertex != -1 && best_global_distance != k_infinity) {
-        processed[selected_vertex] = 1;
-      } else {
-        selected_vertex = -1;
-      }
-    }
-  }
-  return selected_vertex;
-}
-
-void UpdateNeighborsOmp(InType anchor_vertex, std::vector<InType> &distances, const std::vector<char> &processed,
-                        InType k_infinity) {
-  const auto vertex_count = static_cast<InType>(distances.size());
-  const InType anchor_distance = distances[anchor_vertex];
-
-#pragma omp parallel for default(none) \
-    shared(anchor_vertex, distances, processed, vertex_count, k_infinity, anchor_distance)
-  for (InType neighbor = 0; neighbor < vertex_count; ++neighbor) {
-    if (processed[neighbor] == 0 && neighbor != anchor_vertex) {
-      const InType edge_weight = GetEdgeWeight(anchor_vertex, neighbor);
-      if (anchor_distance == k_infinity) {
-        continue;
-      }
-      InType new_distance = 0;
-      if (!SafeAdd(anchor_distance, edge_weight, new_distance)) {
-        continue;
-      }
-      distances[neighbor] = std::min(new_distance, distances[neighbor]);
     }
   }
 }
 
-OutType AccumulateReachableDistanceOmp(const std::vector<InType> &distances, InType k_infinity) {
-  int64_t aggregated_distance = 0;
-  const auto vertex_count = static_cast<InType>(distances.size());
-#pragma omp parallel for reduction(+ : aggregated_distance) default(none) shared(distances, vertex_count, k_infinity)
-  for (InType vertex_idx = 0; vertex_idx < vertex_count; ++vertex_idx) {
-    if (distances[vertex_idx] != k_infinity) {
-      aggregated_distance += distances[vertex_idx];
+std::int64_t SumDistances(const std::vector<Cost> &dist, int n, int threads) {
+  std::int64_t total = 0;
+
+#pragma omp parallel for default(none) num_threads(threads) shared(dist, n) reduction(+ : total)
+  for (int vi = 0; vi < n; ++vi) {
+    const auto d = dist[static_cast<std::size_t>(vi)];
+    if (d != kInf) {
+      total += static_cast<std::int64_t>(d);
     }
   }
-  if (aggregated_distance < 0 || aggregated_distance > std::numeric_limits<OutType>::max()) {
-    return -1;
-  }
-  return static_cast<OutType>(aggregated_distance);
+
+  return total;
 }
 
 }  // namespace
@@ -134,70 +94,90 @@ NalitovDDijkstrasAlgorithmOmp::NalitovDDijkstrasAlgorithmOmp(const InType &in) {
 }
 
 bool NalitovDDijkstrasAlgorithmOmp::ValidationImpl() {
-  const InType n = GetInput();
-
-  constexpr InType kMaxVertices = 10000;
-  if (n <= 0 || n > kMaxVertices) {
-    return false;
-  }
-
   if (GetOutput() != 0) {
     return false;
   }
+  const InType &in = GetInput();
+  if (in.n <= 0 || in.n > 10000) {
+    return false;
+  }
+  if (in.source < 0 || in.source >= in.n) {
+    return false;
+  }
 
-  return true;
+  return std::ranges::all_of(in.arcs, [&in](const Arc &a) {
+    return a.from >= 0 && a.to >= 0 && a.from < in.n && a.to < in.n && a.weight >= 0;
+  });
 }
 
 bool NalitovDDijkstrasAlgorithmOmp::PreProcessingImpl() {
-  const InType n = GetInput();
-  const InType k_infinity = std::numeric_limits<InType>::max();
-  distances_.assign(n, k_infinity);
-  processed_.assign(n, 0);
-  if (!distances_.empty()) {
-    distances_[0] = 0;
+  const InType &in = GetInput();
+  const int vn = in.n;
+  if (vn <= 0) {
+    return false;
   }
-  GetOutput() = 0;
+
+  omp_threads_ = ppc::util::GetNumThreads();
+  if (omp_threads_ <= 0) {
+    return false;
+  }
+
+  const auto vn_u = static_cast<std::size_t>(vn);
+  std::vector<std::size_t> outdeg(vn_u, 0);
+  for (const Arc &a : in.arcs) {
+    ++outdeg[static_cast<std::size_t>(a.from)];
+  }
+
+  graph_.assign(vn_u, {});
+  std::vector<std::atomic<std::size_t>> row_next(vn_u);
+  for (std::size_t i = 0; i < vn_u; ++i) {
+    graph_[i].resize(outdeg[i]);
+    row_next[i].store(0, std::memory_order_relaxed);
+  }
+
+  const std::size_t arc_count = in.arcs.size();
+  auto &graph = graph_;
+
+#pragma omp parallel for default(none) num_threads(omp_threads_) shared(in, row_next, graph, arc_count) schedule(guided)
+  for (std::size_t ei = 0; ei < arc_count; ++ei) {
+    const Arc &a = in.arcs[ei];
+    const auto u = static_cast<std::size_t>(a.from);
+    const std::size_t slot = row_next[u].fetch_add(1, std::memory_order_relaxed);
+    graph[u][slot] = {a.to, a.weight};
+  }
+
+  dist_.assign(vn_u, kInf);
+  visited_.assign(vn_u, 0);
+  dist_[static_cast<std::size_t>(in.source)] = 0;
+
   return true;
 }
 
 bool NalitovDDijkstrasAlgorithmOmp::RunImpl() {
-  const InType n = GetInput();
-
-  if (n <= 0) {
+  const int n = GetInput().n;
+  if (graph_.size() != static_cast<std::size_t>(n)) {
     return false;
   }
 
-  if (n == 1) {
-    GetOutput() = 0;
-    return true;
-  }
+  auto &dist = dist_;
+  auto &visited = visited_;
+  const auto &graph = graph_;
+  const int threads = omp_threads_;
 
-  if (n < 2) {
-    return false;
-  }
+  for (int step = 0; step < n; ++step) {
+    const auto choice = SelectBestVertex(visited, dist, n, threads);
+    const Cost best_cost = choice.first;
+    const NodeId best_vtx = choice.second;
 
-  const InType k_infinity = std::numeric_limits<InType>::max();
-  if (distances_.empty()) {
-    return false;
-  }
-  const int worker_count = GetWorkerCount();
-
-  for (InType iteration = 0; iteration < n; ++iteration) {
-    const InType current_vertex = SelectNextVertexOmp(distances_, processed_, k_infinity, worker_count);
-
-    if (current_vertex == -1 || distances_[current_vertex] == k_infinity) {
+    if (best_vtx == -1 || best_cost == kInf) {
       break;
     }
 
-    UpdateNeighborsOmp(current_vertex, distances_, processed_, k_infinity);
+    visited[static_cast<std::size_t>(best_vtx)] = 1;
+    RelaxNeighbors(graph[static_cast<std::size_t>(best_vtx)], best_cost, visited, dist, threads);
   }
 
-  const OutType total_sum = AccumulateReachableDistanceOmp(distances_, k_infinity);
-  if (total_sum < 0) {
-    return false;
-  }
-
-  GetOutput() = total_sum;
+  GetOutput() = static_cast<OutType>(SumDistances(dist, n, threads));
   return true;
 }
 
