@@ -1,13 +1,15 @@
-#include "kamalagin_a_binary_image_convex_hull/seq/include/ops_seq.hpp"
+#include "kamalagin_a_binary_image_convex_hull/stl/include/ops_stl.hpp"
 
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <thread>
 #include <utility>
 #include <vector>
 
 #include "kamalagin_a_binary_image_convex_hull/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace kamalagin_a_binary_image_convex_hull {
 
@@ -117,37 +119,63 @@ void FloodFillComponent(const BinaryImage &img, int start_row, int start_col, st
   }
 }
 
-void RunBinaryImageConvexHullSeq(const BinaryImage &img, HullList &hulls) {
-  hulls.clear();
+void CollectComponents(const BinaryImage &img, std::vector<std::vector<Point>> &components) {
+  components.clear();
   const int rows = img.rows;
   const int cols = img.cols;
   const size_t total = static_cast<size_t>(rows) * static_cast<size_t>(cols);
   std::vector<int> label(total, 0);
-  std::vector<Point> component_pts;
-  component_pts.reserve(total);
   for (int row = 0; row < rows; ++row) {
     for (int col = 0; col < cols; ++col) {
       const size_t idx = img.Index(row, col);
       if (img.data[idx] == 0 || label[idx] != 0) {
         continue;
       }
-      FloodFillComponent(img, row, col, label, component_pts);
-      Hull hull;
-      GrahamHull(component_pts, hull);
-      hulls.push_back(std::move(hull));
+      components.emplace_back();
+      FloodFillComponent(img, row, col, label, components.back());
     }
+  }
+}
+
+void RunBinaryImageConvexHullStl(const BinaryImage &img, HullList &hulls) {
+  hulls.clear();
+  std::vector<std::vector<Point>> components;
+  CollectComponents(img, components);
+  const size_t count = components.size();
+  hulls.resize(count);
+  if (count == 0) {
+    return;
+  }
+  const auto requested = static_cast<size_t>(ppc::util::GetNumThreads());
+  const size_t num_threads = std::min<size_t>(std::max<size_t>(requested, 1), count);
+  const size_t chunk = count / num_threads;
+  const size_t remainder = count % num_threads;
+  std::vector<std::thread> threads;
+  threads.reserve(num_threads);
+  size_t start = 0;
+  for (size_t ti = 0; ti < num_threads; ++ti) {
+    const size_t end = start + chunk + (ti < remainder ? 1 : 0);
+    threads.emplace_back([&components, &hulls, start, end]() {
+      for (size_t i = start; i < end; ++i) {
+        GrahamHull(components[i], hulls[i]);
+      }
+    });
+    start = end;
+  }
+  for (auto &th : threads) {
+    th.join();
   }
 }
 
 }  // namespace
 
-KamalaginABinaryImageConvexHullSEQ::KamalaginABinaryImageConvexHullSEQ(const InType &in) {
+KamalaginABinaryImageConvexHullSTL::KamalaginABinaryImageConvexHullSTL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = HullList{};
 }
 
-bool KamalaginABinaryImageConvexHullSEQ::ValidationImpl() {
+bool KamalaginABinaryImageConvexHullSTL::ValidationImpl() {
   const auto &img = GetInput();
   if (img.rows < 0 || img.cols < 0) {
     return false;
@@ -161,17 +189,17 @@ bool KamalaginABinaryImageConvexHullSEQ::ValidationImpl() {
   return (static_cast<size_t>(img.rows) * static_cast<size_t>(img.cols)) == img.data.size();
 }
 
-bool KamalaginABinaryImageConvexHullSEQ::PreProcessingImpl() {
+bool KamalaginABinaryImageConvexHullSTL::PreProcessingImpl() {
   GetOutput().clear();
   return true;
 }
 
-bool KamalaginABinaryImageConvexHullSEQ::RunImpl() {
-  RunBinaryImageConvexHullSeq(GetInput(), GetOutput());
+bool KamalaginABinaryImageConvexHullSTL::RunImpl() {
+  RunBinaryImageConvexHullStl(GetInput(), GetOutput());
   return true;
 }
 
-bool KamalaginABinaryImageConvexHullSEQ::PostProcessingImpl() {
+bool KamalaginABinaryImageConvexHullSTL::PostProcessingImpl() {
   return true;
 }
 

@@ -9,7 +9,10 @@
 #include <vector>
 
 #include "kamalagin_a_binary_image_convex_hull/common/include/common.hpp"
+#include "kamalagin_a_binary_image_convex_hull/omp/include/ops_omp.hpp"
 #include "kamalagin_a_binary_image_convex_hull/seq/include/ops_seq.hpp"
+#include "kamalagin_a_binary_image_convex_hull/stl/include/ops_stl.hpp"
+#include "kamalagin_a_binary_image_convex_hull/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -214,7 +217,13 @@ const std::array<TestType, 7> kTestParam = {
 };
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KamalaginABinaryImageConvexHullSEQ, InType>(
-    kTestParam, PPC_SETTINGS_kamalagin_a_binary_image_convex_hull));
+                                               kTestParam, PPC_SETTINGS_kamalagin_a_binary_image_convex_hull),
+                                           ppc::util::AddFuncTask<KamalaginABinaryImageConvexHullOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_kamalagin_a_binary_image_convex_hull),
+                                           ppc::util::AddFuncTask<KamalaginABinaryImageConvexHullTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_kamalagin_a_binary_image_convex_hull),
+                                           ppc::util::AddFuncTask<KamalaginABinaryImageConvexHullSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_kamalagin_a_binary_image_convex_hull));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = KamalaginRunFuncTests::PrintFuncTestName<KamalaginRunFuncTests>;
