@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
+#include "vlasova_a_simpson_method/all/include/ops_all.hpp"
 #include "vlasova_a_simpson_method/common/include/common.hpp"
 #include "vlasova_a_simpson_method/omp/include/ops_omp.hpp"
 #include "vlasova_a_simpson_method/seq/include/ops_seq.hpp"
@@ -45,8 +46,8 @@ TEST_P(VlasovaASimpsonMethodPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, VlasovaASimpsonMethodSEQ, VlasovaASimpsonMethodOMP, VlasovaASimpsonMethodTBB>(
-        PPC_SETTINGS_vlasova_a_simpson_method);
+    ppc::util::MakeAllPerfTasks<InType, VlasovaASimpsonMethodSEQ, VlasovaASimpsonMethodOMP, VlasovaASimpsonMethodTBB,
+                                VlasovaASimpsonMethodALL>(PPC_SETTINGS_vlasova_a_simpson_method);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = VlasovaASimpsonMethodPerfTests::CustomPerfTestName;
