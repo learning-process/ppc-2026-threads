@@ -1,5 +1,6 @@
 #include "pylaeva_s_inc_contrast_img_by_lsh/all/include/ops_all.hpp"
 
+#include <cmath>
 #include <mpi.h>
 
 #include <algorithm>
@@ -107,7 +108,7 @@ bool PylaevaSIncContrastImgByLshALL::RunImpl() {
 #pragma omp parallel for default(none) shared(global_min, scale)
   for (size_t i = 0; i < local_size_; i++) {
     int pixel = local_data_[i];
-    int result = static_cast<int>((pixel - static_cast<int>(global_min)) * scale + 0.5);
+    int result = static_cast<int>(std::lround((pixel - global_min) * scale));
     local_out_[i] = static_cast<uint8_t>(std::clamp(result, 0, 255));
   }
 
