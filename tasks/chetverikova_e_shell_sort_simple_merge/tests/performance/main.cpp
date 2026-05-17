@@ -56,8 +56,7 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ChetverikovaEShellSortSimpleMergeSEQ, ChetverikovaEShellSortSimpleMergeOMP,
-                                ChetverikovaEShellSortSimpleMergeTBB,
-                                ChetverikovaEShellSortSimpleMergeALL>(
+                                ChetverikovaEShellSortSimpleMergeTBB, ChetverikovaEShellSortSimpleMergeALL>(
         PPC_SETTINGS_chetverikova_e_shell_sort_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
