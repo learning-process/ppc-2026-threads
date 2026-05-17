@@ -195,8 +195,7 @@ mpirun --allow-run-as-root -np 4 \
 # ALL (MPI + OMP) — тесты производительности
 mpirun --allow-run-as-root -np 4 \
   ./build/bin/ppc_perf_tests \
-  --gtest_filter="*zyazeva_s_matrix_mult_cannon_alg_all*" \
-  --running-type=performance
+  --gtest_filter="*zyazeva_s_matrix_mult_cannon_alg_all*"
 ```
 
 ## 8. Заключение
