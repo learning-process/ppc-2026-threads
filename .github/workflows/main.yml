@@ -22,6 +22,11 @@ jobs:
     uses: ./.github/workflows/ubuntu.yml
     with:
       is_nightly: ${{ github.event_name == 'schedule' }}
+    permissions:
+      contents: read
+      packages: read
+      issues: write
+      pull-requests: write
   mac:
     needs:
       - pre-commit
@@ -38,6 +43,10 @@ jobs:
     uses: ./.github/workflows/perf.yml
 
   pages:
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     needs:
       - perf
     uses: ./.github/workflows/pages.yml
