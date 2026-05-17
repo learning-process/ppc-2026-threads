@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "romanov_m_matrix_ccs/all/include/ops_all.hpp"
 #include "romanov_m_matrix_ccs/common/include/common.hpp"
 #include "romanov_m_matrix_ccs/omp/include/ops_omp.hpp"
 #include "romanov_m_matrix_ccs/seq/include/ops_seq.hpp"
@@ -121,7 +122,8 @@ const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<RomanovMMatrixCCSSeq, InType>(kTestParam, PPC_SETTINGS_romanov_m_matrix_ccs),
                    ppc::util::AddFuncTask<RomanovMMatrixCCSOMP, InType>(kTestParam, PPC_SETTINGS_romanov_m_matrix_ccs),
                    ppc::util::AddFuncTask<RomanovMMatrixCCSTBB, InType>(kTestParam, PPC_SETTINGS_romanov_m_matrix_ccs),
-                   ppc::util::AddFuncTask<RomanovMMatrixCCSSTL, InType>(kTestParam, PPC_SETTINGS_romanov_m_matrix_ccs));
+                   ppc::util::AddFuncTask<RomanovMMatrixCCSSTL, InType>(kTestParam, PPC_SETTINGS_romanov_m_matrix_ccs),
+                   ppc::util::AddFuncTask<RomanovMMatrixCCSALL, InType>(kTestParam, PPC_SETTINGS_romanov_m_matrix_ccs));
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = RomanovMRunFuncTests::PrintFuncTestName<RomanovMRunFuncTests>;

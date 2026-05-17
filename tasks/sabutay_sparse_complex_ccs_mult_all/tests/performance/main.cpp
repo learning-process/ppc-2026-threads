@@ -21,7 +21,7 @@ namespace {
 
 CCS BuildRandomCcs(int rows, int cols, int seed, int max_per_col) {
   std::mt19937 gen(static_cast<std::uint32_t>(seed));
-  std::uniform_real_distribution<double> re(-3.0, 3.0);
+  std::uniform_real_distribution<double> re((-3.0), (3.0));
   std::uniform_int_distribution<int> per_col(0, max_per_col);
 
   CCS m;
