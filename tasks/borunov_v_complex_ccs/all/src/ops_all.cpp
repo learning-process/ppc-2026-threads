@@ -113,8 +113,8 @@ void FillColumnPointers(int start_col, int end_col, int num_threads, const std::
                         std::vector<int> &col_ptrs) {
   const int range = end_col - start_col;
   for (int tid = 0; tid < num_threads; ++tid) {
-    const int tid_start_col = start_col + (range * tid) / num_threads;
-    const int tid_end_col = start_col + (range * (tid + 1)) / num_threads;
+    const int tid_start_col = start_col + ((range * tid) / num_threads);
+    const int tid_end_col = start_col + ((range * (tid + 1)) / num_threads);
     for (int j = tid_start_col; j < tid_end_col; ++j) {
       col_ptrs[j + 1] = col_ptrs[j] + col_nnz[tid][j - tid_start_col];
     }

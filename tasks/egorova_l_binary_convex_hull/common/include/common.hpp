@@ -13,6 +13,9 @@ struct Point {
   bool operator<(const Point &other) const {
     return std::tie(x, y) < std::tie(other.x, other.y);
   }
+  bool operator==(const Point &other) const {
+    return x == other.x && y == other.y;
+  }
 };
 
 struct ImageData {

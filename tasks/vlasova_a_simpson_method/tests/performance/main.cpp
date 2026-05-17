@@ -7,6 +7,7 @@
 #include "vlasova_a_simpson_method/common/include/common.hpp"
 #include "vlasova_a_simpson_method/omp/include/ops_omp.hpp"
 #include "vlasova_a_simpson_method/seq/include/ops_seq.hpp"
+#include "vlasova_a_simpson_method/tbb/include/ops_tbb.hpp"
 
 namespace vlasova_a_simpson_method {
 
@@ -43,8 +44,9 @@ TEST_P(VlasovaASimpsonMethodPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, VlasovaASimpsonMethodSEQ, VlasovaASimpsonMethodOMP>(
-    PPC_SETTINGS_vlasova_a_simpson_method);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, VlasovaASimpsonMethodSEQ, VlasovaASimpsonMethodOMP, VlasovaASimpsonMethodTBB>(
+        PPC_SETTINGS_vlasova_a_simpson_method);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = VlasovaASimpsonMethodPerfTests::CustomPerfTestName;
