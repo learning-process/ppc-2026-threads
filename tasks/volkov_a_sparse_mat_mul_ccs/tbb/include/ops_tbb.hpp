@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "task/include/task.hpp"
 #include "volkov_a_sparse_mat_mul_ccs/common/include/common.hpp"
 
