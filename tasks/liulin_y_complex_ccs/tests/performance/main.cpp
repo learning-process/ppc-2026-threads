@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include "liulin_y_complex_ccs/all/include/ops_all.hpp"
 #include "liulin_y_complex_ccs/common/include/common.hpp"
 #include "liulin_y_complex_ccs/omp/include/ops_omp.hpp"
 #include "liulin_y_complex_ccs/seq/include/ops_seq.hpp"
@@ -103,8 +104,10 @@ const auto kAllPerfTasksTbb =
     ppc::util::MakeAllPerfTasks<InType, LiulinYComplexCcsTbb>(PPC_SETTINGS_liulin_y_complex_ccs);
 const auto kAllPerfTasksStl =
     ppc::util::MakeAllPerfTasks<InType, LiulinYComplexCcsStl>(PPC_SETTINGS_liulin_y_complex_ccs);
+const auto kAllPerfTasksAll =
+    ppc::util::MakeAllPerfTasks<InType, LiulinYComplexCcsAll>(PPC_SETTINGS_liulin_y_complex_ccs);
 
-const auto kAllPerfTasks = std::tuple_cat(kAllPerfTasksSeq, kAllPerfTasksOmp, kAllPerfTasksTbb, kAllPerfTasksStl);
+const auto kAllPerfTasks = std::tuple_cat(kAllPerfTasksSeq, kAllPerfTasksOmp, kAllPerfTasksTbb, kAllPerfTasksStl, kAllPerfTasksAll);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
