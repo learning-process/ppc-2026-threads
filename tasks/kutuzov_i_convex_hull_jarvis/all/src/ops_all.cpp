@@ -3,6 +3,7 @@
 #include <mpi.h>
 #include <omp.h>
 
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <vector>
@@ -34,36 +35,42 @@ bool KutuzovITestConvexHullALL::IsBetterPoint(double cross, double epsilon, doub
   return false;
 }
 
-void KutuzovITestConvexHullALL::leftmost_reduce(void *invec, void *inoutvec, int *len, MPI_Datatype *) {
-  double *in = static_cast<double *>(invec);
-  double *inout = static_cast<double *>(inoutvec);
+void KutuzovITestConvexHullALL::LeftmostReduce(void *invec, void *inoutvec, const int *len, MPI_Datatype * /*unused*/) {
+  auto *in = static_cast<double *>(invec);
+  auto *inout = static_cast<double *>(inoutvec);
   for (int i = 0; i < *len; ++i) {
-    double x_in = in[3 * i], y_in = in[3 * i + 1];
-    double x_io = inout[3 * i], y_io = inout[3 * i + 1];
+    const auto idx = static_cast<ptrdiff_t>(3) * static_cast<ptrdiff_t>(i);
+    double x_in = in[idx];
+    double y_in = in[idx + 1];
+    double x_io = inout[idx];
+    double y_io = inout[idx + 1];
     if (x_in < x_io || (x_in == x_io && y_in < y_io)) {
-      inout[3 * i] = x_in;
-      inout[3 * i + 1] = y_in;
-      inout[3 * i + 2] = in[3 * i + 2];
+      inout[idx] = x_in;
+      inout[idx + 1] = y_in;
+      inout[idx + 2] = in[idx + 2];
     }
   }
 }
 
-void KutuzovITestConvexHullALL::next_reduce(void *invec, void *inoutvec, int *len, MPI_Datatype *) {
-  double *in = static_cast<double *>(invec);
-  double *inout = static_cast<double *>(inoutvec);
+void KutuzovITestConvexHullALL::NextReduce(void *invec, void *inoutvec, const int *len, MPI_Datatype * /*unused*/) {
+  auto *in = static_cast<double *>(invec);
+  auto *inout = static_cast<double *>(inoutvec);
   for (int i = 0; i < *len; ++i) {
-    double ax = inout[3 * i], ay = inout[3 * i + 1];
-    double bx = in[3 * i], by = in[3 * i + 1];
+    const auto idx = static_cast<ptrdiff_t>(3) * static_cast<ptrdiff_t>(i);
+    double ax = inout[idx];
+    double ay = inout[idx + 1];
+    double bx = in[idx];
+    double by = in[idx + 1];
     double cross = CrossProduct(s_curr_x, s_curr_y, ax, ay, bx, by);
     if (IsBetterPoint(cross, s_epsilon, s_curr_x, s_curr_y, bx, by, ax, ay)) {
-      inout[3 * i] = bx;
-      inout[3 * i + 1] = by;
-      inout[3 * i + 2] = in[3 * i + 2];
+      inout[idx] = bx;
+      inout[idx + 1] = by;
+      inout[idx + 2] = in[idx + 2];
     }
   }
 }
 
-void KutuzovITestConvexHullALL::build_types() {
+void KutuzovITestConvexHullALL::BuildTypes() {
   MPI_Type_contiguous(3, MPI_DOUBLE, &type_leftmost_);
   MPI_Type_commit(&type_leftmost_);
   type_next_ = type_leftmost_;
@@ -80,40 +87,41 @@ bool KutuzovITestConvexHullALL::ValidationImpl() {
 }
 
 bool KutuzovITestConvexHullALL::PreProcessingImpl() {
-  int flag;
+  int flag = 0;
   MPI_Initialized(&flag);
-  if (!flag) {
+  if (flag == 0) {
     MPI_Init_thread(nullptr, nullptr, MPI_THREAD_FUNNELED, nullptr);
   }
 
   MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
   MPI_Comm_size(MPI_COMM_WORLD, &size_);
 
-  build_types();
+  BuildTypes();
 
-  MPI_Op_create((MPI_User_function *)leftmost_reduce, 1, &op_leftmost_);
-  MPI_Op_create((MPI_User_function *)next_reduce, 1, &op_next_);
+  MPI_Op_create(reinterpret_cast<MPI_User_function *>(LeftmostReduce), 1, &op_leftmost_);
+  MPI_Op_create(reinterpret_cast<MPI_User_function *>(NextReduce), 1, &op_next_);
 
   auto &input = GetInput();
-  int N = static_cast<int>(input.size());
+  auto n = static_cast<int>(input.size());
 
-  MPI_Bcast(&N, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
   if (rank_ != 0) {
-    input.resize(N);
+    input.resize(static_cast<size_t>(n));
   }
 
-  std::vector<double> coords(2 * N);
+  std::vector<double> coords(static_cast<size_t>(2) * static_cast<size_t>(n));
   if (rank_ == 0) {
-    for (int i = 0; i < N; ++i) {
-      coords[2 * i] = std::get<0>(input[i]);
-      coords[2 * i + 1] = std::get<1>(input[i]);
+    for (int i = 0; i < n; ++i) {
+      coords[(2 * static_cast<size_t>(i))] = std::get<0>(input[static_cast<size_t>(i)]);
+      coords[(2 * static_cast<size_t>(i)) + 1] = std::get<1>(input[static_cast<size_t>(i)]);
     }
   }
-  MPI_Bcast(coords.data(), 2 * N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(coords.data(), static_cast<int>(coords.size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   if (rank_ != 0) {
-    for (int i = 0; i < N; ++i) {
-      input[i] = {coords[2 * i], coords[2 * i + 1]};
+    for (int i = 0; i < n; ++i) {
+      const auto idx = static_cast<size_t>(i);
+      input[idx] = {coords[2 * idx], coords[(2 * idx) + 1]};
     }
   }
 
@@ -122,24 +130,25 @@ bool KutuzovITestConvexHullALL::PreProcessingImpl() {
 
 bool KutuzovITestConvexHullALL::RunImpl() {
   auto &input = GetInput();
-  const size_t N = input.size();
+  const auto n = static_cast<size_t>(input.size());
 
-  if (N < 3) {
+  if (n < 3) {
     GetOutput() = input;
     return true;
   }
 
-  size_t start = (N * rank_) / size_;
-  size_t end = (N * (rank_ + 1)) / size_;
+  size_t start = (n * static_cast<size_t>(rank_)) / static_cast<size_t>(size_);
+  size_t end = (n * (static_cast<size_t>(rank_) + 1)) / static_cast<size_t>(size_);
 
-  double local_lm[3], global_lm[3];
+  std::array<double, 3> local_lm{};
+  std::array<double, 3> global_lm{};
   local_lm[0] = std::get<0>(input[0]);
   local_lm[1] = std::get<1>(input[0]);
   local_lm[2] = 0.0;
 
 #pragma omp parallel default(none) shared(input, start, end, local_lm)
   {
-    int li = 0;
+    size_t li = 0;
     double lx = std::get<0>(input[li]);
     double ly = std::get<1>(input[li]);
 
@@ -163,8 +172,8 @@ bool KutuzovITestConvexHullALL::RunImpl() {
     }
   }
 
-  MPI_Allreduce(local_lm, global_lm, 1, type_leftmost_, op_leftmost_, MPI_COMM_WORLD);
-  size_t leftmost = static_cast<size_t>(global_lm[2]);
+  MPI_Allreduce(local_lm.data(), global_lm.data(), 1, type_leftmost_, op_leftmost_, MPI_COMM_WORLD);
+  auto leftmost = static_cast<size_t>(global_lm[2]);
 
   size_t current = leftmost;
   double current_x = std::get<0>(input[current]);
@@ -177,14 +186,14 @@ bool KutuzovITestConvexHullALL::RunImpl() {
   while (true) {
     output.push_back(input[current]);
 
-    size_t next = (current + 1) % N;
+    size_t next = (current + 1) % n;
     double next_x = std::get<0>(input[next]);
     double next_y = std::get<1>(input[next]);
 
 #pragma omp parallel default(none) \
-    shared(input, N, current, current_x, current_y, start, end, epsilon, next, next_x, next_y)
+    shared(input, n, current, current_x, current_y, start, end, epsilon, next, next_x, next_y)
     {
-      size_t local_next = (current + 1) % N;
+      size_t local_next = (current + 1) % n;
       double local_next_x = std::get<0>(input[local_next]);
       double local_next_y = std::get<1>(input[local_next]);
 
@@ -218,10 +227,10 @@ bool KutuzovITestConvexHullALL::RunImpl() {
     s_curr_y = current_y;
     s_epsilon = epsilon;
 
-    double local_cand[3] = {next_x, next_y, static_cast<double>(next)};
-    double global_cand[3];
+    std::array<double, 3> local_cand{next_x, next_y, static_cast<double>(next)};
+    std::array<double, 3> global_cand{};
 
-    MPI_Allreduce(local_cand, global_cand, 1, type_next_, op_next_, MPI_COMM_WORLD);
+    MPI_Allreduce(local_cand.data(), global_cand.data(), 1, type_next_, op_next_, MPI_COMM_WORLD);
 
     current = static_cast<size_t>(global_cand[2]);
     current_x = global_cand[0];

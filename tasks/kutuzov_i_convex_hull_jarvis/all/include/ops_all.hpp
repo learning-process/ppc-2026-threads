@@ -2,8 +2,6 @@
 
 #include <mpi.h>
 
-#include <cstddef>
-
 #include "kutuzov_i_convex_hull_jarvis/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -34,12 +32,14 @@ class KutuzovITestConvexHullALL : public BaseTask {
   MPI_Datatype type_leftmost_ = MPI_DATATYPE_NULL;
   MPI_Datatype type_next_ = MPI_DATATYPE_NULL;
 
-  static double s_curr_x, s_curr_y, s_epsilon;
+  static double s_curr_x;
+  static double s_curr_y;
+  static double s_epsilon;
 
-  void build_types();
+  void BuildTypes();
 
-  static void leftmost_reduce(void *invec, void *inoutvec, int *len, MPI_Datatype *datatype);
-  static void next_reduce(void *invec, void *inoutvec, int *len, MPI_Datatype *datatype);
+  static void LeftmostReduce(void *invec, void *inoutvec, const int *len, MPI_Datatype * /*unused*/);
+  static void NextReduce(void *invec, void *inoutvec, const int *len, MPI_Datatype * /*unused*/);
 };
 
 }  // namespace kutuzov_i_convex_hull_jarvis
