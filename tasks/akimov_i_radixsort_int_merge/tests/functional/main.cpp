@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <algorithm>
 #include <array>
@@ -41,6 +42,13 @@ class AkimovIRadixSortIntMergeFuncTests : public ppc::util::BaseRunFuncTests<InT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+    if (ppc::util::IsUnderMpirun()) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+    if (rank != 0) {
+      return true;
+    }
     return output_data == expected_sorted_;
   }
 

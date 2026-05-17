@@ -8,10 +8,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
-#include <utility>
 #include <vector>
 
 #include "akimov_i_radixsort_int_merge/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace akimov_i_radixsort_int_merge {
 
@@ -25,20 +25,20 @@ void CountingSortStep(std::vector<int>::iterator in_begin, std::vector<int>::ite
   for (auto it = in_begin; it != in_end; ++it) {
     auto raw_val = static_cast<uint32_t>(*it);
     uint32_t byte_val = (raw_val >> shift) & 0xFF;
-    count.at(byte_val)++;
+    count[byte_val]++;
   }
 
   std::array<size_t, 256> prefix{};
   prefix[0] = 0;
   for (int i = 1; i < 256; ++i) {
-    prefix.at(i) = prefix.at(i - 1) + count.at(i - 1);
+    prefix[i] = prefix[i - 1] + count[i - 1];
   }
 
   for (auto it = in_begin; it != in_end; ++it) {
     auto raw_val = static_cast<uint32_t>(*it);
     uint32_t byte_val = (raw_val >> shift) & 0xFF;
-    *(out_begin + static_cast<std::ptrdiff_t>(prefix.at(byte_val))) = *it;
-    prefix.at(byte_val)++;
+    *(out_begin + prefix[byte_val]) = *it;
+    prefix[byte_val]++;
   }
 }
 
@@ -47,7 +47,6 @@ void RadixSortLocal(std::vector<int>::iterator begin, std::vector<int>::iterator
   if (n < 2) {
     return;
   }
-
   std::vector<int> temp(n);
   for (size_t i = 0; i < sizeof(int); ++i) {
     if (i % 2 == 0) {
@@ -85,21 +84,38 @@ bool AkimovIRadixSortIntMergeALL::ValidationImpl() {
 }
 
 bool AkimovIRadixSortIntMergeALL::PreProcessingImpl() {
-  GetOutput() = GetInput();
+  int rank = 0;
+  if (ppc::util::IsUnderMpirun()) {
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  }
+  if (rank == 0) {
+    GetOutput() = GetInput();
+  }
   return true;
 }
 
 bool AkimovIRadixSortIntMergeALL::RunImpl() {
-  auto &arr = GetOutput();
-  int n = static_cast<int>(arr.size());
+  const bool is_mpi = ppc::util::IsUnderMpirun();
+  int rank = 0;
+  int world_size = 1;
+
+  if (is_mpi) {
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+  }
+
+  int n = 0;
+  if (rank == 0) {
+    n = static_cast<int>(GetOutput().size());
+  }
+
+  if (is_mpi) {
+    MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  }
+
   if (n == 0) {
     return true;
   }
-
-  int rank = -1;
-  int world_size = -1;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
   std::vector<int> send_counts(world_size);
   std::vector<int> send_displs(world_size);
@@ -115,8 +131,12 @@ bool AkimovIRadixSortIntMergeALL::RunImpl() {
   int local_size = send_counts[rank];
   std::vector<int> local_data(local_size);
 
-  MPI_Scatterv(arr.data(), send_counts.data(), send_displs.data(), MPI_INT, local_data.data(), local_size, MPI_INT, 0,
-               MPI_COMM_WORLD);
+  if (is_mpi) {
+    MPI_Scatterv(rank == 0 ? GetOutput().data() : nullptr, send_counts.data(), send_displs.data(), MPI_INT,
+                 local_data.data(), local_size, MPI_INT, 0, MPI_COMM_WORLD);
+  } else {
+    local_data = GetOutput();
+  }
 
   constexpr int32_t kSignMask = INT32_MIN;
   for (int i = 0; i < local_size; ++i) {
@@ -129,29 +149,32 @@ bool AkimovIRadixSortIntMergeALL::RunImpl() {
     local_data[i] ^= kSignMask;
   }
 
-  std::vector<int> global_data(rank == 0 ? n : 1);
+  if (is_mpi) {
+    if (rank == 0) {
+      GetOutput().resize(n);
+    }
+    MPI_Gatherv(local_data.data(), local_size, MPI_INT, rank == 0 ? GetOutput().data() : nullptr, send_counts.data(),
+                send_displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
+  } else {
+    GetOutput() = local_data;
+  }
 
-  MPI_Gatherv(local_data.data(), local_size, MPI_INT, global_data.data(), send_counts.data(), send_displs.data(),
-              MPI_INT, 0, MPI_COMM_WORLD);
-
-  if (rank == 0) {
+  if (rank == 0 && world_size > 1) {
     std::vector<int> offsets(world_size + 1, 0);
     for (int i = 0; i < world_size; ++i) {
       offsets[i + 1] = offsets[i] + send_counts[i];
     }
-    ParallelMerge(global_data, offsets, world_size);
-    GetOutput() = std::move(global_data);
-  } else {
-    GetOutput().clear();
+    ParallelMerge(GetOutput(), offsets, world_size);
   }
 
-  int output_size = static_cast<int>(GetOutput().size());
-  MPI_Bcast(&output_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  if (rank != 0) {
-    GetOutput().resize(output_size);
+  if (is_mpi) {
+    int output_size = static_cast<int>(GetOutput().size());
+    MPI_Bcast(&output_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if (rank != 0) {
+      GetOutput().resize(output_size);
+    }
+    MPI_Bcast(GetOutput().data(), output_size, MPI_INT, 0, MPI_COMM_WORLD);
   }
-  MPI_Bcast(GetOutput().data(), output_size, MPI_INT, 0, MPI_COMM_WORLD);
 
   return true;
 }
