@@ -5,6 +5,7 @@
 #include <tuple>
 #include <vector>
 
+#include "chaschin_vladimir_linear_image_filtration_seq/all/include/ops_all.hpp"
 #include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
 #include "chaschin_vladimir_linear_image_filtration_seq/omp/include/ops_omp.hpp"
 #include "chaschin_vladimir_linear_image_filtration_seq/seq/include/ops_seq.hpp"
@@ -99,7 +100,8 @@ const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, chaschin_v_linear_image_filtration_seq::ChaschinVLinearFiltrationSEQ,
                                 chaschin_v_linear_image_filtration_omp::ChaschinVLinearFiltrationOMP,
                                 chaschin_v_linear_image_filtration_tbb::ChaschinVLinearFiltrationTBB,
-                                chaschin_v_linear_image_filtration_stl::ChaschinVLinearFiltrationSTL>(
+                                chaschin_v_linear_image_filtration_stl::ChaschinVLinearFiltrationSTL,
+                                chaschin_v_linear_image_filtration_all::ChaschinVLinearFiltrationALL>(
         PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

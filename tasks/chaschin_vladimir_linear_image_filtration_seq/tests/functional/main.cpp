@@ -8,6 +8,7 @@
 #include <tuple>
 #include <vector>
 
+#include "chaschin_vladimir_linear_image_filtration_seq/all/include/ops_all.hpp"
 #include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
 #include "chaschin_vladimir_linear_image_filtration_seq/omp/include/ops_omp.hpp"
 #include "chaschin_vladimir_linear_image_filtration_seq/seq/include/ops_seq.hpp"
@@ -125,6 +126,10 @@ const std::array<TestType, 5> kTestParamStl = {
     std::make_tuple(4, "stl_4"),   std::make_tuple(8, "stl_8"),   std::make_tuple(16, "stl_16"),
     std::make_tuple(32, "stl_32"), std::make_tuple(60, "stl_60"),
 };
+const std::array<TestType, 5> kTestParamAll = {
+    std::make_tuple(4, "all_4"),   std::make_tuple(8, "all_8"),   std::make_tuple(16, "all_16"),
+    std::make_tuple(32, "all_32"), std::make_tuple(60, "all_60"),
+};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<chaschin_v_linear_image_filtration_seq::ChaschinVLinearFiltrationSEQ, InType>(
@@ -134,7 +139,9 @@ const auto kTestTasksList =
                    ppc::util::AddFuncTask<chaschin_v_linear_image_filtration_tbb::ChaschinVLinearFiltrationTBB, InType>(
                        kTestParamTbb, PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_seq),
                    ppc::util::AddFuncTask<chaschin_v_linear_image_filtration_stl::ChaschinVLinearFiltrationSTL, InType>(
-                       kTestParamStl, PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_seq));
+                       kTestParamStl, PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_seq),
+                   ppc::util::AddFuncTask<chaschin_v_linear_image_filtration_all::ChaschinVLinearFiltrationALL, InType>(
+                       kTestParamAll, PPC_SETTINGS_chaschin_vladimir_linear_image_filtration_seq));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = ChaschinVRunFuncTests::PrintFuncTestName<ChaschinVRunFuncTests>;
