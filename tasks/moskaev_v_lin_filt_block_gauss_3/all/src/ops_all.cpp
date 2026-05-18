@@ -100,7 +100,6 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
   int blocks_per_proc = total_blocks / num_procs_;
   int remainder = total_blocks % num_procs_;
 
-  int start_idx = rank_ * blocks_per_proc + std::min(rank_, remainder);
   int local_blocks = blocks_per_proc + (rank_ < remainder ? 1 : 0);
 
   std::vector<int> send_counts(num_procs_);
