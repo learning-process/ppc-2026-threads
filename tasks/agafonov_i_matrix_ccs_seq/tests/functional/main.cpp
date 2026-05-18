@@ -12,6 +12,7 @@
 #include "agafonov_i_matrix_ccs_seq/omp/include/ops_omp.hpp"
 #include "agafonov_i_matrix_ccs_seq/seq/include/ops_seq.hpp"
 #include "agafonov_i_matrix_ccs_seq/stl/include/ops_stl.hpp"
+#include "agafonov_i_matrix_ccs_seq/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -118,6 +119,9 @@ const auto kSeqTasks =
 const auto kOmpTasks =
     ppc::util::AddFuncTask<AgafonovIMatrixCCSOMP, InType>(kTestParams, PPC_SETTINGS_agafonov_i_matrix_ccs_seq);
 
+const auto kTbbTasks =
+    ppc::util::AddFuncTask<AgafonovIMatrixCCSTBB, InType>(kTestParams, PPC_SETTINGS_agafonov_i_matrix_ccs_seq);
+  
 INSTANTIATE_TEST_SUITE_P(AgafonovStlTests, AgafonovIFuncTests, ppc::util::ExpandToValues(kStlTasks),
                          AgafonovIFuncTests::PrintTestParam);
 
@@ -127,6 +131,8 @@ INSTANTIATE_TEST_SUITE_P(AgafonovSeqTests, AgafonovIFuncTests, ppc::util::Expand
 INSTANTIATE_TEST_SUITE_P(AgafonovOmpTests, AgafonovIFuncTests, ppc::util::ExpandToValues(kOmpTasks),
                          AgafonovIFuncTests::PrintTestParam);
 
+INSTANTIATE_TEST_SUITE_P(AgafonovTbbTests, AgafonovIFuncTests, ppc::util::ExpandToValues(kTbbTasks),
+                         AgafonovIFuncTests::PrintTestParam);
 }  // namespace
 
 }  // namespace agafonov_i_matrix_ccs_seq

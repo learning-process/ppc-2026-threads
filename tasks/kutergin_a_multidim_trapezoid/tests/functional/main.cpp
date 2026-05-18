@@ -12,6 +12,7 @@
 #include "kutergin_a_multidim_trapezoid/common/include/common.hpp"
 #include "kutergin_a_multidim_trapezoid/omp/include/ops_omp.hpp"
 #include "kutergin_a_multidim_trapezoid/seq/include/ops_seq.hpp"
+#include "kutergin_a_multidim_trapezoid/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 
 namespace kutergin_a_multidim_trapezoid {
@@ -126,6 +127,8 @@ const std::array<TestType, 12> kFunctionalTests = {{
 const auto kAllTaskPack = std::tuple_cat(ppc::util::AddFuncTask<KuterginAMultidimTrapezoidSEQ, InType>(
                                              kFunctionalTests, PPC_SETTINGS_kutergin_a_multidim_trapezoid),
                                          ppc::util::AddFuncTask<KuterginAMultidimTrapezoidOMP, InType>(
+                                             kFunctionalTests, PPC_SETTINGS_kutergin_a_multidim_trapezoid),
+                                         ppc::util::AddFuncTask<KuterginAMultidimTrapezoidTBB, InType>(
                                              kFunctionalTests, PPC_SETTINGS_kutergin_a_multidim_trapezoid));
 
 const auto kAllFuncValues = ppc::util::ExpandToValues(kAllTaskPack);
