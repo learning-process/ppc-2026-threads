@@ -1,3 +1,4 @@
+// ops_all.cpp
 #include "moskaev_v_lin_filt_block_gauss_3/all/include/ops_all.hpp"
 
 #include <mpi.h>
@@ -6,6 +7,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "moskaev_v_lin_filt_block_gauss_3/common/include/common.hpp"
@@ -36,7 +38,7 @@ void FilterBlock(const std::vector<uint8_t> &input_block, std::vector<uint8_t> &
   for (int row = 0; row < block_h; ++row) {
     for (int col = 0; col < block_w; ++col) {
       for (int ch = 0; ch < channels; ++ch) {
-        float sum = 0.0f;
+        float sum = 0.0F;
         for (int ky = -1; ky <= 1; ++ky) {
           for (int kx = -1; kx <= 1; ++kx) {
             int ny = row + 1 + ky;
@@ -94,7 +96,9 @@ bool MoskaevVLinFiltBlockGauss3ALL::PostProcessingImpl() {
 }
 
 bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
-  int width = 0, height = 0, channels = 0;
+  int width = 0;
+  int height = 0;
+  int channels = 0;
   std::vector<uint8_t> image_data;
 
   if (rank_ == 0) {
@@ -132,12 +136,13 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
     block_indices[i] = i;
   }
 
-  std::vector<int> send_counts(num_procs_), send_displs(num_procs_);
+  std::vector<int> send_counts(num_procs_);
+  std::vector<int> send_displs(num_procs_);
   int offset = 0;
-  for (int p = 0; p < num_procs_; ++p) {
-    int cnt = blocks_per_proc + (p < remainder ? 1 : 0);
-    send_counts[p] = cnt;
-    send_displs[p] = offset;
+  for (int proc = 0; proc < num_procs_; ++proc) {
+    int cnt = blocks_per_proc + (proc < remainder ? 1 : 0);
+    send_counts[proc] = cnt;
+    send_displs[proc] = offset;
     offset += cnt;
   }
 
@@ -156,8 +161,13 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
 
     int padded_w = block_w + 2;
 
-    std::vector<uint8_t> input_block(padded_w * (block_h + 2) * channels, 0);
-    std::vector<uint8_t> output_block(block_w * block_h * channels, 0);
+    size_t input_block_size =
+        static_cast<size_t>(padded_w) * static_cast<size_t>(block_h + 2) * static_cast<size_t>(channels);
+    std::vector<uint8_t> input_block(input_block_size, 0);
+
+    size_t output_block_size =
+        static_cast<size_t>(block_w) * static_cast<size_t>(block_h) * static_cast<size_t>(channels);
+    std::vector<uint8_t> output_block(output_block_size, 0);
 
     CopyBlockWithHalo(image_data, input_block, width, height, channels, block_x, block_y, block_w, block_h, padded_w);
     FilterBlock(input_block, output_block, block_w, block_h, channels);
