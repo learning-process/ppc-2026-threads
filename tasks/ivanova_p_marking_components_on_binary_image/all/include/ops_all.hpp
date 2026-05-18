@@ -44,8 +44,8 @@ class IvanovaPMarkingComponentsOnBinaryImageALL : public BaseTask {
   // Helper methods to reduce cognitive complexity
   void ProcessStripePixelAll(int xx, int yy, int idx, int start_row, std::vector<int> &local_parent, int &local_label);
   static int FindLocalRootAll(int label, const std::vector<int> &local_parent);
-  void UnionLocalLabelsAll(int label1, int label2, std::vector<int> &local_parent);
-  void InitializeLocalParent(std::vector<int> &local_parent, int max_labels);
+  static void UnionLocalLabelsAll(int label1, int label2, std::vector<int> &local_parent);
+  static void InitializeLocalParent(std::vector<int> &local_parent, int max_labels);
   void ProcessStripe(int start_row, int end_row, std::vector<int> &local_parent, int &local_label);
   void MergeBoundaries(int num_threads, int rows_per_thread);
   void MergeLocalParents(const std::vector<std::vector<int>> &local_parents, const std::vector<int> &local_labels,
