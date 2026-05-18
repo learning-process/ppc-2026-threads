@@ -96,12 +96,10 @@ void ShkrylevaSShellMergeALL::ParallelShellSort(std::vector<int> &arr) {
 
   int num_threads = omp_get_max_threads();
   num_threads = std::min(num_threads, n);
-
   int block_size = (n + num_threads - 1) / num_threads;
-  std::vector<std::vector<int>> local_buffers(num_threads);
 
-#pragma omp parallel for schedule(static) num_threads(num_threads) default(none) \
-    shared(arr, num_threads, block_size, local_buffers, n)
+// Параллельная сортировка блоков
+#pragma omp parallel for schedule(static) num_threads(num_threads) default(none) shared(arr, n, block_size)
   for (int tid = 0; tid < num_threads; ++tid) {
     int left = tid * block_size;
     int right = std::min(left + block_size - 1, n - 1);
@@ -110,22 +108,18 @@ void ShkrylevaSShellMergeALL::ParallelShellSort(std::vector<int> &arr) {
     }
   }
 
+  // Последовательное слияние блоков (без OpenMP)
+  std::vector<int> buffer;
   int step = block_size;
-  int active = num_threads;
-  while (active > 1) {
-    int new_active = (active + 1) / 2;
-#pragma omp parallel for schedule(static) num_threads(new_active) default(none) \
-    shared(arr, step, n, local_buffers, new_active)
-    for (int tid = 0; tid < new_active; ++tid) {
-      int left = tid * 2 * step;
+  while (step < n) {
+    for (int left = 0; left < n; left += 2 * step) {
       int mid = std::min(left + step - 1, n - 1);
-      int right = std::min(left + (2 * step) - 1, n - 1);
+      int right = std::min(left + 2 * step - 1, n - 1);
       if (mid < right) {
-        Merge(arr, left, mid, right, local_buffers[tid]);
+        Merge(arr, left, mid, right, buffer);
       }
     }
     step *= 2;
-    active = new_active;
   }
 }
 
