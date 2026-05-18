@@ -8,6 +8,7 @@
 #include "rysev_m_linear_filter_gauss_kernel/common/include/common.hpp"
 #include "rysev_m_linear_filter_gauss_kernel/omp/include/ops_omp.hpp"
 #include "rysev_m_linear_filter_gauss_kernel/seq/include/ops_seq.hpp"
+#include "rysev_m_linear_filter_gauss_kernel/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -58,7 +59,8 @@ const std::array<TestType, 5> kTestParam = {std::make_tuple(0, "pic"), std::make
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<RysevMGaussFilterSEQ, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel),
-    ppc::util::AddFuncTask<RysevMGaussFilterOMP, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel));
+    ppc::util::AddFuncTask<RysevMGaussFilterOMP, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel),
+    ppc::util::AddFuncTask<RysevMGaussFilterTBB, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kFuncTestName = RysevMFuncTests::PrintFuncTestName<RysevMFuncTests>;
