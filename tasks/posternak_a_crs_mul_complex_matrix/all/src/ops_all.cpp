@@ -137,26 +137,20 @@ void PrepareGatherParams(std::vector<int> &g_counts, std::vector<int> &g_displs,
 void GatherResultData(posternak_a_crs_mul_complex_matrix::CRSMatrix &res, int local_start, int local_nnz,
                       const std::vector<int> &g_counts, const std::vector<int> &g_displs, int rank) {
   if (rank == 0) {
-    std::copy(res.values.data() + res.index_row[local_start],
-              res.values.data() + res.index_row[local_start] + local_nnz,
-              res.values.data() + g_displs[0]);
-    std::copy(res.index_col.data() + res.index_row[local_start],
-              res.index_col.data() + res.index_row[local_start] + local_nnz,
-              res.index_col.data() + g_displs[0]);
-    
-    for (int p = 1; p < g_counts.size(); ++p) {
-      if (g_counts[p] > 0) {
-        MPI_Recv(res.values.data() + g_displs[p], g_counts[p], MPI_C_DOUBLE_COMPLEX,
-                 p, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(res.index_col.data() + g_displs[p], g_counts[p], MPI_INT,
-                 p, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      }
-    }
+    std::vector<std::complex<double>> local_values_copy(res.values.data() + res.index_row[local_start],
+                                                        res.values.data() + res.index_row[local_start] + local_nnz);
+    std::vector<int> local_index_copy(res.index_col.data() + res.index_row[local_start],
+                                      res.index_col.data() + res.index_row[local_start] + local_nnz);
+
+    MPI_Gatherv(local_values_copy.data(), local_nnz, MPI_C_DOUBLE_COMPLEX, res.values.data(), g_counts.data(),
+                g_displs.data(), MPI_C_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(local_index_copy.data(), local_nnz, MPI_INT, res.index_col.data(), g_counts.data(), g_displs.data(),
+                MPI_INT, 0, MPI_COMM_WORLD);
   } else {
-    MPI_Send(res.values.data() + res.index_row[local_start], local_nnz, MPI_C_DOUBLE_COMPLEX,
-             0, 0, MPI_COMM_WORLD);
-    MPI_Send(res.index_col.data() + res.index_row[local_start], local_nnz, MPI_INT,
-             0, 1, MPI_COMM_WORLD);
+    MPI_Gatherv(res.values.data() + res.index_row[local_start], local_nnz, MPI_C_DOUBLE_COMPLEX, nullptr, nullptr,
+                nullptr, MPI_C_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(res.index_col.data() + res.index_row[local_start], local_nnz, MPI_INT, nullptr, nullptr, nullptr,
+                MPI_INT, 0, MPI_COMM_WORLD);
   }
 }
 
