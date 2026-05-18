@@ -22,7 +22,10 @@ class NalitovDDijkstrasAlgorithmTBB : public BaseTask {
   bool PostProcessingImpl() override;
 
   using OutgoingTable = std::vector<std::vector<std::pair<NodeId, Cost>>>;
+
   OutgoingTable graph_;
+  std::vector<Cost> dist_;
+  std::vector<char> visited_;
 };
 
 }  // namespace nalitov_d_dijkstras_algorithm
