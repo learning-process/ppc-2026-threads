@@ -1,4 +1,3 @@
-// ops_all.cpp
 #include "moskaev_v_lin_filt_block_gauss_3/all/include/ops_all.hpp"
 
 #include <mpi.h>
@@ -15,10 +14,6 @@ namespace moskaev_v_lin_filt_block_gauss_3 {
 
 namespace {
 
-// ============================================================================
-// Фильтрация одного пикселя (3x3 Gauss)
-// ============================================================================
-
 uint8_t FilterPixel(const std::vector<uint8_t> &img, int width, int height, int channels, int row, int col, int ch) {
   float sum = 0.0f;
   for (int ky = -1; ky <= 1; ++ky) {
@@ -33,13 +28,8 @@ uint8_t FilterPixel(const std::vector<uint8_t> &img, int width, int height, int 
   return static_cast<uint8_t>(std::round(sum));
 }
 
-// ============================================================================
-// Копирование блока с halo (padding 1 пиксель)
-// ============================================================================
-
 void CopyBlockWithHalo(const std::vector<uint8_t> &src, std::vector<uint8_t> &dst, int src_width, int src_height,
                        int channels, int block_x, int block_y, int block_w, int block_h, int padded_w) {
-  int padded_h = block_h + 2;
   for (int row = -1; row <= block_h; ++row) {
     for (int col = -1; col <= block_w; ++col) {
       int src_row = std::clamp(block_y + row, 0, src_height - 1);
@@ -54,10 +44,6 @@ void CopyBlockWithHalo(const std::vector<uint8_t> &src, std::vector<uint8_t> &ds
     }
   }
 }
-
-// ============================================================================
-// Фильтрация блока (без краёв, т.к. halo уже добавлено)
-// ============================================================================
 
 void FilterBlock(const std::vector<uint8_t> &input_block, std::vector<uint8_t> &output_block, int block_w, int block_h,
                  int channels) {
@@ -81,10 +67,6 @@ void FilterBlock(const std::vector<uint8_t> &input_block, std::vector<uint8_t> &
   }
 }
 
-// ============================================================================
-// Копирование обработанного блока в выходное изображение
-// ============================================================================
-
 void CopyBlockToOutput(const std::vector<uint8_t> &src_block, std::vector<uint8_t> &dst, int dst_width, int channels,
                        int block_x, int block_y, int block_w, int block_h) {
   for (int row = 0; row < block_h; ++row) {
@@ -99,10 +81,6 @@ void CopyBlockToOutput(const std::vector<uint8_t> &src_block, std::vector<uint8_
 }
 
 }  // namespace
-
-// ============================================================================
-// Конструктор и валидация
-// ============================================================================
 
 MoskaevVLinFiltBlockGauss3ALL::MoskaevVLinFiltBlockGauss3ALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -129,12 +107,7 @@ bool MoskaevVLinFiltBlockGauss3ALL::PostProcessingImpl() {
   return !GetOutput().empty();
 }
 
-// ============================================================================
-// RunImpl — блочное разбиение (когнитивная сложность ~12)
-// ============================================================================
-
 bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
-  // 1. Получаем и рассылаем размеры
   int width = 0, height = 0, channels = 0;
   std::vector<uint8_t> image_data;
 
@@ -154,25 +127,20 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
     return false;
   }
 
-  // 2. Рассылаем изображение всем процессам
   size_t total_pixels = static_cast<size_t>(width) * height * channels;
   image_data.resize(total_pixels);
   MPI_Bcast(image_data.data(), static_cast<int>(total_pixels), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
-  // 3. Вычисляем сетку блоков
   int blocks_x = (width + block_size_ - 1) / block_size_;
   int blocks_y = (height + block_size_ - 1) / block_size_;
   int total_blocks = blocks_x * blocks_y;
 
-  // 4. Распределяем блоки между процессами
   int blocks_per_proc = total_blocks / num_procs_;
   int remainder = total_blocks % num_procs_;
   int local_blocks = blocks_per_proc + (rank_ < remainder ? 1 : 0);
 
-  // 5. Создаём выходное изображение
   std::vector<uint8_t> output(total_pixels, 0);
 
-  // 6. Создаём список индексов блоков для каждого процесса
   std::vector<int> block_indices(total_blocks);
   for (int i = 0; i < total_blocks; ++i) {
     block_indices[i] = i;
@@ -191,7 +159,6 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
   MPI_Scatterv(block_indices.data(), send_counts.data(), send_displs.data(), MPI_INT, local_indices.data(),
                local_blocks, MPI_INT, 0, MPI_COMM_WORLD);
 
-  // 7. Обрабатываем свои блоки
   for (int idx : local_indices) {
     int bx = idx % blocks_x;
     int by = idx / blocks_x;
@@ -202,9 +169,8 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
     int block_h = std::min(block_size_, height - block_y);
 
     int padded_w = block_w + 2;
-    int padded_h = block_h + 2;
 
-    std::vector<uint8_t> input_block(padded_w * padded_h * channels, 0);
+    std::vector<uint8_t> input_block(padded_w * (block_h + 2) * channels, 0);
     std::vector<uint8_t> output_block(block_w * block_h * channels, 0);
 
     CopyBlockWithHalo(image_data, input_block, width, height, channels, block_x, block_y, block_w, block_h, padded_w);
@@ -212,7 +178,6 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
     CopyBlockToOutput(output_block, output, width, channels, block_x, block_y, block_w, block_h);
   }
 
-  // 8. Собираем результаты на процессе 0
   std::vector<uint8_t> final_output;
   if (rank_ == 0) {
     final_output.resize(total_pixels);
@@ -221,7 +186,6 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
   MPI_Reduce(output.data(), final_output.data(), static_cast<int>(total_pixels), MPI_UNSIGNED_CHAR, MPI_BOR, 0,
              MPI_COMM_WORLD);
 
-  // 9. Рассылаем результат всем
   if (rank_ == 0) {
     GetOutput() = std::move(final_output);
   }
