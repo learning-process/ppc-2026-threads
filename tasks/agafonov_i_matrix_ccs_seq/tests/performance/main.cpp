@@ -81,7 +81,7 @@ const auto kSeqPerfTasks =
 
 const auto kOmpPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, AgafonovIMatrixCCSOMP>(PPC_SETTINGS_agafonov_i_matrix_ccs_seq);
-  
+
 const auto kTbbPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, AgafonovIMatrixCCSTBB>(PPC_SETTINGS_agafonov_i_matrix_ccs_seq);
 

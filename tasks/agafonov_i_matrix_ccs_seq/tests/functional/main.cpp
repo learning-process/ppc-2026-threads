@@ -121,7 +121,7 @@ const auto kOmpTasks =
 
 const auto kTbbTasks =
     ppc::util::AddFuncTask<AgafonovIMatrixCCSTBB, InType>(kTestParams, PPC_SETTINGS_agafonov_i_matrix_ccs_seq);
-  
+
 INSTANTIATE_TEST_SUITE_P(AgafonovStlTests, AgafonovIFuncTests, ppc::util::ExpandToValues(kStlTasks),
                          AgafonovIFuncTests::PrintTestParam);
 
