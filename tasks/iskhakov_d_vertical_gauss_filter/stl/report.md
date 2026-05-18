@@ -110,8 +110,8 @@ for (int thread_id = 0; thread_id < actual_threads; ++thread_id) {
 `./build/bin/ppc_func_tests --gtest_filter="*IskhakovDVerticalGaussFilterFuncTests*stl*"`
 - **Команда запуска тестов производительности:**
   ```bash
-       PPC_NUM_THREADS=<число потоков> ./build/bin/ppc_perf_tests
-       --gtest_filter="*IskhakovDVerticalGaussFilterPerfTests*stl*"
+       PPC_NUM_THREADS=<число потоков> ./build/bin/ppc_perf_tests \
+              -gtest_filter="*IskhakovDVerticalGaussFilterPerfTests*stl*"
   ```
 
 ## 8. Результаты

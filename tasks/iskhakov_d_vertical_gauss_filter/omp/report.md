@@ -118,8 +118,8 @@
 - **Команда запуска тестов производительности:**
 
   ```bash
-       PPC_NUM_THREADS=<число потоков> ./build/bin/ppc_perf_tests
-       --gtest_filter="*IskhakovDVerticalGaussFilterPerfTests*omp*"
+  PPC_NUM_THREADS=<число потоков> ./build/bin/ppc_perf_tests \
+    --gtest_filter="*IskhakovDVerticalGaussFilterPerfTests*omp*"
   ```
 
 

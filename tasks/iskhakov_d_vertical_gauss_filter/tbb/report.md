@@ -101,10 +101,9 @@ tbb::parallel_for(0, width, [&](int horizontal_band) {
 - **Команда запуска тестов производительности:**
 
   ```bash
-       PPC_NUM_THREADS=<число потоков> ./build/bin/ppc_perf_tests
-       --gtest_filter="*IskhakovDVerticalGaussFilterPerfTests*tbb*"
-  ```
-
+       PPC_NUM_THREADS=<число потоков> ./build/bin/ppc_perf_tests \
+              --gtest_filter="*IskhakovDVerticalGaussFilterPerfTests*tbb*"
+  ``` 
 
 
 ## 8. Результаты
