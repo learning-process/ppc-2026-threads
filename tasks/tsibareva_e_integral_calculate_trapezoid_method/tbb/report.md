@@ -131,11 +131,17 @@ double res_sum = tbb::parallel_reduce(
 ## 7. Экспериментальная среда
 
 Процессор: AMD Ryzen 7 5700U (8 физических ядер, 16 логических потоков).
+
 RAM: 8 ГБ. 
+
 ОС: Windows 10 (64-bit).
+
 Компилятор: MSVC (Visual Studio 2022). 
+
 Сборка: Release (при использовании CMake). 
+
 Переменные окружения: `PPC_NUM_THREADS`=1, `PPC_NUM_PROC`=1. 
+
 Команды запуска: `cmake --build build --config Release --parallel`, `python .\scripts\run_tests.py --running-type=functional`, `python .\scripts\run_tests.py --running-type=performance`.
 
 ## 8. Результаты производительности
