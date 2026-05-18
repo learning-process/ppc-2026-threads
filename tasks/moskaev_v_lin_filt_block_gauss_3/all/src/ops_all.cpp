@@ -83,59 +83,76 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
   MPI_Bcast(&channels, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   int total_pixels = width * height * channels;
-  std::vector<uint8_t> local_image(total_pixels);
+  std::vector<uint8_t> full_image;
   if (rank_ == 0) {
-    local_image = image_data;
+    full_image = image_data;
   }
-  MPI_Bcast(local_image.data(), total_pixels, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
   int blocks_x = (width + BLOCK_SIZE - 1) / BLOCK_SIZE;
   int blocks_y = (height + BLOCK_SIZE - 1) / BLOCK_SIZE;
   int total_blocks = blocks_x * blocks_y;
 
-  if (total_blocks < num_procs_) {
-    if (rank_ == 0) {
-      GetOutput().resize(total_pixels);
-      for (int by = 0; by < blocks_y; ++by) {
-        for (int bx = 0; bx < blocks_x; ++bx) {
-          int block_x = bx * BLOCK_SIZE;
-          int block_y = by * BLOCK_SIZE;
-          int block_width = std::min(BLOCK_SIZE, width - block_x);
-          int block_height = std::min(BLOCK_SIZE, height - block_y);
-          ProcessBlock(local_image, GetOutput(), width, height, channels, block_x, block_y, block_width, block_height);
-        }
-      }
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-    return true;
+  std::vector<int> block_indices(total_blocks);
+  for (int i = 0; i < total_blocks; ++i) {
+    block_indices[i] = i;
   }
 
   int blocks_per_proc = total_blocks / num_procs_;
   int remainder = total_blocks % num_procs_;
 
-  int start_block = rank_ * blocks_per_proc + std::min(rank_, remainder);
-  int end_block = start_block + blocks_per_proc + (rank_ < remainder ? 1 : 0);
+  int start_idx = rank_ * blocks_per_proc + std::min(rank_, remainder);
+  int local_blocks = blocks_per_proc + (rank_ < remainder ? 1 : 0);
+
+  std::vector<int> send_counts(num_procs_);
+  std::vector<int> send_displs(num_procs_);
+  int offset = 0;
+  for (int proc = 0; proc < num_procs_; ++proc) {
+    int proc_blocks = blocks_per_proc + (proc < remainder ? 1 : 0);
+    send_counts[proc] = proc_blocks;
+    send_displs[proc] = offset;
+    offset += proc_blocks;
+  }
+
+  std::vector<int> local_block_indices(local_blocks);
+  MPI_Scatterv(block_indices.data(), send_counts.data(), send_displs.data(), MPI_INT, local_block_indices.data(),
+               local_blocks, MPI_INT, 0, MPI_COMM_WORLD);
 
   std::vector<uint8_t> local_output(total_pixels, 0);
 
 #pragma omp parallel for schedule(dynamic) default(none) \
-    shared(local_image, local_output, width, height, channels, blocks_x, start_block, end_block, BLOCK_SIZE)
-  for (int block_idx = start_block; block_idx < end_block; ++block_idx) {
-    int bx = block_idx % blocks_x;
-    int by = block_idx / blocks_x;
+    shared(local_block_indices, full_image, local_output, width, height, channels, blocks_x, BLOCK_SIZE)
+  for (int idx = 0; idx < static_cast<int>(local_block_indices.size()); ++idx) {
+    int block_index = local_block_indices[idx];
+    int bx = block_index % blocks_x;
+    int by = block_index / blocks_x;
 
     int block_x = bx * BLOCK_SIZE;
     int block_y = by * BLOCK_SIZE;
     int block_width = std::min(BLOCK_SIZE, width - block_x);
     int block_height = std::min(BLOCK_SIZE, height - block_y);
 
-    ProcessBlock(local_image, local_output, width, height, channels, block_x, block_y, block_width, block_height);
+    ProcessBlock(full_image, local_output, width, height, channels, block_x, block_y, block_width, block_height);
   }
 
-  MPI_Allreduce(MPI_IN_PLACE, local_output.data(), total_pixels, MPI_UNSIGNED_CHAR, MPI_MAX, MPI_COMM_WORLD);
+  std::vector<int> recv_counts(num_procs_);
+  std::vector<int> recv_displs(num_procs_);
+  offset = 0;
+  for (int proc = 0; proc < num_procs_; ++proc) {
+    int proc_blocks = blocks_per_proc + (proc < remainder ? 1 : 0);
+    recv_counts[proc] = proc_blocks;
+    recv_displs[proc] = offset;
+    offset += proc_blocks;
+  }
+
+  std::vector<int> all_block_indices(total_blocks);
+  MPI_Gatherv(local_block_indices.data(), local_blocks, MPI_INT, all_block_indices.data(), recv_counts.data(),
+              recv_displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
+
+  std::vector<uint8_t> final_output(total_pixels);
+  MPI_Reduce(local_output.data(), final_output.data(), total_pixels, MPI_UNSIGNED_CHAR, MPI_MAX, 0, MPI_COMM_WORLD);
 
   if (rank_ == 0) {
-    GetOutput() = std::move(local_output);
+    GetOutput() = std::move(final_output);
   }
 
   return true;
