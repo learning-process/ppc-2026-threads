@@ -186,12 +186,18 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
   int start_block_y = ComputeStartBlock(rank_, blocks_per_proc, remainder);
   int end_block_y = ComputeEndBlock(rank_, blocks_per_proc, remainder);
 
-  start_block_y = std::min(start_block_y, blocks_y);
-  end_block_y = std::min(end_block_y, blocks_y);
+  int local_height = 0;
+  int start_row = 0;
 
-  int start_row = start_block_y * block_size;
-  int end_row = std::min(end_block_y * block_size, height);
-  int local_height = end_row - start_row;
+  if (start_block_y >= blocks_y) {
+    start_block_y = blocks_y;
+    end_block_y = blocks_y;
+  } else {
+    end_block_y = std::min(end_block_y, blocks_y);
+    start_row = start_block_y * block_size;
+    int end_row = std::min(end_block_y * block_size, height);
+    local_height = end_row - start_row;
+  }
 
   size_t total_size = static_cast<size_t>(width) * height * channels;
   size_t local_size = static_cast<size_t>(width) * local_height * channels;
@@ -201,8 +207,16 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
     ProcessBlockRange(local_image, GetOutput(), width, height, channels, block_size, start_block_y, end_block_y, 0);
 
     for (int proc = 1; proc < num_procs_; ++proc) {
-      int p_start = std::min(ComputeStartBlock(proc, blocks_per_proc, remainder), blocks_y);
-      int p_end = std::min(ComputeEndBlock(proc, blocks_per_proc, remainder), blocks_y);
+      int p_start = ComputeStartBlock(proc, blocks_per_proc, remainder);
+      int p_end = ComputeEndBlock(proc, blocks_per_proc, remainder);
+
+      if (p_start >= blocks_y) {
+        p_start = blocks_y;
+        p_end = blocks_y;
+      } else {
+        p_end = std::min(p_end, blocks_y);
+      }
+
       int p_start_row = p_start * block_size;
       int p_end_row = std::min(p_end * block_size, height);
       size_t p_size = static_cast<size_t>(width) * (p_end_row - p_start_row) * channels;
@@ -210,13 +224,17 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
       std::vector<uint8_t> proc_data;
       ReceiveResults(proc, proc_data, p_size);
 
-      int dst_offset = p_start_row * width * channels;
-      std::copy(proc_data.begin(), proc_data.end(), GetOutput().begin() + dst_offset);
+      if (p_size > 0) {
+        int dst_offset = p_start_row * width * channels;
+        std::copy(proc_data.begin(), proc_data.end(), GetOutput().begin() + dst_offset);
+      }
     }
   } else {
     std::vector<uint8_t> local_output(local_size);
-    ProcessBlockRange(local_image, local_output, width, height, channels, block_size, start_block_y, end_block_y,
-                      start_row);
+    if (local_size > 0) {
+      ProcessBlockRange(local_image, local_output, width, height, channels, block_size, start_block_y, end_block_y,
+                        start_row);
+    }
     SendResults(0, local_output, local_size);
     GetOutput().clear();
   }
