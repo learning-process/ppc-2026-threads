@@ -65,9 +65,9 @@ Baseline: `seq` `TaskRun = 0.0058254364 s`; для pipeline baseline `0.00689950
 
 | workers | time | speedup | efficiency | notes |
 | --- | ---: | ---: | ---: | --- |
-| auto (12 на тестовой машине) | 0.0047718214 s | 1.221 | 0.102 | `TaskRun`; число workers взято из `hardware_concurrency()` |
-| auto (12 на тестовой машине) | 0.0055675704 s | 1.239 | 0.103 | `pipeline`; запуск с `PPC_NUM_THREADS=1`, но STL-код его не использует |
-| auto (12 на тестовой машине) | 0.0081357990 s | 0.848 | 0.071 | `pipeline`; запуск с `PPC_NUM_THREADS=4`, но STL-код его не использует |
+| auto (12 на тестовой машине) | 0.0047718214 s | 1.221 | 0.102 | `TaskRun`; `hardware_concurrency()` |
+| auto (12 на тестовой машине) | 0.0055675704 s | 1.239 | 0.103 | `pipeline`; env=1 не влияет |
+| auto (12 на тестовой машине) | 0.0081357990 s | 0.848 | 0.071 | `pipeline`; env=4 не влияет |
 
 ## Выводы
 
