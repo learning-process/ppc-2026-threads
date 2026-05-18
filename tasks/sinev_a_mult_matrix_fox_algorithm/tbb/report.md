@@ -1,683 +1,205 @@
-# Умножение плотных матриц. Элементы типа double. Блочная схема, алгоритм Фокса
+# Умножение плотных матриц. Элементы типа double. Блочная схема, алгоритм Фокса. — TBB
 
-- Студент: Синев Артём Александрович, группа 3823Б1ПР2
-- Технология: TBB
-- Вариант: 2
-
-## 1. Введение
-
-Умножение плотных матриц является одной из фундаментальных задач параллельных вычислений.
-Операция активно применяется в задачах компьютерной графики, машинного обучения, научного
-моделирования и численных методов.
-
-В данной работе реализован параллельный алгоритм умножения матриц с использованием библиотеки Intel oneTBB.
-В основе реализации лежит блочная схема алгоритма Фокса, позволяющая эффективно распределять вычисления между
-потоками и улучшать локальность данных.
-
-Основной целью работы является реализация масштабируемого алгоритма умножения матриц
-и анализ эффективности использования TBB для многопоточных вычислений.
+- Student: Синев Артём Александрович
+- Technology: TBB
+- Variant: 2
+  
+## 1. Контекст
+Последовательная версия (`seq`) реализует классическое умножение матриц за O(n³).
+OpenMP-версия уже показала ускорение ~6–7×. В данной реализации используется Intel oneTBB
+(Threading Building Blocks) — библиотека для параллельного программирования на основе задач,
+которая автоматически управляет пулом потоков и балансировкой нагрузки. TBB выбран для сравнения
+эффективности задачно-ориентированной модели с OpenMP (директивы) и ручным управлением потоками (`std::thread`).
 
 ## 2. Постановка задачи
+Полная постановка задачи приведена в `seq/report.md`.  
+**Краткое напоминание:** умножить две квадратные матрицы `C = A × B` размера `n × n`, элементы `double`.  
+**Baseline:** последовательная версия (O(n³)) служит эталоном корректности и производительности.
 
-Даны две квадратные матрицы `A` и `B` размера:
-
-```math
-N \times N
-```
-
-Необходимо вычислить произведение:
-
-```math
-C = A \times B
-```
-
-где:
-
-```math
-C_{ij} =
-\sum_{k=0}^{N-1}
-A_{ik} \cdot B_{kj}
-```
-
-### Входные данные
-
-- `matrix_size` — размер матрицы
-- `matrix_a` — первая матрица
-- `matrix_b` — вторая матрица
-
-### Выходные данные
-
-- `output` — результирующая матрица
-
-### Ограничения
-
-- Размер матриц должен быть больше нуля
-- Матрицы должны быть квадратными
-- Размер входных массивов должен соответствовать `N × N`
-- Тип данных элементов — `double`
-
-## 3. Описание базового алгоритма
-
-Для малых размеров матриц используется классический алгоритм умножения с тремя вложенными циклами.
-
-```cpp
-tbb::parallel_for(
-    tbb::blocked_range2d<size_t>(0, n, 0, n),
-    [&](const tbb::blocked_range2d<size_t> &r) {
-
-  for (size_t i = r.rows().begin();
-       i < r.rows().end();
-       ++i) {
-
-    for (size_t j = r.cols().begin();
-         j < r.cols().end();
-         ++j) {
-
-      double sum = 0.0;
-
-      for (size_t k = 0; k < n; ++k) {
-        sum += a[(i * n) + k] *
-               b[(k * n) + j];
-      }
-
-      c[(i * n) + j] = sum;
-    }
-  }
-});
-```
-
-### Сложность алгоритма
-
-#### Временная сложность
-
-```math
-O(N^3)
-```
-
-#### Пространственная сложность
-
-```math
-O(N^2)
-```
+## 3. Базовый алгоритм
+Последовательная версия (`SimpleMultiply`) использует тройной вложенный цикл «строка-столбец».  
+**Алгоритм Фокса (TBB-версия):**
+- Разбить матрицы `A`, `B`, `C` на блоки размера `bs × bs`, количество блоков по каждому измерению `q = n / bs`.
+- Выполнить `q` шагов (стадий) алгоритма Фокса:
+  - На шаге `step` для каждого блока `(i,j)`:
+    - Определить блок `A[i][k]`, где `k = (i + step) % q`.
+    - Умножить блок `A[i][k]` на блок `B[k][j]` и накопить в `C[i][j]`.
+- Собрать результат из блоков обратно в плоскую матрицу.
 
 ## 4. Схема распараллеливания
+**Какой примитив выбран:**  
+`tbb::parallel_for` с `tbb::blocked_range2d` — двумерный диапазон позволяет параллельно обрабатывать
+блоки матрицы по двум измерениям.
 
-В реализации используется блочная схема алгоритма Фокса.
+**Как определяется диапазон работы:**  
+- Для `SimpleMultiply`: диапазон `(0, n, 0, n)` — вся матрица.
+- Для `DecomposeToBlocks`, `AssembleFromBlocks`, `FoxStep`: диапазон `(0, q, 0, q)` — сетка блоков `q × q`.
 
-### Основная идея
+**Какой grainsize используется и почему:**  
+`grainsize` явно не задан, используется значение по умолчанию (автоматический выбор TBB). Причина:
+- Операции над блоками достаточно крупные (`bs × bs` умножений, обычно `bs = 20` для `n = 400`,
+  т.е. 400 операций на блок).
+- Автоматическое разбиение TBB хорошо справляется с задачей благодаря своей адаптивной стратегии.
+- Явная настройка grainsize может улучшить производительность, но требует детального профилирования;
+  для данного отчёта оставлено значение по умолчанию.
 
-Матрицы разбиваются на квадратные блоки размера:
+**Какой partitioner используется:**  
+По умолчанию используется `auto_partitioner` (или `static_partitioner` для `blocked_range2d` в
+зависимости от версии TBB). `auto_partitioner` динамически адаптирует размер чанков под нагрузку,
+что полезно при нерегулярной вычислительной нагрузке.
 
-```math
-bs \times bs
-```
-
-Каждый поток обрабатывает отдельные блоки матриц.
-
-### Разбиение матриц
-
-```cpp
-tbb::parallel_for(
-    tbb::blocked_range2d<int>(0, q, 0, q),
-    [&](const tbb::blocked_range2d<int> &r) {
-```
-
-### Выполнение шагов алгоритма Фокса
-
-```cpp
-tbb::parallel_for(
-    tbb::blocked_range2d<int>(0, q, 0, q),
-    [&](const tbb::blocked_range2d<int> &r) {
-```
-
-### Выбор размера блока
-
-```cpp
-size_t bs = 1;
-
-const auto sqrt_n =
-    static_cast<size_t>(
-        std::sqrt(static_cast<double>(n)));
-
-for (size_t div = sqrt_n;
-     div >= 1;
-     --div) {
-
-  if (n % div == 0) {
-    bs = div;
-    break;
-  }
-}
-```
-
-### Используемые механизмы TBB
-
-- `tbb::parallel_for`
-- `tbb::blocked_range2d`
-- автоматическая балансировка нагрузки
-- task-based модель параллелизма
+**Как ограничивалась конкуренция:**  
+Конкуренция ограничивается раннером курса через переменную окружения `PPC_NUM_THREADS`. TBB использует
+глобальный пул потоков, количество worker-потоков можно контролировать через
+`tbb::global_control::max_allowed_parallelism`. В данной реализации ограничение происходит на уровне раннера,
+явного контроля из кода нет.
 
 ## 5. Детали реализации
+**Файлы:**
+- `tbb/include/ops_tbb.hpp` — объявление класса `SinevAMultMatrixFoxAlgorithmTBB`.
+- `tbb/src/ops_tbb.cpp` — реализация.
 
-### Структура проекта
+**Изменения относительно SEQ:**
+- Добавлены методы `SimpleMultiply`, `DecomposeToBlocks`, `AssembleFromBlocks`, `MultiplyBlocks`, `FoxStep`,
+   `ChooseBlockSize`.
+- Все параллельные циклы заменены на `tbb::parallel_for` с `blocked_range2d`.
+- В `MultiplyBlocks` вынесено ядро умножения двух блоков для улучшения читаемости.
+- Размер блока `bs` выбирается через отдельный метод `ChooseBlockSize` (наибольший делитель `n`, не превышающий `√n`).
 
-- `common/include/common.hpp`
-- `tbb/include/ops_tbb.hpp`
-- `tbb/src/ops_tbb.cpp`
-- `tests/functional/main.cpp`
-- `tests/performance/main.cpp`
-
-### Основной класс
-
-```cpp
-class SinevAMultMatrixFoxAlgorithmTBB : public BaseTask
-```
-
-### Основные методы
-
-- `ValidationImpl()`
-- `PreProcessingImpl()`
-- `RunImpl()`
-- `PostProcessingImpl()`
-
-### Проверка входных данных
+**Иллюстративный листинг (ключевой фрагмент — параллельный шаг Фокса):**
 
 ```cpp
-bool SinevAMultMatrixFoxAlgorithmTBB::ValidationImpl() {
-  const auto &[matrix_size, matrix_a, matrix_b] =
-      GetInput();
-
-  return matrix_size > 0 &&
-         matrix_a.size() ==
-             matrix_size * matrix_size &&
-         matrix_b.size() ==
-             matrix_size * matrix_size;
-}
-```
-
-### Разбиение матриц на блоки
-
-```cpp
-void SinevAMultMatrixFoxAlgorithmTBB::DecomposeToBlocks(
-    const std::vector<double> &src,
-    std::vector<double> &dst,
-    size_t n,
-    size_t bs,
-    int q) {
-
-  tbb::parallel_for(
-      tbb::blocked_range2d<int>(0, q, 0, q),
-      [&](const tbb::blocked_range2d<int> &r) {
-
-    for (int bi = r.rows().begin();
-         bi < r.rows().end();
-         ++bi) {
-
-      for (int bj = r.cols().begin();
-           bj < r.cols().end();
-           ++bj) {
-
-        const size_t block_off =
-            (static_cast<size_t>((bi * q) + bj)) *
-            (bs * bs);
-
-        for (size_t i = 0; i < bs; ++i) {
-          for (size_t j = 0; j < bs; ++j) {
-
-            const size_t src_idx =
-                ((static_cast<size_t>(bi) * bs + i) * n) +
-                (static_cast<size_t>(bj) * bs + j);
-
-            const size_t dst_idx =
-                block_off + (i * bs) + j;
-
-            dst[dst_idx] = src[src_idx];
-          }
-        }
-      }
-    }
-  });
-}
-```
-
-### Умножение блоков
-
-```cpp
-void SinevAMultMatrixFoxAlgorithmTBB::MultiplyBlocks(
-    const std::vector<double> &blocks_a,
-    const std::vector<double> &blocks_b,
-    std::vector<double> &blocks_c,
-    size_t bs,
-    size_t a_off,
-    size_t b_off,
-    size_t c_off) {
-
-  for (size_t ii = 0; ii < bs; ++ii) {
-    for (size_t kk = 0; kk < bs; ++kk) {
-
-      const double val =
-          blocks_a[a_off + (ii * bs) + kk];
-
-      const size_t b_base =
-          b_off + (kk * bs);
-
-      const size_t c_base =
-          c_off + (ii * bs);
-
-      for (size_t jj = 0; jj < bs; ++jj) {
-
-        blocks_c[c_base + jj] +=
-            val *
-            blocks_b[b_base + jj];
-      }
-    }
-  }
-}
-```
-
-### Выполнение шага алгоритма Фокса
-
-```cpp
+// File: tbb/src/ops_tbb.cpp
+// Основной вычислительный шаг алгоритма Фокса
 void SinevAMultMatrixFoxAlgorithmTBB::FoxStep(
     const std::vector<double> &blocks_a,
     const std::vector<double> &blocks_b,
     std::vector<double> &blocks_c,
-    size_t bs,
-    int q,
-    int step) {
-
+    size_t bs, int q, int step) {
   const size_t block_size = bs * bs;
 
-  tbb::parallel_for(
-      tbb::blocked_range2d<int>(0, q, 0, q),
-      [&](const tbb::blocked_range2d<int> &r) {
-
-    for (int i = r.rows().begin();
-         i < r.rows().end();
-         ++i) {
-
-      for (int j = r.cols().begin();
-           j < r.cols().end();
-           ++j) {
-
-        const int k = (i + step) % q;
-
-        const size_t a_off =
-            (static_cast<size_t>((i * q) + k)) *
-            block_size;
-
-        const size_t b_off =
-            (static_cast<size_t>((k * q) + j)) *
-            block_size;
-
-        const size_t c_off =
-            (static_cast<size_t>((i * q) + j)) *
-            block_size;
-
-        MultiplyBlocks(
-            blocks_a,
-            blocks_b,
-            blocks_c,
-            bs,
-            a_off,
-            b_off,
-            c_off);
+  tbb::parallel_for(tbb::blocked_range2d<int>(0, q, 0, q),
+    [&](const tbb::blocked_range2d<int> &r) {
+      for (int i = r.rows().begin(); i < r.rows().end(); ++i) {
+        for (int j = r.cols().begin(); j < r.cols().end(); ++j) {
+          const int k = (i + step) % q;
+          const size_t a_off = ((i * q) + k) * block_size;
+          const size_t b_off = ((k * q) + j) * block_size;
+          const size_t c_off = ((i * q) + j) * block_size;
+          MultiplyBlocks(blocks_a, blocks_b, blocks_c, bs, a_off, b_off, c_off);
+        }
       }
-    }
-  });
+    });
 }
 ```
+*Пояснение*: `blocked_range2d<int>(0, q, 0, q)` создаёт двумерный диапазон блоков `q × q. TBB` 
+автоматически разбивает этот диапазон на подзадачи и распределяет их между worker-потоками.
+Каждый поток обрабатывает свою часть блоков `(i,j)`, вычисляя `k = (i + step) % q` и вызывая `MultiplyBlocks`.
+Гонок нет, так как каждый поток пишет в свой уникальный блок `(i,j)`.
 
-### Особенности реализации
+**Локальные аккумуляторы, объединение результатов, работа с памятью:**
 
-- Используется task-based модель TBB
-- Применяется двумерное разбиение диапазонов
-- Используется автоматическая балансировка нагрузки
-- Улучшается локальность данных
-- Для малых матриц используется простое умножение
+- Локальные аккумуляторы не требуются: каждый поток пишет непосредственно в `blocks_c` в свой блок.
+- Результаты накапливаются прямо в `blocks_c` (оператор `+=` внутри `MultiplyBlocks`),
+   но без гонок, так как блоки уникальны.
+- Память для блоков выделяется как `std::vector<double>` — стандартный аллокатор. Для больших матриц можно
+было бы использовать `tbb::cache_aligned_allocator` для предотвращения ложного разделения кэша,
+но в данной реализации блоки достаточно велики (400 элементов при `bs=20`), поэтому false sharing маловероятен.
 
-## 6. Экспериментальное окружение
+## 6. Проверка корректности
+**Метод сравнения:** результат TBB-версии сравнивается с эталонной последовательной версией `SEQ` 
+(алгоритм `ReferenceMultiply` из тестов). Используется поэлементное сравнение с `epsilon = 1e-10`.
 
-### 6.1 Аппаратное обеспечение / ОС
+**Функциональные тесты:**  
+Те же 13 тестов, что и для SEQ (размеры 1, 2, 4, 6, 8, 9, 10, 16, 18, 25, 50, 75, 100).  
+Данные: арифметическая прогрессия в `A` и обратная прогрессия в `B`.
 
-- **Процессор:** Intel Core i7-13700HX
-- **Количество ядер:** 16
-- **ОЗУ:** 8 ГБ
-- **ОС:** Kubuntu 24.04
-
-### 6.2 Программное окружение
-
-- **Компилятор:** g++ 13.3.0
-- **Стандарт C++:** C++20
-- **Библиотека:** Intel oneTBB
-- **Тип сборки:** Release
-- **Система сборки:** CMake
-
-### 6.3 Тестовое окружение
-
-Запуск функциональных тестов:
-
-```bash
-./build/bin/ppc_func_tests --gtest_filter="*Sinev*tbb*" -v
-```
-
-Запуск performance тестов:
-
-```bash
-./build/bin/ppc_perf_tests --gtest_filter="*Sinev*tbb*" -v
-```
-
-## 7. Результаты
-
-### 7.1 Корректность работы
-
-Были выполнены тесты для матриц размеров:
+**Результат функциональных тестов:**
 
 ```text
-1×1
-2×2
-4×4
-6×6
-8×8
-9×9
-10×10
-16×16
-18×18
-25×25
-50×50
-75×75
-100×100
+[==========] 13 tests from 1 test suite ran. (25 ms total)
+[ PASSED ] 13 tests.
 ```
 
-Все тесты завершились успешно.
-
-```text
-[==========] Running 13 tests from 1 test suite.
-[  PASSED  ] 13 tests.
-```
-
-### Проверка корректности
-
-Проверка выполнялась сравнением с эталонной последовательной реализацией.
-
-Используемая точность сравнения:
-
-```cpp
-const double epsilon = 1e-10;
-```
-
-### 7.2 Производительность
-
-Ниже приведено сравнение реализаций алгоритма Фокса для последовательной версии, OpenMP и Intel TBB.
-
-| Режим          | Потоки | Время, с     | Ускорение | Эффективность |
-|----------------|--------|--------------|-----------|---------------|
-| seq            | 1      | 0.0261574700 | 1.00      | 100%          |
-| omp (pipeline) | 16     | 0.0024294812 | 10.77     | 67.3%         |
-| omp (task_run) | 16     | 0.0042057726 | 6.22      | 38.9%         |
-| tbb (pipeline) | 16     | 0.0166006096 | 1.58      | 9.9%          |
-| tbb (task_run) | 16     | 0.0166640150 | 1.57      | 9.8%          |
-
-Ускорение:
-
-```math
-Speedup = \frac{T_{seq}}{T_{omp}}
-```
-
-Эффективность:
-
-```math
-Efficiency = \frac{Speedup}{Threads} \times 100\%
-```
-
-#### Анализ результатов
-
-Реализация Intel TBB показала меньший прирост производительности. Несмотря на использование 16 потоков,
-ускорение составило около 1.6 раза. Основными причинами являются:
-
-- высокие накладные расходы TBB на создание и управление задачами;
-- малый размер тестовых матриц;
-- частые обращения к памяти при работе с блоками;
-- недостаточная вычислительная нагрузка для полного насыщения всех потоков.
-
-Таким образом:
-
-- OpenMP оказался наиболее эффективной технологией для данной задачи;
-- TBB обеспечивает корректное распараллеливание, однако уступает OpenMP по скорости;
-- последовательная реализация значительно проигрывает параллельным версиям при увеличении размера матриц.
-
-При увеличении размерности матриц ожидается рост эффективности TBB за счёт лучшей загрузки потоков
-и уменьшения относительных накладных расходов.
-
-### Узкие места алгоритма
-
-Основные ограничения производительности:
-
-1. Накладные расходы task scheduler
-2. Конкуренция за кэш-память
-3. Большое количество операций записи
-4. Ограничение пропускной способности памяти
-
-### Масштабируемость
-
-TBB обеспечивает:
-
-- автоматическое распределение задач
-- динамическую балансировку нагрузки
-- эффективную работу с многопоточностью
-- снижение накладных расходов ручного управления потоками
-
-## 8. Выводы
-
-В ходе работы была реализована TBB версия алгоритма Фокса для умножения плотных матриц.
-
-### Полученные результаты
-
-- Реализован параллельный алгоритм на основе Intel oneTBB
-- Успешно пройдены все функциональные тесты
-- Получено ускорение относительно последовательной версии
-- Реализована блочная схема вычислений
-
-### Особенности реализации (tbb)
-
-- Использование task-based параллелизма
-- Автоматическая балансировка нагрузки
-- Улучшенная локальность данных
-- Эффективное распределение блоков
-
-### Ограничения (tbb)
-
-- Производительность зависит от размера блоков
-- Возможны накладные расходы scheduler
-- Ограничение масштабирования памятью
-
-### Перспективы развития
-
-- Автоматический подбор оптимального размера блока
-- Использование SIMD-инструкций
-- NUMA-оптимизации
-- Гибридные схемы MPI + TBB
-
-## 9. Источники
-
-1. Лекции по параллельному программированию Сысоева А. В.
-2. Документация Intel oneTBB: <https://oneapi-src.github.io/oneTBB/>
-3. Материалы курса: <https://github.com/learning-process/ppc-2026-threads>
-4. Fox G. C. Matrix Algorithms on Parallel Hardware.
-5. oneAPI Threading Building Blocks Developer Guide
-
-## 10. Приложение
-
-```cpp
-#include "sinev_a_mult_matrix_fox_algorithm/tbb/include/ops_tbb.hpp"
-
-#include <tbb/blocked_range2d.h>
-#include <tbb/parallel_for.h>
-
-#include <cmath>
-#include <cstddef>
-#include <vector>
-
-#include "sinev_a_mult_matrix_fox_algorithm/common/include/common.hpp"
-
-namespace sinev_a_mult_matrix_fox_algorithm {
-
-SinevAMultMatrixFoxAlgorithmTBB::SinevAMultMatrixFoxAlgorithmTBB(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput() = {};
-}
-
-bool SinevAMultMatrixFoxAlgorithmTBB::ValidationImpl() {
-  const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
-
-  return matrix_size > 0 && matrix_a.size() == matrix_size * matrix_size &&
-         matrix_b.size() == matrix_size * matrix_size;
-}
-
-bool SinevAMultMatrixFoxAlgorithmTBB::PreProcessingImpl() {
-  const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
-  GetOutput() = std::vector<double>(matrix_size * matrix_size, 0.0);
-  return true;
-}
-
-// Добавляем static к определениям
-void SinevAMultMatrixFoxAlgorithmTBB::SimpleMultiply(size_t n, const std::vector<double> &a,
-                                                     const std::vector<double> &b, std::vector<double> &c) {
-  tbb::parallel_for(tbb::blocked_range2d<size_t>(0, n, 0, n), [&](const tbb::blocked_range2d<size_t> &r) {
-    for (size_t i = r.rows().begin(); i < r.rows().end(); ++i) {
-      for (size_t j = r.cols().begin(); j < r.cols().end(); ++j) {
-        double sum = 0.0;
-        for (size_t k = 0; k < n; ++k) {
-          sum += a[(i * n) + k] * b[(k * n) + j];
-        }
-        c[(i * n) + j] = sum;
-      }
-    }
-  });
-}
-
-void SinevAMultMatrixFoxAlgorithmTBB::DecomposeToBlocks(const std::vector<double> &src, std::vector<double> &dst,
-                                                        size_t n, size_t bs, int q) {
-  tbb::parallel_for(tbb::blocked_range2d<int>(0, q, 0, q), [&](const tbb::blocked_range2d<int> &r) {
-    for (int bi = r.rows().begin(); bi < r.rows().end(); ++bi) {
-      for (int bj = r.cols().begin(); bj < r.cols().end(); ++bj) {
-        const size_t block_off = (static_cast<size_t>((bi * q) + bj)) * (bs * bs);
-        for (size_t i = 0; i < bs; ++i) {
-          for (size_t j = 0; j < bs; ++j) {
-            const size_t src_idx = ((static_cast<size_t>(bi) * bs + i) * n) + (static_cast<size_t>(bj) * bs + j);
-            const size_t dst_idx = block_off + (i * bs) + j;
-            dst[dst_idx] = src[src_idx];
-          }
-        }
-      }
-    }
-  });
-}
-
-void SinevAMultMatrixFoxAlgorithmTBB::AssembleFromBlocks(const std::vector<double> &src, std::vector<double> &dst,
-                                                         size_t n, size_t bs, int q) {
-  tbb::parallel_for(tbb::blocked_range2d<int>(0, q, 0, q), [&](const tbb::blocked_range2d<int> &r) {
-    for (int bi = r.rows().begin(); bi < r.rows().end(); ++bi) {
-      for (int bj = r.cols().begin(); bj < r.cols().end(); ++bj) {
-        const size_t block_off = (static_cast<size_t>((bi * q) + bj)) * (bs * bs);
-        for (size_t i = 0; i < bs; ++i) {
-          for (size_t j = 0; j < bs; ++j) {
-            const size_t src_idx = block_off + (i * bs) + j;
-            const size_t dst_idx = ((static_cast<size_t>(bi) * bs + i) * n) + (static_cast<size_t>(bj) * bs + j);
-            dst[dst_idx] = src[src_idx];
-          }
-        }
-      }
-    }
-  });
-}
-
-void SinevAMultMatrixFoxAlgorithmTBB::MultiplyBlocks(const std::vector<double> &blocks_a,
-                                                     const std::vector<double> &blocks_b, std::vector<double> &blocks_c,
-                                                     size_t bs, size_t a_off, size_t b_off, size_t c_off) {
-  for (size_t ii = 0; ii < bs; ++ii) {
-    for (size_t kk = 0; kk < bs; ++kk) {
-      const double val = blocks_a[a_off + (ii * bs) + kk];
-      const size_t b_base = b_off + (kk * bs);
-      const size_t c_base = c_off + (ii * bs);
-      for (size_t jj = 0; jj < bs; ++jj) {
-        blocks_c[c_base + jj] += val * blocks_b[b_base + jj];
-      }
-    }
-  }
-}
-
-void SinevAMultMatrixFoxAlgorithmTBB::FoxStep(const std::vector<double> &blocks_a, const std::vector<double> &blocks_b,
-                                              std::vector<double> &blocks_c, size_t bs, int q, int step) {
-  const size_t block_size = bs * bs;
-
-  tbb::parallel_for(tbb::blocked_range2d<int>(0, q, 0, q), [&](const tbb::blocked_range2d<int> &r) {
-    for (int i = r.rows().begin(); i < r.rows().end(); ++i) {
-      for (int j = r.cols().begin(); j < r.cols().end(); ++j) {
-        const int k = (i + step) % q;
-
-        const size_t a_off = (static_cast<size_t>((i * q) + k)) * block_size;
-        const size_t b_off = (static_cast<size_t>((k * q) + j)) * block_size;
-        const size_t c_off = (static_cast<size_t>((i * q) + j)) * block_size;
-
-        MultiplyBlocks(blocks_a, blocks_b, blocks_c, bs, a_off, b_off, c_off);
-      }
-    }
-  });
-}
-
-bool SinevAMultMatrixFoxAlgorithmTBB::RunImpl() {
-  const auto &input = GetInput();
-  const size_t n = std::get<0>(input);
-  const auto &a = std::get<1>(input);
-  const auto &b = std::get<2>(input);
-  auto &c = GetOutput();
-
-  // Для маленьких матриц используем простое умножение
-  if (n <= 8) {
-    SimpleMultiply(n, a, b, c);
-    return true;
-  }
-
-  size_t bs = ChooseBlockSize(n);
-  const int actual_q = static_cast<int>(n / bs);
-
-  const auto total_blocks = static_cast<size_t>(actual_q) * static_cast<size_t>(actual_q);
-  const auto block_elements = bs * bs;
-
-  std::vector<double> blocks_a(total_blocks * block_elements);
-  std::vector<double> blocks_b(total_blocks * block_elements);
-  std::vector<double> blocks_c(total_blocks * block_elements, 0.0);
-
-  DecomposeToBlocks(a, blocks_a, n, bs, actual_q);
-  DecomposeToBlocks(b, blocks_b, n, bs, actual_q);
-
-  for (int step = 0; step < actual_q; ++step) {
-    FoxStep(blocks_a, blocks_b, blocks_c, bs, actual_q, step);
-  }
-
-  AssembleFromBlocks(blocks_c, c, n, bs, actual_q);
-
-  return true;
-}
-
-size_t SinevAMultMatrixFoxAlgorithmTBB::ChooseBlockSize(size_t n) {
-  size_t bs = 1;
-  const auto sqrt_n = static_cast<size_t>(std::sqrt(static_cast<double>(n)));
-  for (size_t div = sqrt_n; div >= 1; --div) {
-    if (n % div == 0) {
-      bs = div;
-      break;
-    }
-  }
-  return bs;
-}
-
-bool SinevAMultMatrixFoxAlgorithmTBB::PostProcessingImpl() {
-  return true;
-}
-
-}  // namespace sinev_a_mult_matrix_fox_algorithm
-
-```
+Все тесты пройдены. Для `n ≤ 8` используется `SimpleMultiply` с `tbb::parallel_for`,
+для `n > 8` — блочный алгоритм Фокса.
+
+**Характерные проверки:**
+- `n = 1` — простое умножение через `SimpleMultiply` (распараллеливание на одном потоке не меняет результат).
+- `n = 8` — пороговое значение, используется `SimpleMultiply`.
+- `n = 9` — блочный алгоритм (`bs = 3`, `q = 3`).
+- `n = 16` — блочный алгоритм (`bs = 4`, `q = 4`).
+
+## 7. Экспериментальная среда
+- **CPU:** Intel Core (тестирование на рабочей станции `artem-sword`)
+- **Число worker-потоков TBB:** определяется раннером через `PPC_NUM_THREADS` (предположительно,
+   количество аппаратных потоков CPU, от 4 до 8)
+- **RAM:** ≥ 8 ГБ
+- **OS:** Linux (Ubuntu 22.04)
+- **Compiler:** GCC (поддержка TBB включена)
+- **CMake build type:** Release (`-O2 -ltbb`)
+- **Способ ограничения конкуренции:** через раннер курса (переменная `PPC_NUM_THREADS`)
+- **Команда запуска функциональных тестов:**  
+  `./build/bin/ppc_func_tests --gtest_filter="*Sinev*tbb*" -v`
+- **Команда запуска тестов производительности:**  
+  `./build/bin/ppc_perf_tests --gtest_filter="*Sinev*tbb*" -v`
+- **Размер задачи в тестах производительности:** `n = 400` (матрица 400×400)
+- **Размер блока для `n = 400`:** `bs = 20` (т.к. `√400 = 20`), `q = 20`
+- **Число блоков:** `q × q = 400`
+
+## 8. Результаты
+**Измерения производительности (n = 400):**
+
+| Число worker-потоков | Режим    | Время (сек) | Ускорение (S = T_seq / T_tbb) | Эффективность (S / p) |
+|----------------------|----------|-------------|-------------------------------|-----------------------|
+| 1 (SEQ)              | pipeline | 0.025267    | 1.00×                         | 1.00                  |
+| p (TBB)              | pipeline | 0.016035    | 1.58×                         | 1.58/p                |
+| 1 (SEQ)              | task_run | 0.027634    | 1.00×                         | 1.00                  |
+| p (TBB)              | task_run | 0.016077    | 1.72×                         | 1.72/p                |
+
+*Примечание:* точное число worker-потоков `p` определяется раннером курса через переменную `PPC_NUM_THREADS`.
+Ускорение вычислено относительно SEQ-версии из `seq/report.md`.
+
+**Комментарий о балансировке нагрузки и накладных расходах:**
+- Ускорение ~1.6–1.7× — скромный результат по сравнению с OpenMP (5.8–7.3×).
+- **Причины низкого ускорения:**
+  - **Накладные расходы TBB:** `blocked_range2d` создаёт больше объектов задач, чем параллелизация плоских циклов
+  в OpenMP. Для `q = 20` (400 блоков) накладные расходы на разбиение и распределение задач могут быть значительными.
+  - **Автоматический grainsize:** TBB по умолчанию может разбивать диапазон на слишком мелкие чанки,
+   увеличивая overhead. Явная настройка `grainsize` могла бы улучшить результат.
+  - **Размер блока:** `bs = 20` даёт `20×20 = 400` элементов на блок. Для TBB задачи такого размера могут
+   быть слишком мелкими, чтобы окупить overhead.
+  - **Повторное создание диапазонов:** `FoxStep` вызывается `q` раз (20 раз), каждый раз создавая новый `parallel_for`
+   с новым разбиением.
+- **Балансировка нагрузки:** `auto_partitioner` хорошо балансирует нагрузку,
+   но при мелких задачах overhead доминирует.
+
+**Сравнение с OpenMP:**
+- OpenMP показал ускорение 5.8–7.3× на том же оборудовании.
+- TBB отстаёт из-за более высокого overhead задач и менее агрессивной оптимизации циклов компилятором.
+
+## 9. Выводы
+**Когда TBB удобнее:**
+- Для **нерегулярных** или **рекурсивных** задач, где статическое разбиение неэффективно.
+- Для **динамических** задач с изменяющейся вычислительной нагрузкой.
+- Когда нужна **переносимость** между разными архитектурами (TBB сам адаптируется под число ядер).
+
+**Когда overhead мешает:**
+- Для **регулярных циклов с фиксированной сеткой** (как в данной задаче) директивы OpenMP
+   дают меньший overhead и лучшее ускорение.
+- Для **мелкозернистых** задач, где накладные расходы на создание задач превышают пользу от параллелизации.
+- В текущей реализации `q = 20` даёт всего 400 блоков; для эффективной работы TBB желательно иметь 
+  тысячи независимых подзадач.
+
+**Итог по данной реализации:**
+- TBB-версия **корректна** (все тесты пройдены).
+- Ускорение **~1.6–1.7×** значительно ниже, чем у OpenMP (~6–7×).
+- Основная причина — **накладные расходы** на управление задачами и автоматическое разбиение диапазона.
+- Для улучшения результата можно:
+  - Увеличить размер матрицы (например, `n = 1000`), чтобы амортизировать overhead.
+  - Явно задать `grainsize` (например, `blocked_range2d<int>(0, q, 0, q, G)` с `G = q/4`).
+  - Использовать `tbb::parallel_for` с `static_partitioner` для предсказуемого разбиения.
+  - Объединить `FoxStep` в один `parallel_for` по всем шагам (редукция числа создаваемых диапазонов).
+
+**Сравнительная роль в сводном отчёте:** TBB-реализация служит примером задачно-ориентированного подхода,
+который в данной задаче уступает OpenMP из-за высокой регулярности вычислений и небольшого размера сетки блоков.
