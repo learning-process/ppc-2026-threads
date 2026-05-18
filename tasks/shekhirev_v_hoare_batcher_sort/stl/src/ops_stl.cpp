@@ -1,6 +1,7 @@
 #include "shekhirev_v_hoare_batcher_sort/stl/include/ops_stl.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <limits>
 #include <thread>
 #include <utility>
@@ -32,6 +33,24 @@ void SplitPartition(std::vector<int> &arr, int &l, int &r, int &i, int &j) {
   }
 }
 
+void ProcessPartition(std::vector<int> &arr, int &l, int &r, std::vector<std::pair<int, int>> &stack) {
+  int i = 0;
+  int j = 0;
+  SplitPartition(arr, l, r, i, j);
+
+  if (j - l < r - i) {
+    if (i < r) {
+      stack.emplace_back(i, r);
+    }
+    r = j;
+  } else {
+    if (l < j) {
+      stack.emplace_back(l, j);
+    }
+    l = i;
+  }
+}
+
 void OptimizedHoareSort(std::vector<int> &arr, int left, int right) {
   if (left >= right) {
     return;
@@ -46,27 +65,13 @@ void OptimizedHoareSort(std::vector<int> &arr, int left, int right) {
     stack.pop_back();
 
     while (l < r) {
-      int i = 0;
-      int j = 0;
-      SplitPartition(arr, l, r, i, j);
-
-      if (j - l < r - i) {
-        if (i < r) {
-          stack.emplace_back(i, r);
-        }
-        r = j;
-      } else {
-        if (l < j) {
-          stack.emplace_back(l, j);
-        }
-        l = i;
-      }
+      ProcessPartition(arr, l, r, stack);
     }
   }
 }
 
 void MergeBlocks(std::vector<int> &arr, int start1, int start2, int chunk_size) {
-  std::vector<int> buffer(static_cast<size_t>(chunk_size) * 2);
+  std::vector<int> buffer(static_cast<std::size_t>(chunk_size) * 2);
   int i = start1;
   int j = start2;
   int k = 0;
