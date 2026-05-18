@@ -64,9 +64,9 @@ std::vector<std::vector<double>>{{19.0, 22.0}, {43.0, 50.0}}
 
 ## 6. Экспериментальная среда
 
-- **CPU:** Intel(R) Core(TM) Ultra 5 125H (14 ядер / 18 потоков).
-- **RAM:** 32 GB.
-- **ОС:** Windows 10.0.26200.
+- **CPU:** Ryzen 5 2600.
+- **RAM:** 16 GB.
+- **ОС:** Windows 11.
 - **Build type:** Release.
 - **Compiler:** Microsoft Visual C++ 19.44 (MSVC 2022).
 - **Размер задачи (perf):** `n = 512`, `b_size = 32`, `grid_sz = 16` (`tests/performance/main.cpp`).

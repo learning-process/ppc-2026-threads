@@ -68,9 +68,9 @@ mpiexec -n 2 build\bin\ppc_func_tests.exe --gtest_filter=*timur_a_cannon_all*
 
 ## 7. Экспериментальная среда
 
-- **CPU:** Intel Core Ultra 5 125H (14 ядер / 18 потоков).
-- **RAM:** 32 GB.
-- **ОС:** Windows 10.0.26200.
+- **CPU:** Ryzen 5 2600 .
+- **RAM:** 16 GB.
+- **ОС:** Windows 11.
 - **Build type:** Release.
 - **Compiler:** MSVC 19.44.
 - **Размер в perf-тесте:** `n = 512`, `b_size = 32`.
