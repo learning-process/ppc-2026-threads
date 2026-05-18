@@ -1,7 +1,6 @@
 #include "moskaev_v_lin_filt_block_gauss_3/tbb/include/ops_tbb.hpp"
 
 #include <tbb/blocked_range2d.h>
-#include <tbb/blocked_range3d.h>
 #include <tbb/parallel_for.h>
 
 #include <algorithm>
@@ -54,13 +53,10 @@ void MoskaevVLinFiltBlockGauss3TBB::ApplyGaussianFilterToBlock(const std::vector
   int inner_width = block_width - 2;
   int inner_height = block_height - 2;
 
-  tbb::parallel_for(tbb::blocked_range3d<int>(0, inner_height, 0, inner_width, 0, channels),
-                    [&](const tbb::blocked_range3d<int> &range) {
-    for (int row = range.pages().begin(); row < range.pages().end(); ++row) {
-      for (int col = range.cols().begin(); col < range.cols().end(); ++col) {
-        for (int channel = range.rows().begin(); channel < range.rows().end(); ++channel) {
-          ComputeFilteredPixel(input_block, output_block, block_width, inner_width, channels, row, col, channel);
-        }
+  tbb::parallel_for(0, inner_height, [&](int row) {
+    for (int col = 0; col < inner_width; ++col) {
+      for (int channel = 0; channel < channels; ++channel) {
+        ComputeFilteredPixel(input_block, output_block, block_width, inner_width, channels, row, col, channel);
       }
     }
   });
@@ -71,19 +67,17 @@ namespace {
 void CopyBlockWithPadding(const std::vector<uint8_t> &source_image, std::vector<uint8_t> &padded_block, int width,
                           int height, int channels, int block_x, int block_y, int current_block_width,
                           int current_block_height, int block_with_padding_width) {
-  tbb::parallel_for(tbb::blocked_range2d<int>(-1, current_block_height + 1, -1, current_block_width + 1),
-                    [&](const tbb::blocked_range2d<int> &range) {
-    for (int row = range.rows().begin(); row < range.rows().end(); ++row) {
-      for (int col = range.cols().begin(); col < range.cols().end(); ++col) {
-        int src_y = std::clamp(block_y + row, 0, height - 1);
-        int src_x = std::clamp(block_x + col, 0, width - 1);
-        int dst_y = row + 1;
-        int dst_x = col + 1;
-        for (int channel = 0; channel < channels; ++channel) {
-          int src_idx = (((src_y * width) + src_x) * channels) + channel;
-          int dst_idx = (((dst_y * block_with_padding_width) + dst_x) * channels) + channel;
-          padded_block[dst_idx] = source_image[src_idx];
-        }
+  int padded_height = current_block_height + 2;
+  int padded_width = current_block_width + 2;
+
+  tbb::parallel_for(0, padded_height, [&](int row) {
+    for (int col = 0; col < padded_width; ++col) {
+      int src_y = std::clamp(block_y + row - 1, 0, height - 1);
+      int src_x = std::clamp(block_x + col - 1, 0, width - 1);
+      for (int channel = 0; channel < channels; ++channel) {
+        int src_idx = (((src_y * width) + src_x) * channels) + channel;
+        int dst_idx = (((row * block_with_padding_width) + col) * channels) + channel;
+        padded_block[dst_idx] = source_image[src_idx];
       }
     }
   });
@@ -92,15 +86,12 @@ void CopyBlockWithPadding(const std::vector<uint8_t> &source_image, std::vector<
 void CopyProcessedBlockToOutput(const std::vector<uint8_t> &processed_block, std::vector<uint8_t> &output_image,
                                 int width, int channels, int block_x, int block_y, int current_block_width,
                                 int current_block_height) {
-  tbb::parallel_for(tbb::blocked_range2d<int>(0, current_block_height, 0, current_block_width),
-                    [&](const tbb::blocked_range2d<int> &range) {
-    for (int row = range.rows().begin(); row < range.rows().end(); ++row) {
-      for (int col = range.cols().begin(); col < range.cols().end(); ++col) {
-        for (int channel = 0; channel < channels; ++channel) {
-          int src_idx = (((row * current_block_width) + col) * channels) + channel;
-          int dst_idx = ((((block_y + row) * width) + (block_x + col)) * channels) + channel;
-          output_image[dst_idx] = processed_block[src_idx];
-        }
+  tbb::parallel_for(0, current_block_height, [&](int row) {
+    for (int col = 0; col < current_block_width; ++col) {
+      for (int channel = 0; channel < channels; ++channel) {
+        int src_idx = (((row * current_block_width) + col) * channels) + channel;
+        int dst_idx = ((((block_y + row) * width) + (block_x + col)) * channels) + channel;
+        output_image[dst_idx] = processed_block[src_idx];
       }
     }
   });
@@ -128,31 +119,29 @@ bool MoskaevVLinFiltBlockGauss3TBB::RunImpl() {
   int blocks_x = (width + block_size - 1) / block_size;
   int blocks_y = (height + block_size - 1) / block_size;
 
-  tbb::parallel_for(tbb::blocked_range2d<int>(0, blocks_y, 0, blocks_x), [&](const tbb::blocked_range2d<int> &range) {
-    for (int by = range.rows().begin(); by < range.rows().end(); ++by) {
-      for (int bx = range.cols().begin(); bx < range.cols().end(); ++bx) {
-        int block_x = bx * block_size;
-        int block_y = by * block_size;
-        int current_block_width = std::min(block_size, width - block_x);
-        int current_block_height = std::min(block_size, height - block_y);
-        int block_with_padding_width = current_block_width + 2;
-        int block_with_padding_height = current_block_height + 2;
+  tbb::parallel_for(0, blocks_y, [&](int by) {
+    for (int bx = 0; bx < blocks_x; ++bx) {
+      int block_x = bx * block_size;
+      int block_y = by * block_size;
+      int current_block_width = std::min(block_size, width - block_x);
+      int current_block_height = std::min(block_size, height - block_y);
+      int block_with_padding_width = current_block_width + 2;
+      int block_with_padding_height = current_block_height + 2;
 
-        std::vector<uint8_t> input_block(static_cast<size_t>(block_with_padding_width) *
-                                             static_cast<size_t>(block_with_padding_height) *
-                                             static_cast<size_t>(channels),
-                                         0);
-        std::vector<uint8_t> output_block(static_cast<size_t>(current_block_width) *
-                                              static_cast<size_t>(current_block_height) * static_cast<size_t>(channels),
-                                          0);
+      std::vector<uint8_t> input_block(static_cast<size_t>(block_with_padding_width) *
+                                           static_cast<size_t>(block_with_padding_height) *
+                                           static_cast<size_t>(channels),
+                                       0);
+      std::vector<uint8_t> output_block(static_cast<size_t>(current_block_width) *
+                                            static_cast<size_t>(current_block_height) * static_cast<size_t>(channels),
+                                        0);
 
-        CopyBlockWithPadding(image_data, input_block, width, height, channels, block_x, block_y, current_block_width,
-                             current_block_height, block_with_padding_width);
-        ApplyGaussianFilterToBlock(input_block, output_block, block_with_padding_width, block_with_padding_height,
-                                   channels);
-        CopyProcessedBlockToOutput(output_block, GetOutput(), width, channels, block_x, block_y, current_block_width,
-                                   current_block_height);
-      }
+      CopyBlockWithPadding(image_data, input_block, width, height, channels, block_x, block_y, current_block_width,
+                           current_block_height, block_with_padding_width);
+      ApplyGaussianFilterToBlock(input_block, output_block, block_with_padding_width, block_with_padding_height,
+                                 channels);
+      CopyProcessedBlockToOutput(output_block, GetOutput(), width, channels, block_x, block_y, current_block_width,
+                                 current_block_height);
     }
   });
 
@@ -160,7 +149,7 @@ bool MoskaevVLinFiltBlockGauss3TBB::RunImpl() {
 }
 
 bool MoskaevVLinFiltBlockGauss3TBB::PostProcessingImpl() {
-  return !GetOutput().empty();  //
+  return !GetOutput().empty();
 }
 
 }  // namespace moskaev_v_lin_filt_block_gauss_3
