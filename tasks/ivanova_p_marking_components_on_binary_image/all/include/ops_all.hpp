@@ -40,6 +40,11 @@ class IvanovaPMarkingComponentsOnBinaryImageALL : public BaseTask {
   void MergeVerticalPairsAll();
   void FinalizeRootsAll(int total_pixels);
   void NormalizeLabelsAll(int total_pixels);
+
+  // Helper methods to reduce cognitive complexity
+  void ProcessStripePixelAll(int xx, int yy, int idx, int start_row, std::vector<int> &local_parent, int &local_label);
+  int FindLocalRootAll(int label, const std::vector<int> &local_parent);
+  void UnionLocalLabelsAll(int label1, int label2, std::vector<int> &local_parent);
 };
 
 }  // namespace ivanova_p_marking_components_on_binary_image

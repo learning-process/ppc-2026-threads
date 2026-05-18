@@ -1,6 +1,5 @@
 #pragma once
 
-#include <thread>
 #include <vector>
 
 #include "ivanova_p_marking_components_on_binary_image/common/include/common.hpp"
@@ -39,6 +38,11 @@ class IvanovaPMarkingComponentsOnBinaryImageSTL : public BaseTask {
   void MergeVerticalPairsStl(int num_threads);
   void FinalizeRootsStl(int total_pixels, int num_threads);
   void NormalizeLabelsStl(int total_pixels);
+
+  // Helper methods to reduce cognitive complexity
+  void ProcessStripePixelStl(int xx, int yy, int idx, int start_row, std::vector<int> &local_parent, int &local_label);
+  int FindLocalRootStl(int label, const std::vector<int> &local_parent);
+  void UnionLocalLabelsStl(int label1, int label2, std::vector<int> &local_parent);
 };
 
 }  // namespace ivanova_p_marking_components_on_binary_image

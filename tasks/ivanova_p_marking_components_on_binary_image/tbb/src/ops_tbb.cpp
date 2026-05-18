@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "ivanova_p_marking_components_on_binary_image/data/image_generator.hpp"
@@ -38,6 +37,9 @@ bool IvanovaPMarkingComponentsOnBinaryImageTBB::ValidationImpl() {
           break;
         case 14:
           filename = "tasks/ivanova_p_marking_components_on_binary_image/data/image4.txt";
+          break;
+        default:
+          filename = "";
           break;
       }
       test_image = LoadImageFromTxt(filename);
@@ -116,8 +118,44 @@ void IvanovaPMarkingComponentsOnBinaryImageTBB::ProcessPixel(int xx, int yy, int
   }
 }
 
+int IvanovaPMarkingComponentsOnBinaryImageTBB::FindLocalRoot(int label) {
+  int root = label;
+  while (parent_[root] != root) {
+    root = parent_[root];
+  }
+  return root;
+}
+
+void IvanovaPMarkingComponentsOnBinaryImageTBB::ProcessStripePixel(int xx, int yy, int idx, int start_row) {
+  if (input_image_.data[idx] == 0) {
+    return;
+  }
+
+  int left_label = (xx > 0) ? labels_[idx - 1] : 0;
+  int top_label = (yy > start_row) ? labels_[idx - width_] : 0;
+
+  if (left_label == 0 && top_label == 0) {
+    labels_[idx] = idx + 1;
+  } else {
+    int label = (left_label != 0) ? left_label : top_label;
+    labels_[idx] = label;
+
+    if (left_label != 0 && top_label != 0 && left_label != top_label) {
+      int root1 = FindLocalRoot(left_label);
+      int root2 = FindLocalRoot(top_label);
+
+      if (root1 != root2) {
+        if (root1 < root2) {
+          parent_[root2] = root1;
+        } else {
+          parent_[root1] = root2;
+        }
+      }
+    }
+  }
+}
+
 void IvanovaPMarkingComponentsOnBinaryImageTBB::FirstPass() {
-  // На всякий случай защищаемся от 0 потоков
   int num_threads = std::max(1, tbb::this_task_arena::max_concurrency());
   int rows_per_thread = (height_ + num_threads - 1) / num_threads;
 
@@ -132,42 +170,7 @@ void IvanovaPMarkingComponentsOnBinaryImageTBB::FirstPass() {
     for (int yy = start_row; yy < end_row; ++yy) {
       for (int xx = 0; xx < width_; ++xx) {
         int idx = (yy * width_) + xx;
-
-        if (input_image_.data[idx] == 0) {
-          continue;
-        }
-
-        // Строго изолированное чтение: не лезем за границы своей полосы наверх
-        int left_label = (xx > 0) ? labels_[idx - 1] : 0;
-        int top_label = (yy > start_row) ? labels_[idx - width_] : 0;
-
-        if (left_label == 0 && top_label == 0) {
-          // ИСПРАВЛЕНИЕ: Метка компоненты не может быть нулем.
-          labels_[idx] = idx + 1;
-        } else {
-          int label = (left_label != 0) ? left_label : top_label;
-          labels_[idx] = label;
-
-          // Локальный DSU без сжатия (безопасно, так как мы внутри своей полосы)
-          if (left_label != 0 && top_label != 0 && left_label != top_label) {
-            int root1 = left_label;
-            while (parent_[root1] != root1) {
-              root1 = parent_[root1];
-            }
-            int root2 = top_label;
-            while (parent_[root2] != root2) {
-              root2 = parent_[root2];
-            }
-
-            if (root1 != root2) {
-              if (root1 < root2) {
-                parent_[root2] = root1;
-              } else {
-                parent_[root1] = root2;
-              }
-            }
-          }
-        }
+        ProcessStripePixel(xx, yy, idx, start_row);
       }
     }
   });
@@ -180,8 +183,8 @@ void IvanovaPMarkingComponentsOnBinaryImageTBB::FirstPass() {
     }
 
     for (int xx = 0; xx < width_; ++xx) {
-      int top_idx = (boundary_row - 1) * width_ + xx;
-      int bottom_idx = boundary_row * width_ + xx;
+      int top_idx = ((boundary_row - 1) * width_) + xx;
+      int bottom_idx = (boundary_row * width_) + xx;
 
       int top_label = labels_[top_idx];
       int bottom_label = labels_[bottom_idx];
@@ -192,7 +195,6 @@ void IvanovaPMarkingComponentsOnBinaryImageTBB::FirstPass() {
     }
   }
 
-  // Флаг запуска SecondPass
   current_label_ = 1;
 }
 

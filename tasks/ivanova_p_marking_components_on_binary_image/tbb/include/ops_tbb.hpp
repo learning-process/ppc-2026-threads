@@ -2,7 +2,6 @@
 
 #include <tbb/tbb.h>
 
-#include <unordered_map>
 #include <vector>
 
 #include "ivanova_p_marking_components_on_binary_image/common/include/common.hpp"
@@ -41,6 +40,10 @@ class IvanovaPMarkingComponentsOnBinaryImageTBB : public BaseTask {
   void MergeVerticalPairsTbb();
   void FinalizeRootsTbb(int total_pixels);
   void NormalizeLabelsTbb(int total_pixels);
+
+  // Helper methods to reduce cognitive complexity
+  void ProcessStripePixel(int xx, int yy, int idx, int start_row);
+  int FindLocalRoot(int label);
 };
 
 }  // namespace ivanova_p_marking_components_on_binary_image

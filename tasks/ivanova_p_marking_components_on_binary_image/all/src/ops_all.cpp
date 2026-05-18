@@ -44,6 +44,7 @@ bool IvanovaPMarkingComponentsOnBinaryImageALL::ValidationImpl() {
           break;
         default:
           filename = "";
+          break;
       }
       test_image = LoadImageFromTxt(filename);
     } else {
@@ -83,6 +84,7 @@ bool IvanovaPMarkingComponentsOnBinaryImageALL::PreProcessingImpl() {
           break;
         default:
           filename = "";
+          break;
       }
       test_image = LoadImageFromTxt(filename);
     } else {
@@ -101,9 +103,9 @@ bool IvanovaPMarkingComponentsOnBinaryImageALL::PreProcessingImpl() {
 
   // Выделяем память под глобальный DSU с запасом на все потоки
   int num_threads = tbb::this_task_arena::max_concurrency();
-  parent_.resize(num_threads * total_pixels + 1);
+  parent_.resize(static_cast<size_t>((num_threads * total_pixels) + 1));
   for (size_t i = 0; i < parent_.size(); ++i) {
-    parent_[i] = i;
+    parent_[i] = static_cast<int>(i);
   }
 
   current_label_ = 0;
@@ -143,14 +145,61 @@ void IvanovaPMarkingComponentsOnBinaryImageALL::ProcessPixel(int /*xx*/, int /*y
   // Не используется в основном параллельном проходе, оставлено для интерфейса класса
 }
 
+int IvanovaPMarkingComponentsOnBinaryImageALL::FindLocalRootAll(int label, const std::vector<int> &local_parent) {
+  int root = label;
+  while (local_parent[static_cast<size_t>(root)] != root) {
+    root = local_parent[static_cast<size_t>(root)];
+  }
+  return root;
+}
+
+void IvanovaPMarkingComponentsOnBinaryImageALL::UnionLocalLabelsAll(int label1, int label2,
+                                                                    std::vector<int> &local_parent) {
+  int root1 = FindLocalRootAll(label1, local_parent);
+  int root2 = FindLocalRootAll(label2, local_parent);
+  if (root1 != root2) {
+    if (root1 < root2) {
+      local_parent[static_cast<size_t>(root2)] = root1;
+    } else {
+      local_parent[static_cast<size_t>(root1)] = root2;
+    }
+  }
+}
+
+void IvanovaPMarkingComponentsOnBinaryImageALL::ProcessStripePixelAll(int xx, int yy, int idx, int start_row,
+                                                                      std::vector<int> &local_parent,
+                                                                      int &local_label) {
+  if (input_image_.data[static_cast<size_t>(idx)] == 0) {
+    return;
+  }
+
+  int left_label = (xx > 0) ? labels_[static_cast<size_t>(idx - 1)] : 0;
+  int top_label = (yy > start_row) ? labels_[static_cast<size_t>(idx - width_)] : 0;
+
+  bool left_exists = (left_label != 0);
+  bool top_exists = (top_label != 0);
+
+  if (!left_exists && !top_exists) {
+    local_label++;
+    labels_[static_cast<size_t>(idx)] = local_label;
+  } else {
+    int label = left_exists ? left_label : top_label;
+    labels_[static_cast<size_t>(idx)] = label;
+
+    if (left_exists && top_exists && left_label != top_label) {
+      UnionLocalLabelsAll(left_label, top_label, local_parent);
+    }
+  }
+}
+
 void IvanovaPMarkingComponentsOnBinaryImageALL::FirstPass() {
   int num_threads = tbb::this_task_arena::max_concurrency();
   int rows_per_thread = (height_ + num_threads - 1) / num_threads;
   int total_pixels = width_ * height_;
 
   // Локальные DSU для каждого потока теперь на векторах
-  std::vector<std::vector<int>> local_parents(num_threads);
-  std::vector<int> local_labels(num_threads, 0);
+  std::vector<std::vector<int>> local_parents(static_cast<size_t>(num_threads));
+  std::vector<int> local_labels(static_cast<size_t>(num_threads), 0);
 
   // Фаза 1: Параллельная обработка полос с TBB
   tbb::parallel_for(0, num_threads, [&](int thread_id) {
@@ -161,55 +210,19 @@ void IvanovaPMarkingComponentsOnBinaryImageALL::FirstPass() {
     }
 
     // Инициализация локального DSU вектора для конкретного потока
-    int max_possible_labels = num_threads * total_pixels + 1;
-    local_parents[thread_id].resize(max_possible_labels);
+    int max_possible_labels = (num_threads * total_pixels) + 1;
+    local_parents[static_cast<size_t>(thread_id)].resize(static_cast<size_t>(max_possible_labels));
     for (int i = 0; i < max_possible_labels; ++i) {
-      local_parents[thread_id][i] = i;
+      local_parents[static_cast<size_t>(thread_id)][static_cast<size_t>(i)] = i;
     }
 
-    int &local_label = local_labels[thread_id];
+    int &local_label = local_labels[static_cast<size_t>(thread_id)];
     local_label = thread_id * total_pixels;  // Гарантия уникального диапазона меток
 
     for (int yy = start_row; yy < end_row; ++yy) {
       for (int xx = 0; xx < width_; ++xx) {
         int idx = (yy * width_) + xx;
-
-        if (input_image_.data[idx] == 0) {
-          continue;
-        }
-
-        int left_label = (xx > 0) ? labels_[idx - 1] : 0;
-        int top_label = (yy > start_row) ? labels_[idx - width_] : 0;
-
-        bool left_exists = (left_label != 0);
-        bool top_exists = (top_label != 0);
-
-        if (!left_exists && !top_exists) {
-          local_label++;
-          labels_[idx] = local_label;
-        } else {
-          int label = left_exists ? left_label : top_label;
-          labels_[idx] = label;
-
-          if (left_exists && top_exists && left_label != top_label) {
-            auto &lp = local_parents[thread_id];
-            int root1 = left_label;
-            int root2 = top_label;
-            while (lp[root1] != root1) {
-              root1 = lp[root1];
-            }
-            while (lp[root2] != root2) {
-              root2 = lp[root2];
-            }
-            if (root1 != root2) {
-              if (root1 < root2) {
-                lp[root2] = root1;
-              } else {
-                lp[root1] = root2;
-              }
-            }
-          }
-        }
+        ProcessStripePixelAll(xx, yy, idx, start_row, local_parents[static_cast<size_t>(thread_id)], local_label);
       }
     }
   });
@@ -222,11 +235,11 @@ void IvanovaPMarkingComponentsOnBinaryImageALL::FirstPass() {
     }
 
     for (int xx = 0; xx < width_; ++xx) {
-      int top_idx = (boundary_row - 1) * width_ + xx;
-      int bottom_idx = boundary_row * width_ + xx;
+      int top_idx = ((boundary_row - 1) * width_) + xx;
+      int bottom_idx = (boundary_row * width_) + xx;
 
-      int top_label = labels_[top_idx];
-      int bottom_label = labels_[bottom_idx];
+      int top_label = labels_[static_cast<size_t>(top_idx)];
+      int bottom_label = labels_[static_cast<size_t>(bottom_idx)];
 
       if (top_label != 0 && bottom_label != 0 && top_label != bottom_label) {
         UnionLabels(top_label, bottom_label);
@@ -236,15 +249,15 @@ void IvanovaPMarkingComponentsOnBinaryImageALL::FirstPass() {
 
   // Фаза 3: Перенос локальных связей потоков в глобальный вектор DSU
   for (int thread_id = 0; thread_id < num_threads; ++thread_id) {
-    if (local_parents[thread_id].empty()) {
+    if (local_parents[static_cast<size_t>(thread_id)].empty()) {
       continue;
     }
 
-    int start_lbl = thread_id * total_pixels + 1;
-    int end_lbl = local_labels[thread_id];
+    int start_lbl = (thread_id * total_pixels) + 1;
+    int end_lbl = local_labels[static_cast<size_t>(thread_id)];
 
     for (int label = start_lbl; label <= end_lbl; ++label) {
-      int p = local_parents[thread_id][label];
+      int p = local_parents[static_cast<size_t>(thread_id)][static_cast<size_t>(label)];
       if (p != label) {
         UnionLabels(label, p);
       }
@@ -253,7 +266,7 @@ void IvanovaPMarkingComponentsOnBinaryImageALL::FirstPass() {
 
   current_label_ = 0;
   for (int thread_id = 0; thread_id < num_threads; ++thread_id) {
-    current_label_ = std::max(current_label_, local_labels[thread_id]);
+    current_label_ = std::max(current_label_, local_labels[static_cast<size_t>(thread_id)]);
   }
 }
 
@@ -262,29 +275,29 @@ void IvanovaPMarkingComponentsOnBinaryImageALL::SecondPass() {
   int total_pixels = width_ * height_;
 
   // Вектор вместо unordered_map для нормализации меток
-  std::vector<int> new_labels(num_threads * total_pixels + 1, 0);
+  std::vector<int> new_labels(static_cast<size_t>((num_threads * total_pixels) + 1), 0);
   int next_label = 1;
 
   for (int &label : labels_) {
     if (label != 0) {
       int root = FindRoot(label);
 
-      if (new_labels[root] == 0) {
-        new_labels[root] = next_label++;
+      if (new_labels[static_cast<size_t>(root)] == 0) {
+        new_labels[static_cast<size_t>(root)] = next_label++;
       }
 
-      label = new_labels[root];
+      label = new_labels[static_cast<size_t>(root)];
     }
   }
 
   current_label_ = next_label - 1;
 }
 
-void IvanovaPMarkingComponentsOnBinaryImageALL::InitLabelsAll(int) {}
+void IvanovaPMarkingComponentsOnBinaryImageALL::InitLabelsAll(int /*unused*/) {}
 void IvanovaPMarkingComponentsOnBinaryImageALL::MergeHorizontalPairsAll() {}
 void IvanovaPMarkingComponentsOnBinaryImageALL::MergeVerticalPairsAll() {}
-void IvanovaPMarkingComponentsOnBinaryImageALL::FinalizeRootsAll(int) {}
-void IvanovaPMarkingComponentsOnBinaryImageALL::NormalizeLabelsAll(int) {}
+void IvanovaPMarkingComponentsOnBinaryImageALL::FinalizeRootsAll(int /*unused*/) {}
+void IvanovaPMarkingComponentsOnBinaryImageALL::NormalizeLabelsAll(int /*unused*/) {}
 
 bool IvanovaPMarkingComponentsOnBinaryImageALL::RunImpl() {
   int total_pixels = width_ * height_;
