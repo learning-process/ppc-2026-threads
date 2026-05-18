@@ -176,10 +176,24 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
   block_size_ = 256;
   int block_size = block_size_;
 
+  int blocks_y = (height + block_size - 1) / block_size;
+  int blocks_x = (width + block_size - 1) / block_size;
+
+  if (num_procs_ == 1 || (blocks_y == 1 && blocks_x == 1)) {
+    if (rank_ == 0) {
+      GetOutput().resize(static_cast<size_t>(width) * height * channels);
+      for (int by = 0; by < blocks_y; ++by) {
+        for (int bx = 0; bx < blocks_x; ++bx) {
+          ProcessSingleBlock(image_data, GetOutput(), width, height, channels, block_size, bx, by, 0);
+        }
+      }
+    }
+    return true;
+  }
+
   std::vector<uint8_t> local_image;
   BroadcastImage(rank_, image_data, local_image);
 
-  int blocks_y = (height + block_size - 1) / block_size;
   int blocks_per_proc = blocks_y / num_procs_;
   int remainder = blocks_y % num_procs_;
 
