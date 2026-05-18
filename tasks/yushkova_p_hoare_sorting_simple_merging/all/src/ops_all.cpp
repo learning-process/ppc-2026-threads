@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
+#include <mutex>
 #include <stack>
 #include <thread>
 #include <utility>
@@ -28,28 +30,51 @@ std::size_t GetThreadCount(std::size_t task_count) {
 }
 
 template <class Function>
+void RunSequentialTasks(std::size_t task_count, Function function) {
+  for (std::size_t task_index = 0; task_index < task_count; ++task_index) {
+    function(task_index);
+  }
+}
+
+template <class Function>
+void RunThreadWorker(std::size_t thread_index, std::size_t thread_count, std::size_t task_count, Function &function,
+                     std::exception_ptr &exception_ptr, std::mutex &exception_mutex) {
+  try {
+    for (std::size_t task_index = thread_index; task_index < task_count; task_index += thread_count) {
+      function(task_index);
+    }
+  } catch (...) {
+    std::scoped_lock lock(exception_mutex);
+    if (!exception_ptr) {
+      exception_ptr = std::current_exception();
+    }
+  }
+}
+
+template <class Function>
 void RunInThreads(std::size_t task_count, Function function) {
   const std::size_t thread_count = GetThreadCount(task_count);
   if (thread_count <= 1) {
-    for (std::size_t task_index = 0; task_index < task_count; ++task_index) {
-      function(task_index);
-    }
+    RunSequentialTasks(task_count, function);
     return;
   }
 
   std::vector<std::thread> threads;
   threads.reserve(thread_count);
+  std::exception_ptr exception_ptr;
+  std::mutex exception_mutex;
   for (std::size_t thread_index = 0; thread_index < thread_count; ++thread_index) {
-    // NOLINTNEXTLINE(bugprone-exception-escape)
-    threads.emplace_back([thread_index, thread_count, task_count, &function]() noexcept {
-      for (std::size_t task_index = thread_index; task_index < task_count; task_index += thread_count) {
-        function(task_index);
-      }
+    threads.emplace_back([thread_index, thread_count, task_count, &function, &exception_ptr, &exception_mutex]() {
+      RunThreadWorker(thread_index, thread_count, task_count, function, exception_ptr, exception_mutex);
     });
   }
 
   for (auto &thread : threads) {
     thread.join();
+  }
+
+  if (exception_ptr) {
+    std::rethrow_exception(exception_ptr);
   }
 }
 
