@@ -69,12 +69,12 @@ bool NikolaevDBlockLinearImageFilteringSTL::RunImpl() {
   auto &dst = GetOutput();
   dst.assign(src.size(), 0);
 
-  unsigned int num_threads = std::thread::hardware_concurrency();
+  int num_threads = ppc::util::GetNumThreads();
   if (num_threads == 0) {
     num_threads = 4;
   }
 
-  if (height < static_cast<int>(num_threads)) {
+  if (height < num_threads) {
     num_threads = height;
   }
 
@@ -85,10 +85,10 @@ bool NikolaevDBlockLinearImageFilteringSTL::RunImpl() {
   int remainder = height % num_threads;
 
   int start_row = 0;
-  for (unsigned int i = 0; i < num_threads; ++i) {
-    int end_row = start_row + rows_per_thread + (static_cast<int>(i) < remainder ? 1 : 0);
+  for (int i = 0; i < num_threads; ++i) {
+    int end_row = start_row + rows_per_thread + (i < remainder ? 1 : 0);
     threads.emplace_back(
-        [&src, width, height, start_row, end_row]() { ProcessRows(src, width, height, start_row, end_row); });
+        [this, &src, width, height, start_row, end_row]() { ProcessRows(src, width, height, start_row, end_row); });
 
     start_row = end_row;
   }
