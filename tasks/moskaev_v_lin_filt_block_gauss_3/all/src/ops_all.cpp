@@ -91,7 +91,7 @@ void CopyProcessedBlockToOutput(const std::vector<uint8_t> &processed_block, std
     for (int col = 0; col < current_block_width; ++col) {
       for (int channel = 0; channel < channels; ++channel) {
         int src_idx = (((row * current_block_width) + col) * channels) + channel;
-        int dst_row = output_start_row + (block_y + row);
+        int dst_row = output_start_row + block_y + row;
         int dst_idx = ((dst_row * width) + (block_x + col)) * channels + channel;
         output_image[dst_idx] = processed_block[src_idx];
       }
@@ -173,13 +173,27 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
     return false;
   }
 
-  block_size_ = 64;
+  block_size_ = 256;
   int block_size = block_size_;
 
   std::vector<uint8_t> local_image;
   BroadcastImage(rank_, image_data, local_image);
 
   int blocks_y = (height + block_size - 1) / block_size;
+
+  if (blocks_y <= rank_) {
+    if (rank_ == 0) {
+      GetOutput().resize(static_cast<size_t>(width) * height * channels);
+      int blocks_x = (width + block_size - 1) / block_size;
+      for (int by = 0; by < blocks_y; ++by) {
+        for (int bx = 0; bx < blocks_x; ++bx) {
+          ProcessSingleBlock(local_image, GetOutput(), width, height, channels, block_size, bx, by, 0);
+        }
+      }
+    }
+    return true;
+  }
+
   int blocks_per_proc = blocks_y / num_procs_;
   int remainder = blocks_y % num_procs_;
 
@@ -204,6 +218,10 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
       int p_end_row = std::min(p_end * block_size, height);
       size_t p_size = static_cast<size_t>(width) * (p_end_row - p_start_row) * channels;
 
+      if (p_size == 0) {
+        continue;
+      }
+
       std::vector<uint8_t> proc_data;
       ReceiveResults(proc, proc_data, p_size);
 
@@ -211,11 +229,14 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
       std::copy(proc_data.begin(), proc_data.end(), GetOutput().begin() + dst_offset);
     }
   } else {
+    if (local_size == 0) {
+      return true;
+    }
+
     std::vector<uint8_t> local_output(local_size);
     ProcessBlockRange(local_image, local_output, width, height, channels, block_size, start_block_y, end_block_y,
                       start_row);
     SendResults(0, local_output, local_size);
-    GetOutput().clear();
   }
 
   return true;
