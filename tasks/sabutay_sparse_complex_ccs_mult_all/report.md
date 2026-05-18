@@ -179,11 +179,89 @@ build\bin\ppc_perf_tests.exe --gtest_filter="*sabutay_sparse_complex_ccs_mult_al
 ## 9. Источники
 
 1. Материалы курса «Параллельное программирование», репозиторий [ppc-2026-threads][repo-ppc].
-2. Структура задачи `tasks/example_threads` в том же репозитории.
+2. Методическое руководство по отчётам и структура `tasks/example_threads` в том же репозитории.
 3. [OpenMP](https://www.openmp.org/) — директивы `parallel`, `for`.
 4. [oneTBB][onetbb-doc] — `parallel_for`, `blocked_range`.
 5. [MPI Forum](https://www.mpi-forum.org/) — `MPI_Comm_rank`, `MPI_Barrier`.
 6. [cppreference.com](https://en.cppreference.com/) — `std::thread`, контейнеры STL.
+
+## 10. Приложение
+
+### Структура задачи
+
+Каталог задачи построен по минимальному каркасу курса (как в `example_threads`).
+
+```text
+tasks/sabutay_sparse_complex_ccs_mult_all/
+  report.md                      # обязательный корневой сводный отчёт
+  info.json                      # сведения о студенте
+  settings.json                  # включённые технологии
+  common/
+    include/common.hpp           # InType, OutType, TestType, BaseTask
+  seq/
+    include/ops_seq.hpp
+    src/ops_seq.cpp
+    report.md                    # локальный отчёт по SEQ
+  omp/
+    include/ops_omp.hpp
+    src/ops_omp.cpp
+    report.md                    # локальный отчёт по OMP
+  tbb/
+    include/ops_tbb.hpp
+    src/ops_tbb.cpp
+    report.md                    # локальный отчёт по TBB
+  stl/
+    include/ops_stl.hpp
+    src/ops_stl.cpp
+    report.md                    # локальный отчёт по std::thread
+  all/
+    include/ops_all.hpp
+    src/ops_all.cpp
+    report.md                    # локальный отчёт по гибридной версии
+  tests/
+    functional/main.cpp
+    performance/main.cpp
+  data/                          # опционально (в задаче не используется)
+  img/                           # опционально (графики в отчётах — таблицы)
+```
+
+В `common/include/common.hpp` заданы тип `CCS` и типы задачи `InType`, `OutType`, `BaseTask`. В каждом каталоге `seq/`, `omp/`, `tbb/`, `stl/`, `all/` — класс-наследник `BaseTask` со своим `TypeOfTask` и методами `ValidationImpl`, `PreProcessingImpl`, `RunImpl`, `PostProcessingImpl`.
+
+`tests/functional/main.cpp` — один набор из трёх тестовых случаев (`case_id` 0, 1, 2) для всех backend-ов; эталон — умножение через плотные матрицы. `tests/performance/main.cpp` — общий каркас курса (`BaseRunPerfTests`, `MakeAllPerfTasks`), режимы `task_run` и `pipeline`.
+
+Каталог `all/` — гибридная версия: `MPI_Comm_rank`, ветвление по рангу, `MPI_Barrier`, а также демонстрационные фрагменты OpenMP, `std::thread` и oneTBB в `RunImpl` (подробнее — [all/report.md](all/report.md)).
+
+### Связь отчётов
+
+```mermaid
+flowchart TD
+    ROOT["tasks/sabutay_sparse_complex_ccs_mult_all/report.md<br/>Сводный отчёт"] --> SEQ["seq/report.md"]
+    ROOT --> OMP["omp/report.md"]
+    ROOT --> TBB["tbb/report.md"]
+    ROOT --> STL["stl/report.md"]
+    ROOT --> ALL["all/report.md"]
+
+    ROOT --> TESTS["tests/functional + tests/performance"]
+    ROOT --> COMMON["common/include/common.hpp"]
+    ROOT --> META["info.json + settings.json"]
+```
+
+### Короткий листинг: типы входа и выхода
+
+```cpp
+// File: common/include/common.hpp
+struct CCS {
+  int row_count{0};
+  int col_count{0};
+  std::vector<int> col_start;
+  std::vector<int> row_index;
+  std::vector<std::complex<double>> nz;
+};
+
+using InType = std::tuple<CCS, CCS>;
+using OutType = CCS;
+using BaseTask = ppc::task::Task<InType, OutType>;
+```
 
 [repo-ppc]: https://github.com/learning-process/ppc-2026-threads
 [onetbb-doc]: https://github.com/uxlfoundation/oneTBB
