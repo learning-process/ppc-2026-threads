@@ -1,10 +1,15 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <chrono>
 #include <vector>
 
 #include "borunov_v_complex_ccs/common/include/common.hpp"
+#include "borunov_v_complex_ccs/omp/include/ops_omp.hpp"
 #include "borunov_v_complex_ccs/seq/include/ops_seq.hpp"
+#include "borunov_v_complex_ccs/stl/include/ops_stl.hpp"
+#include "borunov_v_complex_ccs/tbb/include/ops_tbb.hpp"
+#include "performance/include/performance.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace borunov_v_complex_ccs {
@@ -52,6 +57,15 @@ class BorunovVRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, Ou
   InType GetTestInputData() final {
     return input_data_;
   }
+
+  void SetPerfAttributes(ppc::performance::PerfAttr &perf_attrs) override {
+    const auto t0 = std::chrono::high_resolution_clock::now();
+    perf_attrs.current_timer = [t0] {
+      const auto now = std::chrono::high_resolution_clock::now();
+      const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now - t0).count();
+      return static_cast<double>(ns) * 1e-9;
+    };
+  }
 };
 
 TEST_P(BorunovVRunPerfTestThreads, RunPerfModes) {
@@ -61,7 +75,8 @@ TEST_P(BorunovVRunPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, BorunovVComplexCcsSEQ>(PPC_SETTINGS_borunov_v_complex_ccs);
+    ppc::util::MakeAllPerfTasks<InType, BorunovVComplexCcsOMP, BorunovVComplexCcsSEQ, BorunovVComplexCcsTBB,
+                                BorunovVComplexCcsSTL>(PPC_SETTINGS_borunov_v_complex_ccs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

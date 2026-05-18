@@ -11,6 +11,8 @@
 #include "chernykh_s_trapezoidal_integration/common/include/common.hpp"
 #include "chernykh_s_trapezoidal_integration/omp/include/ops_omp.hpp"
 #include "chernykh_s_trapezoidal_integration/seq/include/ops_seq.hpp"
+#include "chernykh_s_trapezoidal_integration/stl/include/ops_stl.hpp"
+#include "chernykh_s_trapezoidal_integration/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -75,6 +77,10 @@ const std::array<TestType, 6> kTestParam = {
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ChernykhSTrapezoidalIntegrationSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_chernykh_s_trapezoidal_integration),
                                            ppc::util::AddFuncTask<ChernykhSTrapezoidalIntegrationOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_chernykh_s_trapezoidal_integration),
+                                           ppc::util::AddFuncTask<ChernykhSTrapezoidalIntegrationTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_chernykh_s_trapezoidal_integration),
+                                           ppc::util::AddFuncTask<ChernykhSTrapezoidalIntegrationSTL, InType>(
                                                kTestParam, PPC_SETTINGS_chernykh_s_trapezoidal_integration));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

@@ -6,7 +6,10 @@
 #include <tuple>
 
 #include "ovchinnikov_m_shell_sort_batcher_merge/common/include/common.hpp"
+#include "ovchinnikov_m_shell_sort_batcher_merge/omp/include/ops_omp.hpp"
 #include "ovchinnikov_m_shell_sort_batcher_merge/seq/include/ops_seq.hpp"
+#include "ovchinnikov_m_shell_sort_batcher_merge/stl/include/ops_stl.hpp"
+#include "ovchinnikov_m_shell_sort_batcher_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -52,7 +55,13 @@ const std::array<TestType, 8> kTestParam = {
     TestType{{9, 0, 8, 1, 7, 2, 6, 3}, {0, 1, 2, 3, 6, 7, 8, 9}, "EvenOddLength"}};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<OvchinnikovMShellSortBatcherMergeSEQ, InType>(
-    kTestParam, PPC_SETTINGS_ovchinnikov_m_shell_sort_batcher_merge));
+                                               kTestParam, PPC_SETTINGS_ovchinnikov_m_shell_sort_batcher_merge),
+                                           ppc::util::AddFuncTask<OvchinnikovMShellSortBatcherMergeOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_ovchinnikov_m_shell_sort_batcher_merge),
+                                           ppc::util::AddFuncTask<OvchinnikovMShellSortBatcherMergeSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_ovchinnikov_m_shell_sort_batcher_merge),
+                                           ppc::util::AddFuncTask<OvchinnikovMShellSortBatcherMergeTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_ovchinnikov_m_shell_sort_batcher_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

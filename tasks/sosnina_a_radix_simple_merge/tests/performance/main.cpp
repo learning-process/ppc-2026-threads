@@ -4,9 +4,11 @@
 #include <cstddef>
 #include <random>
 
+#include "sosnina_a_radix_simple_merge/all/include/ops_all.hpp"
 #include "sosnina_a_radix_simple_merge/common/include/common.hpp"
 #include "sosnina_a_radix_simple_merge/omp/include/ops_omp.hpp"
 #include "sosnina_a_radix_simple_merge/seq/include/ops_seq.hpp"
+#include "sosnina_a_radix_simple_merge/stl/include/ops_stl.hpp"
 #include "sosnina_a_radix_simple_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -46,8 +48,8 @@ TEST_P(SosninaARunPerfTestRadixSort, RunPerfRadixSort) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, SosninaATestTaskSEQ, SosninaATestTaskOMP, SosninaATestTaskTBB>(
-        PPC_SETTINGS_sosnina_a_radix_simple_merge);
+    ppc::util::MakeAllPerfTasks<InType, SosninaATestTaskSEQ, SosninaATestTaskOMP, SosninaATestTaskSTL,
+                                SosninaATestTaskTBB, SosninaATestTaskALL>(PPC_SETTINGS_sosnina_a_radix_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

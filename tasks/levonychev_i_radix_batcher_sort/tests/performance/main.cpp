@@ -3,9 +3,12 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "levonychev_i_radix_batcher_sort/all/include/ops_all.hpp"
 #include "levonychev_i_radix_batcher_sort/common/include/common.hpp"
 #include "levonychev_i_radix_batcher_sort/omp/include/ops_omp.hpp"
 #include "levonychev_i_radix_batcher_sort/seq/include/ops_seq.hpp"
+#include "levonychev_i_radix_batcher_sort/stl/include/ops_stl.hpp"
+#include "levonychev_i_radix_batcher_sort/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace levonychev_i_radix_batcher_sort {
@@ -49,8 +52,9 @@ TEST_P(LevonychevIRadixBatcherSortRunPerfTestsThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, LevonychevIRadixBatcherSortSEQ, LevonychevIRadixBatcherSortOMP>(
-        PPC_SETTINGS_levonychev_i_radix_batcher_sort);
+    ppc::util::MakeAllPerfTasks<InType, LevonychevIRadixBatcherSortSEQ, LevonychevIRadixBatcherSortOMP,
+                                LevonychevIRadixBatcherSortTBB, LevonychevIRadixBatcherSortSTL,
+                                LevonychevIRadixBatcherSortALL>(PPC_SETTINGS_levonychev_i_radix_batcher_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
