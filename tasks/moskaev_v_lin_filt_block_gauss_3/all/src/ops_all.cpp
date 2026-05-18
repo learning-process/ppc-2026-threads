@@ -15,10 +15,8 @@ namespace moskaev_v_lin_filt_block_gauss_3 {
 
 namespace {
 
-void CopyBlockWithHalo(const std::vector<uint8_t> &src, std::vector<uint8_t> &dst,
-                       int src_width, int src_height, int channels,
-                       int block_x, int block_y, int block_w, int block_h,
-                       int padded_w) {
+void CopyBlockWithHalo(const std::vector<uint8_t> &src, std::vector<uint8_t> &dst, int src_width, int src_height,
+                       int channels, int block_x, int block_y, int block_w, int block_h, int padded_w) {
   for (int row = -1; row <= block_h; ++row) {
     for (int col = -1; col <= block_w; ++col) {
       int src_row = std::clamp(block_y + row, 0, src_height - 1);
@@ -34,8 +32,8 @@ void CopyBlockWithHalo(const std::vector<uint8_t> &src, std::vector<uint8_t> &ds
   }
 }
 
-void FilterBlock(const std::vector<uint8_t> &input_block, std::vector<uint8_t> &output_block,
-                 int block_w, int block_h, int channels) {
+void FilterBlock(const std::vector<uint8_t> &input_block, std::vector<uint8_t> &output_block, int block_w, int block_h,
+                 int channels) {
   for (int row = 0; row < block_h; ++row) {
     for (int col = 0; col < block_w; ++col) {
       for (int ch = 0; ch < channels; ++ch) {
@@ -56,8 +54,7 @@ void FilterBlock(const std::vector<uint8_t> &input_block, std::vector<uint8_t> &
   }
 }
 
-void CopyBlockToOutput(const std::vector<uint8_t> &src_block, std::vector<uint8_t> &dst,
-                       int dst_width, int channels,
+void CopyBlockToOutput(const std::vector<uint8_t> &src_block, std::vector<uint8_t> &dst, int dst_width, int channels,
                        int block_x, int block_y, int block_w, int block_h) {
   for (int row = 0; row < block_h; ++row) {
     for (int col = 0; col < block_w; ++col) {
@@ -70,7 +67,7 @@ void CopyBlockToOutput(const std::vector<uint8_t> &src_block, std::vector<uint8_
   }
 }
 
-}
+}  // namespace
 
 MoskaevVLinFiltBlockGauss3ALL::MoskaevVLinFiltBlockGauss3ALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -82,7 +79,9 @@ MoskaevVLinFiltBlockGauss3ALL::MoskaevVLinFiltBlockGauss3ALL(const InType &in) {
 
 bool MoskaevVLinFiltBlockGauss3ALL::ValidationImpl() {
   const auto &input = GetInput();
-  if (rank_ != 0) return true;
+  if (rank_ != 0) {
+    return true;
+  }
   const auto &data = std::get<4>(input);
   return !data.empty();
 }
@@ -98,7 +97,7 @@ bool MoskaevVLinFiltBlockGauss3ALL::PostProcessingImpl() {
 bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
   int width = 0, height = 0, channels = 0;
   std::vector<uint8_t> image_data;
-  
+
   if (rank_ == 0) {
     const auto &input = GetInput();
     width = std::get<0>(input);
@@ -106,30 +105,34 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
     channels = std::get<2>(input);
     image_data = std::get<4>(input);
   }
-  
+
   MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&height, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&channels, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  
-  if (width == 0 || height == 0) return false;
-  
+
+  if (width == 0 || height == 0) {
+    return false;
+  }
+
   size_t total_pixels = static_cast<size_t>(width) * height * channels;
   image_data.resize(total_pixels);
   MPI_Bcast(image_data.data(), static_cast<int>(total_pixels), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
-  
+
   int blocks_x = (width + block_size_ - 1) / block_size_;
   int blocks_y = (height + block_size_ - 1) / block_size_;
   int total_blocks = blocks_x * blocks_y;
-  
+
   int blocks_per_proc = total_blocks / num_procs_;
   int remainder = total_blocks % num_procs_;
   int local_blocks = blocks_per_proc + (rank_ < remainder ? 1 : 0);
-  
+
   std::vector<uint8_t> output(total_pixels, 0);
-  
+
   std::vector<int> block_indices(total_blocks);
-  for (int i = 0; i < total_blocks; ++i) block_indices[i] = i;
-  
+  for (int i = 0; i < total_blocks; ++i) {
+    block_indices[i] = i;
+  }
+
   std::vector<int> send_counts(num_procs_), send_displs(num_procs_);
   int offset = 0;
   for (int p = 0; p < num_procs_; ++p) {
@@ -138,48 +141,45 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
     send_displs[p] = offset;
     offset += cnt;
   }
-  
+
   std::vector<int> local_indices(local_blocks);
-  MPI_Scatterv(block_indices.data(), send_counts.data(), send_displs.data(), MPI_INT,
-               local_indices.data(), local_blocks, MPI_INT, 0, MPI_COMM_WORLD);
-  
+  MPI_Scatterv(block_indices.data(), send_counts.data(), send_displs.data(), MPI_INT, local_indices.data(),
+               local_blocks, MPI_INT, 0, MPI_COMM_WORLD);
+
   for (int idx : local_indices) {
     int bx = idx % blocks_x;
     int by = idx / blocks_x;
-    
+
     int block_x = bx * block_size_;
     int block_y = by * block_size_;
     int block_w = std::min(block_size_, width - block_x);
     int block_h = std::min(block_size_, height - block_y);
-    
+
     int padded_w = block_w + 2;
-    
+
     std::vector<uint8_t> input_block(padded_w * (block_h + 2) * channels, 0);
     std::vector<uint8_t> output_block(block_w * block_h * channels, 0);
-    
-    CopyBlockWithHalo(image_data, input_block, width, height, channels,
-                      block_x, block_y, block_w, block_h, padded_w);
+
+    CopyBlockWithHalo(image_data, input_block, width, height, channels, block_x, block_y, block_w, block_h, padded_w);
     FilterBlock(input_block, output_block, block_w, block_h, channels);
-    CopyBlockToOutput(output_block, output, width, channels,
-                      block_x, block_y, block_w, block_h);
+    CopyBlockToOutput(output_block, output, width, channels, block_x, block_y, block_w, block_h);
   }
-  
+
   std::vector<uint8_t> final_output;
   if (rank_ == 0) {
     final_output.resize(total_pixels);
   }
-  
-  MPI_Reduce(output.data(), final_output.data(), static_cast<int>(total_pixels),
-             MPI_UNSIGNED_CHAR, MPI_BOR, 0, MPI_COMM_WORLD);
-  
+
+  MPI_Reduce(output.data(), final_output.data(), static_cast<int>(total_pixels), MPI_UNSIGNED_CHAR, MPI_BOR, 0,
+             MPI_COMM_WORLD);
+
   if (rank_ == 0) {
     GetOutput() = std::move(final_output);
   }
-  
-  MPI_Bcast(GetOutput().data(), static_cast<int>(GetOutput().size()),
-            MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
-  
+
+  MPI_Bcast(GetOutput().data(), static_cast<int>(GetOutput().size()), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+
   return true;
 }
 
-}
+}  // namespace moskaev_v_lin_filt_block_gauss_3
