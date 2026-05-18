@@ -6,6 +6,7 @@
 #include "kosolapov_v_calc_mult_integrals_m_rectangles/common/include/common.hpp"
 #include "kosolapov_v_calc_mult_integrals_m_rectangles/omp/include/ops_omp.hpp"
 #include "kosolapov_v_calc_mult_integrals_m_rectangles/seq/include/ops_seq.hpp"
+#include "kosolapov_v_calc_mult_integrals_m_rectangles/stl/include/ops_stl.hpp"
 #include "kosolapov_v_calc_mult_integrals_m_rectangles/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -35,7 +36,8 @@ TEST_P(KosolapovVCalcMultIntegralsMRectanglesPerfTestProcesses, RunPerfModes) {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, KosolapovVCalcMultIntegralsMRectanglesSEQ,
-                                KosolapovVCalcMultIntegralsMRectanglesOMP, KosolapovVCalcMultIntegralsMRectanglesTBB>(
+                                KosolapovVCalcMultIntegralsMRectanglesOMP, KosolapovVCalcMultIntegralsMRectanglesTBB,
+                                KosolapovVCalcMultIntegralsMRectanglesSTL>(
         PPC_SETTINGS_kosolapov_v_calc_mult_integrals_m_rectangles);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

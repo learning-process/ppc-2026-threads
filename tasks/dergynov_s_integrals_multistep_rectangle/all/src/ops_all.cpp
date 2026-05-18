@@ -189,8 +189,10 @@ double ComputeSTL(const std::function<double(const std::vector<double> &)> &func
   return total_sum;
 }
 
-double ComputeALL(const std::function<double(const std::vector<double> &)> &function,
-                  const std::vector<std::pair<double, double>> &limits, int steps_count, int dimensions) {
+// Returns false when backend results disagree; true and *out_value set on success (including zero).
+bool ComputeALL(const std::function<double(const std::vector<double> &)> &function,
+                const std::vector<std::pair<double, double>> &limits, int steps_count, int dimensions,
+                double *out_value) {
   std::vector<double> step_sizes(dimensions);
   double cell_volume = 1.0;
 
@@ -218,10 +220,11 @@ double ComputeALL(const std::function<double(const std::vector<double> &)> &func
   }
 
   if (!results_match) {
-    return 0.0;
+    return false;
   }
 
-  return tbb_result * cell_volume;
+  *out_value = tbb_result * cell_volume;
+  return true;
 }
 
 }  // namespace
@@ -260,9 +263,8 @@ bool DergynovSIntegralsMultistepRectangleALL::RunImpl() {
   const int step_count = std::get<2>(input_data);
   const int total_dimensions = static_cast<int>(integration_limits.size());
 
-  double final_result = ComputeALL(target_function, integration_limits, step_count, total_dimensions);
-
-  if (final_result == 0.0) {
+  double final_result = 0.0;
+  if (!ComputeALL(target_function, integration_limits, step_count, total_dimensions, &final_result)) {
     return false;
   }
 

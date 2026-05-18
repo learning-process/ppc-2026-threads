@@ -7,6 +7,7 @@
 #include <tuple>
 #include <vector>
 
+#include "tabalaev_a_matrix_mul_strassen/all/include/ops_all.hpp"
 #include "tabalaev_a_matrix_mul_strassen/common/include/common.hpp"
 #include "tabalaev_a_matrix_mul_strassen/omp/include/ops_omp.hpp"
 #include "tabalaev_a_matrix_mul_strassen/seq/include/ops_seq.hpp"
@@ -97,6 +98,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<TabalaevAMatri
                                            ppc::util::AddFuncTask<TabalaevAMatrixMulStrassenTBB, InType>(
                                                kTestParam, PPC_SETTINGS_tabalaev_a_matrix_mul_strassen),
                                            ppc::util::AddFuncTask<TabalaevAMatrixMulStrassenSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_tabalaev_a_matrix_mul_strassen),
+                                           ppc::util::AddFuncTask<TabalaevAMatrixMulStrassenALL, InType>(
                                                kTestParam, PPC_SETTINGS_tabalaev_a_matrix_mul_strassen));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

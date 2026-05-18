@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <vector>
 
+#include "shkenev_i_constra_hull_for_binary_image/all/include/ops_all.hpp"
 #include "shkenev_i_constra_hull_for_binary_image/common/include/common.hpp"
 #include "shkenev_i_constra_hull_for_binary_image/omp/include/ops_omp.hpp"
 #include "shkenev_i_constra_hull_for_binary_image/seq/include/ops_seq.hpp"
@@ -49,7 +50,8 @@ namespace {
 
 const auto kPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ShkenevIConstrHullSeq, ShkenevIConstrHullOMP, ShkenevIConstrHullTBB,
-                                ShkenevIConstrHullSTL>(PPC_SETTINGS_shkenev_i_constra_hull_for_binary_image);
+                                ShkenevIConstrHullSTL, ShkenevIConstrHullALL>(
+        PPC_SETTINGS_shkenev_i_constra_hull_for_binary_image);
 
 const auto kValues = ppc::util::TupleToGTestValues(kPerfTasks);
 
