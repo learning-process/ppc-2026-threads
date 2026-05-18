@@ -98,7 +98,7 @@ int MarkingComponentsALL::FindRoot(std::vector<int> &parent, int label) {
     root = parent[static_cast<size_t>(root)];
   }
 
-  // Сжатие пути
+  // Path compression
   int current = label;
   while (current != root) {
     int next = parent[static_cast<size_t>(current)];
@@ -112,7 +112,6 @@ void MarkingComponentsALL::UnionLabels(std::vector<int> &parent, int label1, int
   int root1 = FindRoot(parent, label1);
   int root2 = FindRoot(parent, label2);
   if (root1 != root2) {
-    // Всегда объединяем больший корень с меньшим
     if (root1 < root2) {
       parent[static_cast<size_t>(root2)] = root1;
     } else {
@@ -130,12 +129,10 @@ void MarkingComponentsALL::FirstPass() {
     for (int j = 0; j < cols_; ++j) {
       size_t idx = (static_cast<size_t>(i) * static_cast<size_t>(cols_)) + static_cast<size_t>(j) + 2;
 
-      // Пропускаем фон (255)
       if (input[idx] == 255) {
         continue;
       }
 
-      // Собираем метки соседей
       std::vector<int> neighbor_labels;
       for (const auto &offset : neighbors) {
         NeighborInfo info = GetNeighborInfo(i, j, rows_, cols_, labels_, offset);
@@ -145,16 +142,13 @@ void MarkingComponentsALL::FirstPass() {
       }
 
       if (neighbor_labels.empty()) {
-        // Нет соседей - новая метка
         labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = next_label;
         equivalent_labels_.push_back(next_label);
         ++next_label;
       } else {
-        // Находим минимальную метку среди соседей
         int min_label = *std::min_element(neighbor_labels.begin(), neighbor_labels.end());
         labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = min_label;
 
-        // Объединяем все метки соседей
         for (int label : neighbor_labels) {
           if (label != min_label) {
             UnionLabels(equivalent_labels_, label, min_label);
@@ -166,7 +160,6 @@ void MarkingComponentsALL::FirstPass() {
 }
 
 void MarkingComponentsALL::SecondPass() {
-  // Первый проход: заменяем каждую метку на её корень
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
       if (labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] != 0) {
@@ -176,7 +169,6 @@ void MarkingComponentsALL::SecondPass() {
     }
   }
 
-  // Создаём последовательную нумерацию меток
   std::map<int, int> label_remap;
   int current_label = 1;
 
@@ -192,7 +184,6 @@ void MarkingComponentsALL::SecondPass() {
     }
   }
 
-  // Применяем пере映射
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
       int label = labels_[static_cast<size_t>(i)][static_cast<size_t>(j)];
