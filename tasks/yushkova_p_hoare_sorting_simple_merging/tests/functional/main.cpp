@@ -4,8 +4,6 @@
 #include <array>
 #include <cstddef>
 #include <functional>
-#include <numeric>
-#include <ranges>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -77,17 +75,24 @@ const std::array<TestType, 17> kTestParam = {
     std::make_tuple(std::vector<int>(64, 7), "one_block_equal"),
     std::make_tuple([] {
       std::vector<int> values(64);
-      std::ranges::iota(values, 0);
+      for (std::size_t i = 0; i < values.size(); ++i) {
+        values[i] = static_cast<int>(i);
+      }
       return values;
     }(), "one_block_sorted"),
     std::make_tuple([] {
       std::vector<int> values(64);
-      std::ranges::iota(std::views::reverse(values), 0);
+      for (std::size_t i = 0; i < values.size(); ++i) {
+        values[i] = static_cast<int>(i);
+      }
+      std::ranges::reverse(values);
       return values;
     }(), "one_block_reverse"),
     std::make_tuple([] {
       std::vector<int> values(65);
-      std::ranges::iota(values, -32);
+      for (std::size_t i = 0; i < values.size(); ++i) {
+        values[i] = static_cast<int>(i) - 32;
+      }
       return values;
     }(), "crosses_block_65"),
     std::make_tuple([] {
