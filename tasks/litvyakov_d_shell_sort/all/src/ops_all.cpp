@@ -42,6 +42,28 @@ std::vector<std::size_t> LitvyakovDShellSortALL::GetBounds(std::size_t n, std::s
   return bounds;
 }
 
+void LitvyakovDShellSortALL::ShellSortMerge(std::vector<int> &vec) {
+  if (vec.empty()) {
+    return;
+  }
+  const std::size_t threads = std::max(1, omp_get_max_threads());
+  const std::size_t parts_count = std::min<std::size_t>(threads, vec.size());
+  const auto bounds = GetBounds(vec.size(), parts_count);
+  int parts_count_t = static_cast<int>(parts_count);
+
+#pragma omp parallel for default(none) shared(vec, bounds, parts_count_t) schedule(static)
+  for (int i = 0; i < parts_count_t; ++i) {
+    const std::size_t l = bounds[i];
+    const std::size_t r = bounds[i + 1];
+    BaseShellSort(vec.begin() + static_cast<std::ptrdiff_t>(l), vec.begin() + static_cast<std::ptrdiff_t>(r));
+  }
+
+  for (std::size_t i = 1; i < parts_count; ++i) {
+    std::inplace_merge(vec.begin(), vec.begin() + static_cast<std::ptrdiff_t>(bounds[i]),
+                       vec.begin() + static_cast<std::ptrdiff_t>(bounds[i + 1]));
+  }
+}
+
 LitvyakovDShellSortALL::LitvyakovDShellSortALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
 
@@ -113,28 +135,7 @@ bool LitvyakovDShellSortALL::RunImpl() {
   MPI_Scatterv(world_rank == 0 ? vec.data() : nullptr, sendcounts.data(), displs.data(), MPI_INT, local_vec.data(),
                sendcounts[world_rank], MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (!local_vec.empty()) {
-    const std::size_t threads = std::max(1, omp_get_max_threads());
-    const std::size_t parts_count = std::min<std::size_t>(threads, local_vec.size());
-    const auto bounds = GetBounds(local_vec.size(), parts_count);
-    int parts_count_t = static_cast<int>(parts_count);
-
-#pragma omp parallel for default(none) shared(local_vec, bounds, parts_count_t) schedule(static)
-    for (int i = 0; i < parts_count_t; ++i) {
-      const std::size_t l = bounds[i];
-      const std::size_t r = bounds[i + 1];
-      BaseShellSort(local_vec.begin() + static_cast<std::ptrdiff_t>(l),
-                    local_vec.begin() + static_cast<std::ptrdiff_t>(r));
-    }
-
-    // cppreference.com:
-    //  void inplace_merge( BidirIt first, BidirIt middle, BidirIt last ),
-    //  Merges two consecutive sorted ranges [first, middle) and [middle, last) into one sorted range [first, last).
-    for (std::size_t i = 1; i < parts_count; ++i) {
-      std::inplace_merge(local_vec.begin(), local_vec.begin() + static_cast<std::ptrdiff_t>(bounds[i]),
-                         local_vec.begin() + static_cast<std::ptrdiff_t>(bounds[i + 1]));
-    }
-  }
+  ShellSortMerge(local_vec);
 
   MPI_Gatherv(local_vec.data(), sendcounts[world_rank], MPI_INT, world_rank == 0 ? vec.data() : nullptr,
               sendcounts.data(), displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
@@ -142,8 +143,9 @@ bool LitvyakovDShellSortALL::RunImpl() {
   if (world_rank == 0) {
     for (int i = 1; i < world_size; ++i) {
       if (sendcounts[i] > 0) {
-        std::inplace_merge(vec.begin(), vec.begin() + static_cast<std::ptrdiff_t>(displs[i]),
-                           vec.begin() + static_cast<std::ptrdiff_t>(displs[i] + sendcounts[i]));
+        std::inplace_merge(
+            vec.begin(), vec.begin() + static_cast<std::ptrdiff_t>(displs[i]),
+            vec.begin() + static_cast<std::ptrdiff_t>(displs[i]) + static_cast<std::ptrdiff_t>(sendcounts[i]));
       }
     }
   }
