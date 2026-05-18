@@ -7,6 +7,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "pikhotskiy_r_vertical_gauss_filter/common/include/common.hpp"
+
 namespace pikhotskiy_r_vertical_gauss_filter {
 
 namespace {
