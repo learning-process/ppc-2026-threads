@@ -47,9 +47,8 @@ bool IvanovaPMarkingComponentsOnBinaryImageSTL::ValidationImpl() {
       }
       test_image = LoadImageFromTxt(filename);
     } else {
-      const int width = 500;
-      const int height = 500;
-      test_image = CreateTestImage(width, height, test_case);
+      int size = ExtractImageSize(test_case);
+      test_image = CreateTestImage(size, size, test_case);
     }
   }
 
@@ -87,9 +86,8 @@ bool IvanovaPMarkingComponentsOnBinaryImageSTL::PreProcessingImpl() {
       }
       test_image = LoadImageFromTxt(filename);
     } else {
-      const int width = 500;
-      const int height = 500;
-      test_image = CreateTestImage(width, height, test_case);
+      int size = ExtractImageSize(test_case);
+      test_image = CreateTestImage(size, size, test_case);
     }
   }
 
@@ -188,50 +186,25 @@ void IvanovaPMarkingComponentsOnBinaryImageSTL::ProcessStripePixelStl(int xx, in
   }
 }
 
-void IvanovaPMarkingComponentsOnBinaryImageSTL::FirstPass() {
-  int num_threads = ppc::util::GetNumThreads();
-  int rows_per_thread = (height_ + num_threads - 1) / num_threads;
-  int total_pixels = width_ * height_;
-
-  // Локальные DSU переведены на векторы
-  std::vector<std::vector<int>> local_parents(num_threads);
-  std::vector<int> local_labels(num_threads, 0);
-  std::vector<std::thread> threads;
-
-  threads.reserve(static_cast<size_t>(num_threads));
-  // Фаза 1: Параллельная обработка полос через стандартные потоки
-  for (int thread_id = 0; thread_id < num_threads; ++thread_id) {
-    threads.emplace_back(
-        [this, thread_id, rows_per_thread, &local_parents, &local_labels, num_threads, total_pixels]() {
-      int start_row = thread_id * rows_per_thread;
-      int end_row = std::min(start_row + rows_per_thread, height_);
-      if (start_row >= height_) {
-        return;
-      }
-
-      int max_possible_labels = (num_threads * total_pixels) + 1;
-      local_parents[thread_id].resize(static_cast<size_t>(max_possible_labels));
-      for (int i = 0; i < max_possible_labels; ++i) {
-        local_parents[thread_id][static_cast<size_t>(i)] = i;
-      }
-
-      int &local_label = local_labels[static_cast<size_t>(thread_id)];
-      local_label = thread_id * total_pixels;
-
-      for (int yy = start_row; yy < end_row; ++yy) {
-        for (int xx = 0; xx < width_; ++xx) {
-          int idx = (yy * width_) + xx;
-          ProcessStripePixelStl(xx, yy, idx, start_row, local_parents[thread_id], local_label);
-        }
-      }
-    });
+void IvanovaPMarkingComponentsOnBinaryImageSTL::InitializeLocalParentStl(std::vector<int> &local_parent,
+                                                                         int max_labels) {
+  local_parent.resize(static_cast<size_t>(max_labels));
+  for (int i = 0; i < max_labels; ++i) {
+    local_parent[static_cast<size_t>(i)] = i;
   }
+}
 
-  for (auto &thread : threads) {
-    thread.join();
+void IvanovaPMarkingComponentsOnBinaryImageSTL::ProcessStripeStl(int start_row, int end_row,
+                                                                 std::vector<int> &local_parent, int &local_label) {
+  for (int yy = start_row; yy < end_row; ++yy) {
+    for (int xx = 0; xx < width_; ++xx) {
+      int idx = (yy * width_) + xx;
+      ProcessStripePixelStl(xx, yy, idx, start_row, local_parent, local_label);
+    }
   }
+}
 
-  // Фаза 2: Последовательное объединение смежных границ между полосами
+void IvanovaPMarkingComponentsOnBinaryImageSTL::MergeBoundariesStl(int num_threads, int rows_per_thread) {
   for (int thread_id = 0; thread_id < num_threads - 1; ++thread_id) {
     int boundary_row = (thread_id + 1) * rows_per_thread;
     if (boundary_row >= height_) {
@@ -250,8 +223,11 @@ void IvanovaPMarkingComponentsOnBinaryImageSTL::FirstPass() {
       }
     }
   }
+}
 
-  // Фаза 3: Перенос локальных отношений эквивалентности в глобальный вектор
+void IvanovaPMarkingComponentsOnBinaryImageSTL::MergeLocalParentsStl(const std::vector<std::vector<int>> &local_parents,
+                                                                     const std::vector<int> &local_labels,
+                                                                     int num_threads, int total_pixels) {
   for (int thread_id = 0; thread_id < num_threads; ++thread_id) {
     if (local_parents[static_cast<size_t>(thread_id)].empty()) {
       continue;
@@ -267,6 +243,47 @@ void IvanovaPMarkingComponentsOnBinaryImageSTL::FirstPass() {
       }
     }
   }
+}
+
+void IvanovaPMarkingComponentsOnBinaryImageSTL::FirstPass() {
+  int num_threads = ppc::util::GetNumThreads();
+  int rows_per_thread = (height_ + num_threads - 1) / num_threads;
+  int total_pixels = width_ * height_;
+
+  std::vector<std::vector<int>> local_parents(num_threads);
+  std::vector<int> local_labels(num_threads, 0);
+  std::vector<std::thread> threads;
+
+  threads.reserve(static_cast<size_t>(num_threads));
+  // Фаза 1: Параллельная обработка полос через стандартные потоки
+  for (int thread_id = 0; thread_id < num_threads; ++thread_id) {
+    threads.emplace_back(
+        [this, thread_id, rows_per_thread, &local_parents, &local_labels, num_threads, total_pixels]() {
+      int start_row = thread_id * rows_per_thread;
+      int end_row = std::min(start_row + rows_per_thread, height_);
+      if (start_row >= height_) {
+        return;
+      }
+
+      int max_possible_labels = (num_threads * total_pixels) + 1;
+      InitializeLocalParentStl(local_parents[thread_id], max_possible_labels);
+
+      int &local_label = local_labels[static_cast<size_t>(thread_id)];
+      local_label = thread_id * total_pixels;
+
+      ProcessStripeStl(start_row, end_row, local_parents[thread_id], local_label);
+    });
+  }
+
+  for (auto &thread : threads) {
+    thread.join();
+  }
+
+  // Фаза 2: Последовательное объединение смежных границ между полосами
+  MergeBoundariesStl(num_threads, rows_per_thread);
+
+  // Фаза 3: Перенос локальных отношений эквивалентности в глобальный вектор
+  MergeLocalParentsStl(local_parents, local_labels, num_threads, total_pixels);
 
   current_label_ = 0;
   for (int thread_id = 0; thread_id < num_threads; ++thread_id) {

@@ -18,7 +18,8 @@ class IvanovaPRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, O
   void SetUp() override {
     test_image = CreateTestImage(kSize_, kSize_, 8);  // Например, тест 8 с множеством компонент
 
-    input_data_ = 1;  // Произвольное положительное число
+    // Кодируем размер 500 и тип теста 8 для тестов производительности
+    input_data_ = EncodeTestCase(500, 8);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

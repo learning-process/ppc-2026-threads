@@ -45,6 +45,7 @@ class IvanovaPMarkingComponentsOnBinaryImageTBB : public BaseTask {
   void ProcessStripePixel(int xx, int yy, int idx, int start_row);
   int FindLocalRoot(int label);
   void UnionLocalRoots(int root1, int root2);
+  void MergeBoundariesTbb(int num_threads, int rows_per_thread);
 };
 
 }  // namespace ivanova_p_marking_components_on_binary_image

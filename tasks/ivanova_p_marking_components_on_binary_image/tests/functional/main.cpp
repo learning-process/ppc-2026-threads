@@ -126,13 +126,13 @@ class IvanovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
       }
       test_image = LoadImageFromTxt(filename);
     } else {
-      // Создаем тестовое изображение программно
-      const int width = 500;
-      const int height = 500;
-      test_image = CreateTestImage(width, height, current_test_case_);
+      // Создаем тестовое изображение программно с размером 100x100
+      const int size = 100;
+      test_image = CreateTestImage(size, size, current_test_case_);
     }
 
-    return current_test_case_;
+    // Возвращаем закодированный test_case с размером для функциональных тестов
+    return is_file_test_ ? current_test_case_ : EncodeTestCase(100, current_test_case_);
   }
 
  private:

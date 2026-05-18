@@ -45,10 +45,8 @@ bool IvanovaPMarkingComponentsOnBinaryImageOMP::PreProcessingImpl() {
     }
     input_image_ = LoadImageFromTxt(filename);
   } else {
-    // Функциональные тесты создают изображения размера 100x100.
-    const int width = 500;
-    const int height = 500;
-    input_image_ = CreateTestImage(width, height, test_case);
+    int size = ExtractImageSize(test_case);
+    input_image_ = CreateTestImage(size, size, test_case);
   }
 
   if (input_image_.width <= 0 || input_image_.height <= 0 || input_image_.data.empty()) {

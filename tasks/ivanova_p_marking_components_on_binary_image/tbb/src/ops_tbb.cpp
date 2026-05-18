@@ -45,7 +45,8 @@ bool IvanovaPMarkingComponentsOnBinaryImageTBB::ValidationImpl() {
       }
       test_image = LoadImageFromTxt(filename);
     } else {
-      test_image = CreateTestImage(500, 500, test_case);
+      int size = ExtractImageSize(test_case);
+      test_image = CreateTestImage(size, size, test_case);
     }
   }
   return test_image.width > 0 && !test_image.data.empty();
@@ -159,6 +160,27 @@ void IvanovaPMarkingComponentsOnBinaryImageTBB::ProcessStripePixel(int xx, int y
   }
 }
 
+void IvanovaPMarkingComponentsOnBinaryImageTBB::MergeBoundariesTbb(int num_threads, int rows_per_thread) {
+  for (int thread_id = 0; thread_id < num_threads - 1; ++thread_id) {
+    int boundary_row = (thread_id + 1) * rows_per_thread;
+    if (boundary_row >= height_) {
+      continue;
+    }
+
+    for (int xx = 0; xx < width_; ++xx) {
+      int top_idx = ((boundary_row - 1) * width_) + xx;
+      int bottom_idx = (boundary_row * width_) + xx;
+
+      int top_label = labels_[top_idx];
+      int bottom_label = labels_[bottom_idx];
+
+      if (top_label != 0 && bottom_label != 0 && top_label != bottom_label) {
+        UnionLabels(top_label, bottom_label);
+      }
+    }
+  }
+}
+
 void IvanovaPMarkingComponentsOnBinaryImageTBB::FirstPass() {
   int num_threads = std::max(1, tbb::this_task_arena::max_concurrency());
   int rows_per_thread = (height_ + num_threads - 1) / num_threads;
@@ -180,24 +202,7 @@ void IvanovaPMarkingComponentsOnBinaryImageTBB::FirstPass() {
   });
 
   // Фаза 2: Быстрое последовательное объединение на стыках полос
-  for (int thread_id = 0; thread_id < num_threads - 1; ++thread_id) {
-    int boundary_row = (thread_id + 1) * rows_per_thread;
-    if (boundary_row >= height_) {
-      continue;
-    }
-
-    for (int xx = 0; xx < width_; ++xx) {
-      int top_idx = ((boundary_row - 1) * width_) + xx;
-      int bottom_idx = (boundary_row * width_) + xx;
-
-      int top_label = labels_[top_idx];
-      int bottom_label = labels_[bottom_idx];
-
-      if (top_label != 0 && bottom_label != 0 && top_label != bottom_label) {
-        UnionLabels(top_label, bottom_label);
-      }
-    }
-  }
+  MergeBoundariesTbb(num_threads, rows_per_thread);
 
   current_label_ = 1;
 }

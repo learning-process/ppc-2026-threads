@@ -48,9 +48,8 @@ bool IvanovaPMarkingComponentsOnBinaryImageALL::ValidationImpl() {
       }
       test_image = LoadImageFromTxt(filename);
     } else {
-      const int width = 500;
-      const int height = 500;
-      test_image = CreateTestImage(width, height, test_case);
+      int size = ExtractImageSize(test_case);
+      test_image = CreateTestImage(size, size, test_case);
     }
   }
 
@@ -88,9 +87,8 @@ bool IvanovaPMarkingComponentsOnBinaryImageALL::PreProcessingImpl() {
       }
       test_image = LoadImageFromTxt(filename);
     } else {
-      const int width = 500;
-      const int height = 500;
-      test_image = CreateTestImage(width, height, test_case);
+      int size = ExtractImageSize(test_case);
+      test_image = CreateTestImage(size, size, test_case);
     }
   }
 
@@ -192,42 +190,24 @@ void IvanovaPMarkingComponentsOnBinaryImageALL::ProcessStripePixelAll(int xx, in
   }
 }
 
-void IvanovaPMarkingComponentsOnBinaryImageALL::FirstPass() {
-  int num_threads = tbb::this_task_arena::max_concurrency();
-  int rows_per_thread = (height_ + num_threads - 1) / num_threads;
-  int total_pixels = width_ * height_;
+void IvanovaPMarkingComponentsOnBinaryImageALL::InitializeLocalParent(std::vector<int> &local_parent, int max_labels) {
+  local_parent.resize(static_cast<size_t>(max_labels));
+  for (int i = 0; i < max_labels; ++i) {
+    local_parent[static_cast<size_t>(i)] = i;
+  }
+}
 
-  // Локальные DSU для каждого потока теперь на векторах
-  std::vector<std::vector<int>> local_parents(static_cast<size_t>(num_threads));
-  std::vector<int> local_labels(static_cast<size_t>(num_threads), 0);
-
-  // Фаза 1: Параллельная обработка полос с TBB
-  tbb::parallel_for(0, num_threads, [&](int thread_id) {
-    int start_row = thread_id * rows_per_thread;
-    int end_row = std::min(start_row + rows_per_thread, height_);
-    if (start_row >= height_) {
-      return;
+void IvanovaPMarkingComponentsOnBinaryImageALL::ProcessStripe(int start_row, int end_row,
+                                                              std::vector<int> &local_parent, int &local_label) {
+  for (int yy = start_row; yy < end_row; ++yy) {
+    for (int xx = 0; xx < width_; ++xx) {
+      int idx = (yy * width_) + xx;
+      ProcessStripePixelAll(xx, yy, idx, start_row, local_parent, local_label);
     }
+  }
+}
 
-    // Инициализация локального DSU вектора для конкретного потока
-    int max_possible_labels = (num_threads * total_pixels) + 1;
-    local_parents[static_cast<size_t>(thread_id)].resize(static_cast<size_t>(max_possible_labels));
-    for (int i = 0; i < max_possible_labels; ++i) {
-      local_parents[static_cast<size_t>(thread_id)][static_cast<size_t>(i)] = i;
-    }
-
-    int &local_label = local_labels[static_cast<size_t>(thread_id)];
-    local_label = thread_id * total_pixels;  // Гарантия уникального диапазона меток
-
-    for (int yy = start_row; yy < end_row; ++yy) {
-      for (int xx = 0; xx < width_; ++xx) {
-        int idx = (yy * width_) + xx;
-        ProcessStripePixelAll(xx, yy, idx, start_row, local_parents[static_cast<size_t>(thread_id)], local_label);
-      }
-    }
-  });
-
-  // Фаза 2: Последовательное объединение границ между полосами на уровне процесса
+void IvanovaPMarkingComponentsOnBinaryImageALL::MergeBoundaries(int num_threads, int rows_per_thread) {
   for (int thread_id = 0; thread_id < num_threads - 1; ++thread_id) {
     int boundary_row = (thread_id + 1) * rows_per_thread;
     if (boundary_row >= height_) {
@@ -246,8 +226,11 @@ void IvanovaPMarkingComponentsOnBinaryImageALL::FirstPass() {
       }
     }
   }
+}
 
-  // Фаза 3: Перенос локальных связей потоков в глобальный вектор DSU
+void IvanovaPMarkingComponentsOnBinaryImageALL::MergeLocalParents(const std::vector<std::vector<int>> &local_parents,
+                                                                  const std::vector<int> &local_labels, int num_threads,
+                                                                  int total_pixels) {
   for (int thread_id = 0; thread_id < num_threads; ++thread_id) {
     if (local_parents[static_cast<size_t>(thread_id)].empty()) {
       continue;
@@ -263,6 +246,38 @@ void IvanovaPMarkingComponentsOnBinaryImageALL::FirstPass() {
       }
     }
   }
+}
+
+void IvanovaPMarkingComponentsOnBinaryImageALL::FirstPass() {
+  int num_threads = tbb::this_task_arena::max_concurrency();
+  int rows_per_thread = (height_ + num_threads - 1) / num_threads;
+  int total_pixels = width_ * height_;
+
+  std::vector<std::vector<int>> local_parents(static_cast<size_t>(num_threads));
+  std::vector<int> local_labels(static_cast<size_t>(num_threads), 0);
+
+  // Фаза 1: Параллельная обработка полос с TBB
+  tbb::parallel_for(0, num_threads, [&](int thread_id) {
+    int start_row = thread_id * rows_per_thread;
+    int end_row = std::min(start_row + rows_per_thread, height_);
+    if (start_row >= height_) {
+      return;
+    }
+
+    int max_possible_labels = (num_threads * total_pixels) + 1;
+    InitializeLocalParent(local_parents[static_cast<size_t>(thread_id)], max_possible_labels);
+
+    int &local_label = local_labels[static_cast<size_t>(thread_id)];
+    local_label = thread_id * total_pixels;
+
+    ProcessStripe(start_row, end_row, local_parents[static_cast<size_t>(thread_id)], local_label);
+  });
+
+  // Фаза 2: Последовательное объединение границ между полосами
+  MergeBoundaries(num_threads, rows_per_thread);
+
+  // Фаза 3: Перенос локальных связей потоков в глобальный вектор DSU
+  MergeLocalParents(local_parents, local_labels, num_threads, total_pixels);
 
   current_label_ = 0;
   for (int thread_id = 0; thread_id < num_threads; ++thread_id) {

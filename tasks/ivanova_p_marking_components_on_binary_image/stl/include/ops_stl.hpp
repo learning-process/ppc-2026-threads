@@ -42,7 +42,12 @@ class IvanovaPMarkingComponentsOnBinaryImageSTL : public BaseTask {
   // Helper methods to reduce cognitive complexity
   void ProcessStripePixelStl(int xx, int yy, int idx, int start_row, std::vector<int> &local_parent, int &local_label);
   static int FindLocalRootStl(int label, const std::vector<int> &local_parent);
-  void UnionLocalLabelsStl(int label1, int label2, std::vector<int> &local_parent);
+  static void UnionLocalLabelsStl(int label1, int label2, std::vector<int> &local_parent);
+  void InitializeLocalParentStl(std::vector<int> &local_parent, int max_labels);
+  void ProcessStripeStl(int start_row, int end_row, std::vector<int> &local_parent, int &local_label);
+  void MergeBoundariesStl(int num_threads, int rows_per_thread);
+  void MergeLocalParentsStl(const std::vector<std::vector<int>> &local_parents, const std::vector<int> &local_labels,
+                            int num_threads, int total_pixels);
 };
 
 }  // namespace ivanova_p_marking_components_on_binary_image
