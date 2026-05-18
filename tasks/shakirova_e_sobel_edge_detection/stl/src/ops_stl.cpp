@@ -17,7 +17,9 @@ ShakirovaESobelEdgeDetectionSTL::ShakirovaESobelEdgeDetectionSTL(const InType &i
   GetOutput().clear();
 }
 
-bool ShakirovaESobelEdgeDetectionSTL::ValidationImpl() { return GetInput().IsValid(); }
+bool ShakirovaESobelEdgeDetectionSTL::ValidationImpl() {
+  return GetInput().IsValid();
+}
 
 bool ShakirovaESobelEdgeDetectionSTL::PreProcessingImpl() {
   const auto &img = GetInput();
@@ -49,16 +51,15 @@ bool ShakirovaESobelEdgeDetectionSTL::RunImpl() {
 
       for (int row = row_begin; row < row_end; ++row) {
         const int *prev = inp + static_cast<ptrdiff_t>((row - 1) * w);
-        const int *curr = inp + static_cast<ptrdiff_t>((row) * w);
+        const int *curr = inp + static_cast<ptrdiff_t>((row)*w);
         const int *next = inp + static_cast<ptrdiff_t>((row + 1) * w);
-        int *out_row    = out + static_cast<ptrdiff_t>((row) * w);
+        int *out_row = out + static_cast<ptrdiff_t>((row)*w);
 
         for (int col = 1; col < w - 1; ++col) {
-          const int gx = -prev[col - 1] + prev[col + 1]
-                         - (2 * curr[col - 1]) + (2 * curr[col + 1])
-                         - next[col - 1] + next[col + 1];
-          const int gy = -prev[col - 1] - (2 * prev[col]) - prev[col + 1]
-                         + next[col - 1] + (2 * next[col]) + next[col + 1];
+          const int gx = -prev[col - 1] + prev[col + 1] - (2 * curr[col - 1]) + (2 * curr[col + 1]) - next[col - 1] +
+                         next[col + 1];
+          const int gy =
+              -prev[col - 1] - (2 * prev[col]) - prev[col + 1] + next[col - 1] + (2 * next[col]) + next[col + 1];
 
           const int agx = std::abs(gx);
           const int agy = std::abs(gy);
@@ -76,6 +77,8 @@ bool ShakirovaESobelEdgeDetectionSTL::RunImpl() {
   return true;
 }
 
-bool ShakirovaESobelEdgeDetectionSTL::PostProcessingImpl() { return true; }
+bool ShakirovaESobelEdgeDetectionSTL::PostProcessingImpl() {
+  return true;
+}
 
-}  // namespace shakirova_e_sobel_edge_detection 
+}  // namespace shakirova_e_sobel_edge_detection
