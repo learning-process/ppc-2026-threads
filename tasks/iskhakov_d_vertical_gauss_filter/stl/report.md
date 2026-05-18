@@ -4,7 +4,6 @@
 - Technology: STL
 - Variant: 25
 
-
 ## 1. Контекст
 
 Версия STL реализует параллелизм с помощью стандартных потоков `std::thread`.
@@ -12,18 +11,15 @@
 столбцов независимо. Это позволяет оценить производительность ручного управления потоками в сравнении с
 высокоуровневыми технологиями (OMP, TBB)
 
-
 ## 2. Постановка задачи
 
 Постановка задачи ровно такая же как и в `seq/report.md` (пункт 2). включая **входные данные**, **выходные данные**,
 **ограничения** и **крайние случаи**
 
-
 ## 3. Базовый алгоритм
 
 Последовательный алгоритм тот же, что и в SEQ: свёртка 3×3 с ядром Гаусса и зеркальным отражением границ
 Асимптотика по времени O(N), по памяти O(N). Подробнее см. `seq/report.md` (пункт 3)
-
 
 ## 4. Схема распараллеливания
 
@@ -37,15 +33,14 @@
 вызывается `join()` для каждого. Это корректный паттерн: потоки работают параллельно, а главный поток ждёт их
 завершения.
 
-
 ## 5. Детали реализации
 
 Файлы: `stl/include/ops_stl.hpp`, `stl/src/ops_stl.cpp`
 
 В сравнении с SEQ, OMP и TBB версия STL практически идентична:
 
-* **ValidationImpl** и **PreProcessingImpl**/**PostProcessingImpl** – без изменений относительно SEQ, OMP и TBB.
-* **RunImpl** изменения относительно SEQ, OMP и TBB:
+- **ValidationImpl** и **PreProcessingImpl**/**PostProcessingImpl** – без изменений относительно SEQ, OMP и TBB.
+- **RunImpl** изменения относительно SEQ, OMP и TBB:
 
 1. Определяется число потоков `num_threads = ppc::util::GetNumThreads()` и ограничивается шириной изображения:
 `actual_threads = std::min(num_threads, width)`.
@@ -91,12 +86,10 @@ for (int thread_id = 0; thread_id < actual_threads; ++thread_id) {
 Функция **IskhakovDGetPixelMirrorStl** осталась без изменений, поменялось только название реализации в конце
 (вместо Seq, Omp или Tbb)
 
-
 ## 6. Проверка корректности
 
 Набор тестов для STL идентичен набору тестов для SEQ, и также проходят все функциональные тесты
 (см пункт 5 `seq/report.md`)
-
 
 ## 7. Экспериментальная среда
 
@@ -109,10 +102,10 @@ for (int thread_id = 0; thread_id < actual_threads; ++thread_id) {
 - **Команда запуска функциональных тестов:**
 `./build/bin/ppc_func_tests --gtest_filter="*IskhakovDVerticalGaussFilterFuncTests*stl*"`
 - **Команда запуска тестов производительности:**
-  ```bash
-       PPC_NUM_THREADS=<число потоков> ./build/bin/ppc_perf_tests \
-              -gtest_filter="*IskhakovDVerticalGaussFilterPerfTests*stl*"
-  ```
+       ```bash
+              PPC_NUM_THREADS=<число потоков> ./build/bin/ppc_perf_tests \
+                     -gtest_filter="*IskhakovDVerticalGaussFilterPerfTests*stl*"
+       ```
 
 ## 8. Результаты
 
@@ -136,7 +129,6 @@ for (int thread_id = 0; thread_id < actual_threads; ++thread_id) {
 Это объясняется накладными расходами на создание и join большего числа потоков
 По итогу реализация STL показала низкую максимальную производительность (2.42× против 2.67× у OMP и 2.91× у TBB)
 и заметное падение эффективности при большом числе потоков
-
 
 ## 9. Выводы
 
