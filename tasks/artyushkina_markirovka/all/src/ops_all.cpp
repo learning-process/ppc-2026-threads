@@ -158,7 +158,7 @@ void MarkingComponentsALL::FirstPass() {
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
       size_t idx = (static_cast<size_t>(i) * static_cast<size_t>(cols_)) + static_cast<size_t>(j) + 2;
-
+      
       // ИСПРАВЛЕНИЕ: обрабатываем объекты (0), пропускаем фон (255)
       if (input[idx] == 255) {
         continue;
