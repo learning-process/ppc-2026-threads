@@ -96,11 +96,11 @@ void GatherCountsToRoot(const std::vector<size_t> &local_counts, int local_count
                         const std::vector<int> &recv_counts, const std::vector<int> &displs, int rank) {
   if (rank == 0) {
     std::vector<size_t> send_buf = local_counts;
-    MPI_Gatherv(send_buf.data(), local_count, MPI_UNSIGNED_LONG, global_counts.data(), recv_counts.data(),
-                displs.data(), MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(send_buf.data(), local_count, MPI_UNSIGNED_LONG_LONG, global_counts.data(), recv_counts.data(),
+                displs.data(), MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
   } else {
-    MPI_Gatherv(local_counts.data(), local_count, MPI_UNSIGNED_LONG, nullptr, nullptr, nullptr, MPI_UNSIGNED_LONG, 0,
-                MPI_COMM_WORLD);
+    MPI_Gatherv(local_counts.data(), local_count, MPI_UNSIGNED_LONG_LONG, nullptr, nullptr, nullptr,
+                MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
   }
 }
 
