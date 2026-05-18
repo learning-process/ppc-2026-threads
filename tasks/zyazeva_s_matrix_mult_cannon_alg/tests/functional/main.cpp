@@ -9,7 +9,6 @@
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
-#include "zyazeva_s_matrix_mult_cannon_alg/all/include/ops_all.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/common/include/common.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/omp/include/ops_omp.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/seq/include/ops_seq.hpp"
