@@ -152,10 +152,16 @@ void BroadcastImage(int rank, const std::vector<uint8_t> &image_data, std::vecto
 }
 
 void SendResults(int dest, const std::vector<uint8_t> &data, size_t size) {
+  if (size == 0) {
+    return;
+  }
   MPI_Send(const_cast<uint8_t *>(data.data()), static_cast<int>(size), MPI_UNSIGNED_CHAR, dest, 0, MPI_COMM_WORLD);
 }
 
 void ReceiveResults(int src, std::vector<uint8_t> &buffer, size_t size) {
+  if (size == 0) {
+    return;
+  }
   buffer.resize(size);
   MPI_Recv(buffer.data(), static_cast<int>(size), MPI_UNSIGNED_CHAR, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 }
@@ -190,6 +196,8 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
           ProcessSingleBlock(local_image, GetOutput(), width, height, channels, block_size, bx, by, 0);
         }
       }
+    } else {
+      GetOutput().clear();
     }
     return true;
   }
@@ -230,6 +238,7 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
     }
   } else {
     if (local_size == 0) {
+      GetOutput().clear();
       return true;
     }
 
@@ -237,6 +246,7 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
     ProcessBlockRange(local_image, local_output, width, height, channels, block_size, start_block_y, end_block_y,
                       start_row);
     SendResults(0, local_output, local_size);
+    GetOutput().clear();
   }
 
   return true;
