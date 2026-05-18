@@ -49,6 +49,18 @@ std::uint8_t NikolaevDBlockLinearImageFilteringSTL::ApplyKernel(const std::vecto
   return static_cast<uint8_t>(std::clamp((acc + 8) / 16, 0, 255));
 }
 
+void NikolaevDBlockLinearImageFilteringSTL::ProcessRows(const std::vector<uint8_t> &src, int width, int height,
+                                                        int start_row, int end_row) {
+  auto &dst = GetOutput();
+  for (int ny = start_row; ny < end_row; ++ny) {
+    for (int nx = 0; nx < width; ++nx) {
+      for (int ch = 0; ch < 3; ++ch) {
+        dst[((ny * width + nx) * 3) + ch] = ApplyKernel(src, width, height, nx, ny, ch);
+      }
+    }
+  }
+}
+
 bool NikolaevDBlockLinearImageFilteringSTL::RunImpl() {
   const int width = std::get<0>(GetInput());
   const int height = std::get<1>(GetInput());
@@ -57,7 +69,7 @@ bool NikolaevDBlockLinearImageFilteringSTL::RunImpl() {
   auto &dst = GetOutput();
   dst.assign(src.size(), 0);
 
-  int num_threads = ppc::util::GetNumThreads();
+  unsigned int num_threads = std::thread::hardware_concurrency();
   if (num_threads == 0) {
     num_threads = 4;
   }
@@ -73,18 +85,10 @@ bool NikolaevDBlockLinearImageFilteringSTL::RunImpl() {
   int remainder = height % num_threads;
 
   int start_row = 0;
-  for (int i = 0; i < num_threads; ++i) {
+  for (unsigned int i = 0; i < num_threads; ++i) {
     int end_row = start_row + rows_per_thread + (static_cast<int>(i) < remainder ? 1 : 0);
-
-    threads.emplace_back([&src, width, height, start_row, end_row, &dst]() {
-      for (int ny = start_row; ny < end_row; ++ny) {
-        for (int nx = 0; nx < width; ++nx) {
-          for (int ch = 0; ch < 3; ++ch) {
-            dst[((ny * width + nx) * 3) + ch] = ApplyKernel(src, width, height, nx, ny, ch);
-          }
-        }
-      }
-    });
+    threads.emplace_back(
+        [&src, width, height, start_row, end_row]() { ProcessRows(src, width, height, start_row, end_row); });
 
     start_row = end_row;
   }
