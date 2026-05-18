@@ -37,35 +37,31 @@ namespace {
 
 constexpr int BLOCK_SIZE = 256;
 
-inline uint8_t ComputeFilteredPixel(const std::vector<uint8_t> &image, int width, int height, int row, int col,
-                                    int channel) {
+inline uint8_t ComputeFilteredPixel(const std::vector<uint8_t> &image, int width, int height, int channels, int row,
+                                    int col, int channel) {
   float sum = 0.0F;
   for (int ky = -1; ky <= 1; ++ky) {
     for (int kx = -1; kx <= 1; ++kx) {
       int ny = std::clamp(row + ky, 0, height - 1);
       int nx = std::clamp(col + kx, 0, width - 1);
-      int idx = (((ny * width) + nx) * 3) + channel;
+      int idx = (((ny * width) + nx) * channels) + channel;
       sum += static_cast<float>(image[idx]) * kGaussianKernel[((ky + 1) * 3) + (kx + 1)];
     }
   }
   return static_cast<uint8_t>(std::round(sum));
 }
 
-void ProcessSingleBlock(const std::vector<uint8_t> &image, std::vector<uint8_t> &output, int width, int height,
-                        int channels, int start_row, int local_rows, int block_y_idx, int block_x_idx) {
-  int block_x = block_x_idx * BLOCK_SIZE;
-  int block_y = block_y_idx * BLOCK_SIZE;
-  int block_width = std::min(BLOCK_SIZE, width - block_x);
-  int block_height = std::min(BLOCK_SIZE, local_rows - block_y);
-
+void ProcessBlock(const std::vector<uint8_t> &input, std::vector<uint8_t> &output, int width, int height, int channels,
+                  int start_row, int block_x, int block_y, int block_width, int block_height) {
   for (int row = 0; row < block_height; ++row) {
     int global_row = start_row + block_y + row;
     for (int col = 0; col < block_width; ++col) {
       int global_col = block_x + col;
       for (int ch = 0; ch < channels; ++ch) {
         int output_row = block_y + row;
-        int output_idx = ((output_row * width) + (block_x + col)) * channels + ch;
-        output[output_idx] = ComputeFilteredPixel(image, width, height, global_row, global_col, ch);
+        int output_col = block_x + col;
+        int output_idx = ((output_row * width) + output_col) * channels + ch;
+        output[output_idx] = ComputeFilteredPixel(input, width, height, channels, global_row, global_col, ch);
       }
     }
   }
@@ -102,39 +98,35 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
   std::vector<int> displs(num_procs_);
   int offset = 0;
   for (int proc = 0; proc < num_procs_; ++proc) {
-    int rows = rows_per_proc;
-    if (proc < remainder) {
-      rows = rows_per_proc + 1;
-    }
+    int rows = rows_per_proc + (proc < remainder ? 1 : 0);
     send_counts[proc] = rows * width * channels;
     displs[proc] = offset;
     offset += send_counts[proc];
   }
 
-  int local_rows = rows_per_proc;
-  if (rank_ < remainder) {
-    local_rows = rows_per_proc + 1;
-  }
+  int local_rows = rows_per_proc + (rank_ < remainder ? 1 : 0);
   int local_size = local_rows * width * channels;
   std::vector<uint8_t> local_output(local_size, 0);
 
   int start_row = 0;
   for (int proc = 0; proc < rank_; ++proc) {
-    int rows = rows_per_proc;
-    if (proc < remainder) {
-      rows = rows_per_proc + 1;
-    }
-    start_row += rows;
+    start_row += rows_per_proc + (proc < remainder ? 1 : 0);
   }
 
   int blocks_x = (width + BLOCK_SIZE - 1) / BLOCK_SIZE;
   int blocks_y = (local_rows + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
-#pragma omp parallel for schedule(dynamic) default(none) \
+#pragma omp parallel for collapse(2) schedule(dynamic) default(none) \
     shared(local_image, local_output, width, height, channels, local_rows, start_row, blocks_x, blocks_y)
   for (int by = 0; by < blocks_y; ++by) {
     for (int bx = 0; bx < blocks_x; ++bx) {
-      ProcessSingleBlock(local_image, local_output, width, height, channels, start_row, local_rows, by, bx);
+      int block_x = bx * BLOCK_SIZE;
+      int block_y = by * BLOCK_SIZE;
+      int block_width = std::min(BLOCK_SIZE, width - block_x);
+      int block_height = std::min(BLOCK_SIZE, local_rows - block_y);
+
+      ProcessBlock(local_image, local_output, width, height, channels, start_row, block_x, block_y, block_width,
+                   block_height);
     }
   }
 
