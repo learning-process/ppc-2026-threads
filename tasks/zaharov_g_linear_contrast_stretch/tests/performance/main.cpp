@@ -11,6 +11,7 @@
 #include "zaharov_g_linear_contrast_stretch/common/include/common.hpp"
 #include "zaharov_g_linear_contrast_stretch/omp/include/ops_omp.hpp"
 #include "zaharov_g_linear_contrast_stretch/seq/include/ops_seq.hpp"
+#include "zaharov_g_linear_contrast_stretch/stl/include/ops_stl.hpp"
 #include "zaharov_g_linear_contrast_stretch/tbb/include/ops_tbb.hpp"
 
 namespace zaharov_g_linear_contrast_stretch {
@@ -83,8 +84,8 @@ TEST_P(ZaharovGRunPerfTestsLinContrStr, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZaharovGLinContrStrSEQ, ZaharovGLinContrStrOMP, ZaharovGLinContrStrTBB>(
-        GetSettingsPath());
+    ppc::util::MakeAllPerfTasks<InType, ZaharovGLinContrStrSEQ, ZaharovGLinContrStrOMP, ZaharovGLinContrStrTBB,
+                                ZaharovGLinContrStrSTL>(GetSettingsPath());
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = ZaharovGRunPerfTestsLinContrStr::CustomPerfTestName;
