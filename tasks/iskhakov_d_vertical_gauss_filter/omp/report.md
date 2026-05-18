@@ -116,7 +116,11 @@
 - **Команда запуска функциональных тестов:** 
 `./build/bin/ppc_func_tests --gtest_filter="*IskhakovDVerticalGaussFilterFuncTests*omp*"`
 - **Команда запуска тестов производительности:** 
-`PPC_NUM_THREADS=<число потоков> ./build/bin/ppc_perf_tests --gtest_filter="*IskhakovDVerticalGaussFilterPerfTests*omp*"`
+
+  ```bash
+       PPC_NUM_THREADS=<число потоков> ./build/bin/ppc_perf_tests 
+       --gtest_filter="*IskhakovDVerticalGaussFilterPerfTests*omp*"
+  ```
 
 
 ## 8. Результаты
