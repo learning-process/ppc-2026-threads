@@ -28,6 +28,7 @@ TabalaevAMatrixMulStrassenALL::TabalaevAMatrixMulStrassenALL(const InType &in) {
 bool TabalaevAMatrixMulStrassenALL::ValidationImpl() {
   int rank = 0;
   int size = 1;
+
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
