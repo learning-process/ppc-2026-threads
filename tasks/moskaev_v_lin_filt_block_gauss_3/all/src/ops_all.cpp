@@ -221,21 +221,20 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
       int p_end_row = std::min(p_end * block_size, height);
       size_t p_size = static_cast<size_t>(width) * (p_end_row - p_start_row) * channels;
 
-      std::vector<uint8_t> proc_data;
-      ReceiveResults(proc, proc_data, p_size);
-
       if (p_size > 0) {
+        std::vector<uint8_t> proc_data;
+        ReceiveResults(proc, proc_data, p_size);
         int dst_offset = p_start_row * width * channels;
         std::copy(proc_data.begin(), proc_data.end(), GetOutput().begin() + dst_offset);
       }
     }
   } else {
-    std::vector<uint8_t> local_output(local_size);
     if (local_size > 0) {
+      std::vector<uint8_t> local_output(local_size);
       ProcessBlockRange(local_image, local_output, width, height, channels, block_size, start_block_y, end_block_y,
                         start_row);
+      SendResults(0, local_output, local_size);
     }
-    SendResults(0, local_output, local_size);
     GetOutput().clear();
   }
 
