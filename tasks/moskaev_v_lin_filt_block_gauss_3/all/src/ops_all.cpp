@@ -173,13 +173,29 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
     return false;
   }
 
-  block_size_ = 256;
+  block_size_ = 64;
   int block_size = block_size_;
+
+  int blocks_y = (height + block_size - 1) / block_size;
+  int blocks_x = (width + block_size - 1) / block_size;
+
+  // Маленькие картинки обрабатываем последовательно на процессе 0
+  if (width * height < 10000) {
+    if (rank_ == 0) {
+      GetOutput().resize(static_cast<size_t>(width) * height * channels);
+      for (int by = 0; by < blocks_y; ++by) {
+        for (int bx = 0; bx < blocks_x; ++bx) {
+          ProcessSingleBlock(image_data, GetOutput(), width, height, channels, block_size, bx, by, 0);
+        }
+      }
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    return true;
+  }
 
   std::vector<uint8_t> local_image;
   BroadcastImage(rank_, image_data, local_image);
 
-  int blocks_y = (height + block_size - 1) / block_size;
   int blocks_per_proc = blocks_y / num_procs_;
   int remainder = blocks_y % num_procs_;
 
@@ -211,10 +227,12 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
       int p_end = ComputeEndBlock(proc, blocks_per_proc, remainder);
 
       if (p_start >= blocks_y) {
-        continue;
+        p_start = blocks_y;
+        p_end = blocks_y;
+      } else {
+        p_end = std::min(p_end, blocks_y);
       }
 
-      p_end = std::min(p_end, blocks_y);
       int p_start_row = p_start * block_size;
       int p_end_row = std::min(p_end * block_size, height);
       size_t p_size = static_cast<size_t>(width) * (p_end_row - p_start_row) * channels;
@@ -222,16 +240,18 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
       std::vector<uint8_t> proc_data;
       ReceiveResults(proc, proc_data, p_size);
 
-      int dst_offset = p_start_row * width * channels;
-      std::copy(proc_data.begin(), proc_data.end(), GetOutput().begin() + dst_offset);
+      if (p_size > 0) {
+        int dst_offset = p_start_row * width * channels;
+        std::copy(proc_data.begin(), proc_data.end(), GetOutput().begin() + dst_offset);
+      }
     }
   } else {
-    if (start_block_y < blocks_y) {
-      std::vector<uint8_t> local_output(local_size);
+    std::vector<uint8_t> local_output(local_size);
+    if (local_size > 0) {
       ProcessBlockRange(local_image, local_output, width, height, channels, block_size, start_block_y, end_block_y,
                         start_row);
-      SendResults(0, local_output, local_size);
     }
+    SendResults(0, local_output, local_size);
     GetOutput().clear();
   }
 
