@@ -7,10 +7,13 @@
 #include <tuple>
 #include <vector>
 
+#include "ivanova_p_marking_components_on_binary_image/all/include/ops_all.hpp"
 #include "ivanova_p_marking_components_on_binary_image/common/include/common.hpp"
 #include "ivanova_p_marking_components_on_binary_image/data/image_generator.hpp"
 #include "ivanova_p_marking_components_on_binary_image/omp/include/ops_omp.hpp"
 #include "ivanova_p_marking_components_on_binary_image/seq/include/ops_seq.hpp"
+#include "ivanova_p_marking_components_on_binary_image/stl/include/ops_stl.hpp"
+#include "ivanova_p_marking_components_on_binary_image/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 
 namespace ivanova_p_marking_components_on_binary_image {
@@ -124,8 +127,8 @@ class IvanovaPRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
       test_image = LoadImageFromTxt(filename);
     } else {
       // Создаем тестовое изображение программно
-      const int width = 100;
-      const int height = 100;
+      const int width = 500;
+      const int height = 500;
       test_image = CreateTestImage(width, height, current_test_case_);
     }
 
@@ -176,7 +179,13 @@ const std::array<TestType, 14> kTestParam = {
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<IvanovaPMarkingComponentsOnBinaryImageSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_ivanova_p_marking_components_on_binary_image),
+                                           ppc::util::AddFuncTask<IvanovaPMarkingComponentsOnBinaryImageTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_ivanova_p_marking_components_on_binary_image),
+                                           ppc::util::AddFuncTask<IvanovaPMarkingComponentsOnBinaryImageSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_ivanova_p_marking_components_on_binary_image),
                                            ppc::util::AddFuncTask<IvanovaPMarkingComponentsOnBinaryImageOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_ivanova_p_marking_components_on_binary_image),
+                                           ppc::util::AddFuncTask<IvanovaPMarkingComponentsOnBinaryImageALL, InType>(
                                                kTestParam, PPC_SETTINGS_ivanova_p_marking_components_on_binary_image));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

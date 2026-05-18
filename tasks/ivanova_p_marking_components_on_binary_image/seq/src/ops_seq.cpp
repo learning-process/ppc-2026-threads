@@ -49,8 +49,8 @@ bool IvanovaPMarkingComponentsOnBinaryImageSEQ::ValidationImpl() {
       test_image = LoadImageFromTxt(filename);
     } else {
       // Создаем программно
-      const int width = 100;
-      const int height = 100;
+      const int width = 500;
+      const int height = 500;
       test_image = CreateTestImage(width, height, test_case);
     }
   }
@@ -135,8 +135,8 @@ bool IvanovaPMarkingComponentsOnBinaryImageSEQ::PreProcessingImpl() {
       test_image = LoadImageFromTxt(filename);
     } else {
       // Создаем программно
-      const int width = 100;
-      const int height = 100;
+      const int width = 500;
+      const int height = 500;
       test_image = CreateTestImage(width, height, test_case);
     }
   }
