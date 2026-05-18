@@ -74,9 +74,7 @@ bool NikolaevDBlockLinearImageFilteringSTL::RunImpl() {
     num_threads = 4;
   }
 
-  if (height < num_threads) {
-    num_threads = height;
-  }
+  num_threads = std::min(height, num_threads);
 
   std::vector<std::thread> threads;
   threads.reserve(num_threads);
