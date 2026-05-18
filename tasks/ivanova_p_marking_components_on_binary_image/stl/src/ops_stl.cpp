@@ -102,7 +102,7 @@ bool IvanovaPMarkingComponentsOnBinaryImageSTL::PreProcessingImpl() {
 
   // Инициализация глобального вектора DSU
   int num_threads = ppc::util::GetNumThreads();
-  parent_.resize(static_cast<size_t>((num_threads * total_pixels) + 1));
+  parent_.resize((static_cast<size_t>(num_threads) * static_cast<size_t>(total_pixels)) + 1);
   for (size_t i = 0; i < parent_.size(); ++i) {
     parent_[i] = static_cast<int>(i);
   }
@@ -279,7 +279,7 @@ void IvanovaPMarkingComponentsOnBinaryImageSTL::SecondPass() {
   int total_pixels = width_ * height_;
 
   // Убран локальный unordered_map, заменен плоским вектором разметки
-  std::vector<int> new_labels(static_cast<size_t>((num_threads * total_pixels) + 1), 0);
+  std::vector<int> new_labels((static_cast<size_t>(num_threads) * static_cast<size_t>(total_pixels)) + 1, 0);
   int next_label = 1;
 
   for (int &label : labels_) {

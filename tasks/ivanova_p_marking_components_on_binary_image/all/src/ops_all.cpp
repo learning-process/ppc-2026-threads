@@ -103,7 +103,7 @@ bool IvanovaPMarkingComponentsOnBinaryImageALL::PreProcessingImpl() {
 
   // Выделяем память под глобальный DSU с запасом на все потоки
   int num_threads = tbb::this_task_arena::max_concurrency();
-  parent_.resize(static_cast<size_t>((num_threads * total_pixels) + 1));
+  parent_.resize((static_cast<size_t>(num_threads) * static_cast<size_t>(total_pixels)) + 1);
   for (size_t i = 0; i < parent_.size(); ++i) {
     parent_[i] = static_cast<int>(i);
   }
@@ -275,7 +275,7 @@ void IvanovaPMarkingComponentsOnBinaryImageALL::SecondPass() {
   int total_pixels = width_ * height_;
 
   // Вектор вместо unordered_map для нормализации меток
-  std::vector<int> new_labels(static_cast<size_t>((num_threads * total_pixels) + 1), 0);
+  std::vector<int> new_labels((static_cast<size_t>(num_threads) * static_cast<size_t>(total_pixels)) + 1, 0);
   int next_label = 1;
 
   for (int &label : labels_) {

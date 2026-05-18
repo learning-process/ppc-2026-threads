@@ -41,7 +41,7 @@ class IvanovaPMarkingComponentsOnBinaryImageSTL : public BaseTask {
 
   // Helper methods to reduce cognitive complexity
   void ProcessStripePixelStl(int xx, int yy, int idx, int start_row, std::vector<int> &local_parent, int &local_label);
-  int FindLocalRootStl(int label, const std::vector<int> &local_parent);
+  static int FindLocalRootStl(int label, const std::vector<int> &local_parent);
   void UnionLocalLabelsStl(int label1, int label2, std::vector<int> &local_parent);
 };
 

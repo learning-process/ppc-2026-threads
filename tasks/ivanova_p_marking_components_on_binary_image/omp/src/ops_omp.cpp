@@ -72,7 +72,6 @@ bool IvanovaPMarkingComponentsOnBinaryImageOMP::PreProcessingImpl() {
 }
 
 int IvanovaPMarkingComponentsOnBinaryImageOMP::FindRoot(int i) {
-  // Чистая функция поиска без изменения состояния parent_ снаружи критических секций
   int root = i;
   while (parent_[root] != root) {
     root = parent_[root];
@@ -81,28 +80,17 @@ int IvanovaPMarkingComponentsOnBinaryImageOMP::FindRoot(int i) {
 }
 
 void IvanovaPMarkingComponentsOnBinaryImageOMP::UnionLabels(int i, int j) {
+  // Убран вызов FindRoot вне критической секции во избежание Data Race
+  // при одновременном чтении и записи в массив parent_.
 #pragma omp critical(dsu_union)
   {
-    int root_i = i;
-    while (parent_[root_i] != root_i) {
-      root_i = parent_[root_i];
-    }
-
-    int root_j = j;
-    while (parent_[root_j] != root_j) {
-      root_j = parent_[root_j];
-    }
-
+    int root_i = FindRoot(i);
+    int root_j = FindRoot(j);
     if (root_i != root_j) {
       if (root_i < root_j) {
         parent_[root_j] = root_i;
-        // Сжатие путей прямо внутри критической секции для стабильности
-        parent_[j] = root_i;
-        parent_[i] = root_i;
       } else {
         parent_[root_i] = root_j;
-        parent_[i] = root_j;
-        parent_[j] = root_j;
       }
     }
   }

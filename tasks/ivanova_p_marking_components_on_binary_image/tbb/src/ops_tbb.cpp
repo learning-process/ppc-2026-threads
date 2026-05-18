@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "ivanova_p_marking_components_on_binary_image/common/include/common.hpp"
 #include "ivanova_p_marking_components_on_binary_image/data/image_generator.hpp"
 
 namespace ivanova_p_marking_components_on_binary_image {
@@ -126,6 +127,16 @@ int IvanovaPMarkingComponentsOnBinaryImageTBB::FindLocalRoot(int label) {
   return root;
 }
 
+void IvanovaPMarkingComponentsOnBinaryImageTBB::UnionLocalRoots(int root1, int root2) {
+  if (root1 != root2) {
+    if (root1 < root2) {
+      parent_[root2] = root1;
+    } else {
+      parent_[root1] = root2;
+    }
+  }
+}
+
 void IvanovaPMarkingComponentsOnBinaryImageTBB::ProcessStripePixel(int xx, int yy, int idx, int start_row) {
   if (input_image_.data[idx] == 0) {
     return;
@@ -143,14 +154,7 @@ void IvanovaPMarkingComponentsOnBinaryImageTBB::ProcessStripePixel(int xx, int y
     if (left_label != 0 && top_label != 0 && left_label != top_label) {
       int root1 = FindLocalRoot(left_label);
       int root2 = FindLocalRoot(top_label);
-
-      if (root1 != root2) {
-        if (root1 < root2) {
-          parent_[root2] = root1;
-        } else {
-          parent_[root1] = root2;
-        }
-      }
+      UnionLocalRoots(root1, root2);
     }
   }
 }
