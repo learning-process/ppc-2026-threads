@@ -1,4 +1,3 @@
-// ops_all.cpp
 #include "moskaev_v_lin_filt_block_gauss_3/all/include/ops_all.hpp"
 
 #include <mpi.h>
@@ -118,6 +117,8 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
   image_data.resize(total_pixels);
   MPI_Bcast(image_data.data(), static_cast<int>(total_pixels), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
+  std::vector<uint8_t> output(total_pixels, 0);
+
   int blocks_x = (width + block_size_ - 1) / block_size_;
   int blocks_y = (height + block_size_ - 1) / block_size_;
   int total_blocks = blocks_x * blocks_y;
@@ -125,8 +126,6 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
   int blocks_per_proc = total_blocks / num_procs_;
   int remainder = total_blocks % num_procs_;
   int local_blocks = blocks_per_proc + (rank_ < remainder ? 1 : 0);
-
-  std::vector<uint8_t> output(total_pixels, 0);
 
   std::vector<int> block_indices(total_blocks);
   for (int i = 0; i < total_blocks; ++i) {
@@ -177,7 +176,14 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
     GetOutput() = std::move(final_output);
   }
 
-  MPI_Bcast(GetOutput().data(), static_cast<int>(GetOutput().size()), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+  int output_size = static_cast<int>(GetOutput().size());
+  MPI_Bcast(&output_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (rank_ != 0) {
+    GetOutput().resize(output_size);
+  }
+
+  MPI_Bcast(GetOutput().data(), output_size, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
   return true;
 }
