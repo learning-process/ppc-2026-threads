@@ -35,7 +35,7 @@ bool MoskaevVLinFiltBlockGauss3ALL::PreProcessingImpl() {
 
 namespace {
 
-constexpr int BLOCK_SIZE = 64;
+constexpr int BLOCK_SIZE = 256;
 
 inline uint8_t ComputeFilteredPixel(const std::vector<uint8_t> &image, int width, int height, int channels, int row,
                                     int col, int channel) {
@@ -89,12 +89,27 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
   }
   MPI_Bcast(local_image.data(), total_pixels, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
-  // Разбиение на блоки
   int blocks_x = (width + BLOCK_SIZE - 1) / BLOCK_SIZE;
   int blocks_y = (height + BLOCK_SIZE - 1) / BLOCK_SIZE;
   int total_blocks = blocks_x * blocks_y;
 
-  // Распределение блоков между процессами
+  if (total_blocks < num_procs_) {
+    if (rank_ == 0) {
+      GetOutput().resize(total_pixels);
+      for (int by = 0; by < blocks_y; ++by) {
+        for (int bx = 0; bx < blocks_x; ++bx) {
+          int block_x = bx * BLOCK_SIZE;
+          int block_y = by * BLOCK_SIZE;
+          int block_width = std::min(BLOCK_SIZE, width - block_x);
+          int block_height = std::min(BLOCK_SIZE, height - block_y);
+          ProcessBlock(local_image, GetOutput(), width, height, channels, block_x, block_y, block_width, block_height);
+        }
+      }
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    return true;
+  }
+
   int blocks_per_proc = total_blocks / num_procs_;
   int remainder = total_blocks % num_procs_;
 
@@ -104,7 +119,7 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
   std::vector<uint8_t> local_output(total_pixels, 0);
 
 #pragma omp parallel for schedule(dynamic) default(none) \
-    shared(local_image, local_output, width, height, channels, blocks_x, start_block, end_block)
+    shared(local_image, local_output, width, height, channels, blocks_x, start_block, end_block, BLOCK_SIZE)
   for (int block_idx = start_block; block_idx < end_block; ++block_idx) {
     int bx = block_idx % blocks_x;
     int by = block_idx / blocks_x;
@@ -117,7 +132,6 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
     ProcessBlock(local_image, local_output, width, height, channels, block_x, block_y, block_width, block_height);
   }
 
-  // Сбор результатов
   MPI_Allreduce(MPI_IN_PLACE, local_output.data(), total_pixels, MPI_UNSIGNED_CHAR, MPI_MAX, MPI_COMM_WORLD);
 
   if (rank_ == 0) {
