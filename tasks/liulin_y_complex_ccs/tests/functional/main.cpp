@@ -180,8 +180,13 @@ const auto kTestTasksListStl =
     ppc::util::AddFuncTask<LiulinYComplexCcsStl, InType>(kTestParam, PPC_SETTINGS_liulin_y_complex_ccs);
 const auto kTestTasksListAll =
     ppc::util::AddFuncTask<LiulinYComplexCcsAll, InType>(kTestParam, PPC_SETTINGS_liulin_y_complex_ccs);
+<<<<<<< HEAD
 
 const auto kTestTasksList = std::tuple_cat(kTestTasksListSeq, kTestTasksListOmp, kTestTasksListTbb, kTestTasksListStl, kTestTasksListAll);
+=======
+const auto kTestTasksList =
+    std::tuple_cat(kTestTasksListSeq, kTestTasksListOmp, kTestTasksListTbb, kTestTasksListStl, kTestTasksListAll);
+>>>>>>> 2d61be88 (fix precommit after merge)
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kFuncTestName = LiulinYComplexCcsFuncTestsFromFile::PrintFuncTestName<LiulinYComplexCcsFuncTestsFromFile>;

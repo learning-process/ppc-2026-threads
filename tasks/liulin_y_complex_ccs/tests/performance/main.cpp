@@ -106,8 +106,8 @@ const auto kAllPerfTasksStl =
     ppc::util::MakeAllPerfTasks<InType, LiulinYComplexCcsStl>(PPC_SETTINGS_liulin_y_complex_ccs);
 const auto kAllPerfTasksAll =
     ppc::util::MakeAllPerfTasks<InType, LiulinYComplexCcsAll>(PPC_SETTINGS_liulin_y_complex_ccs);
-
-const auto kAllPerfTasks = std::tuple_cat(kAllPerfTasksSeq, kAllPerfTasksOmp, kAllPerfTasksTbb, kAllPerfTasksStl, kAllPerfTasksAll);
+const auto kAllPerfTasks =
+    std::tuple_cat(kAllPerfTasksSeq, kAllPerfTasksOmp, kAllPerfTasksTbb, kAllPerfTasksStl, kAllPerfTasksAll);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
