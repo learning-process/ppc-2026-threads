@@ -180,7 +180,7 @@ threads.emplace_back(&SafronovMMultiplicationMatrixBlockSchemeCannonSTL::CannonT
 
 * `OMP_NUM_THREADS` задаёт число потоков выполнения
 
-Команды запуска:
+Команды запуска: 
 
 * сборка через CMake
 * запуск тестов через `run_tests.py`
