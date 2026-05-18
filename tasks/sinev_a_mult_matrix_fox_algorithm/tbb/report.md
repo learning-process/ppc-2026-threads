@@ -1,4 +1,4 @@
-# Умножение плотных матриц. Элементы типа double. Блочная схема, алгоритм Фокса.
+# Умножение плотных матриц. Элементы типа double. Блочная схема, алгоритм Фокса
 
 - Студент: Синев Артём Александрович, группа 3823Б1ПР2
 - Технология: TBB
@@ -424,6 +424,7 @@ Speedup = \frac{T_{seq}}{T_{omp}}
 ```math
 Efficiency = \frac{Speedup}{Threads} \times 100\%
 ```
+
 #### Анализ результатов
 
 Реализация Intel TBB показала меньший прирост производительности. Несмотря на использование 16 потоков, ускорение составило около 1.6 раза. Основными причинами являются:
@@ -453,6 +454,7 @@ Efficiency = \frac{Speedup}{Threads} \times 100\%
 ### Масштабируемость
 
 TBB обеспечивает:
+
 - автоматическое распределение задач
 - динамическую балансировку нагрузки
 - эффективную работу с многопоточностью
@@ -492,8 +494,8 @@ TBB обеспечивает:
 ## 9. Источники
 
 1. Лекции по параллельному программированию Сысоева А. В.
-2. Документация Intel oneTBB: https://oneapi-src.github.io/oneTBB/
-3. Материалы курса: https://github.com/learning-process/ppc-2026-threads
+2. Документация Intel oneTBB: <https://oneapi-src.github.io/oneTBB/>
+3. Материалы курса: <https://github.com/learning-process/ppc-2026-threads>
 4. Fox G. C. Matrix Algorithms on Parallel Hardware.
 5. oneAPI Threading Building Blocks Developer Guide
 
