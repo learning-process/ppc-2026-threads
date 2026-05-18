@@ -8,8 +8,8 @@
 #include <vector>
 
 #include "makoveeva_matmul_double_all/all/include/ops_all.hpp"
-#include "makoveeva_matmul_double_all/common/include/common.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace makoveeva_matmul_double_all {
 
@@ -45,15 +45,7 @@ class MakoveevaALLRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
     input_data_ = std::make_tuple(n, a, b);
 
     std::vector<double> expected(size, 0.0);
-    for (size_t i = 0; i < n; ++i) {
-      for (size_t j = 0; j < n; ++j) {
-        double sum = 0.0;
-        for (size_t k = 0; k < n; ++k) {
-          sum += a[(i * n) + k] * b[(k * n) + j];
-        }
-        expected[(i * n) + j] = sum;
-      }
-    }
+    ReferenceMultiply(a, b, expected, n);
     expected_output_ = expected;
   }
 
@@ -73,6 +65,19 @@ class MakoveevaALLRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
 
   InType GetTestInputData() final {
     return input_data_;
+  }
+
+  static void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c,
+                                size_t n) {
+    for (size_t i = 0; i < n; ++i) {
+      for (size_t j = 0; j < n; ++j) {
+        double sum = 0.0;
+        for (size_t k = 0; k < n; ++k) {
+          sum += a[(i * n) + k] * b[(k * n) + j];
+        }
+        c[(i * n) + j] = sum;
+      }
+    }
   }
 
  private:
