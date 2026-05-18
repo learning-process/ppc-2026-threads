@@ -12,7 +12,7 @@ struct NeighborOffsetAll;
 class MarkingComponentsALL : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kMPI;  // ИЗМЕНЕНО: используем kMPI
+    return ppc::task::TypeOfTask::kMPI;  // Для MPI-тестов
   }
   explicit MarkingComponentsALL(const InType &in);
 
