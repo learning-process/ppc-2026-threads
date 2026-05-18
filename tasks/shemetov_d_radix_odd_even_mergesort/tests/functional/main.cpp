@@ -8,6 +8,7 @@
 #include <tuple>
 #include <vector>
 
+#include "shemetov_d_radix_odd_even_mergesort/all/include/ops_all.hpp"
 #include "shemetov_d_radix_odd_even_mergesort/common/include/common.hpp"
 #include "shemetov_d_radix_odd_even_mergesort/omp/include/ops_omp.hpp"
 #include "shemetov_d_radix_odd_even_mergesort/seq/include/ops_seq.hpp"
@@ -107,6 +108,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ShemetovDRadix
                                            ppc::util::AddFuncTask<ShemetovDRadixOddEvenMergeSortTBB, InType>(
                                                kTestParam, PPC_SETTINGS_shemetov_d_radix_odd_even_mergesort),
                                            ppc::util::AddFuncTask<ShemetovDRadixOddEvenMergeSortSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_shemetov_d_radix_odd_even_mergesort),
+                                           ppc::util::AddFuncTask<ShemetovDRadixOddEvenMergeSortALL, InType>(
                                                kTestParam, PPC_SETTINGS_shemetov_d_radix_odd_even_mergesort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

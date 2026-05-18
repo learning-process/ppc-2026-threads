@@ -8,6 +8,7 @@
 #include "sinev_a_mult_matrix_fox_algorithm/common/include/common.hpp"
 #include "sinev_a_mult_matrix_fox_algorithm/omp/include/ops_omp.hpp"
 #include "sinev_a_mult_matrix_fox_algorithm/seq/include/ops_seq.hpp"
+#include "sinev_a_mult_matrix_fox_algorithm/stl/include/ops_stl.hpp"
 #include "sinev_a_mult_matrix_fox_algorithm/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -85,7 +86,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, SinevAMultMatrixFoxAlgorithmSEQ, SinevAMultMatrixFoxAlgorithmOMP,
-                                SinevAMultMatrixFoxAlgorithmTBB>(PPC_SETTINGS_sinev_a_mult_matrix_fox_algorithm);
+                                SinevAMultMatrixFoxAlgorithmTBB, SinevAMultMatrixFoxAlgorithmSTL>(
+        PPC_SETTINGS_sinev_a_mult_matrix_fox_algorithm);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

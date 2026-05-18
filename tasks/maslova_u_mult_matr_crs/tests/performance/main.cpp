@@ -5,6 +5,7 @@
 #include <set>
 #include <tuple>
 
+#include "maslova_u_mult_matr_crs/all/include/ops_all.hpp"
 #include "maslova_u_mult_matr_crs/common/include/common.hpp"
 #include "maslova_u_mult_matr_crs/omp/include/ops_omp.hpp"
 #include "maslova_u_mult_matr_crs/seq/include/ops_seq.hpp"
@@ -82,7 +83,7 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, MaslovaUMultMatrSEQ, MaslovaUMultMatrOMP, MaslovaUMultMatrTBB,
-                                MaslovaUMultMatrSTL>(PPC_SETTINGS_maslova_u_mult_matr_crs);
+                                MaslovaUMultMatrSTL, MaslovaUMultMatrALL>(PPC_SETTINGS_maslova_u_mult_matr_crs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
