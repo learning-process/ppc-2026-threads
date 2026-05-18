@@ -5,6 +5,7 @@
 #include <random>
 #include <vector>
 
+#include "iskhakov_d_vertical_gauss_filter/all/include/ops_all.hpp"
 #include "iskhakov_d_vertical_gauss_filter/common/include/common.hpp"
 #include "iskhakov_d_vertical_gauss_filter/omp/include/ops_omp.hpp"
 #include "iskhakov_d_vertical_gauss_filter/seq/include/ops_seq.hpp"
@@ -51,8 +52,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, IskhakovDVerticalGaussFilterSEQ, IskhakovDVerticalGaussFilterOMP,
-                                IskhakovDVerticalGaussFilterTBB, IskhakovDVerticalGaussFilterSTL>(
-        PPC_SETTINGS_iskhakov_d_vertical_gauss_filter);
+                                IskhakovDVerticalGaussFilterTBB, IskhakovDVerticalGaussFilterSTL,
+                                IskhakovDVerticalGaussFilterALL>(PPC_SETTINGS_iskhakov_d_vertical_gauss_filter);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
