@@ -39,8 +39,10 @@ bool AshihminDMultMatrCrsSTL::RunImpl() {
   std::vector<std::vector<double>> local_vals(rows_a);
 
   unsigned int num_threads = std::thread::hardware_concurrency();
-  if (num_threads == 0) num_threads = 2;
-  
+  if (num_threads == 0) {
+    num_threads = 2;
+  }
+
   std::vector<std::future<void>> futures;
   int chunk_size = (rows_a + num_threads - 1) / num_threads;
 
@@ -48,16 +50,19 @@ bool AshihminDMultMatrCrsSTL::RunImpl() {
     int start_row = t * chunk_size;
     int end_row = std::min(start_row + chunk_size, rows_a);
 
-    if (start_row >= end_row) break;
+    if (start_row >= end_row) {
+      break;
+    }
 
-    futures.push_back(std::async(std::launch::async, [start_row, end_row, &matrix_a, &matrix_b, &local_cols, &local_vals]() {
+    futures.push_back(
+        std::async(std::launch::async, [start_row, end_row, &matrix_a, &matrix_b, &local_cols, &local_vals]() {
       for (int i = start_row; i < end_row; ++i) {
         std::map<int, double> row_accumulator;
-        
+
         for (int j = matrix_a.row_ptr[i]; j < matrix_a.row_ptr[i + 1]; ++j) {
           int col_a = matrix_a.col_index[j];
           double val_a = matrix_a.values[j];
-          
+
           for (int k = matrix_b.row_ptr[col_a]; k < matrix_b.row_ptr[col_a + 1]; ++k) {
             int col_b = matrix_b.col_index[k];
             double val_b = matrix_b.values[k];
