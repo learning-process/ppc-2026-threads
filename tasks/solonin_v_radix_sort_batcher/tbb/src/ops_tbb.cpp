@@ -114,7 +114,9 @@ bool RadixSortBatcherTBB::PreProcessingImpl() {
 
 bool RadixSortBatcherTBB::RunImpl() {
   if (GetInput().size() <= 1) {
-    GetOutput() = GetInput();
+    auto& out = GetOutput();
+    const auto& inp = GetInput();
+    out.assign(inp.begin(), inp.end());
     return true;
   }
 
