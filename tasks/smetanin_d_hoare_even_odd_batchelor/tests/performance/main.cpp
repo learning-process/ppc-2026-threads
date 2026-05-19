@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 
+#include "smetanin_d_hoare_even_odd_batchelor/all/include/ops_all.hpp"
 #include "smetanin_d_hoare_even_odd_batchelor/common/include/common.hpp"
 #include "smetanin_d_hoare_even_odd_batchelor/omp/include/ops_omp.hpp"
 #include "smetanin_d_hoare_even_odd_batchelor/seq/include/ops_seq.hpp"
@@ -39,8 +40,9 @@ TEST_P(SmetaninDRunPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, SmetaninDHoarSortOMP, SmetaninDHoarSortSEQ, SmetaninDHoarSortSTL,
-                                SmetaninDHoarSortTBB>(PPC_SETTINGS_smetanin_d_hoare_even_odd_batchelor);
+    ppc::util::MakeAllPerfTasks<InType, SmetaninDHoarSortALL, SmetaninDHoarSortOMP, SmetaninDHoarSortSEQ,
+                                SmetaninDHoarSortSTL, SmetaninDHoarSortTBB>(
+        PPC_SETTINGS_smetanin_d_hoare_even_odd_batchelor);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
