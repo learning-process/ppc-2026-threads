@@ -114,9 +114,8 @@ bool RadixSortBatcherSTL::PreProcessingImpl() {
 
 bool RadixSortBatcherSTL::RunImpl() {
   if (GetInput().size() <= 1) {
-    auto& out = GetOutput();
-    const auto& inp = GetInput();
-    out.assign(inp.begin(), inp.end());
+    std::vector<int> tmp(GetInput().begin(), GetInput().end());
+    GetOutput() = std::move(tmp);
     return true;
   }
 
