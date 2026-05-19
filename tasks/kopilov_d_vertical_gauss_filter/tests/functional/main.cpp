@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 
+#include "kopilov_d_vertical_gauss_filter/all/include/ops_all.hpp"
 #include "kopilov_d_vertical_gauss_filter/common/include/common.hpp"
 #include "kopilov_d_vertical_gauss_filter/omp/include/ops_omp.hpp"
 #include "kopilov_d_vertical_gauss_filter/seq/include/ops_seq.hpp"
@@ -79,6 +80,8 @@ const auto kTaskProviders = std::tuple_cat(ppc::util::AddFuncTask<KopilovDVertic
                                            ppc::util::AddFuncTask<KopilovDVerticalGaussFilterSTL, InType>(
                                                kFunctionalScenarios, PPC_SETTINGS_kopilov_d_vertical_gauss_filter),
                                            ppc::util::AddFuncTask<KopilovDVerticalGaussFilterTBB, InType>(
+                                               kFunctionalScenarios, PPC_SETTINGS_kopilov_d_vertical_gauss_filter),
+                                           ppc::util::AddFuncTask<KopilovDVerticalGaussFilterALL, InType>(
                                                kFunctionalScenarios, PPC_SETTINGS_kopilov_d_vertical_gauss_filter));
 
 INSTANTIATE_TEST_SUITE_P(GaussFilters, VerticalGaussFilterTaskTest, ppc::util::ExpandToValues(kTaskProviders),
@@ -128,6 +131,7 @@ std::vector<ValidationCase> GetValidationData() {
   register_impl("OMP", [](const Matrix &m) { return std::make_shared<KopilovDVerticalGaussFilterOMP>(m); });
   register_impl("STL", [](const Matrix &m) { return std::make_shared<KopilovDVerticalGaussFilterSTL>(m); });
   register_impl("TBB", [](const Matrix &m) { return std::make_shared<KopilovDVerticalGaussFilterTBB>(m); });
+  register_impl("ALL", [](const Matrix &m) { return std::make_shared<KopilovDVerticalGaussFilterALL>(m); });
 
   return cases;
 }
