@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <iostream>
 #include <random>
 
 #include "rozenberg_a_quicksort_simple_merge/all/include/ops_all.hpp"
