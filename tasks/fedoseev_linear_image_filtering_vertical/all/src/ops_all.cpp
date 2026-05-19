@@ -5,12 +5,42 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
+#include <utility>
 #include <vector>
 
 #include "fedoseev_linear_image_filtering_vertical/common/include/common.hpp"
 #include "util/include/util.hpp"
 
 namespace fedoseev_linear_image_filtering_vertical {
+
+namespace {
+void ExchangeGhostRows(int rank, int size, int w, int local_rows, const std::vector<int> &local_data,
+                       std::vector<int> &ghost_src) {
+  bool is_mpi = ppc::util::IsUnderMpirun();
+  if (!is_mpi) {
+    std::copy(local_data.begin(), local_data.begin() + w, ghost_src.begin());
+    std::copy(local_data.begin() + (local_rows - 1) * w, local_data.begin() + local_rows * w,
+              ghost_src.begin() + (local_rows + 1) * w);
+    return;
+  }
+
+  if (rank > 0) {
+    MPI_Sendrecv(const_cast<int *>(local_data.data()), w, MPI_INT, rank - 1, 0, ghost_src.data(), w, MPI_INT, rank - 1,
+                 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  } else {
+    std::copy(local_data.begin(), local_data.begin() + w, ghost_src.begin());
+  }
+
+  if (rank < size - 1) {
+    MPI_Sendrecv(const_cast<int *>(local_data.data() + (local_rows - 1) * w), w, MPI_INT, rank + 1, 0,
+                 ghost_src.data() + (local_rows + 1) * w, w, MPI_INT, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  } else {
+    std::copy(local_data.begin() + (local_rows - 1) * w, local_data.begin() + local_rows * w,
+              ghost_src.begin() + (local_rows + 1) * w);
+  }
+}
+}  // namespace
 
 LinearImageFilteringVerticalAll::LinearImageFilteringVerticalAll(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -47,14 +77,16 @@ void LinearImageFilteringVerticalAll::DistributeData(int rank, int size, int &h)
 
   counts_.resize(size);
   displs_.resize(size);
-  int rows_per_proc = h / size, rem = h % size, curr = 0;
+  int rows_per_proc = h / size;
+  int rem = h % size;
+  int curr = 0;
   for (int i = 0; i < size; ++i) {
     int rows = rows_per_proc + (i < rem ? 1 : 0);
     counts_[i] = rows * w_;
     displs_[i] = curr;
     curr += counts_[i];
   }
-  local_data_.resize(counts_[rank]);
+  local_data_.resize(static_cast<size_t>(counts_[rank]));
 
   if (is_mpi) {
     MPI_Scatterv(rank == 0 ? GetOutput().data.data() : nullptr, counts_.data(), displs_.data(), MPI_INT,
@@ -74,35 +106,16 @@ void LinearImageFilteringVerticalAll::LocalProcessing(int rank, int size, int nu
   }
 
   int ghost_rows = local_rows + 2;
-  std::vector<int> ghost_src(ghost_rows * w_, 0);
+  std::vector<int> ghost_src(static_cast<size_t>(ghost_rows) * static_cast<size_t>(w_), 0);
   for (int i = 0; i < local_rows; ++i) {
-    std::copy(local_data_.begin() + i * w_, local_data_.begin() + (i + 1) * w_, ghost_src.begin() + (i + 1) * w_);
+    std::copy(local_data_.begin() + static_cast<ptrdiff_t>(i) * w_,
+              local_data_.begin() + static_cast<ptrdiff_t>(i + 1) * w_,
+              ghost_src.begin() + static_cast<ptrdiff_t>(i + 1) * w_);
   }
 
-  bool is_mpi = ppc::util::IsUnderMpirun();
-  if (is_mpi) {
-    if (rank > 0) {
-      MPI_Sendrecv(local_data_.data(), w_, MPI_INT, rank - 1, 0, ghost_src.data(), w_, MPI_INT, rank - 1, 0,
-                   MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    } else {
-      std::copy(local_data_.begin(), local_data_.begin() + w_, ghost_src.begin());
-    }
+  ExchangeGhostRows(rank, size, w_, local_rows, local_data_, ghost_src);
 
-    if (rank < size - 1) {
-      MPI_Sendrecv(local_data_.data() + (local_rows - 1) * w_, w_, MPI_INT, rank + 1, 0,
-                   ghost_src.data() + (local_rows + 1) * w_, w_, MPI_INT, rank + 1, 0, MPI_COMM_WORLD,
-                   MPI_STATUS_IGNORE);
-    } else {
-      std::copy(local_data_.begin() + (local_rows - 1) * w_, local_data_.begin() + local_rows * w_,
-                ghost_src.begin() + (ghost_rows - 1) * w_);
-    }
-  } else {
-    std::copy(local_data_.begin(), local_data_.begin() + w_, ghost_src.begin());
-    std::copy(local_data_.begin() + (local_rows - 1) * w_, local_data_.begin() + local_rows * w_,
-              ghost_src.begin() + (ghost_rows - 1) * w_);
-  }
-
-  local_result_.resize(local_rows * w_, 0);
+  local_result_.resize(static_cast<size_t>(local_rows) * static_cast<size_t>(w_), 0);
 #pragma omp parallel for num_threads(num_threads) default(none) \
     shared(ghost_src, local_result_, local_rows, w_, kernel, kernel_sum)
   for (int i = 0; i < local_rows; ++i) {
@@ -113,10 +126,11 @@ void LinearImageFilteringVerticalAll::LocalProcessing(int rank, int size, int nu
         for (int kx = -1; kx <= 1; ++kx) {
           int px = col + kx;
           int py = row_in_ghost + ky;
-          sum += ghost_src[py * w_ + px] * kernel.at(ky + 1).at(kx + 1);
+          sum += ghost_src[static_cast<size_t>(py) * static_cast<size_t>(w_) + static_cast<size_t>(px)] *
+                 kernel.at(ky + 1).at(kx + 1);
         }
       }
-      local_result_[i * w_ + col] = sum / kernel_sum;
+      local_result_[static_cast<size_t>(i) * static_cast<size_t>(w_) + static_cast<size_t>(col)] = sum / kernel_sum;
     }
   }
 }
@@ -124,8 +138,9 @@ void LinearImageFilteringVerticalAll::LocalProcessing(int rank, int size, int nu
 void LinearImageFilteringVerticalAll::GatherData(int rank, int /*size*/) {
   bool is_mpi = ppc::util::IsUnderMpirun();
   if (is_mpi) {
-    MPI_Gatherv(local_result_.data(), local_result_.size(), MPI_INT, rank == 0 ? GetOutput().data.data() : nullptr,
-                counts_.data(), displs_.data(), MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(local_result_.data(), static_cast<int>(local_result_.size()), MPI_INT,
+                rank == 0 ? GetOutput().data.data() : nullptr, counts_.data(), displs_.data(), MPI_INT, 0,
+                MPI_COMM_WORLD);
   } else {
     OutType out;
     out.width = w_;
@@ -136,7 +151,8 @@ void LinearImageFilteringVerticalAll::GatherData(int rank, int /*size*/) {
 }
 
 bool LinearImageFilteringVerticalAll::RunImpl() {
-  int rank = 0, size = 1;
+  int rank = 0;
+  int size = 1;
   bool is_mpi = ppc::util::IsUnderMpirun();
   if (is_mpi) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
