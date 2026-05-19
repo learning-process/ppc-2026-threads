@@ -8,6 +8,7 @@
 #include <tuple>
 #include <vector>
 
+#include "kichanova_k_lin_system_by_conjug_grad/all/include/ops_all.hpp"
 #include "kichanova_k_lin_system_by_conjug_grad/common/include/common.hpp"
 #include "kichanova_k_lin_system_by_conjug_grad/omp/include/ops_omp.hpp"
 #include "kichanova_k_lin_system_by_conjug_grad/seq/include/ops_seq.hpp"
@@ -182,6 +183,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KichanovaKLinS
                                            ppc::util::AddFuncTask<KichanovaKLinSystemByConjugGradOMP, LinSystemData>(
                                                kTestParam, PPC_SETTINGS_kichanova_k_lin_system_by_conjug_grad),
                                            ppc::util::AddFuncTask<KichanovaKLinSystemByConjugGradSTL, LinSystemData>(
+                                               kTestParam, PPC_SETTINGS_kichanova_k_lin_system_by_conjug_grad),
+                                           ppc::util::AddFuncTask<KichanovaKLinSystemByConjugGradALL, LinSystemData>(
                                                kTestParam, PPC_SETTINGS_kichanova_k_lin_system_by_conjug_grad));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
