@@ -1,5 +1,5 @@
 #include "chaschin_vladimir_linear_image_filtration_seq/all/include/ops_all.hpp"
-#include "chaschin_v_linear_image_filtration_seq/common/include/common.hpp"
+#include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
 
 #include <omp.h>
 #include <tbb/tbb.h>
