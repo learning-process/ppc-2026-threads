@@ -1,5 +1,5 @@
 # Умножение плотных матриц. Элементы типа double. Алгоритм Штрассена — TBB
-- Student: Лазарева А.
+- Student: Лазарева Анна
 - Technology: TBB
 - Variant: 3
 
@@ -132,10 +132,10 @@ cd build
 ninja
 
 ### Функциональные тесты
-./func_tests 
+./ppc_func_tests 
 
 ### Тесты производительности  
-TBB_NUM_THREADS=4 ./perf_tests
+TBB_NUM_THREADS=4 ./ppc_perf_tests     --gtest_filter="*tbb_enabled*"     --gtest_print_time=true
 
 Размеры задач:
 Функциональные тесты: 2, 3, 5, 7, 16, 64, 65, 128

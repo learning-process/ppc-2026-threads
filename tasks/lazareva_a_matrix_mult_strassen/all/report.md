@@ -1,5 +1,5 @@
 # Умножение плотных матриц. Элементы типа double. Алгоритм Штрассена — ALL
-- Student: Лазарева А.
+- Student: Лазарева Анна
 - Technology: ALL (MPI + TBB)
 - Variant: 3
 
@@ -194,7 +194,7 @@ cd build
 ninja
 
 ### Функциональные тесты
-./func_tests 
+./ppc_func_tests  
 
 ### Тесты производительности  
 mpirun -np 6 --oversubscribe env TBB_NUM_THREADS=1 ./ppc_perf_tests
