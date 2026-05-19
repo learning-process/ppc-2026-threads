@@ -4,7 +4,6 @@
 #include <oneapi/tbb/blocked_range2d.h>
 #include <oneapi/tbb/parallel_for.h>
 
-#include <algorithm>  // NOLINT(misc-include-cleaner)
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -18,7 +17,6 @@ namespace {
 const int kDivisor = 16;
 const std::array<std::array<int, 3>, 3> kGaussKernel = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
 
-// Математически точное зеркалирование по Y (в точности как в SEQ версии)
 uint8_t GetPixelWithHalo(const uint8_t *local_data, int col_with_halo, int row, int lw_with_halo, int height) {
   int cur_row = row;
   if (cur_row < 0) {
@@ -42,7 +40,6 @@ uint8_t ApplyFilter(const uint8_t *data, int col, int row, int lw_halo, int heig
   return static_cast<uint8_t>(pixel_sum / kDivisor);
 }
 
-// Функции для поиска реальных соседей (обход пустых процессов)
 int FindLeftNeighbor(int rank, const std::vector<int> &counts) {
   for (int p_idx = rank - 1; p_idx >= 0; --p_idx) {
     if (counts.at(static_cast<size_t>(p_idx)) > 0) {
@@ -262,7 +259,6 @@ bool KopilovDVerticalGaussFilterALL::RunImpl() {
     WorkerReceive(local_w, global_height, l_in.data(), lw_halo);
   }
 
-  // Передаем counts, чтобы правильно вычислить живых соседей
   ExchangeHalo(world_rank, world_size, global_height, local_w, lw_halo, l_in, counts);
   ComputeTBB(local_w, global_height, lw_halo, l_in.data(), l_out.data());
 

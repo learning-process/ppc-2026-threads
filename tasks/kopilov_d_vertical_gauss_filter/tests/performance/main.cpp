@@ -12,7 +12,6 @@
 #include <utility>
 #include <vector>
 
-// Инклуды отсортированы строго по алфавиту
 #include "kopilov_d_vertical_gauss_filter/all/include/ops_all.hpp"
 #include "kopilov_d_vertical_gauss_filter/common/include/common.hpp"
 #include "kopilov_d_vertical_gauss_filter/omp/include/ops_omp.hpp"
