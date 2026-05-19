@@ -43,8 +43,8 @@ class MatmulDoubleAllTask : public BaseTask {
                         std::vector<double> &local_a, std::vector<double> &local_b, size_t block_sz);
   void ExecuteFoxIterations(int grid, int row_id, int col_id, size_t bs, size_t block_sz, MPI_Comm row_comm,
                             std::vector<double> &local_a, std::vector<double> &local_b, std::vector<double> &local_c);
-  void CollectResults(int rank, int world_size, size_t n, size_t bs, size_t block_sz, int grid,
-                      const std::vector<double> &local_c, std::vector<double> &c);
+  void CollectResultsImpl(int my_rank, int num_procs, size_t n, size_t bs, size_t block_sz, int grid_dim,
+                          const std::vector<double> &local_c, std::vector<double> &c);
 
   size_t matrix_size_ = 0;
   std::vector<double> matrix_a_;
