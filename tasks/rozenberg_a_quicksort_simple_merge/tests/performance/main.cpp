@@ -20,7 +20,7 @@ class RozenbergARunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType,
     output_data_.clear();
 
     constexpr int kSize = 10000000;
-    std::mt19937 rng(std::random_device{}());
+    std::mt19937 rng(42);
     std::uniform_int_distribution<int> dist(-10000000, 10000000);
 
     InType input_data(kSize);
