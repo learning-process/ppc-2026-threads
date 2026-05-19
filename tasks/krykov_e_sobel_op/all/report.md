@@ -125,7 +125,7 @@ for (int li = 0; li < local_count; ++li) {
 | CMake build type               | Release                              |
 | `PPC_NUM_PROC` / `mpiexec -n`  | 4                                    |
 | `OMP_NUM_THREADS`              | 4                                    |
-| Конфигурация                   | 4 ranks x 4 OMP-потока = 16 единиц  |
+| Конфигурация                   | 4 ranks x 4 OMP-потока = 16 единиц   |
 
 Команда запуска:
 
