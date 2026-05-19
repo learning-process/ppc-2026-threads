@@ -176,7 +176,8 @@ mpiexec -env PPC_NUM_THREADS 4 -env OMP_NUM_THREADS 4 \
 
 ### Структура задачи
 
-Каталог задачи построен по минимальному каркасу курса (как в `example_threads`).
+Каталог задачи построен по минимальному каркасу курса
+(как в `example_threads`).
 
 ```text
 tasks/timur_a_cannon/
@@ -209,27 +210,38 @@ tasks/timur_a_cannon/
     functional/main.cpp
     performance/main.cpp
   data/                          # опционально (в задаче не используется)
-  img/                           # опционально (графики в отчётах — таблицы)
+  img/                           # опционально 
 ```
 
-В `common/include/common.hpp` заданы типы задачи `InType`, `OutType`, `TestType`, `BaseTask`.
-В каждом каталоге `seq/`, `omp/`, `tbb/`, `stl/`, `all/` — класс-наследник `BaseTask` со своим `TypeOfTask` и методами `ValidationImpl`, `PreProcessingImpl`, `RunImpl`, `PostProcessingImpl`.
+В `common/include/common.hpp` заданы типы задачи `InType`, `OutType`,
+`TestType`, `BaseTask`. В каждом каталоге `seq/`, `omp/`, `tbb/`, `stl/`,
+`all/` — класс-наследник `BaseTask` со своим `TypeOfTask` и методами
+`ValidationImpl`, `PreProcessingImpl`, `RunImpl`, `PostProcessingImpl`.
 
-`tests/functional/main.cpp` — один набор из **восьми** тестовых случаев (`a`–`h`, размеры от $2 \times 2$ до $9 \times 9$) для всех backend-ов; эталон — заранее вычисленная матрица произведения.
-`tests/performance/main.cpp` — общий каркас курса (`BaseRunPerfTests`, `MakeAllPerfTasks`), режимы `task_run` и `pipeline`, матрицы $512 \times 512$, `b_size = 32`.
+`tests/functional/main.cpp` — один набор из **восьми** тестовых случаев
+(`a`–`h`, размеры от $2 \times 2$ до $9 \times 9$) для всех backend-ов;
+эталон — заранее вычисленная матрица произведения.
 
-Каталог `all/` — гибридная версия: `MPI_Comm_rank`, `MPI_Bcast` входных матриц, распределение строк блоков между процессами, `MPI_Allgatherv` результата, внутри процесса — OpenMP в `ComputeLocalResult` (подробнее — [all/report.md](all/report.md)).
+`tests/performance/main.cpp` — общий каркас курса (`BaseRunPerfTests`,
+`MakeAllPerfTasks`), режимы `task_run` и `pipeline`, матрицы $512 \times 512$,
+`b_size = 32`.
 
+Каталог `all/` — гибридная версия: `MPI_Comm_rank`, `MPI_Bcast` входных
+матриц, распределение строк блоков между процессами, `MPI_Allgatherv`
+результата, внутри процесса — OpenMP в `ComputeLocalResult`
+(подробнее — [all/report.md](all/report.md)).
 
 ### Короткий листинг: типы входа и выхода
 
 ```cpp
 // File: common/include/common.hpp
-using InType = std::tuple<int, std::vector<std::vector<double>>, std::vector<std::vector<double>>>;
+using InType = std::tuple<int, std::vector<std::vector<double>>,
+                          std::vector<std::vector<double>>>;
 using OutType = std::vector<std::vector<double>>;
-using TestType = std::tuple<std::string, int, std::vector<std::vector<double>>,
-                            std::vector<std::vector<double>>, std::vector<std::vector<double>>>;
+using TestType = std::tuple<std::string, int,
+                            std::vector<std::vector<double>>,
+                            std::vector<std::vector<double>>,
+                            std::vector<std::vector<double>>>;
 using BaseTask = ppc::task::Task<InType, OutType>;
-```
 
 `InType`: размер блока `b_size`, матрицы `A` и `B`. `OutType`: матрица `C = A·B`.
