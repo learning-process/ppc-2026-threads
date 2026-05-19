@@ -1,47 +1,50 @@
 #include <gtest/gtest.h>
 
-#include <array>
-#include <cmath>
-#include <cstddef>
-#include <tuple>
-
 #include "luchnikov_e_mult_of_dense_matrices_fox_algorithm/common/include/common.hpp"
+#include "luchnikov_e_mult_of_dense_matrices_fox_algorithm/omp/include/ops_omp.hpp"
 #include "luchnikov_e_mult_of_dense_matrices_fox_algorithm/seq/include/ops_seq.hpp"
+#include "luchnikov_e_mult_of_dense_matrices_fox_algorithm/stl/include/ops_stl.hpp"
+#include "luchnikov_e_mult_of_dense_matrices_fox_algorithm/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace luchnikov_e_mult_of_dense_matrices_fox_algorithm {
 
-class LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
- protected:
+class LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  const int kCount_ = 200;
+  InType input_data_{};
+
+  void SetUp() override {
+    input_data_ = kCount_;
+  }
+
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::isfinite(static_cast<double>(output_data));
+    return output_data > 0;
   }
 
   InType GetTestInputData() final {
-    static constexpr std::array<InType, 9> kBenchmarkSizes = {8, 12, 24, 48, 96, 192, 384, 512, 768};
-
-    static thread_local size_t run_counter = 0;
-    InType size = kBenchmarkSizes.at(run_counter % kBenchmarkSizes.size());
-    ++run_counter;
-    return size;
+    return input_data_;
   }
 };
 
-TEST_P(LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTestThreads, BenchmarkFoxAlgorithm) {
+TEST_P(LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 namespace {
-
-const auto kPerfTaskList =
+const auto kAllPerfTasks =
     std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, LuchnikovEMultOfDenseMatrixFoxAlgoritmSeq>(
-        PPC_SETTINGS_luchnikov_e_mult_of_dense_matrices_fox_algorithm));
+                       PPC_SETTINGS_luchnikov_e_mult_of_dense_matrices_fox_algorithm),
+                   ppc::util::MakeAllPerfTasks<InType, LuchnikovEMultOfDenseMatrixFoxAlgoritmOMP>(
+                       PPC_SETTINGS_luchnikov_e_mult_of_dense_matrices_fox_algorithm),
+                   ppc::util::MakeAllPerfTasks<InType, LuchnikovEMultOfDenseMatrixFoxAlgoritmSTL>(
+                       PPC_SETTINGS_luchnikov_e_mult_of_dense_matrices_fox_algorithm),
+                   ppc::util::MakeAllPerfTasks<InType, LuchnikovEMultOfDenseMatrixFoxAlgoritmTBB>(
+                       PPC_SETTINGS_luchnikov_e_mult_of_dense_matrices_fox_algorithm));
 
-const auto kGtestParams = ppc::util::TupleToGTestValues(kPerfTaskList);
-const auto kTestPrinter = LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTestThreads::CustomPerfTestName;
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kPerfTestName = LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(FoxAlgorithmBenchmark, LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTestThreads, kGtestParams,
-                         kTestPrinter);
-
+INSTANTIATE_TEST_SUITE_P(AllTechPerfTests, LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTests, kGtestValues,
+                         kPerfTestName);
 }  // namespace
 }  // namespace luchnikov_e_mult_of_dense_matrices_fox_algorithm
