@@ -1,7 +1,6 @@
 #include "kopilov_d_vertical_gauss_filter/all/include/ops_all.hpp"
 
 #include <mpi.h>
-
 #include <oneapi/tbb/blocked_range2d.h>
 #include <oneapi/tbb/parallel_for.h>
 
@@ -19,13 +18,13 @@ namespace {
 const int kDivisor = 16;
 const std::array<std::array<int, 3>, 3> kGaussKernel = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
 
-uint8_t GetPixelWithHalo(const uint8_t* local_data, int col_with_halo, int row, int lw_with_halo, int height) {
+uint8_t GetPixelWithHalo(const uint8_t *local_data, int col_with_halo, int row, int lw_with_halo, int height) {
   int cur_row = std::clamp(row, 0, height - 1);
   auto idx = (static_cast<size_t>(cur_row) * static_cast<size_t>(lw_with_halo)) + static_cast<size_t>(col_with_halo);
   return local_data[idx];
 }
 
-uint8_t ApplyFilter(const uint8_t* data, int col, int row, int lw_halo, int height) {
+uint8_t ApplyFilter(const uint8_t *data, int col, int row, int lw_halo, int height) {
   int pixel_sum = 0;
   for (size_t ky = 0; ky < 3; ++ky) {
     for (size_t kx = 0; kx < 3; ++kx) {
@@ -38,7 +37,7 @@ uint8_t ApplyFilter(const uint8_t* data, int col, int row, int lw_halo, int heig
 }
 
 void ExchangeHalo(int world_rank, int world_size, int height, int local_w, int lw_with_halo,
-                  std::vector<uint8_t>& local_input) {
+                  std::vector<uint8_t> &local_input) {
   std::vector<uint8_t> send_left(static_cast<size_t>(height));
   std::vector<uint8_t> send_right(static_cast<size_t>(height));
   std::vector<uint8_t> recv_left(static_cast<size_t>(height));
@@ -61,16 +60,16 @@ void ExchangeHalo(int world_rank, int world_size, int height, int local_w, int l
 
   for (int row_idx = 0; row_idx < height; ++row_idx) {
     auto base_idx = static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo);
-    local_input[base_idx + 0] = (left_proc != MPI_PROC_NULL) ? recv_left[static_cast<size_t>(row_idx)]
-                                                            : local_input[base_idx + 1];
+    local_input[base_idx + 0] =
+        (left_proc != MPI_PROC_NULL) ? recv_left[static_cast<size_t>(row_idx)] : local_input[base_idx + 1];
     local_input[base_idx + static_cast<size_t>(local_w + 1)] =
         (right_proc != MPI_PROC_NULL) ? recv_right[static_cast<size_t>(row_idx)]
                                       : local_input[base_idx + static_cast<size_t>(local_w)];
   }
 }
 
-void MasterDistribute(int world_size, int width, int height, const std::vector<int>& counts,
-                      const std::vector<int>& displs, const uint8_t* full_data, uint8_t* local_data, int lw_with_halo) {
+void MasterDistribute(int world_size, int width, int height, const std::vector<int> &counts,
+                      const std::vector<int> &displs, const uint8_t *full_data, uint8_t *local_data, int lw_with_halo) {
   int p0_w = counts.at(0);
   for (int r_idx = 0; r_idx < height; ++r_idx) {
     for (int c_idx = 0; c_idx < p0_w; ++c_idx) {
@@ -78,7 +77,6 @@ void MasterDistribute(int world_size, int width, int height, const std::vector<i
           full_data[(static_cast<size_t>(r_idx) * static_cast<size_t>(width)) + static_cast<size_t>(c_idx)];
     }
   }
-
 
   for (int p_idx = 1; p_idx < world_size; ++p_idx) {
     int p_w = counts.at(static_cast<size_t>(p_idx));
@@ -94,19 +92,20 @@ void MasterDistribute(int world_size, int width, int height, const std::vector<i
   }
 }
 
-void WorkerReceive(int my_w, int height, uint8_t* local_data, int lw_with_halo) {
+void WorkerReceive(int my_w, int height, uint8_t *local_data, int lw_with_halo) {
   std::vector<uint8_t> buf(static_cast<size_t>(my_w) * static_cast<size_t>(height));
   MPI_Recv(buf.data(), static_cast<int>(buf.size()), MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   for (int row_idx = 0; row_idx < height; ++row_idx) {
     for (int col_idx = 0; col_idx < my_w; ++col_idx) {
-      local_data[(static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo)) + static_cast<size_t>(col_idx + 1)] =
+      local_data[(static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo)) +
+                 static_cast<size_t>(col_idx + 1)] =
           buf[(static_cast<size_t>(row_idx) * static_cast<size_t>(my_w)) + static_cast<size_t>(col_idx)];
     }
   }
 }
 
-void MasterGather(int world_size, int width, int height, const std::vector<int>& counts, const std::vector<int>& displs,
-                  const std::vector<uint8_t>& local_out, uint8_t* full_data) {
+void MasterGather(int world_size, int width, int height, const std::vector<int> &counts, const std::vector<int> &displs,
+                  const std::vector<uint8_t> &local_out, uint8_t *full_data) {
   int p0_w = counts.at(0);
   for (int r_idx = 0; r_idx < height; ++r_idx) {
     for (int c_idx = 0; c_idx < p0_w; ++c_idx) {
@@ -130,7 +129,7 @@ void MasterGather(int world_size, int width, int height, const std::vector<int>&
 }
 }  // namespace
 
-KopilovDVerticalGaussFilterALL::KopilovDVerticalGaussFilterALL(const InType& in) {
+KopilovDVerticalGaussFilterALL::KopilovDVerticalGaussFilterALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = OutType{};
@@ -140,14 +139,16 @@ bool KopilovDVerticalGaussFilterALL::ValidationImpl() {
   int rank_v = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank_v);
   if (rank_v == 0) {
-    const auto& input_ref = GetInput();
+    const auto &input_ref = GetInput();
     return input_ref.width > 0 && input_ref.height > 0 &&
            input_ref.data.size() == static_cast<size_t>(input_ref.width) * static_cast<size_t>(input_ref.height);
   }
   return true;
 }
 
-bool KopilovDVerticalGaussFilterALL::PreProcessingImpl() { return true; }
+bool KopilovDVerticalGaussFilterALL::PreProcessingImpl() {
+  return true;
+}
 
 bool KopilovDVerticalGaussFilterALL::RunImpl() {
   int world_size = 0;
@@ -184,7 +185,7 @@ bool KopilovDVerticalGaussFilterALL::RunImpl() {
     WorkerReceive(local_w, g_h, l_in.data(), lw_halo);
   }
   ExchangeHalo(world_rank, world_size, g_h, local_w, lw_halo, l_in);
-  tbb::parallel_for(tbb::blocked_range2d<int>(0, g_h, 0, local_w), [&](const tbb::blocked_range2d<int>& r) {
+  tbb::parallel_for(tbb::blocked_range2d<int>(0, g_h, 0, local_w), [&](const tbb::blocked_range2d<int> &r) {
     for (int r_idx = r.rows().begin(); r_idx != r.rows().end(); ++r_idx) {
       for (int c_idx = r.cols().begin(); c_idx != r.cols().end(); ++c_idx) {
         l_out[(static_cast<size_t>(r_idx) * static_cast<size_t>(local_w)) + static_cast<size_t>(c_idx)] =
@@ -203,6 +204,8 @@ bool KopilovDVerticalGaussFilterALL::RunImpl() {
   return true;
 }
 
-bool KopilovDVerticalGaussFilterALL::PostProcessingImpl() { return true; }
+bool KopilovDVerticalGaussFilterALL::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace kopilov_d_vertical_gauss_filter

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+
 #include "kopilov_d_vertical_gauss_filter/common/include/common.hpp"
 #include "task/include/task.hpp"
 
