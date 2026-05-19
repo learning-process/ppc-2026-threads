@@ -13,7 +13,7 @@
 #include "util/include/util.hpp"
 
 namespace makoveeva_matmul_double_all {
-
+// hi
 class MakoveevaALLRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
