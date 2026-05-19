@@ -97,6 +97,7 @@ python scripts/run_tests.py --running-type="performance"
 
 Результаты замера времени для последовательной версии:
 
+Количество элементов в массиве: 6 000 000
 Время замеров - среднее. Режим task (не pipeline).
 
 | Режим | Количество элементов | Время, сек | Ускорение | Эффективность |
@@ -115,11 +116,10 @@ python scripts/run_tests.py --running-type="performance"
 2. Практические занятия по курсу "Технологии параллельного программирования".
 3. Поразрядная сортировка (Radix Sort) — теоретическое описание алгоритмов.
 
-
 ## Приложение
 
 ```cpp
-
+// File: seq/src/ops_seq.cpp
 
 // Если массив пустой - сортировать нечего
 bool VotincevDRadixMergeSortSEQ::ValidationImpl() {
@@ -138,6 +138,7 @@ bool VotincevDRadixMergeSortSEQ::PostProcessingImpl() {
 }
 
 
+// Основной цикл поразрядной сортировки (LSD) с нормализацией массива
 bool VotincevDRadixMergeSortSEQ::RunImpl() {
   std::vector<int32_t> working_array = GetInput();
 
@@ -168,3 +169,7 @@ bool VotincevDRadixMergeSortSEQ::RunImpl() {
   GetOutput() = std::move(working_array);
   return true;
 }
+
+Пояснение: сдвиг на min_val гарантирует корректную работу с разрядами.
+Цикл for последовательно вызывает сортировку SortByDigit.
+После завершения сортировки - массив возвращается к исходному диапазону.

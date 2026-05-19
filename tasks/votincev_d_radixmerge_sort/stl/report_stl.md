@@ -51,7 +51,9 @@
 - **Локальная сортировка**: Метод `LocalRadixSort` сортирует один из блоков данных.
 - **Слияние**: Функция `Merge` производит объединение соседних локальных участков с использованием
   временного буфера.
-- **Синхронизация**: Синхронизация потоков на каждом этапе слияния обеспечивается вызовом метода `.get()`
+- **Обеспечение реального параллелизма (Синхронизация)**:
+  Для достижения честного параллельного выполнения задач слияния на каждом уровне дерева разработан строго раздельный двухэтапный цикл. В первом цикле происходит массовый асинхронный запуск всех независимых пар слияния текущего шага с флагом `std::launch::async`, а возвращаемые объекты `std::future` немедленно сохраняются в `std::vector`.
+  Только после того, как абсолютно все потоки текущего уровня дерева были запущены, итератор переходит ко второму (последовательному) циклу, где у каждой фуктуры вызывается метод блокирующего ожидания `.get()` (выполняющий роль `join`). Такой подход гарантирует, что задачи выполняются параллельно на пуле потоков ОС, а не блокируют основную нить последовательно одна за другой.
   у объектов `std::future`.
 - **std::launch::async**: гарантирует создание потока, а не отложенное выполнение.
 
@@ -90,7 +92,7 @@ python scripts/run_tests.py --running-type="performance"
 
 В таблице приведены результаты измерений для последовательной и параллельной версий:
 
-Количество элементов в массиве: 1 000 000
+Количество элементов в массиве: 6 000 000
 
 Время замеров - среднее. Режим task (не pipeline).
 
@@ -132,30 +134,37 @@ bool VotincevDRadixMergeSortSTL::PostProcessingImpl() {
   return true;
 }
 
-bool VotincevDRadixMergeSortSTL::RunImpl() {
-  const auto &input = GetInput();
-  auto n = static_cast<int32_t>(input.size());
-  if (n == 0) {
-    return true;
+void VotincevDRadixMergeSortSTL::ParallelRadixMergeSort(uint32_t *data, int32_t n, uint32_t *temp) {
+  const int32_t grain_size = 4096;
+  if (n <= grain_size) {
+    LocalRadixSort(data, data + n);
+    return;
+  }
+// запуск асинхронных задач и явная синхронизация
+// (через std::vector<std::future<void>> futures;)
+  std::vector<std::future<void>> futures;
+
+  int32_t num_blocks = (n + grain_size - 1) / grain_size;
+  futures.reserve(static_cast<size_t>(num_blocks));
+
+  for (int32_t i = 0; i < num_blocks; ++i) {
+    int32_t left = i * grain_size;
+    int32_t right = std::min(left + grain_size, n);
+
+    futures.push_back(std::async(std::launch::async, [data, left, right] {
+      VotincevDRadixMergeSortSTL::LocalRadixSort(data + left, data + right);
+    }));
+  }
+  for (auto &f : futures) {
+    f.get();
   }
 
-  int32_t min_val = *std::ranges::min_element(input.begin(), input.end());
-
-  std::vector<uint32_t> working_array(static_cast<size_t>(n));
-  for (int32_t i = 0; i < n; ++i) {
-    working_array[static_cast<size_t>(i)] =
-        static_cast<uint32_t>(input[static_cast<size_t>(i)]) - static_cast<uint32_t>(min_val);
-  }
-
-  std::vector<uint32_t> temp_buffer(static_cast<size_t>(n));
-  ParallelRadixMergeSort(working_array.data(), n, temp_buffer.data());
-
-  std::vector<int32_t> result(static_cast<size_t>(n));
-  for (int32_t i = 0; i < n; ++i) {
-    result[static_cast<size_t>(i)] =
-        static_cast<int32_t>(working_array[static_cast<size_t>(i)] + static_cast<uint32_t>(min_val));
-  }
-
-  GetOutput() = std::move(result);
-  return true;
+  // ...
+  // дальше код функции
 }
+
+Пояснение:
+std::launch::async - 
+гарантирует немедленное создание потоков ОС (в отличи от deferred). 
+Цикл запуска потоков отделен о цикла ожидания .get() (аналог .join()).
+Если бы .get() происходил внутри первого цикла - выполнение было бы последовательным.

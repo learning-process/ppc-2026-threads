@@ -87,7 +87,7 @@ python scripts/run_tests.py --running-type="performance"
 В таблице ниже представлены замеры времени выполнения для 1 000 000 элементов `int32_t`. Эксперименты проводились
 с разным соотношением MPI-рангов и OpenMP-потоков для выявления наиболее эффективной конфигурации.
 
-Количество элементов в массиве: 1 000 000
+Количество элементов в массиве: 6 000 000
 
 Время замеров - среднее. Режим task (не pipeline).
 
@@ -138,27 +138,15 @@ bool VotincevDRadixMergeSortALL::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int32_t n = (rank == 0) ? static_cast<int32_t>(input_.size()) : 0;
-  MPI_Bcast(&n, 1, MPI_INT32_T, 0, MPI_COMM_WORLD);
-
-  std::vector<int32_t> send_counts(static_cast<size_t>(size));
-  std::vector<int32_t> displacements(static_cast<size_t>(size));
-  int32_t items = n / size;
-  int32_t rem = n % size;
-
-  for (int32_t i = 0; i < size; ++i) {
-    send_counts.at(static_cast<size_t>(i)) = items + (i < rem ? 1 : 0);
-    displacements.at(static_cast<size_t>(i)) =
-        (i == 0) ? 0 : displacements.at(static_cast<size_t>(i - 1)) + send_counts.at(static_cast<size_t>(i - 1));
-  }
-
-  auto local_n = send_counts.at(static_cast<size_t>(rank));
-  std::vector<uint32_t> local_data(static_cast<size_t>(local_n));
-
+  // ...
+  
+// межпроцессное распределение данных и сбор отсортированных блоков
+  // разделение данных корневым процессом (Rank 0)
   int32_t min_val = ScatterData(rank, n, local_n, send_counts, displacements, local_data);
 
+// внутрипроцессная сортировка и слияние (OpenMP)
   OmpLocalSortAndMerge(local_data);
-
+// сбор данных обратно на корневой процесс
   std::vector<uint32_t> gathered_data;
   if (rank == 0) {
     gathered_data.resize(static_cast<size_t>(n));
@@ -167,6 +155,7 @@ bool VotincevDRadixMergeSortALL::RunImpl() {
   MPI_Gatherv(local_data.data(), local_n, MPI_UINT32_T, gathered_data.data(), send_counts.data(), displacements.data(),
               MPI_UINT32_T, 0, MPI_COMM_WORLD);
 
+// финальное слияние на корневом процессе
   FinalMergeAndFormat(rank, size, n, min_val, gathered_data, displacements);
 
   if (rank == 0) {
@@ -175,3 +164,9 @@ bool VotincevDRadixMergeSortALL::RunImpl() {
 
   return true;
 }
+
+Пояснение:
+MPI_Scatterv, MPI_Gatherv - выступают в роли барьеров (нет необходимости дополнительно писать MPI_Barrirer).
+Вся вычислительная нагрузка - OmpLocalSortAndMerge.
+Внутри этой функции потоки работают с общей памятью.
+Финальное слияние - выполнятся на потоке с rank=0.
