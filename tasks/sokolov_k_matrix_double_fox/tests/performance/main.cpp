@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include "sokolov_k_matrix_double_fox/all/include/ops_all.hpp"
 #include "sokolov_k_matrix_double_fox/common/include/common.hpp"
 #include "sokolov_k_matrix_double_fox/omp/include/ops_omp.hpp"
 #include "sokolov_k_matrix_double_fox/seq/include/ops_seq.hpp"
@@ -32,9 +33,10 @@ TEST_P(SokolovKMatrixDoubleFoxPerfTestsSeq, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SokolovKMatrixDoubleFoxOMP, SokolovKMatrixDoubleFoxSEQ,
-                                                       SokolovKMatrixDoubleFoxSTL, SokolovKMatrixDoubleFoxTBB>(
-    PPC_SETTINGS_sokolov_k_matrix_double_fox);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, SokolovKMatrixDoubleFoxALL, SokolovKMatrixDoubleFoxOMP,
+                                SokolovKMatrixDoubleFoxSEQ, SokolovKMatrixDoubleFoxSTL, SokolovKMatrixDoubleFoxTBB>(
+        PPC_SETTINGS_sokolov_k_matrix_double_fox);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
