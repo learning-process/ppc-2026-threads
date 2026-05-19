@@ -133,7 +133,7 @@ bool RadixSortBatcherSTL::RunImpl() {
     }
     blocks.emplace_back(GetInput().begin() + lo, GetInput().begin() + hi);
     int block_idx = static_cast<int>(blocks.size()) - 1;
-    workers.emplace_back([this, &blocks, block_idx]() {
+    workers.emplace_back([[this, &blocks, block_idx]blocks, block_idx]() {
       for (size_t pos_idx = 0; pos_idx < sizeof(int); ++pos_idx) {
         SortByDigit(blocks[block_idx], pos_idx);
       }
