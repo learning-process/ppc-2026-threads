@@ -190,9 +190,9 @@ void RozenbergAQuicksortSimpleMergeSEQ::PushSubarrays(
 массива отрицательные
 6. [`random_data_test.txt`](../data/random_data_test.txt) $-$ тест, принимающий на вход массив из 50 чисел из отрезка
 $(-100, 100)$. Проверяет корректность алгоритма на массивах среднего размера.
-7. [`random_data_test_2.txt](../data/random_data_test_2.txt) $-$ тест, принимающий на вход массив из 500 чисел из
+7. [`random_data_test_2.txt`](../data/random_data_test_2.txt) $-$ тест, принимающий на вход массив из 500 чисел из
 отрезка $(-1000, 1000)$. Проверяет корректность алгоритма на массивах большого размера.
-8. [`reverse_order_test.txt](../data/reverse_order_test.txt) $-$ проверяет случай, когда на вход принимается массив,
+8. [`reverse_order_test.txt`](../data/reverse_order_test.txt) $-$ проверяет случай, когда на вход принимается массив,
 отсортированный по невозрастанию
 9. [`single_element_test.txt`](../data/single_element_test.txt) $-$ проверяет случай, когда массив состоит из одного элемента
 
