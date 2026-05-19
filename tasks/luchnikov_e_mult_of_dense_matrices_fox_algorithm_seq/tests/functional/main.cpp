@@ -29,7 +29,6 @@ class LuchnikovEMultOfDenseMatrixFoxAlgoritmFuncTestsThreads
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     InType test_id = std::get<0>(params);
 
-    // Для матриц из единиц сумма элементов результата = N^3
     static const std::map<InType, double> kExpectedSums = {{2, 8.0},     {4, 64.0},    {6, 216.0},
                                                            {8, 512.0},   {10, 1000.0}, {12, 1728.0},
                                                            {16, 4096.0}, {20, 8000.0}, {24, 13824.0}};
@@ -42,7 +41,7 @@ class LuchnikovEMultOfDenseMatrixFoxAlgoritmFuncTestsThreads
     double expected = it->second;
     double rel_tol = 1e-8;
     double abs_tol = 1e-6;
-    return std::abs(output_data - expected) <= (std::abs(expected) * rel_tol + abs_tol);
+    return std::abs(output_data - expected) <= ((std::abs(expected) * rel_tol) + abs_tol);
   }
 
   InType GetTestInputData() final {
@@ -53,7 +52,6 @@ class LuchnikovEMultOfDenseMatrixFoxAlgoritmFuncTestsThreads
 
 namespace {
 
-// NOLINTNEXTLINE(readability-named-parameter)
 TEST_P(LuchnikovEMultOfDenseMatrixFoxAlgoritmFuncTestsThreads, VerifyFoxMultiplication) {
   ExecuteTest(GetParam());
 }

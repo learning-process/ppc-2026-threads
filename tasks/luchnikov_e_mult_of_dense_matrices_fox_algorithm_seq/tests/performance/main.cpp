@@ -26,7 +26,6 @@ class LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTestThreads : public ppc::util::
   }
 };
 
-// NOLINTNEXTLINE(readability-named-parameter)
 TEST_P(LuchnikovEMultOfDenseMatrixFoxAlgoritmPerfTestThreads, BenchmarkFoxAlgorithm) {
   ExecuteTest(GetParam());
 }

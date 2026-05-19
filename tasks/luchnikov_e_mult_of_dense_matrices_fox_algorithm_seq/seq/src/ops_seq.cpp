@@ -1,7 +1,7 @@
 #include "luchnikov_e_mult_of_dense_matrices_fox_algorithm_seq/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <cmath>
+#include <cstddef>
 
 namespace luchnikov_e_mult_of_dense_matrices_fox_algorithm_seq {
 
@@ -89,7 +89,6 @@ bool LuchnikovEMultOfDenseMatrixFoxAlgoritmSeq::ValidationImpl() {
 
 bool LuchnikovEMultOfDenseMatrixFoxAlgoritmSeq::PreProcessingImpl() {
   int n = GetInput();
-  // Генерируем матрицы программно, чтобы не зависеть от внешних файлов
   FillMatrixWithOnes(matrix_a_, n);
   FillMatrixWithOnes(matrix_b_, n);
 
