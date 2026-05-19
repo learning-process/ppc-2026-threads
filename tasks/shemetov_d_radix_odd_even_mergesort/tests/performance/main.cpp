@@ -5,6 +5,7 @@
 #include <random>
 #include <vector>
 
+#include "shemetov_d_radix_odd_even_mergesort/all/include/ops_all.hpp"
 #include "shemetov_d_radix_odd_even_mergesort/common/include/common.hpp"
 #include "shemetov_d_radix_odd_even_mergesort/omp/include/ops_omp.hpp"
 #include "shemetov_d_radix_odd_even_mergesort/seq/include/ops_seq.hpp"
@@ -49,8 +50,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ShemetovDRadixOddEvenMergeSortSEQ, ShemetovDRadixOddEvenMergeSortOMP,
-                                ShemetovDRadixOddEvenMergeSortTBB, ShemetovDRadixOddEvenMergeSortSTL>(
-        PPC_SETTINGS_shemetov_d_radix_odd_even_mergesort);
+                                ShemetovDRadixOddEvenMergeSortTBB, ShemetovDRadixOddEvenMergeSortSTL,
+                                ShemetovDRadixOddEvenMergeSortALL>(PPC_SETTINGS_shemetov_d_radix_odd_even_mergesort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
