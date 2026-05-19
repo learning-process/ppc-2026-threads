@@ -2,9 +2,8 @@
 
 #include <algorithm>
 #include <cmath>
-#include <execution>
+#include <future>
 #include <map>
-#include <numeric>
 #include <vector>
 
 #include "ashihmin_d_mult_matr_crs/common/include/common.hpp"
@@ -39,31 +38,53 @@ bool AshihminDMultMatrCrsSTL::RunImpl() {
   std::vector<std::vector<int>> local_cols(rows_a);
   std::vector<std::vector<double>> local_vals(rows_a);
 
-  std::vector<int> row_indices(rows_a);
-  std::iota(row_indices.begin(), row_indices.end(), 0);
+  unsigned int num_threads = std::thread::hardware_concurrency();
+  if (num_threads == 0) num_threads = 2;
+  
+  std::vector<std::future<void>> futures;
+  int chunk_size = (rows_a + num_threads - 1) / num_threads;
 
-  std::for_each(std::execution::par, row_indices.begin(), row_indices.end(), [&](int i) {
-    std::map<int, double> row_accumulator;
-    for (int j = matrix_a.row_ptr[i]; j < matrix_a.row_ptr[i + 1]; ++j) {
-      int col_a = matrix_a.col_index[j];
-      double val_a = matrix_a.values[j];
-      for (int k = matrix_b.row_ptr[col_a]; k < matrix_b.row_ptr[col_a + 1]; ++k) {
-        row_accumulator[matrix_b.col_index[k]] += val_a * matrix_b.values[k];
+  for (unsigned int t = 0; t < num_threads; ++t) {
+    int start_row = t * chunk_size;
+    int end_row = std::min(start_row + chunk_size, rows_a);
+
+    if (start_row >= end_row) break;
+
+    futures.push_back(std::async(std::launch::async, [start_row, end_row, &matrix_a, &matrix_b, &local_cols, &local_vals]() {
+      for (int i = start_row; i < end_row; ++i) {
+        std::map<int, double> row_accumulator;
+        
+        for (int j = matrix_a.row_ptr[i]; j < matrix_a.row_ptr[i + 1]; ++j) {
+          int col_a = matrix_a.col_index[j];
+          double val_a = matrix_a.values[j];
+          
+          for (int k = matrix_b.row_ptr[col_a]; k < matrix_b.row_ptr[col_a + 1]; ++k) {
+            int col_b = matrix_b.col_index[k];
+            double val_b = matrix_b.values[k];
+            row_accumulator[col_b] += val_a * val_b;
+          }
+        }
+
+        for (auto it = row_accumulator.begin(); it != row_accumulator.end(); ++it) {
+          if (std::abs(it->second) > 1e-15) {
+            local_cols[i].push_back(it->first);
+            local_vals[i].push_back(it->second);
+          }
+        }
       }
-    }
-    for (const auto &[col, val] : row_accumulator) {
-      if (std::abs(val) > 1e-15) {
-        local_cols[i].push_back(col);
-        local_vals[i].push_back(val);
-      }
-    }
-  });
+    }));
+  }
+
+  for (auto &f : futures) {
+    f.get();
+  }
 
   for (int i = 0; i < rows_a; ++i) {
     matrix_c.col_index.insert(matrix_c.col_index.end(), local_cols[i].begin(), local_cols[i].end());
     matrix_c.values.insert(matrix_c.values.end(), local_vals[i].begin(), local_vals[i].end());
     matrix_c.row_ptr[i + 1] = static_cast<int>(matrix_c.values.size());
   }
+
   return true;
 }
 
