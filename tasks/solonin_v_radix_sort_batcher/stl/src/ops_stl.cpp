@@ -77,8 +77,14 @@ std::vector<int> RadixSortBatcherSTL::OddEvenMerge(const std::vector<int> &a, co
   std::vector<int> se;
   std::vector<int> so;
 
-  std::thread t_even([&]() { std::ranges::sort(evens); se = evens; });
-  std::thread t_odd([&]() { std::ranges::sort(odds); so = odds; });
+  std::thread t_even([&]() {
+    std::ranges::sort(evens);
+    se = evens;
+  });
+  std::thread t_odd([&]() {
+    std::ranges::sort(odds);
+    so = odds;
+  });
   t_even.join();
   t_odd.join();
 
@@ -116,20 +122,20 @@ bool RadixSortBatcherSTL::RunImpl() {
   int n = static_cast<int>(GetInput().size());
   int chunk = (n + nthreads - 1) / nthreads;
 
-  std::vector<std::vector<int>> blocks(nthreads);
+  std::vector<std::vector<int>> blocks;
   std::vector<std::thread> workers;
 
   for (int thread_idx = 0; thread_idx < nthreads; ++thread_idx) {
     int lo = thread_idx * chunk;
     int hi = std::min(lo + chunk, n);
     if (lo >= n) {
-      blocks[thread_idx] = {};
-      continue;
+      break;
     }
-    blocks[thread_idx].assign(GetInput().begin() + lo, GetInput().begin() + hi);
-    workers.emplace_back([&blocks, thread_idx]() {
+    blocks.emplace_back(GetInput().begin() + lo, GetInput().begin() + hi);
+    int block_idx = static_cast<int>(blocks.size()) - 1;
+    workers.emplace_back([this, &blocks, block_idx]() {
       for (size_t pos_idx = 0; pos_idx < sizeof(int); ++pos_idx) {
-        SortByDigit(blocks[thread_idx], pos_idx);
+        SortByDigit(blocks[block_idx], pos_idx);
       }
     });
   }

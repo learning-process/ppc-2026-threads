@@ -124,16 +124,17 @@ bool RadixSortBatcherTBB::RunImpl() {
   int n = static_cast<int>(GetInput().size());
   int chunk = (n + nthreads - 1) / nthreads;
 
-  std::vector<std::vector<int>> blocks(nthreads);
+  int actual_blocks = std::min(nthreads, (n + chunk - 1) / chunk);
+  std::vector<std::vector<int>> blocks(actual_blocks);
 
-  tbb::parallel_for(tbb::blocked_range<int>(0, nthreads), [&](const tbb::blocked_range<int> &rng) {
+  for (int thread_idx = 0; thread_idx < actual_blocks; ++thread_idx) {
+    int lo = thread_idx * chunk;
+    int hi = std::min(lo + chunk, n);
+    blocks[thread_idx].assign(GetInput().begin() + lo, GetInput().begin() + hi);
+  }
+
+  tbb::parallel_for(tbb::blocked_range<int>(0, actual_blocks), [&](const tbb::blocked_range<int> &rng) {
     for (int thread_idx = rng.begin(); thread_idx < rng.end(); ++thread_idx) {
-      int lo = thread_idx * chunk;
-      int hi = std::min(lo + chunk, n);
-      if (lo >= n) {
-        break;
-      }
-      blocks[thread_idx].assign(GetInput().begin() + lo, GetInput().begin() + hi);
       for (size_t pos_idx = 0; pos_idx < sizeof(int); ++pos_idx) {
         SortByDigit(blocks[thread_idx], pos_idx);
       }
