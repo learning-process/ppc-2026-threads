@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 
+#include "romanov_m_matrix_ccs/all/include/ops_all.hpp"
 #include "romanov_m_matrix_ccs/common/include/common.hpp"
 #include "romanov_m_matrix_ccs/omp/include/ops_omp.hpp"
 #include "romanov_m_matrix_ccs/seq/include/ops_seq.hpp"
@@ -76,7 +77,7 @@ TEST_P(RomanovMPerfTest, RunPerfModes) {
 namespace {
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, RomanovMMatrixCCSSeq, RomanovMMatrixCCSOMP, RomanovMMatrixCCSTBB,
-                                RomanovMMatrixCCSSTL>(PPC_SETTINGS_romanov_m_matrix_ccs);
+                                RomanovMMatrixCCSSTL, RomanovMMatrixCCSALL>(PPC_SETTINGS_romanov_m_matrix_ccs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = RomanovMPerfTest::CustomPerfTestName;
