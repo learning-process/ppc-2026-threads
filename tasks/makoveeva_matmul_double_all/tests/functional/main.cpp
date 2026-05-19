@@ -7,6 +7,7 @@
 #include <tuple>
 #include <vector>
 
+#include "makoveeva_matmul_double_all/common/include/common.hpp"
 #include "makoveeva_matmul_double_all/all/include/ops_all.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -92,10 +93,12 @@ TEST_P(MakoveevaALLRunFuncTests, MatMulFoxAlg) {
 }
 
 const std::array<TestType, 12> kTestParams = {
-    std::make_tuple(1, "size_1x1"),    std::make_tuple(2, "size_2x2"),    std::make_tuple(3, "size_3x3"),
-    std::make_tuple(4, "size_4x4"),    std::make_tuple(5, "size_5x5"),    std::make_tuple(6, "size_6x6"),
-    std::make_tuple(7, "size_7x7"),    std::make_tuple(8, "size_8x8"),    std::make_tuple(9, "size_9x9"),
-    std::make_tuple(10, "size_10x10"), std::make_tuple(16, "size_16x16"), std::make_tuple(32, "size_32x32")};
+    std::make_tuple(1, "size_1x1"),    std::make_tuple(2, "size_2x2"),
+    std::make_tuple(3, "size_3x3"),    std::make_tuple(4, "size_4x4"),
+    std::make_tuple(5, "size_5x5"),    std::make_tuple(6, "size_6x6"),
+    std::make_tuple(7, "size_7x7"),    std::make_tuple(8, "size_8x8"),
+    std::make_tuple(9, "size_9x9"),    std::make_tuple(10, "size_10x10"),
+    std::make_tuple(16, "size_16x16"), std::make_tuple(32, "size_32x32")};
 
 const auto kTestTasksList =
     ppc::util::AddFuncTask<MatmulDoubleAllTask, InType>(kTestParams, PPC_SETTINGS_makoveeva_matmul_double_all);

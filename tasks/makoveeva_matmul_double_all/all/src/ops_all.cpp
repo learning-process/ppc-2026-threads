@@ -7,12 +7,13 @@
 #include <cstddef>
 #include <vector>
 
+#include "makoveeva_matmul_double_all/common/include/common.hpp"
+
 namespace makoveeva_matmul_double_all {
 namespace {
 
-// Вспомогательные функции вынесены в анонимный namespace как static
-void ParallelMultiplyImpl(size_t n, const std::vector<double> &a, const std::vector<double> &b,
-                          std::vector<double> &c) {
+void ParallelMultiplyImpl(size_t n, const std::vector<double>& a,
+                          const std::vector<double>& b, std::vector<double>& c) {
 #pragma omp parallel for default(none) shared(n, a, b, c) collapse(2)
   for (size_t i = 0; i < n; ++i) {
     for (size_t j = 0; j < n; ++j) {
@@ -25,7 +26,8 @@ void ParallelMultiplyImpl(size_t n, const std::vector<double> &a, const std::vec
   }
 }
 
-void SplitIntoBlocksImpl(const std::vector<double> &src, std::vector<double> &dst, size_t n, size_t bs, int grid_size) {
+void SplitIntoBlocksImpl(const std::vector<double>& src, std::vector<double>& dst,
+                         size_t n, size_t bs, int grid_size) {
 #pragma omp parallel for default(none) shared(src, dst, n, bs, grid_size) collapse(2)
   for (int bi = 0; bi < grid_size; ++bi) {
     for (int bj = 0; bj < grid_size; ++bj) {
@@ -42,7 +44,8 @@ void SplitIntoBlocksImpl(const std::vector<double> &src, std::vector<double> &ds
   }
 }
 
-void MergeFromBlocksImpl(const std::vector<double> &src, std::vector<double> &dst, size_t n, size_t bs, int grid_size) {
+void MergeFromBlocksImpl(const std::vector<double>& src, std::vector<double>& dst,
+                         size_t n, size_t bs, int grid_size) {
 #pragma omp parallel for default(none) shared(src, dst, n, bs, grid_size) collapse(2)
   for (int bi = 0; bi < grid_size; ++bi) {
     for (int bj = 0; bj < grid_size; ++bj) {
@@ -59,8 +62,9 @@ void MergeFromBlocksImpl(const std::vector<double> &src, std::vector<double> &ds
   }
 }
 
-void MultiplyBlockPairImpl(const std::vector<double> &block_a, const std::vector<double> &block_b,
-                           std::vector<double> &block_c, size_t bs) {
+void MultiplyBlockPairImpl(const std::vector<double>& block_a,
+                           const std::vector<double>& block_b,
+                           std::vector<double>& block_c, size_t bs) {
 #pragma omp parallel for default(none) shared(block_a, block_b, block_c, bs) collapse(2)
   for (size_t i = 0; i < bs; ++i) {
     for (size_t j = 0; j < bs; ++j) {
@@ -77,29 +81,33 @@ bool IsValidConfigurationImpl(size_t n, int grid_size, int world_size) {
   return ((grid_size * grid_size) == world_size) && ((n % static_cast<size_t>(grid_size)) == 0);
 }
 
-void HandleFallbackImpl(int rank, size_t n, const std::vector<double> &a, const std::vector<double> &b,
-                        std::vector<double> &c) {
+void HandleFallbackImpl(int rank, size_t n, const std::vector<double>& a,
+                        const std::vector<double>& b, std::vector<double>& c) {
   if (rank == 0) {
     ParallelMultiplyImpl(n, a, b, c);
   }
   MPI_Bcast(c.data(), static_cast<int>(n * n), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
-void DistributeBlocksImpl(int rank, const std::vector<double> &blocks_a, const std::vector<double> &blocks_b,
-                          std::vector<double> &local_a, std::vector<double> &local_b, size_t block_sz) {
-  const double *send_a = (rank == 0) ? blocks_a.data() : nullptr;
-  const double *send_b = (rank == 0) ? blocks_b.data() : nullptr;
+void DistributeBlocksImpl(int rank, const std::vector<double>& blocks_a,
+                          const std::vector<double>& blocks_b,
+                          std::vector<double>& local_a, std::vector<double>& local_b,
+                          size_t block_sz) {
+  const double* send_a = (rank == 0) ? blocks_a.data() : nullptr;
+  const double* send_b = (rank == 0) ? blocks_b.data() : nullptr;
 
-  MPI_Scatter(send_a, static_cast<int>(block_sz), MPI_DOUBLE, local_a.data(), static_cast<int>(block_sz), MPI_DOUBLE, 0,
-              MPI_COMM_WORLD);
+  MPI_Scatter(send_a, static_cast<int>(block_sz), MPI_DOUBLE,
+              local_a.data(), static_cast<int>(block_sz), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  MPI_Scatter(send_b, static_cast<int>(block_sz), MPI_DOUBLE, local_b.data(), static_cast<int>(block_sz), MPI_DOUBLE, 0,
-              MPI_COMM_WORLD);
+  MPI_Scatter(send_b, static_cast<int>(block_sz), MPI_DOUBLE,
+              local_b.data(), static_cast<int>(block_sz), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
-void ExecuteFoxIterationsImpl(int grid, int row_id, int col_id, size_t bs, size_t block_sz, MPI_Comm row_comm,
-                              std::vector<double> &local_a, std::vector<double> &local_b,
-                              std::vector<double> &local_c) {
+void ExecuteFoxIterationsImpl(int grid, int row_id, int col_id, size_t bs,
+                              size_t block_sz, MPI_Comm row_comm,
+                              std::vector<double>& local_a,
+                              std::vector<double>& local_b,
+                              std::vector<double>& local_c) {
   std::vector<double> broadcast_buffer(block_sz);
 
   for (int stage = 0; stage < grid; ++stage) {
@@ -116,23 +124,24 @@ void ExecuteFoxIterationsImpl(int grid, int row_id, int col_id, size_t bs, size_
     const int target = (((row_id - 1 + grid) % grid) * grid) + col_id;
     const int origin = (((row_id + 1) % grid) * grid) + col_id;
 
-    MPI_Sendrecv_replace(local_b.data(), static_cast<int>(block_sz), MPI_DOUBLE, target, 0, origin, 0, MPI_COMM_WORLD,
-                         MPI_STATUS_IGNORE);
+    MPI_Sendrecv_replace(local_b.data(), static_cast<int>(block_sz), MPI_DOUBLE,
+                         target, 0, origin, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
 }
 
-void CollectResultsImpl(int rank, int world_size, size_t n, size_t bs, size_t block_sz, int grid,
-                        const std::vector<double> &local_c, std::vector<double> &c) {
+void CollectResultsImpl(int rank, int world_size, size_t n, size_t bs,
+                        size_t block_sz, int grid, const std::vector<double>& local_c,
+                        std::vector<double>& c) {
   std::vector<double> all_blocks;
 
   if (rank == 0) {
     all_blocks.resize(static_cast<size_t>(world_size) * block_sz);
   }
 
-  double *recv_buf = (rank == 0) ? all_blocks.data() : nullptr;
+  double* recv_buf = (rank == 0) ? all_blocks.data() : nullptr;
 
-  MPI_Gather(local_c.data(), static_cast<int>(block_sz), MPI_DOUBLE, recv_buf, static_cast<int>(block_sz), MPI_DOUBLE,
-             0, MPI_COMM_WORLD);
+  MPI_Gather(local_c.data(), static_cast<int>(block_sz), MPI_DOUBLE,
+             recv_buf, static_cast<int>(block_sz), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
     MergeFromBlocksImpl(all_blocks, c, n, bs, grid);
@@ -143,23 +152,23 @@ void CollectResultsImpl(int rank, int world_size, size_t n, size_t bs, size_t bl
 
 }  // namespace
 
-MatmulDoubleAllTask::MatmulDoubleAllTask(const InType &in) {
+MatmulDoubleAllTask::MatmulDoubleAllTask(const InType& in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<double>();
 }
 
 bool MatmulDoubleAllTask::ValidationImpl() {
-  const auto &input = GetInput();
+  const auto& input = GetInput();
   const size_t n = std::get<0>(input);
-  const auto &a = std::get<1>(input);
-  const auto &b = std::get<2>(input);
+  const auto& a = std::get<1>(input);
+  const auto& b = std::get<2>(input);
 
   return n > 0 && a.size() == n * n && b.size() == n * n;
 }
 
 bool MatmulDoubleAllTask::PreProcessingImpl() {
-  const auto &input = GetInput();
+  const auto& input = GetInput();
   matrix_size_ = std::get<0>(input);
   matrix_a_ = std::get<1>(input);
   matrix_b_ = std::get<2>(input);
@@ -176,9 +185,9 @@ bool MatmulDoubleAllTask::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &total_processes);
 
   const size_t n = matrix_size_;
-  const auto &a = matrix_a_;
-  const auto &b = matrix_b_;
-  auto &c = result_matrix_;
+  const auto& a = matrix_a_;
+  const auto& b = matrix_b_;
+  auto& c = result_matrix_;
 
   const int grid_size = static_cast<int>(std::sqrt(total_processes));
 
@@ -209,15 +218,18 @@ bool MatmulDoubleAllTask::RunImpl() {
     SplitIntoBlocksImpl(b, all_blocks_b, n, bs, grid_size);
   }
 
-  DistributeBlocksImpl(process_rank, all_blocks_a, all_blocks_b, local_a_block, local_b_block, block_sz);
+  DistributeBlocksImpl(process_rank, all_blocks_a, all_blocks_b,
+                       local_a_block, local_b_block, block_sz);
 
   MPI_Comm row_communicator = MPI_COMM_NULL;
   MPI_Comm_split(MPI_COMM_WORLD, row_idx, col_idx, &row_communicator);
 
-  ExecuteFoxIterationsImpl(grid_size, row_idx, col_idx, bs, block_sz, row_communicator, local_a_block, local_b_block,
-                           local_c_block);
+  ExecuteFoxIterationsImpl(grid_size, row_idx, col_idx, bs, block_sz,
+                           row_communicator, local_a_block, local_b_block, local_c_block);
 
-  CollectResultsImpl(process_rank, total_processes, n, bs, block_sz, grid_size, local_c_block, c);
+  // Исправлен порядок аргументов: сначала grid_size, потом total_processes
+  CollectResultsImpl(process_rank, grid_size, n, bs, block_sz,
+                     total_processes, local_c_block, c);
 
   if (row_communicator != MPI_COMM_NULL) {
     MPI_Comm_free(&row_communicator);
