@@ -5,6 +5,7 @@
 #include <tuple>
 #include <vector>
 
+#include "remizov_k_dense_matrix_multiplication_cannon_algorithm/all/include/ops_all.hpp"
 #include "remizov_k_dense_matrix_multiplication_cannon_algorithm/common/include/common.hpp"
 #include "remizov_k_dense_matrix_multiplication_cannon_algorithm/omp/include/ops_omp.hpp"
 #include "remizov_k_dense_matrix_multiplication_cannon_algorithm/seq/include/ops_seq.hpp"
@@ -110,6 +111,18 @@ const auto kAllPerfTasksStl = ppc::util::MakeAllPerfTasks<InType, RemizovKDenseM
 const auto kGtestValuesStl = ppc::util::TupleToGTestValues(kAllPerfTasksStl);
 
 INSTANTIATE_TEST_SUITE_P(PerfTestsStl, RemizovKDenseMatrixMultiplicationCannonAlgorithmPerfTests, kGtestValuesStl,
+                         kPerfTestName);
+
+}  // namespace
+
+namespace {
+
+const auto kAllPerfTasksAll = ppc::util::MakeAllPerfTasks<InType, RemizovKDenseMatrixMultiplicationCannonAlgorithmAll>(
+    PPC_SETTINGS_remizov_k_dense_matrix_multiplication_cannon_algorithm);
+
+const auto kGtestValuesAll = ppc::util::TupleToGTestValues(kAllPerfTasksAll);
+
+INSTANTIATE_TEST_SUITE_P(PerfTestsAll, RemizovKDenseMatrixMultiplicationCannonAlgorithmPerfTests, kGtestValuesAll,
                          kPerfTestName);
 
 }  // namespace
