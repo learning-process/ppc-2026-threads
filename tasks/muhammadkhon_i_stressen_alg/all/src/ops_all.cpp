@@ -4,6 +4,7 @@
 #include <omp.h>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -49,8 +50,8 @@ void AddToBuffer(const double *a, std::size_t a_stride, const double *b, std::si
 }
 
 void MulMicroBlock(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c,
-                   std::size_t c_stride, std::size_t i_begin, std::size_t i_end, std::size_t k_begin,
-                   std::size_t k_end, std::size_t j_begin, std::size_t j_end) {
+                   std::size_t c_stride, std::size_t i_begin, std::size_t i_end, std::size_t k_begin, std::size_t k_end,
+                   std::size_t j_begin, std::size_t j_end) {
   for (std::size_t i = i_begin; i < i_end; ++i) {
     double *c_row = c + (i * c_stride);
     const double *a_row = a + (i * a_stride);
@@ -110,66 +111,68 @@ void CombineQuadrants(const std::vector<double> &m1, const std::vector<double> &
   }
 }
 
-void StrassenSeq(const double *a_in, std::size_t a_stride_in, const double *b_in, std::size_t b_stride_in,
-                 double *c_in, std::size_t c_stride_in, std::size_t n_in) {
+// Последовательный Штрассен через std::function (без рекурсивных свободных функций)
+void StrassenSeq(const double *a_in, std::size_t a_stride_in, const double *b_in, std::size_t b_stride_in, double *c_in,
+                 std::size_t c_stride_in, std::size_t n_in) {
   std::function<void(const double *, std::size_t, const double *, std::size_t, double *, std::size_t, std::size_t)>
       impl = [&](const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c,
                  std::size_t c_stride, std::size_t n) {
-        if (n <= kCutoff) {
-          NaiveMulBlocked(a, a_stride, b, b_stride, c, c_stride, n);
-          return;
-        }
-        const std::size_t half = n / 2;
+    if (n <= kCutoff) {
+      NaiveMulBlocked(a, a_stride, b, b_stride, c, c_stride, n);
+      return;
+    }
+    const std::size_t half = n / 2;
 
-        const double *a11 = a;
-        const double *a12 = a + half;
-        const double *a21 = a + (half * a_stride);
-        const double *a22 = a21 + half;
-        const double *b11 = b;
-        const double *b12 = b + half;
-        const double *b21 = b + (half * b_stride);
-        const double *b22 = b21 + half;
+    const double *a11 = a;
+    const double *a12 = a + half;
+    const double *a21 = a + (half * a_stride);
+    const double *a22 = a21 + half;
+    const double *b11 = b;
+    const double *b12 = b + half;
+    const double *b21 = b + (half * b_stride);
+    const double *b22 = b21 + half;
 
-        std::vector<double> lhs(half * half);
-        std::vector<double> rhs(half * half);
-        std::vector<double> m1(half * half);
-        std::vector<double> m2(half * half);
-        std::vector<double> m3(half * half);
-        std::vector<double> m4(half * half);
-        std::vector<double> m5(half * half);
-        std::vector<double> m6(half * half);
-        std::vector<double> m7(half * half);
+    std::vector<double> lhs(half * half);
+    std::vector<double> rhs(half * half);
+    std::vector<double> m1(half * half);
+    std::vector<double> m2(half * half);
+    std::vector<double> m3(half * half);
+    std::vector<double> m4(half * half);
+    std::vector<double> m5(half * half);
+    std::vector<double> m6(half * half);
+    std::vector<double> m7(half * half);
 
-        AddToBuffer(a11, a_stride, a22, a_stride, lhs.data(), half, 1.0);
-        AddToBuffer(b11, b_stride, b22, b_stride, rhs.data(), half, 1.0);
-        impl(lhs.data(), half, rhs.data(), half, m1.data(), half, half);
+    AddToBuffer(a11, a_stride, a22, a_stride, lhs.data(), half, 1.0);
+    AddToBuffer(b11, b_stride, b22, b_stride, rhs.data(), half, 1.0);
+    impl(lhs.data(), half, rhs.data(), half, m1.data(), half, half);
 
-        AddToBuffer(a21, a_stride, a22, a_stride, lhs.data(), half, 1.0);
-        impl(lhs.data(), half, b11, b_stride, m2.data(), half, half);
+    AddToBuffer(a21, a_stride, a22, a_stride, lhs.data(), half, 1.0);
+    impl(lhs.data(), half, b11, b_stride, m2.data(), half, half);
 
-        AddToBuffer(b12, b_stride, b22, b_stride, rhs.data(), half, -1.0);
-        impl(a11, a_stride, rhs.data(), half, m3.data(), half, half);
+    AddToBuffer(b12, b_stride, b22, b_stride, rhs.data(), half, -1.0);
+    impl(a11, a_stride, rhs.data(), half, m3.data(), half, half);
 
-        AddToBuffer(b21, b_stride, b11, b_stride, rhs.data(), half, -1.0);
-        impl(a22, a_stride, rhs.data(), half, m4.data(), half, half);
+    AddToBuffer(b21, b_stride, b11, b_stride, rhs.data(), half, -1.0);
+    impl(a22, a_stride, rhs.data(), half, m4.data(), half, half);
 
-        AddToBuffer(a11, a_stride, a12, a_stride, lhs.data(), half, 1.0);
-        impl(lhs.data(), half, b22, b_stride, m5.data(), half, half);
+    AddToBuffer(a11, a_stride, a12, a_stride, lhs.data(), half, 1.0);
+    impl(lhs.data(), half, b22, b_stride, m5.data(), half, half);
 
-        AddToBuffer(a21, a_stride, a11, a_stride, lhs.data(), half, -1.0);
-        AddToBuffer(b11, b_stride, b12, b_stride, rhs.data(), half, 1.0);
-        impl(lhs.data(), half, rhs.data(), half, m6.data(), half, half);
+    AddToBuffer(a21, a_stride, a11, a_stride, lhs.data(), half, -1.0);
+    AddToBuffer(b11, b_stride, b12, b_stride, rhs.data(), half, 1.0);
+    impl(lhs.data(), half, rhs.data(), half, m6.data(), half, half);
 
-        AddToBuffer(a12, a_stride, a22, a_stride, lhs.data(), half, -1.0);
-        AddToBuffer(b21, b_stride, b22, b_stride, rhs.data(), half, 1.0);
-        impl(lhs.data(), half, rhs.data(), half, m7.data(), half, half);
+    AddToBuffer(a12, a_stride, a22, a_stride, lhs.data(), half, -1.0);
+    AddToBuffer(b21, b_stride, b22, b_stride, rhs.data(), half, 1.0);
+    impl(lhs.data(), half, rhs.data(), half, m7.data(), half, half);
 
-        CombineQuadrants(m1, m2, m3, m4, m5, m6, m7, c, c_stride, half);
-      };
+    CombineQuadrants(m1, m2, m3, m4, m5, m6, m7, c, c_stride, half);
+  };
 
   impl(a_in, a_stride_in, b_in, b_stride_in, c_in, c_stride_in, n_in);
 }
 
+// OMP-параллельный Штрассен (верхний уровень через tasks, базовый — OMP parallel for)
 void StrassenOmpLocal(const double *a, std::size_t a_stride, const double *b, std::size_t b_stride, double *c,
                       std::size_t c_stride, std::size_t n) {
   if (n <= kCutoff || ppc::util::GetNumThreads() <= 1) {
@@ -396,14 +399,15 @@ bool MuhammadkhonIStressenAlgALL::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  std::uint64_t dims[4] = {0, 0, 0, 0};
+  // Broadcast размеры
+  std::array<std::uint64_t, 4> dims = {0, 0, 0, 0};
   if (rank == 0) {
     dims[0] = static_cast<std::uint64_t>(a_rows_);
     dims[1] = static_cast<std::uint64_t>(a_cols_b_rows_);
     dims[2] = static_cast<std::uint64_t>(b_cols_);
     dims[3] = static_cast<std::uint64_t>(padded_n_);
   }
-  MPI_Bcast(dims, 4, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(dims.data(), 4, MPI_UINT64_T, 0, MPI_COMM_WORLD);
 
   if (rank != 0) {
     a_rows_ = static_cast<size_t>(dims[0]);
