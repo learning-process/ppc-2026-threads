@@ -1,7 +1,7 @@
 # Обработка контуров бинарных компонент — Сводный отчёт
 
 - **Student:** Перяшкин Василий Андреевич, группа 3823Б1ПР4
-- **Variant:** 4
+- **Variant:** 30
 - **Локальные отчёты:** [seq/report.md](seq/report.md), [omp/report.md](omp/report.md), [tbb/report.md](tbb/report.md), [stl/report.md](stl/report.md), [all/report.md](all/report.md)
 
 ## 1. Введение
