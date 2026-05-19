@@ -7,6 +7,7 @@
 #include <string>
 #include <tuple>
 
+#include "sakharov_a_shell_sorting_with_merging_butcher/all/include/ops_all.hpp"
 #include "sakharov_a_shell_sorting_with_merging_butcher/common/include/common.hpp"
 #include "sakharov_a_shell_sorting_with_merging_butcher/omp/include/ops_omp.hpp"
 #include "sakharov_a_shell_sorting_with_merging_butcher/seq/include/ops_seq.hpp"
@@ -70,6 +71,8 @@ const std::array<TestType, 5> kTestParam = {
     MakeCase({1, 1, 1, 1, 1, 1}, "duplicates"), MakeCase({42}, "single"), MakeCase({}, "empty")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SakharovAShellButcherSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_sakharov_a_shell_sorting_with_merging_butcher),
+                                           ppc::util::AddFuncTask<SakharovAShellButcherALL, InType>(
                                                kTestParam, PPC_SETTINGS_sakharov_a_shell_sorting_with_merging_butcher),
                                            ppc::util::AddFuncTask<SakharovAShellButcherOMP, InType>(
                                                kTestParam, PPC_SETTINGS_sakharov_a_shell_sorting_with_merging_butcher),

@@ -6,6 +6,7 @@
 #include <tuple>
 #include <vector>
 
+#include "romanov_a_gauss_block/all/include/ops_all.hpp"
 #include "romanov_a_gauss_block/common/include/common.hpp"
 #include "romanov_a_gauss_block/omp/include/ops_omp.hpp"
 #include "romanov_a_gauss_block/seq/include/ops_seq.hpp"
@@ -47,8 +48,8 @@ TEST_P(RomanovAPerfTestThreads, GaussFilter) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, RomanovAGaussBlockOMP, RomanovAGaussBlockSEQ, RomanovAGaussBlockSTL,
-                                RomanovAGaussBlockTBB>(PPC_SETTINGS_romanov_a_gauss_block);
+    ppc::util::MakeAllPerfTasks<InType, RomanovAGaussBlockALL, RomanovAGaussBlockOMP, RomanovAGaussBlockSEQ,
+                                RomanovAGaussBlockSTL, RomanovAGaussBlockTBB>(PPC_SETTINGS_romanov_a_gauss_block);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

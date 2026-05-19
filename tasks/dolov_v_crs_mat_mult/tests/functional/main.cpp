@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <array>
 #include <cmath>
@@ -9,8 +10,12 @@
 #include <tuple>
 #include <vector>
 
+#include "dolov_v_crs_mat_mult/all/include/ops_all.hpp"
 #include "dolov_v_crs_mat_mult/common/include/common.hpp"
+#include "dolov_v_crs_mat_mult/omp/include/ops_omp.hpp"
 #include "dolov_v_crs_mat_mult/seq/include/ops_seq.hpp"
+#include "dolov_v_crs_mat_mult/stl/include/ops_stl.hpp"
+#include "dolov_v_crs_mat_mult/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -104,6 +109,18 @@ class DolovVCrsMatMultRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<I
   }
 
   bool CheckTestOutputData(OutType &out) final {
+    int rank = 0;
+    int is_mpi_init = 0;
+
+    MPI_Initialized(&is_mpi_init);
+    if (is_mpi_init != 0) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+
+    if (rank != 0) {
+      return true;
+    }
+
     if (out.num_rows != rows_res_ || out.num_cols != cols_res_) {
       return false;
     }
@@ -146,7 +163,11 @@ const std::array<TestType, 7> kTestParam = {std::make_tuple(1, "SmallSparse"),  
                                             std::make_tuple(7, "SingleElement")};
 
 const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<DolovVCrsMatMultSeq, InType>(kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult));
+    std::tuple_cat(ppc::util::AddFuncTask<DolovVCrsMatMultSeq, InType>(kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult),
+                   ppc::util::AddFuncTask<DolovVCrsMatMultOmp, InType>(kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult),
+                   ppc::util::AddFuncTask<DolovVCrsMatMultTbb, InType>(kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult),
+                   ppc::util::AddFuncTask<DolovVCrsMatMultStl, InType>(kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult),
+                   ppc::util::AddFuncTask<DolovVCrsMatMultAll, InType>(kTestParam, PPC_SETTINGS_dolov_v_crs_mat_mult));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kFuncTestName = DolovVCrsMatMultRunFuncTestsThreads::PrintFuncTestName<DolovVCrsMatMultRunFuncTestsThreads>;

@@ -1,13 +1,16 @@
 #include "shilin_n_monte_carlo_integration/tbb/include/ops_tbb.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <functional>
 #include <vector>
 
 #include "oneapi/tbb/blocked_range.h"
+#include "oneapi/tbb/global_control.h"
 #include "oneapi/tbb/parallel_reduce.h"
 #include "shilin_n_monte_carlo_integration/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace shilin_n_monte_carlo_integration {
 
@@ -62,7 +65,13 @@ bool ShilinNMonteCarloIntegrationTBB::RunImpl() {
       0.38516480713450403   // frac(sqrt(29))
   };
 
-  double sum = tbb::parallel_reduce(tbb::blocked_range<int>(0, num_points_), 0.0,
+  // Honor PPC_NUM_THREADS so reports can construct a real T-scaling table.
+  const int num_threads = std::max(1, ppc::util::GetNumThreads());
+  tbb::global_control global_limit(tbb::global_control::max_allowed_parallelism, static_cast<std::size_t>(num_threads));
+  // Explicit grain prevents oneTBB from over-splitting a very light per-iteration body.
+  const int grain = std::max(1024, num_points_ / (num_threads * 4));
+
+  double sum = tbb::parallel_reduce(tbb::blocked_range<int>(0, num_points_, grain), 0.0,
                                     [&](const tbb::blocked_range<int> &range, double local_sum) {
     std::vector<double> point(dimensions);
     for (int i = range.begin(); i < range.end(); ++i) {

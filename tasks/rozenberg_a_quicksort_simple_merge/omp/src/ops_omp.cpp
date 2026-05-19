@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "rozenberg_a_quicksort_simple_merge/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace rozenberg_a_quicksort_simple_merge {
 
@@ -122,7 +123,7 @@ void RozenbergAQuicksortSimpleMergeOMP::Merge(InType &data, int left, int mid, i
 bool RozenbergAQuicksortSimpleMergeOMP::RunImpl() {
   InType data = GetInput();
   int n = static_cast<int>(data.size());
-  int num_threads = omp_get_max_threads();
+  int num_threads = ppc::util::GetNumThreads();
 
   if (n < num_threads * 2) {
     Quicksort(data, 0, n - 1);
