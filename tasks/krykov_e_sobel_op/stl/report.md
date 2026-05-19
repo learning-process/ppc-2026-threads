@@ -108,12 +108,12 @@ int ComputeMagnitude(const std::vector<int>& gray, int w, int row, int col,
 
 ## 7. Экспериментальная среда
 
-| Параметр         | Значение                             |
-| ---------------- | ------------------------------------ |
-| CPU              | AMD Ryzen 3 3100 (4 физических ядра) |
-| ОС               | Windows 10                           |
-| Компилятор       | MSVC (Release)                       |
-| CMake build type | Release                              |
+| Параметр         | Значение                                        |
+| ---------------- | ----------------------------------------------- |
+| CPU              | AMD Ryzen 3 3100 (4 физических ядра)            |
+| ОС               | Windows 10                                      |
+| Компилятор       | MSVC (Release)                                  |
+| CMake build type | Release                                         |
 | Число потоков    | `hardware_concurrency()` (8 на тестовой машине) |
 
 Команда запуска:
