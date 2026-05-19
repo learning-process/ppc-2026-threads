@@ -108,7 +108,8 @@ void MasterDistribute(int world_size, int width, int height, const std::vector<i
   int p0_w = counts.at(0);
   for (int row_idx = 0; row_idx < height; ++row_idx) {
     for (int col_idx = 0; col_idx < p0_w; ++col_idx) {
-      local_data[(static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo)) + static_cast<size_t>(col_idx + 1)] =
+      local_data[(static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo)) +
+                 static_cast<size_t>(col_idx + 1)] =
           full_data[(static_cast<size_t>(row_idx) * static_cast<size_t>(width)) + static_cast<size_t>(col_idx)];
     }
   }
@@ -138,7 +139,8 @@ void WorkerReceive(int my_w, int height, uint8_t *local_data, int lw_with_halo) 
   MPI_Recv(buf.data(), static_cast<int>(buf.size()), MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   for (int row_idx = 0; row_idx < height; ++row_idx) {
     for (int col_idx = 0; col_idx < my_w; ++col_idx) {
-      local_data[(static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo)) + static_cast<size_t>(col_idx + 1)] =
+      local_data[(static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo)) +
+                 static_cast<size_t>(col_idx + 1)] =
           buf[(static_cast<size_t>(row_idx) * static_cast<size_t>(my_w)) + static_cast<size_t>(col_idx)];
     }
   }
