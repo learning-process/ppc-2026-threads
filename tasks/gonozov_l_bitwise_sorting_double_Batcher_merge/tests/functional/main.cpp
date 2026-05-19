@@ -36,6 +36,7 @@ class GonozovLBitSortBatcherMergeFuncTests : public ppc::util::BaseRunFuncTests<
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     std::vector<double> ordered_data = static_cast<OutType>(std::get<1>(params));
     size_t num_elem = ordered_data.size();
+
     for (size_t i = 0; i < num_elem; i++) {
       if (std::abs(ordered_data[i] - output_data[i]) > 0.01) {
         return false;
