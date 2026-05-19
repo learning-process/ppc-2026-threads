@@ -178,20 +178,6 @@ tasks/timur_a_cannon/
 
 Каталог `all/` — гибридная версия: `MPI_Comm_rank`, `MPI_Bcast` входных матриц, распределение строк блоков между процессами, `MPI_Allgatherv` результата, внутри процесса — OpenMP в `ComputeLocalResult` (подробнее — [all/report.md](all/report.md)).
 
-### Связь отчётов
-
-```mermaid
-flowchart TD
-    ROOT["tasks/timur_a_cannon/report.md<br/>Сводный отчёт"] --> SEQ["seq/report.md"]
-    ROOT --> OMP["omp/report.md"]
-    ROOT --> TBB["tbb/report.md"]
-    ROOT --> STL["stl/report.md"]
-    ROOT --> ALL["all/report.md"]
-
-    ROOT --> TESTS["tests/functional + tests/performance"]
-    ROOT --> COMMON["common/include/common.hpp"]
-    ROOT --> META["info.json + settings.json"]
-```
 
 ### Короткий листинг: типы входа и выхода
 
