@@ -1,8 +1,8 @@
 # Повышение контраста полутонового изображения посредством линейной растяжки гистограммы
 
-- Student: Отческов Семён Андреевич, group 3823Б1ПР1
-- Variant: 28
-- Local reports: seq/report.md, omp/report.md, tbb/report.md, stl/report.md, all/report.md
+- Студент: Отческов Семён Андреевич, группа 3823Б1ПР1
+- Вариант: 28
+- Локальные отчёты: seq/report.md, omp/report.md, tbb/report.md, stl/report.md, all/report.md
 
 ## 1. Введение
 
