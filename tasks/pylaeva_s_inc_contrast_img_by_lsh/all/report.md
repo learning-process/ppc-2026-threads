@@ -1,7 +1,7 @@
-# Повышение контраста полутонового изображения посредством линейной растяжки гистограммы — SEQ
+# Повышение контраста полутонового изображения посредством линейной растяжки гистограммы — ALL
 
 - Student: Пылаева Светлана Алексеевна
-- Technology: SEQ
+- Technology: ALL
 - Variant: 28
 
 ## 1. Контекст
@@ -13,7 +13,7 @@
 
 ## 2. Постановка задачи
 
-Полная постановка задачи приведена в отчёте для SEQ-версии (`seq/report.md`).
+Полная постановка задачи приведена в отчёте для SEQ-версии [seq/report.md](../seq/report.md).
 
 Кратко:
 
@@ -204,13 +204,10 @@ for (size_t i = 0; i < local_size_; i++) {
     cmake --build build --config Release --parallel
     #ЗАПУСК ТЕСТОВ
     cd build/bin
-    set PPC_NUM_PROC=2
     set PPC_NUM_THREADS=4
     mpiexec -n 2 ./ppc_perf_tests --gtest-filter="*PylaevaS*"
     mpiexec -n 2 ./ppc_func_tests --gtest-filter="*PylaevaS*"
 ```
-
-Аналогично задаются PPC_NUM_PROC, PPC_NUM_THREADS для других значений процессов и потоков.
 
 ## 9. Результаты
 
