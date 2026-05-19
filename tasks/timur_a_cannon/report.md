@@ -177,7 +177,6 @@ mpiexec -env PPC_NUM_THREADS 4 -env OMP_NUM_THREADS 4 \
 ### Структура задачи
 
 Каталог задачи построен по минимальному каркасу курса
-(как в `example_threads`).
 
 ```text
 tasks/timur_a_cannon/
