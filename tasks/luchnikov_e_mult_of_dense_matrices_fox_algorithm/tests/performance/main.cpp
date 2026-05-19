@@ -1,10 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "luchnikov_e_mult_of_dense_matrices_fox_algorithm/common/include/common.hpp"
-#include "luchnikov_e_mult_of_dense_matrices_fox_algorithm/omp/include/ops_omp.hpp"
 #include "luchnikov_e_mult_of_dense_matrices_fox_algorithm/seq/include/ops_seq.hpp"
-#include "luchnikov_e_mult_of_dense_matrices_fox_algorithm/stl/include/ops_stl.hpp"
-#include "luchnikov_e_mult_of_dense_matrices_fox_algorithm/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace luchnikov_e_mult_of_dense_matrices_fox_algorithm {
