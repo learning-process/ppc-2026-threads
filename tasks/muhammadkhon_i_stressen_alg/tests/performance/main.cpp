@@ -4,8 +4,8 @@
 #include <cstddef>
 #include <vector>
 
+#include "muhammadkhon_i_stressen_alg/all/include/ops_all.hpp"
 #include "muhammadkhon_i_stressen_alg/common/include/common.hpp"
-#include "muhammadkhon_i_stressen_alg/stl/include/ops_stl.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace muhammadkhon_i_stressen_alg {
@@ -68,7 +68,7 @@ TEST_P(MuhammadkhonIStressenAlgPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, MuhammadkhonIStressenAlgSTL>(PPC_SETTINGS_muhammadkhon_i_stressen_alg);
+    ppc::util::MakeAllPerfTasks<InType, MuhammadkhonIStressenAlgALL>(PPC_SETTINGS_muhammadkhon_i_stressen_alg);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
