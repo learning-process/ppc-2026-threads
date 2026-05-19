@@ -67,7 +67,6 @@ TEST_P(EreminVRunFuncTestsThreadsIntegralsMonteCarlo, IntegralsMonteCarloFunc) {
 
 const std::array<TestType, 3> kTestParam = {
 
-
     std::make_tuple(1, std::vector<std::pair<double, double>>{{0.0, 1.0}}, 100'000,
                     [](const std::vector<double> &x) { return x[0] * x[0]; }, 1.0 / 3.0),
 

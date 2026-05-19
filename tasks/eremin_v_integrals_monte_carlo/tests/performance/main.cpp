@@ -48,7 +48,8 @@ namespace {
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, EreminVIntegralsMonteCarloSEQ, EreminVIntegralsMonteCarloOMP,
 
-                                EreminVIntegralsMonteCarloSTL, EreminVIntegralsMonteCarloTBB, EreminVIntegralsMonteCarloALL>(
+                                EreminVIntegralsMonteCarloSTL, EreminVIntegralsMonteCarloTBB,
+                                EreminVIntegralsMonteCarloALL>(
 
         PPC_SETTINGS_eremin_v_integrals_monte_carlo);
 
