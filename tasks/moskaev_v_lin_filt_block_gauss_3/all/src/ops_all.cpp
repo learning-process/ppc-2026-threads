@@ -38,7 +38,7 @@ void CopyBlockWithHalo(const std::vector<uint8_t> &src, std::vector<uint8_t> &ds
 
 void FilterPixelInBlock(const std::vector<uint8_t> &input_block, std::vector<uint8_t> &output_block, int block_w,
                         int channels, int row, int col, int ch) {
-  float sum = 0.0f;
+  float sum = 0.0F;
   for (int ky = -1; ky <= 1; ++ky) {
     for (int kx = -1; kx <= 1; ++kx) {
       int ny = row + 1 + ky;
@@ -54,7 +54,8 @@ void FilterPixelInBlock(const std::vector<uint8_t> &input_block, std::vector<uin
 
 void FilterBlock(const std::vector<uint8_t> &input_block, std::vector<uint8_t> &output_block, int block_w, int block_h,
                  int channels) {
-#pragma omp parallel for collapse(2) schedule(static)
+#pragma omp parallel for collapse(2) schedule(static) default(none) \
+    shared(input_block, output_block, block_w, block_h, channels)
   for (int row = 0; row < block_h; ++row) {
     for (int col = 0; col < block_w; ++col) {
       for (int ch = 0; ch < channels; ++ch) {
@@ -99,6 +100,92 @@ void ProcessOneBlock(int idx, int blocks_x, int width, int height, int channels,
   CopyBlockToOutput(output_block, output, width, channels, block_x, block_y, block_w, block_h);
 }
 
+void BroadcastImageData(int rank, int &width, int &height, int &channels, std::vector<uint8_t> &image_data,
+                        const MoskaevVLinFiltBlockGauss3ALL::InType &input) {
+  if (rank == 0) {
+    width = std::get<0>(input);
+    height = std::get<1>(input);
+    channels = std::get<2>(input);
+    image_data = std::get<4>(input);
+  }
+
+  MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&height, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&channels, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (width == 0 || height == 0) {
+    return;
+  }
+
+  size_t total_pixels = static_cast<size_t>(width) * height * channels;
+  image_data.resize(total_pixels);
+  MPI_Bcast(image_data.data(), static_cast<int>(total_pixels), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+}
+
+std::vector<int> ComputeCountsAndDispls(int num_procs, int total_blocks, int per_proc, int rem,
+                                        std::vector<int> &counts, std::vector<int> &displs) {
+  int offset = 0;
+  for (int proc = 0; proc < num_procs; ++proc) {
+    int cnt = per_proc + (proc < rem ? 1 : 0);
+    counts[proc] = cnt;
+    displs[proc] = offset;
+    offset += cnt;
+  }
+
+  std::vector<int> all(total_blocks);
+  for (int i = 0; i < total_blocks; ++i) {
+    all[i] = i;
+  }
+  return all;
+}
+
+void ProcessLocalBlocks(int rank, int num_procs, int total_blocks, int blocks_x, int width, int height, int channels,
+                        int block_size, const std::vector<uint8_t> &image_data, std::vector<uint8_t> &output) {
+  int per_proc = total_blocks / num_procs;
+  int rem = total_blocks % num_procs;
+  int local_cnt = per_proc + (rank < rem ? 1 : 0);
+
+  if (local_cnt <= 0) {
+    return;
+  }
+
+  std::vector<int> counts(num_procs);
+  std::vector<int> displs(num_procs);
+  std::vector<int> all = ComputeCountsAndDispls(num_procs, total_blocks, per_proc, rem, counts, displs);
+
+  std::vector<int> local(local_cnt);
+  MPI_Scatterv(all.data(), counts.data(), displs.data(), MPI_INT, local.data(), local_cnt, MPI_INT, 0, MPI_COMM_WORLD);
+
+#pragma omp parallel for default(none) shared(local, blocks_x, width, height, channels, block_size, image_data, output)
+  for (int i = 0; i < local_cnt; ++i) {
+    ProcessOneBlock(local[i], blocks_x, width, height, channels, block_size, image_data, output);
+  }
+}
+
+void GatherAndBroadcastResult(int rank, std::vector<uint8_t> &output, size_t total_pixels,
+                              MoskaevVLinFiltBlockGauss3ALL::OutType &out) {
+  std::vector<uint8_t> final_output;
+  if (rank == 0) {
+    final_output.resize(total_pixels);
+  }
+
+  MPI_Reduce(output.data(), final_output.data(), static_cast<int>(total_pixels), MPI_UNSIGNED_CHAR, MPI_BOR, 0,
+             MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    out = std::move(final_output);
+  }
+
+  int out_size = static_cast<int>(out.size());
+  MPI_Bcast(&out_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (rank != 0) {
+    out.resize(out_size);
+  }
+
+  MPI_Bcast(out.data(), out_size, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+}
+
 }  // namespace
 
 MoskaevVLinFiltBlockGauss3ALL::MoskaevVLinFiltBlockGauss3ALL(const InType &in) {
@@ -127,29 +214,18 @@ bool MoskaevVLinFiltBlockGauss3ALL::PostProcessingImpl() {
 }
 
 bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
-  int width = 0, height = 0, channels = 0;
+  int width = 0;
+  int height = 0;
+  int channels = 0;
   std::vector<uint8_t> image_data;
 
-  if (rank_ == 0) {
-    const auto &input = GetInput();
-    width = std::get<0>(input);
-    height = std::get<1>(input);
-    channels = std::get<2>(input);
-    image_data = std::get<4>(input);
-  }
-
-  MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&height, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&channels, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  BroadcastImageData(rank_, width, height, channels, image_data, GetInput());
 
   if (width == 0 || height == 0) {
     return false;
   }
 
   size_t total_pixels = static_cast<size_t>(width) * height * channels;
-  image_data.resize(total_pixels);
-  MPI_Bcast(image_data.data(), static_cast<int>(total_pixels), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
-
   std::vector<uint8_t> output(total_pixels, 0);
 
   int blocks_x = (width + block_size_ - 1) / block_size_;
@@ -160,55 +236,9 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
     return false;
   }
 
-  int per_proc = total_blocks / num_procs_;
-  int rem = total_blocks % num_procs_;
-  int local_cnt = per_proc + (rank_ < rem ? 1 : 0);
-
-  if (local_cnt > 0) {
-    std::vector<int> all(total_blocks);
-    for (int i = 0; i < total_blocks; ++i) {
-      all[i] = i;
-    }
-
-    std::vector<int> counts(num_procs_), displs(num_procs_);
-    int off = 0;
-    for (int p = 0; p < num_procs_; ++p) {
-      int cnt = per_proc + (p < rem ? 1 : 0);
-      counts[p] = cnt;
-      displs[p] = off;
-      off += cnt;
-    }
-
-    std::vector<int> local(local_cnt);
-    MPI_Scatterv(all.data(), counts.data(), displs.data(), MPI_INT, local.data(), local_cnt, MPI_INT, 0,
-                 MPI_COMM_WORLD);
-
-#pragma omp parallel for
-    for (int i = 0; i < local_cnt; ++i) {
-      ProcessOneBlock(local[i], blocks_x, width, height, channels, block_size_, image_data, output);
-    }
-  }
-
-  std::vector<uint8_t> final_output;
-  if (rank_ == 0) {
-    final_output.resize(total_pixels);
-  }
-
-  MPI_Reduce(output.data(), final_output.data(), static_cast<int>(total_pixels), MPI_UNSIGNED_CHAR, MPI_BOR, 0,
-             MPI_COMM_WORLD);
-
-  if (rank_ == 0) {
-    GetOutput() = std::move(final_output);
-  }
-
-  int out_size = static_cast<int>(GetOutput().size());
-  MPI_Bcast(&out_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  if (rank_ != 0) {
-    GetOutput().resize(out_size);
-  }
-
-  MPI_Bcast(GetOutput().data(), out_size, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+  ProcessLocalBlocks(rank_, num_procs_, total_blocks, blocks_x, width, height, channels, block_size_, image_data,
+                     output);
+  GatherAndBroadcastResult(rank_, output, total_pixels, GetOutput());
 
   return true;
 }
