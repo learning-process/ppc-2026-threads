@@ -1,4 +1,5 @@
 #include "chaschin_vladimir_linear_image_filtration_seq/all/include/ops_all.hpp"
+#include "chaschin_v_linear_image_filtration_seq/common/include/common.hpp"
 
 #include <omp.h>
 #include <tbb/tbb.h>
@@ -66,7 +67,7 @@ bool ChaschinVLinearFiltrationALL::RunImpl() {
     }
   });
 
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(m, n, temp, out)
   for (int yi = 0; yi < m; ++yi) {
     for (int xy = 0; xy < n; ++xy) {
       out[(yi * n) + xy] = VerticalFilterAtALL(temp, n, m, xy, yi);
