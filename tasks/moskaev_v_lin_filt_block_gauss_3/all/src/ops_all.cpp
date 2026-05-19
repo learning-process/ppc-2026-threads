@@ -101,7 +101,7 @@ void ProcessOneBlock(int idx, int blocks_x, int width, int height, int channels,
 }
 
 void BroadcastImageData(int rank, int &width, int &height, int &channels, std::vector<uint8_t> &image_data,
-                        const MoskaevVLinFiltBlockGauss3ALL::InType &input) {
+                        const InType &input) {
   if (rank == 0) {
     width = std::get<0>(input);
     height = std::get<1>(input);
@@ -112,58 +112,52 @@ void BroadcastImageData(int rank, int &width, int &height, int &channels, std::v
   MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&height, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&channels, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  if (width == 0 || height == 0) {
-    return;
-  }
-
-  size_t total_pixels = static_cast<size_t>(width) * height * channels;
-  image_data.resize(total_pixels);
-  MPI_Bcast(image_data.data(), static_cast<int>(total_pixels), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 }
 
-std::vector<int> ComputeCountsAndDispls(int num_procs, int total_blocks, int per_proc, int rem,
-                                        std::vector<int> &counts, std::vector<int> &displs) {
-  int offset = 0;
-  for (int proc = 0; proc < num_procs; ++proc) {
-    int cnt = per_proc + (proc < rem ? 1 : 0);
-    counts[proc] = cnt;
-    displs[proc] = offset;
-    offset += cnt;
+void ScatterBlocks(int rank, int num_procs, int total_blocks, std::vector<int> &local_blocks, int &local_cnt) {
+  int per_proc = total_blocks / num_procs;
+  int rem = total_blocks % num_procs;
+  local_cnt = per_proc + (rank < rem ? 1 : 0);
+
+  if (local_cnt <= 0) {
+    return;
   }
 
   std::vector<int> all(total_blocks);
   for (int i = 0; i < total_blocks; ++i) {
     all[i] = i;
   }
-  return all;
-}
-
-void ProcessLocalBlocks(int rank, int num_procs, int total_blocks, int blocks_x, int width, int height, int channels,
-                        int block_size, const std::vector<uint8_t> &image_data, std::vector<uint8_t> &output) {
-  int per_proc = total_blocks / num_procs;
-  int rem = total_blocks % num_procs;
-  int local_cnt = per_proc + (rank < rem ? 1 : 0);
-
-  if (local_cnt <= 0) {
-    return;
-  }
 
   std::vector<int> counts(num_procs);
   std::vector<int> displs(num_procs);
-  std::vector<int> all = ComputeCountsAndDispls(num_procs, total_blocks, per_proc, rem, counts, displs);
+  int off = 0;
+  for (int proc = 0; proc < num_procs; ++proc) {
+    int cnt = per_proc + (proc < rem ? 1 : 0);
+    counts[proc] = cnt;
+    displs[proc] = off;
+    off += cnt;
+  }
 
-  std::vector<int> local(local_cnt);
-  MPI_Scatterv(all.data(), counts.data(), displs.data(), MPI_INT, local.data(), local_cnt, MPI_INT, 0, MPI_COMM_WORLD);
+  local_blocks.resize(local_cnt);
+  MPI_Scatterv(all.data(), counts.data(), displs.data(), MPI_INT, local_blocks.data(), local_cnt, MPI_INT, 0,
+               MPI_COMM_WORLD);
+}
 
-#pragma omp parallel for default(none) shared(local, blocks_x, width, height, channels, block_size, image_data, output)
+void ProcessAssignedBlocks(const std::vector<int> &local_blocks, int blocks_x, int width, int height, int channels,
+                           int block_size, const std::vector<uint8_t> &image_data, std::vector<uint8_t> &output) {
+  int local_cnt = static_cast<int>(local_blocks.size());
+  if (local_cnt == 0) {
+    return;
+  }
+
+#pragma omp parallel for default(none) \
+    shared(local_blocks, blocks_x, width, height, channels, block_size, image_data, output, local_cnt)
   for (int i = 0; i < local_cnt; ++i) {
-    ProcessOneBlock(local[i], blocks_x, width, height, channels, block_size, image_data, output);
+    ProcessOneBlock(local_blocks[i], blocks_x, width, height, channels, block_size, image_data, output);
   }
 }
 
-void GatherAndBroadcastResult(int rank, std::vector<uint8_t> &output, size_t total_pixels,
-                              MoskaevVLinFiltBlockGauss3ALL::OutType &out) {
+void GatherAndBroadcastResult(int rank, std::vector<uint8_t> &output, size_t total_pixels, OutType &out) {
   std::vector<uint8_t> final_output;
   if (rank == 0) {
     final_output.resize(total_pixels);
@@ -236,8 +230,12 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
     return false;
   }
 
-  ProcessLocalBlocks(rank_, num_procs_, total_blocks, blocks_x, width, height, channels, block_size_, image_data,
-                     output);
+  std::vector<int> local_blocks;
+  int local_cnt = 0;
+  ScatterBlocks(rank_, num_procs_, total_blocks, local_blocks, local_cnt);
+
+  ProcessAssignedBlocks(local_blocks, blocks_x, width, height, channels, block_size_, image_data, output);
+
   GatherAndBroadcastResult(rank_, output, total_pixels, GetOutput());
 
   return true;
