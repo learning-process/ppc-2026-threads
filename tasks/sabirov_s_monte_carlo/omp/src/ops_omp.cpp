@@ -1,11 +1,15 @@
 #include "sabirov_s_monte_carlo/omp/include/ops_omp.hpp"
 
+#include <omp.h>
+
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <random>
 #include <vector>
 
 #include "sabirov_s_monte_carlo/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace sabirov_s_monte_carlo {
 
@@ -137,6 +141,8 @@ bool SabirovSMonteCarloOMP::PreProcessingImpl() {
 }
 
 bool SabirovSMonteCarloOMP::RunImpl() {
+  omp_set_num_threads(std::max(1, ppc::util::GetNumThreads()));
+
   auto dims = static_cast<int>(lower_.size());
 
   double volume = 1.0;
