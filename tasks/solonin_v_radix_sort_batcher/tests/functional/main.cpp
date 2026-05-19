@@ -1,8 +1,3 @@
-#include <gtest/gtest.h>
-#include <array>
-#include <cstddef>
-#include <string>
-#include <tuple>
 #include "solonin_v_radix_sort_batcher/all/include/ops_all.hpp"
 #include "solonin_v_radix_sort_batcher/common/include/common.hpp"
 #include "solonin_v_radix_sort_batcher/omp/include/ops_omp.hpp"
@@ -11,6 +6,12 @@
 #include "solonin_v_radix_sort_batcher/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
+#include <climits>
+#include <cstddef>
+#include <gtest/gtest.h>
+#include <array>
+#include <string>
+#include <tuple>
 
 namespace solonin_v_radix_sort_batcher {
 
@@ -33,7 +34,7 @@ class RadixBatcherFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
     } else if (id == 4) {
       input_data_ = {10, -3, 7, -1, 0, 5, -9, 2};
     } else if (id == 5) {
-      input_data_ = {INT32_MAX, INT32_MIN, 0, -1, 1};
+      input_data_ = {INT_MAX, INT_MIN, 0, -1, 1};
     } else if (id == 6) {
       input_data_ = {4, 4, 4, 4, 4};
     }
@@ -41,7 +42,9 @@ class RadixBatcherFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
 
   bool CheckTestOutputData(OutType &output) final {
     for (size_t i = 1; i < output.size(); ++i) {
-      if (output[i - 1] > output[i]) return false;
+      if (output[i - 1] > output[i]) {
+        return false;
+      }
     }
     return true;
   }

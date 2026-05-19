@@ -1,10 +1,10 @@
 #include "solonin_v_radix_sort_batcher/omp/include/ops_omp.hpp"
-#include <omp.h>
+#include "solonin_v_radix_sort_batcher/common/include/common.hpp"
+#include "util/include/util.hpp"
 #include <algorithm>
 #include <cstddef>
 #include <vector>
-#include "solonin_v_radix_sort_batcher/common/include/common.hpp"
-#include "util/include/util.hpp"
+#include <omp.h>
 
 namespace solonin_v_radix_sort_batcher {
 
@@ -14,22 +14,26 @@ RadixSortBatcherOMP::RadixSortBatcherOMP(const InType &in) {
 }
 
 void RadixSortBatcherOMP::SortByDigit(std::vector<int> &data, size_t pos) {
-  const size_t kBase = 256;
-  std::vector<int> freq(kBase, 0);
+  const size_t k_base = 256;
+  std::vector<int> freq(k_base, 0);
   std::vector<int> out(data.size());
   bool last = (pos == sizeof(int) - 1ULL);
 
   for (int v : data) {
     int bv = (v >> (pos * 8ULL)) & 0xFF;
-    if (last) bv ^= 0x80;
+    if (last) {
+      bv ^= 0x80;
+    }
     freq[bv]++;
   }
-  for (size_t i = 1; i < kBase; ++i) {
+  for (size_t i = 1; i < k_base; ++i) {
     freq[i] += freq[i - 1];
   }
   for (int i = static_cast<int>(data.size()) - 1; i >= 0; --i) {
     int bv = (data[i] >> (pos * 8ULL)) & 0xFF;
-    if (last) bv ^= 0x80;
+    if (last) {
+      bv ^= 0x80;
+    }
     out[--freq[bv]] = data[i];
   }
   data = out;
@@ -37,10 +41,10 @@ void RadixSortBatcherOMP::SortByDigit(std::vector<int> &data, size_t pos) {
 
 void RadixSortBatcherOMP::SortChunk(std::vector<int> &data, int left, int right) {
   std::vector<int> chunk(data.begin() + left, data.begin() + right);
-  for (size_t p = 0; p < sizeof(int); ++p) {
-    SortByDigit(chunk, p);
+  for (size_t pos_idx = 0; pos_idx < sizeof(int); ++pos_idx) {
+    SortByDigit(chunk, pos_idx);
   }
-  std::copy(chunk.begin(), chunk.end(), data.begin() + left);
+  std::ranges::copy(chunk, data.begin() + left);
 }
 
 void RadixSortBatcherOMP::CompareSwapRange(std::vector<int> &data, int offset, int step, int half) {
@@ -96,7 +100,9 @@ bool RadixSortBatcherOMP::RunImpl() {
   }
 
   int start = 1;
-  while (start < chunk) start <<= 1;
+  while (start < chunk) {
+    start <<= 1;
+  }
   BatcherNetwork(GetOutput(), start, nthreads);
 
   return true;
