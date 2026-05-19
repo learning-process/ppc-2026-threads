@@ -100,6 +100,8 @@ void ProcessOneBlock(int idx, int blocks_x, int width, int height, int channels,
   CopyBlockToOutput(output_block, output, width, channels, block_x, block_y, block_w, block_h);
 }
 
+// ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ RUN_IMPL ==========
+
 void BroadcastImageData(int rank, int &width, int &height, int &channels, std::vector<uint8_t> &image_data,
                         const InType &input) {
   if (rank == 0) {
@@ -150,8 +152,8 @@ void ProcessAssignedBlocks(const std::vector<int> &local_blocks, int blocks_x, i
     return;
   }
 
-#pragma omp parallel for default(none) \
-    shared(local_blocks, blocks_x, width, height, channels, block_size, image_data, output, local_cnt)
+#pragma omp parallel for default(none) firstprivate(local_cnt) \
+    shared(local_blocks, blocks_x, width, height, channels, block_size, image_data, output)
   for (int i = 0; i < local_cnt; ++i) {
     ProcessOneBlock(local_blocks[i], blocks_x, width, height, channels, block_size, image_data, output);
   }
