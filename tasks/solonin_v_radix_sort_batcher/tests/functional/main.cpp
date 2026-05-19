@@ -6,10 +6,10 @@
 #include "solonin_v_radix_sort_batcher/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
+#include <gtest/gtest.h>
 #include <array>
 #include <climits>
 #include <cstddef>
-#include <gtest/gtest.h>
 #include <string>
 #include <tuple>
 

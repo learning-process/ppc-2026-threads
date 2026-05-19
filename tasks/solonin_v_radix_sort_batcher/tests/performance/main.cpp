@@ -5,9 +5,9 @@
 #include "solonin_v_radix_sort_batcher/stl/include/ops_stl.hpp"
 #include "solonin_v_radix_sort_batcher/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
+#include <gtest/gtest.h>
 #include <climits>
 #include <cstddef>
-#include <gtest/gtest.h>
 
 namespace solonin_v_radix_sort_batcher {
 
