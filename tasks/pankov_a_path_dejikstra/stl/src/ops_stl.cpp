@@ -87,7 +87,8 @@ bool PankovAPathDejikstraSTL::PreProcessingImpl() {
   }
 
   auto &adjacency = adjacency_;
-  const std::size_t chunk = (input.n + static_cast<std::size_t>(num_threads) - 1) / static_cast<std::size_t>(num_threads);
+  const std::size_t chunk =
+      (input.n + static_cast<std::size_t>(num_threads) - 1) / static_cast<std::size_t>(num_threads);
 
   auto worker = [&](std::size_t begin, std::size_t end) {
     for (std::size_t from = begin; from < end; ++from) {
