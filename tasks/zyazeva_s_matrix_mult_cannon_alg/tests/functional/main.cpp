@@ -9,6 +9,7 @@
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
+#include "zyazeva_s_matrix_mult_cannon_alg/all/include/ops_all.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/common/include/common.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/omp/include/ops_omp.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/seq/include/ops_seq.hpp"
@@ -100,6 +101,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ZyazevaSMatrix
                                            ppc::util::AddFuncTask<ZyazevaSMatrixMultCannonAlgTBB, InType>(
                                                kTestParams, PPC_SETTINGS_zyazeva_s_matrix_mult_cannon_alg),
                                            ppc::util::AddFuncTask<ZyazevaSMatrixMultCannonAlgSTL, InType>(
+                                               kTestParams, PPC_SETTINGS_zyazeva_s_matrix_mult_cannon_alg),
+                                           ppc::util::AddFuncTask<ZyazevaSMatrixMultCannonAlgALL, InType>(
                                                kTestParams, PPC_SETTINGS_zyazeva_s_matrix_mult_cannon_alg));
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

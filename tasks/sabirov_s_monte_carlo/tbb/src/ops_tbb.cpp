@@ -1,13 +1,16 @@
 #include "sabirov_s_monte_carlo/tbb/include/ops_tbb.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <random>
 #include <vector>
 
 #include "oneapi/tbb/blocked_range.h"
+#include "oneapi/tbb/global_control.h"
 #include "oneapi/tbb/parallel_reduce.h"
 #include "sabirov_s_monte_carlo/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace sabirov_s_monte_carlo {
 
@@ -63,6 +66,9 @@ bool SabirovSMonteCarloTBB::RunImpl() {
 
   const FuncType ftype = func_type_;
   const int n_samples = num_samples_;
+
+  const size_t max_threads = static_cast<size_t>(std::max(1, ppc::util::GetNumThreads()));
+  oneapi::tbb::global_control gc(oneapi::tbb::global_control::max_allowed_parallelism, max_threads);
 
   const double sum = tbb::parallel_reduce(tbb::blocked_range<int>(0, n_samples), 0.0,
                                           [&](const tbb::blocked_range<int> &r, double init) {
