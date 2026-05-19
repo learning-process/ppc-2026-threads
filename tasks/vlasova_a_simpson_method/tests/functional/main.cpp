@@ -13,6 +13,7 @@
 #include "vlasova_a_simpson_method/common/include/common.hpp"
 #include "vlasova_a_simpson_method/omp/include/ops_omp.hpp"
 #include "vlasova_a_simpson_method/seq/include/ops_seq.hpp"
+#include "vlasova_a_simpson_method/tbb/include/ops_tbb.hpp"
 
 namespace vlasova_a_simpson_method {
 
@@ -125,7 +126,8 @@ const std::array<TestType, 22> kTestCases = {
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<VlasovaASimpsonMethodSEQ, InType>(kTestCases, PPC_SETTINGS_vlasova_a_simpson_method),
-    ppc::util::AddFuncTask<VlasovaASimpsonMethodOMP, InType>(kTestCases, PPC_SETTINGS_vlasova_a_simpson_method));
+    ppc::util::AddFuncTask<VlasovaASimpsonMethodOMP, InType>(kTestCases, PPC_SETTINGS_vlasova_a_simpson_method),
+    ppc::util::AddFuncTask<VlasovaASimpsonMethodTBB, InType>(kTestCases, PPC_SETTINGS_vlasova_a_simpson_method));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
