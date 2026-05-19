@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <map>
 #include <vector>
 
 #include "artyushkina_markirovka/common/include/common.hpp"
@@ -63,6 +62,39 @@ NeighborInfo GetNeighborInfo(int i, int j, int rows, int cols, const std::vector
   return info;
 }
 
+void FindMinLabelFromNeighbors(int i, int j, int rows, int cols, const std::vector<std::vector<int>> &labels,
+                               const std::vector<NeighborOffsetAll> &neighbors, int &min_label, bool &has_neighbors) {
+  for (const auto &offset : neighbors) {
+    NeighborInfo info = GetNeighborInfo(i, j, rows, cols, labels, offset);
+    if (info.label != 0) {
+      has_neighbors = true;
+      min_label = (std::min)(info.label, min_label);
+    }
+  }
+}
+
+void UnionNeighborLabels(int i, int j, int rows, int cols, std::vector<std::vector<int>> &labels,
+                         std::vector<int> &equivalent_labels, const std::vector<NeighborOffsetAll> &neighbors,
+                         int min_label) {
+  for (const auto &offset : neighbors) {
+    NeighborInfo info = GetNeighborInfo(i, j, rows, cols, labels, offset);
+    if (info.label != 0 && info.label != min_label) {
+      MarkingComponentsALL::UnionLabels(equivalent_labels, info.label, min_label);
+    }
+  }
+}
+
+void AssignNewLabel(int i, int j, int &next_label, std::vector<std::vector<int>> &labels,
+                    std::vector<int> &equivalent_labels) {
+  labels[static_cast<size_t>(i)][static_cast<size_t>(j)] = next_label;
+  equivalent_labels.push_back(next_label);
+  ++next_label;
+}
+
+void AssignExistingLabel(int i, int j, int min_label, std::vector<std::vector<int>> &labels) {
+  labels[static_cast<size_t>(i)][static_cast<size_t>(j)] = min_label;
+}
+
 }  // namespace
 
 MarkingComponentsALL::MarkingComponentsALL(const InType &in) {
@@ -97,8 +129,6 @@ int MarkingComponentsALL::FindRoot(std::vector<int> &parent, int label) {
   while (parent[static_cast<size_t>(root)] != root) {
     root = parent[static_cast<size_t>(root)];
   }
-
-  // Path compression
   int current = label;
   while (current != root) {
     int next = parent[static_cast<size_t>(current)];
@@ -133,62 +163,46 @@ void MarkingComponentsALL::FirstPass() {
         continue;
       }
 
-      std::vector<int> neighbor_labels;
-      for (const auto &offset : neighbors) {
-        NeighborInfo info = GetNeighborInfo(i, j, rows_, cols_, labels_, offset);
-        if (info.label != 0) {
-          neighbor_labels.push_back(info.label);
-        }
-      }
+      int min_label = next_label;
+      bool has_neighbors = false;
+      FindMinLabelFromNeighbors(i, j, rows_, cols_, labels_, neighbors, min_label, has_neighbors);
 
-      if (neighbor_labels.empty()) {
-        labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = next_label;
-        equivalent_labels_.push_back(next_label);
-        ++next_label;
+      if (!has_neighbors) {
+        AssignNewLabel(i, j, next_label, labels_, equivalent_labels_);
       } else {
-        int min_label = *std::min_element(neighbor_labels.begin(), neighbor_labels.end());
-        labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = min_label;
-
-        for (int label : neighbor_labels) {
-          if (label != min_label) {
-            UnionLabels(equivalent_labels_, label, min_label);
-          }
-        }
+        AssignExistingLabel(i, j, min_label, labels_);
+        UnionNeighborLabels(i, j, rows_, cols_, labels_, equivalent_labels_, neighbors, min_label);
       }
     }
   }
 }
 
 void MarkingComponentsALL::SecondPass() {
+  int label_count = static_cast<int>(equivalent_labels_.size());
+
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
       if (labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] != 0) {
-        int root = FindRoot(equivalent_labels_, labels_[static_cast<size_t>(i)][static_cast<size_t>(j)]);
-        labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = root;
+        labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] =
+            FindRoot(equivalent_labels_, labels_[static_cast<size_t>(i)][static_cast<size_t>(j)]);
       }
     }
   }
 
-  std::map<int, int> label_remap;
+  std::vector<int> remap(static_cast<size_t>(label_count), 0);
   int current_label = 1;
-
-  for (int i = 0; i < rows_; ++i) {
-    for (int j = 0; j < cols_; ++j) {
-      int label = labels_[static_cast<size_t>(i)][static_cast<size_t>(j)];
-      if (label != 0) {
-        if (label_remap.find(label) == label_remap.end()) {
-          label_remap[label] = current_label;
-          ++current_label;
-        }
-      }
+  for (int i = 1; i < label_count; ++i) {
+    if (equivalent_labels_[static_cast<size_t>(i)] == i) {
+      remap[static_cast<size_t>(i)] = current_label;
+      ++current_label;
     }
   }
 
   for (int i = 0; i < rows_; ++i) {
     for (int j = 0; j < cols_; ++j) {
-      int label = labels_[static_cast<size_t>(i)][static_cast<size_t>(j)];
-      if (label != 0) {
-        labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] = label_remap[label];
+      if (labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] != 0) {
+        labels_[static_cast<size_t>(i)][static_cast<size_t>(j)] =
+            remap[static_cast<size_t>(labels_[static_cast<size_t>(i)][static_cast<size_t>(j)])];
       }
     }
   }
