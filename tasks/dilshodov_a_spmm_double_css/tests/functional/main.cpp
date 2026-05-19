@@ -7,8 +7,12 @@
 #include <tuple>
 #include <vector>
 
+#include "dilshodov_a_spmm_double_css/all/include/ops_all.hpp"
 #include "dilshodov_a_spmm_double_css/common/include/common.hpp"
+#include "dilshodov_a_spmm_double_css/omp/include/ops_omp.hpp"
 #include "dilshodov_a_spmm_double_css/seq/include/ops_seq.hpp"
+#include "dilshodov_a_spmm_double_css/stl/include/ops_stl.hpp"
+#include "dilshodov_a_spmm_double_css/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -117,8 +121,12 @@ const std::array<TestType, 3> kTestParams = {
     std::make_tuple("RectangularCheck", DenseMatrix{{1.0, -1.0, 0.0}, {0.0, 2.0, 4.0}},
                     DenseMatrix{{3.0, 0.0}, {0.0, 5.0}, {6.0, 7.0}})};
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<DilshodovASpmmDoubleCssSeq, InType>(kTestParams, PPC_SETTINGS_dilshodov_a_spmm_double_css);
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<DilshodovASpmmDoubleCssSeq, InType>(kTestParams, PPC_SETTINGS_dilshodov_a_spmm_double_css),
+    ppc::util::AddFuncTask<DilshodovASpmmDoubleCssOmp, InType>(kTestParams, PPC_SETTINGS_dilshodov_a_spmm_double_css),
+    ppc::util::AddFuncTask<DilshodovASpmmDoubleCssTbb, InType>(kTestParams, PPC_SETTINGS_dilshodov_a_spmm_double_css),
+    ppc::util::AddFuncTask<DilshodovASpmmDoubleCssStl, InType>(kTestParams, PPC_SETTINGS_dilshodov_a_spmm_double_css),
+    ppc::util::AddFuncTask<DilshodovASpmmDoubleCssAll, InType>(kTestParams, PPC_SETTINGS_dilshodov_a_spmm_double_css));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

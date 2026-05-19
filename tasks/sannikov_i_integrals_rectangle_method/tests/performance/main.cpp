@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 
+#include "sannikov_i_integrals_rectangle_method/all/include/ops_all.hpp"
 #include "sannikov_i_integrals_rectangle_method/common/include/common.hpp"
 #include "sannikov_i_integrals_rectangle_method/omp/include/ops_omp.hpp"
 #include "sannikov_i_integrals_rectangle_method/seq/include/ops_seq.hpp"
@@ -47,7 +48,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, SannikovIIntegralsRectangleMethodSEQ, SannikovIIntegralsRectangleMethodOMP,
-                                SannikovIIntegralsRectangleMethodTBB, SannikovIIntegralsRectangleMethodSTL>(
+                                SannikovIIntegralsRectangleMethodTBB, SannikovIIntegralsRectangleMethodSTL,
+                                SannikovIIntegralsRectangleMethodALL>(
         PPC_SETTINGS_sannikov_i_integrals_rectangle_method);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

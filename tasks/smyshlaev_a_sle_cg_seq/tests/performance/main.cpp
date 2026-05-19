@@ -5,6 +5,7 @@
 #include <random>
 #include <utility>
 
+#include "smyshlaev_a_sle_cg_seq/all/include/ops_all.hpp"
 #include "smyshlaev_a_sle_cg_seq/common/include/common.hpp"
 #include "smyshlaev_a_sle_cg_seq/omp/include/ops_omp.hpp"
 #include "smyshlaev_a_sle_cg_seq/seq/include/ops_seq.hpp"
@@ -82,7 +83,7 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, SmyshlaevASleCgTaskSEQ, SmyshlaevASleCgTaskOMP, SmyshlaevASleCgTaskTBB,
-                                SmyshlaevASleCgTaskSTL>(PPC_SETTINGS_smyshlaev_a_sle_cg_seq);
+                                SmyshlaevASleCgTaskSTL, SmyshlaevASleCgTaskALL>(PPC_SETTINGS_smyshlaev_a_sle_cg_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
