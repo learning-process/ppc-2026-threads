@@ -27,6 +27,8 @@ class KosolapovVCalcMultIntegralsMRectanglesALL : public BaseTask {
   static double CallFunction(int func_id, double x, double y);
   static std::tuple<double, double, double, double> GetBounds(int func_id);
   static double RectanglesIntegral(int func_id, int steps, double a, double b, double c, double d);
+  static double ComputeLocalSum(int func_id, int steps, double a, double c, double hx, double hy, int start_i,
+                                int end_i);
 };
 
 }  // namespace kosolapov_v_calc_mult_integrals_m_rectangles
