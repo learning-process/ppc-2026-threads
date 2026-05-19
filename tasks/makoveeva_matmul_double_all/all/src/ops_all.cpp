@@ -218,8 +218,8 @@ bool MatmulDoubleAllTask::RunImpl() {
   ExecuteFoxIterationsImpl(grid_size, row_idx, col_idx, bs, block_sz, row_communicator, local_a_block, local_b_block,
                            local_c_block);
 
-  // Исправлен порядок аргументов: сначала grid_size, потом total_processes
-  CollectResultsImpl(process_rank, grid_size, n, bs, block_sz, total_processes, local_c_block, c);
+  // ИСПРАВЛЕНО: порядок аргументов соответствует объявлению
+  CollectResultsImpl(process_rank, total_processes, n, bs, block_sz, grid_size, local_c_block, c);
 
   if (row_communicator != MPI_COMM_NULL) {
     MPI_Comm_free(&row_communicator);
