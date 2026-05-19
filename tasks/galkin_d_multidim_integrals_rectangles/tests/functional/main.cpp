@@ -14,6 +14,7 @@
 #include <utility>
 #include <vector>
 
+#include "galkin_d_multidim_integrals_rectangles/all/include/ops_all.hpp"
 #include "galkin_d_multidim_integrals_rectangles/common/include/common.hpp"
 #include "galkin_d_multidim_integrals_rectangles/omp/include/ops_omp.hpp"
 #include "galkin_d_multidim_integrals_rectangles/seq/include/ops_seq.hpp"
@@ -303,7 +304,9 @@ const std::array<TestType, 23> kTestParam = {
              InType{[](const std::vector<double> &) { return 1.0; }, {{0.0, 100.0}, {0.0, 0.01}}, 200}, 1.0},
 };
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<GalkinDMultidimIntegralsRectanglesOMP, InType>(
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<GalkinDMultidimIntegralsRectanglesALL, InType>(
+                                               kTestParam, PPC_SETTINGS_galkin_d_multidim_integrals_rectangles),
+                                           ppc::util::AddFuncTask<GalkinDMultidimIntegralsRectanglesOMP, InType>(
                                                kTestParam, PPC_SETTINGS_galkin_d_multidim_integrals_rectangles),
                                            ppc::util::AddFuncTask<GalkinDMultidimIntegralsRectanglesSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_galkin_d_multidim_integrals_rectangles),
