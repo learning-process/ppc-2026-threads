@@ -6,6 +6,7 @@
 #include <string>
 #include <tuple>
 
+#include "khruev_a_radix_sorting_int_bather_merge/all/include/ops_all.hpp"
 #include "khruev_a_radix_sorting_int_bather_merge/common/include/common.hpp"
 #include "khruev_a_radix_sorting_int_bather_merge/omp/include/ops_omp.hpp"
 #include "khruev_a_radix_sorting_int_bather_merge/seq/include/ops_seq.hpp"
@@ -78,6 +79,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KhruevARadixSo
                                            ppc::util::AddFuncTask<KhruevARadixSortingIntBatherMergeTBB, InType>(
                                                kTestParam, PPC_SETTINGS_khruev_a_radix_sorting_int_bather_merge),
                                            ppc::util::AddFuncTask<KhruevARadixSortingIntBatherMergeSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_khruev_a_radix_sorting_int_bather_merge),
+                                           ppc::util::AddFuncTask<KhruevARadixSortingIntBatherMergeALL, InType>(
                                                kTestParam, PPC_SETTINGS_khruev_a_radix_sorting_int_bather_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
