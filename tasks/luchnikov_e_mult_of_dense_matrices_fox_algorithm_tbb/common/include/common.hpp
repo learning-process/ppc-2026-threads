@@ -4,7 +4,7 @@
 
 #include "task/include/task.hpp"
 
-namespace luchnikov_e_mult_of_dense_matrices_fox_algorithm_omp {
+namespace luchnikov_e_mult_of_dense_matrices_fox_algorithm_tbb {
 
 using InType = int;
 using OutType = double;
@@ -32,4 +32,4 @@ struct DenseMatrix {
   }
 };
 
-}  // namespace luchnikov_e_mult_of_dense_matrices_fox_algorithm_omp
+}  // namespace luchnikov_e_mult_of_dense_matrices_fox_algorithm_tbb
