@@ -3,6 +3,7 @@
 #include <mpi.h>
 #include <omp.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -10,6 +11,7 @@
 #include <vector>
 
 #include "sabirov_s_monte_carlo/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace sabirov_s_monte_carlo {
 
@@ -212,6 +214,8 @@ bool SabirovSMonteCarloALL::PreProcessingImpl() {
 }
 
 bool SabirovSMonteCarloALL::RunImpl() {
+  omp_set_num_threads(std::max(1, ppc::util::GetNumThreads()));
+
   int rank = 0;
   int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
