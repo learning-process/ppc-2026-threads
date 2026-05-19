@@ -12,7 +12,7 @@
 #include "akimov_i_radixsort_int_merge/common/include/common.hpp"
 #include "util/include/util.hpp"
 
-namespace akimov_i_radixsort_int_merge {  // comment for ci rerun
+namespace akimov_i_radixsort_int_merge {
 
 namespace {
 
