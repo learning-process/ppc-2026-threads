@@ -74,22 +74,22 @@ void MultiplyBlockPairImpl(const std::vector<double> &block_a, const std::vector
   }
 }
 
-bool IsValidConfigurationImpl(size_t n, int grid_size, int world_size) {
-  return ((grid_size * grid_size) == world_size) && ((n % static_cast<size_t>(grid_size)) == 0);
+bool IsValidConfigurationImpl(size_t n, int grid_size, int num_procs) {
+  return ((grid_size * grid_size) == num_procs) && ((n % static_cast<size_t>(grid_size)) == 0);
 }
 
-void HandleFallbackImpl(int rank, size_t n, const std::vector<double> &a, const std::vector<double> &b,
+void HandleFallbackImpl(int my_rank, size_t n, const std::vector<double> &a, const std::vector<double> &b,
                         std::vector<double> &c) {
-  if (rank == 0) {
+  if (my_rank == 0) {
     ParallelMultiplyImpl(n, a, b, c);
   }
   MPI_Bcast(c.data(), static_cast<int>(n * n), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
-void DistributeBlocksImpl(int rank, const std::vector<double> &blocks_a, const std::vector<double> &blocks_b,
+void DistributeBlocksImpl(int my_rank, const std::vector<double> &blocks_a, const std::vector<double> &blocks_b,
                           std::vector<double> &local_a, std::vector<double> &local_b, size_t block_sz) {
-  const double *send_a = (rank == 0) ? blocks_a.data() : nullptr;
-  const double *send_b = (rank == 0) ? blocks_b.data() : nullptr;
+  const double *send_a = (my_rank == 0) ? blocks_a.data() : nullptr;
+  const double *send_b = (my_rank == 0) ? blocks_b.data() : nullptr;
 
   MPI_Scatter(send_a, static_cast<int>(block_sz), MPI_DOUBLE, local_a.data(), static_cast<int>(block_sz), MPI_DOUBLE, 0,
               MPI_COMM_WORLD);
@@ -98,13 +98,13 @@ void DistributeBlocksImpl(int rank, const std::vector<double> &blocks_a, const s
               MPI_COMM_WORLD);
 }
 
-void ExecuteFoxIterationsImpl(int grid, int row_id, int col_id, size_t bs, size_t block_sz, MPI_Comm row_comm,
+void ExecuteFoxIterationsImpl(int grid_dim, int row_id, int col_id, size_t bs, size_t block_sz, MPI_Comm row_comm,
                               std::vector<double> &local_a, std::vector<double> &local_b,
                               std::vector<double> &local_c) {
   std::vector<double> broadcast_buffer(block_sz);
 
-  for (int stage = 0; stage < grid; ++stage) {
-    const int source = (row_id + stage) % grid;
+  for (int stage = 0; stage < grid_dim; ++stage) {
+    const int source = (row_id + stage) % grid_dim;
 
     if (col_id == source) {
       broadcast_buffer = local_a;
@@ -114,8 +114,8 @@ void ExecuteFoxIterationsImpl(int grid, int row_id, int col_id, size_t bs, size_
 
     MultiplyBlockPairImpl(broadcast_buffer, local_b, local_c, bs);
 
-    const int target = (((row_id - 1 + grid) % grid) * grid) + col_id;
-    const int origin = (((row_id + 1) % grid) * grid) + col_id;
+    const int target = (((row_id - 1 + grid_dim) % grid_dim) * grid_dim) + col_id;
+    const int origin = (((row_id + 1) % grid_dim) % grid_dim) * grid_dim + col_id;
 
     MPI_Sendrecv_replace(local_b.data(), static_cast<int>(block_sz), MPI_DOUBLE, target, 0, origin, 0, MPI_COMM_WORLD,
                          MPI_STATUS_IGNORE);
@@ -169,6 +169,52 @@ bool MatmulDoubleAllTask::PreProcessingImpl() {
   return true;
 }
 
+void MatmulDoubleAllTask::ParallelMultiply(size_t n, const std::vector<double> &a, const std::vector<double> &b,
+                                           std::vector<double> &c) {
+  ParallelMultiplyImpl(n, a, b, c);
+}
+
+void MatmulDoubleAllTask::SplitIntoBlocks(const std::vector<double> &src, std::vector<double> &dst, size_t n, size_t bs,
+                                          int grid_size) {
+  SplitIntoBlocksImpl(src, dst, n, bs, grid_size);
+}
+
+void MatmulDoubleAllTask::MergeFromBlocks(const std::vector<double> &src, std::vector<double> &dst, size_t n, size_t bs,
+                                          int grid_size) {
+  MergeFromBlocksImpl(src, dst, n, bs, grid_size);
+}
+
+void MatmulDoubleAllTask::MultiplyBlockPair(const std::vector<double> &block_a, const std::vector<double> &block_b,
+                                            std::vector<double> &block_c, size_t bs) {
+  MultiplyBlockPairImpl(block_a, block_b, block_c, bs);
+}
+
+bool MatmulDoubleAllTask::IsValidConfiguration(size_t n, int grid_size, int num_procs) {
+  return IsValidConfigurationImpl(n, grid_size, num_procs);
+}
+
+void MatmulDoubleAllTask::HandleFallback(int my_rank, size_t n, const std::vector<double> &a,
+                                         const std::vector<double> &b, std::vector<double> &c) {
+  HandleFallbackImpl(my_rank, n, a, b, c);
+}
+
+void MatmulDoubleAllTask::DistributeBlocks(int my_rank, const std::vector<double> &blocks_a,
+                                           const std::vector<double> &blocks_b, std::vector<double> &local_a,
+                                           std::vector<double> &local_b, size_t block_sz) {
+  DistributeBlocksImpl(my_rank, blocks_a, blocks_b, local_a, local_b, block_sz);
+}
+
+void MatmulDoubleAllTask::ExecuteFoxIterations(int grid_dim, int row_id, int col_id, size_t bs, size_t block_sz,
+                                               MPI_Comm row_comm, std::vector<double> &local_a,
+                                               std::vector<double> &local_b, std::vector<double> &local_c) {
+  ExecuteFoxIterationsImpl(grid_dim, row_id, col_id, bs, block_sz, row_comm, local_a, local_b, local_c);
+}
+
+void MatmulDoubleAllTask::CollectResults(int my_rank, int num_procs, size_t n, size_t bs, size_t block_sz, int grid_dim,
+                                         const std::vector<double> &local_c, std::vector<double> &c) {
+  CollectResultsImpl(my_rank, num_procs, n, bs, block_sz, grid_dim, local_c, c);
+}
+
 bool MatmulDoubleAllTask::RunImpl() {
   int my_rank = 0;
   int num_procs = 1;
@@ -183,8 +229,8 @@ bool MatmulDoubleAllTask::RunImpl() {
 
   const int grid_dim = static_cast<int>(std::sqrt(num_procs));
 
-  if (!IsValidConfigurationImpl(n, grid_dim, num_procs)) {
-    HandleFallbackImpl(my_rank, n, a, b, c);
+  if (!IsValidConfiguration(n, grid_dim, num_procs)) {
+    HandleFallback(my_rank, n, a, b, c);
     GetOutput() = c;
     return true;
   }
@@ -206,20 +252,18 @@ bool MatmulDoubleAllTask::RunImpl() {
     all_blocks_a.resize(static_cast<size_t>(num_procs) * block_sz);
     all_blocks_b.resize(static_cast<size_t>(num_procs) * block_sz);
 
-    SplitIntoBlocksImpl(a, all_blocks_a, n, bs, grid_dim);
-    SplitIntoBlocksImpl(b, all_blocks_b, n, bs, grid_dim);
+    SplitIntoBlocks(a, all_blocks_a, n, bs, grid_dim);
+    SplitIntoBlocks(b, all_blocks_b, n, bs, grid_dim);
   }
 
-  DistributeBlocksImpl(my_rank, all_blocks_a, all_blocks_b, local_a_block, local_b_block, block_sz);
+  DistributeBlocks(my_rank, all_blocks_a, all_blocks_b, local_a_block, local_b_block, block_sz);
 
   MPI_Comm row_comm = MPI_COMM_NULL;
   MPI_Comm_split(MPI_COMM_WORLD, row_idx, col_idx, &row_comm);
 
-  ExecuteFoxIterationsImpl(grid_dim, row_idx, col_idx, bs, block_sz, row_comm, local_a_block, local_b_block,
-                           local_c_block);
+  ExecuteFoxIterations(grid_dim, row_idx, col_idx, bs, block_sz, row_comm, local_a_block, local_b_block, local_c_block);
 
-  // world_size = num_procs, grid = grid_dim
-  CollectResultsImpl(my_rank, num_procs, n, bs, block_sz, grid_dim, local_c_block, c);
+  CollectResults(my_rank, num_procs, n, bs, block_sz, grid_dim, local_c_block, c);
 
   if (row_comm != MPI_COMM_NULL) {
     MPI_Comm_free(&row_comm);

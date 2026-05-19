@@ -36,15 +36,15 @@ class MatmulDoubleAllTask : public BaseTask {
   void MergeFromBlocks(const std::vector<double> &src, std::vector<double> &dst, size_t n, size_t bs, int grid_size);
   void MultiplyBlockPair(const std::vector<double> &block_a, const std::vector<double> &block_b,
                          std::vector<double> &block_c, size_t bs);
-  bool IsValidConfiguration(size_t n, int grid_size, int world_size);
-  void HandleFallback(int rank, size_t n, const std::vector<double> &a, const std::vector<double> &b,
+  bool IsValidConfiguration(size_t n, int grid_size, int num_procs);
+  void HandleFallback(int my_rank, size_t n, const std::vector<double> &a, const std::vector<double> &b,
                       std::vector<double> &c);
-  void DistributeBlocks(int rank, const std::vector<double> &blocks_a, const std::vector<double> &blocks_b,
+  void DistributeBlocks(int my_rank, const std::vector<double> &blocks_a, const std::vector<double> &blocks_b,
                         std::vector<double> &local_a, std::vector<double> &local_b, size_t block_sz);
-  void ExecuteFoxIterations(int grid, int row_id, int col_id, size_t bs, size_t block_sz, MPI_Comm row_comm,
+  void ExecuteFoxIterations(int grid_dim, int row_id, int col_id, size_t bs, size_t block_sz, MPI_Comm row_comm,
                             std::vector<double> &local_a, std::vector<double> &local_b, std::vector<double> &local_c);
-  void CollectResultsImpl(int my_rank, int num_procs, size_t n, size_t bs, size_t block_sz, int grid_dim,
-                          const std::vector<double> &local_c, std::vector<double> &c);
+  void CollectResults(int my_rank, int num_procs, size_t n, size_t bs, size_t block_sz, int grid_dim,
+                      const std::vector<double> &local_c, std::vector<double> &c);
 
   size_t matrix_size_ = 0;
   std::vector<double> matrix_a_;
