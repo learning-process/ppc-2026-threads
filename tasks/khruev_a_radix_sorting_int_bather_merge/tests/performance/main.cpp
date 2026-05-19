@@ -2,9 +2,9 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <random>
 // #include <ranges>
 
+#include "khruev_a_radix_sorting_int_bather_merge/all/include/ops_all.hpp"
 #include "khruev_a_radix_sorting_int_bather_merge/common/include/common.hpp"
 #include "khruev_a_radix_sorting_int_bather_merge/omp/include/ops_omp.hpp"
 #include "khruev_a_radix_sorting_int_bather_merge/seq/include/ops_seq.hpp"
@@ -20,15 +20,12 @@ class KhruevARadixSortingIntBatherMergePerfTests : public ppc::util::BaseRunPerf
     input_data_.resize(kCount_);
     expected_data_.resize(kCount_);
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist(-100, 100);
-
     for (int i = 0; i < kCount_; i++) {
-      int number = dist(gen);
-      input_data_[i] = number;
-      expected_data_[i] = number;
+      int val = ((i * 17) % 201) - 100;
+      input_data_[i] = val;
+      expected_data_[i] = val;
     }
+
     std::ranges::sort(expected_data_);
   }
 
@@ -64,7 +61,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, KhruevARadixSortingIntBatherMergeSEQ, KhruevARadixSortingIntBatherMergeOMP,
-                                KhruevARadixSortingIntBatherMergeTBB, KhruevARadixSortingIntBatherMergeSTL>(
+                                KhruevARadixSortingIntBatherMergeTBB, KhruevARadixSortingIntBatherMergeSTL,
+                                KhruevARadixSortingIntBatherMergeALL>(
         PPC_SETTINGS_khruev_a_radix_sorting_int_bather_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
