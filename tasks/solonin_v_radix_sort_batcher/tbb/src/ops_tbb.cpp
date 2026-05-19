@@ -4,12 +4,12 @@
 #include <algorithm>
 #include <cstddef>
 #include <iterator>
-#include <utility>
-#include <vector>
 #include <tbb/blocked_range.h>
 #include <tbb/global_control.h>
 #include <tbb/parallel_for.h>
 #include <tbb/parallel_invoke.h>
+#include <utility>
+#include <vector>
 
 namespace solonin_v_radix_sort_batcher {
 

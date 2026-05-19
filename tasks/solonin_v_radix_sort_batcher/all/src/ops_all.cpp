@@ -3,11 +3,11 @@
 #include "util/include/util.hpp"
 #include <algorithm>
 #include <cstddef>
+#include <mpi.h>
+#include <omp.h>
 #include <thread>
 #include <utility>
 #include <vector>
-#include <mpi.h>
-#include <omp.h>
 
 namespace solonin_v_radix_sort_batcher {
 

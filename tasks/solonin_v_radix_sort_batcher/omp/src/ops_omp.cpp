@@ -3,8 +3,8 @@
 #include "util/include/util.hpp"
 #include <algorithm>
 #include <cstddef>
-#include <vector>
 #include <omp.h>
+#include <vector>
 
 namespace solonin_v_radix_sort_batcher {
 
