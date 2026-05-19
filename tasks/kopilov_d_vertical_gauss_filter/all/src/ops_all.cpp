@@ -18,12 +18,13 @@ namespace {
 const int kDivisor = 16;
 const std::array<std::array<int, 3>, 3> kGaussKernel = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
 
+// Математически точное зеркалирование по Y (в точности как в SEQ версии)
 uint8_t GetPixelWithHalo(const uint8_t *local_data, int col_with_halo, int row, int lw_with_halo, int height) {
   int cur_row = row;
   if (cur_row < 0) {
-    cur_row = (height > 1) ? 1 : 0;
+    cur_row = -cur_row - 1;
   } else if (cur_row >= height) {
-    cur_row = (height > 1) ? height - 2 : 0;
+    cur_row = (2 * height) - cur_row - 1;
   }
   auto idx = (static_cast<size_t>(cur_row) * static_cast<size_t>(lw_with_halo)) + static_cast<size_t>(col_with_halo);
   return local_data[idx];
@@ -41,8 +42,27 @@ uint8_t ApplyFilter(const uint8_t *data, int col, int row, int lw_halo, int heig
   return static_cast<uint8_t>(pixel_sum / kDivisor);
 }
 
+// Функции для поиска реальных соседей (обход пустых процессов)
+int FindLeftNeighbor(int rank, const std::vector<int> &counts) {
+  for (int p_idx = rank - 1; p_idx >= 0; --p_idx) {
+    if (counts.at(static_cast<size_t>(p_idx)) > 0) {
+      return p_idx;
+    }
+  }
+  return MPI_PROC_NULL;
+}
+
+int FindRightNeighbor(int rank, int size, const std::vector<int> &counts) {
+  for (int p_idx = rank + 1; p_idx < size; ++p_idx) {
+    if (counts.at(static_cast<size_t>(p_idx)) > 0) {
+      return p_idx;
+    }
+  }
+  return MPI_PROC_NULL;
+}
+
 void ExchangeHalo(int world_rank, int world_size, int height, int local_w, int lw_with_halo,
-                  std::vector<uint8_t> &local_input) {
+                  std::vector<uint8_t> &local_input, const std::vector<int> &counts) {
   if (local_w <= 0) {
     return;
   }
@@ -54,28 +74,32 @@ void ExchangeHalo(int world_rank, int world_size, int height, int local_w, int l
 
   for (int row_idx = 0; row_idx < height; ++row_idx) {
     send_left[static_cast<size_t>(row_idx)] =
-        local_input[(static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo)) + 1];
+        local_input[static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo) + 1];
     send_right[static_cast<size_t>(row_idx)] =
         local_input[(static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo)) + static_cast<size_t>(local_w)];
   }
 
-  int left_proc = (world_rank > 0) ? world_rank - 1 : MPI_PROC_NULL;
-  int right_proc = (world_rank < world_size - 1) ? world_rank + 1 : MPI_PROC_NULL;
+  int left_proc = FindLeftNeighbor(world_rank, counts);
+  int right_proc = FindRightNeighbor(world_rank, world_size, counts);
 
   MPI_Sendrecv(send_left.data(), height, MPI_UNSIGNED_CHAR, left_proc, 1, recv_right.data(), height, MPI_UNSIGNED_CHAR,
                right_proc, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   MPI_Sendrecv(send_right.data(), height, MPI_UNSIGNED_CHAR, right_proc, 2, recv_left.data(), height, MPI_UNSIGNED_CHAR,
                left_proc, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  size_t left_mirror = (local_w > 1) ? 2 : 1;
-  size_t right_mirror = (local_w > 1) ? static_cast<size_t>(local_w - 1) : static_cast<size_t>(local_w);
-
   for (int row_idx = 0; row_idx < height; ++row_idx) {
-    auto base_idx = (static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo));
-    local_input[base_idx + 0] =
-        (left_proc != MPI_PROC_NULL) ? recv_left[static_cast<size_t>(row_idx)] : local_input[base_idx + left_mirror];
-    local_input[base_idx + static_cast<size_t>(local_w + 1)] =
-        (right_proc != MPI_PROC_NULL) ? recv_right[static_cast<size_t>(row_idx)] : local_input[base_idx + right_mirror];
+    auto base_idx = static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo);
+    if (left_proc != MPI_PROC_NULL) {
+      local_input[base_idx + 0] = recv_left[static_cast<size_t>(row_idx)];
+    } else {
+      local_input[base_idx + 0] = local_input[base_idx + 1];
+    }
+
+    if (right_proc != MPI_PROC_NULL) {
+      local_input[base_idx + static_cast<size_t>(local_w + 1)] = recv_right[static_cast<size_t>(row_idx)];
+    } else {
+      local_input[base_idx + static_cast<size_t>(local_w + 1)] = local_input[base_idx + static_cast<size_t>(local_w)];
+    }
   }
 }
 
@@ -84,8 +108,7 @@ void MasterDistribute(int world_size, int width, int height, const std::vector<i
   int p0_w = counts.at(0);
   for (int row_idx = 0; row_idx < height; ++row_idx) {
     for (int col_idx = 0; col_idx < p0_w; ++col_idx) {
-      local_data[(static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo)) +
-                 static_cast<size_t>(col_idx + 1)] =
+      local_data[(static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo)) + static_cast<size_t>(col_idx + 1)] =
           full_data[(static_cast<size_t>(row_idx) * static_cast<size_t>(width)) + static_cast<size_t>(col_idx)];
     }
   }
@@ -115,8 +138,7 @@ void WorkerReceive(int my_w, int height, uint8_t *local_data, int lw_with_halo) 
   MPI_Recv(buf.data(), static_cast<int>(buf.size()), MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   for (int row_idx = 0; row_idx < height; ++row_idx) {
     for (int col_idx = 0; col_idx < my_w; ++col_idx) {
-      local_data[(static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo)) +
-                 static_cast<size_t>(col_idx + 1)] =
+      local_data[(static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo)) + static_cast<size_t>(col_idx + 1)] =
           buf[(static_cast<size_t>(row_idx) * static_cast<size_t>(my_w)) + static_cast<size_t>(col_idx)];
     }
   }
@@ -238,7 +260,8 @@ bool KopilovDVerticalGaussFilterALL::RunImpl() {
     WorkerReceive(local_w, global_height, l_in.data(), lw_halo);
   }
 
-  ExchangeHalo(world_rank, world_size, global_height, local_w, lw_halo, l_in);
+  // Передаем counts, чтобы правильно вычислить живых соседей
+  ExchangeHalo(world_rank, world_size, global_height, local_w, lw_halo, l_in, counts);
   ComputeTBB(local_w, global_height, lw_halo, l_in.data(), l_out.data());
 
   if (world_rank == 0) {
