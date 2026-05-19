@@ -2,12 +2,12 @@
 
 #include <algorithm>
 #include <array>
+#include <barrier>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <limits>
 #include <thread>
-#include <tuple>
-#include <utility>
 #include <vector>
 
 #include "batkov_f_contrast_enh_lin_hist_stretch/common/include/common.hpp"
@@ -17,79 +17,174 @@ namespace batkov_f_contrast_enh_lin_hist_stretch {
 
 namespace {
 
-std::pair<uint8_t, uint8_t> FindMinMaxParallel(const InType &input, size_t num_threads) {
-  const size_t n = input.size();
-  const size_t block = n / num_threads;
+constexpr size_t kParallelThreshold = 100000;
+constexpr size_t kMinGrainSize = 1U << 16U;
 
-  std::vector<uint8_t> mins(num_threads, std::numeric_limits<uint8_t>::max());
-  std::vector<uint8_t> maxs(num_threads, std::numeric_limits<uint8_t>::min());
+struct Range {
+  size_t begin;
+  size_t end;
 
-  {
-    std::vector<std::thread> threads;
-    threads.reserve(num_threads);
-    for (size_t thread_index = 0; thread_index < num_threads; ++thread_index) {
-      const size_t begin = thread_index * block;
-      const size_t end = (thread_index == num_threads - 1) ? n : begin + block;
+  Range(size_t begin_value, size_t end_value) noexcept : begin(begin_value), end(end_value) {}
+};
 
-      threads.emplace_back([&, thread_index, begin, end]() {
-        uint8_t local_min = std::numeric_limits<uint8_t>::max();
-        uint8_t local_max = std::numeric_limits<uint8_t>::min();
-        for (size_t i = begin; i < end; ++i) {
-          local_min = std::min(local_min, input[i]);
-          local_max = std::max(local_max, input[i]);
-        }
-        mins[thread_index] = local_min;
-        maxs[thread_index] = local_max;
-      });
-    }
+struct MinMax {
+  uint8_t min_val;
+  uint8_t max_val;
 
-    for (auto &th : threads) {
-      th.join();
-    }
+  MinMax() noexcept : min_val(std::numeric_limits<uint8_t>::max()), max_val(std::numeric_limits<uint8_t>::min()) {}
+
+  MinMax(uint8_t min_value, uint8_t max_value) noexcept : min_val(min_value), max_val(max_value) {}
+};
+
+size_t ChooseThreadCount(size_t size, size_t requested_threads) noexcept {
+  if (size < kParallelThreshold || requested_threads <= 1) {
+    return 1;
   }
 
-  return {*std::ranges::min_element(mins), *std::ranges::max_element(maxs)};
+  const size_t by_grain = std::max<size_t>(1, size / kMinGrainSize);
+  return std::max<size_t>(1, std::min({requested_threads, size, by_grain}));
 }
 
-std::pair<uint8_t, uint8_t> FindMinMax(const InType &input, size_t parallel_threshold, size_t num_threads) {
-  if (input.size() < parallel_threshold || num_threads <= 1) {
-    const auto [min_it, max_it] = std::ranges::minmax_element(input);
-    return {*min_it, *max_it};
-  }
-
-  return FindMinMaxParallel(input, num_threads);
+Range MakeRange(size_t size, size_t thread_index, size_t thread_count) noexcept {
+  return {(size * thread_index) / thread_count, (size * (thread_index + 1)) / thread_count};
 }
 
-std::array<uint8_t, 256> BuildStretchLut(float a, float b) {
+std::array<uint8_t, 256> BuildStretchLut(uint8_t min_el, uint8_t max_el) {
   std::array<uint8_t, 256> lut{};
-  for (size_t pixel = 0; pixel < 256; ++pixel) {
-    lut.at(pixel) = static_cast<uint8_t>(std::clamp((a * static_cast<float>(pixel)) + b, 0.0F, 255.0F));
+
+  const int min_value = static_cast<int>(min_el);
+  const int max_value = static_cast<int>(max_el);
+  const int range = max_value - min_value;
+
+  for (size_t pixel = 0; pixel < lut.size(); ++pixel) {
+    const int value = static_cast<int>(pixel);
+
+    if (value <= min_value) {
+      lut.at(pixel) = 0;
+    } else if (value >= max_value) {
+      lut.at(pixel) = std::numeric_limits<uint8_t>::max();
+    } else {
+      lut.at(pixel) = static_cast<uint8_t>(((value - min_value) * 255) / range);
+    }
   }
+
   return lut;
 }
 
-void ApplyStretchParallel(const InType &input, OutType &output, size_t num_threads,
-                          const std::array<uint8_t, 256> &lut) {
-  const size_t n = input.size();
-  const size_t block = n / num_threads;
+uint8_t GetLutValue(const std::array<uint8_t, 256> &lut, uint8_t pixel) noexcept {
+  return *std::next(lut.cbegin(), static_cast<std::ptrdiff_t>(pixel));
+}
+
+MinMax FindLocalMinMax(const InType &input, const Range &range) {
+  auto input_it = std::next(input.cbegin(), static_cast<std::ptrdiff_t>(range.begin));
+  const auto input_last = std::next(input.cbegin(), static_cast<std::ptrdiff_t>(range.end));
+
+  MinMax result;
+  for (; input_it != input_last; ++input_it) {
+    result.min_val = std::min(result.min_val, *input_it);
+    result.max_val = std::max(result.max_val, *input_it);
+  }
+
+  return result;
+}
+
+MinMax CombineLocalMinMax(const std::vector<MinMax> &locals) noexcept {
+  MinMax result;
+
+  for (const auto &local : locals) {
+    result.min_val = std::min(result.min_val, local.min_val);
+    result.max_val = std::max(result.max_val, local.max_val);
+  }
+
+  return result;
+}
+
+void CopyRange(const InType &input, OutType &output, const Range &range) {
+  const auto input_first = std::next(input.cbegin(), static_cast<std::ptrdiff_t>(range.begin));
+  const auto input_last = std::next(input.cbegin(), static_cast<std::ptrdiff_t>(range.end));
+  const auto output_first = std::next(output.begin(), static_cast<std::ptrdiff_t>(range.begin));
+
+  std::copy(input_first, input_last, output_first);
+}
+
+void ApplyLutRange(const InType &input, OutType &output, const Range &range, const std::array<uint8_t, 256> &lut) {
+  auto input_it = std::next(input.cbegin(), static_cast<std::ptrdiff_t>(range.begin));
+  const auto input_last = std::next(input.cbegin(), static_cast<std::ptrdiff_t>(range.end));
+  auto output_it = std::next(output.begin(), static_cast<std::ptrdiff_t>(range.begin));
+
+  for (; input_it != input_last; ++input_it, ++output_it) {
+    *output_it = GetLutValue(lut, *input_it);
+  }
+}
+
+void ApplyResultRange(const InType &input, OutType &output, const Range &range, bool copy_only,
+                      const std::array<uint8_t, 256> &lut) {
+  if (copy_only) {
+    CopyRange(input, output, range);
+    return;
+  }
+
+  ApplyLutRange(input, output, range, lut);
+}
+
+void StretchSequential(const InType &input, OutType &output) {
+  const auto minmax = std::ranges::minmax_element(input.cbegin(), input.cend());
+  const uint8_t min_el = *minmax.max;
+  const uint8_t max_el = *minmax.min;
+  const Range full_range(0, input.size());
+
+  if (min_el == max_el) {
+    CopyRange(input, output, full_range);
+    return;
+  }
+
+  const auto lut = BuildStretchLut(min_el, max_el);
+  ApplyLutRange(input, output, full_range, lut);
+}
+
+void StretchParallel(const InType &input, OutType &output, size_t thread_count) {
+  const size_t size = input.size();
+  std::vector<MinMax> locals(thread_count);
+  std::array<uint8_t, 256> lut{};
+  bool copy_only = false;
+
+  auto completion = [&locals, &lut, &copy_only]() noexcept {
+    const MinMax global = CombineLocalMinMax(locals);
+    copy_only = global.min_val == global.max_val;
+
+    if (!copy_only) {
+      lut = BuildStretchLut(global.min_val, global.max_val);
+    }
+  };
+
+  std::barrier<decltype(completion)> barrier(static_cast<std::ptrdiff_t>(thread_count), completion);
 
   std::vector<std::thread> threads;
-  threads.reserve(num_threads);
+  threads.reserve(thread_count);
 
-  for (size_t thread_index = 0; thread_index < num_threads; ++thread_index) {
-    const size_t begin = thread_index * block;
-    const size_t end = (thread_index == num_threads - 1) ? n : begin + block;
-
-    threads.emplace_back([&, begin, end]() {
-      for (size_t i = begin; i < end; ++i) {
-        output[i] = lut.at(input[i]);
-      }
+  for (size_t thread_index = 0; thread_index < thread_count; ++thread_index) {
+    threads.emplace_back([&, thread_index]() {
+      const Range range = MakeRange(size, thread_index, thread_count);
+      locals.at(thread_index) = FindLocalMinMax(input, range);
+      barrier.arrive_and_wait();
+      ApplyResultRange(input, output, range, copy_only, lut);
     });
   }
 
-  for (auto &th : threads) {
-    th.join();
+  for (auto &thread : threads) {
+    thread.join();
   }
+}
+
+void StretchContrast(const InType &input, OutType &output, size_t requested_threads) {
+  const size_t thread_count = ChooseThreadCount(input.size(), requested_threads);
+
+  if (thread_count == 1) {
+    StretchSequential(input, output);
+    return;
+  }
+
+  StretchParallel(input, output, thread_count);
 }
 
 }  // namespace
@@ -109,25 +204,12 @@ bool BatkovFContrastEnhLinHistStretchSTL::PreProcessingImpl() {
 }
 
 bool BatkovFContrastEnhLinHistStretchSTL::RunImpl() {
-  auto &input = GetInput();
+  const auto &input = GetInput();
   auto &output = GetOutput();
 
-  constexpr size_t kParallelMinMaxThreshold = 100000;
-  const size_t num_threads = static_cast<size_t>(std::max(1, ppc::util::GetNumThreads()));
+  const size_t requested_threads = static_cast<size_t>(std::max(1, ppc::util::GetNumThreads()));
+  StretchContrast(input, output, requested_threads);
 
-  uint8_t min_el{};
-  uint8_t max_el{};
-  std::tie(min_el, max_el) = FindMinMax(input, kParallelMinMaxThreshold, num_threads);
-
-  if (min_el == max_el) {
-    std::ranges::copy(input, output.begin());
-    return true;
-  }
-
-  const float a = 255.0F / static_cast<float>(max_el - min_el);
-  const float b = -a * static_cast<float>(min_el);
-  const auto lut = BuildStretchLut(a, b);
-  ApplyStretchParallel(input, output, num_threads, lut);
   return true;
 }
 
