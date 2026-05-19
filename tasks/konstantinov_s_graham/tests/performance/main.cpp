@@ -1,16 +1,18 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <cstddef>
 #include <tuple>
 #include <vector>
 
-// #include "konstantinov_s_graham/all/include/ops_all.hpp"
+#include "konstantinov_s_graham/all/include/ops_all.hpp"
 #include "konstantinov_s_graham/common/include/common.hpp"
 #include "konstantinov_s_graham/omp/include/ops_omp.hpp"
 #include "konstantinov_s_graham/seq/include/ops_seq.hpp"
-// #include "konstantinov_s_graham/stl/include/ops_stl.hpp"
+#include "konstantinov_s_graham/stl/include/ops_stl.hpp"
 #include "konstantinov_s_graham/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace konstantinov_s_graham {
 
@@ -39,6 +41,13 @@ class KonstantinovSRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InTy
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    if (ppc::util::IsUnderMpirun()) {
+      int rank = 0;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      if (rank != 0) {
+        return true;
+      }
+    }
     return output_data.size() == 4;
   }
 
@@ -56,7 +65,9 @@ namespace {
 const auto kAllPerfTasks =
     std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, KonstantinovAGrahamOMP>(PPC_SETTINGS_konstantinov_s_graham),
                    ppc::util::MakeAllPerfTasks<InType, KonstantinovAGrahamSEQ>(PPC_SETTINGS_konstantinov_s_graham),
-                   ppc::util::MakeAllPerfTasks<InType, KonstantinovAGrahamTBB>(PPC_SETTINGS_konstantinov_s_graham));
+                   ppc::util::MakeAllPerfTasks<InType, KonstantinovAGrahamTBB>(PPC_SETTINGS_konstantinov_s_graham),
+                   ppc::util::MakeAllPerfTasks<InType, KonstantinovAGrahamSTL>(PPC_SETTINGS_konstantinov_s_graham),
+                   ppc::util::MakeAllPerfTasks<InType, KonstantinovAGrahamALL>(PPC_SETTINGS_konstantinov_s_graham));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
