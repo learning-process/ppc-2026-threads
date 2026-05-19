@@ -68,7 +68,7 @@ mpiexec -n 2 build\bin\ppc_func_tests.exe --gtest_filter=*timur_a_cannon_all*
 
 ## 7. Экспериментальная среда
 
-- **CPU:** Ryzen 5 2600 .
+- **CPU:** AMD Ryzen 5 2600 .
 - **RAM:** 16 GB.
 - **ОС:** Windows 11.
 - **Build type:** Release.

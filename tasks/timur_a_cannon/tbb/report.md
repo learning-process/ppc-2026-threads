@@ -59,7 +59,7 @@ tbb::parallel_for(tbb::blocked_range2d<int>(0, grid_sz, 0, grid_sz),
 
 ## 7. Экспериментальная среда
 
-- **CPU:** Ryzen 5 2600.
+- **CPU:** AMD Ryzen 5 2600.
 - **RAM:** 16 GB.
 - **ОС:** Windows 11.
 - **Build type:** Release.

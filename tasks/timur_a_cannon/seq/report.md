@@ -64,7 +64,7 @@ std::vector<std::vector<double>>{{19.0, 22.0}, {43.0, 50.0}}
 
 ## 6. Экспериментальная среда
 
-- **CPU:** Ryzen 5 2600.
+- **CPU:** AMD Ryzen 5 2600.
 - **RAM:** 16 GB.
 - **ОС:** Windows 11.
 - **Build type:** Release.
