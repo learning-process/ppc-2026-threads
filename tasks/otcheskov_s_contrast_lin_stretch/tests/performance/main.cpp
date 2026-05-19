@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -6,10 +7,14 @@
 #include <random>
 #include <vector>
 
+#include "otcheskov_s_contrast_lin_stretch/all/include/ops_all.hpp"
 #include "otcheskov_s_contrast_lin_stretch/common/include/common.hpp"
 #include "otcheskov_s_contrast_lin_stretch/omp/include/ops_omp.hpp"
 #include "otcheskov_s_contrast_lin_stretch/seq/include/ops_seq.hpp"
+#include "otcheskov_s_contrast_lin_stretch/stl/include/ops_stl.hpp"
+#include "otcheskov_s_contrast_lin_stretch/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace otcheskov_s_contrast_lin_stretch {
 namespace {
@@ -42,8 +47,22 @@ class OtcheskovSContrastLinStretchPerfTests : public ppc::util::BaseRunPerfTests
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    auto [min_it, max_it] = std::ranges::minmax_element(output_data);
-    return (*min_it == 0 && *max_it == 255) || (*min_it == *max_it);
+    auto check = [&]() {
+      if (output_data.empty()) {
+        return false;
+      }
+      auto [min_it, max_it] = std::ranges::minmax_element(output_data);
+      return (*min_it == 0 && *max_it == 255) || (*min_it == *max_it);
+    };
+
+    if (!ppc::util::IsUnderMpirun()) {
+      return check();
+    }
+
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    return (rank != 0) || check();
   }
 
   InType GetTestInputData() final {
@@ -58,8 +77,9 @@ TEST_P(OtcheskovSContrastLinStretchPerfTests, RunPerfTests) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, OtcheskovSContrastLinStretchSEQ, OtcheskovSContrastLinStretchOMP>(
-        PPC_SETTINGS_otcheskov_s_contrast_lin_stretch);
+    ppc::util::MakeAllPerfTasks<InType, OtcheskovSContrastLinStretchSEQ, OtcheskovSContrastLinStretchOMP,
+                                OtcheskovSContrastLinStretchTBB, OtcheskovSContrastLinStretchSTL,
+                                OtcheskovSContrastLinStretchALL>(PPC_SETTINGS_otcheskov_s_contrast_lin_stretch);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

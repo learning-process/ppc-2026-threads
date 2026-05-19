@@ -8,8 +8,12 @@
 #include <tuple>
 #include <vector>
 
+#include "maslova_u_mult_matr_crs/all/include/ops_all.hpp"
 #include "maslova_u_mult_matr_crs/common/include/common.hpp"
+#include "maslova_u_mult_matr_crs/omp/include/ops_omp.hpp"
 #include "maslova_u_mult_matr_crs/seq/include/ops_seq.hpp"
+#include "maslova_u_mult_matr_crs/stl/include/ops_stl.hpp"
+#include "maslova_u_mult_matr_crs/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -175,7 +179,11 @@ const std::array<TestType, 5> kTestParams = {std::make_tuple(1, "FullDense2x2"),
                                              std::make_tuple(5, "VectorInnerProduct")};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<MaslovaUMultMatrSEQ, InType>(kTestParams, PPC_SETTINGS_maslova_u_mult_matr_crs));
+    ppc::util::AddFuncTask<MaslovaUMultMatrSEQ, InType>(kTestParams, PPC_SETTINGS_maslova_u_mult_matr_crs),
+    ppc::util::AddFuncTask<MaslovaUMultMatrOMP, InType>(kTestParams, PPC_SETTINGS_maslova_u_mult_matr_crs),
+    ppc::util::AddFuncTask<MaslovaUMultMatrTBB, InType>(kTestParams, PPC_SETTINGS_maslova_u_mult_matr_crs),
+    ppc::util::AddFuncTask<MaslovaUMultMatrSTL, InType>(kTestParams, PPC_SETTINGS_maslova_u_mult_matr_crs),
+    ppc::util::AddFuncTask<MaslovaUMultMatrALL, InType>(kTestParams, PPC_SETTINGS_maslova_u_mult_matr_crs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

@@ -5,7 +5,10 @@
 #include <vector>
 
 #include "kazennova_a_fox_algorithm/common/include/common.hpp"
+#include "kazennova_a_fox_algorithm/omp/include/ops_omp.hpp"
 #include "kazennova_a_fox_algorithm/seq/include/ops_seq.hpp"
+#include "kazennova_a_fox_algorithm/stl/include/ops_stl.hpp"
+#include "kazennova_a_fox_algorithm/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace kazennova_a_fox_algorithm {
@@ -19,7 +22,6 @@ class KazennovaAPerfTestSeq : public ppc::util::BaseRunPerfTests<InType, OutType
     std::mt19937 gen(rd());
     std::uniform_real_distribution<double> dis(-10.0, 10.0);
 
-    // Матрица A (kMatrixSize × kMatrixSize)
     input_data_.A.rows = kMatrixSize;
     input_data_.A.cols = kMatrixSize;
     input_data_.A.data.resize(static_cast<size_t>(kMatrixSize) * kMatrixSize);
@@ -27,7 +29,6 @@ class KazennovaAPerfTestSeq : public ppc::util::BaseRunPerfTests<InType, OutType
       input_data_.A.data[i] = dis(gen);
     }
 
-    // Матрица B (kMatrixSize × kMatrixSize)
     input_data_.B.rows = kMatrixSize;
     input_data_.B.cols = kMatrixSize;
     input_data_.B.data.resize(static_cast<size_t>(kMatrixSize) * kMatrixSize);
@@ -53,10 +54,10 @@ TEST_P(KazennovaAPerfTestSeq, RunPerfTests) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KazennovaATestTaskSEQ>(PPC_SETTINGS_kazennova_a_fox_algorithm);
+    ppc::util::MakeAllPerfTasks<InType, KazennovaATestTaskSEQ, KazennovaATestTaskOMP, KazennovaATestTaskTBB,
+                                KazennovaATestTaskSTL>(PPC_SETTINGS_kazennova_a_fox_algorithm);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-
 const auto kPerfTestName = KazennovaAPerfTestSeq::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(RunPerfTests, KazennovaAPerfTestSeq, kGtestValues, kPerfTestName);

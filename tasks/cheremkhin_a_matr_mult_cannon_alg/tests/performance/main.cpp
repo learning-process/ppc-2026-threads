@@ -6,7 +6,10 @@
 #include <vector>
 
 #include "cheremkhin_a_matr_mult_cannon_alg/common/include/common.hpp"
+#include "cheremkhin_a_matr_mult_cannon_alg/omp/include/ops_omp.hpp"
 #include "cheremkhin_a_matr_mult_cannon_alg/seq/include/ops_seq.hpp"
+#include "cheremkhin_a_matr_mult_cannon_alg/stl/include/ops_stl.hpp"
+#include "cheremkhin_a_matr_mult_cannon_alg/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace cheremkhin_a_matr_mult_cannon_alg {
@@ -75,8 +78,10 @@ TEST_P(CheremkhinAPerformanceTest, RunPerformanceTest) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, CheremkhinAMatrMultCannonAlgSEQ>(
-    PPC_SETTINGS_cheremkhin_a_matr_mult_cannon_alg);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, CheremkhinAMatrMultCannonAlgSEQ, CheremkhinAMatrMultCannonAlgSTL,
+                                CheremkhinAMatrMultCannonAlgOMP, CheremkhinAMatrMultCannonAlgTBB>(
+        PPC_SETTINGS_cheremkhin_a_matr_mult_cannon_alg);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

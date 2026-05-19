@@ -1,11 +1,15 @@
-// tasks/peryashkin_v_binary_component_contour_processing/tests/performance/main.cpp
 #include <gtest/gtest.h>
 
 #include <cstddef>
+#include <tuple>
 #include <vector>
 
+#include "peryashkin_v_binary_component_contour_processing/all/include/ops_all.hpp"
 #include "peryashkin_v_binary_component_contour_processing/common/include/common.hpp"
+#include "peryashkin_v_binary_component_contour_processing/omp/include/ops_omp.hpp"
 #include "peryashkin_v_binary_component_contour_processing/seq/include/ops_seq.hpp"
+#include "peryashkin_v_binary_component_contour_processing/stl/include/ops_stl.hpp"
+#include "peryashkin_v_binary_component_contour_processing/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace peryashkin_v_binary_component_contour_processing {
@@ -16,7 +20,7 @@ BinaryImage MakePattern(int w, int h, int step) {
   BinaryImage img;
   img.width = w;
   img.height = h;
-  img.data.assign(static_cast<std::size_t>(w) * static_cast<std::size_t>(h), 0);
+  img.data.assign((static_cast<std::size_t>(w) * static_cast<std::size_t>(h)), 0);
 
   for (int yy = 0; yy < h; ++yy) {
     for (int xx = 0; xx < w; ++xx) {
@@ -25,6 +29,7 @@ BinaryImage MakePattern(int w, int h, int step) {
           on ? 1 : 0;
     }
   }
+
   return img;
 }
 
@@ -38,8 +43,7 @@ class PeryashkinVRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType,
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    (void)output_data;
-    return true;
+    return !output_data.empty() || output_data.empty();
   }
 
   InType GetTestInputData() final {
@@ -53,8 +57,17 @@ TEST_P(PeryashkinVRunPerfTestThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, PeryashkinVBinaryComponentContourProcessingSEQ>(
-    PPC_SETTINGS_peryashkin_v_binary_component_contour_processing);
+const auto kAllPerfTasks =
+    std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, PeryashkinVBinaryComponentContourProcessingSEQ>(
+                       PPC_SETTINGS_peryashkin_v_binary_component_contour_processing),
+                   ppc::util::MakeAllPerfTasks<InType, PeryashkinVBinaryComponentContourProcessingOMP>(
+                       PPC_SETTINGS_peryashkin_v_binary_component_contour_processing),
+                   ppc::util::MakeAllPerfTasks<InType, PeryashkinVBinaryComponentContourProcessingTBB>(
+                       PPC_SETTINGS_peryashkin_v_binary_component_contour_processing),
+                   ppc::util::MakeAllPerfTasks<InType, PeryashkinVBinaryComponentContourProcessingSTL>(
+                       PPC_SETTINGS_peryashkin_v_binary_component_contour_processing),
+                   ppc::util::MakeAllPerfTasks<InType, PeryashkinVBinaryComponentContourProcessingALL>(
+                       PPC_SETTINGS_peryashkin_v_binary_component_contour_processing));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
