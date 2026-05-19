@@ -41,7 +41,8 @@
 
 - **Методика:**
   - Размер perf-задачи: случайные матрицы $80 \times 90$ и $90 \times 70$ (`tests/performance/main.cpp`).
-  - Для каждой технологии каркас perf запускает **`task_run`** и **`pipeline`**; в сводных таблицах ниже — **`task_run`** (единое сравнение).
+- Для каждой технологии каркас perf запускает **`task_run`** и **`pipeline`**; в сводных таблицах ниже — **`task_run`**
+(единое сравнение).
   - Число потоков: `PPC_NUM_THREADS` $\in \{1, 2, 4, 8\}$; для MPI-замеров: `PPC_NUM_PROC = 1`.
   - Внутри одного замера — **5** вызовов `Run()` (каркас `ppc::performance::Perf`).
   - Базовое время: $T_{seq}$ при SEQ и $p = 1$.
@@ -114,7 +115,8 @@
 | STL | 0.00003026 | 0.00010842 | 0.00002598 | 0.00002726 |
 | ALL | 0.00237558 | 0.00256790 | 0.00320222 | 0.00456848 |
 
-Режим `pipeline` включает полный цикл задачи (валидация, подготовка, выполнение, постобработка). Детали — в локальных отчётах, §8.
+Режим `pipeline` включает полный цикл задачи (валидация, подготовка, выполнение, постобработка). Детали — в локальных
+отчётах, §8.
 
 ## 6. Интерпретация различий
 
@@ -225,11 +227,16 @@ tasks/sabutay_sparse_complex_ccs_mult_all/
   img/                           # опционально (графики в отчётах — таблицы)
 ```
 
-В `common/include/common.hpp` заданы тип `CCS` и типы задачи `InType`, `OutType`, `BaseTask`. В каждом каталоге `seq/`, `omp/`, `tbb/`, `stl/`, `all/` — класс-наследник `BaseTask` со своим `TypeOfTask` и методами `ValidationImpl`, `PreProcessingImpl`, `RunImpl`, `PostProcessingImpl`.
+В `common/include/common.hpp` заданы тип `CCS` и типы задачи `InType`, `OutType`, `BaseTask`. В каждом каталоге `seq/`,
+`omp/`, `tbb/`, `stl/`, `all/` — класс-наследник `BaseTask` со своим `TypeOfTask` и методами `ValidationImpl`,
+`PreProcessingImpl`, `RunImpl`, `PostProcessingImpl`.
 
-`tests/functional/main.cpp` — один набор из трёх тестовых случаев (`case_id` 0, 1, 2) для всех backend-ов; эталон — умножение через плотные матрицы. `tests/performance/main.cpp` — общий каркас курса (`BaseRunPerfTests`, `MakeAllPerfTasks`), режимы `task_run` и `pipeline`.
+`tests/functional/main.cpp` — один набор из трёх тестовых случаев (`case_id` 0, 1, 2) для всех backend-ов; эталон —
+умножение через плотные матрицы. `tests/performance/main.cpp` — общий каркас курса (`BaseRunPerfTests`,
+`MakeAllPerfTasks`), режимы `task_run` и `pipeline`.
 
-Каталог `all/` — гибридная версия: `MPI_Comm_rank`, ветвление по рангу, `MPI_Barrier`, а также демонстрационные фрагменты OpenMP, `std::thread` и oneTBB в `RunImpl` (подробнее — [all/report.md](all/report.md)).
+Каталог `all/` — гибридная версия: `MPI_Comm_rank`, ветвление по рангу, `MPI_Barrier`, а также демонстрационные
+фрагменты OpenMP, `std::thread` и oneTBB в `RunImpl` (подробнее — [all/report.md](all/report.md)).
 
 ### Связь отчётов
 
