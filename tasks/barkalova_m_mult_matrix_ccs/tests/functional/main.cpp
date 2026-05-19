@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "barkalova_m_mult_matrix_ccs/all/include/ops_all.hpp"
 #include "barkalova_m_mult_matrix_ccs/common/include/common.hpp"
 #include "barkalova_m_mult_matrix_ccs/omp/include/ops_omp.hpp"
 #include "barkalova_m_mult_matrix_ccs/seq/include/ops_seq.hpp"
@@ -254,7 +255,8 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsSEQ, InType>(kTestParam, PPC_SETTINGS_barkalova_m_mult_matrix_ccs),
     ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsOMP, InType>(kTestParam, PPC_SETTINGS_barkalova_m_mult_matrix_ccs),
     ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsTBB, InType>(kTestParam, PPC_SETTINGS_barkalova_m_mult_matrix_ccs),
-    ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsSTL, InType>(kTestParam, PPC_SETTINGS_barkalova_m_mult_matrix_ccs));
+    ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsSTL, InType>(kTestParam, PPC_SETTINGS_barkalova_m_mult_matrix_ccs),
+    ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsALL, InType>(kTestParam, PPC_SETTINGS_barkalova_m_mult_matrix_ccs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

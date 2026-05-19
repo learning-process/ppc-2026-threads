@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
+#include <mpi.h>
 
 #include <array>
 #include <cstddef>
@@ -8,6 +8,7 @@
 #include <string>
 #include <tuple>
 
+#include "luzan_e_double_sparse_matrix_mult/all/include/ops_all.hpp"
 #include "luzan_e_double_sparse_matrix_mult/common/include/common.hpp"
 #include "luzan_e_double_sparse_matrix_mult/omp/include/ops_omp.hpp"
 #include "luzan_e_double_sparse_matrix_mult/seq/include/ops_seq.hpp"
@@ -52,6 +53,13 @@ class LuzanEDoubleSparseMatrixMultSeqestsThreads : public ppc::util::BaseRunFunc
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+    if (ppc::util::IsUnderMpirun()) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+    if (rank != 0) {
+      return true;
+    }
     return (output_data == output_data_);
   }
 
@@ -81,6 +89,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LuzanEDoubleSp
                                            ppc::util::AddFuncTask<LuzanEDoubleSparseMatrixMultTBB, InType>(
                                                kTestParam, PPC_SETTINGS_luzan_e_double_sparse_matrix_mult),
                                            ppc::util::AddFuncTask<LuzanEDoubleSparseMatrixMultSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_luzan_e_double_sparse_matrix_mult),
+                                           ppc::util::AddFuncTask<LuzanEDoubleSparseMatrixMultALL, InType>(
                                                kTestParam, PPC_SETTINGS_luzan_e_double_sparse_matrix_mult));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
