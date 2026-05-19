@@ -1,4 +1,4 @@
-#include "chaschin_vladimir_linear_image_filtration_seq/stl/include/ops_stl.hpp"
+#include "chaschin_v_linear_image_filtration_seq/stl/include/ops_stl.hpp"
 
 #include <cstddef>
 #include <future>
@@ -6,7 +6,29 @@
 #include <utility>
 #include <vector>
 
-#include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
+#include "chaschin_v_linear_image_filtration_seq/common/include/common.hpp"
+
+namespace {
+
+inline void ProcessHorizontalSTL(int thread_idx, int num_threads, int m, int n, const std::vector<float> &image,
+                                 std::vector<float> &temp) {
+  for (int yi = thread_idx; yi < m; yi += num_threads) {
+    for (int xf = 0; xf < n; ++xf) {
+      temp[(yi * n) + xf] = chaschin_v_linear_image_filtration_stl::HorizontalFilterAtSTL(image, n, xf, yi);
+    }
+  }
+}
+
+inline void ProcessVerticalSTL(int thread_idx, int num_threads, int m, int n, const std::vector<float> &temp,
+                               std::vector<float> &out) {
+  for (int yi = thread_idx; yi < m; yi += num_threads) {
+    for (int xy = 0; xy < n; ++xy) {
+      out[(yi * n) + xy] = chaschin_v_linear_image_filtration_stl::VerticalFilterAtSTL(temp, n, m, xy, yi);
+    }
+  }
+}
+
+}  // namespace
 
 namespace chaschin_v_linear_image_filtration_stl {
 
@@ -47,24 +69,6 @@ inline float VerticalFilterAtSTL(const std::vector<float> &temp, int n, int m, i
     return (temp[idx - n] + (2.F * temp[idx])) / 3.F;
   }
   return (temp[idx - n] + (2.F * temp[idx]) + temp[idx + n]) / 4.F;
-}
-
-static inline void ProcessHorizontalSTL(int thread_idx, int num_threads, int m, int n, const std::vector<float> &image,
-                                        std::vector<float> &temp) {
-  for (int yi = thread_idx; yi < m; yi += num_threads) {
-    for (int xf = 0; xf < n; ++xf) {
-      temp[(yi * n) + xf] = HorizontalFilterAtSTL(image, n, xf, yi);
-    }
-  }
-}
-
-static inline void ProcessVerticalSTL(int thread_idx, int num_threads, int m, int n, const std::vector<float> &temp,
-                                      std::vector<float> &out) {
-  for (int yi = thread_idx; yi < m; yi += num_threads) {
-    for (int xy = 0; xy < n; ++xy) {
-      out[(yi * n) + xy] = VerticalFilterAtSTL(temp, n, m, xy, yi);
-    }
-  }
 }
 
 bool ChaschinVLinearFiltrationSTL::RunImpl() {
