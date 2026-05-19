@@ -3,6 +3,7 @@
 #include <cmath>
 #include <vector>
 
+#include "tsibareva_e_integral_calculate_trapezoid_method/all/include/ops_all.hpp"
 #include "tsibareva_e_integral_calculate_trapezoid_method/common/include/common.hpp"
 #include "tsibareva_e_integral_calculate_trapezoid_method/omp/include/ops_omp.hpp"
 #include "tsibareva_e_integral_calculate_trapezoid_method/seq/include/ops_seq.hpp"
@@ -41,8 +42,8 @@ namespace {
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<
     Integral, TsibarevaEIntegralCalculateTrapezoidMethodSEQ, TsibarevaEIntegralCalculateTrapezoidMethodOMP,
-    TsibarevaEIntegralCalculateTrapezoidMethodTBB, TsibarevaEIntegralCalculateTrapezoidMethodSTL>(
-    PPC_SETTINGS_tsibareva_e_integral_calculate_trapezoid_method);
+    TsibarevaEIntegralCalculateTrapezoidMethodTBB, TsibarevaEIntegralCalculateTrapezoidMethodSTL,
+    TsibarevaEIntegralCalculateTrapezoidMethodALL>(PPC_SETTINGS_tsibareva_e_integral_calculate_trapezoid_method);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

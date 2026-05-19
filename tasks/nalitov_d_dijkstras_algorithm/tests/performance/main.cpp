@@ -4,9 +4,11 @@
 #include <cstddef>
 #include <tuple>
 
+#include "nalitov_d_dijkstras_algorithm/all/include/ops_all.hpp"
 #include "nalitov_d_dijkstras_algorithm/common/include/common.hpp"
 #include "nalitov_d_dijkstras_algorithm/omp/include/ops_omp.hpp"
 #include "nalitov_d_dijkstras_algorithm/seq/include/ops_seq.hpp"
+#include "nalitov_d_dijkstras_algorithm/stl/include/ops_stl.hpp"
 #include "nalitov_d_dijkstras_algorithm/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -28,7 +30,7 @@ InType MakeStarFromZero(int n) {
 }  // namespace
 
 class NalitovDDijkstrasAlgorithmPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr int kGraphSize = 150;
+  static constexpr int kGraphSize = 3500;
   InType input_data_{};
   OutType expected_output_{};
 
@@ -58,9 +60,13 @@ const auto kOmpPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, NalitovDDijkstrasAlgorithmOmp>(PPC_SETTINGS_nalitov_d_dijkstras_algorithm);
 const auto kTbbPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, NalitovDDijkstrasAlgorithmTBB>(PPC_SETTINGS_nalitov_d_dijkstras_algorithm);
-const auto kAllPerfTasks = std::tuple_cat(kSeqPerfTasks, kOmpPerfTasks, kTbbPerfTasks);
+const auto kStlPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, NalitovDDijkstrasAlgorithmSTL>(PPC_SETTINGS_nalitov_d_dijkstras_algorithm);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, NalitovDDijkstrasAlgorithmALL>(PPC_SETTINGS_nalitov_d_dijkstras_algorithm);
+const auto kPerfTasks = std::tuple_cat(kSeqPerfTasks, kOmpPerfTasks, kTbbPerfTasks, kStlPerfTasks, kAllPerfTasks);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kGtestValues = ppc::util::TupleToGTestValues(kPerfTasks);
 
 const auto kPerfTestName = NalitovDDijkstrasAlgorithmPerfTests::CustomPerfTestName;
 
