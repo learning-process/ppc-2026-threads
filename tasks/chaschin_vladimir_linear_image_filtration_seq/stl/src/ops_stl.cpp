@@ -1,4 +1,4 @@
-#include "chaschin_v_linear_image_filtration_seq/stl/include/ops_stl.hpp"
+#include "chaschin_vladimir_linear_image_filtration_seq/stl/include/ops_stl.hpp"
 
 #include <cstddef>
 #include <future>
@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-#include "chaschin_v_linear_image_filtration_seq/common/include/common.hpp"
+#include "chaschin_vladimir_linear_image_filtration_seq/common/include/common.hpp"
 
 namespace {
 
