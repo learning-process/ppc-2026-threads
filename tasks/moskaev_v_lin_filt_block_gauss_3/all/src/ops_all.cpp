@@ -1,3 +1,4 @@
+// ops_all.cpp - исправленная версия
 #include "moskaev_v_lin_filt_block_gauss_3/all/include/ops_all.hpp"
 
 #include <mpi.h>
@@ -200,6 +201,7 @@ void ProcessAssignedBlocks(const std::vector<int> &local_blocks, int blocks_x, i
 }
 
 void GatherSizes(int rank, int num_procs, int send_count, std::vector<int> &recv_counts, std::vector<int> &displs) {
+  (void)rank;
   MPI_Gather(&send_count, 1, MPI_INT, recv_counts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
@@ -211,7 +213,7 @@ void GatherSizes(int rank, int num_procs, int send_count, std::vector<int> &recv
   }
 }
 
-void GatherResult(int rank, const std::vector<uint8_t> &output, int send_count, OutType &out,
+void GatherResult(int /*rank*/, const std::vector<uint8_t> &output, int send_count, OutType &out,
                   const std::vector<int> &recv_counts, const std::vector<int> &displs) {
   MPI_Gatherv(const_cast<uint8_t *>(output.data()), send_count, MPI_UNSIGNED_CHAR, out.data(), recv_counts.data(),
               displs.data(), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
