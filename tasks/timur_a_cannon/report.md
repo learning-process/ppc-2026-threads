@@ -242,5 +242,7 @@ using TestType = std::tuple<std::string, int,
                             std::vector<std::vector<double>>,
                             std::vector<std::vector<double>>>;
 using BaseTask = ppc::task::Task<InType, OutType>;
+```
 
-`InType`: размер блока `b_size`, матрицы `A` и `B`. `OutType`: матрица `C = A·B`.
+`InType`: размер блока `b_size`, матрицы `A` и `B`.  
+`OutType`: матрица `C = A·B`.
