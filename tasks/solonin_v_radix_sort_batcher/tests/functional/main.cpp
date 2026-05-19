@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
+#include "solonin_v_radix_sort_batcher/all/include/ops_all.hpp"
 #include "solonin_v_radix_sort_batcher/common/include/common.hpp"
 #include "solonin_v_radix_sort_batcher/omp/include/ops_omp.hpp"
 #include "solonin_v_radix_sort_batcher/seq/include/ops_seq.hpp"
@@ -56,16 +57,16 @@ namespace {
 TEST_P(RadixBatcherFuncTests, RadixBatcherSortTests) { ExecuteTest(GetParam()); }
 
 const std::array<TestType, 6> kParams = {
-    std::make_tuple(1, "single"),      std::make_tuple(2, "positive"),
-    std::make_tuple(3, "negative"),    std::make_tuple(4, "mixed"),
-    std::make_tuple(5, "extremes"),    std::make_tuple(6, "duplicates"),
+    std::make_tuple(1, "single"),   std::make_tuple(2, "positive"), std::make_tuple(3, "negative"),
+    std::make_tuple(4, "mixed"),    std::make_tuple(5, "extremes"), std::make_tuple(6, "duplicates"),
 };
 
 const auto kTasks = std::tuple_cat(
     ppc::util::AddFuncTask<RadixSortBatcherSEQ, InType>(kParams, PPC_SETTINGS_solonin_v_radix_sort_batcher),
     ppc::util::AddFuncTask<RadixSortBatcherOMP, InType>(kParams, PPC_SETTINGS_solonin_v_radix_sort_batcher),
     ppc::util::AddFuncTask<RadixSortBatcherTBB, InType>(kParams, PPC_SETTINGS_solonin_v_radix_sort_batcher),
-    ppc::util::AddFuncTask<RadixSortBatcherSTL, InType>(kParams, PPC_SETTINGS_solonin_v_radix_sort_batcher));
+    ppc::util::AddFuncTask<RadixSortBatcherSTL, InType>(kParams, PPC_SETTINGS_solonin_v_radix_sort_batcher),
+    ppc::util::AddFuncTask<RadixSortBatcherALL, InType>(kParams, PPC_SETTINGS_solonin_v_radix_sort_batcher));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTasks);
 const auto kTestName = RadixBatcherFuncTests::PrintFuncTestName<RadixBatcherFuncTests>;
