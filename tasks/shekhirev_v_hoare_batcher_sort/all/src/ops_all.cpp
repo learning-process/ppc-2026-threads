@@ -90,7 +90,7 @@ void OMPLocalSort(std::vector<int> &arr) {
     return;
   }
 
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(arr, num_threads, size)
   for (int i = 0; i < num_threads; ++i) {
     int chunk_size = size / num_threads;
     int start = i * chunk_size;
