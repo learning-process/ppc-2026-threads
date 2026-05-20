@@ -101,7 +101,6 @@ const auto kTestTasksList =
                    ppc::util::AddFuncTask<RychkovaGaussSTL, InType>(kTestParam, PPC_SETTINGS_rychkova_gauss),
                    ppc::util::AddFuncTask<RychkovaGaussOMP, InType>(kTestParam, PPC_SETTINGS_rychkova_gauss),
                    ppc::util::AddFuncTask<RychkovaGaussALL, InType>(kTestParam, PPC_SETTINGS_rychkova_gauss),
-                   ppc::util::AddFuncTask<RychkovaGaussSTL, InType>(kTestParam, PPC_SETTINGS_rychkova_gauss),
                    ppc::util::AddFuncTask<RychkovaGaussTBB, InType>(kTestParam, PPC_SETTINGS_rychkova_gauss));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
