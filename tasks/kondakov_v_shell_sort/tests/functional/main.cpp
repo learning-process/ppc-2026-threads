@@ -7,6 +7,7 @@
 #include <tuple>
 #include <vector>
 
+#include "kondakov_v_shell_sort/all/include/ops_all.hpp"
 #include "kondakov_v_shell_sort/common/include/common.hpp"
 #include "kondakov_v_shell_sort/omp/include/ops_omp.hpp"
 #include "kondakov_v_shell_sort/seq/include/ops_seq.hpp"
@@ -81,6 +82,7 @@ const std::array<TestType, 12> kTestParam = []() {
 }();
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<KondakovVShellSortALL, InType>(kTestParam, PPC_SETTINGS_kondakov_v_shell_sort),
     ppc::util::AddFuncTask<KondakovVShellSortOMP, InType>(kTestParam, PPC_SETTINGS_kondakov_v_shell_sort),
     ppc::util::AddFuncTask<KondakovVShellSortSEQ, InType>(kTestParam, PPC_SETTINGS_kondakov_v_shell_sort),
     ppc::util::AddFuncTask<KondakovVShellSortSTL, InType>(kTestParam, PPC_SETTINGS_kondakov_v_shell_sort),

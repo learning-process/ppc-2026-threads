@@ -3,6 +3,7 @@
 #include <cmath>
 #include <vector>
 
+#include "eremin_v_integrals_monte_carlo/all/include/ops_all.hpp"
 #include "eremin_v_integrals_monte_carlo/common/include/common.hpp"
 #include "eremin_v_integrals_monte_carlo/omp/include/ops_omp.hpp"
 #include "eremin_v_integrals_monte_carlo/seq/include/ops_seq.hpp"
@@ -45,7 +46,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, EreminVIntegralsMonteCarloSEQ, EreminVIntegralsMonteCarloOMP,
-                                EreminVIntegralsMonteCarloTBB>(PPC_SETTINGS_eremin_v_integrals_monte_carlo);
+                                EreminVIntegralsMonteCarloTBB, EreminVIntegralsMonteCarloALL>(
+        PPC_SETTINGS_eremin_v_integrals_monte_carlo);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

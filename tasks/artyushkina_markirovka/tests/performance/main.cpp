@@ -8,6 +8,7 @@
 #include "artyushkina_markirovka/common/include/common.hpp"
 #include "artyushkina_markirovka/omp/include/ops_omp.hpp"
 #include "artyushkina_markirovka/seq/include/ops_seq.hpp"
+#include "artyushkina_markirovka/stl/include/ops_stl.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace artyushkina_markirovka {
@@ -90,6 +91,15 @@ const auto kGtestValuesOMP = ppc::util::TupleToGTestValues(kAllPerfTasksOMP);
 const auto kPerfTestNameOMP = ArtyushkinaMarkirovkaPerfTests::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(RunModeTestsOMP, ArtyushkinaMarkirovkaPerfTests, kGtestValuesOMP, kPerfTestNameOMP);
+
+const auto kAllPerfTasksSTL =
+    ppc::util::MakeAllPerfTasks<InType, MarkingComponentsSTL>(PPC_SETTINGS_artyushkina_markirovka);
+
+const auto kGtestValuesSTL = ppc::util::TupleToGTestValues(kAllPerfTasksSTL);
+
+const auto kPerfTestNameSTL = ArtyushkinaMarkirovkaPerfTests::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(RunModeTestsSTL, ArtyushkinaMarkirovkaPerfTests, kGtestValuesSTL, kPerfTestNameSTL);
 
 }  // namespace
 
