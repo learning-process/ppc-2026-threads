@@ -1,10 +1,13 @@
 #include "artyushkina_markirovka/tbb/include/ops_tbb.hpp"
 
 #include <tbb/parallel_for.h>
+#include <tbb/parallel_reduce.h>
 #include <tbb/spin_mutex.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <vector>
 
 #include "artyushkina_markirovka/common/include/common.hpp"
@@ -39,10 +42,12 @@ bool MarkingComponentsTBB::PreProcessingImpl() {
 }
 
 int MarkingComponentsTBB::FindRoot(int label) {
+  // Итеративный поиск корня со сжатием пути
   int root = label;
   while (parent_[root] != root) {
     root = parent_[root];
   }
+
   // Сжатие пути
   int current = label;
   while (parent_[current] != current) {
@@ -58,6 +63,7 @@ void MarkingComponentsTBB::UnionLabels(int label1, int label2) {
   int root1 = FindRoot(label1);
   int root2 = FindRoot(label2);
   if (root1 != root2) {
+    // Объединяем по рангу (меньший корень становится родителем)
     if (root1 < root2) {
       parent_[root2] = root1;
     } else {
@@ -72,12 +78,13 @@ void MarkingComponentsTBB::InitLabelsTbb() {
     size_t input_idx = static_cast<size_t>(idx) + 2;
     // 0 = объект, не-0 = фон
     if (input_[input_idx] == 0) {
-      labels_[idx] = idx + 1;
+      labels_[idx] = idx + 1;  // Временная метка
     }
   });
 }
 
 void MarkingComponentsTBB::MergeHorizontalPairsTbb() {
+  // Для каждой строки обрабатываем горизонтальные связи
   tbb::parallel_for(0, rows_, [this](int y_coord) {
     for (int x_coord = 0; x_coord < cols_ - 1; ++x_coord) {
       int idx = (y_coord * cols_) + x_coord;
@@ -89,11 +96,34 @@ void MarkingComponentsTBB::MergeHorizontalPairsTbb() {
 }
 
 void MarkingComponentsTBB::MergeVerticalPairsTbb() {
-  tbb::parallel_for(0, rows_ - 1, [this](int y_coord) {
-    for (int x_coord = 0; x_coord < cols_; ++x_coord) {
+  // Для каждого столбца обрабатываем вертикальные связи
+  tbb::parallel_for(0, cols_, [this](int x_coord) {
+    for (int y_coord = 0; y_coord < rows_ - 1; ++y_coord) {
       int idx = (y_coord * cols_) + x_coord;
       if (labels_[idx] != 0 && labels_[idx + cols_] != 0) {
         UnionLabels(labels_[idx], labels_[idx + cols_]);
+      }
+    }
+  });
+}
+
+void MarkingComponentsTBB::MergeDiagonalPairsTbb() {
+  // Обрабатываем диагональные связи (8-связность)
+  // Для верхней и левой диагоналей
+  tbb::parallel_for(0, rows_, [this](int y_coord) {
+    for (int x_coord = 0; x_coord < cols_; ++x_coord) {
+      int idx = (y_coord * cols_) + x_coord;
+      if (labels_[idx] == 0) {
+        continue;
+      }
+
+      // Верхняя диагональ (северо-запад)
+      if (y_coord > 0 && x_coord > 0 && labels_[idx - cols_ - 1] != 0) {
+        UnionLabels(labels_[idx], labels_[idx - cols_ - 1]);
+      }
+      // Верхняя диагональ (северо-восток)
+      if (y_coord > 0 && x_coord < cols_ - 1 && labels_[idx - cols_ + 1] != 0) {
+        UnionLabels(labels_[idx], labels_[idx - cols_ + 1]);
       }
     }
   });
@@ -110,19 +140,33 @@ void MarkingComponentsTBB::FinalizeRootsTbb() {
 
 void MarkingComponentsTBB::NormalizeLabelsTbb() {
   int total_pixels = rows_ * cols_;
-  std::vector<int> mapping(total_pixels + 1, 0);
-  int next_id = 1;
 
+  // Сначала собираем все уникальные корни
+  std::vector<int> unique_roots;
   for (int i = 0; i < total_pixels; ++i) {
     if (labels_[i] != 0) {
-      int root = labels_[i];
-      if (mapping[root] == 0) {
-        mapping[root] = next_id++;
-      }
-      labels_[i] = mapping[root];
+      unique_roots.push_back(labels_[i]);
     }
   }
-  current_label_ = next_id - 1;
+
+  // Сортируем и удаляем дубликаты
+  std::sort(unique_roots.begin(), unique_roots.end());
+  unique_roots.erase(std::unique(unique_roots.begin(), unique_roots.end()), unique_roots.end());
+
+  // Создаем отображение
+  std::vector<int> mapping(total_pixels + 1, 0);
+  for (size_t i = 0; i < unique_roots.size(); ++i) {
+    mapping[unique_roots[i]] = static_cast<int>(i + 1);
+  }
+
+  // Применяем отображение
+  tbb::parallel_for(0, total_pixels, [this, &mapping](int i) {
+    if (labels_[i] != 0) {
+      labels_[i] = mapping[labels_[i]];
+    }
+  });
+
+  current_label_ = static_cast<int>(unique_roots.size());
 }
 
 bool MarkingComponentsTBB::RunImpl() {
@@ -134,6 +178,7 @@ bool MarkingComponentsTBB::RunImpl() {
   InitLabelsTbb();
   MergeHorizontalPairsTbb();
   MergeVerticalPairsTbb();
+  MergeDiagonalPairsTbb();  // Добавляем обработку диагональных связей для 8-связности
   FinalizeRootsTbb();
   NormalizeLabelsTbb();
 
