@@ -151,20 +151,25 @@ mpiexec -env PPC_NUM_THREADS 4 -env OMP_NUM_THREADS 4 \
   -env PPC_NUM_PROC 2 -n 2 \
   build\bin\ppc_perf_tests.exe --gtest_filter=*timur_a_cannon_all*
 
-Альтернатива из курса: `scripts/run_tests.py --running-type=threads --counts 1 2 4 8` и `--running-type=processes` для ALL.
+Альтернатива из курса: `scripts/run_tests.py --running-type=threads --counts 1 2 4 8`
+и `--running-type=processes` для ALL.
 
 ## 8. Заключение
 
-Для умножения матриц **$512 \times 512$** алгоритмом Кэннона на тестовой машине **самой быстрой** оказалась реализация на **oneTBB** (ускорение **~3.1×** к SEQ на 8 потоках). 
+Для умножения матриц **$512 \times 512$** алгоритмом Кэннона на тестовой машине **самой быстрой**
+оказалась реализация на **oneTBB** (ускорение **~3.1×** к SEQ на 8 потоках).
 **OpenMP** — хороший практичный вариант (**~2.1×**). 
 **STL** без пула потоков на этой задаче **не даёт выигрыша**. 
 **Гибрид MPI + OpenMP** имеет смысл при нескольких процессах и больших матрицах; на малых размерах overhead MPI заметен.
 
-Для защиты работы детальные таблицы, фрагменты кода и комментарии по каждой технологии см. в [seq/report.md](seq/report.md), [omp/report.md](omp/report.md), [tbb/report.md](tbb/report.md), [stl/report.md](stl/report.md), [all/report.md](all/report.md).
+Для защиты работы детальные таблицы, фрагменты кода и комментарии по каждой технологии см. в
+[seq/report.md](seq/report.md), [omp/report.md](omp/report.md), [tbb/report.md](tbb/report.md),
+[stl/report.md](stl/report.md), [all/report.md](all/report.md).
 
 ## 9. Источники
 
-1. Материалы курса «Параллельное программирование», репозиторий [ppc-2026-threads](https://github.com/learning-process/ppc-2026-threads).
+1. Материалы курса «Параллельное программирование», репозиторий
+   [ppc-2026-threads](https://github.com/learning-process/ppc-2026-threads).
 2. [OpenMP](https://www.openmp.org/) — директивы `parallel for`, `collapse`.
 3. [oneTBB](https://github.com/uxlfoundation/oneTBB) — `parallel_for`, `blocked_range2d`.
 4. [MPI Forum](https://www.mpi-forum.org/) — `MPI_Bcast`, `MPI_Allgatherv`.
