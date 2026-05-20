@@ -8,6 +8,8 @@
 #include "savva_d_monte_carlo/common/include/common.hpp"
 #include "savva_d_monte_carlo/omp/include/ops_omp.hpp"
 #include "savva_d_monte_carlo/seq/include/ops_seq.hpp"
+#include "savva_d_monte_carlo/stl/include/ops_stl.hpp"
+#include "savva_d_monte_carlo/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace savva_d_monte_carlo {
@@ -33,7 +35,6 @@ class SavvaDRunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutT
   bool CheckTestOutputData(OutType &output_data) final {
     double expected = 2400.0;
     double tolerance = 0.1;
-    ;
     return std::abs(output_data - expected) / expected <= tolerance;
   }
 
@@ -49,8 +50,9 @@ TEST_P(SavvaDRunPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, SavvaDMonteCarloSEQ, SavvaDMonteCarloOMP>(PPC_SETTINGS_savva_d_monte_carlo);
-// SavvaDMonteCarloALL,  SavvaDMonteCarloSTL, SavvaDMonteCarloTBB
+    ppc::util::MakeAllPerfTasks<InType, SavvaDMonteCarloSEQ, SavvaDMonteCarloTBB, SavvaDMonteCarloSTL,
+                                SavvaDMonteCarloOMP>(PPC_SETTINGS_savva_d_monte_carlo);
+// SavvaDMonteCarloALL
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

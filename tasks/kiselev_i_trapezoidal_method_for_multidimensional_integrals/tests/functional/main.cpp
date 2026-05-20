@@ -10,6 +10,7 @@
 #include <string>
 #include <tuple>
 
+#include "kiselev_i_trapezoidal_method_for_multidimensional_integrals/all/include/ops_all.hpp"
 #include "kiselev_i_trapezoidal_method_for_multidimensional_integrals/common/include/common.hpp"
 #include "kiselev_i_trapezoidal_method_for_multidimensional_integrals/omp/include/ops_omp.hpp"
 #include "kiselev_i_trapezoidal_method_for_multidimensional_integrals/seq/include/ops_seq.hpp"
@@ -221,6 +222,8 @@ const auto kTestTasksList =
                    ppc::util::AddFuncTask<KiselevITestTaskTBB, InType>(
                        kTestParam, PPC_SETTINGS_kiselev_i_trapezoidal_method_for_multidimensional_integrals),
                    ppc::util::AddFuncTask<KiselevITestTaskSTL, InType>(
+                       kTestParam, PPC_SETTINGS_kiselev_i_trapezoidal_method_for_multidimensional_integrals),
+                   ppc::util::AddFuncTask<KiselevITestTaskALL, InType>(
                        kTestParam, PPC_SETTINGS_kiselev_i_trapezoidal_method_for_multidimensional_integrals));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

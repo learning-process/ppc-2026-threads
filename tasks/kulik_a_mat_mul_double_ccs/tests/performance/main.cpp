@@ -7,9 +7,11 @@
 #include <tuple>
 #include <vector>
 
+#include "kulik_a_mat_mul_double_ccs/all/include/ops_all.hpp"
 #include "kulik_a_mat_mul_double_ccs/common/include/common.hpp"
 #include "kulik_a_mat_mul_double_ccs/omp/include/ops_omp.hpp"
 #include "kulik_a_mat_mul_double_ccs/seq/include/ops_seq.hpp"
+#include "kulik_a_mat_mul_double_ccs/stl/include/ops_stl.hpp"
 #include "kulik_a_mat_mul_double_ccs/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -22,8 +24,8 @@ class KulikARunPerfTestThreads : public ppc::util::BaseRunPerfTests<InType, OutT
     size_t size = 20000;
     CCS &a = std::get<0>(input_data_);
     CCS &b = std::get<1>(input_data_);
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    int seed = 42;
+    std::mt19937 gen(seed);
     std::uniform_real_distribution<double> dist_val(-10.0, 10.0);
     a.m = size;
     a.n = size;
@@ -117,7 +119,8 @@ TEST_P(KulikARunPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KulikAMatMulDoubleCcsSEQ, KulikAMatMulDoubleCcsOMP, KulikAMatMulDoubleCcsTBB>(
+    ppc::util::MakeAllPerfTasks<InType, KulikAMatMulDoubleCcsSEQ, KulikAMatMulDoubleCcsOMP, KulikAMatMulDoubleCcsTBB,
+                                KulikAMatMulDoubleCcsSTL, KulikAMatMulDoubleCcsALL>(
         PPC_SETTINGS_kulik_a_mat_mul_double_ccs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
