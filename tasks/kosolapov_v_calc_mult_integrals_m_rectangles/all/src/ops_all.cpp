@@ -96,7 +96,7 @@ double KosolapovVCalcMultIntegralsMRectanglesALL::ComputeLocalSum(int func_id, i
   if (my_rows == 0) {
     return 0.0;
   }
-  unsigned int num_threads = std::max(1U, std::thread::hardware_concurrency());
+  unsigned int num_threads = ppc::util::GetNumThreads();
   num_threads = std::min(num_threads, my_rows);
   unsigned int rows_per_thread = my_rows / num_threads;
   unsigned int thread_remainder = my_rows % num_threads;
