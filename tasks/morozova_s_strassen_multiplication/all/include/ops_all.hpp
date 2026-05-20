@@ -8,7 +8,7 @@ namespace morozova_s_strassen_multiplication {
 class MorozovaSStrassenMultiplicationAll : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kAll;
+    return ppc::task::TypeOfTask::kALL;
   }
   explicit MorozovaSStrassenMultiplicationAll(const InType &in);
 
