@@ -15,7 +15,7 @@
 namespace fedoseev_linear_image_filtering_vertical {
 
 namespace {
-void ExchangeGhostRows(int rank, int size, int w, int local_rows, const std::vector<int> &local_data,
+void ExchangeGhostRows(int rank, int size, int w, int local_rows, std::vector<int> &local_data,
                        std::vector<int> &ghost_src) {
   bool is_mpi = ppc::util::IsUnderMpirun();
   if (!is_mpi) {
@@ -26,14 +26,14 @@ void ExchangeGhostRows(int rank, int size, int w, int local_rows, const std::vec
   }
 
   if (rank > 0) {
-    MPI_Sendrecv(const_cast<int *>(local_data.data()), w, MPI_INT, rank - 1, 0, ghost_src.data(), w, MPI_INT, rank - 1,
-                 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Sendrecv(local_data.data(), w, MPI_INT, rank - 1, 0, ghost_src.data(), w, MPI_INT, rank - 1, 0, MPI_COMM_WORLD,
+                 MPI_STATUS_IGNORE);
   } else {
     std::copy(local_data.begin(), local_data.begin() + w, ghost_src.begin());
   }
 
   if (rank < size - 1) {
-    MPI_Sendrecv(const_cast<int *>(local_data.data() + (local_rows - 1) * w), w, MPI_INT, rank + 1, 0,
+    MPI_Sendrecv(local_data.data() + (local_rows - 1) * w, w, MPI_INT, rank + 1, 0,
                  ghost_src.data() + (local_rows + 1) * w, w, MPI_INT, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   } else {
     std::copy(local_data.begin() + (local_rows - 1) * w, local_data.begin() + local_rows * w,
@@ -106,7 +106,7 @@ void LinearImageFilteringVerticalAll::LocalProcessing(int rank, int size, int nu
   }
 
   int ghost_rows = local_rows + 2;
-  std::vector<int> ghost_src(static_cast<size_t>(ghost_rows) * static_cast<size_t>(w_), 0);
+  std::vector<int> ghost_src(static_cast<size_t>(ghost_rows) * w_, 0);
   for (int i = 0; i < local_rows; ++i) {
     std::copy(local_data_.begin() + static_cast<ptrdiff_t>(i) * w_,
               local_data_.begin() + static_cast<ptrdiff_t>(i + 1) * w_,
@@ -126,11 +126,10 @@ void LinearImageFilteringVerticalAll::LocalProcessing(int rank, int size, int nu
         for (int kx = -1; kx <= 1; ++kx) {
           int px = col + kx;
           int py = row_in_ghost + ky;
-          sum += ghost_src[static_cast<size_t>(py) * static_cast<size_t>(w_) + static_cast<size_t>(px)] *
-                 kernel.at(ky + 1).at(kx + 1);
+          sum += ghost_src[(static_cast<size_t>(py) * w_) + static_cast<size_t>(px)] * kernel.at(ky + 1).at(kx + 1);
         }
       }
-      local_result_[static_cast<size_t>(i) * static_cast<size_t>(w_) + static_cast<size_t>(col)] = sum / kernel_sum;
+      local_result_[(static_cast<size_t>(i) * w_) + static_cast<size_t>(col)] = sum / kernel_sum;
     }
   }
 }
