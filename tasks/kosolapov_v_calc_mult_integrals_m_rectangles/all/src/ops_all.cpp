@@ -92,7 +92,7 @@ std::tuple<double, double, double, double> KosolapovVCalcMultIntegralsMRectangle
 }
 double KosolapovVCalcMultIntegralsMRectanglesALL::ComputeLocalSum(int func_id, int steps, double a, double c, double hx,
                                                                   double hy, int start_i, int end_i) {
-  unsigned int my_rows = static_cast<unsigned int>(end_i - start_i);
+  auto my_rows = static_cast<unsigned int>(end_i - start_i);
   if (my_rows == 0) {
     return 0.0;
   }
