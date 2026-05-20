@@ -100,6 +100,44 @@ void RunLocalMultiplication(const std::vector<double> &a, const std::vector<doub
   }
 }
 
+void ComputeRecvCounts(int world_size, int rows_per_proc, int remainder, int cols_b, std::vector<int> &recv_counts,
+                       std::vector<int> &displs, int &total_elements) {
+  total_elements = 0;
+  for (int proc = 0; proc < world_size; ++proc) {
+    const int proc_local_rows = rows_per_proc + (proc < remainder ? 1 : 0);
+    recv_counts[proc] = proc_local_rows * cols_b;
+    displs[proc] = total_elements;
+    total_elements += recv_counts[proc];
+  }
+}
+
+void GatherAndAssemble(int rank, int world_size, int rows_per_proc, int remainder, int cols_b,
+                       const std::vector<double> &local_c, std::vector<double> &c) {
+  if (rank == 0) {
+    std::vector<int> recv_counts(world_size), displs(world_size);
+    int total_elements = 0;
+    ComputeRecvCounts(world_size, rows_per_proc, remainder, cols_b, recv_counts, displs, total_elements);
+    std::vector<double> gathered(static_cast<size_t>(total_elements));
+    MPI_Gatherv(local_c.data(), static_cast<int>(local_c.size()), MPI_DOUBLE, gathered.data(), recv_counts.data(),
+                displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    for (int proc = 0; proc < world_size; ++proc) {
+      const int proc_start_row = (proc * rows_per_proc) + std::min(proc, remainder);
+      const int proc_local_rows = rows_per_proc + (proc < remainder ? 1 : 0);
+      for (int i = 0; i < proc_local_rows; ++i) {
+        for (int j = 0; j < cols_b; ++j) {
+          c[((proc_start_row + i) * cols_b) + j] = gathered[displs[proc] + (i * cols_b) + j];
+        }
+      }
+    }
+  } else {
+    std::vector<int> recv_counts(world_size), displs(world_size);
+    int total_elements = 0;
+    ComputeRecvCounts(world_size, rows_per_proc, remainder, cols_b, recv_counts, displs, total_elements);
+    MPI_Gatherv(local_c.data(), static_cast<int>(local_c.size()), MPI_DOUBLE, nullptr, nullptr, nullptr, MPI_DOUBLE, 0,
+                MPI_COMM_WORLD);
+  }
+}
+
 }  // namespace
 
 KazennovaATestTaskALL::KazennovaATestTaskALL(const InType &in) {
@@ -165,33 +203,7 @@ bool KazennovaATestTaskALL::RunImpl() {
 
   RunLocalMultiplication(a, b, rows_total, cols_a, cols_b, start_row, local_rows, block_size, local_c);
 
-  std::vector<int> recv_counts(world_size, 0);
-  std::vector<int> displs(world_size, 0);
-  int total_elements = 0;
-  for (int proc = 0; proc < world_size; ++proc) {
-    const int proc_local_rows = rows_per_proc + (proc < remainder ? 1 : 0);
-    recv_counts[proc] = proc_local_rows * cols_b;
-    displs[proc] = total_elements;
-    total_elements += recv_counts[proc];
-  }
-
-  if (rank == 0) {
-    std::vector<double> gathered(static_cast<size_t>(total_elements));
-    MPI_Gatherv(local_c.data(), static_cast<int>(local_c.size()), MPI_DOUBLE, gathered.data(), recv_counts.data(),
-                displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    for (int proc = 0; proc < world_size; ++proc) {
-      const int proc_start_row = (proc * rows_per_proc) + std::min(proc, remainder);
-      const int proc_local_rows = rows_per_proc + (proc < remainder ? 1 : 0);
-      for (int i = 0; i < proc_local_rows; ++i) {
-        for (int j = 0; j < cols_b; ++j) {
-          c[((proc_start_row + i) * cols_b) + j] = gathered[displs[proc] + (i * cols_b) + j];
-        }
-      }
-    }
-  } else {
-    MPI_Gatherv(local_c.data(), static_cast<int>(local_c.size()), MPI_DOUBLE, nullptr, nullptr, nullptr, MPI_DOUBLE, 0,
-                MPI_COMM_WORLD);
-  }
+  GatherAndAssemble(rank, world_size, rows_per_proc, remainder, cols_b, local_c, c);
 
   MPI_Barrier(MPI_COMM_WORLD);
   return true;
