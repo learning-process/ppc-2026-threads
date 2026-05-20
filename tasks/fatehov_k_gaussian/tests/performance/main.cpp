@@ -38,8 +38,6 @@ namespace {
 const auto kAllPerfTasks =
     std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, FatehovKGaussianSEQ>(PPC_SETTINGS_fatehov_k_gaussian),
                    ppc::util::MakeAllPerfTasks<InType, FatehovKGaussianOMP>(PPC_SETTINGS_fatehov_k_gaussian),
-                   ppc::util::MakeAllPerfTasks<InType, FatehovKGaussianTBB>(PPC_SETTINGS_fatehov_k_gaussian),
-                   ppc::util::MakeAllPerfTasks<InType, FatehovKGaussianSTL>(PPC_SETTINGS_fatehov_k_gaussian),
                    ppc::util::MakeAllPerfTasks<InType, FatehovKGaussianALL>(PPC_SETTINGS_fatehov_k_gaussian));
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

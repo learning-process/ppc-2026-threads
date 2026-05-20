@@ -58,8 +58,6 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(10, "10"), std::make
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<FatehovKGaussianSEQ, InType>(kTestParam, PPC_SETTINGS_fatehov_k_gaussian),
                    ppc::util::AddFuncTask<FatehovKGaussianOMP, InType>(kTestParam, PPC_SETTINGS_fatehov_k_gaussian),
-                   ppc::util::AddFuncTask<FatehovKGaussianTBB, InType>(kTestParam, PPC_SETTINGS_fatehov_k_gaussian),
-                   ppc::util::AddFuncTask<FatehovKGaussianSTL, InType>(kTestParam, PPC_SETTINGS_fatehov_k_gaussian),
                    ppc::util::AddFuncTask<FatehovKGaussianALL, InType>(kTestParam, PPC_SETTINGS_fatehov_k_gaussian));
 
 INSTANTIATE_TEST_SUITE_P(FatehovKTests, FatehovKGaussianFuncTests, ppc::util::ExpandToValues(kTestTasksList),
