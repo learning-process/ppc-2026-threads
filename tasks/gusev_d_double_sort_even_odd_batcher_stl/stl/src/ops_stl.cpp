@@ -318,7 +318,7 @@ bool DoubleSortEvenOddBatcherSTL::RunImpl() {
     return true;
   }
 
-  const auto parallelism = static_cast<size_t>(std::max(1, ppc::util::GetNumThreads()));
+  const auto parallelism = GetSafeParallelism();
   auto blocks = MakeSortedBlocks(input_data_, parallelism);
   result_data_ = MergeBlocks(std::move(blocks), parallelism);
   return true;
