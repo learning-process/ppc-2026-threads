@@ -95,7 +95,7 @@ const auto kTaskProviders = std::tuple_cat(ppc::util::AddFuncTask<KopilovDVertic
                                                kFunctionalScenarios, PPC_SETTINGS_kopilov_d_vertical_gauss_filter));
 
 INSTANTIATE_TEST_SUITE_P(GaussFilters, VerticalGaussFilterTaskTest, ppc::util::ExpandToValues(kTaskProviders),
-                         VerticalGaussFilterTaskTest::PrintFuncTestName<VerticalGaussFilterTaskTest>);  // NOLINT
+                         VerticalGaussFilterTaskTest::PrintFuncTestName<VerticalGaussFilterTaskTest>);
 
 }  // namespace
 
@@ -147,7 +147,7 @@ std::vector<ValidationCase> GetValidationData() {
 }
 
 INSTANTIATE_TEST_SUITE_P(NegativeTests, VerticalGaussFilterValidationTest, testing::ValuesIn(GetValidationData()),
-                         [](const testing::TestParamInfo<ValidationCase> &info) { return info.param.tag; });  // NOLINT
+                         [](const testing::TestParamInfo<ValidationCase> &info) { return info.param.tag; });
 
 }  // namespace
 

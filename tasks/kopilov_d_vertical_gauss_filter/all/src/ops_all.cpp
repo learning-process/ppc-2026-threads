@@ -71,7 +71,7 @@ void ExchangeHalo(int world_rank, int world_size, int height, int local_w, int l
 
   for (int row_idx = 0; row_idx < height; ++row_idx) {
     send_left[static_cast<size_t>(row_idx)] =
-        local_input[static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo) + 1];
+        local_input[(static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo)) + 1];
     send_right[static_cast<size_t>(row_idx)] =
         local_input[(static_cast<size_t>(row_idx) * static_cast<size_t>(lw_with_halo)) + static_cast<size_t>(local_w)];
   }
