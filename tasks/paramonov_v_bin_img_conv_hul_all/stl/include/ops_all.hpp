@@ -34,7 +34,6 @@ class ConvexHullAll : public BaseTask {
 
   void FloodFill(int start_row, int start_col, std::vector<bool> &visited, std::vector<PixelPoint> &component) const;
 
-  // Вспомогательные методы для снижения когнитивной сложности
   [[nodiscard]] static PixelPoint FindLowestPoint(const std::vector<PixelPoint> &points);
   [[nodiscard]] static std::vector<PixelPoint> SortPointsByAngle(const std::vector<PixelPoint> &points,
                                                                  const PixelPoint &lowest_point);
