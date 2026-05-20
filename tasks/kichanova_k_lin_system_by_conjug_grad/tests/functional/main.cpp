@@ -77,9 +77,7 @@ LinSystemData CreateTestSystem(int n, const std::string &type) {
   if (type == "diagonal") {
     return CreateDiagonalSystem(n, n_squared);
   }
-  if (type == "tridiagonal") {
-    return CreateTridiagonalSystem(n, n_squared);
-  }
+  return CreateTridiagonalSystem(n, n_squared);
 }
 
 }  // namespace
