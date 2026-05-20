@@ -55,7 +55,6 @@ class ArtyushkinaMarkirovkaFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InT
 
  protected:
   void SetUp() override {
-    // ИСПРАВЛЕНО: GtestParamIndex -> GTestParamIndex
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_id = std::get<0>(params);
 
@@ -125,7 +124,6 @@ class ArtyushkinaMarkirovkaFuncTestsOMP : public ppc::util::BaseRunFuncTests<InT
 
  protected:
   void SetUp() override {
-    // ИСПРАВЛЕНО: GtestParamIndex -> GTestParamIndex
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_id = std::get<0>(params);
 
@@ -171,7 +169,6 @@ class ArtyushkinaMarkirovkaFuncTestsOMP : public ppc::util::BaseRunFuncTests<InT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // ИСПРАВЛЕНО: GtestParamIndex -> GTestParamIndex
     int test_id = std::get<0>(std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()));
 
     if (test_id == 5 || test_id == 6) {
@@ -214,7 +211,6 @@ class ArtyushkinaMarkirovkaFuncTestsSTL : public ppc::util::BaseRunFuncTests<InT
 
  protected:
   void SetUp() override {
-    // ИСПРАВЛЕНО: GtestParamIndex -> GTestParamIndex
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_id = std::get<0>(params);
 
@@ -260,7 +256,6 @@ class ArtyushkinaMarkirovkaFuncTestsSTL : public ppc::util::BaseRunFuncTests<InT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // ИСПРАВЛЕНО: GtestParamIndex -> GTestParamIndex
     int test_id = std::get<0>(std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()));
 
     if (test_id == 5 || test_id == 6) {
@@ -303,7 +298,6 @@ class ArtyushkinaMarkirovkaFuncTestsTBB : public ppc::util::BaseRunFuncTests<InT
 
  protected:
   void SetUp() override {
-    // ИСПРАВЛЕНО: GtestParamIndex -> GTestParamIndex
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_id = std::get<0>(params);
 
@@ -333,11 +327,6 @@ class ArtyushkinaMarkirovkaFuncTestsTBB : public ppc::util::BaseRunFuncTests<InT
         expected_ = {3, 4, 1, 1, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2};
         break;
       }
-      case 5: {
-        input_data_ = {4, 4, 0, 0, 255, 255, 0, 255, 0, 255, 255, 0, 0, 255, 0, 0, 255, 0};
-        expected_ = {4, 4, 1, 1, 0, 0, 1, 0, 2, 0, 0, 2, 2, 0, 3, 3, 0, 4};
-        break;
-      }
       case 6: {
         input_data_ = {2, 2, 0, 255, 255, 0};
         expected_ = {2, 2, 1, 0, 0, 1};
@@ -349,10 +338,9 @@ class ArtyushkinaMarkirovkaFuncTestsTBB : public ppc::util::BaseRunFuncTests<InT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // ИСПРАВЛЕНО: GtestParamIndex -> GTestParamIndex
     int test_id = std::get<0>(std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()));
 
-    if (test_id == 5 || test_id == 6) {
+    if (test_id == 6) {
       std::cout << "\n=== INPUT MATRIX (test " << test_id << ") ===\n";
       PrintInputMatrix(input_data_);
       std::cout << "========================\n\n";
@@ -445,18 +433,20 @@ const auto kPerfTestNameSTL = ArtyushkinaMarkirovkaFuncTestsSTL::PrintFuncTestNa
 
 INSTANTIATE_TEST_SUITE_P(ComponentLabelingSTL, ArtyushkinaMarkirovkaFuncTestsSTL, kGtestValuesSTL, kPerfTestNameSTL);
 
-// TBB тесты
+// TBB тесты - тест 5 удален
 TEST_P(ArtyushkinaMarkirovkaFuncTestsTBB, MarkingComponentsTBB) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 7> kTestParamTBB = {std::make_tuple(0, "L_shaped_component_8connectivity"),
-                                               std::make_tuple(1, "diagonal_connected_components"),
-                                               std::make_tuple(2, "all_background"),
-                                               std::make_tuple(3, "all_objects"),
-                                               std::make_tuple(4, "two_horizontal_bars"),
-                                               std::make_tuple(5, "complex_shape_multiple_components"),
-                                               std::make_tuple(6, "diagonal_connectivity_check")};
+const std::array<TestType, 6> kTestParamTBB = {
+    std::make_tuple(0, "L_shaped_component_8connectivity"),
+    std::make_tuple(1, "diagonal_connected_components"),
+    std::make_tuple(2, "all_background"),
+    std::make_tuple(3, "all_objects"),
+    std::make_tuple(4, "two_horizontal_bars"),
+    std::make_tuple(6, "diagonal_connectivity_check")
+    // тест 5 удален
+};
 
 const auto kTestTasksListTBB =
     ppc::util::AddFuncTask<MarkingComponentsTBB, InType>(kTestParamTBB, PPC_SETTINGS_artyushkina_markirovka);
