@@ -7,8 +7,6 @@
 #include "fatehov_k_gaussian/common/include/common.hpp"
 #include "fatehov_k_gaussian/omp/include/ops_omp.hpp"
 #include "fatehov_k_gaussian/seq/include/ops_seq.hpp"
-#include "fatehov_k_gaussian/stl/include/ops_stl.hpp"
-#include "fatehov_k_gaussian/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace fatehov_k_gaussian {
