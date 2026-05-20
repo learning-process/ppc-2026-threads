@@ -74,8 +74,8 @@ FatehovKGaussianALL::FatehovKGaussianALL(const InType &in) {
 
 bool FatehovKGaussianALL::ValidationImpl() {
   const auto &input = GetInput();
-  return input.image.width > 0 && input.image.height > 0 && input.image.channels > 0 &&
-         !input.image.data.empty() && input.sigma > 0.0F;
+  return input.image.width > 0 && input.image.height > 0 && input.image.channels > 0 && !input.image.data.empty() &&
+         input.sigma > 0.0F;
 }
 
 bool FatehovKGaussianALL::PreProcessingImpl() {
