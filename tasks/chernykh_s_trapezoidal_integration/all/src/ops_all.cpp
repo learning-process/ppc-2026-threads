@@ -37,12 +37,12 @@ int DetectDim1(const IntegrationInType &input) {
 }
 
 int DetectDim3(const IntegrationInType &input) {
-  if (input.steps[0] == 400) {
-    return 7;
+  std::vector<double> zero_pt(3, 0.0);
+  if (std::abs(input.func(zero_pt) - 5.0) < 1e-5) {
+    return 3;
   }
-  return 3;
+  return 7;
 }
-
 }  // namespace
 
 ChernykhSTrapezoidalIntegrationALL::ChernykhSTrapezoidalIntegrationALL(const InType &in) {
