@@ -4,6 +4,7 @@
 #include <cmath>
 #include <future>
 #include <map>
+#include <thread>
 #include <vector>
 
 #include "ashihmin_d_mult_matr_crs/common/include/common.hpp"
@@ -38,16 +39,14 @@ bool AshihminDMultMatrCrsSTL::RunImpl() {
   std::vector<std::vector<int>> local_cols(rows_a);
   std::vector<std::vector<double>> local_vals(rows_a);
 
-  unsigned int num_threads = std::thread::hardware_concurrency();
-  if (num_threads == 0) {
-    num_threads = 2;
-  }
+  unsigned int hardware_threads = std::thread::hardware_concurrency();
+  int num_threads = (hardware_threads == 0) ? 2 : static_cast<int>(hardware_threads);
 
-  std::vector<std::future<void>> futures;
   int chunk_size = (rows_a + num_threads - 1) / num_threads;
+  std::vector<std::future<void>> futures;
 
-  for (unsigned int t = 0; t < num_threads; ++t) {
-    int start_row = t * chunk_size;
+  for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+    int start_row = thread_idx * chunk_size;
     int end_row = std::min(start_row + chunk_size, rows_a);
 
     if (start_row >= end_row) {
@@ -55,25 +54,20 @@ bool AshihminDMultMatrCrsSTL::RunImpl() {
     }
 
     futures.push_back(
-        std::async(std::launch::async, [start_row, end_row, &matrix_a, &matrix_b, &local_cols, &local_vals]() {
+        std::async(std::launch::async, [start_row, end_row, &matrix_a, &matrix_b, &local_cols, &local_vals] {
       for (int i = start_row; i < end_row; ++i) {
         std::map<int, double> row_accumulator;
-
         for (int j = matrix_a.row_ptr[i]; j < matrix_a.row_ptr[i + 1]; ++j) {
           int col_a = matrix_a.col_index[j];
           double val_a = matrix_a.values[j];
-
           for (int k = matrix_b.row_ptr[col_a]; k < matrix_b.row_ptr[col_a + 1]; ++k) {
-            int col_b = matrix_b.col_index[k];
-            double val_b = matrix_b.values[k];
-            row_accumulator[col_b] += val_a * val_b;
+            row_accumulator[matrix_b.col_index[k]] += val_a * matrix_b.values[k];
           }
         }
-
-        for (auto it = row_accumulator.begin(); it != row_accumulator.end(); ++it) {
-          if (std::abs(it->second) > 1e-15) {
-            local_cols[i].push_back(it->first);
-            local_vals[i].push_back(it->second);
+        for (const auto &entry : row_accumulator) {
+          if (std::abs(entry.second) > 1e-15) {
+            local_cols[i].push_back(entry.first);
+            local_vals[i].push_back(entry.second);
           }
         }
       }
