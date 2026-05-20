@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "tsyplakov_k_mul_double_crs_matrix/common/include/common.hpp"
-#include "tsyplakov_k_mul_double_crs_matrix/tbb/include/ops_tbb.hpp"
+#include "tsyplakov_k_mul_double_crs_matrix/stl/include/ops_stl.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace tsyplakov_k_mul_double_crs_matrix {
@@ -68,7 +68,7 @@ TEST_P(TsyplakovKRunPerfTestsThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, TsyplakovKTestTaskTBB>(PPC_SETTINGS_tsyplakov_k_mul_double_crs_matrix);
+    ppc::util::MakeAllPerfTasks<InType, TsyplakovKTestTaskSTL>(PPC_SETTINGS_tsyplakov_k_mul_double_crs_matrix);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = TsyplakovKRunPerfTestsThreads::CustomPerfTestName;

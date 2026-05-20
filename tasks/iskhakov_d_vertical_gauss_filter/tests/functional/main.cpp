@@ -10,6 +10,7 @@
 #include <tuple>
 #include <vector>
 
+#include "iskhakov_d_vertical_gauss_filter/all/include/ops_all.hpp"
 #include "iskhakov_d_vertical_gauss_filter/common/include/common.hpp"
 #include "iskhakov_d_vertical_gauss_filter/omp/include/ops_omp.hpp"
 #include "iskhakov_d_vertical_gauss_filter/seq/include/ops_seq.hpp"
@@ -90,6 +91,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<IskhakovDVerti
                                            ppc::util::AddFuncTask<IskhakovDVerticalGaussFilterTBB, InType>(
                                                kTestCases, PPC_SETTINGS_iskhakov_d_vertical_gauss_filter),
                                            ppc::util::AddFuncTask<IskhakovDVerticalGaussFilterSTL, InType>(
+                                               kTestCases, PPC_SETTINGS_iskhakov_d_vertical_gauss_filter),
+                                           ppc::util::AddFuncTask<IskhakovDVerticalGaussFilterALL, InType>(
                                                kTestCases, PPC_SETTINGS_iskhakov_d_vertical_gauss_filter));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
@@ -148,6 +151,7 @@ std::vector<InvalidInputParams> GenerateInvalidInputParams() {
   add("OMP", [](const Matrix &m) { return std::make_shared<IskhakovDVerticalGaussFilterOMP>(m); });
   add("TBB", [](const Matrix &m) { return std::make_shared<IskhakovDVerticalGaussFilterTBB>(m); });
   add("STL", [](const Matrix &m) { return std::make_shared<IskhakovDVerticalGaussFilterSTL>(m); });
+  add("ALL", [](const Matrix &m) { return std::make_shared<IskhakovDVerticalGaussFilterALL>(m); });
 
   return params;
 }
