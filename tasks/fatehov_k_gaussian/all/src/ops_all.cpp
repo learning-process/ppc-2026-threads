@@ -122,7 +122,7 @@ bool FatehovKGaussianALL::RunImpl() {
   const auto &kernel = kernel_;
 
   std::vector<uint8_t> img_data(input.image.data);
-  MPI_Bcast(img_data.data(), static_cast<int>(img_data.size()), MPI_UINT8_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(img_data.data(), static_cast<int>(img_data.size()), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
   const int rows_per_proc = h / size;
   const int remainder = h % size;
