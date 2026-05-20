@@ -1,6 +1,7 @@
 #include "fedoseev_linear_image_filtering_vertical/all/include/ops_all.hpp"
 
 #include <mpi.h>
+#include <omp.h>
 
 #include <algorithm>
 #include <array>
@@ -12,14 +13,14 @@
 
 namespace fedoseev_linear_image_filtering_vertical {
 
-LinearImageFilteringVerticalAll::LinearImageFilteringVerticalAll(const InType &in) {
+LinearImageFilteringVerticalAll::LinearImageFilteringVerticalAll(const InType& in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = InType{};
 }
 
 bool LinearImageFilteringVerticalAll::ValidationImpl() {
-  const InType &input = GetInput();
+  const InType& input = GetInput();
   if (input.width < 3 || input.height < 3) {
     return false;
   }
@@ -46,7 +47,7 @@ bool LinearImageFilteringVerticalAll::RunImpl() {
   int w = 0, h = 0;
   std::vector<int> img;
   if (rank == 0) {
-    const InType &input = GetInput();
+    const InType& input = GetInput();
     w = input.width;
     h = input.height;
     img = input.data;
@@ -60,7 +61,7 @@ bool LinearImageFilteringVerticalAll::RunImpl() {
     }
     MPI_Bcast(img.data(), static_cast<int>(img.size()), MPI_INT, 0, MPI_COMM_WORLD);
   } else {
-    const InType &input = GetInput();
+    const InType& input = GetInput();
     w = input.width;
     h = input.height;
     img = input.data;
@@ -70,6 +71,8 @@ bool LinearImageFilteringVerticalAll::RunImpl() {
   const int kernel_sum = 16;
   std::vector<int> result(static_cast<size_t>(w) * static_cast<size_t>(h), 0);
 
+  // OpenMP параллелизация по строкам
+  #pragma omp parallel for default(none) shared(img, result, w, h, kernel, kernel_sum)
   for (int row = 0; row < h; ++row) {
     for (int col = 0; col < w; ++col) {
       int sum = 0;
