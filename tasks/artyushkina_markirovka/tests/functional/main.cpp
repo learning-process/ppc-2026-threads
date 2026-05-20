@@ -55,7 +55,8 @@ class ArtyushkinaMarkirovkaFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InT
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GtestParamIndex::kTestParams)>(GetParam());
+    // ИСПРАВЛЕНО: GtestParamIndex -> GTestParamIndex
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_id = std::get<0>(params);
 
     switch (test_id) {
@@ -124,7 +125,8 @@ class ArtyushkinaMarkirovkaFuncTestsOMP : public ppc::util::BaseRunFuncTests<InT
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GtestParamIndex::kTestParams)>(GetParam());
+    // ИСПРАВЛЕНО: GtestParamIndex -> GTestParamIndex
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_id = std::get<0>(params);
 
     switch (test_id) {
@@ -169,7 +171,8 @@ class ArtyushkinaMarkirovkaFuncTestsOMP : public ppc::util::BaseRunFuncTests<InT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int test_id = std::get<0>(std::get<static_cast<std::size_t>(ppc::util::GtestParamIndex::kTestParams)>(GetParam()));
+    // ИСПРАВЛЕНО: GtestParamIndex -> GTestParamIndex
+    int test_id = std::get<0>(std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()));
 
     if (test_id == 5 || test_id == 6) {
       std::cout << "\n=== INPUT MATRIX (test " << test_id << ") ===\n";
@@ -211,7 +214,8 @@ class ArtyushkinaMarkirovkaFuncTestsSTL : public ppc::util::BaseRunFuncTests<InT
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GtestParamIndex::kTestParams)>(GetParam());
+    // ИСПРАВЛЕНО: GtestParamIndex -> GTestParamIndex
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_id = std::get<0>(params);
 
     switch (test_id) {
@@ -256,7 +260,8 @@ class ArtyushkinaMarkirovkaFuncTestsSTL : public ppc::util::BaseRunFuncTests<InT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int test_id = std::get<0>(std::get<static_cast<std::size_t>(ppc::util::GtestParamIndex::kTestParams)>(GetParam()));
+    // ИСПРАВЛЕНО: GtestParamIndex -> GTestParamIndex
+    int test_id = std::get<0>(std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()));
 
     if (test_id == 5 || test_id == 6) {
       std::cout << "\n=== INPUT MATRIX (test " << test_id << ") ===\n";
@@ -298,7 +303,8 @@ class ArtyushkinaMarkirovkaFuncTestsTBB : public ppc::util::BaseRunFuncTests<InT
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GtestParamIndex::kTestParams)>(GetParam());
+    // ИСПРАВЛЕНО: GtestParamIndex -> GTestParamIndex
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_id = std::get<0>(params);
 
     switch (test_id) {
@@ -343,7 +349,8 @@ class ArtyushkinaMarkirovkaFuncTestsTBB : public ppc::util::BaseRunFuncTests<InT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int test_id = std::get<0>(std::get<static_cast<std::size_t>(ppc::util::GtestParamIndex::kTestParams)>(GetParam()));
+    // ИСПРАВЛЕНО: GtestParamIndex -> GTestParamIndex
+    int test_id = std::get<0>(std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()));
 
     if (test_id == 5 || test_id == 6) {
       std::cout << "\n=== INPUT MATRIX (test " << test_id << ") ===\n";
