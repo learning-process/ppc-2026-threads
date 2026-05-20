@@ -175,6 +175,15 @@ size_t GetBlockCount(size_t input_size, size_t parallelism) {
   return std::max<size_t>(1, std::min(input_size, parallelism));
 }
 
+size_t GetSafeParallelism() {
+  const auto requested = static_cast<size_t>(std::max(1, ppc::util::GetNumThreads()));
+  const auto available = std::thread::hardware_concurrency();
+  if (available == 0) {
+    return requested;
+  }
+  return std::min(requested, static_cast<size_t>(available));
+}
+
 void FillAndSortBlock(const InType &input, Block &block, BlockRange range) {
   block.assign(input.begin() + static_cast<std::ptrdiff_t>(range.begin),
                input.begin() + static_cast<std::ptrdiff_t>(range.end));
