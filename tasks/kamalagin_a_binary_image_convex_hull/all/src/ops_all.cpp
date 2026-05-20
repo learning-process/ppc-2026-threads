@@ -22,38 +22,26 @@ int64_t Cross(const Point &o, const Point &a, const Point &b) {
   return (static_cast<int64_t>(a.x - o.x) * (b.y - o.y)) - (static_cast<int64_t>(a.y - o.y) * (b.x - o.x));
 }
 
-void GrahamHull(std::vector<Point> &pts, Hull &out) {
-  out.clear();
-  const size_t n = pts.size();
-  if (n <= 1) {
-    if (n == 1) {
-      out.push_back(pts[0]);
-    }
-    return;
-  }
+int64_t DistSq(const Point &a, const Point &b) {
+  const int dx = a.x - b.x;
+  const int dy = a.y - b.y;
+  return (static_cast<int64_t>(dx) * dx) + (static_cast<int64_t>(dy) * dy);
+}
 
+size_t GrahamFindPivot(std::vector<Point> &pts) {
   size_t pivot = 0;
+  const size_t n = pts.size();
   for (size_t i = 1; i < n; ++i) {
     if (pts[i].y < pts[pivot].y || (pts[i].y == pts[pivot].y && pts[i].x < pts[pivot].x)) {
       pivot = i;
     }
   }
-  std::swap(pts[0], pts[pivot]);
+  return pivot;
+}
 
-  const Point origin = pts[0];
-  std::sort(pts.begin() + 1, pts.end(), [&origin](const Point &a, const Point &b) {
-    const int64_t cr = Cross(origin, a, b);
-    if (cr != 0) {
-      return cr > 0;
-    }
-    const int64_t da = (static_cast<int64_t>(a.x - origin.x) * (a.x - origin.x)) +
-                       (static_cast<int64_t>(a.y - origin.y) * (a.y - origin.y));
-    const int64_t db = (static_cast<int64_t>(b.x - origin.x) * (b.x - origin.x)) +
-                       (static_cast<int64_t>(b.y - origin.y) * (b.y - origin.y));
-    return da < db;
-  });
-
+void GrahamCollinearReduce(std::vector<Point> &pts) {
   size_t m = 1;
+  const size_t n = pts.size();
   for (size_t i = 2; i < n; ++i) {
     while (m > 0 && Cross(pts[m - 1], pts[m], pts[i]) == 0) {
       --m;
@@ -62,7 +50,9 @@ void GrahamHull(std::vector<Point> &pts, Hull &out) {
     pts[m] = pts[i];
   }
   pts.resize(m + 1);
+}
 
+void GrahamScan(std::vector<Point> &pts, Hull &out) {
   out.push_back(pts[0]);
   if (pts.size() <= 2) {
     if (pts.size() == 2) {
@@ -77,6 +67,29 @@ void GrahamHull(std::vector<Point> &pts, Hull &out) {
     }
     out.push_back(pts[i]);
   }
+}
+
+void GrahamHull(std::vector<Point> &pts, Hull &out) {
+  out.clear();
+  const size_t n = pts.size();
+  if (n <= 1) {
+    if (n == 1) {
+      out.push_back(pts[0]);
+    }
+    return;
+  }
+  const size_t pivot = GrahamFindPivot(pts);
+  std::swap(pts[0], pts[pivot]);
+  const Point &p0 = pts[0];
+  std::sort(pts.begin() + 1, pts.end(), [&p0](const Point &a, const Point &b) {
+    const int64_t c = Cross(p0, a, b);
+    if (c != 0) {
+      return c > 0;
+    }
+    return DistSq(p0, a) < DistSq(p0, b);
+  });
+  GrahamCollinearReduce(pts);
+  GrahamScan(pts, out);
 }
 
 void FloodFillComponent(const BinaryImage &img, int start_row, int start_col, std::vector<int> &label,
