@@ -24,9 +24,9 @@ bool ComparePoints(const PixelPoint &a, const PixelPoint &b) {
 }
 
 int64_t SquaredDistance(const PixelPoint &a, const PixelPoint &b) {
-  int64_t dx = static_cast<int64_t>(a.col - b.col);
-  int64_t dy = static_cast<int64_t>(a.row - b.row);
-  return dx * dx + dy * dy;
+  auto dx = static_cast<int64_t>(a.col - b.col);
+  auto dy = static_cast<int64_t>(a.row - b.row);
+  return (dx * dx) + (dy * dy);
 }
 
 }  // namespace
