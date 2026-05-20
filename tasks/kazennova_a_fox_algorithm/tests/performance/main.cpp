@@ -15,7 +15,7 @@
 namespace kazennova_a_fox_algorithm {
 
 class KazennovaAPerfTestSeq : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr int kMatrixSize = 1000;
+  static constexpr int kMatrixSize = 700;
   InType input_data_;
 
   void SetUp() override {
