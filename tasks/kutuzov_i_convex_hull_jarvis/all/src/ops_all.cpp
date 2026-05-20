@@ -61,8 +61,7 @@ void KutuzovITestConvexHullALL::NextReduce(void *invec, void *inoutvec, const in
     double ay = inout[idx + 1];
     double bx = in[idx];
     double by = in[idx + 1];
-    double cross = CrossProduct(s_curr_x, s_curr_y, ax, ay, bx, by);
-    
+    double cross = CrossProduct(s_curr_x, s_curr_y, ax, ay, bx, by); 
     if (IsBetterPoint(cross, s_epsilon, s_curr_x, s_curr_y, bx, by, ax, ay)) {
       inout[idx] = bx;
       inout[idx + 1] = by;
