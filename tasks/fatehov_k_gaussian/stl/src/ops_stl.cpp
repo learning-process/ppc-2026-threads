@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <thread>
 #include <vector>
 
@@ -110,10 +111,10 @@ bool FatehovKGaussianSTL::RunImpl() {
   const int remainder = h % num_threads;
 
   int row_begin = 0;
-  for (int t = 0; t < num_threads; ++t) {
-    const int row_end = row_begin + rows_per_thread + (t < remainder ? 1 : 0);
-    threads[t] = std::thread(ProcessRows, std::cref(input.image), std::ref(output), std::cref(kernel), kernel_size,
-                             half, row_begin, row_end);
+  for (int idx = 0; idx < num_threads; ++idx) {
+    const int row_end = row_begin + rows_per_thread + (idx < remainder ? 1 : 0);
+    threads[idx] = std::thread(ProcessRows, std::cref(input.image), std::ref(output), std::cref(kernel), kernel_size,
+                               half, row_begin, row_end);
     row_begin = row_end;
   }
 
