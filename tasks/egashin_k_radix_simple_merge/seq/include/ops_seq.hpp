@@ -14,7 +14,7 @@ class EgashinKRadixSimpleMergeSEQ : public BaseTask {
     return ppc::task::TypeOfTask::kSEQ;
   }
 
-  explicit EgashinKRadixSimpleMergeSEQ(const InType& in);
+  explicit EgashinKRadixSimpleMergeSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -22,8 +22,8 @@ class EgashinKRadixSimpleMergeSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static void CountingPass(const std::vector<uint64_t>& source, std::vector<uint64_t>& destination, int byte_index);
-  static void RadixSort(std::vector<double>& data);
+  static void CountingPass(const std::vector<uint64_t> &source, std::vector<uint64_t> &destination, int byte_index);
+  static void RadixSort(std::vector<double> &data);
 
   OutType result_;
 };

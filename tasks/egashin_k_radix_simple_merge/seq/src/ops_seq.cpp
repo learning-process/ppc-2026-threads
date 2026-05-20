@@ -17,7 +17,7 @@ constexpr uint64_t kSignBit = 0x8000000000000000ULL;
 
 }  // namespace
 
-EgashinKRadixSimpleMergeSEQ::EgashinKRadixSimpleMergeSEQ(const InType& in) {
+EgashinKRadixSimpleMergeSEQ::EgashinKRadixSimpleMergeSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};
@@ -42,7 +42,7 @@ bool EgashinKRadixSimpleMergeSEQ::PostProcessingImpl() {
   return true;
 }
 
-void EgashinKRadixSimpleMergeSEQ::CountingPass(const std::vector<uint64_t>& source, std::vector<uint64_t>& destination,
+void EgashinKRadixSimpleMergeSEQ::CountingPass(const std::vector<uint64_t> &source, std::vector<uint64_t> &destination,
                                                int byte_index) {
   std::array<size_t, 256> count{};
 
@@ -62,7 +62,7 @@ void EgashinKRadixSimpleMergeSEQ::CountingPass(const std::vector<uint64_t>& sour
   }
 }
 
-void EgashinKRadixSimpleMergeSEQ::RadixSort(std::vector<double>& data) {
+void EgashinKRadixSimpleMergeSEQ::RadixSort(std::vector<double> &data) {
   if (data.size() < 2) {
     return;
   }
@@ -76,8 +76,8 @@ void EgashinKRadixSimpleMergeSEQ::RadixSort(std::vector<double>& data) {
     keys[i] = ((bits & kSignBit) != 0U) ? ~bits : (bits ^ kSignBit);
   }
 
-  auto* source = &keys;
-  auto* destination = &buffer;
+  auto *source = &keys;
+  auto *destination = &buffer;
   for (int byte_index = 0; byte_index < 8; ++byte_index) {
     CountingPass(*source, *destination, byte_index);
     std::swap(source, destination);

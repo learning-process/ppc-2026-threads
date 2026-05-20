@@ -24,7 +24,7 @@ class EgashinKRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, O
     }
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     return std::ranges::is_sorted(output_data);
   }
 
@@ -42,8 +42,8 @@ TEST_P(EgashinKRunPerfTestsThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, EgashinKRadixSimpleMergeSEQ>(
-    PPC_SETTINGS_egashin_k_radix_simple_merge);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, EgashinKRadixSimpleMergeSEQ>(PPC_SETTINGS_egashin_k_radix_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

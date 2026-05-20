@@ -17,7 +17,7 @@ namespace egashin_k_radix_simple_merge {
 
 class EgashinKRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType& test_param) {
+  static std::string PrintTestParam(const TestType &test_param) {
     return std::get<1>(test_param);
   }
 
@@ -29,7 +29,7 @@ class EgashinKRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
     std::ranges::sort(expected_result_);
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     return output_data == expected_result_;
   }
 
@@ -60,8 +60,8 @@ const std::array<TestType, 8> kTestParam = {{
      "with_infinities"},
 }};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<EgashinKRadixSimpleMergeSEQ, InType>(
-    kTestParam, PPC_SETTINGS_egashin_k_radix_simple_merge);
+const auto kTestTasksList =
+    ppc::util::AddFuncTask<EgashinKRadixSimpleMergeSEQ, InType>(kTestParam, PPC_SETTINGS_egashin_k_radix_simple_merge);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
