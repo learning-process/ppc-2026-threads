@@ -433,7 +433,6 @@ const auto kPerfTestNameSTL = ArtyushkinaMarkirovkaFuncTestsSTL::PrintFuncTestNa
 
 INSTANTIATE_TEST_SUITE_P(ComponentLabelingSTL, ArtyushkinaMarkirovkaFuncTestsSTL, kGtestValuesSTL, kPerfTestNameSTL);
 
-// TBB тесты - тест 5 удален
 TEST_P(ArtyushkinaMarkirovkaFuncTestsTBB, MarkingComponentsTBB) {
   ExecuteTest(GetParam());
 }

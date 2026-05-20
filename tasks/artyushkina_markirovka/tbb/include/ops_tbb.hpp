@@ -29,7 +29,7 @@ class MarkingComponentsTBB : public BaseTask {
   void InitLabelsTbb();
   void MergeHorizontalPairsTbb();
   void MergeVerticalPairsTbb();
-  void MergeDiagonalPairsTbb();  // Добавлен метод для диагональных связей
+  void MergeDiagonalPairsTbb();
   void FinalizeRootsTbb();
   void NormalizeLabelsTbb();
 
