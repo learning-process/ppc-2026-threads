@@ -4,6 +4,7 @@
 #include <random>
 #include <vector>
 
+#include "papulina_y_radix_sort/all/include/ops_all.hpp"
 #include "papulina_y_radix_sort/common/include/common.hpp"
 #include "papulina_y_radix_sort/omp/include/ops_omp.hpp"
 #include "papulina_y_radix_sort/seq/include/ops_seq.hpp"
@@ -48,7 +49,7 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, PapulinaYRadixSortSEQ, PapulinaYRadixSortOMP, PapulinaYRadixSortTBB,
-                                PapulinaYRadixSortSTL>(PPC_SETTINGS_papulina_y_radix_sort);
+                                PapulinaYRadixSortSTL, PapulinaYRadixSortALL>(PPC_SETTINGS_papulina_y_radix_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

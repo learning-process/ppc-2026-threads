@@ -6,9 +6,11 @@
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
+#include "zyazeva_s_matrix_mult_cannon_alg/all/include/ops_all.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/common/include/common.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/omp/include/ops_omp.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/seq/include/ops_seq.hpp"
+#include "zyazeva_s_matrix_mult_cannon_alg/stl/include/ops_stl.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/tbb/include/ops_tbb.hpp"
 
 namespace zyazeva_s_matrix_mult_cannon_alg {
@@ -80,7 +82,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ZyazevaSMatrixMultCannonAlgSEQ, ZyazevaSMatrixMultCannonAlgOMP,
-                                ZyazevaSMatrixMultCannonAlgTBB>(PPC_SETTINGS_zyazeva_s_matrix_mult_cannon_alg);
+                                ZyazevaSMatrixMultCannonAlgTBB, ZyazevaSMatrixMultCannonAlgSTL,
+                                ZyazevaSMatrixMultCannonAlgALL>(PPC_SETTINGS_zyazeva_s_matrix_mult_cannon_alg);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = ZyazevaSPerformanceTest::CustomPerfTestName;
