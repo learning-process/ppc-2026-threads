@@ -1,29 +1,40 @@
-# Отчет TBB: сортировка Хоара с простым слиянием
+# Сортировка Хоара с простым слиянием — TBB
 
-## Контекст и базовый алгоритм
+- **Студент:** Олесницкий Владимир Тарасович, 3823Б1ПР2
+- **Технология:** TBB
+- **Вариант:** 13
 
-TBB-версия сортирует массив `int` блоками по 64 элемента, затем сливает соседние
-отсортированные диапазоны (`tbb/src/ops_tbb.cpp:18`,
-`tbb/src/ops_tbb.cpp:127`). Локальная сортировка использует
-ту же схему Хоара, что и `seq`: pivot из середины, два индекса и обмен до
-пересечения (`tbb/src/ops_tbb.cpp:28`).
+## 1. Контекст
 
-## TBB-примитивы
+TBB-версия переносит две независимые фазы алгоритма на `oneapi::tbb`:
+сортировку блоков и слияние соседних отсортированных диапазонов. Эта реализация
+проверяет, насколько эффективно планировщик TBB распределяет работу для входа
+`N=100000`.
 
-Используется `oneapi::tbb::parallel_for` с `oneapi::tbb::blocked_range<size_t>`
-для диапазона индексов блоков и индексов слияния
-(`tbb/src/ops_tbb.cpp:117`,
-`tbb/src/ops_tbb.cpp:131`). Grainsize явно не передан,
-поэтому применяется значение конструктора `blocked_range` по умолчанию;
-partitioner также явно не указан, значит используется стандартное разбиение
-`parallel_for`. Конкуренция ограничивается раннером через
-`tbb::global_control(max_allowed_parallelism, ppc::util::GetNumThreads())`
-(`modules/runners/src/runners.cpp:150`);
-`GetNumThreads` читает `PPC_NUM_THREADS`
-(`modules/util/src/util.cpp:23`).
+## 2. Постановка задачи
 
-Фрагмент, `tbb/src/ops_tbb.cpp:117`: `blocked_range` задает
-независимые номера блоков.
+- **Входные данные:** непустой объект `std::vector<int>`.
+- **Выходные данные:** отсортированный по неубыванию `std::vector<int>`.
+- **Baseline:** последовательная версия с временем `T_seq = 0.0058254364 s`.
+
+## 3. Базовый алгоритм
+
+Массив `int` сортируется блоками по 64 элемента, затем соседние отсортированные
+диапазоны объединяются простым слиянием. Локальная сортировка использует ту же
+схему Хоара, что и SEQ: pivot из середины, два индекса и обмен до пересечения.
+
+## 4. Схема распараллеливания
+
+Используется `oneapi::tbb::parallel_for` с
+`oneapi::tbb::blocked_range<size_t>` для диапазона номеров блоков и диапазона
+номеров слияний. Grainsize и partitioner явно не задаются, поэтому применяются
+значения по умолчанию.
+
+Конкуренция ограничивается раннером через
+`tbb::global_control(max_allowed_parallelism, ppc::util::GetNumThreads())`.
+`GetNumThreads` читает `PPC_NUM_THREADS`.
+
+Фрагмент TBB-части:
 
 ```cpp
 oneapi::tbb::parallel_for(
@@ -49,28 +60,31 @@ for (size_t merge_width = kBlockSize; merge_width < size; merge_width *= 2) {
       [this, size, merge_width, &merged_data](const auto &range) {
 ```
 
-## Детали pipeline и гонки
+## 5. Детали реализации
 
-`ValidationImpl`, `PreProcessingImpl`, `RunImpl`, `PostProcessingImpl`
-расположены в `tbb/src/ops_tbb.cpp:99`. Сортировка блоков
-пишет в непересекающиеся отрезки `data_`; слияние пишет в непересекающиеся
-отрезки `merged_data`, читая `data_`
-(`tbb/src/ops_tbb.cpp:138`). `data_.swap` выполняется после
-завершения `parallel_for` (`tbb/src/ops_tbb.cpp:148`).
+`ValidationImpl`, `PreProcessingImpl`, `RunImpl` и `PostProcessingImpl`
+расположены в `tbb/src/ops_tbb.cpp`. Сортировка блоков пишет в
+непересекающиеся отрезки `data_`. Слияние пишет в непересекающиеся отрезки
+`merged_data`, читая `data_`. `data_.swap` выполняется после завершения
+`parallel_for`.
 
-## Корректность и среда
+## 6. Проверка корректности
 
-Функциональный тест сравнивает результат с `std::ranges::sort`
-(`tests/functional/main.cpp:35`). Запуск
-текущего `build_olesnitskiy/bin/ppc_func_tests` прошел для `seq/omp/stl/tbb`: 60
-passed; ALL отдельно прошел под `mpirun -np 2`: 15 passed. Performance-вход:
-`N=100000` (`tests/performance/main.cpp:20`).
+Функциональный тест сравнивает результат с `std::ranges::sort`. Запуск текущего
+`build_olesnitskiy/bin/ppc_func_tests` прошел для `seq/omp/stl/tbb`: 60 passed.
+ALL отдельно прошел под `mpirun -np 2`: 15 passed.
 
-## Результаты
+## 7. Экспериментальная среда
 
-Baseline: `seq` `TaskRun = 0.0058254364 s`; для pipeline baseline `0.0068995056
-s`. Framework выполняет 5 повторов по умолчанию
-(`modules/performance/include/performance.hpp:21`).
+- **Сборка:** `build_olesnitskiy`
+- **Compiler:** `g++-14`
+- **Flags:** `-O3 -DNDEBUG`, `std=gnu++23`
+- **Размер входных данных:** `N=100000`
+- **Baseline TaskRun:** `0.0058254364 s`
+- **Baseline pipeline:** `0.0068995056 s`
+- **Число повторов:** 5 по умолчанию
+
+## 8. Результаты
 
 - threads: 1; time: 0.0024417256 s; speedup: 2.386; efficiency: 2.386; notes:
   `TaskRun`, `PPC_NUM_THREADS=1`.
@@ -83,9 +97,8 @@ s`. Framework выполняет 5 повторов по умолчанию
 - threads: 4; time: 0.0026312252 s; speedup: 2.622; efficiency: 0.656; notes:
   `pipeline`, `PPC_NUM_THREADS=4`.
 
-## Выводы
+## 9. Выводы
 
 В измерениях TBB показал лучший результат среди потоковых backend-ов:
-`0.0011774682 s` при 4 потоках, speedup `4.947`. Числа относятся к `N=100000` и
-фиксируются командой `ppc_perf_tests`; вывод не распространяется на другие
-размеры без дополнительных замеров.
+`0.0011774682 s` при 4 потоках, speedup `4.947`. Числа относятся к
+`N=100000`; для других размеров нужны отдельные замеры.
