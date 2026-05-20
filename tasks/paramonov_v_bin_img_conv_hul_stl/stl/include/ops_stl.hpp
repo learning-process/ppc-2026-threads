@@ -34,6 +34,17 @@ class ConvexHullSTL : public BaseTask {
 
   void FloodFill(int start_row, int start_col, std::vector<bool> &visited, std::vector<PixelPoint> &component) const;
 
+  // Вспомогательные методы для снижения когнитивной сложности
+  [[nodiscard]] static PixelPoint FindLowestPoint(const std::vector<PixelPoint> &points);
+  [[nodiscard]] static std::vector<PixelPoint> SortPointsByAngle(const std::vector<PixelPoint> &points,
+                                                                 const PixelPoint &lowest_point);
+  [[nodiscard]] static std::vector<PixelPoint> RemoveCollinearPoints(const std::vector<PixelPoint> &sorted_points,
+                                                                     const PixelPoint &lowest_point);
+  [[nodiscard]] static std::vector<PixelPoint> BuildHull(const std::vector<PixelPoint> &unique_points,
+                                                         const PixelPoint &lowest_point);
+  [[nodiscard]] static std::vector<PixelPoint> HandleCollinearCase(const std::vector<PixelPoint> &points,
+                                                                   const PixelPoint &lowest_point);
+
   InputType working_image_;
 };
 

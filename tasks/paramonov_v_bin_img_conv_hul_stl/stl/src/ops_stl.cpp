@@ -23,6 +23,12 @@ bool ComparePoints(const PixelPoint &a, const PixelPoint &b) {
   return a.col < b.col;
 }
 
+int64_t SquaredDistance(const PixelPoint &a, const PixelPoint &b) {
+  int64_t dx = static_cast<int64_t>(a.col - b.col);
+  int64_t dy = static_cast<int64_t>(a.row - b.row);
+  return dx * dx + dy * dy;
+}
+
 }  // namespace
 
 ConvexHullSTL::ConvexHullSTL(const InputType &input) {
@@ -126,59 +132,75 @@ int64_t ConvexHullSTL::Orientation(const PixelPoint &p, const PixelPoint &q, con
          (static_cast<int64_t>(q.row - p.row) * (r.col - p.col));
 }
 
-std::vector<PixelPoint> ConvexHullSTL::ComputeConvexHull(const std::vector<PixelPoint> &points) {
-  if (points.size() <= 2) {
-    return points;
-  }
+PixelPoint ConvexHullSTL::FindLowestPoint(const std::vector<PixelPoint> &points) {
+  return *std::ranges::min_element(points, ComparePoints);
+}
 
-  auto lowest_point = *std::ranges::min_element(points, ComparePoints);
-
+std::vector<PixelPoint> ConvexHullSTL::SortPointsByAngle(const std::vector<PixelPoint> &points,
+                                                         const PixelPoint &lowest_point) {
   std::vector<PixelPoint> sorted_points;
   sorted_points.reserve(points.size() - 1);
+
   std::ranges::copy_if(points, std::back_inserter(sorted_points), [&lowest_point](const PixelPoint &p) {
     return (p.row != lowest_point.row) || (p.col != lowest_point.col);
   });
 
   std::ranges::sort(sorted_points, [&lowest_point](const PixelPoint &a, const PixelPoint &b) {
     int64_t orient = Orientation(lowest_point, a, b);
-    if (orient == 0) {
-      int64_t dist_a = ((a.row - lowest_point.row) * (a.row - lowest_point.row)) +
-                       ((a.col - lowest_point.col) * (a.col - lowest_point.col));
-      int64_t dist_b = ((b.row - lowest_point.row) * (b.row - lowest_point.row)) +
-                       ((b.col - lowest_point.col) * (b.col - lowest_point.col));
-      return dist_a < dist_b;
+    if (orient != 0) {
+      return orient > 0;
     }
-    return orient > 0;
+    return SquaredDistance(a, lowest_point) < SquaredDistance(b, lowest_point);
   });
 
-  // Удаляем промежуточные коллинеарные точки, оставляя только самую дальнюю
+  return sorted_points;
+}
+
+std::vector<PixelPoint> ConvexHullSTL::RemoveCollinearPoints(const std::vector<PixelPoint> &sorted_points,
+                                                             const PixelPoint &lowest_point) {
+  if (sorted_points.empty()) {
+    return {};
+  }
+
   std::vector<PixelPoint> unique_points;
   unique_points.reserve(sorted_points.size());
+
   for (size_t i = 0; i < sorted_points.size(); ++i) {
-    if (i == sorted_points.size() - 1 || Orientation(lowest_point, sorted_points[i], sorted_points[i + 1]) != 0) {
+    bool is_last = (i == sorted_points.size() - 1);
+    bool is_collinear = !is_last && Orientation(lowest_point, sorted_points[i], sorted_points[i + 1]) == 0;
+
+    if (is_last || !is_collinear) {
       unique_points.push_back(sorted_points[i]);
     }
   }
 
-  // Если все точки коллинеарны, возвращаем две крайние точки
-  if (unique_points.size() <= 1) {
-    std::vector<PixelPoint> collinear_hull;
-    collinear_hull.push_back(lowest_point);
-    if (!unique_points.empty()) {
-      collinear_hull.push_back(unique_points.back());
-    }
-    // Сортируем для консистентности вывода
-    if (collinear_hull.size() == 2) {
-      if (collinear_hull[0].row > collinear_hull[1].row ||
-          (collinear_hull[0].row == collinear_hull[1].row && collinear_hull[0].col > collinear_hull[1].col)) {
-        std::swap(collinear_hull[0], collinear_hull[1]);
-      }
-    }
-    return collinear_hull;
+  return unique_points;
+}
+
+std::vector<PixelPoint> ConvexHullSTL::HandleCollinearCase(const std::vector<PixelPoint> &points,
+                                                           const PixelPoint &lowest_point) {
+  std::vector<PixelPoint> collinear_hull;
+  collinear_hull.push_back(lowest_point);
+
+  if (!points.empty()) {
+    collinear_hull.push_back(points.back());
   }
 
+  if (collinear_hull.size() == 2) {
+    bool need_swap = (collinear_hull[0].row > collinear_hull[1].row) ||
+                     (collinear_hull[0].row == collinear_hull[1].row && collinear_hull[0].col > collinear_hull[1].col);
+    if (need_swap) {
+      std::swap(collinear_hull[0], collinear_hull[1]);
+    }
+  }
+
+  return collinear_hull;
+}
+
+std::vector<PixelPoint> ConvexHullSTL::BuildHull(const std::vector<PixelPoint> &unique_points,
+                                                 const PixelPoint &lowest_point) {
   std::vector<PixelPoint> hull;
-  hull.reserve(points.size());
+  hull.reserve(unique_points.size() + 1);
   hull.push_back(lowest_point);
   hull.push_back(unique_points[0]);
 
@@ -187,7 +209,6 @@ std::vector<PixelPoint> ConvexHullSTL::ComputeConvexHull(const std::vector<Pixel
     while (hull.size() >= 2) {
       const auto &a = hull[hull.size() - 2];
       const auto &b = hull.back();
-
       if (Orientation(a, b, p) <= 0) {
         hull.pop_back();
       } else {
@@ -198,6 +219,22 @@ std::vector<PixelPoint> ConvexHullSTL::ComputeConvexHull(const std::vector<Pixel
   }
 
   return hull;
+}
+
+std::vector<PixelPoint> ConvexHullSTL::ComputeConvexHull(const std::vector<PixelPoint> &points) {
+  if (points.size() <= 2) {
+    return points;
+  }
+
+  PixelPoint lowest_point = FindLowestPoint(points);
+  std::vector<PixelPoint> sorted_points = SortPointsByAngle(points, lowest_point);
+  std::vector<PixelPoint> unique_points = RemoveCollinearPoints(sorted_points, lowest_point);
+
+  if (unique_points.size() <= 1) {
+    return HandleCollinearCase(unique_points, lowest_point);
+  }
+
+  return BuildHull(unique_points, lowest_point);
 }
 
 }  // namespace paramonov_v_bin_img_conv_hul_stl
