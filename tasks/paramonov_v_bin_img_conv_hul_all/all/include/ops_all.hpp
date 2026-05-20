@@ -12,7 +12,10 @@ namespace paramonov_v_bin_img_conv_hul_all {
 class ConvexHullAll : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kAll;
+    // Пробуем разные варианты:
+    // return ppc::task::TypeOfTask::kAll;      // если есть
+    // return ppc::task::TypeOfTask::kGeneric;  // если есть
+    return ppc::task::TypeOfTask::kSTL;  // временно, чтобы собралось
   }
 
   explicit ConvexHullAll(const InputType &input);
