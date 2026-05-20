@@ -33,7 +33,7 @@ class ChernykhSRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::abs(output_data - expected_output_) < 1e-3;
+    return std::abs(output_data - expected_output_) < 1e-5;
   }
 
   InType GetTestInputData() final {
