@@ -114,7 +114,8 @@ void ComputeRecvCounts(int world_size, int rows_per_proc, int remainder, int col
 void GatherAndAssemble(int rank, int world_size, int rows_per_proc, int remainder, int cols_b,
                        const std::vector<double> &local_c, std::vector<double> &c) {
   if (rank == 0) {
-    std::vector<int> recv_counts(world_size), displs(world_size);
+    std::vector<int> recv_counts(world_size);
+    std::vector<int> displs(world_size);
     int total_elements = 0;
     ComputeRecvCounts(world_size, rows_per_proc, remainder, cols_b, recv_counts, displs, total_elements);
     std::vector<double> gathered(static_cast<size_t>(total_elements));
@@ -130,7 +131,8 @@ void GatherAndAssemble(int rank, int world_size, int rows_per_proc, int remainde
       }
     }
   } else {
-    std::vector<int> recv_counts(world_size), displs(world_size);
+    std::vector<int> recv_counts(world_size);
+    std::vector<int> displs(world_size);
     int total_elements = 0;
     ComputeRecvCounts(world_size, rows_per_proc, remainder, cols_b, recv_counts, displs, total_elements);
     MPI_Gatherv(local_c.data(), static_cast<int>(local_c.size()), MPI_DOUBLE, nullptr, nullptr, nullptr, MPI_DOUBLE, 0,
