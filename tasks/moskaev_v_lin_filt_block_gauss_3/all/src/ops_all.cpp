@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <functional>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "moskaev_v_lin_filt_block_gauss_3/common/include/common.hpp"
@@ -85,21 +86,8 @@ void FilterBlock(const std::vector<uint8_t> &input_block, std::vector<uint8_t> &
   }
 }
 
-void CopyBlockToOutput(const std::vector<uint8_t> &src_block, std::vector<uint8_t> &dst, int dst_width, int channels,
-                       int block_x, int block_y, int block_w, int block_h) {
-  for (int row = 0; row < block_h; ++row) {
-    for (int col = 0; col < block_w; ++col) {
-      for (int ch = 0; ch < channels; ++ch) {
-        size_t src_idx = ((static_cast<size_t>(row) * block_w + col) * channels) + ch;
-        size_t dst_idx = ((static_cast<size_t>(block_y + row) * dst_width + (block_x + col)) * channels) + ch;
-        dst[dst_idx] = src_block[src_idx];
-      }
-    }
-  }
-}
-
 void ProcessOneBlock(int idx, int blocks_x, int width, int height, int channels, int block_size,
-                     const std::vector<uint8_t> &image_data, std::vector<uint8_t> &output) {
+                     const std::vector<uint8_t> &image_data, std::vector<uint8_t> &output, int &output_offset) {
   int bx = idx % blocks_x;
   int by = idx / blocks_x;
 
@@ -117,7 +105,11 @@ void ProcessOneBlock(int idx, int blocks_x, int width, int height, int channels,
 
   CopyBlockWithHalo(image_data, input_block, width, height, channels, block_x, block_y, block_w, block_h, padded_w);
   FilterBlock(input_block, output_block, block_w, block_h, channels);
-  CopyBlockToOutput(output_block, output, width, channels, block_x, block_y, block_w, block_h);
+
+  for (size_t i = 0; i < output_size; ++i) {
+    output[output_offset + i] = output_block[i];
+  }
+  output_offset += static_cast<int>(output_size);
 }
 
 void BroadcastImageData(int rank, int &width, int &height, int &channels, std::vector<uint8_t> &image_data,
@@ -173,9 +165,113 @@ void ScatterBlocks(int rank, int num_procs, int total_blocks, std::vector<int> &
 
 void ProcessBlockRange(const std::vector<int> &blocks, int start, int end, int blocks_x, int width, int height,
                        int channels, int block_size, const std::vector<uint8_t> &image_data,
-                       std::vector<uint8_t> &output) {
+                       std::vector<uint8_t> &output, int &output_offset) {
   for (int i = start; i < end; ++i) {
-    ProcessOneBlock(blocks[i], blocks_x, width, height, channels, block_size, image_data, output);
+    ProcessOneBlock(blocks[i], blocks_x, width, height, channels, block_size, image_data, output, output_offset);
+  }
+}
+
+void ProcessAssignedBlocksSequential(const std::vector<int> &local_blocks, int blocks_x, int width, int height,
+                                     int channels, int block_size, const std::vector<uint8_t> &image_data,
+                                     std::vector<uint8_t> &output) {
+  int local_cnt = static_cast<int>(local_blocks.size());
+  int total_bytes = 0;
+  for (int i = 0; i < local_cnt; ++i) {
+    int idx = local_blocks[i];
+    int bx = idx % blocks_x;
+    int by = idx / blocks_x;
+    int block_x = bx * block_size;
+    int block_y = by * block_size;
+    int block_w = std::min(block_size, width - block_x);
+    int block_h = std::min(block_size, height - block_y);
+    total_bytes += block_w * block_h * channels;
+  }
+  output.resize(total_bytes);
+  int output_offset = 0;
+  ProcessBlockRange(local_blocks, 0, local_cnt, blocks_x, width, height, channels, block_size, image_data, output,
+                    output_offset);
+}
+
+void ProcessBlocksInThread(int start, int blocks_in_thread, int blocks_x, int width, int height, int channels,
+                           int block_size, const std::vector<uint8_t> &image_data, const std::vector<int> &local_blocks,
+                           std::vector<uint8_t> &local_output) {
+  int offset = 0;
+  for (int i = start; i < start + blocks_in_thread; ++i) {
+    int idx = local_blocks[i];
+    int bx = idx % blocks_x;
+    int by = idx / blocks_x;
+    int block_x = bx * block_size;
+    int block_y = by * block_size;
+    int block_w = std::min(block_size, width - block_x);
+    int block_h = std::min(block_size, height - block_y);
+    int padded_w = block_w + 2;
+
+    size_t input_size =
+        static_cast<size_t>(padded_w) * static_cast<size_t>(block_h + 2) * static_cast<size_t>(channels);
+    std::vector<uint8_t> input_block(input_size, 0);
+    size_t output_size = static_cast<size_t>(block_w) * static_cast<size_t>(block_h) * static_cast<size_t>(channels);
+    std::vector<uint8_t> output_block(output_size, 0);
+
+    CopyBlockWithHalo(image_data, input_block, width, height, channels, block_x, block_y, block_w, block_h, padded_w);
+    FilterBlock(input_block, output_block, block_w, block_h, channels);
+
+    for (size_t j = 0; j < output_size; ++j) {
+      local_output[offset + j] = output_block[j];
+    }
+    offset += static_cast<int>(output_size);
+  }
+}
+
+void ProcessAssignedBlocksParallel(const std::vector<int> &local_blocks, int blocks_x, int width, int height,
+                                   int channels, int block_size, const std::vector<uint8_t> &image_data,
+                                   std::vector<uint8_t> &output) {
+  int local_cnt = static_cast<int>(local_blocks.size());
+  int num_threads = static_cast<int>(std::thread::hardware_concurrency());
+  num_threads = std::min(num_threads, 8);
+  num_threads = std::min(num_threads, local_cnt);
+  int blocks_per_thread_base = local_cnt / num_threads;
+  int blocks_remainder = local_cnt % num_threads;
+
+  std::vector<std::vector<uint8_t>> thread_outputs(num_threads);
+  std::vector<std::thread> threads;
+
+  for (int tid = 0; tid < num_threads; ++tid) {
+    int blocks_in_thread = blocks_per_thread_base + (tid < blocks_remainder ? 1 : 0);
+    int start = (tid * blocks_per_thread_base) + std::min(tid, blocks_remainder);
+
+    threads.emplace_back([&, tid, start, blocks_in_thread]() {
+      int bytes_in_thread = 0;
+      for (int i = start; i < start + blocks_in_thread; ++i) {
+        int idx = local_blocks[i];
+        int bx = idx % blocks_x;
+        int by = idx / blocks_x;
+        int block_x = bx * block_size;
+        int block_y = by * block_size;
+        int block_w = std::min(block_size, width - block_x);
+        int block_h = std::min(block_size, height - block_y);
+        bytes_in_thread += block_w * block_h * channels;
+      }
+
+      std::vector<uint8_t> local_output(bytes_in_thread);
+      ProcessBlocksInThread(start, blocks_in_thread, blocks_x, width, height, channels, block_size, image_data,
+                            local_blocks, local_output);
+      thread_outputs[tid] = std::move(local_output);
+    });
+  }
+
+  for (auto &t : threads) {
+    t.join();
+  }
+
+  int total_bytes = 0;
+  for (const auto &to : thread_outputs) {
+    total_bytes += static_cast<int>(to.size());
+  }
+  output.resize(total_bytes);
+  int pos = 0;
+  for (const auto &to : thread_outputs) {
+    std::ranges::copy(to, output.begin() + pos);
+    pos += static_cast<int>(to.size());
   }
 }
 
@@ -183,50 +279,36 @@ void ProcessAssignedBlocks(const std::vector<int> &local_blocks, int blocks_x, i
                            int block_size, const std::vector<uint8_t> &image_data, std::vector<uint8_t> &output) {
   int local_cnt = static_cast<int>(local_blocks.size());
   if (local_cnt == 0) {
+    output.clear();
     return;
   }
 
   int num_threads = static_cast<int>(std::thread::hardware_concurrency());
   if (num_threads <= 1 || local_cnt < 2) {
-    ProcessBlockRange(local_blocks, 0, local_cnt, blocks_x, width, height, channels, block_size, image_data, output);
-    return;
-  }
-
-  num_threads = std::min(num_threads, 8);
-  num_threads = std::min(num_threads, local_cnt);
-  int blocks_per_thread = (local_cnt + num_threads - 1) / num_threads;
-  std::vector<std::thread> threads;
-
-  for (int tid = 0; tid < num_threads; ++tid) {
-    int start = tid * blocks_per_thread;
-    int end = std::min(start + blocks_per_thread, local_cnt);
-    threads.emplace_back(ProcessBlockRange, std::cref(local_blocks), start, end, blocks_x, width, height, channels,
-                         block_size, std::cref(image_data), std::ref(output));
-  }
-
-  for (auto &t : threads) {
-    t.join();
+    ProcessAssignedBlocksSequential(local_blocks, blocks_x, width, height, channels, block_size, image_data, output);
+  } else {
+    ProcessAssignedBlocksParallel(local_blocks, blocks_x, width, height, channels, block_size, image_data, output);
   }
 }
 
-void GatherAndBroadcastResult(int rank, int num_procs, std::vector<uint8_t> &output, size_t total_pixels,
-                              OutType &out) {
+void GatherAndBroadcastResult(int rank, int num_procs, const std::vector<uint8_t> &output, OutType &out) {
   int send_count = static_cast<int>(output.size());
 
   std::vector<int> recv_counts(num_procs);
   MPI_Allgather(&send_count, 1, MPI_INT, recv_counts.data(), 1, MPI_INT, MPI_COMM_WORLD);
 
+  std::vector<int> displs(num_procs);
+  int total_bytes = 0;
+  for (int i = 0; i < num_procs; ++i) {
+    displs[i] = total_bytes;
+    total_bytes += recv_counts[i];
+  }
+
   if (rank == 0) {
-    std::vector<int> displs(num_procs);
-    int offset = 0;
-    for (int i = 0; i < num_procs; ++i) {
-      displs[i] = offset;
-      offset += recv_counts[i];
-    }
-    out.resize(total_pixels);
+    out.resize(total_bytes);
 
     if (send_count > 0) {
-      std::copy(output.begin(), output.end(), out.begin());
+      std::ranges::copy(output, out.begin());
     }
 
     for (int src = 1; src < num_procs; ++src) {
@@ -288,8 +370,6 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
     return false;
   }
 
-  size_t total_pixels = static_cast<size_t>(width) * height * channels;
-
   int blocks_x = (width + block_size_ - 1) / block_size_;
   int blocks_y = (height + block_size_ - 1) / block_size_;
   int total_blocks = blocks_x * blocks_y;
@@ -303,13 +383,9 @@ bool MoskaevVLinFiltBlockGauss3ALL::RunImpl() {
   ScatterBlocks(rank_, num_procs_, total_blocks, local_blocks, local_cnt);
 
   std::vector<uint8_t> output;
-  if (local_cnt > 0) {
-    output.assign(total_pixels, 0);
-  }
-
   ProcessAssignedBlocks(local_blocks, blocks_x, width, height, channels, block_size_, image_data, output);
 
-  GatherAndBroadcastResult(rank_, num_procs_, output, total_pixels, GetOutput());
+  GatherAndBroadcastResult(rank_, num_procs_, output, GetOutput());
 
   return true;
 }
