@@ -6,7 +6,6 @@
 #include <limits>
 #include <numbers>
 #include <string>
-#include <tuple>
 
 #include "egashin_k_radix_simple_merge/common/include/common.hpp"
 #include "egashin_k_radix_simple_merge/seq/include/ops_seq.hpp"
