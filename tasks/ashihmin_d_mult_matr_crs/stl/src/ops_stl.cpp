@@ -30,6 +30,24 @@ bool AshihminDMultMatrCrsSTL::PreProcessingImpl() {
   return true;
 }
 
+void AshihminDMultMatrCrsSTL::MultiplyRow(int row_idx, const CRSMatrix &matrix_a, const CRSMatrix &matrix_b,
+                                          std::vector<int> &row_cols, std::vector<double> &row_vals) {
+  std::map<int, double> row_accumulator;
+  for (int j = matrix_a.row_ptr[row_idx]; j < matrix_a.row_ptr[row_idx + 1]; ++j) {
+    int col_a = matrix_a.col_index[j];
+    double val_a = matrix_a.values[j];
+    for (int k = matrix_b.row_ptr[col_a]; k < matrix_b.row_ptr[col_a + 1]; ++k) {
+      row_accumulator[matrix_b.col_index[k]] += val_a * matrix_b.values[k];
+    }
+  }
+  for (const auto &entry : row_accumulator) {
+    if (std::abs(entry.second) > 1e-15) {
+      row_cols.push_back(entry.first);
+      row_vals.push_back(entry.second);
+    }
+  }
+}
+
 bool AshihminDMultMatrCrsSTL::RunImpl() {
   const auto &matrix_a = GetInput().first;
   const auto &matrix_b = GetInput().second;
@@ -56,26 +74,13 @@ bool AshihminDMultMatrCrsSTL::RunImpl() {
     futures.push_back(
         std::async(std::launch::async, [start_row, end_row, &matrix_a, &matrix_b, &local_cols, &local_vals] {
       for (int i = start_row; i < end_row; ++i) {
-        std::map<int, double> row_accumulator;
-        for (int j = matrix_a.row_ptr[i]; j < matrix_a.row_ptr[i + 1]; ++j) {
-          int col_a = matrix_a.col_index[j];
-          double val_a = matrix_a.values[j];
-          for (int k = matrix_b.row_ptr[col_a]; k < matrix_b.row_ptr[col_a + 1]; ++k) {
-            row_accumulator[matrix_b.col_index[k]] += val_a * matrix_b.values[k];
-          }
-        }
-        for (const auto &entry : row_accumulator) {
-          if (std::abs(entry.second) > 1e-15) {
-            local_cols[i].push_back(entry.first);
-            local_vals[i].push_back(entry.second);
-          }
-        }
+        MultiplyRow(i, matrix_a, matrix_b, local_cols[i], local_vals[i]);
       }
     }));
   }
 
-  for (auto &f : futures) {
-    f.get();
+  for (auto &fut : futures) {
+    fut.get();
   }
 
   for (int i = 0; i < rows_a; ++i) {

@@ -18,6 +18,9 @@ class AshihminDMultMatrCrsSTL : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  static void MultiplyRow(int row_idx, const CRSMatrix &matrix_a, const CRSMatrix &matrix_b, std::vector<int> &row_cols,
+                          std::vector<double> &row_vals);
 };
 
 }  // namespace ashihmin_d_mult_matr_crs
