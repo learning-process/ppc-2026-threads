@@ -7,6 +7,8 @@
 #include <utility>
 #include <vector>
 
+#include "egashin_k_radix_simple_merge/common/include/common.hpp"
+
 namespace egashin_k_radix_simple_merge {
 
 namespace {
@@ -46,17 +48,17 @@ void EgashinKRadixSimpleMergeSEQ::CountingPass(const std::vector<uint64_t>& sour
 
   for (uint64_t value : source) {
     const auto byte = static_cast<uint8_t>((value >> (byte_index * 8)) & 0xFFU);
-    count[byte]++;
+    count.at(byte)++;
   }
 
   std::array<size_t, 256> position{};
   for (size_t i = 1; i < count.size(); ++i) {
-    position[i] = position[i - 1] + count[i - 1];
+    position.at(i) = position.at(i - 1) + count.at(i - 1);
   }
 
   for (uint64_t value : source) {
     const auto byte = static_cast<uint8_t>((value >> (byte_index * 8)) & 0xFFU);
-    destination[position[byte]++] = value;
+    destination[position.at(byte)++] = value;
   }
 }
 

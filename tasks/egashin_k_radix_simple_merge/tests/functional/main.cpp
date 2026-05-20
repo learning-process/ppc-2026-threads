@@ -2,14 +2,16 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <limits>
+#include <numbers>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "egashin_k_radix_simple_merge/common/include/common.hpp"
 #include "egashin_k_radix_simple_merge/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace egashin_k_radix_simple_merge {
 
@@ -53,7 +55,7 @@ const std::array<TestType, 8> kTestParam = {{
     {InType{9.0, 7.0, 5.0, 3.0, 1.0}, "reverse_sorted"},
     {InType{5.0, -1.25, 0.0, 3.5, -2.75, 0.25}, "mixed_signs"},
     {InType{4.5, 4.5, -2.0, 4.5, -2.0, 8.1, 8.1}, "duplicates"},
-    {InType{1e-12, -1e12, 3.1415926535, -2.7182818284, 1e6, -1e-6}, "different_scales"},
+    {InType{1e-12, -1e12, std::numbers::pi, -std::numbers::e, 1e6, -1e-6}, "different_scales"},
     {InType{std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(), -10.0, 1.0, 0.5},
      "with_infinities"},
 }};
