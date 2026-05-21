@@ -125,8 +125,8 @@ TEST_P(VolkovAPerfTests, RunPerfTest) {
 
 namespace {
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, VolkovASparseMatMulCcsSeq, VolkovASparseMatMulCcsOmp,
-                                VolkovASparseMatMulCcsTbb, VolkovASparseMatMulCcsStl>(PPC_SETTINGS_volkov_a_sparse_mat_mul_ccs);
+    ppc::util::MakeAllPerfTasks<InType, VolkovASparseMatMulCcsSeq, VolkovASparseMatMulCcsOmp, VolkovASparseMatMulCcsTbb,
+                                VolkovASparseMatMulCcsStl>(PPC_SETTINGS_volkov_a_sparse_mat_mul_ccs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = VolkovAPerfTests::CustomPerfTestName;
