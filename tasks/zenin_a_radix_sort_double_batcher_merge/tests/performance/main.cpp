@@ -19,8 +19,7 @@ class ZeninARadixSortDoubleBatcherMergePerfTestsThreads : public ppc::util::Base
   InType input_data_;
 
   void SetUp() override {
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::mt19937 gen(static_cast<unsigned int>(kCount_));
     std::uniform_real_distribution<double> dist(-1e6, 1e6);
 
     input_data_.resize(kCount_);
