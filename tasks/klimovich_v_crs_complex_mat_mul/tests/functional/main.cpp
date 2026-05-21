@@ -9,6 +9,7 @@
 #include <tuple>
 #include <vector>
 
+#include "klimovich_v_crs_complex_mat_mul/all/include/ops_all.hpp"
 #include "klimovich_v_crs_complex_mat_mul/common/include/common.hpp"
 #include "klimovich_v_crs_complex_mat_mul/omp/include/ops_omp.hpp"
 #include "klimovich_v_crs_complex_mat_mul/seq/include/ops_seq.hpp"
@@ -163,6 +164,8 @@ const auto kTaskList = std::tuple_cat(ppc::util::AddFuncTask<KlimovichVCrsComple
                                       ppc::util::AddFuncTask<KlimovichVCrsComplexMatMulTbb, InType>(
                                           kTestParams, PPC_SETTINGS_klimovich_v_crs_complex_mat_mul),
                                       ppc::util::AddFuncTask<KlimovichVCrsComplexMatMulStl, InType>(
+                                          kTestParams, PPC_SETTINGS_klimovich_v_crs_complex_mat_mul),
+                                      ppc::util::AddFuncTask<KlimovichVCrsComplexMatMulAll, InType>(
                                           kTestParams, PPC_SETTINGS_klimovich_v_crs_complex_mat_mul));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTaskList);

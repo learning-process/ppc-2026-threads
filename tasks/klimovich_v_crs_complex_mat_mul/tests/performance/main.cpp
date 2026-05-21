@@ -6,6 +6,7 @@
 #include <tuple>
 #include <utility>
 
+#include "klimovich_v_crs_complex_mat_mul/all/include/ops_all.hpp"
 #include "klimovich_v_crs_complex_mat_mul/common/include/common.hpp"
 #include "klimovich_v_crs_complex_mat_mul/omp/include/ops_omp.hpp"
 #include "klimovich_v_crs_complex_mat_mul/seq/include/ops_seq.hpp"
@@ -77,8 +78,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, KlimovichVCrsComplexMatMulSeq, KlimovichVCrsComplexMatMulOmp,
-                                KlimovichVCrsComplexMatMulTbb, KlimovichVCrsComplexMatMulStl>(
-        PPC_SETTINGS_klimovich_v_crs_complex_mat_mul);
+                                KlimovichVCrsComplexMatMulTbb, KlimovichVCrsComplexMatMulStl,
+                                KlimovichVCrsComplexMatMulAll>(PPC_SETTINGS_klimovich_v_crs_complex_mat_mul);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
