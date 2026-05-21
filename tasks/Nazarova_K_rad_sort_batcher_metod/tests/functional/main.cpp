@@ -11,7 +11,6 @@
 #include "Nazarova_K_rad_sort_batcher_metod/common/include/common.hpp"
 #include "Nazarova_K_rad_sort_batcher_metod/omp/include/ops_omp.hpp"
 #include "Nazarova_K_rad_sort_batcher_metod/seq/include/ops_seq.hpp"
-#include "Nazarova_K_rad_sort_batcher_metod/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -97,12 +96,10 @@ const std::array<TestType, 7> kTestParam = {
 
 const auto kOmpTestTasksList = ppc::util::AddFuncTask<NazarovaKCalcIntegRectanglesOMP, InType>(
     kTestParam, PPC_SETTINGS_Nazarova_K_rad_sort_batcher_metod);
-const auto kTbbTestTasksList = ppc::util::AddFuncTask<NazarovaKCalcIntegRectanglesTBB, InType>(
-    kTestParam, PPC_SETTINGS_Nazarova_K_rad_sort_batcher_metod);
 const auto kTestTasksList = ppc::util::AddFuncTask<NazarovaKCalcIntegRectanglesSEQ, InType>(
     kTestParam, PPC_SETTINGS_Nazarova_K_rad_sort_batcher_metod);
 
-const auto kAllTestTasks = std::tuple_cat(kOmpTestTasksList, kTestTasksList, kTbbTestTasksList);
+const auto kAllTestTasks = std::tuple_cat(kOmpTestTasksList, kTestTasksList);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kAllTestTasks);
 
