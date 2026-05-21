@@ -63,7 +63,7 @@ class VlasovaASimpsonMethodFuncTests : public ppc::util::BaseRunFuncTests<InType
       func = [](const std::vector<double> &) { return 0.0; };
     }
 
-    input_data_ = SimpsonTask(func, a, b, n);
+    input_data_ = SimpsonTask(func, a, b, n);  // функция Гаусса на кубе [-2,2]^3 с сеткой 200x200x200
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

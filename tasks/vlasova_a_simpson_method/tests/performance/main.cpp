@@ -46,8 +46,10 @@ TEST_P(VlasovaASimpsonMethodPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, VlasovaASimpsonMethodSEQ, VlasovaASimpsonMethodOMP, VlasovaASimpsonMethodTBB, VlasovaASimpsonMethodSTL, VlasovaASimpsonMethodALL>(PPC_SETTINGS_vlasova_a_simpson_method);
-  
+    ppc::util::MakeAllPerfTasks<InType, VlasovaASimpsonMethodSEQ, VlasovaASimpsonMethodOMP, VlasovaASimpsonMethodTBB,
+                                VlasovaASimpsonMethodSTL, VlasovaASimpsonMethodALL>(
+        PPC_SETTINGS_vlasova_a_simpson_method);
+
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = VlasovaASimpsonMethodPerfTests::CustomPerfTestName;
 
