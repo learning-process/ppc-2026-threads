@@ -41,7 +41,7 @@ class VlasovaASimpsonMethodFuncTests : public ppc::util::BaseRunFuncTests<InType
       func = [](const std::vector<double> &) { return 1.0; };
     } else if (func_name.find("linear") != std::string::npos) {
       func = [](const std::vector<double> &x) { return x[0]; };
-    } else if (func_name.find("quadratic_2d_x_only") != std::string::npos) {
+    } else if (func_name.find("quadratic_2d_only_x") != std::string::npos) {
       func = [](const std::vector<double> &x) { return x[0] * x[0]; };
     } else if (func_name.find("quadratic_2d_only_y") != std::string::npos) {
       func = [](const std::vector<double> &x) { return x[1] * x[1]; };
