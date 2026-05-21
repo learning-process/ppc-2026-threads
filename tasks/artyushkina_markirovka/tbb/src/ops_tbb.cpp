@@ -102,11 +102,9 @@ void MarkingComponentsTBB::MergeDiagonalPairsTbb() {
   tbb::parallel_for(0, rows_ - 1, [this](int y_coord) {
     for (int x_coord = 0; x_coord < cols_ - 1; ++x_coord) {
       int idx = (y_coord * cols_) + x_coord;
-      // Главная диагональ (нижний-правый)
       if (labels_[idx] != 0 && labels_[idx + cols_ + 1] != 0) {
         UnionLabels(labels_[idx], labels_[idx + cols_ + 1]);
       }
-      // Побочная диагональ (нижний-левый)
       if (x_coord > 0) {
         if (labels_[idx] != 0 && labels_[idx + cols_ - 1] != 0) {
           UnionLabels(labels_[idx], labels_[idx + cols_ - 1]);
