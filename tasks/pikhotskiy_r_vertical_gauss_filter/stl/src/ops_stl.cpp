@@ -34,6 +34,24 @@ constexpr std::size_t ToLinearIndex(int x_pos, int y_pos, int width) noexcept {
 std::uint8_t NormalizeAndRoundUp(int sum) {
   return static_cast<std::uint8_t>((sum + (kKernelNorm - 1)) / kKernelNorm);
 }
+
+template <class TCallback>
+void RunPassInParallel(int actual_threads, int stripes_per_worker, int extra_stripes, TCallback callback) {
+  std::vector<std::thread> workers;
+  workers.reserve(actual_threads);
+
+  int stripe_begin = 0;
+  for (int worker_id = 0; worker_id < actual_threads; ++worker_id) {
+    const int stripes_this_worker = stripes_per_worker + (worker_id < extra_stripes ? 1 : 0);
+    const int stripe_end = stripe_begin + stripes_this_worker;
+    workers.emplace_back([callback, stripe_begin, stripe_end]() { callback(stripe_begin, stripe_end); });
+    stripe_begin = stripe_end;
+  }
+
+  for (auto &worker : workers) {
+    worker.join();
+  }
+}
 }  // namespace
 
 PikhotskiyRVerticalGaussFilterSTL::PikhotskiyRVerticalGaussFilterSTL(const InType &in) {
@@ -76,53 +94,23 @@ bool PikhotskiyRVerticalGaussFilterSTL::RunImpl() {
   const int requested_threads = std::max(1, ppc::util::GetNumThreads());
   const int stripe_count = (width_ + stripe_width_ - 1) / stripe_width_;
   const int actual_threads = std::max(1, std::min(requested_threads, stripe_count));
-
-  std::vector<std::thread> workers;
-  workers.reserve(actual_threads);
-
   const int stripes_per_worker = stripe_count / actual_threads;
   const int extra_stripes = stripe_count % actual_threads;
+  RunPassInParallel(actual_threads, stripes_per_worker, extra_stripes, [this](int stripe_begin, int stripe_end) {
+    for (int stripe_index = stripe_begin; stripe_index < stripe_end; ++stripe_index) {
+      const int x_begin = stripe_index * stripe_width_;
+      const int x_end = std::min(width_, x_begin + stripe_width_);
+      RunVerticalPassForStripe(x_begin, x_end);
+    }
+  });
 
-  int stripe_begin = 0;
-  for (int worker_id = 0; worker_id < actual_threads; ++worker_id) {
-    const int stripes_this_worker = stripes_per_worker + (worker_id < extra_stripes ? 1 : 0);
-    const int stripe_end = stripe_begin + stripes_this_worker;
-
-    workers.emplace_back([this, stripe_begin, stripe_end]() {
-      for (int stripe_index = stripe_begin; stripe_index < stripe_end; ++stripe_index) {
-        const int x_begin = stripe_index * stripe_width_;
-        const int x_end = std::min(width_, x_begin + stripe_width_);
-        RunVerticalPassForStripe(x_begin, x_end);
-      }
-    });
-    stripe_begin = stripe_end;
-  }
-
-  for (auto &worker : workers) {
-    worker.join();
-  }
-
-  workers.clear();
-  workers.reserve(actual_threads);
-
-  stripe_begin = 0;
-  for (int worker_id = 0; worker_id < actual_threads; ++worker_id) {
-    const int stripes_this_worker = stripes_per_worker + (worker_id < extra_stripes ? 1 : 0);
-    const int stripe_end = stripe_begin + stripes_this_worker;
-
-    workers.emplace_back([this, stripe_begin, stripe_end]() {
-      for (int stripe_index = stripe_begin; stripe_index < stripe_end; ++stripe_index) {
-        const int x_begin = stripe_index * stripe_width_;
-        const int x_end = std::min(width_, x_begin + stripe_width_);
-        RunHorizontalPassForStripe(x_begin, x_end);
-      }
-    });
-    stripe_begin = stripe_end;
-  }
-
-  for (auto &worker : workers) {
-    worker.join();
-  }
+  RunPassInParallel(actual_threads, stripes_per_worker, extra_stripes, [this](int stripe_begin, int stripe_end) {
+    for (int stripe_index = stripe_begin; stripe_index < stripe_end; ++stripe_index) {
+      const int x_begin = stripe_index * stripe_width_;
+      const int x_end = std::min(width_, x_begin + stripe_width_);
+      RunHorizontalPassForStripe(x_begin, x_end);
+    }
+  });
 
   return true;
 }
