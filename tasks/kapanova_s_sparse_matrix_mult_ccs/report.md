@@ -247,14 +247,19 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
 cmake --build build
 ```
 
-**Команды запуска функциональных тестов**
+### Команды запуска функциональных тестов
+
+```bash
 ./build/bin/ppc_func_tests --gtest_filter="*kapanova*seq*"
 ./build/bin/ppc_func_tests --gtest_filter="*kapanova*omp*"
 ./build/bin/ppc_func_tests --gtest_filter="*kapanova*stl*"
 ./build/bin/ppc_func_tests --gtest_filter="*kapanova*tbb*"
 export PPC_NUM_THREADS=<N> && mpirun -np <N> ./build/bin/ppc_func_tests --gtest_filter="*kapanova*all*"
+```
 
-**Команды запуска тестов производительности:**
+### Команды запуска тестов производительности
+
+```bash
 export PPC_NUM_THREADS=1
 ./build/bin/ppc_perf_tests --gtest_filter="*kapanova*seq*"
 
@@ -274,6 +279,7 @@ export PPC_NUM_PROC=1 PPC_NUM_THREADS=4 && ./build/bin/ppc_perf_tests --gtest_fi
 export PPC_NUM_PROC=2 PPC_NUM_THREADS=2 && mpirun -np 2 ./build/bin/ppc_perf_tests --gtest_filter="*kapanova*all*"
 export PPC_NUM_PROC=2 PPC_NUM_THREADS=4 && mpirun -np 2 ./build/bin/ppc_perf_tests --gtest_filter="*kapanova*all*"
 export PPC_NUM_PROC=4 PPC_NUM_THREADS=2 && mpirun -np 4 ./build/bin/ppc_perf_tests --gtest_filter="*kapanova*all*"
+```
 
 Дополнительные меры стабилизации (отключение частотного скейлинга, фиксация governor в performance, привязка процесса
 к ядру, уменьшение фоновой нагрузки) не применялись.
