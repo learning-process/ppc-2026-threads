@@ -1,3 +1,5 @@
+#include "vinyaikina_e_multidimensional_integrals_simpson_method/all/include/ops_all.hpp"
+
 #include <mpi.h>
 #include <omp.h>
 
@@ -12,7 +14,6 @@
 
 #include "util/include/util.hpp"
 #include "vinyaikina_e_multidimensional_integrals_simpson_method/common/include/common.hpp"
-#include "vinyaikina_e_multidimensional_integrals_simpson_method/mpi/include/ops_mpi.hpp"
 
 namespace vinyaikina_e_multidimensional_integrals_simpson_method {
 namespace {
