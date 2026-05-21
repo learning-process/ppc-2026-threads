@@ -11,8 +11,8 @@
 #include "Nazarova_K_rad_sort_batcher_metod/common/include/common.hpp"
 #include "Nazarova_K_rad_sort_batcher_metod/omp/include/ops_omp.hpp"
 #include "Nazarova_K_rad_sort_batcher_metod/seq/include/ops_seq.hpp"
-#include "Nazarova_K_rad_sort_batcher_metod/tbb/include/ops_tbb.hpp"
 #include "Nazarova_K_rad_sort_batcher_metod/stl/include/ops_stl.hpp"
+#include "Nazarova_K_rad_sort_batcher_metod/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
