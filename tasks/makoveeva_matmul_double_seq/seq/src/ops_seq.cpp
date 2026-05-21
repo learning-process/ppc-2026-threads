@@ -16,7 +16,7 @@ MatmulDoubleSeqTask::MatmulDoubleSeqTask(const InType &in)
 }
 
 bool MatmulDoubleSeqTask::ValidationImpl() {
-  const std::size_t expected_size = static_cast<std::size_t>(n_ * n_);
+  const auto expected_size = static_cast<std::size_t>(n_ * n_);
   const bool is_valid = n_ > 0 && A_.size() == expected_size && B_.size() == expected_size;
   return is_valid;
 }
@@ -28,35 +28,35 @@ bool MatmulDoubleSeqTask::PreProcessingImpl() {
 namespace {
 
 // Helper function to get linear index
-std::size_t Idx(int i, int j, int dim) {
-  return static_cast<std::size_t>(i * dim + j);
+std::size_t Idx(const int i, const int j, const int dim) {
+  return static_cast<std::size_t>((i * dim) + j);
 }
 
 // Helper function to multiply block A_block * B_block and add to C_block
-void MultiplyAndAddBlock(const std::vector<double> &A_block, const std::vector<double> &B_block,
-                         std::vector<double> &C_block, int block_size) {
+void MultiplyAndAddBlock(const std::vector<double> &a_block, const std::vector<double> &b_block,
+                         std::vector<double> &c_block, const int block_size) {
   for (int i = 0; i < block_size; ++i) {
     for (int k = 0; k < block_size; ++k) {
-      const double a_ik = A_block[Idx(i, k, block_size)];
+      const double a_ik = a_block[Idx(i, k, block_size)];
       for (int j = 0; j < block_size; ++j) {
-        C_block[Idx(i, j, block_size)] += a_ik * B_block[Idx(k, j, block_size)];
+        c_block[Idx(i, j, block_size)] += a_ik * b_block[Idx(k, j, block_size)];
       }
     }
   }
 }
 
 // Helper function to copy a block from matrix
-std::vector<double> GetBlock(const std::vector<double> &matrix, int block_row, int block_col, int block_size,
-                             int matrix_dim) {
+std::vector<double> GetBlock(const std::vector<double> &matrix, const int block_row, const int block_col,
+                             const int block_size, const int matrix_dim) {
   std::vector<double> block(static_cast<std::size_t>(block_size * block_size), 0.0);
   for (int i = 0; i < block_size; ++i) {
-    const int global_i = block_row * block_size + i;
+    const int global_i = (block_row * block_size) + i;
     if (global_i >= matrix_dim) {
       continue;
     }
 
     for (int j = 0; j < block_size; ++j) {
-      const int global_j = block_col * block_size + j;
+      const int global_j = (block_col * block_size) + j;
       if (global_j >= matrix_dim) {
         continue;
       }
@@ -68,16 +68,16 @@ std::vector<double> GetBlock(const std::vector<double> &matrix, int block_row, i
 }
 
 // Helper function to add a block to matrix
-void AddBlockToMatrix(const std::vector<double> &block, std::vector<double> &matrix, int block_row, int block_col,
-                      int block_size, int matrix_dim) {
+void AddBlockToMatrix(const std::vector<double> &block, std::vector<double> &matrix, const int block_row,
+                      const int block_col, const int block_size, const int matrix_dim) {
   for (int i = 0; i < block_size; ++i) {
-    const int global_i = block_row * block_size + i;
+    const int global_i = (block_row * block_size) + i;
     if (global_i >= matrix_dim) {
       continue;
     }
 
     for (int j = 0; j < block_size; ++j) {
-      const int global_j = block_col * block_size + j;
+      const int global_j = (block_col * block_size) + j;
       if (global_j >= matrix_dim) {
         continue;
       }
@@ -88,12 +88,12 @@ void AddBlockToMatrix(const std::vector<double> &block, std::vector<double> &mat
 }
 
 // Fox's algorithm core function
-void FoxAlgorithm(const std::vector<double> &A, const std::vector<double> &B, std::vector<double> &C, int matrix_dim,
-                  int block_size) {
+void FoxAlgorithm(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c,
+                  const int matrix_dim, const int block_size) {
   const int grid_size = matrix_dim / block_size;
 
   // Initialize result matrix C with zeros
-  std::fill(C.begin(), C.end(), 0.0);
+  std::ranges::fill(c, 0.0);
 
   // Main loop of Fox's algorithm
   for (int stage = 0; stage < grid_size; ++stage) {
@@ -103,21 +103,22 @@ void FoxAlgorithm(const std::vector<double> &A, const std::vector<double> &B, st
       const int a_block_col = (row_block + stage) % grid_size;
 
       // Get the block from A
-      std::vector<double> A_block = GetBlock(A, row_block, a_block_col, block_size, matrix_dim);
+      const auto a_block = GetBlock(a, row_block, a_block_col, block_size, matrix_dim);
 
       // For each column block
       for (int col_block = 0; col_block < grid_size; ++col_block) {
-        // Get the block from B
-        std::vector<double> B_block = GetBlock(B, a_block_col, col_block, block_size, matrix_dim);
+        // Get the block from B (note: a_block_col is used as row for B)
+        const auto b_block = GetBlock(b, a_block_col, col_block, block_size, matrix_dim);
 
         // Get current C block
-        std::vector<double> C_block = GetBlock(C, row_block, col_block, block_size, matrix_dim);
+        const auto c_block = GetBlock(c, row_block, col_block, block_size, matrix_dim);
 
-        // Multiply A_block * B_block and add to C_block
-        MultiplyAndAddBlock(A_block, B_block, C_block, block_size);
+        // Multiply a_block * b_block and add to c_block
+        auto c_block_mutable = c_block;
+        MultiplyAndAddBlock(a_block, b_block, c_block_mutable, block_size);
 
-        // Put C_block back
-        AddBlockToMatrix(C_block, C, row_block, col_block, block_size, matrix_dim);
+        // Put c_block back
+        AddBlockToMatrix(c_block_mutable, c, row_block, col_block, block_size, matrix_dim);
       }
     }
   }
@@ -137,17 +138,18 @@ bool MatmulDoubleSeqTask::RunImpl() {
   block_size = std::max(1, block_size);
 
   // Ensure block_size divides matrix_dim evenly
-  while (matrix_dim % block_size != 0 && block_size > 1) {
+  while ((matrix_dim % block_size) != 0 && block_size > 1) {
     --block_size;
   }
 
   // If no suitable block size found, use matrix_dim itself as block size
-  if (block_size == 1 && matrix_dim > 1 && matrix_dim % block_size != 0) {
+  if (block_size == 1 && matrix_dim > 1 && (matrix_dim % block_size) != 0) {
     block_size = matrix_dim;
   }
 
   // Allocate result matrix
-  C_.assign(static_cast<std::size_t>(matrix_dim * matrix_dim), 0.0);
+  const auto total_size = static_cast<std::size_t>(matrix_dim) * static_cast<std::size_t>(matrix_dim);
+  C_.assign(total_size, 0.0);
 
   // Execute Fox's algorithm
   FoxAlgorithm(A_, B_, C_, matrix_dim, block_size);
