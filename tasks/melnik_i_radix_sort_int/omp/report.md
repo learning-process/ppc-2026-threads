@@ -79,7 +79,7 @@ scripts/run_tests.py --running-type=performance
 ## 8. Результаты
 В таблице приведены результаты (медиана из серии трех повторов).
 
-| Threads | Median Time (s) | Speedup | Efficiency | Notes |
+| Workers | Median Time (s) | Speedup | Efficiency | Notes |
 |---|---|---|---|---|
 | 1 | 0.1741551496 | 1.00 | 100% | Однопоточный OpenMP |
 | 2 | 0.1019089178 | 1.70 | 85% | - |

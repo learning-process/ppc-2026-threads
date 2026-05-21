@@ -54,7 +54,8 @@
 - **OS**: Windows 10 Pro 22H2 19045.5965 + WSL2 (Ubuntu 13.3.0)
 - **Compiler**: GNU 14.2.0
 - **CMake build type**: Release
-- **Размеры задач**: 10'000'000
+- **Режим тестирования (Mode)**: task, pipeline
+- **Размер тестовых данных (Size)**: 10'000'000 элементов
 - **Команды запуска**:
 ```bash
 cmake -S . -B build -D USE_FUNC_TESTS=ON -D USE_PERF_TESTS=ON -D CMAKE_BUILD_TYPE=Release
@@ -67,10 +68,10 @@ scripts/run_tests.py --running-type=performance
 ## 7. Результаты
 Baseline-время для последовательной реализации.
 
-| Mode | Size | Workers | Median Time (s) | Speedup | Efficiency | 
-|---|---|---|---|---|---|
-| task | 10'000'000 | 1 | 0.1476837782 | 1.00 | 100% |
-| pipeline | 10'000'000 | 1 | 0.1891055396 | 1.00 | 100% |
+| Workers | Median Time (s) | Speedup | Efficiency | Notes |
+|---|---|---|---|---|
+| 1 | 0.1476837782 | 1.00 | 100% | task |
+| 1 | 0.1891055396 | 1.00 | 100% | pipeline |
 
 Самый дорогой фрагмент алгоритма — выделение временного вектора `OutType output(n)` внутри функции `CountingSort` на каждом проходе, что вызывает регулярные аллокации памяти, а также цикл копирования результата обратно.
 
