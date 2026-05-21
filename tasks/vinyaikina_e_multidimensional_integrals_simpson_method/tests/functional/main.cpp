@@ -13,6 +13,7 @@
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
+#include "vinyaikina_e_multidimensional_integrals_simpson_method/all/include/ops_all.hpp"
 #include "vinyaikina_e_multidimensional_integrals_simpson_method/common/include/common.hpp"
 #include "vinyaikina_e_multidimensional_integrals_simpson_method/omp/include/ops_omp.hpp"
 #include "vinyaikina_e_multidimensional_integrals_simpson_method/seq/include/ops_seq.hpp"
@@ -176,7 +177,8 @@ const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<VinyaikinaEMultidimIntegrSimpsonSEQ, InType>(kTests, kTaskName),
                    ppc::util::AddFuncTask<VinyaikinaEMultidimIntegrSimpsonOMP, InType>(kTests, kTaskName),
                    ppc::util::AddFuncTask<VinyaikinaEMultidimIntegrSimpsonTBB, InType>(kTests, kTaskName),
-                   ppc::util::AddFuncTask<VinyaikinaEMultidimIntegrSimpsonSTL, InType>(kTests, kTaskName));
+                   ppc::util::AddFuncTask<VinyaikinaEMultidimIntegrSimpsonSTL, InType>(kTests, kTaskName),
+                   ppc::util::AddFuncTask<VinyaikinaEMultidimIntegrSimpsonALL, InType>(kTests, kTaskName));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
