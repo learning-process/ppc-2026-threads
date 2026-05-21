@@ -71,6 +71,7 @@ for (int row = -1; row <= current_block_height; ++row) {
 ```
 
 3. **Фильтрация блока:** для каждого внутреннего пикселя вычисляется свёртка с ядром Гаусса.
+
 ```cpp
    Фрагмент функции ApplyGaussianFilterToBlock:
    for (int row = 0; row < inner_height; ++row) {
@@ -96,10 +97,12 @@ for (int row = -1; row <= current_block_height; ++row) {
 ## 4. Детали реализации
 
 **Файлы:**
+
 - seq/include/ops_seq.hpp — заголовочный файл с объявлением класса MoskaevVLinFiltBlockGauss3SEQ
 - seq/src/ops_seq.cpp — реализация
 
 **Методы класса:**
+
 - ValidationImpl(): проверяет, что вектор входных данных не пуст.
 - PreProcessingImpl(): тривиальный, возвращает true.
 - RunImpl(): реализует блочный алгоритм фильтрации.

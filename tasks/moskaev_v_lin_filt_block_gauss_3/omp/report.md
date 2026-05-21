@@ -25,11 +25,13 @@ OpenMP-реализация блочной фильтрации изображе
 ## 4. Схема распараллеливания
 
 **Какая область кода параллелится:**
+
 - Фильтрация внутри блока (тройной вложенный цикл)
 - Копирование блока с отступами (двойной цикл)
 - Внешний цикл по блокам (двойной цикл по y и x)
 
 **Какие переменные shared/private:**
+
 - shared: input_block, output_block, inner_width, inner_height, channels,
   block_width, kGaussianKernel, image_data, width, height, block_size
 - private: row, col, channel, ky, kx, sum, idx, out_idx (неявно через collapse)
@@ -39,12 +41,14 @@ OpenMP-реализация блочной фильтрации изображе
 (разные блоки или разные пиксели внутри блока). Гонок нет.
 
 **Какой schedule выбран и почему:**
+
 - Для фильтрации и копирования: schedule(static) — минимальный оверхед,
   нагрузка равномерна.
 - Для внешнего цикла по блокам: schedule(dynamic) — блоки у границ могут быть меньше,
   dynamic лучше балансирует.
 
 **Есть ли неявные или явные барьеры:**
+
 - Неявный барьер в конце каждой параллельной области (по умолчанию).
 - Явные барьеры не используются.
 
@@ -53,24 +57,33 @@ OpenMP-реализация блочной фильтрации изображе
 **Файлы:** omp/include/ops_omp.hpp, omp/src/ops_omp.cpp
 
 **Какие участки были изменены относительно SEQ:**
+
 - В ApplyGaussianFilterToBlock() добавлена директива:
+
 ```cpp
   #pragma omp parallel for collapse(3) schedule(static) default(none) shared(...)
 ```
+
 - В CopyBlockWithPadding() добавлена:
+
 ```cpp
   #pragma omp parallel for collapse(2) schedule(static) default(none) shared(...)
   ```
+
 - В CopyProcessedBlockToOutput() добавлена:
+
 ```cpp
   #pragma omp parallel for collapse(2) schedule(static) default(none) shared(...)
   ```
+
 - В RunImpl() внешний цикл по блокам:
+
 ```cpp
   #pragma omp parallel for collapse(2) schedule(dynamic) default(none) shared(...)
   ```
 
 **Фрагмент кода фильтрации:**
+
 ```cpp
 #pragma omp parallel for collapse(3) schedule(static) default(none) \
     shared(input_block, output_block, inner_width, inner_height, channels, block_width, kGaussianKernel)
@@ -89,12 +102,14 @@ for (int row = 0; row < inner_height; ++row) {
 
 **Какие риски гонок были устранены:**
 Гонок нет, так как:
+
 - При фильтрации каждый поток работает с разными пикселями (итерации цикла независимы).
 - При копировании блоков каждый поток обрабатывает разные блоки.
 
 ## 6. Проверка корректности
 
 Сравнение с SEQ. Функциональные тесты (из tests/functional/main.cpp):
+
 - Тест 1: 2×2 серое, вход [100,150,200,250] → выход [138,163,188,213]
 - Тест 2: 3×3 серое, вход [1,2,3,4,5,6,7,8,9] → выход [2,3,4,4,5,6,7,7,8]
 - Тест 3: 2×2 RGB, вход 12 чисел → выход 12 чисел
@@ -113,6 +128,7 @@ for (int row = 0; row < inner_height; ++row) {
 **Переменные окружения:** OMP_NUM_THREADS
 
 **Команды запуска:**
+
 ```bash
 $env:OMP_NUM_THREADS=1; .\build\bin\ppc_perf_tests.exe --gtest_filter="*task_run_moskaev_v_lin_filt_block_gauss_3_omp_enabled"
 $env:OMP_NUM_THREADS=2; .\build\bin\ppc_perf_tests.exe --gtest_filter="*task_run_moskaev_v_lin_filt_block_gauss_3_omp_enabled"
@@ -130,6 +146,7 @@ $env:OMP_NUM_THREADS=8; .\build\bin\ppc_perf_tests.exe --gtest_filter="*task_run
 | 8       | 0.115    | 1.86    | 23%        |
 
 **Комментарий о масштабируемости и узких местах:**
+
 - При 1 потоке OpenMP в 3 раза медленнее SEQ из-за оверхеда на создание параллельных областей.
 - Ускорение растёт до 1.86× на 8 потоках, но далеко от идеального (8×).
 - Узкое место: последовательная природа внешнего цикла (каждый шаг зависит от предыдущего) ограничивает максимальное ускорение.

@@ -59,6 +59,7 @@ for (auto &th : threads) th.join();
 
 **Какая синхронизация используется и почему:**
 Синхронизация не требуется, так как:
+
 - Каждый поток обрабатывает свой набор блоков
 - Блоки не перекрываются
 - Запись в выходной вектор происходит в разные позиции
@@ -68,11 +69,13 @@ for (auto &th : threads) th.join();
 **Файлы:** stl/include/ops_stl.hpp, stl/src/ops_stl.cpp
 
 **Ключевые особенности:**
+
 - Количество потоков определяется через std::thread::hardware_concurrency()
 - При создании потоков используется захват переменных по ссылке [&]
 - Функция ApplyGaussianFilterToBlock не распараллелена внутри, только внешний цикл по блокам
 
 **Фрагмент кода создания потоков:**
+
 ```cpp
 const int num_threads = ppc::util::GetNumThreads();
 std::vector<std::thread> threads(num_threads);
@@ -87,7 +90,9 @@ for (int tid = 0; tid < num_threads; ++tid) {
 }
 for (auto &th : threads) th.join();
 ```
+
 **Особенности:**
+
 - Статическое распределение блоков (не адаптивное)
 - Нет work stealing
 - Потоки создаются один раз на всё изображение
@@ -95,6 +100,7 @@ for (auto &th : threads) th.join();
 ## 6. Проверка корректности
 
 Сравнение с SEQ. Функциональные тесты (из tests/functional/main.cpp):
+
 - Тест 1: 2×2 серое, вход [100,150,200,250] → выход [138,163,188,213]
 - Тест 2: 3×3 серое, вход [1,2,3,4,5,6,7,8,9] → выход [2,3,4,4,5,6,7,7,8]
 - Тест 3: 2×2 RGB, вход 12 чисел → выход 12 чисел
@@ -113,12 +119,14 @@ for (auto &th : threads) th.join();
 **Переменные окружения:** PPC_NUM_THREADS
 
 **Команды запуска:**
+
 ```bash
 $env:PPC_NUM_THREADS=1; .\build\bin\ppc_perf_tests.exe --gtest_filter="*task_run_moskaev_v_lin_filt_block_gauss_3_stl_enabled"
 $env:PPC_NUM_THREADS=2; .\build\bin\ppc_perf_tests.exe --gtest_filter="*task_run_moskaev_v_lin_filt_block_gauss_3_stl_enabled"
 $env:PPC_NUM_THREADS=4; .\build\bin\ppc_perf_tests.exe --gtest_filter="*task_run_moskaev_v_lin_filt_block_gauss_3_stl_enabled"
 $env:PPC_NUM_THREADS=8; .\build\bin\ppc_perf_tests.exe --gtest_filter="*task_run_moskaev_v_lin_filt_block_gauss_3_stl_enabled"
 ```
+
 ## 8. Результаты
 
 | Потоков | Время, с | Speedup | Efficiency |
@@ -129,6 +137,7 @@ $env:PPC_NUM_THREADS=8; .\build\bin\ppc_perf_tests.exe --gtest_filter="*task_run
 | 8       | 0.044    | 4.86    | 61%        |
 
 **Комментарий о масштабируемости и узких местах:**
+
 - STL показывает лучшее ускорение среди всех технологий — 4.86× на 8 потоках.
 - При 1 потоке STL почти не уступает SEQ (0.220 против 0.214) — оверхед минимален.
 - Ускорение почти линейное до 4 потоков (2.89× на 4 потоках).

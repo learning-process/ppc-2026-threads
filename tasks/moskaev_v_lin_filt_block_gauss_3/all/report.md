@@ -7,7 +7,8 @@
 ## 1. Контекст
 
 Гибридная версия сочетает два уровня параллелизма:
-- **Межпроцессный** 
+
+- **Межпроцессный**
 – с использованием MPI. Каждый MPI-процесс получает подмножество блоков для обработки.
 - **Внутрипроцессный**
 – внутри каждого MPI-процесса для фильтрации блоков используется std::thread.
@@ -29,11 +30,13 @@
 ## 4. Межпроцессная схема (MPI)
 
 **Роли rank-ов:**
+
 - Все процессы равноправны при вычислениях: каждый процесс обрабатывает свою часть блоков.
 - Процесс с рангом 0 выполняет дополнительную роль:
 рассылает исходные данные всем процессам и собирает результаты.
 
 **Распределение данных:**
+
 1. Rank 0 рассылает параметры изображения (width, height, channels) через MPI_Bcast.
 2. Размер вектора пикселей и сами данные рассылаются через MPI_Bcast.
     Каждый процесс получает полную копию изображения (репликация, а не распределение).
@@ -58,12 +61,15 @@ local_blocks.resize(local_cnt);
 MPI_Scatterv(all.data(), counts.data(), displs.data(), MPI_INT,
              local_blocks.data(), local_cnt, MPI_INT, 0, MPI_COMM_WORLD);
 ```
+
 **Сбор результатов:**
+
 - Каждый процесс отправляет свои обработанные данные процессу 0 через MPI_Send.
 - Процесс 0 принимает данные от всех процессов через MPI_Recv.
 - Затем процесс 0 рассылает собранный результат всем процессам через MPI_Bcast.
 
 **Фрагмент кода сбора результатов:**
+
 ```cpp
 if (rank == 0) {
     out.resize(total_bytes);
@@ -84,6 +90,7 @@ MPI_Bcast(out.data(), out_size, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 ```
 
 **Синхронизация:**
+
 - MPI_Bcast – для распространения исходных данных и итогового результата.
 - MPI_Scatterv – для распределения индексов блоков.
 - MPI_Send/MPI_Recv – для сбора результатов.
@@ -95,6 +102,7 @@ MPI_Bcast(out.data(), out_size, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 Внутри каждого MPI-процесса фильтрация блоков распараллеливается с помощью std::thread.
 
 **Фрагмент кода (ProcessAssignedBlocksParallel):**
+
 ```cpp
 int num_threads = std::thread::hardware_concurrency();
 num_threads = std::min(num_threads, 8);
@@ -117,12 +125,15 @@ for (int tid = 0; tid < num_threads; ++tid) {
 for (auto &t : threads) t.join();
 // объединение результатов из всех потоков
 ```
+
 **Особенности:**
+
 - Количество потоков ограничено 8 (даже если hardware_concurrency() больше).
 - Каждый поток создаёт свой локальный буфер для результатов.
 - После завершения всех потоков результаты объединяются в общий буфер.
 
 **Фильтрация одного блока (ProcessOneBlock):**
+
 - Копирование блока с отступами (CopyBlockWithHalo)
 - Фильтрация блока (FilterBlock) – внутри также используется std::thread
 - Запись результата в выходной буфер
@@ -132,6 +143,7 @@ for (auto &t : threads) t.join();
 **Файлы:** all/include/ops_all.hpp, all/src/ops_all.cpp
 
 **Ключевые функции:**
+
 - BroadcastImageData() – рассылка параметров и данных через MPI_Bcast
 - ScatterBlocks() – распределение индексов блоков через MPI_Scatterv
 - ProcessAssignedBlocks() – обработка блоков (выбор последовательного или параллельного режима)
@@ -141,6 +153,7 @@ for (auto &t : threads) t.join();
 - GatherAndBroadcastResult() – сбор результатов через MPI_Send/Recv и MPI_Bcast
 
 **Иерархия параллелизма:**
+
 1. MPI-процессы – распределение блоков между процессами
 2. std::thread внутри процесса – обработка блоков
 3. std::thread внутри FilterBlock – фильтрация строк блока (второй уровень потоков)
@@ -148,6 +161,7 @@ for (auto &t : threads) t.join();
 ## 7. Проверка корректности
 
 Сравнение с SEQ. Функциональные тесты (из tests/functional/main.cpp):
+
 - Тест 1: 2×2 серое, вход [100,150,200,250] → выход [138,163,188,213]
 - Тест 2: 3×3 серое, вход [1,2,3,4,5,6,7,8,9] → выход [2,3,4,4,5,6,7,7,8]
 - Тест 3: 2×2 RGB, вход 12 чисел → выход 12 чисел
@@ -166,12 +180,14 @@ for (auto &t : threads) t.join();
 **Переменные окружения:** PPC_NUM_THREADS (задаёт число потоков внутри MPI-процесса)
 
 **Команды запуска:**
+
 ```bash
 $env:PPC_NUM_THREADS=1; mpiexec -n 1 .\build\bin\ppc_perf_tests.exe --gtest_filter="*task_run_moskaev_v_lin_filt_block_gauss_3_all_enabled"
 $env:PPC_NUM_THREADS=4; mpiexec -n 1 .\build\bin\ppc_perf_tests.exe --gtest_filter="*task_run_moskaev_v_lin_filt_block_gauss_3_all_enabled"
 $env:PPC_NUM_THREADS=4; mpiexec -n 2 .\build\bin\ppc_perf_tests.exe --gtest_filter="*task_run_moskaev_v_lin_filt_block_gauss_3_all_enabled"
 $env:PPC_NUM_THREADS=2; mpiexec -n 4 .\build\bin\ppc_perf_tests.exe --gtest_filter="*task_run_moskaev_v_lin_filt_block_gauss_3_all_enabled"
 ```
+
 ## 9. Результаты
 
 | Ranks | Потоков/rank | Всего workers | Время, с | Speedup | Efficiency |
@@ -204,6 +220,7 @@ $env:PPC_NUM_THREADS=2; mpiexec -n 4 .\build\bin\ppc_perf_tests.exe --gtest_filt
 ## 10. Выводы
 
 ALL версия не даёт выигрыша по сравнению с чистыми STL/TBB на одном компьютере. Основные проблемы:
+
 1. Оверхед на MPI-коммуникации (Bcast, Scatterv, Send/Recv)
 2. Репликация данных (каждый процесс получает копию всего изображения)
 3. Двухуровневый параллелизм приводит к созданию избыточного количества потоков
