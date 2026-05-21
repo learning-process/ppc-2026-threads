@@ -252,7 +252,7 @@ cmake --build build
 ./build/bin/ppc_func_tests --gtest_filter="*kapanova*omp*"
 ./build/bin/ppc_func_tests --gtest_filter="*kapanova*stl*"
 ./build/bin/ppc_func_tests --gtest_filter="*kapanova*tbb*"
-export PPC_NUM_THREADS=**N** && mpirun -np **N** ./build/bin/ppc_func_tests --gtest_filter="*kapanova*all*"
+export PPC_NUM_THREADS=<N> && mpirun -np <N> ./build/bin/ppc_func_tests --gtest_filter="*kapanova*all*"
 
 **Команды запуска тестов производительности:**
 export PPC_NUM_THREADS=1
@@ -296,7 +296,6 @@ export PPC_NUM_PROC=4 PPC_NUM_THREADS=2 && mpirun -np 4 ./build/bin/ppc_perf_tes
 Исследовать влияние размера задачи и плотности на масштабируемость.
 Оптимизировать слияние результатов в OMP и TBB (параллельная сборка).
 Для ALL: заменить #pragma omp critical на lock-free слияние, отказаться от BroadcastResult в пользу MPI_Reduce.
-Провести замеры на серверном x86-64 процессоре с большим числом ядер.
 
 ## 9. Источники
 
