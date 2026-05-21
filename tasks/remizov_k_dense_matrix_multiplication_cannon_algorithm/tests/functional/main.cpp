@@ -7,6 +7,7 @@
 #include <tuple>
 #include <vector>
 
+#include "remizov_k_dense_matrix_multiplication_cannon_algorithm/all/include/ops_all.hpp"
 #include "remizov_k_dense_matrix_multiplication_cannon_algorithm/common/include/common.hpp"
 #include "remizov_k_dense_matrix_multiplication_cannon_algorithm/omp/include/ops_omp.hpp"
 #include "remizov_k_dense_matrix_multiplication_cannon_algorithm/seq/include/ops_seq.hpp"
@@ -145,6 +146,15 @@ const auto kTestTasksListStl =
 const auto kGtestValuesStl = ppc::util::ExpandToValues(kTestTasksListStl);
 
 INSTANTIATE_TEST_SUITE_P(CannonTestsStl, RemizovKDenseMatrixMultiplicationCannonAlgorithmFuncTests, kGtestValuesStl,
+                         kTestNameFunc);
+
+const auto kTestTasksListAll =
+    std::tuple_cat(ppc::util::AddFuncTask<RemizovKDenseMatrixMultiplicationCannonAlgorithmAll, InType>(
+        kTestCases, PPC_SETTINGS_remizov_k_dense_matrix_multiplication_cannon_algorithm));
+
+const auto kGtestValuesAll = ppc::util::ExpandToValues(kTestTasksListAll);
+
+INSTANTIATE_TEST_SUITE_P(CannonTestsAll, RemizovKDenseMatrixMultiplicationCannonAlgorithmFuncTests, kGtestValuesAll,
                          kTestNameFunc);
 
 }  // namespace

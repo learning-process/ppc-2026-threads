@@ -57,7 +57,7 @@ class BaseRunPerfTests : public ::testing::TestWithParam<PerfTestParam<InType, O
                task_->GetDynamicTypeOfTask() == ppc::task::TypeOfTask::kSTL ||
                task_->GetDynamicTypeOfTask() == ppc::task::TypeOfTask::kTBB) {
       const auto t0 = std::chrono::high_resolution_clock::now();
-      perf_attrs.current_timer = [&] {
+      perf_attrs.current_timer = [t0] {
         auto now = std::chrono::high_resolution_clock::now();
         auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now - t0).count();
         return static_cast<double>(ns) * 1e-9;
