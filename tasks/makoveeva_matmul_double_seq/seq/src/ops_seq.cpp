@@ -8,16 +8,45 @@
 #include "makoveeva_matmul_double_seq/common/include/common.hpp"
 
 namespace makoveeva_matmul_double_seq {
+namespace {
+
+// Вспомогательная функция для выбора размера блока
+int ChooseBlockSize(int n) {
+  int block_size = static_cast<int>(std::sqrt(static_cast<double>(n)));
+  block_size = std::max(1, block_size);
+
+  while ((n % block_size != 0) && (block_size > 1)) {
+    --block_size;
+  }
+
+  return block_size;
+}
+
+// Вспомогательная функция для умножения блоков
+void MultiplyBlocks(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, int n,
+                    int row_start, int row_end, int col_start, int col_end, int k_start, int k_end) {
+  for (int row = row_start; row < row_end; ++row) {
+    for (int col = col_start; col < col_end; ++col) {
+      double sum = 0.0;
+      for (int k = k_start; k < k_end; ++k) {
+        sum += a[static_cast<size_t>(row) * n + k] * b[static_cast<size_t>(k) * n + col];
+      }
+      c[static_cast<size_t>(row) * n + col] += sum;
+    }
+  }
+}
+
+}  // namespace
 
 MatmulDoubleSeqTask::MatmulDoubleSeqTask(const InType &in)
-    : n_(std::get<0>(in)), A_(std::get<1>(in)), B_(std::get<2>(in)), C_(static_cast<std::size_t>(n_ * n_), 0.0) {
+    : n_(std::get<0>(in)), A_(std::get<1>(in)), B_(std::get<2>(in)), C_(static_cast<size_t>(n_ * n_), 0.0) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetOutput() = C_;
 }
 
 bool MatmulDoubleSeqTask::ValidationImpl() {
-  const auto expected_size = static_cast<std::size_t>(n_ * n_);
-  const bool is_valid = n_ > 0 && A_.size() == expected_size && B_.size() == expected_size;
+  const auto expected_size = static_cast<size_t>(n_ * n_);
+  const bool is_valid = (n_ > 0) && (A_.size() == expected_size) && (B_.size() == expected_size);
   return is_valid;
 }
 
@@ -30,47 +59,34 @@ bool MatmulDoubleSeqTask::RunImpl() {
     return false;
   }
 
-  // Блокировка для алгоритма Фокса
-  int block_size = static_cast<int>(std::sqrt(static_cast<double>(n_)));
-  block_size = std::max(1, block_size);
-  
-  // Убеждаемся, что размер матрицы делится на block_size
-  while (n_ % block_size != 0 && block_size > 1) {
-    --block_size;
-  }
-  
-  if (block_size == 1 && n_ > 1 && n_ % block_size != 0) {
-    block_size = n_;
+  const int n_int = static_cast<int>(n_);
+  int block_size = ChooseBlockSize(n_int);
+
+  if (block_size == 1 && n_int > 1 && (n_int % block_size != 0)) {
+    block_size = n_int;
   }
 
-  // Инициализируем результат нулями
-  C_.assign(static_cast<std::size_t>(n_ * n_), 0.0);
-  
-  const int grid_size = n_ / block_size;
-  
-  // Алгоритм Фокса
+  C_.assign(static_cast<size_t>(n_ * n_), 0.0);
+
+  const int grid_size = n_int / block_size;
+
   for (int stage = 0; stage < grid_size; ++stage) {
-    for (int i = 0; i < grid_size; ++i) {
-      for (int j = 0; j < grid_size; ++j) {
-        // Индекс диагонального блока A на этом этапе
-        int root = (i + stage) % grid_size;
-        
-        // Перемножаем блоки
-        for (int bi = 0; bi < block_size; ++bi) {
-          for (int bj = 0; bj < block_size; ++bj) {
-            for (int bk = 0; bk < block_size; ++bk) {
-              int row = i * block_size + bi;
-              int col = j * block_size + bj;
-              int k_idx = root * block_size + bk;
-              
-              C_[row * n_ + col] += A_[row * n_ + k_idx] * B_[k_idx * n_ + col];
-            }
-          }
-        }
+    for (int i_block = 0; i_block < grid_size; ++i_block) {
+      for (int j_block = 0; j_block < grid_size; ++j_block) {
+        const int root_block = (i_block + stage) % grid_size;
+
+        const int row_start = i_block * block_size;
+        const int row_end = row_start + block_size;
+        const int col_start = j_block * block_size;
+        const int col_end = col_start + block_size;
+        const int k_start = root_block * block_size;
+        const int k_end = k_start + block_size;
+
+        MultiplyBlocks(A_, B_, C_, n_int, row_start, row_end, col_start, col_end, k_start, k_end);
       }
     }
   }
-  
+
   GetOutput() = C_;
   return true;
 }
