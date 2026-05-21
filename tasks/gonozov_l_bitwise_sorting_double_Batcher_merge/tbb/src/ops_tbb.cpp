@@ -106,7 +106,6 @@ void CompareExchangeBlocks(uint64_t *arr, size_t i, size_t step) {
       std::swap(arr[i + k], arr[i + k + step]);
     }
   }
-}
 
 void OddEvenMergeIterative(uint64_t *arr, size_t start, size_t n) {
   if (n <= 1) {

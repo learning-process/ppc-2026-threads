@@ -13,6 +13,7 @@
 #include "lopatin_a_sobel_operator/common/include/common.hpp"
 #include "lopatin_a_sobel_operator/omp/include/ops_omp.hpp"
 #include "lopatin_a_sobel_operator/seq/include/ops_seq.hpp"
+#include "lopatin_a_sobel_operator/stl/include/ops_stl.hpp"
 #include "lopatin_a_sobel_operator/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -92,7 +93,8 @@ const std::array<TestType, 3> kTestParam = {std::string("test_img_3x3"), std::st
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<LopatinASobelOperatorSEQ, InType>(kTestParam, PPC_SETTINGS_lopatin_a_sobel_operator),
     ppc::util::AddFuncTask<LopatinASobelOperatorOMP, InType>(kTestParam, PPC_SETTINGS_lopatin_a_sobel_operator),
-    ppc::util::AddFuncTask<LopatinASobelOperatorTBB, InType>(kTestParam, PPC_SETTINGS_lopatin_a_sobel_operator));
+    ppc::util::AddFuncTask<LopatinASobelOperatorTBB, InType>(kTestParam, PPC_SETTINGS_lopatin_a_sobel_operator),
+    ppc::util::AddFuncTask<LopatinASobelOperatorSTL, InType>(kTestParam, PPC_SETTINGS_lopatin_a_sobel_operator));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

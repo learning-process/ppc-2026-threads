@@ -4,6 +4,7 @@
 #include <cstddef>    // for size_t
 #include <cstdint>    // for uint8_t
 
+#include "pylaeva_s_inc_contrast_img_by_lsh/all/include/ops_all.hpp"
 #include "pylaeva_s_inc_contrast_img_by_lsh/common/include/common.hpp"
 #include "pylaeva_s_inc_contrast_img_by_lsh/omp/include/ops_omp.hpp"
 #include "pylaeva_s_inc_contrast_img_by_lsh/seq/include/ops_seq.hpp"
@@ -49,8 +50,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, PylaevaSIncContrastImgByLshSEQ, PylaevaSIncContrastImgByLshSTL,
-                                PylaevaSIncContrastImgByLshOMP, PylaevaSIncContrastImgByLshTBB>(
-        PPC_SETTINGS_pylaeva_s_inc_contrast_img_by_lsh);
+                                PylaevaSIncContrastImgByLshOMP, PylaevaSIncContrastImgByLshTBB,
+                                PylaevaSIncContrastImgByLshALL>(PPC_SETTINGS_pylaeva_s_inc_contrast_img_by_lsh);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
