@@ -96,7 +96,7 @@ for (unsigned int thread_id = 0; thread_id < num_threads; ++thread_id) {
     if (start >= c.cols) break;
 
     threads.emplace_back(WorkerTask, std::cref(a), std::cref(b),
-                         static_cast**int**(start), static_cast**int**(end),
+                         static_cast<int>(start), static_cast<int>(end),
                          std::ref(temp_rows), std::ref(temp_vals));
 }
 
@@ -128,9 +128,12 @@ ThreadLocalData.
 - **CMake build type:** Release
 
 Команды запуска тестов:
-export PPC_NUM_THREADS=**N**
+
+```bash
+export PPC_NUM_THREADS=<N>
 ./build/bin/ppc_perf_tests --gtest_filter="*kapanova*stl*"
 ./build/bin/ppc_func_tests --gtest_filter="*kapanova*stl*"
+```
 
 - **Размеры задач:** квадратные матрицы `10000×10000`, плотность `0.5%` (примерно 500 000 ненулевых элементов на
 матрицу).

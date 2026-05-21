@@ -101,7 +101,7 @@
 #pragma omp parallel for schedule(dynamic) default(none) \
     shared(a, b, c, thread_accum, thread_row_mask, thread_active_rows, thread_col_rows, thread_col_vals)
   for (size_t j = 0; j < c.cols; ++j) {
-    ProcessColumn(static_cast**int**(j), a, b, thread_accum, thread_row_mask, thread_active_rows,
+    ProcessColumn(static_cast<int>(j), a, b, thread_accum, thread_row_mask, thread_active_rows,
                   thread_col_rows, thread_col_vals);
   }
 ```
@@ -126,9 +126,12 @@ OMP-версии поэлементно сравнивается с эталон
 - **CMake build type:** Release
 
 Команды запуска тестов:
-export OMP_NUM_THREADS=**N**
+
+```bash
+export OMP_NUM_THREADS=<N>
 ./build/bin/ppc_perf_tests --gtest_filter="*kapanova*omp*"
 ./build/bin/ppc_func_tests --gtest_filter="*kapanova*omp*"
+```
 
 - **Размеры задач:** квадратные матрицы `10000×10000`, плотность `0.5%` (примерно 500 000 ненулевых элементов на
 матрицу).

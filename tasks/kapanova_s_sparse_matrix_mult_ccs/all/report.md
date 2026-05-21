@@ -113,12 +113,12 @@ critical` — параллельная
 // all/src/ops_all.cpp — внутрипроцессная обработка
 #pragma omp parallel default(none) shared(a, b, start, local_cols, send_rows, send_cols, send_vals)
   {
-    std::vector**double** accum(a.rows, 0.0);
-    std::vector**char** used(static_cast**size_t**(a.rows), 0);
-    std::vector**size_t** active(static_cast**size_t**(a.rows));
-    std::vector**MpiU64** thr_rows;
-    std::vector**MpiU64** thr_cols;
-    std::vector**double** thr_vals;
+    std::vector<double> accum(a.rows, 0.0);
+    std::vector<char> used(static_cast<size_t>(a.rows), 0);
+    std::vector<size_t> active(static_cast<size_t>(a.rows));
+    std::vector<MpiU64> thr_rows;
+    std::vector<MpiU64> thr_cols;
+    std::vector<double> thr_vals;
     int active_count = 0;
 
 #pragma omp for schedule(guided, 32) nowait
@@ -159,10 +159,13 @@ ALL-версии поэлементно сравнивается с эталон
 процесс)
 
 Команды запуска:
-export PPC_NUM_PROC=**P**
-export PPC_NUM_THREADS=**T**
-mpirun -np **P** ./build/bin/ppc_perf_tests --gtest_filter="*kapanova*all*"
-mpirun -np **P** ./build/bin/ppc_func_tests --gtest_filter="*kapanova*all*"
+
+```bash
+export PPC_NUM_PROC=<P>
+export PPC_NUM_THREADS=<T>
+mpirun -np <P> ./build/bin/ppc_perf_tests --gtest_filter="*kapanova*all*"
+mpirun -np <P> ./build/bin/ppc_func_tests --gtest_filter="*kapanova*all*"
+```
 
 - **Размеры задач:** квадратные матрицы `10000×10000`, плотность `0.5%` (примерно 500 000 ненулевых элементов на
 матрицу).

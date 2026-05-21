@@ -37,7 +37,7 @@ TBB-версия использует Intel oneTBB для параллельно
 операция редукции с комбинацией результатов — каждый поток пишет в свои массивы, а слияние делается после.
 
 **Как определяется диапазон работы:**
-`tbb::blocked_range**size_t**(0, c.cols, 256)` — столбцы от 0 до `c.cols` делятся на блоки. Параметр `256` — grainsize
+`tbb::blocked_range<size_t>(0, c.cols, 256)` — столбцы от 0 до `c.cols` делятся на блоки. Параметр `256` — grainsize
 (минимальный размер блока в итерациях).
 
 **Какой grainsize используется и почему:**
@@ -54,7 +54,7 @@ TBB-версия использует Intel oneTBB для параллельно
 рабочих потоков на основе `std::thread::hardware_concurrency()`.
 
 **Локальные данные:**
-`tbb::enumerable_thread_specific**ThreadLocalBuffers**` — каждый поток автоматически получает свой экземпляр
+`tbb::enumerable_thread_specific<ThreadLocalBuffers>` — каждый поток автоматически получает свой экземпляр
 `ThreadLocalBuffers` (accum, mask, active_rows, col_rows, col_vals). Обращение через `tls_data.local()`. Это аналог
 `thread_local`, но управляется TBB.
 
@@ -95,8 +95,8 @@ sharing не возникает.
 
 ```cpp
 // tbb/src/ops_tbb.cpp — параллельный цикл
-tbb::parallel_for(tbb::blocked_range**size_t**(0, c.cols, 256),
-  [&](const tbb::blocked_range**size_t** &range) {
+tbb::parallel_for(tbb::blocked_range<size_t>(0, c.cols, 256),
+  [&](const tbb::blocked_range<size_t> &range) {
     auto &local = tls_data.local();
     ProcessColumnRange(a, b, local.col_rows, local.col_vals,
                        local.accum, local.mask, local.active_rows, range);
@@ -130,9 +130,12 @@ ThreadLocalBuffers
 матрицу).
 
 Команды запуска тестов:
-export PPC_NUM_THREADS=**N**
+
+```bash
+export PPC_NUM_THREADS=<N>
 ./build/bin/ppc_perf_tests --gtest_filter="*kapanova*tbb*"
 ./build/bin/ppc_func_tests --gtest_filter="*kapanova*tbb*"
+```
 
 - **Размеры задач:** квадратные матрицы `10000×10000`, плотность `0.5%` (примерно 500 000 ненулевых элементов на
 матрицу).
