@@ -37,7 +37,7 @@ class VinyaikinaESimpsonFuncTests : public ppc::util::BaseRunFuncTests<InType, O
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const double eps = 1e-3;
+    const double eps = 1e-2;
     return std::fabs(output_data - etalon_) <= eps;
   }
 

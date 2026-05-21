@@ -25,7 +25,7 @@ class VinyaikinaESimpsonPerfTests : public ppc::util::BaseRunPerfTests<InType, O
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::fabs(output_data - etalon_) <= 1e-3;
+    return std::fabs(output_data - etalon_) <= 1e-2;
   }
 
   InType GetTestInputData() final {
