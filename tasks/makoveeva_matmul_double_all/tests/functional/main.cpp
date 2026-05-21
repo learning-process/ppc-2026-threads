@@ -111,6 +111,50 @@ const auto kTestName = MakoveevaALLRunFuncTests::PrintFuncTestName<MakoveevaALLR
 
 INSTANTIATE_TEST_SUITE_P(MatMulFoxAlg_Basic, MakoveevaALLRunFuncTests, kGtestValues, kTestName);
 
+// ============================================================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ UNIT ТЕСТОВ
+// ============================================================================
+
+void ExpectMatrixNear(const std::vector<double> &actual, const std::vector<double> &expected, double epsilon = 1e-10) {
+  ASSERT_EQ(actual.size(), expected.size());
+  for (size_t i = 0; i < actual.size(); ++i) {
+    EXPECT_NEAR(actual[i], expected[i], epsilon);
+  }
+}
+
+void ValidateNoNanOrInf(const std::vector<double> &matrix) {
+  for (double value : matrix) {
+    EXPECT_FALSE(std::isnan(value));
+    EXPECT_FALSE(std::isinf(value));
+  }
+}
+
+void CheckMatrixSymmetric(const std::vector<double> &matrix, size_t n, double epsilon = 1e-10) {
+  for (size_t row = 0; row < n; ++row) {
+    for (size_t col = 0; col < n; ++col) {
+      EXPECT_NEAR(matrix[(row * n) + col], matrix[(col * n) + row], epsilon);
+    }
+  }
+}
+
+std::vector<double> CreateDiagonalMatrix(size_t n, double diag_value) {
+  std::vector<double> matrix(n * n, 0.0);
+  for (size_t i = 0; i < n; ++i) {
+    matrix[(i * n) + i] = diag_value;
+  }
+  return matrix;
+}
+
+void CheckDiagonalMatrixResult(const std::vector<double> &matrix, size_t n, double expected_diag,
+                               double epsilon = 1e-10) {
+  for (size_t row = 0; row < n; ++row) {
+    for (size_t col = 0; col < n; ++col) {
+      double expected = (row == col) ? expected_diag : 0.0;
+      EXPECT_NEAR(matrix[(row * n) + col], expected, epsilon);
+    }
+  }
+}
+
 }  // namespace
 
 // ============================================================================
@@ -142,7 +186,7 @@ TEST_F(MatmulDoubleAllUnitTests, ValidationWithValidInput) {
 TEST_F(MatmulDoubleAllUnitTests, ValidationWithInvalidSizeA) {
   const size_t n = 4;
 
-  std::vector<double> a((n * n) - 1, 1.0);  // ИСПРАВЛЕНО: добавлены скобки
+  std::vector<double> a((n * n) - 1, 1.0);
   std::vector<double> b(n * n, 2.0);
 
   auto input = std::make_tuple(n, a, b);
@@ -156,7 +200,7 @@ TEST_F(MatmulDoubleAllUnitTests, ValidationWithInvalidSizeB) {
   const size_t n = 4;
 
   std::vector<double> a(n * n, 1.0);
-  std::vector<double> b((n * n) + 5, 2.0);  // ИСПРАВЛЕНО: добавлены скобки
+  std::vector<double> b((n * n) + 5, 2.0);
 
   auto input = std::make_tuple(n, a, b);
   MatmulDoubleAllTask task(input);
@@ -200,9 +244,9 @@ TEST_F(MatmulDoubleAllUnitTests, PreprocessingInitializesCorrectly) {
 // ТЕСТ 6: Простое матричное умножение 2x2
 TEST_F(MatmulDoubleAllUnitTests, SimpleMatrixMultiplication2x2) {
   const size_t n = 2;
-
   std::vector<double> a = {1.0, 2.0, 3.0, 4.0};
   std::vector<double> b = {5.0, 6.0, 7.0, 8.0};
+  std::vector<double> expected = {19.0, 22.0, 43.0, 50.0};
 
   auto input = std::make_tuple(n, a, b);
   MatmulDoubleAllTask task(input);
@@ -211,12 +255,7 @@ TEST_F(MatmulDoubleAllUnitTests, SimpleMatrixMultiplication2x2) {
   task.RunImpl();
   task.PostProcessingImpl();
 
-  const auto &result = task.GetResult();
-
-  EXPECT_NEAR(result[0], 19.0, 1e-10);
-  EXPECT_NEAR(result[1], 22.0, 1e-10);
-  EXPECT_NEAR(result[2], 43.0, 1e-10);
-  EXPECT_NEAR(result[3], 50.0, 1e-10);
+  ExpectMatrixNear(task.GetResult(), expected);
 }
 
 // ТЕСТ 7: Умножение на единичную матрицу
@@ -231,7 +270,7 @@ TEST_F(MatmulDoubleAllUnitTests, MultiplicationByIdentity) {
 
   std::vector<double> identity(size, 0.0);
   for (size_t row = 0; row < n; ++row) {
-    identity[(row * n) + row] = 1.0;  // ИСПРАВЛЕНО: добавлены скобки
+    identity[(row * n) + row] = 1.0;
   }
 
   auto input = std::make_tuple(n, a, identity);
@@ -241,11 +280,7 @@ TEST_F(MatmulDoubleAllUnitTests, MultiplicationByIdentity) {
   task.RunImpl();
   task.PostProcessingImpl();
 
-  const auto &result = task.GetResult();
-
-  for (size_t idx = 0; idx < size; ++idx) {
-    EXPECT_NEAR(result[idx], a[idx], 1e-10);
-  }
+  ExpectMatrixNear(task.GetResult(), a);
 }
 
 // ТЕСТ 8: Умножение нулевой матрицы
@@ -255,6 +290,7 @@ TEST_F(MatmulDoubleAllUnitTests, MultiplicationByZeroMatrix) {
 
   std::vector<double> a(size, 2.5);
   std::vector<double> zero_matrix(size, 0.0);
+  std::vector<double> expected(size, 0.0);
 
   auto input = std::make_tuple(n, a, zero_matrix);
   MatmulDoubleAllTask task(input);
@@ -263,11 +299,7 @@ TEST_F(MatmulDoubleAllUnitTests, MultiplicationByZeroMatrix) {
   task.RunImpl();
   task.PostProcessingImpl();
 
-  const auto &result = task.GetResult();
-
-  for (size_t idx = 0; idx < size; ++idx) {
-    EXPECT_NEAR(result[idx], 0.0, 1e-10);
-  }
+  ExpectMatrixNear(task.GetResult(), expected);
 }
 
 // ТЕСТ 9: Матрица 4x4
@@ -277,6 +309,7 @@ TEST_F(MatmulDoubleAllUnitTests, Matrix4x4) {
 
   std::vector<double> a(size, 1.0);
   std::vector<double> b(size, 1.0);
+  std::vector<double> expected(size, static_cast<double>(n));
 
   auto input = std::make_tuple(n, a, b);
   MatmulDoubleAllTask task(input);
@@ -285,11 +318,7 @@ TEST_F(MatmulDoubleAllUnitTests, Matrix4x4) {
   task.RunImpl();
   task.PostProcessingImpl();
 
-  const auto &result = task.GetResult();
-
-  for (size_t idx = 0; idx < size; ++idx) {
-    EXPECT_NEAR(result[idx], static_cast<double>(n), 1e-10);
-  }
+  ExpectMatrixNear(task.GetResult(), expected);
 }
 
 // ТЕСТ 10: Матрица 8x8 (большой размер)
@@ -315,11 +344,7 @@ TEST_F(MatmulDoubleAllUnitTests, Matrix8x8Large) {
   const auto &result = task.GetResult();
 
   EXPECT_EQ(result.size(), size);
-
-  for (size_t idx = 0; idx < size; ++idx) {
-    EXPECT_FALSE(std::isnan(result[idx]));
-    EXPECT_FALSE(std::isinf(result[idx]));
-  }
+  ValidateNoNanOrInf(result);
 }
 
 // ТЕСТ 11: Симметричные матрицы
@@ -330,7 +355,7 @@ TEST_F(MatmulDoubleAllUnitTests, SymmetricMatrices) {
   std::vector<double> a(size);
   for (size_t row = 0; row < n; ++row) {
     for (size_t col = 0; col < n; ++col) {
-      a[(row * n) + col] = 1.0 + static_cast<double>((row == col) ? 2 : 0);  // ИСПРАВЛЕНО
+      a[(row * n) + col] = 1.0 + static_cast<double>((row == col) ? 2 : 0);
     }
   }
 
@@ -341,29 +366,15 @@ TEST_F(MatmulDoubleAllUnitTests, SymmetricMatrices) {
   task.RunImpl();
   task.PostProcessingImpl();
 
-  const auto &result = task.GetResult();
-
-  for (size_t row = 0; row < n; ++row) {
-    for (size_t col = 0; col < n; ++col) {
-      EXPECT_NEAR(result[(row * n) + col], result[(col * n) + row], 1e-10);  // ИСПРАВЛЕНО
-    }
-  }
+  CheckMatrixSymmetric(task.GetResult(), n);
 }
 
 // ТЕСТ 12: Диагональные матрицы
 TEST_F(MatmulDoubleAllUnitTests, DiagonalMatrices) {
   const size_t n = 4;
-  const size_t size = n * n;
 
-  std::vector<double> a(size, 0.0);
-  for (size_t row = 0; row < n; ++row) {
-    a[(row * n) + row] = 2.0;  // ИСПРАВЛЕНО: добавлены скобки
-  }
-
-  std::vector<double> b(size, 0.0);
-  for (size_t row = 0; row < n; ++row) {
-    b[(row * n) + row] = 3.0;  // ИСПРАВЛЕНО: добавлены скобки
-  }
+  auto a = CreateDiagonalMatrix(n, 2.0);
+  auto b = CreateDiagonalMatrix(n, 3.0);
 
   auto input = std::make_tuple(n, a, b);
   MatmulDoubleAllTask task(input);
@@ -372,17 +383,7 @@ TEST_F(MatmulDoubleAllUnitTests, DiagonalMatrices) {
   task.RunImpl();
   task.PostProcessingImpl();
 
-  const auto &result = task.GetResult();
-
-  for (size_t row = 0; row < n; ++row) {
-    for (size_t col = 0; col < n; ++col) {
-      if (row == col) {
-        EXPECT_NEAR(result[(row * n) + col], 6.0, 1e-10);  // ИСПРАВЛЕНО
-      } else {
-        EXPECT_NEAR(result[(row * n) + col], 0.0, 1e-10);  // ИСПРАВЛЕНО
-      }
-    }
-  }
+  CheckDiagonalMatrixResult(task.GetResult(), n, 6.0);
 }
 
 // ТЕСТ 13: Матрицы с отрицательными значениями
@@ -405,12 +406,7 @@ TEST_F(MatmulDoubleAllUnitTests, NegativeValues) {
   task.RunImpl();
   task.PostProcessingImpl();
 
-  const auto &result = task.GetResult();
-
-  for (size_t idx = 0; idx < size; ++idx) {
-    EXPECT_FALSE(std::isnan(result[idx]));
-    EXPECT_FALSE(std::isinf(result[idx]));
-  }
+  ValidateNoNanOrInf(task.GetResult());
 }
 
 // ТЕСТ 14: PostProcessing сохраняет результат
