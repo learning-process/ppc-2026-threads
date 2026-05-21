@@ -14,7 +14,7 @@ namespace nazarova_k_calc_integ_rectangles {
 
 namespace {
 
-bool HasValidInput(const InType& input) {
+bool HasValidInput(const InType &input) {
   const std::size_t dimension = input.lower_bounds.size();
   if (!input.function || dimension == 0U || input.upper_bounds.size() != dimension || input.steps.size() != dimension) {
     return false;
@@ -35,8 +35,8 @@ bool HasValidInput(const InType& input) {
   return true;
 }
 
-void FillPointFromLinearIndex(const InType& input, const std::vector<double>& step_sizes, std::size_t linear_index,
-                              std::vector<double>& point) {
+void FillPointFromLinearIndex(const InType &input, const std::vector<double> &step_sizes, std::size_t linear_index,
+                              std::vector<double> &point) {
   std::size_t current_index = linear_index;
   for (std::size_t axis = 0U; axis < point.size(); ++axis) {
     const std::size_t coordinate_index = current_index % input.steps[axis];
@@ -47,7 +47,7 @@ void FillPointFromLinearIndex(const InType& input, const std::vector<double>& st
 
 }  // namespace
 
-NazarovaKCalcIntegRectanglesSTL::NazarovaKCalcIntegRectanglesSTL(const InType& in) {
+NazarovaKCalcIntegRectanglesSTL::NazarovaKCalcIntegRectanglesSTL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};
@@ -58,7 +58,7 @@ bool NazarovaKCalcIntegRectanglesSTL::ValidationImpl() {
 }
 
 bool NazarovaKCalcIntegRectanglesSTL::PreProcessingImpl() {
-  const auto& input = GetInput();
+  const auto &input = GetInput();
   dimension_ = input.lower_bounds.size();
   step_sizes_.assign(dimension_, 0.0);
   cell_volume_ = 1.0;
@@ -76,7 +76,7 @@ bool NazarovaKCalcIntegRectanglesSTL::PreProcessingImpl() {
 }
 
 bool NazarovaKCalcIntegRectanglesSTL::RunImpl() {
-  const auto& input = GetInput();
+  const auto &input = GetInput();
   std::size_t thread_count = std::thread::hardware_concurrency();
   if (thread_count == 0U) {
     thread_count = 1U;
@@ -106,7 +106,7 @@ bool NazarovaKCalcIntegRectanglesSTL::RunImpl() {
   }
 
   double sum = 0.0;
-  for (auto& future : futures) {
+  for (auto &future : futures) {
     sum += future.get();
   }
 

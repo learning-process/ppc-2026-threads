@@ -13,7 +13,7 @@ class NazarovaKCalcIntegRectanglesSTL : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSTL;
   }
-  explicit NazarovaKCalcIntegRectanglesSTL(const InType& in);
+  explicit NazarovaKCalcIntegRectanglesSTL(const InType &in);
 
  private:
   bool ValidationImpl() override;
