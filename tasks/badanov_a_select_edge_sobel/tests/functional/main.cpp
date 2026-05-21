@@ -15,6 +15,7 @@
 #include "badanov_a_select_edge_sobel/common/include/common.hpp"
 #include "badanov_a_select_edge_sobel/omp/include/ops_omp.hpp"
 #include "badanov_a_select_edge_sobel/seq/include/ops_seq.hpp"
+#include "badanov_a_select_edge_sobel/stl/include/ops_stl.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -280,7 +281,8 @@ const std::array<TestType, 10> kTestParam = {
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<BadanovASelectEdgeSobelSEQ, InType>(kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel),
-    ppc::util::AddFuncTask<BadanovASelectEdgeSobelOMP, InType>(kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel));
+    ppc::util::AddFuncTask<BadanovASelectEdgeSobelOMP, InType>(kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel),
+    ppc::util::AddFuncTask<BadanovASelectEdgeSobelSTL, InType>(kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel));
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = BadanovASelectEdgeSobelFuncTests::PrintFuncTestName<BadanovASelectEdgeSobelFuncTests>;

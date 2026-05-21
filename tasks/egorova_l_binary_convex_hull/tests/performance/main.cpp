@@ -6,6 +6,7 @@
 #include "egorova_l_binary_convex_hull/common/include/common.hpp"
 #include "egorova_l_binary_convex_hull/omp/include/ops_omp.hpp"
 #include "egorova_l_binary_convex_hull/seq/include/ops_seq.hpp"
+#include "egorova_l_binary_convex_hull/stl/include/ops_stl.hpp"
 #include "egorova_l_binary_convex_hull/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -47,14 +48,15 @@ class EgorovaLPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
   }
 };
 
+namespace {
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, BinaryConvexHullSEQ, BinaryConvexHullOMP, BinaryConvexHullTBB,
+                                BinaryConvexHullSTL>(PPC_SETTINGS_egorova_l_binary_convex_hull);
+
 TEST_P(EgorovaLPerfTest, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-namespace {
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, BinaryConvexHullSEQ, BinaryConvexHullOMP, BinaryConvexHullTBB>(
-        PPC_SETTINGS_egorova_l_binary_convex_hull);
 INSTANTIATE_TEST_SUITE_P(RunModeTests, EgorovaLPerfTest, ppc::util::TupleToGTestValues(kAllPerfTasks),
                          EgorovaLPerfTest::CustomPerfTestName);
 }  // namespace
