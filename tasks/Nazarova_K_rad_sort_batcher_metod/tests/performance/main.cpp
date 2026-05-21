@@ -39,8 +39,8 @@ TEST_P(NazarovaKCalcIntegRectanglesRunPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NazarovaKCalcIntegRectanglesOMP, NazarovaKCalcIntegRectanglesSEQ, NazarovaKCalcIntegRectanglesTBB>(
-        PPC_SETTINGS_Nazarova_K_rad_sort_batcher_metod);
+    ppc::util::MakeAllPerfTasks<InType, NazarovaKCalcIntegRectanglesOMP, NazarovaKCalcIntegRectanglesSEQ,
+                                NazarovaKCalcIntegRectanglesTBB>(PPC_SETTINGS_Nazarova_K_rad_sort_batcher_metod);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
