@@ -166,7 +166,7 @@ bool KamalaginABinaryImageConvexHullTBB::ValidationImpl() {
   if (img.rows == 0 || img.cols == 0) {
     return img.data.empty();
   }
-  if (img.rows > 1000 || img.cols > 1000) {
+  if (img.rows > 8192 || img.cols > 8192) {
     return false;
   }
   return (static_cast<size_t>(img.rows) * static_cast<size_t>(img.cols)) == img.data.size();

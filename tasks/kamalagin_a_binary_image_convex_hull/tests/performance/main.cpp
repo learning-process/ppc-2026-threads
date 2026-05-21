@@ -18,30 +18,19 @@ namespace kamalagin_a_binary_image_convex_hull {
 namespace {
 
 BinaryImage MakeSyntheticPerfImage() {
-  const int rows = 100;
-  const int cols = 100;
+  constexpr int kRows = 5000;
+  constexpr int kCols = 5000;
   BinaryImage img;
-  img.rows = rows;
-  img.cols = cols;
-  img.data.resize(static_cast<size_t>(rows) * static_cast<size_t>(cols), 0);
-  for (int row = 10; row < 30; ++row) {
-    for (int col = 10; col < 40; ++col) {
-      img.data[(static_cast<size_t>(row) * static_cast<size_t>(cols)) + static_cast<size_t>(col)] = 1;
-    }
-  }
-  for (int row = 50; row < 70; ++row) {
-    for (int col = 40; col < 70; ++col) {
-      img.data[(static_cast<size_t>(row) * static_cast<size_t>(cols)) + static_cast<size_t>(col)] = 1;
-    }
-  }
-  for (int row = 80; row < 95; ++row) {
-    for (int col = 5; col < 35; ++col) {
-      img.data[(static_cast<size_t>(row) * static_cast<size_t>(cols)) + static_cast<size_t>(col)] = 1;
-    }
-  }
-  for (int i = 0; i < rows; ++i) {
-    int col = i % cols;
-    img.data[(static_cast<size_t>(i) * static_cast<size_t>(cols)) + static_cast<size_t>(col)] = 1;
+  img.rows = kRows;
+  img.cols = kCols;
+  const size_t total = static_cast<size_t>(kRows) * static_cast<size_t>(kCols);
+  img.data.assign(total, 0);
+  for (int row = 0; row < kRows; ++row) {
+    const auto urow = static_cast<size_t>(row);
+    const int col1 = (row * 13) % kCols;
+    const int col2 = (row * 29 + 7) % kCols;
+    img.data[(urow * static_cast<size_t>(kCols)) + static_cast<size_t>(col1)] = 1;
+    img.data[(urow * static_cast<size_t>(kCols)) + static_cast<size_t>(col2)] = 1;
   }
   return img;
 }
