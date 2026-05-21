@@ -136,6 +136,7 @@
 ## 7. Репродуцируемость
 
 **Команды сборки:**
+
     cmake -S . -B build -D USE_FUNC_TESTS=ON -D USE_PERF_TESTS=ON -D CMAKE_BUILD_TYPE=Release
     cmake --build build --config Release --parallel
 
