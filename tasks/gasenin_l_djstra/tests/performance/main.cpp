@@ -1,7 +1,13 @@
 #include <gtest/gtest.h>
 
+#include <tuple>
+
+#include "gasenin_l_djstra/all/include/ops_all.hpp"
 #include "gasenin_l_djstra/common/include/common.hpp"
+#include "gasenin_l_djstra/omp/include/ops_omp.hpp"
 #include "gasenin_l_djstra/seq/include/ops_seq.hpp"
+#include "gasenin_l_djstra/stl/include/ops_stl.hpp"
+#include "gasenin_l_djstra/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace gasenin_l_djstra {
@@ -30,8 +36,15 @@ TEST_P(DjkstraPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, GaseninLDjstraSEQ>(PPC_SETTINGS_gasenin_l_djstra);
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kSeqPerfTasks = ppc::util::MakeAllPerfTasks<InType, GaseninLDjstraSEQ>(PPC_SETTINGS_gasenin_l_djstra);
+const auto kOmpPerfTasks = ppc::util::MakeAllPerfTasks<InType, GaseninLDjstraOMP>(PPC_SETTINGS_gasenin_l_djstra);
+const auto kStlPerfTasks = ppc::util::MakeAllPerfTasks<InType, GaseninLDjstraSTL>(PPC_SETTINGS_gasenin_l_djstra);
+const auto kTbbPerfTasks = ppc::util::MakeAllPerfTasks<InType, GaseninLDjstraTBB>(PPC_SETTINGS_gasenin_l_djstra);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, GaseninLDjstraALL>(PPC_SETTINGS_gasenin_l_djstra);
+
+const auto kTestPerfTasksLists =
+    std::tuple_cat(kSeqPerfTasks, kOmpPerfTasks, kStlPerfTasks, kTbbPerfTasks, kAllPerfTasks);
+const auto kGtestValues = ppc::util::TupleToGTestValues(kTestPerfTasksLists);
 const auto kPerfTestName = DjkstraPerfTests::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(DjkstraSeqPerf, DjkstraPerfTests, kGtestValues, kPerfTestName);
