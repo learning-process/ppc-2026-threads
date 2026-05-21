@@ -140,6 +140,32 @@ reduction(+ : local_sum)
 Количество генерируемых точек со случайным распределением равно 5 000 000.
 - **Конфигурации `Ranks × Threads`**: 2×4 и 4×8.
 
+**Конфигурация** задаётся парой:
+
+- `mpiexec -n P` — число MPI-процессов (`P`);
+- `OMP_NUM_THREADS=T` — потоков OpenMP на процесс;
+- **total workers** = `P × T`.
+
+**Сборка:**
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release --parallel
+```
+
+**Функциональные тесты:**
+
+```bash
+mpiexec -n P ./build/bin/ppc_func_tests.exe --gtest_filter="*Savva*"
+```
+
+**Тесты производительности:**
+
+```powershell
+$env:OMP_NUM_THREADS="T"
+mpiexec -n P ./build/bin/ppc_perf_tests.exe --gtest_filter="*Savva*"
+```
+
 ## 9. Результаты
 
 | Ranks × Threads | Общее число workers | Время (сек) | Ускорение (S) | Эффективность |

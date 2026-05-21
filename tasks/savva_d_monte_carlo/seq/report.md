@@ -123,6 +123,27 @@ for (; i + 3 < n; i += 4) {
 - **Параметры запуска тестов производительности:**
 Количество генерируемых точек со случайным распределением равно 5 000 000.
 
+
+**Команды запуска:**
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release --parallel
+```
+
+**Функциональные тесты:**
+
+```powershell
+./build/bin/ppc_func_tests.exe --gtest_filter="*Savva*"
+```
+
+**Тесты производительности:**
+
+```powershell
+./build/bin/ppc_perf_tests.exe --gtest_filter="*Savva*"
+```
+
+
 ## 8. Результаты
 
 Последовательная версия демонстрирует стабильное время выполнения

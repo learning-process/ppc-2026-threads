@@ -118,6 +118,33 @@ $$
 - **Компилятор:** Microsoft Visual C++ (MSVC);
 - **Тип сборки:** Release
 
+
+**Сборка:**
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release --parallel
+```
+
+**Конфигурация** задаётся парой:
+
+- `mpiexec -n P` — число MPI-процессов (`P`);
+- `OMP_NUM_THREADS=T` — потоков OpenMP на процесс;
+- **total workers** = `P × T`.
+
+**Функциональные тесты:**
+
+```bash
+mpiexec -n P ./build/bin/ppc_func_tests.exe --gtest_filter="*Savva*"
+```
+
+**Тесты производительности:**
+
+```powershell
+$env:OMP_NUM_THREADS="T"
+mpiexec -n P ./build/bin/ppc_perf_tests.exe --gtest_filter="*Savva*"
+```
+
 ## 6. Результаты
 
 |Technology|Конфигурация|Время (сек)|Ускорение (S)|Эффективность (E)|
