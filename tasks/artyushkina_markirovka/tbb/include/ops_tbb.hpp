@@ -45,4 +45,4 @@ class MarkingComponentsTBB : public BaseTask {
 
 }  // namespace artyushkina_markirovka
 
-#endif  // ARTYUSHKINA_MARKIROVKA_TBB_INCLUDE_OPS_TBB_HPP_
+#endif
