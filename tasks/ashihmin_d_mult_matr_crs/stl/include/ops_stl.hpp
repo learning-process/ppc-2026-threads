@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "ashihmin_d_mult_matr_crs/common/include/common.hpp"
 #include "task/include/task.hpp"
 
