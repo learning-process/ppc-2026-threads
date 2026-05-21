@@ -25,22 +25,25 @@ int ChooseBlockSize(int n) {
 // Вспомогательная функция для умножения блоков
 void MultiplyBlocks(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, int n,
                     int row_start, int row_end, int col_start, int col_end, int k_start, int k_end) {
+  const size_t n_size = static_cast<size_t>(n);
+
   for (int row = row_start; row < row_end; ++row) {
+    const size_t row_idx = static_cast<size_t>(row);
+    const size_t row_offset = row_idx * n_size;
+
     for (int col = col_start; col < col_end; ++col) {
+      const size_t col_idx = static_cast<size_t>(col);
       double sum = 0.0;
+
       for (int k = k_start; k < k_end; ++k) {
-        const size_t row_idx = static_cast<size_t>(row);
-        const size_t col_idx = static_cast<size_t>(col);
         const size_t k_idx = static_cast<size_t>(k);
-        const size_t n_size = static_cast<size_t>(n);
-
-        const size_t a_idx = (row_idx * n_size) + k_idx;
+        const size_t a_idx = row_offset + k_idx;
         const size_t b_idx = (k_idx * n_size) + col_idx;
-        const size_t c_idx = (row_idx * n_size) + col_idx;
-
         sum += a[a_idx] * b[b_idx];
-        c[c_idx] = sum;
       }
+
+      const size_t c_idx = row_offset + col_idx;
+      c[c_idx] += sum;
     }
   }
 }
@@ -48,13 +51,13 @@ void MultiplyBlocks(const std::vector<double> &a, const std::vector<double> &b, 
 }  // namespace
 
 MatmulDoubleSeqTask::MatmulDoubleSeqTask(const InType &in)
-    : n_(std::get<0>(in)), A_(std::get<1>(in)), B_(std::get<2>(in)), C_(static_cast<size_t>(n_ * n_), 0.0) {
+    : n_(std::get<0>(in)), A_(std::get<1>(in)), B_(std::get<2>(in)), C_(n_ * n_, 0.0) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetOutput() = C_;
 }
 
 bool MatmulDoubleSeqTask::ValidationImpl() {
-  const size_t expected_size = static_cast<size_t>(n_ * n_);
+  const size_t expected_size = n_ * n_;
   const bool is_valid = (n_ > 0) && (A_.size() == expected_size) && (B_.size() == expected_size);
   return is_valid;
 }
@@ -75,7 +78,7 @@ bool MatmulDoubleSeqTask::RunImpl() {
     block_size = n_int;
   }
 
-  const size_t total_size = static_cast<size_t>(n_ * n_);
+  const size_t total_size = n_ * n_;
   C_.assign(total_size, 0.0);
 
   const int grid_size = n_int / block_size;
