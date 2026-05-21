@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <ranges>
 #include <vector>
 
 #include "artyushkina_markirovka/common/include/common.hpp"
@@ -136,9 +137,9 @@ void MarkingComponentsTBB::NormalizeLabelsTbb() {
     return;
   }
 
-  std::sort(unique_roots.begin(), unique_roots.end());
-  auto last = std::unique(unique_roots.begin(), unique_roots.end());
-  unique_roots.erase(last, unique_roots.end());
+  std::ranges::sort(unique_roots);
+  auto last = std::ranges::unique(unique_roots);
+  unique_roots.erase(last.begin(), last.end());
 
   std::vector<int> mapping(total_pixels + 1, 0);
   int next_id = 1;
