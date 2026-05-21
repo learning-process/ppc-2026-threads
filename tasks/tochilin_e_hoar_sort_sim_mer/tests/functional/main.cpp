@@ -8,6 +8,7 @@
 #include <string>
 #include <tuple>
 
+#include "tochilin_e_hoar_sort_sim_mer/all/include/ops_all.hpp"
 #include "tochilin_e_hoar_sort_sim_mer/common/include/common.hpp"
 #include "tochilin_e_hoar_sort_sim_mer/omp/include/ops_omp.hpp"
 #include "tochilin_e_hoar_sort_sim_mer/seq/include/ops_seq.hpp"
@@ -98,6 +99,7 @@ const std::array<TestType, 10> kTestParam = {
     std::make_tuple(2000, "LongLongSize")};
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<TochilinEHoarSortSimMerALL, InType>(kTestParam, PPC_SETTINGS_tochilin_e_hoar_sort_sim_mer),
     ppc::util::AddFuncTask<TochilinEHoarSortSimMerSTL, InType>(kTestParam, PPC_SETTINGS_tochilin_e_hoar_sort_sim_mer),
     ppc::util::AddFuncTask<TochilinEHoarSortSimMerTBB, InType>(kTestParam, PPC_SETTINGS_tochilin_e_hoar_sort_sim_mer),
     ppc::util::AddFuncTask<TochilinEHoarSortSimMerOMP, InType>(kTestParam, PPC_SETTINGS_tochilin_e_hoar_sort_sim_mer),

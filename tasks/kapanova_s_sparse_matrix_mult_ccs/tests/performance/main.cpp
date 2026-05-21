@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include "kapanova_s_sparse_matrix_mult_ccs/all/include/ops_all.hpp"
 #include "kapanova_s_sparse_matrix_mult_ccs/common/include/common.hpp"
 #include "kapanova_s_sparse_matrix_mult_ccs/omp/include/ops_omp.hpp"
 #include "kapanova_s_sparse_matrix_mult_ccs/seq/include/ops_seq.hpp"
@@ -71,7 +72,7 @@ class KapanovaSMatrixMultiplyPerfTest : public ppc::util::BaseRunPerfTests<InTyp
  protected:
   void SetUp() override {
     size_t size = 10000;
-    double density = 0.002;
+    double density = 0.005;
 
     matrix_a_ = CreateRandomSparseMatrix(size, size, density);
     matrix_b_ = CreateRandomSparseMatrix(size, size, density);
@@ -124,8 +125,11 @@ const auto kAllPerfTasksTBB = ppc::util::MakeAllPerfTasks<InType, KapanovaSSpars
 
 const auto kAllPerfTasksSTL = ppc::util::MakeAllPerfTasks<InType, KapanovaSSparseMatrixMultCCSSTL>(
     PPC_SETTINGS_kapanova_s_sparse_matrix_mult_ccs);
+const auto kAllPerfTasksALL = ppc::util::MakeAllPerfTasks<InType, KapanovaSSparseMatrixMultCCSALL>(
+    PPC_SETTINGS_kapanova_s_sparse_matrix_mult_ccs);
 
-const auto kAllPerfTasks = std::tuple_cat(kAllPerfTasksSeq, kAllPerfTasksOMP, kAllPerfTasksTBB, kAllPerfTasksSTL);
+const auto kAllPerfTasks =
+    std::tuple_cat(kAllPerfTasksSeq, kAllPerfTasksOMP, kAllPerfTasksTBB, kAllPerfTasksSTL, kAllPerfTasksALL);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

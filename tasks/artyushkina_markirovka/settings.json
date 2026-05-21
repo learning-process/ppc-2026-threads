@@ -2,7 +2,8 @@
   "tasks": {
     "mpi": "enabled",
     "omp": "enabled",
-    "seq": "enabled"
+    "seq": "enabled",
+    "stl": "enabled"
   },
   "tasks_type": "processes"
 }
