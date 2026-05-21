@@ -29,9 +29,18 @@ void MultiplyBlocks(const std::vector<double> &a, const std::vector<double> &b, 
     for (int col = col_start; col < col_end; ++col) {
       double sum = 0.0;
       for (int k = k_start; k < k_end; ++k) {
-        sum += a[static_cast<size_t>(row) * n + k] * b[static_cast<size_t>(k) * n + col];
+        const size_t row_idx = static_cast<size_t>(row);
+        const size_t col_idx = static_cast<size_t>(col);
+        const size_t k_idx = static_cast<size_t>(k);
+        const size_t n_size = static_cast<size_t>(n);
+
+        const size_t a_idx = (row_idx * n_size) + k_idx;
+        const size_t b_idx = (k_idx * n_size) + col_idx;
+        const size_t c_idx = (row_idx * n_size) + col_idx;
+
+        sum += a[a_idx] * b[b_idx];
+        c[c_idx] = sum;
       }
-      c[static_cast<size_t>(row) * n + col] += sum;
     }
   }
 }
@@ -45,7 +54,7 @@ MatmulDoubleSeqTask::MatmulDoubleSeqTask(const InType &in)
 }
 
 bool MatmulDoubleSeqTask::ValidationImpl() {
-  const auto expected_size = static_cast<size_t>(n_ * n_);
+  const size_t expected_size = static_cast<size_t>(n_ * n_);
   const bool is_valid = (n_ > 0) && (A_.size() == expected_size) && (B_.size() == expected_size);
   return is_valid;
 }
@@ -66,7 +75,8 @@ bool MatmulDoubleSeqTask::RunImpl() {
     block_size = n_int;
   }
 
-  C_.assign(static_cast<size_t>(n_ * n_), 0.0);
+  const size_t total_size = static_cast<size_t>(n_ * n_);
+  C_.assign(total_size, 0.0);
 
   const int grid_size = n_int / block_size;
 
