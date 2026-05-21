@@ -4,11 +4,11 @@
 #include <cmath>
 #include <cstddef>
 #include <future>
-#include <thread>
 #include <tuple>
 #include <vector>
 
 #include "kosolapov_v_calc_mult_integrals_m_rectangles/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace kosolapov_v_calc_mult_integrals_m_rectangles {
 
