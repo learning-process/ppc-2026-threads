@@ -1,6 +1,8 @@
 #include "Nazarova_K_rad_sort_batcher_metod/all/include/ops_all.hpp"
 
 #include <mpi.h>
+#include <tbb/blocked_range.h>
+#include <tbb/parallel_reduce.h>
 
 #include <cmath>
 #include <cstddef>
@@ -8,16 +10,13 @@
 #include <limits>
 #include <vector>
 
-#include <tbb/blocked_range.h>
-#include <tbb/parallel_reduce.h>
-
 #include "Nazarova_K_rad_sort_batcher_metod/common/include/common.hpp"
 
 namespace nazarova_k_calc_integ_rectangles {
 
 namespace {
 
-bool HasValidInput(const InType& input) {
+bool HasValidInput(const InType &input) {
   const std::size_t dimension = input.lower_bounds.size();
   if (!input.function || dimension == 0U || input.upper_bounds.size() != dimension || input.steps.size() != dimension) {
     return false;
@@ -38,8 +37,8 @@ bool HasValidInput(const InType& input) {
   return true;
 }
 
-void FillPointFromLinearIndex(const InType& input, const std::vector<double>& step_sizes, std::size_t linear_index,
-                              std::vector<double>& point) {
+void FillPointFromLinearIndex(const InType &input, const std::vector<double> &step_sizes, std::size_t linear_index,
+                              std::vector<double> &point) {
   std::size_t current_index = linear_index;
   for (std::size_t axis = 0U; axis < point.size(); ++axis) {
     const std::size_t coordinate_index = current_index % input.steps[axis];
@@ -50,7 +49,7 @@ void FillPointFromLinearIndex(const InType& input, const std::vector<double>& st
 
 }  // namespace
 
-NazarovaKCalcIntegRectanglesALL::NazarovaKCalcIntegRectanglesALL(const InType& in) {
+NazarovaKCalcIntegRectanglesALL::NazarovaKCalcIntegRectanglesALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};
@@ -61,7 +60,7 @@ bool NazarovaKCalcIntegRectanglesALL::ValidationImpl() {
 }
 
 bool NazarovaKCalcIntegRectanglesALL::PreProcessingImpl() {
-  const auto& input = GetInput();
+  const auto &input = GetInput();
   dimension_ = input.lower_bounds.size();
   step_sizes_.assign(dimension_, 0.0);
   cell_volume_ = 1.0;
@@ -79,7 +78,7 @@ bool NazarovaKCalcIntegRectanglesALL::PreProcessingImpl() {
 }
 
 bool NazarovaKCalcIntegRectanglesALL::RunImpl() {
-  const auto& input = GetInput();
+  const auto &input = GetInput();
 
   int rank = 0;
   int size = 1;
@@ -94,17 +93,15 @@ bool NazarovaKCalcIntegRectanglesALL::RunImpl() {
   const std::size_t local_size = base_chunk + (mpi_rank < remainder ? 1U : 0U);
   const std::size_t local_end = local_begin + local_size;
 
-  const double local_sum = tbb::parallel_reduce(
-      tbb::blocked_range<std::size_t>(local_begin, local_end), 0.0,
-      [&](const tbb::blocked_range<std::size_t>& range, double partial_sum) {
-        std::vector<double> point(dimension_, 0.0);
-        for (std::size_t linear_index = range.begin(); linear_index < range.end(); ++linear_index) {
-          FillPointFromLinearIndex(input, step_sizes_, linear_index, point);
-          partial_sum += input.function(point);
-        }
-        return partial_sum;
-      },
-      std::plus<>());
+  const double local_sum = tbb::parallel_reduce(tbb::blocked_range<std::size_t>(local_begin, local_end), 0.0,
+                                                [&](const tbb::blocked_range<std::size_t> &range, double partial_sum) {
+    std::vector<double> point(dimension_, 0.0);
+    for (std::size_t linear_index = range.begin(); linear_index < range.end(); ++linear_index) {
+      FillPointFromLinearIndex(input, step_sizes_, linear_index, point);
+      partial_sum += input.function(point);
+    }
+    return partial_sum;
+  }, std::plus<>());
 
   double global_sum = 0.0;
   MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
