@@ -138,12 +138,12 @@ cmake -S . -B build -D CMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ```
 
-# Запуск функциональных тестов (SEQ)
+### Запуск функциональных тестов (SEQ)
 ```bash
 ./build/bin/ppc_func_tests --gtest_filter="*chernov*seq*"
 ```
 
-# Запуск тестов производительности (SEQ)
+### Запуск тестов производительности (SEQ)
 ```bash
 ./build/bin/ppc_perf_tests --gtest_filter="*chernov*seq*"
 ```
@@ -163,7 +163,7 @@ cmake --build build --parallel
 **Таблица зависимости времени от размера массива:**
 
 | Размер массива | Время (с) |
-|---------------|-----------|
+|----------------|-----------|
 | 1 000 | 0.00002 |
 | 10 000 | 0.00018 |
 | 100 000 | 0.0018 |
