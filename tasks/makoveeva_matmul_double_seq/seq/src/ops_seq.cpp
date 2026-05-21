@@ -29,7 +29,7 @@ namespace {
 
 // Helper function to get linear index
 std::size_t Idx(const int i, const int j, const int dim) {
-  return static_cast<std::size_t>((i * dim) + j);
+  return static_cast<std::size_t>(i) * dim + j;
 }
 
 // Helper function to multiply block A_block * B_block and add to C_block
@@ -108,7 +108,7 @@ void FoxAlgorithm(const std::vector<double> &a, const std::vector<double> &b, st
       // For each column block
       for (int col_block = 0; col_block < grid_size; ++col_block) {
         // Get the block from B (note: a_block_col is used as row for B)
-        const auto b_block = GetBlock(b, a_block_col, col_block, block_size, matrix_dim);
+        const auto b_block = GetBlock(b, row_block, col_block, block_size, matrix_dim);
 
         // Get current C block
         const auto c_block = GetBlock(c, row_block, col_block, block_size, matrix_dim);
