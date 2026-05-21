@@ -45,8 +45,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ShekhirevHoareBatcherSortSEQ, ShekhirevHoareBatcherSortOMP,
-                                ShekhirevHoareBatcherSortSTL, ShekhirevHoareBatcherSortTBB,ShekhirevHoareBatcherSortALL>(
-        PPC_SETTINGS_shekhirev_v_hoare_batcher_sort);
+                                ShekhirevHoareBatcherSortSTL, ShekhirevHoareBatcherSortTBB,
+                                ShekhirevHoareBatcherSortALL>(PPC_SETTINGS_shekhirev_v_hoare_batcher_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
