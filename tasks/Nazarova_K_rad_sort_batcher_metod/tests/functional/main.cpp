@@ -1,20 +1,23 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "Nazarova_K_rad_sort_batcher_metod/common/include/common.hpp"
 #include "Nazarova_K_rad_sort_batcher_metod/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace nazarova_k_rad_sort_batcher_metod_processes {
+namespace nazarova_k_calc_integ_rectangles {
 
-class NazarovaKRadSortBatcherMetodRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class NazarovaKCalcIntegRectanglesRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::get<2>(test_param);
+    return std::get<3>(test_param);
   }
 
  protected:
@@ -22,18 +25,11 @@ class NazarovaKRadSortBatcherMetodRunFuncTests : public ppc::util::BaseRunFuncTe
     TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_ = std::get<0>(param);
     expected_ = std::get<1>(param);
+    eps_ = std::get<2>(param);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.size() != expected_.size()) {
-      return false;
-    }
-    for (std::size_t i = 0; i < output_data.size(); ++i) {
-      if (output_data[i] != expected_[i]) {
-        return false;
-      }
-    }
-    return true;
+    return std::abs(output_data - expected_) <= eps_;
   }
 
   InType GetTestInputData() final {
@@ -42,40 +38,71 @@ class NazarovaKRadSortBatcherMetodRunFuncTests : public ppc::util::BaseRunFuncTe
 
  private:
   InType input_data_;
-  OutType expected_;
+  OutType expected_{0.0};
+  double eps_{0.0};
 };
 
 namespace {
 
-TEST_P(NazarovaKRadSortBatcherMetodRunFuncTests, RadixSortDoubleBatcherMerge) {
+InType MakeInput(double (*function)(const std::vector<double> &), std::vector<double> lower_bounds,
+                 std::vector<double> upper_bounds, std::vector<std::size_t> steps) {
+  return InType{function, std::move(lower_bounds), std::move(upper_bounds), std::move(steps)};
+}
+
+double ConstFunction(const std::vector<double> & /*point*/) {
+  return 5.0;
+}
+
+double Linear1D(const std::vector<double> &point) {
+  return point[0];
+}
+
+double Product2D(const std::vector<double> &point) {
+  return point[0] * point[1];
+}
+
+double Sum3D(const std::vector<double> &point) {
+  return point[0] + point[1] + point[2];
+}
+
+double Square1D(const std::vector<double> &point) {
+  return point[0] * point[0];
+}
+
+double Trig2D(const std::vector<double> &point) {
+  return std::sin(point[0]) * std::cos(point[1]);
+}
+
+double ShiftedProduct3D(const std::vector<double> &point) {
+  return (point[0] + 1.0) * (point[1] - 2.0) * point[2];
+}
+
+TEST_P(NazarovaKCalcIntegRectanglesRunFuncTests, MultidimensionalRectangleIntegration) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 12> kTestParam = {
-    TestType{InType{8.8}, OutType{8.8}, "Single"},
-    TestType{InType{}, OutType{}, "Empty"},
-    TestType{InType{6.6, 3.3}, OutType{3.3, 6.6}, "ReverseTwo"},
-    TestType{InType{-0.2, -150.0, -60.5, -4.4, -9.9}, OutType{-150.0, -60.5, -9.9, -4.4, -0.2}, "Negative"},
-    TestType{InType{15.7, 0.6, 98.2, 3.75, 7.83, 46.0}, OutType{0.6, 3.75, 7.83, 15.7, 46.0, 98.2}, "Positive"},
-    TestType{InType{9e12, 1e3, 5e9, 7e15, 2e11}, OutType{1e3, 5e9, 2e11, 9e12, 7e15}, "Large"},
-    TestType{InType{1e-20, 5e-6, 3e-12, 2e-3, 4e-9}, OutType{1e-20, 3e-12, 4e-9, 5e-6, 2e-3}, "Small"},
-    TestType{InType{-8.0, -2.0, 0.5, 8.0, 9.0}, OutType{-8.0, -2.0, 0.5, 8.0, 9.0}, "Sorted"},
-    TestType{InType{-3.3, 6.6, -10.9, 0.0, 2.2, -1.1}, OutType{-10.9, -3.3, -1.1, 0.0, 2.2, 6.6}, "DifferentSigns"},
-    TestType{InType{7.7, 3.3, 7.7, 3.3, 7.7}, OutType{3.3, 3.3, 7.7, 7.7, 7.7}, "Duplicates"},
-    TestType{InType{36.6, 25.5, 10.0, 8.9, 6.7, 4.5, 2.2}, OutType{2.2, 4.5, 6.7, 8.9, 10.0, 25.5, 36.6},
-             "ReverseSeven"},
-    TestType{InType{0.0, -0.0}, OutType{-0.0, 0.0}, "ZeroAndNegativeZero"}};
+const std::array<TestType, 7> kTestParam = {
+    TestType{MakeInput(ConstFunction, {0.0, 0.0}, {2.0, 3.0}, {8U, 9U}), 30.0, 1e-12, "Const2D"},
+    TestType{MakeInput(Linear1D, {0.0}, {10.0}, {100U}), 50.0, 1e-12, "Linear1D"},
+    TestType{MakeInput(Product2D, {0.0, 0.0}, {2.0, 3.0}, {20U, 30U}), 9.0, 1e-12, "Product2D"},
+    TestType{MakeInput(Sum3D, {0.0, 0.0, 0.0}, {1.0, 2.0, 3.0}, {10U, 12U, 14U}), 18.0, 1e-12, "Sum3D"},
+    TestType{MakeInput(Square1D, {0.0}, {1.0}, {1000U}), 1.0 / 3.0, 1e-7, "Square1D"},
+    TestType{MakeInput(Trig2D, {0.0, 0.0}, {std::acos(-1.0), std::acos(-1.0) / 2.0}, {400U, 300U}), 2.0, 1e-5,
+             "Trig2D"},
+    TestType{MakeInput(ShiftedProduct3D, {-1.0, 2.0, 0.0}, {1.0, 4.0, 2.0}, {12U, 10U, 8U}), 8.0, 1e-12,
+             "ShiftedProduct3D"}};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<NazarovaKRadSortBatcherMetodSEQ, InType>(
+const auto kTestTasksList = ppc::util::AddFuncTask<NazarovaKCalcIntegRectanglesSEQ, InType>(
     kTestParam, PPC_SETTINGS_Nazarova_K_rad_sort_batcher_metod);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName =
-    NazarovaKRadSortBatcherMetodRunFuncTests::PrintFuncTestName<NazarovaKRadSortBatcherMetodRunFuncTests>;
+    NazarovaKCalcIntegRectanglesRunFuncTests::PrintFuncTestName<NazarovaKCalcIntegRectanglesRunFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(RadixSortBatcherTests, NazarovaKRadSortBatcherMetodRunFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RectangleIntegrationTests, NazarovaKCalcIntegRectanglesRunFuncTests, kGtestValues,
+                         kPerfTestName);
 
 }  // namespace
 
-}  // namespace nazarova_k_rad_sort_batcher_metod_processes
+}  // namespace nazarova_k_calc_integ_rectangles
