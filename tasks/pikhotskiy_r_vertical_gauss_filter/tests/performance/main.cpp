@@ -5,6 +5,7 @@
 #include <random>
 #include <vector>
 
+#include "pikhotskiy_r_vertical_gauss_filter/all/include/ops_all.hpp"
 #include "pikhotskiy_r_vertical_gauss_filter/common/include/common.hpp"
 #include "pikhotskiy_r_vertical_gauss_filter/omp/include/ops_omp.hpp"
 #include "pikhotskiy_r_vertical_gauss_filter/seq/include/ops_seq.hpp"
@@ -48,8 +49,8 @@ TEST_P(PikhotskiyRVerticalGaussFilterPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, PikhotskiyRVerticalGaussFilterSEQ, PikhotskiyRVerticalGaussFilterOMP>(
-        PPC_SETTINGS_pikhotskiy_r_vertical_gauss_filter);
+    ppc::util::MakeAllPerfTasks<InType, PikhotskiyRVerticalGaussFilterSEQ, PikhotskiyRVerticalGaussFilterOMP,
+                                PikhotskiyRVerticalGaussFilterALL>(PPC_SETTINGS_pikhotskiy_r_vertical_gauss_filter);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
