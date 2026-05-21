@@ -74,7 +74,7 @@ bool SavvaDMonteCarloALL::RunImpl() {
 // 2. Параллельные вычисления внутри узла через OMP
 #pragma omp parallel default(none) shared(input, func, dim, n_local, rank) reduction(+ : local_sum)
   {
-    uint32_t seed = static_cast<uint32_t>(rank * omp_get_num_threads() + omp_get_thread_num());
+    auto seed = static_cast<uint32_t>(rank * omp_get_num_threads() + omp_get_thread_num());
     std::minstd_rand gen(seed ^ 0x9e3779b9U);
 
     std::vector<std::uniform_real_distribution<double>> dists(dim);
@@ -85,7 +85,7 @@ bool SavvaDMonteCarloALL::RunImpl() {
     std::vector<double> point(dim);
 
 #pragma omp for schedule(static)
-    for (int64_t i = 0; i < static_cast<int64_t>(n_local); ++i) {
+    for (int64_t i = 0; i < n_local; ++i) {
       for (size_t j = 0; j < dim; ++j) {
         point[j] = dists[j](gen);
       }
