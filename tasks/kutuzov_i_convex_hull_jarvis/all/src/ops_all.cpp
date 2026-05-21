@@ -267,5 +267,5 @@ bool KutuzovITestConvexHullALL::PostProcessingImpl() {
   }
   return true;
 }
-
+// Comment for CI
 }  // namespace kutuzov_i_convex_hull_jarvis
