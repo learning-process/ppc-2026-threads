@@ -1,13 +1,11 @@
 #include "artyushkina_markirovka/tbb/include/ops_tbb.hpp"
 
 #include <tbb/parallel_for.h>
-#include <tbb/parallel_reduce.h>
 #include <tbb/spin_mutex.h>
 
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <vector>
 
 #include "artyushkina_markirovka/common/include/common.hpp"
@@ -46,7 +44,6 @@ int MarkingComponentsTBB::FindRoot(int label) {
   while (parent_[root] != root) {
     root = parent_[root];
   }
-
   int current = label;
   while (parent_[current] != current) {
     int next = parent_[current];
@@ -91,29 +88,11 @@ void MarkingComponentsTBB::MergeHorizontalPairsTbb() {
 }
 
 void MarkingComponentsTBB::MergeVerticalPairsTbb() {
-  tbb::parallel_for(0, cols_, [this](int x_coord) {
-    for (int y_coord = 0; y_coord < rows_ - 1; ++y_coord) {
+  tbb::parallel_for(0, rows_ - 1, [this](int y_coord) {
+    for (int x_coord = 0; x_coord < cols_; ++x_coord) {
       int idx = (y_coord * cols_) + x_coord;
       if (labels_[idx] != 0 && labels_[idx + cols_] != 0) {
         UnionLabels(labels_[idx], labels_[idx + cols_]);
-      }
-    }
-  });
-}
-
-void MarkingComponentsTBB::MergeDiagonalPairsTbb() {
-  tbb::parallel_for(0, rows_, [this](int y_coord) {
-    for (int x_coord = 0; x_coord < cols_; ++x_coord) {
-      int idx = (y_coord * cols_) + x_coord;
-      if (labels_[idx] == 0) {
-        continue;
-      }
-
-      if (y_coord > 0 && x_coord > 0 && labels_[idx - cols_ - 1] != 0) {
-        UnionLabels(labels_[idx], labels_[idx - cols_ - 1]);
-      }
-      if (y_coord > 0 && x_coord < cols_ - 1 && labels_[idx - cols_ + 1] != 0) {
-        UnionLabels(labels_[idx], labels_[idx - cols_ + 1]);
       }
     }
   });
@@ -130,7 +109,6 @@ void MarkingComponentsTBB::FinalizeRootsTbb() {
 
 void MarkingComponentsTBB::NormalizeLabelsTbb() {
   int total_pixels = rows_ * cols_;
-
   std::vector<int> unique_roots;
   for (int i = 0; i < total_pixels; ++i) {
     if (labels_[i] != 0) {
@@ -138,21 +116,26 @@ void MarkingComponentsTBB::NormalizeLabelsTbb() {
     }
   }
 
-  std::sort(unique_roots.begin(), unique_roots.end());
-  unique_roots.erase(std::unique(unique_roots.begin(), unique_roots.end()), unique_roots.end());
-
-  std::vector<int> mapping(total_pixels + 1, 0);
-  for (size_t i = 0; i < unique_roots.size(); ++i) {
-    mapping[unique_roots[i]] = static_cast<int>(i + 1);
+  if (unique_roots.empty()) {
+    return;
   }
 
-  tbb::parallel_for(0, total_pixels, [this, &mapping](int i) {
+  std::sort(unique_roots.begin(), unique_roots.end());
+  auto last = std::unique(unique_roots.begin(), unique_roots.end());
+  unique_roots.erase(last, unique_roots.end());
+
+  std::vector<int> mapping(total_pixels + 1, 0);
+  int next_id = 1;
+  for (int root : unique_roots) {
+    mapping[root] = next_id++;
+  }
+
+  for (int i = 0; i < total_pixels; ++i) {
     if (labels_[i] != 0) {
       labels_[i] = mapping[labels_[i]];
     }
-  });
-
-  current_label_ = static_cast<int>(unique_roots.size());
+  }
+  current_label_ = next_id - 1;
 }
 
 bool MarkingComponentsTBB::RunImpl() {
@@ -164,7 +147,6 @@ bool MarkingComponentsTBB::RunImpl() {
   InitLabelsTbb();
   MergeHorizontalPairsTbb();
   MergeVerticalPairsTbb();
-  MergeDiagonalPairsTbb();
   FinalizeRootsTbb();
   NormalizeLabelsTbb();
 
