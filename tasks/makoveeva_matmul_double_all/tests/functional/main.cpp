@@ -13,7 +13,7 @@
 #include "util/include/util.hpp"
 
 namespace makoveeva_matmul_double_all {
-// hi
+
 class MakoveevaALLRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
@@ -105,8 +105,317 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kTestName = MakoveevaALLRunFuncTests::PrintFuncTestName<MakoveevaALLRunFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(MatMulFoxAlg_ArithmeticProgression, MakoveevaALLRunFuncTests, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(MatMulFoxAlg_Basic, MakoveevaALLRunFuncTests, kGtestValues, kTestName);
 
 }  // namespace
+
+class MatmulDoubleAllUnitTests : public ::testing::Test {
+ protected:
+  void SetUp() override {}
+};
+
+TEST_F(MatmulDoubleAllUnitTests, ValidationWithValidInput) {
+  const size_t n = 4;
+  const size_t size = n * n;
+
+  std::vector<double> a(size, 1.0);
+  std::vector<double> b(size, 2.0);
+
+  auto input = std::make_tuple(n, a, b);
+  MatmulDoubleAllTask task(input);
+
+  EXPECT_TRUE(task.ValidationImpl());
+}
+
+TEST_F(MatmulDoubleAllUnitTests, ValidationWithInvalidSizeA) {
+  const size_t n = 4;
+
+  std::vector<double> a(n * n - 1, 1.0);
+  std::vector<double> b(n * n, 2.0);
+
+  auto input = std::make_tuple(n, a, b);
+  MatmulDoubleAllTask task(input);
+
+  EXPECT_FALSE(task.ValidationImpl());
+}
+
+TEST_F(MatmulDoubleAllUnitTests, ValidationWithInvalidSizeB) {
+  const size_t n = 4;
+
+  std::vector<double> a(n * n, 1.0);
+  std::vector<double> b(n * n + 5, 2.0);
+
+  auto input = std::make_tuple(n, a, b);
+  MatmulDoubleAllTask task(input);
+
+  EXPECT_FALSE(task.ValidationImpl());
+}
+
+TEST_F(MatmulDoubleAllUnitTests, ValidationWithZeroSize) {
+  const size_t n = 0;
+
+  std::vector<double> a;
+  std::vector<double> b;
+
+  auto input = std::make_tuple(n, a, b);
+  MatmulDoubleAllTask task(input);
+
+  EXPECT_FALSE(task.ValidationImpl());
+}
+
+TEST_F(MatmulDoubleAllUnitTests, PreprocessingInitializesCorrectly) {
+  const size_t n = 3;
+  const size_t size = n * n;
+
+  std::vector<double> a(size, 1.5);
+  std::vector<double> b(size, 2.5);
+
+  auto input = std::make_tuple(n, a, b);
+  MatmulDoubleAllTask task(input);
+
+  EXPECT_TRUE(task.PreProcessingImpl());
+
+  const auto &result = task.GetResult();
+  EXPECT_EQ(result.size(), size);
+  for (size_t i = 0; i < size; ++i) {
+    EXPECT_EQ(result[i], 0.0);
+  }
+}
+
+TEST_F(MatmulDoubleAllUnitTests, SimpleMatrixMultiplication2x2) {
+  const size_t n = 2;
+
+  std::vector<double> a = {1.0, 2.0, 3.0, 4.0};
+  std::vector<double> b = {5.0, 6.0, 7.0, 8.0};
+
+  auto input = std::make_tuple(n, a, b);
+  MatmulDoubleAllTask task(input);
+
+  task.PreProcessingImpl();
+  task.RunImpl();
+  task.PostProcessingImpl();
+
+  const auto &result = task.GetResult();
+
+  EXPECT_NEAR(result[0], 19.0, 1e-10);
+  EXPECT_NEAR(result[1], 22.0, 1e-10);
+  EXPECT_NEAR(result[2], 43.0, 1e-10);
+  EXPECT_NEAR(result[3], 50.0, 1e-10);
+}
+
+TEST_F(MatmulDoubleAllUnitTests, MultiplicationByIdentity) {
+  const size_t n = 3;
+  const size_t size = n * n;
+
+  std::vector<double> a(size);
+  for (size_t i = 0; i < size; ++i) {
+    a[i] = static_cast<double>(i + 1);
+  }
+
+  // Единичная матрица
+  std::vector<double> identity(size, 0.0);
+  for (size_t i = 0; i < n; ++i) {
+    identity[i * n + i] = 1.0;
+  }
+
+  auto input = std::make_tuple(n, a, identity);
+  MatmulDoubleAllTask task(input);
+
+  task.PreProcessingImpl();
+  task.RunImpl();
+  task.PostProcessingImpl();
+
+  const auto &result = task.GetResult();
+
+  for (size_t i = 0; i < size; ++i) {
+    EXPECT_NEAR(result[i], a[i], 1e-10);
+  }
+}
+
+TEST_F(MatmulDoubleAllUnitTests, MultiplicationByZeroMatrix) {
+  const size_t n = 3;
+  const size_t size = n * n;
+
+  std::vector<double> a(size, 2.5);
+  std::vector<double> zero_matrix(size, 0.0);
+
+  auto input = std::make_tuple(n, a, zero_matrix);
+  MatmulDoubleAllTask task(input);
+
+  task.PreProcessingImpl();
+  task.RunImpl();
+  task.PostProcessingImpl();
+
+  const auto &result = task.GetResult();
+
+  for (size_t i = 0; i < size; ++i) {
+    EXPECT_NEAR(result[i], 0.0, 1e-10);
+  }
+}
+
+TEST_F(MatmulDoubleAllUnitTests, Matrix4x4) {
+  const size_t n = 4;
+  const size_t size = n * n;
+
+  std::vector<double> a(size, 1.0);
+  std::vector<double> b(size, 1.0);
+
+  auto input = std::make_tuple(n, a, b);
+  MatmulDoubleAllTask task(input);
+
+  task.PreProcessingImpl();
+  task.RunImpl();
+  task.PostProcessingImpl();
+
+  const auto &result = task.GetResult();
+
+  for (size_t i = 0; i < size; ++i) {
+    EXPECT_NEAR(result[i], static_cast<double>(n), 1e-10);
+  }
+}
+
+TEST_F(MatmulDoubleAllUnitTests, Matrix8x8Large) {
+  const size_t n = 8;
+  const size_t size = n * n;
+
+  std::vector<double> a(size);
+  std::vector<double> b(size);
+
+  for (size_t i = 0; i < size; ++i) {
+    a[i] = 0.5 + (static_cast<double>(i) * 0.1);
+    b[i] = 1.0 - (static_cast<double>(i) * 0.05);
+  }
+
+  auto input = std::make_tuple(n, a, b);
+  MatmulDoubleAllTask task(input);
+
+  task.PreProcessingImpl();
+  task.RunImpl();
+  task.PostProcessingImpl();
+
+  const auto &result = task.GetResult();
+
+  EXPECT_EQ(result.size(), size);
+
+  for (size_t i = 0; i < size; ++i) {
+    EXPECT_FALSE(std::isnan(result[i]));
+    EXPECT_FALSE(std::isinf(result[i]));
+  }
+}
+
+TEST_F(MatmulDoubleAllUnitTests, SymmetricMatrices) {
+  const size_t n = 4;
+  const size_t size = n * n;
+
+  // Симметричная матрица
+  std::vector<double> a(size);
+  for (size_t i = 0; i < n; ++i) {
+    for (size_t j = 0; j < n; ++j) {
+      a[i * n + j] = 1.0 + static_cast<double>((i == j) ? 2 : 0);
+    }
+  }
+
+  // Используем ту же матрицу для B
+  auto input = std::make_tuple(n, a, a);
+  MatmulDoubleAllTask task(input);
+
+  task.PreProcessingImpl();
+  task.RunImpl();
+  task.PostProcessingImpl();
+
+  const auto &result = task.GetResult();
+
+  for (size_t i = 0; i < n; ++i) {
+    for (size_t j = 0; j < n; ++j) {
+      EXPECT_NEAR(result[i * n + j], result[j * n + i], 1e-10);
+    }
+  }
+}
+
+TEST_F(MatmulDoubleAllUnitTests, DiagonalMatrices) {
+  const size_t n = 4;
+  const size_t size = n * n;
+
+  std::vector<double> a(size, 0.0);
+  for (size_t i = 0; i < n; ++i) {
+    a[i * n + i] = 2.0;
+  }
+
+  std::vector<double> b(size, 0.0);
+  for (size_t i = 0; i < n; ++i) {
+    b[i * n + i] = 3.0;
+  }
+
+  auto input = std::make_tuple(n, a, b);
+  MatmulDoubleAllTask task(input);
+
+  task.PreProcessingImpl();
+  task.RunImpl();
+  task.PostProcessingImpl();
+
+  const auto &result = task.GetResult();
+
+  for (size_t i = 0; i < n; ++i) {
+    for (size_t j = 0; j < n; ++j) {
+      if (i == j) {
+        EXPECT_NEAR(result[i * n + j], 6.0, 1e-10);
+      } else {
+        EXPECT_NEAR(result[i * n + j], 0.0, 1e-10);
+      }
+    }
+  }
+}
+
+TEST_F(MatmulDoubleAllUnitTests, NegativeValues) {
+  const size_t n = 3;
+  const size_t size = n * n;
+
+  std::vector<double> a(size);
+  std::vector<double> b(size);
+
+  for (size_t i = 0; i < size; ++i) {
+    a[i] = -1.0 - (static_cast<double>(i) * 0.5);
+    b[i] = 2.0 - (static_cast<double>(i) * 0.3);
+  }
+
+  auto input = std::make_tuple(n, a, b);
+  MatmulDoubleAllTask task(input);
+
+  task.PreProcessingImpl();
+  task.RunImpl();
+  task.PostProcessingImpl();
+
+  const auto &result = task.GetResult();
+
+  for (size_t i = 0; i < size; ++i) {
+    EXPECT_FALSE(std::isnan(result[i]));
+    EXPECT_FALSE(std::isinf(result[i]));
+  }
+}
+
+TEST_F(MatmulDoubleAllUnitTests, PostProcessingPreservesResult) {
+  const size_t n = 2;
+  const size_t size = n * n;
+
+  std::vector<double> a = {1.0, 2.0, 3.0, 4.0};
+  std::vector<double> b = {5.0, 6.0, 7.0, 8.0};
+
+  auto input = std::make_tuple(n, a, b);
+  MatmulDoubleAllTask task(input);
+
+  task.PreProcessingImpl();
+  task.RunImpl();
+
+  const auto &before_post = task.GetResult();
+  std::vector<double> result_before = before_post;
+
+  task.PostProcessingImpl();
+
+  const auto &after_post = task.GetResult();
+
+  for (size_t i = 0; i < size; ++i) {
+    EXPECT_EQ(result_before[i], after_post[i]);
+  }
+}
 
 }  // namespace makoveeva_matmul_double_all

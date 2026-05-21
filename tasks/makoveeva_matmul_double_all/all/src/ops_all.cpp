@@ -12,8 +12,6 @@
 namespace makoveeva_matmul_double_all {
 namespace {
 
-// Все вспомогательные функции в анонимном namespace (static)
-
 void ParallelMultiplyImpl(size_t n, const std::vector<double> &a, const std::vector<double> &b,
                           std::vector<double> &c) {
 #pragma omp parallel for default(none) shared(n, a, b, c) collapse(2)
