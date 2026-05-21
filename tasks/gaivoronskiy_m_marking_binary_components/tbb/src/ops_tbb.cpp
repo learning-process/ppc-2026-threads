@@ -51,6 +51,30 @@ namespace {
 constexpr std::array<int, 4> kDx = {-1, 1, 0, 0};
 constexpr std::array<int, 4> kDy = {0, 0, -1, 1};
 
+void BfsLabelFull(const InType &input, OutType &output, int rows, int cols, int start_row, int start_col, int label) {
+  std::vector<std::pair<int, int>> queue;
+  queue.reserve(64);
+  std::size_t head = 0;
+  queue.emplace_back(start_row, start_col);
+  output[(start_row * cols) + start_col + 2] = label;
+
+  while (head < queue.size()) {
+    const auto [cx, cy] = queue[head++];
+    for (std::size_t dir = 0; dir < 4; dir++) {
+      const int nx = cx + kDx.at(dir);
+      const int ny = cy + kDy.at(dir);
+      if (nx < 0 || nx >= rows || ny < 0 || ny >= cols) {
+        continue;
+      }
+      const int nidx = (nx * cols) + ny + 2;
+      if (input[nidx] == 0 && output[nidx] == 0) {
+        output[nidx] = label;
+        queue.emplace_back(nx, ny);
+      }
+    }
+  }
+}
+
 void BfsLabelInStrip(const InType &input, OutType &output, int cols, int r_begin, int r_end, int start_row,
                      int start_col, int label) {
   std::vector<std::pair<int, int>> queue;
@@ -84,29 +108,8 @@ void RunSequentialMarking(const InType &input, OutType &output, int rows, int co
       if (input[idx] != 0 || output[idx] != 0) {
         continue;
       }
-
       label++;
-      std::vector<std::pair<int, int>> queue;
-      queue.reserve(64);
-      std::size_t head = 0;
-      queue.emplace_back(row, col);
-      output[idx] = label;
-
-      while (head < queue.size()) {
-        const auto [cx, cy] = queue[head++];
-        for (std::size_t dir = 0; dir < 4; dir++) {
-          const int nx = cx + kDx.at(dir);
-          const int ny = cy + kDy.at(dir);
-          if (nx < 0 || nx >= rows || ny < 0 || ny >= cols) {
-            continue;
-          }
-          const int nidx = (nx * cols) + ny + 2;
-          if (input[nidx] == 0 && output[nidx] == 0) {
-            output[nidx] = label;
-            queue.emplace_back(nx, ny);
-          }
-        }
-      }
+      BfsLabelFull(input, output, rows, cols, row, col, label);
     }
   }
 }
@@ -229,7 +232,7 @@ void AddBaseOffsets(OutType &output, int cols, int num_threads, const std::vecto
 void MergeBoundariesUnionFind(const InType &input, const OutType &output, int rows, int cols, int num_threads,
                               const std::vector<int> &row_starts, std::vector<int> &parent) {
   for (int thread_idx = 0; thread_idx + 1 < num_threads; thread_idx++) {
-    const int boundary_row = row_starts[static_cast<std::size_t>(thread_idx + 1)];
+    const int boundary_row = row_starts[static_cast<std::size_t>(thread_idx) + 1U];
     if (boundary_row <= 0 || boundary_row >= rows) {
       continue;
     }
@@ -259,12 +262,12 @@ void FlattenParentForest(std::vector<int> &parent, int max_label) {
 std::vector<int> BuildRemapFromFirstPositions(const std::vector<int> &first_pos) {
   std::vector<int> roots;
   roots.reserve(first_pos.size());
-  for (int root = 1; root < static_cast<int>(first_pos.size()); root++) {
-    if (first_pos[static_cast<std::size_t>(root)] != std::numeric_limits<int>::max()) {
-      roots.push_back(root);
+  for (std::size_t root = 1; root < first_pos.size(); root++) {
+    if (first_pos[root] != std::numeric_limits<int>::max()) {
+      roots.push_back(static_cast<int>(root));
     }
   }
-  std::sort(roots.begin(), roots.end(), [&](int a, int b) {
+  std::ranges::sort(roots, [&](int a, int b) {
     return first_pos[static_cast<std::size_t>(a)] < first_pos[static_cast<std::size_t>(b)];
   });
 
@@ -274,6 +277,45 @@ std::vector<int> BuildRemapFromFirstPositions(const std::vector<int> &first_pos)
     remap[static_cast<std::size_t>(root)] = next_final++;
   }
   return remap;
+}
+
+void CollectFirstPositionsForRows(const InType &input, const OutType &output, const std::vector<int> &parent, int cols,
+                                  int row_begin, int row_end, std::vector<int> &local) {
+  for (int row = row_begin; row < row_end; row++) {
+    for (int col = 0; col < cols; col++) {
+      const int idx = (row * cols) + col + 2;
+      if (input[idx] != 0) {
+        continue;
+      }
+      const int lbl = output[idx];
+      if (lbl <= 0) {
+        continue;
+      }
+      const int root = parent[static_cast<std::size_t>(lbl)];
+      const int pos = (row * cols) + col;
+      local[static_cast<std::size_t>(root)] = std::min(local[static_cast<std::size_t>(root)], pos);
+    }
+  }
+}
+
+void CollectFirstPositionsRange(const InType &input, const OutType &output, const std::vector<int> &parent, int rows,
+                                int cols, int num_threads, std::vector<std::vector<int>> &thread_first, int begin_tid,
+                                int end_tid) {
+  for (int tid = begin_tid; tid < end_tid; ++tid) {
+    auto &local = thread_first[static_cast<std::size_t>(tid)];
+    const int row_begin = (tid * rows) / num_threads;
+    const int row_end = ((tid + 1) * rows) / num_threads;
+    CollectFirstPositionsForRows(input, output, parent, cols, row_begin, row_end, local);
+  }
+}
+
+void MergeRootFirstPositions(const std::vector<std::vector<int>> &thread_first, int num_threads, int root,
+                             std::vector<int> &first_pos) {
+  int min_pos = std::numeric_limits<int>::max();
+  for (int tid = 0; tid < num_threads; tid++) {
+    min_pos = std::min(min_pos, thread_first[static_cast<std::size_t>(tid)][static_cast<std::size_t>(root)]);
+  }
+  first_pos[static_cast<std::size_t>(root)] = min_pos;
 }
 
 std::vector<int> ComputeFirstPositionsParallel(const InType &input, const OutType &output,
@@ -286,43 +328,34 @@ std::vector<int> ComputeFirstPositionsParallel(const InType &input, const OutTyp
   tbb::task_arena arena(num_threads);
   arena.execute([&] {
     tbb::parallel_for(tbb::blocked_range<int>(0, num_threads), [&](const tbb::blocked_range<int> &range) {
-      for (int tid = range.begin(); tid < range.end(); ++tid) {
-        auto &local = thread_first[static_cast<std::size_t>(tid)];
-        const int row_begin = (tid * rows) / num_threads;
-        const int row_end = ((tid + 1) * rows) / num_threads;
-
-        for (int row = row_begin; row < row_end; row++) {
-          for (int col = 0; col < cols; col++) {
-            const int idx = (row * cols) + col + 2;
-            if (input[idx] != 0) {
-              continue;
-            }
-            const int lbl = output[idx];
-            if (lbl <= 0) {
-              continue;
-            }
-            const int root = parent[static_cast<std::size_t>(lbl)];
-            const int pos = (row * cols) + col;
-            if (pos < local[static_cast<std::size_t>(root)]) {
-              local[static_cast<std::size_t>(root)] = pos;
-            }
-          }
-        }
-      }
+      CollectFirstPositionsRange(input, output, parent, rows, cols, num_threads, thread_first, range.begin(),
+                                 range.end());
     });
   });
 
   std::vector<int> first_pos(static_cast<std::size_t>(max_label) + 1U, std::numeric_limits<int>::max());
   tbb::parallel_for(tbb::blocked_range<int>(1, max_label + 1), [&](const tbb::blocked_range<int> &range) {
     for (int root = range.begin(); root < range.end(); ++root) {
-      int min_pos = std::numeric_limits<int>::max();
-      for (int tid = 0; tid < num_threads; tid++) {
-        min_pos = std::min(min_pos, thread_first[static_cast<std::size_t>(tid)][static_cast<std::size_t>(root)]);
-      }
-      first_pos[static_cast<std::size_t>(root)] = min_pos;
+      MergeRootFirstPositions(thread_first, num_threads, root, first_pos);
     }
   });
   return first_pos;
+}
+
+void RemapRow(const InType &input, OutType &output, const std::vector<int> &parent, const std::vector<int> &remap,
+              int row, int cols) {
+  for (int col = 0; col < cols; col++) {
+    const int idx = (row * cols) + col + 2;
+    if (input[idx] != 0) {
+      continue;
+    }
+    const int lbl = output[idx];
+    if (lbl <= 0) {
+      continue;
+    }
+    const int root = parent[static_cast<std::size_t>(lbl)];
+    output[idx] = remap[static_cast<std::size_t>(root)];
+  }
 }
 
 void ApplyRemapInParallel(const InType &input, OutType &output, const std::vector<int> &parent,
@@ -331,18 +364,7 @@ void ApplyRemapInParallel(const InType &input, OutType &output, const std::vecto
   arena.execute([&] {
     tbb::parallel_for(tbb::blocked_range<int>(0, rows), [&](const tbb::blocked_range<int> &range) {
       for (int row = range.begin(); row < range.end(); ++row) {
-        for (int col = 0; col < cols; col++) {
-          const int idx = (row * cols) + col + 2;
-          if (input[idx] != 0) {
-            continue;
-          }
-          const int lbl = output[idx];
-          if (lbl <= 0) {
-            continue;
-          }
-          const int root = parent[static_cast<std::size_t>(lbl)];
-          output[idx] = remap[static_cast<std::size_t>(root)];
-        }
+        RemapRow(input, output, parent, remap, row, cols);
       }
     });
   });
