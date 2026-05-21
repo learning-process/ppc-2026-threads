@@ -264,9 +264,9 @@ std::vector<int> BuildRemapFromFirstPositions(const std::vector<int> &first_pos)
 std::vector<int> ComputeFirstPositionsParallel(const InType &input, const OutType &output,
                                                const std::vector<int> &parent, int rows, int cols, int max_label,
                                                int num_threads) {
-  std::vector<std::vector<int>> thread_first(static_cast<std::size_t>(num_threads),
-                                             std::vector<int>(static_cast<std::size_t>(max_label) + 1U,
-                                                              std::numeric_limits<int>::max()));
+  std::vector<std::vector<int>> thread_first(
+      static_cast<std::size_t>(num_threads),
+      std::vector<int>(static_cast<std::size_t>(max_label) + 1U, std::numeric_limits<int>::max()));
 
 #pragma omp parallel num_threads(num_threads) default(none) \
     shared(input, output, parent, rows, cols, max_label, num_threads, thread_first)
