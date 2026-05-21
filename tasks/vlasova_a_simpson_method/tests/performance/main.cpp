@@ -9,6 +9,7 @@
 #include "vlasova_a_simpson_method/omp/include/ops_omp.hpp"
 #include "vlasova_a_simpson_method/seq/include/ops_seq.hpp"
 #include "vlasova_a_simpson_method/stl/include/ops_stl.hpp"
+#include "vlasova_a_simpson_method/tbb/include/ops_tbb.hpp"
 
 namespace vlasova_a_simpson_method {
 
