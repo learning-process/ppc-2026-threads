@@ -4,6 +4,8 @@
 #include <vector>
 
 #include "Nazarova_K_rad_sort_batcher_metod/common/include/common.hpp"
+#include "Nazarova_K_rad_sort_batcher_metod/omp/include/ops_omp.hpp"
+#include "Nazarova_K_rad_sort_batcher_metod/seq/include/ops_seq.hpp"
 #include "Nazarova_K_rad_sort_batcher_metod/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -36,8 +38,9 @@ TEST_P(NazarovaKCalcIntegRectanglesRunPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, NazarovaKCalcIntegRectanglesTBB>(
-    PPC_SETTINGS_Nazarova_K_rad_sort_batcher_metod);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, NazarovaKCalcIntegRectanglesOMP, NazarovaKCalcIntegRectanglesSEQ, NazarovaKCalcIntegRectanglesTBB>(
+        PPC_SETTINGS_Nazarova_K_rad_sort_batcher_metod);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
