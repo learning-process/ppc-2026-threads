@@ -9,6 +9,7 @@
 #include <tuple>
 #include <vector>
 
+#include "dorogin_v_bin_img_conv_hull/all/include/ops_all.hpp"
 #include "dorogin_v_bin_img_conv_hull/common/include/common.hpp"
 #include "dorogin_v_bin_img_conv_hull/omp/include/ops_omp.hpp"
 #include "dorogin_v_bin_img_conv_hull/seq/include/ops_seq.hpp"
@@ -161,7 +162,8 @@ const auto kTasks = std::tuple_cat(
     ppc::util::AddFuncTask<DoroginVBinImgConvHullSeq, InType>(kParams, PPC_SETTINGS_dorogin_v_bin_img_conv_hull),
     ppc::util::AddFuncTask<DoroginVBinImgConvHullOMP, InType>(kParams, PPC_SETTINGS_dorogin_v_bin_img_conv_hull),
     ppc::util::AddFuncTask<DoroginVBinImgConvHullTBB, InType>(kParams, PPC_SETTINGS_dorogin_v_bin_img_conv_hull),
-    ppc::util::AddFuncTask<DoroginVBinImgConvHullSTL, InType>(kParams, PPC_SETTINGS_dorogin_v_bin_img_conv_hull));
+    ppc::util::AddFuncTask<DoroginVBinImgConvHullSTL, InType>(kParams, PPC_SETTINGS_dorogin_v_bin_img_conv_hull),
+    ppc::util::AddFuncTask<DoroginVBinImgConvHullALL, InType>(kParams, PPC_SETTINGS_dorogin_v_bin_img_conv_hull));
 
 const auto kValues = ppc::util::ExpandToValues(kTasks);
 
