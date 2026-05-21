@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -93,15 +94,13 @@ const std::array<TestType, 7> kTestParam = {
     TestType{MakeInput(ShiftedProduct3D, {-1.0, 2.0, 0.0}, {1.0, 4.0, 2.0}, {12U, 10U, 8U}), 8.0, 1e-12,
              "ShiftedProduct3D"}};
 
-
 const auto kOmpTestTasksList = ppc::util::AddFuncTask<NazarovaKCalcIntegRectanglesOMP, InType>(
     kTestParam, PPC_SETTINGS_Nazarova_K_rad_sort_batcher_metod);
 const auto kTestTasksList = ppc::util::AddFuncTask<NazarovaKCalcIntegRectanglesSEQ, InType>(
     kTestParam, PPC_SETTINGS_Nazarova_K_rad_sort_batcher_metod);
 
-const auto kAllTestTasks =
-  std::tuple_cat(kSeqTestTasksList, kStlTestTasksList);
-  
+const auto kAllTestTasks = std::tuple_cat(kOmpTestTasksList, kTestTasksList);
+
 const auto kGtestValues = ppc::util::ExpandToValues(kAllTestTasks);
 
 const auto kPerfTestName =
