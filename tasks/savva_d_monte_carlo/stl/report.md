@@ -157,23 +157,20 @@ auto worker = [&](int thread_id, int64_t pts) {
 
 **Команды запуска:**
 
-```bash
+   bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release --parallel
-```
 
 **Функциональные тесты:**
 
-```powershell
+   powershell
 ./build/bin/ppc_func_tests.exe --gtest_filter="*Savva*"
-```
 
 **Тесты производительности:**
 
-```powershell
+   powershell
 $env:PPC_NUM_THREADS="N"
 ./build/bin/ppc_perf_tests.exe --gtest_filter="*Savva*"
-```
 
 где `N` — количество потоков.
 

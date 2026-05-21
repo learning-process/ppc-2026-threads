@@ -148,23 +148,19 @@ reduction(+ : local_sum)
 
 **Сборка:**
 
-```bash
+   bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release --parallel
-```
 
 **Функциональные тесты:**
 
-```bash
+   bash
 mpiexec -n P ./build/bin/ppc_func_tests.exe --gtest_filter="*Savva*"
-```
 
 **Тесты производительности:**
-
-```powershell
+   powershell
 $env:OMP_NUM_THREADS="T"
 mpiexec -n P ./build/bin/ppc_perf_tests.exe --gtest_filter="*Savva*"
-```
 
 ## 9. Результаты
 
