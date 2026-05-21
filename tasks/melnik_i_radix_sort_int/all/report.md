@@ -43,30 +43,28 @@
 - Тесты стабильно проходят как на средних размерах, так и на смешанных конфигурациях процессов и потоков.
 
 ## 8. Экспериментальная среда
-- **Конфигурация**: `ranks × threads` задается через переменные окружения `PPC_NUM_PROC` (транслируется в аргументы для mpiexec) и `PPC_NUM_THREADS` (транслируется во внутренний `num_threads`).
-- **CPU**: <Заполнить модель CPU>
-- **RAM**: <Заполнить объем>
-- **OS**: Windows
-- **Compiler**: <Заполнить компилятор>
+- **CPU**: Intel Core i5 11400F (6 cores, 6 threads (Hypethreading off), 2.5 GHz (up to 4.2))
+- **RAM**: 32 GB DDR4 (3200 MHz, 2-channel)
+- **OS**: Windows 10 Pro 22H2 19045.5965 + WSL2 (Ubuntu 13.3.0)
+- **Compiler**: GNU 14.2.0
 - **CMake build type**: Release
 - **Команды запуска**:
 ```bash
 cmake -S . -B build -D USE_FUNC_TESTS=ON -D USE_PERF_TESTS=ON -D CMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
-export PPC_NUM_PROC=2
 export PPC_NUM_THREADS=4
-scripts/run_tests.py --running-type=performance
+mpirun -n 2 --allow-run-as-root /workspaces/ppc-2026-threads/build/bin/ppc_perf_tests --gtest_filter="*melnik_i*"
 ```
 
 ## 9. Результаты
-В таблице представлены данные замеров на массиве размера <Размер>. Для расчета эффективности берется общее количество воркеров: `total_workers = ranks * threads_per_rank`. Baseline берется от однопоточного `SEQ`.
+В таблице представлены данные замеров на массиве размера 10'000'000. Для расчета эффективности берется общее количество воркеров: `total_workers = ranks * threads_per_rank`. Baseline берется от однопоточного `SEQ`.
 
-| Ranks | Threads/Rank | Total Workers | Median Time (ms) | Speedup vs SEQ | Efficiency | Notes |
+| Ranks | Threads per rank | Total Workers | Median Time (s) | Speedup | Efficiency | Notes |
 |---|---|---|---|---|---|---|
-| 1 | 1 | 1 | <Время> | 1.00 | 100% | Имитация SEQ через ALL |
-| 2 | 2 | 4 | <Время> | <Ускорение> | <Эффективность>% | - |
-| 4 | 2 | 8 | <Время> | <Ускорение> | <Эффективность>% | - |
-| 2 | 4 | 8 | <Время> | <Ускорение> | <Эффективность>% | - |
+| 1 | 1 | 1 | 0.1826267222 | 1.00 | 100% | Имитация SEQ через ALL |
+| 2 | 2 | 4 | 0.1296914394 | 1.40 | 35% | - |
+| 4 | 2 | 8 | 0.0952527348 | 1.91 | 23% | - |
+| 2 | 4 | 8 | 0.1376392362 | 1.32 | 16% | - |
 
 Накладные расходы на `MPI_Scatterv` / `MPI_Gatherv` и создание/джоин `std::thread` внутри процессов значительны. Ускорение достигается только когда вычислительная сложность сортировки превышает задержки сети и системные аллокации потоков.
 
