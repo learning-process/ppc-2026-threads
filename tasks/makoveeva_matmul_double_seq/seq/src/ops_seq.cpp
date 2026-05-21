@@ -16,14 +16,47 @@ MatmulDoubleSeqTask::MatmulDoubleSeqTask(const InType &in)
 }
 
 bool MatmulDoubleSeqTask::ValidationImpl() {
+  // Remove redundant casting - n_ * n_ already produces size_t
   const bool is_valid =
-      n_ > 0 && A_.size() == static_cast<size_t>(n_ * n_) && B_.size() == static_cast<size_t>(n_ * n_);
+      n_ > 0 && A_.size() == static_cast<std::size_t>(n_ * n_) && B_.size() == static_cast<std::size_t>(n_ * n_);
   return is_valid;
 }
 
 bool MatmulDoubleSeqTask::PreProcessingImpl() {
   return true;
 }
+
+// Helper function to reduce cognitive complexity
+namespace {
+void ComputeBlock(const std::vector<double> &A, const std::vector<double> &B, std::vector<double> &C, int matrix_dim,
+                  int row_start, int col_start, int root_start, int block_size) {
+  for (int local_i = 0; local_i < block_size; ++local_i) {
+    const int global_i = row_start + local_i;
+    if (global_i >= matrix_dim) {
+      continue;
+    }
+
+    for (int local_j = 0; local_j < block_size; ++local_j) {
+      const int global_j = col_start + local_j;
+      if (global_j >= matrix_dim) {
+        continue;
+      }
+
+      double accumulator = 0.0;
+      for (int local_k = 0; local_k < block_size; ++local_k) {
+        const int global_k = root_start + local_k;
+        if (global_k >= matrix_dim) {
+          continue;
+        }
+
+        accumulator += A[static_cast<std::size_t>(global_i * matrix_dim + global_k)] *
+                       B[static_cast<std::size_t>(global_k * matrix_dim + global_j)];
+      }
+      C[static_cast<std::size_t>(global_i * matrix_dim + global_j)] += accumulator;
+    }
+  }
+}
+}  // namespace
 
 bool MatmulDoubleSeqTask::RunImpl() {
   if (n_ <= 0) {
@@ -36,12 +69,14 @@ bool MatmulDoubleSeqTask::RunImpl() {
   int block_size = static_cast<int>(std::sqrt(static_cast<double>(matrix_dim)));
   block_size = std::max(1, block_size);
 
+  // Adjust block size to divide matrix_dim evenly
   while (matrix_dim % block_size != 0 && block_size > 1) {
     --block_size;
   }
 
   const int grid_size = matrix_dim / block_size;
 
+  // Matrix multiplication with blocking optimization
   for (int stage = 0; stage < grid_size; ++stage) {
     for (int row_block = 0; row_block < grid_size; ++row_block) {
       const int root_block = (row_block + stage) % grid_size;
@@ -51,30 +86,7 @@ bool MatmulDoubleSeqTask::RunImpl() {
         const int col_start = col_block * block_size;
         const int root_start = root_block * block_size;
 
-        for (int local_i = 0; local_i < block_size; ++local_i) {
-          const int global_i = row_start + local_i;
-          if (global_i >= matrix_dim) {
-            continue;
-          }
-
-          for (int local_j = 0; local_j < block_size; ++local_j) {
-            const int global_j = col_start + local_j;
-            if (global_j >= matrix_dim) {
-              continue;
-            }
-
-            double accumulator = 0.0;
-            for (int local_k = 0; local_k < block_size; ++local_k) {
-              const int global_k = root_start + local_k;
-              if (global_k >= matrix_dim) {
-                continue;
-              }
-
-              accumulator += A_[(global_i * matrix_dim) + global_k] * B_[(global_k * matrix_dim) + global_j];
-            }
-            C_[(global_i * matrix_dim) + global_j] += accumulator;
-          }
-        }
+        ComputeBlock(A_, B_, C_, matrix_dim, row_start, col_start, root_start, block_size);
       }
     }
   }
