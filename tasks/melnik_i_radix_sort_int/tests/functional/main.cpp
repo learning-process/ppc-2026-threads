@@ -7,6 +7,7 @@
 #include <tuple>
 #include <vector>
 
+#include "melnik_i_radix_sort_int/all/include/ops_all.hpp"
 #include "melnik_i_radix_sort_int/common/include/common.hpp"
 #include "melnik_i_radix_sort_int/omp/include/ops_omp.hpp"
 #include "melnik_i_radix_sort_int/seq/include/ops_seq.hpp"
@@ -60,6 +61,7 @@ const std::array<TestType, 7> kTestParam = {
 };
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<MelnikIRadixSortIntALL, InType>(kTestParam, PPC_SETTINGS_melnik_i_radix_sort_int),
     ppc::util::AddFuncTask<MelnikIRadixSortIntSEQ, InType>(kTestParam, PPC_SETTINGS_melnik_i_radix_sort_int),
     ppc::util::AddFuncTask<MelnikIRadixSortIntOMP, InType>(kTestParam, PPC_SETTINGS_melnik_i_radix_sort_int),
     ppc::util::AddFuncTask<MelnikIRadixSortIntSTL, InType>(kTestParam, PPC_SETTINGS_melnik_i_radix_sort_int),
