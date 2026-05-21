@@ -75,21 +75,21 @@ double OuntNtIntegral(double left_border, double right_border, double simpson_fa
 
 }  // namespace
 
-VinyaikinaEMultidimIntegrSimpsonMPI::VinyaikinaEMultidimIntegrSimpsonMPI(const InType &in) {
+VinyaikinaEMultidimIntegrSimpsonALL::VinyaikinaEMultidimIntegrSimpsonALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
-bool VinyaikinaEMultidimIntegrSimpsonMPI::PreProcessingImpl() {
+bool VinyaikinaEMultidimIntegrSimpsonALL::PreProcessingImpl() {
   return true;
 }
 
-bool VinyaikinaEMultidimIntegrSimpsonMPI::ValidationImpl() {
+bool VinyaikinaEMultidimIntegrSimpsonALL::ValidationImpl() {
   const auto &[h, limits, function] = GetInput();
   return !limits.empty() && function && h <= 0.01;
 }
 
-bool VinyaikinaEMultidimIntegrSimpsonMPI::RunImpl() {
+bool VinyaikinaEMultidimIntegrSimpsonALL::RunImpl() {
   const auto &input = GetInput();
   double h = std::get<0>(input);
   const auto &limits = std::get<1>(input);
@@ -157,7 +157,7 @@ bool VinyaikinaEMultidimIntegrSimpsonMPI::RunImpl() {
   return true;
 }
 
-bool VinyaikinaEMultidimIntegrSimpsonMPI::PostProcessingImpl() {
+bool VinyaikinaEMultidimIntegrSimpsonALL::PostProcessingImpl() {
   GetOutput() = I_res_;
   return true;
 }
