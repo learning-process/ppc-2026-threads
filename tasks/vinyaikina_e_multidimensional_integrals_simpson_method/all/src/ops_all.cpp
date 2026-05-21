@@ -18,18 +18,6 @@
 namespace vinyaikina_e_multidimensional_integrals_simpson_method {
 namespace {
 
-double CustomRound(double value, double h) {
-  h *= 2;
-  int tmp = static_cast<int>(1 / h);
-  int decimal_places = 0;
-  while (tmp > 0 && tmp % 10 == 0) {
-    decimal_places++;
-    tmp /= 10;
-  }
-  double factor = std::pow(10.0, decimal_places);
-  return std::round(value * factor) / factor;
-}
-
 double Weight(int i, int steps_count) {
   double weight = 2.0;
   if (i == 0 || i == steps_count) {
@@ -40,37 +28,37 @@ double Weight(int i, int steps_count) {
   return weight;
 }
 
-double OuntNtIntegral(double left_border, double right_border, double simpson_factor,
-                      const std::vector<std::pair<double, double>> &limits, const std::vector<double> &actual_step,
-                      const std::function<double(const std::vector<double> &)> &function) {
+double IntegrateRemainingDims(double x0, double simpson_factor, const std::vector<std::pair<double, double>> &limits,
+                              const std::vector<double> &actual_step,
+                              const std::function<double(const std::vector<double> &)> &function) {
   std::stack<std::pair<std::vector<double>, double>> stack;
-  double res = 0.0;
-  int steps_count_0 = static_cast<int>(lround((right_border - left_border) / actual_step[0]));
-  for (int i0 = 0; i0 <= steps_count_0; ++i0) {
-    double x0 = left_border + (i0 * actual_step[0]);
-    double weight_0 = Weight(i0, steps_count_0);
-    stack.emplace(std::vector<double>{x0}, weight_0);
-    while (!stack.empty()) {
-      std::vector<double> point = stack.top().first;
-      double weight = stack.top().second;
-      stack.pop();
-      if (point.size() == limits.size()) {
-        res += function(point) * weight * simpson_factor;
-        continue;
-      }
-      size_t dim = point.size();
-      double step = actual_step[dim];
-      int steps_count = static_cast<int>(lround((limits[dim].second - limits[dim].first) / step));
-      for (int i = 0; i <= steps_count; ++i) {
-        double x = limits[dim].first + (i * step);
-        double dim_weight = Weight(i, steps_count);
-        point.push_back(x);
-        stack.emplace(point, weight * dim_weight);
-        point.pop_back();
-      }
+  double result = 0.0;
+
+  stack.emplace(std::vector<double>{x0}, 1.0);
+
+  while (!stack.empty()) {
+    auto [point, weight_product] = stack.top();
+    stack.pop();
+
+    size_t dim = point.size();
+
+    if (dim == limits.size()) {
+      result += function(point) * weight_product * simpson_factor;
+      continue;
+    }
+
+    double step = actual_step[dim];
+    int steps_count = static_cast<int>(lround((limits[dim].second - limits[dim].first) / step));
+    for (int i = 0; i <= steps_count; ++i) {
+      double x = limits[dim].first + i * step;
+      double dim_weight = Weight(i, steps_count);
+      point.push_back(x);
+      stack.emplace(point, weight_product * dim_weight);
+      point.pop_back();
     }
   }
-  return res;
+
+  return result;
 }
 
 }  // namespace
@@ -103,48 +91,57 @@ bool VinyaikinaEMultidimIntegrSimpsonALL::RunImpl() {
 
   std::vector<double> actual_step(limits.size());
   double simpson_factor = 1.0;
-  for (size_t i = 0; i < limits.size(); i++) {
-    int quan_steps = static_cast<int>(lround((limits[i].second - limits[i].first) / h));
+  for (size_t i = 0; i < limits.size(); ++i) {
+    double len = limits[i].second - limits[i].first;
+    int quan_steps = static_cast<int>(lround(len / h));
     if (quan_steps % 2 != 0) {
-      quan_steps++;
+      ++quan_steps;
     }
-    actual_step[i] = (limits[i].second - limits[i].first) / quan_steps;
+    actual_step[i] = len / quan_steps;
     simpson_factor *= actual_step[i] / 3.0;
   }
 
   int total_steps_0 = static_cast<int>(lround((limits[0].second - limits[0].first) / actual_step[0]));
-  int base_steps = total_steps_0 / num_procs;
+
+  int steps_per_proc = total_steps_0 / num_procs;
   int remainder = total_steps_0 % num_procs;
 
-  int my_start_step = rank * base_steps + std::min(rank, remainder);
-  int my_end_step = (rank + 1) * base_steps + std::min(rank + 1, remainder);
+  int start_idx = rank * steps_per_proc + std::min(rank, remainder);
+  int end_idx = start_idx + steps_per_proc + (rank < remainder ? 1 : 0) - 1;
+  if (start_idx > total_steps_0) {
+    start_idx = total_steps_0;
+  }
+  if (end_idx > total_steps_0) {
+    end_idx = total_steps_0;
+  }
+  if (end_idx < start_idx) {
+    end_idx = start_idx - 1;
+  }
 
-  double mpi_left = limits[0].first + my_start_step * actual_step[0];
-  double mpi_right = limits[0].first + my_end_step * actual_step[0];
-
-  double omp_delta = (mpi_right - mpi_left) / num_omp_threads;
   double local_res = 0.0;
 
-#pragma omp parallel num_threads(num_omp_threads) default(none)                                            \
-    shared(mpi_left, mpi_right, omp_delta, num_omp_threads, actual_step, simpson_factor, limits, function) \
-    reduction(+ : local_res)
-  {
-    int tid = omp_get_thread_num();
-    double t_left = mpi_left + tid * omp_delta;
-    double t_right = mpi_right - (num_omp_threads - tid - 1) * omp_delta;
+  int my_indices_count = end_idx - start_idx + 1;
+  if (my_indices_count > 0) {
+    int indices_per_thread = my_indices_count / num_omp_threads;
+    int remainder_threads = my_indices_count % num_omp_threads;
 
-    if (tid == 0) {
-      t_left = mpi_left;
-    }
-    if (tid == num_omp_threads - 1) {
-      t_right = mpi_right;
-    }
+#pragma omp parallel num_threads(num_omp_threads) default(none)                                                      \
+    shared(start_idx, end_idx, indices_per_thread, remainder_threads, limits, actual_step, simpson_factor, function, \
+               total_steps_0) reduction(+ : local_res)
+    {
+      int tid = omp_get_thread_num();
+      int thread_start = start_idx + tid * indices_per_thread + std::min(tid, remainder_threads);
+      int thread_end = thread_start + indices_per_thread + (tid < remainder_threads ? 1 : 0) - 1;
+      if (thread_end > end_idx) {
+        thread_end = end_idx;
+      }
 
-    t_left = CustomRound(t_left, actual_step[0]);
-    t_right = CustomRound(t_right, actual_step[0]);
+      for (int idx = thread_start; idx <= thread_end; ++idx) {
+        double x0 = limits[0].first + idx * actual_step[0];
+        double weight0 = Weight(idx, total_steps_0);
 
-    if (t_right > t_left) {
-      local_res += OuntNtIntegral(t_left, t_right, simpson_factor, limits, actual_step, function);
+        local_res += IntegrateRemainingDims(x0, simpson_factor, limits, actual_step, function) * weight0;
+      }
     }
   }
 
@@ -154,6 +151,7 @@ bool VinyaikinaEMultidimIntegrSimpsonALL::RunImpl() {
   if (rank == 0) {
     I_res_ = global_res;
   }
+
   return true;
 }
 
