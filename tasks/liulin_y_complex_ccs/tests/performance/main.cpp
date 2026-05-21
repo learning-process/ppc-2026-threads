@@ -9,6 +9,7 @@
 #include "liulin_y_complex_ccs/common/include/common.hpp"
 #include "liulin_y_complex_ccs/omp/include/ops_omp.hpp"
 #include "liulin_y_complex_ccs/seq/include/ops_seq.hpp"
+#include "liulin_y_complex_ccs/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace liulin_y_complex_ccs {
@@ -97,8 +98,9 @@ namespace {
 const auto kAllPerfTasksSeq = ppc::util::MakeAllPerfTasks<InType, LiulinYComplexCcs>(PPC_SETTINGS_liulin_y_complex_ccs);
 const auto kAllPerfTasksOmp =
     ppc::util::MakeAllPerfTasks<InType, LiulinYComplexCcsOmp>(PPC_SETTINGS_liulin_y_complex_ccs);
-
-const auto kAllPerfTasks = std::tuple_cat(kAllPerfTasksSeq, kAllPerfTasksOmp);
+const auto kAllPerfTasksTbb =
+    ppc::util::MakeAllPerfTasks<InType, LiulinYComplexCcsTbb>(PPC_SETTINGS_liulin_y_complex_ccs);
+const auto kAllPerfTasks = std::tuple_cat(kAllPerfTasksSeq, kAllPerfTasksOmp, kAllPerfTasksTbb);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
