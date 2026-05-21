@@ -143,18 +143,11 @@ cmake --build build --config Release --parallel
 ```
 
 **Команды запуска тестов (пример для STL 8 потоков):**
-```bash
     $env:PPC_NUM_THREADS=8; .\build\bin\ppc_perf_tests.exe --gtest_filter="*task_run_moskaev_v_lin_filt_block_gauss_3_stl_enabled"
-```
-
 **Команды для ALL (4 процесса × 2 потока):**
-```bash
     $env:PPC_NUM_THREADS=2; mpiexec -n 4 .\build\bin\ppc_perf_tests.exe --gtest_filter="*task_run_moskaev_v_lin_filt_block_gauss_3_all_enabled"
-```
 
 ## 8. Заключение
-
-**Лучшая технология:** STL с ускорением 4.62× на 8 потоках.
 
 **Второй:** TBB с ускорением 4.13×.
 
