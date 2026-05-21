@@ -45,12 +45,12 @@ void ShemetovDRadixOddEvenMergeSortTBB::ApplyMainPass(std::vector<int> &array, s
 
 ## 5. Экспериментальная среда
 
-CPU: AMD Ryzen 7 5800x
-OS: Windows 11
-Compiler: MSVC
-Build Type: Release
+- CPU: AMD Ryzen 7 5800x
+- OS: Windows 11
+- Compiler: MSVC
+- Build Type: Release
 
-Задача генерируется динамически размером $N = 2^17$ с элементами из равномерного распределения $[-1000000, 1000000]$.
+Задача генерируется динамически размером $N = 2^(17)$ с элементами из равномерного распределения $[-1000000, 1000000]$.
 
 ## 6. Результаты
 
