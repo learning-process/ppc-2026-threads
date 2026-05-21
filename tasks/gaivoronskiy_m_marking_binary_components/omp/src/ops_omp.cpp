@@ -49,6 +49,30 @@ namespace {
 constexpr std::array<int, 4> kDx = {-1, 1, 0, 0};
 constexpr std::array<int, 4> kDy = {0, 0, -1, 1};
 
+void BfsLabelFull(const InType &input, OutType &output, int rows, int cols, int start_row, int start_col, int label) {
+  std::vector<std::pair<int, int>> queue;
+  queue.reserve(64);
+  std::size_t head = 0;
+  queue.emplace_back(start_row, start_col);
+  output[(start_row * cols) + start_col + 2] = label;
+
+  while (head < queue.size()) {
+    const auto [cx, cy] = queue[head++];
+    for (std::size_t dir = 0; dir < 4; dir++) {
+      const int nx = cx + kDx.at(dir);
+      const int ny = cy + kDy.at(dir);
+      if (nx < 0 || nx >= rows || ny < 0 || ny >= cols) {
+        continue;
+      }
+      const int nidx = (nx * cols) + ny + 2;
+      if (input[nidx] == 0 && output[nidx] == 0) {
+        output[nidx] = label;
+        queue.emplace_back(nx, ny);
+      }
+    }
+  }
+}
+
 void BfsLabelInStrip(const InType &input, OutType &output, int cols, int r_begin, int r_end, int start_row,
                      int start_col, int label) {
   std::vector<std::pair<int, int>> queue;
@@ -82,29 +106,8 @@ void RunSequentialMarking(const InType &input, OutType &output, int rows, int co
       if (input[idx] != 0 || output[idx] != 0) {
         continue;
       }
-
       label++;
-      std::vector<std::pair<int, int>> queue;
-      queue.reserve(64);
-      std::size_t head = 0;
-      queue.emplace_back(row, col);
-      output[idx] = label;
-
-      while (head < queue.size()) {
-        const auto [cx, cy] = queue[head++];
-        for (std::size_t dir = 0; dir < 4; dir++) {
-          const int nx = cx + kDx.at(dir);
-          const int ny = cy + kDy.at(dir);
-          if (nx < 0 || nx >= rows || ny < 0 || ny >= cols) {
-            continue;
-          }
-          const int nidx = (nx * cols) + ny + 2;
-          if (input[nidx] == 0 && output[nidx] == 0) {
-            output[nidx] = label;
-            queue.emplace_back(nx, ny);
-          }
-        }
-      }
+      BfsLabelFull(input, output, rows, cols, row, col, label);
     }
   }
 }
@@ -214,7 +217,7 @@ void AddBaseOffsets(OutType &output, int cols, int num_threads, const std::vecto
 void MergeBoundariesUnionFind(const InType &input, const OutType &output, int rows, int cols, int num_threads,
                               const std::vector<int> &row_starts, std::vector<int> &parent) {
   for (int thread_idx = 0; thread_idx + 1 < num_threads; thread_idx++) {
-    const int boundary_row = row_starts[static_cast<std::size_t>(thread_idx + 1)];
+    const int boundary_row = row_starts[static_cast<std::size_t>(thread_idx) + 1U];
     if (boundary_row <= 0 || boundary_row >= rows) {
       continue;
     }
@@ -244,12 +247,12 @@ void FlattenParentForest(std::vector<int> &parent, int max_label) {
 std::vector<int> BuildRemapFromFirstPositions(const std::vector<int> &first_pos) {
   std::vector<int> roots;
   roots.reserve(first_pos.size());
-  for (int root = 1; root < static_cast<int>(first_pos.size()); root++) {
-    if (first_pos[static_cast<std::size_t>(root)] != std::numeric_limits<int>::max()) {
-      roots.push_back(root);
+  for (std::size_t root = 1; root < first_pos.size(); root++) {
+    if (first_pos[root] != std::numeric_limits<int>::max()) {
+      roots.push_back(static_cast<int>(root));
     }
   }
-  std::sort(roots.begin(), roots.end(), [&](int a, int b) {
+  std::ranges::sort(roots, [&](int a, int b) {
     return first_pos[static_cast<std::size_t>(a)] < first_pos[static_cast<std::size_t>(b)];
   });
 
@@ -288,9 +291,7 @@ std::vector<int> ComputeFirstPositionsParallel(const InType &input, const OutTyp
         }
         const int root = parent[static_cast<std::size_t>(lbl)];
         const int pos = (row * cols) + col;
-        if (pos < local[static_cast<std::size_t>(root)]) {
-          local[static_cast<std::size_t>(root)] = pos;
-        }
+        local[static_cast<std::size_t>(root)] = std::min(local[static_cast<std::size_t>(root)], pos);
       }
     }
   }
