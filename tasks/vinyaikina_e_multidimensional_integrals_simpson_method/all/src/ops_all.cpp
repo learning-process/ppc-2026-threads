@@ -139,6 +139,7 @@ bool VinyaikinaEMultidimIntegrSimpsonALL::RunImpl() {
       for (int idx = thread_start; idx <= thread_end; ++idx) {
         double x0 = limits[0].first + idx * actual_step[0];
         double weight0 = Weight(idx, total_steps_0);
+
         local_res += IntegrateRemainingDims(x0, simpson_factor, limits, actual_step, function) * weight0;
       }
     }
