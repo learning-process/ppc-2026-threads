@@ -58,7 +58,7 @@ $$B[i] \le B[j], \quad \forall \,\, i < j$$
 
 ### Программное окружение
 
-* Compiler: GCC 15.2.0 
+* Compiler: GCC 15.2.0
 * Build type: `Debug`
 * C++ Standard: `C++20`.
 

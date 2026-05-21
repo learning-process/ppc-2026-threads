@@ -189,7 +189,7 @@ bool FrolovaSRadixSortDoubleSEQ::ValidationImpl() {
 
 ### Программное окружение
 
-* Compiler: GCC 15.2.0 
+* Compiler: GCC 15.2.0
 * Build type: `Debug`
 * C++ Standard: `C++20`
 
@@ -210,7 +210,6 @@ $$N = 10^6 \text{ и } N = 10^7  $$
 | --- | --- | --- | --- |
 | SEQ | 1 | 1 000 000 | 0.045 * |
 | SEQ | 1 | 10 000 000 | 0.482 * |
-
 
 ### Анализ времени выполнения
 

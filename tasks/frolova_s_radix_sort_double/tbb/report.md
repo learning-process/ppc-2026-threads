@@ -157,7 +157,7 @@ std::array<std::atomic<int>, kRadix> count{};
 
 ### Программное окружение
 
-* Compiler: GCC 15.2.0 
+* Compiler: GCC 15.2.0
 * Build type: `Debug`
 * C++ Standard: `C++20`
 
@@ -207,7 +207,6 @@ cmake --build build --parallel
 | 1 (SEQ baseline) | 0.4820 | 1.00 | 100.0% |
 | 2 | 0.3110 | 1.55 | 77.5% |
 | 4 | 0.2190 | 2.20 | 55.0% |
-
 
 ### Анализ масштабируемости
 
