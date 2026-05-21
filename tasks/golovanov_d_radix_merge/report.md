@@ -62,7 +62,8 @@ export PPC_NUM_THREADS=4
 # Запуск гибридной версии с 4 процессами
 mpirun --hostfile ~/hostfile -n 4 ./build/bin/ppc_perf_tests --gtest_filter="*golovanov*"
 
-```markdown
+```
+
 
 **Формулы:**
 - Ускорение (Speedup) = `Time(seq) / Time(parallel)`
