@@ -1,73 +1,70 @@
 # Линейная фильтрация изображений (вертикальное разбиение). Ядро Гаусса 3x3 — SEQ
 
-- Student: Пихотский Роман Владимирович, group 3823Б1ФИ1
+- Student: Pikhotskiy Roman Vladimirovich, group 3823B1FI1
 - Technology: SEQ
 - Variant: 25
 
 ## 1. Introduction
-В этой версии реализован базовый последовательный алгоритм фильтрации изображения ядром Гаусса 3x3.  
-SEQ-реализация используется как эталон корректности для параллельных версий.
+Цель реализации SEQ-версии: получить корректный baseline для фильтра Гаусса 3x3 с вертикальным разбиением, относительно которого сравниваются OMP/TBB/STL/ALL.
 
 ## 2. Problem Statement
-- Вход: изображение в градациях серого, заданное как `width`, `height` и одномерный массив `data`.
-- Выход: изображение того же размера после сглаживания Гауссом.
-- Ограничения:
-  - `width > 0`, `height > 0`;
-  - `data.size() == width * height`.
-- Границы обрабатываются через `clamp` к ближайшему валидному индексу.
+- Вход: `width`, `height`, `data` (`std::vector<std::uint8_t>`), где `data.size() == width * height`.
+- Выход: изображение той же размерности после фильтрации ядром Гаусса 3x3.
+- Ограничения: `width > 0`, `height > 0`, корректная обработка границ.
 
 ## 3. Baseline Algorithm (Sequential)
-Используется разложение 3x3 ядра Гаусса на два одномерных прохода:
-1. Вертикальный проход по каждой колонке: коэффициенты `[1, 2, 1]`.
-2. Горизонтальный проход по каждой строке: коэффициенты `[1, 2, 1]`.
-3. Нормализация результата: `(sum + 15) / 16`.
-
-Вертикальное разбиение в SEQ организовано полосами по оси `x`, но вычисления идут в одном потоке.
+Используется сепарабельная свертка:
+1. Вертикальный проход с коэффициентами `[1, 2, 1]` в промежуточный `int`-буфер.
+2. Горизонтальный проход с коэффициентами `[1, 2, 1]` в итоговый `uint8_t`-буфер.
+3. Нормализация: `(sum + 15) / 16`.
+4. Границы обрабатываются через `clamp` индексов.
 
 ## 4. Parallelization Scheme
-Параллелизма нет.  
-Логика разбиения на вертикальные полосы сохранена, чтобы структура кода совпадала с параллельными реализациями.
+Параллелизм не используется. Обработка идет последовательно по вертикальным полосам фиксированной ширины (`kStripeDivider = 8`), что задает структуру baseline и совпадает с логикой декомпозиции в параллельных версиях.
 
 ## 5. Implementation Details
-- Основной класс: `PikhotskiyRVerticalGaussFilterSEQ`.
-- Файлы:
-  - `seq/include/ops_seq.hpp`
-  - `seq/src/ops_seq.cpp`
-- Этапы пайплайна:
-  - `ValidationImpl` — проверка размеров и размера массива;
-  - `PreProcessingImpl` — подготовка буферов;
-  - `RunImpl` — 2 прохода (vertical/horizontal);
-  - `PostProcessingImpl` — сбор результата в `GetOutput()`.
-- Для индексации используется линейный индекс `row * width + col`.
+- Файлы: `seq/include/ops_seq.hpp`, `seq/src/ops_seq.cpp`.
+- Класс: `PikhotskiyRVerticalGaussFilterSEQ`.
+- Pipeline:
+  - `ValidationImpl`: проверка размеров и `data.size()`.
+  - `PreProcessingImpl`: подготовка `source_`, `vertical_buffer_`, `result_buffer_`.
+  - `RunImpl`: вертикальный и горизонтальный проходы.
+  - `PostProcessingImpl`: запись результата в `OutType`.
 
 ## 6. Experimental Setup
-- CPU/OS/Compiler зависят от стенда запуска (локально или CI).
-- Сборка в `Release`.
-- Для проверок используются:
-  - функциональные тесты: `tests/functional/main.cpp`;
-  - performance-тесты: `tests/performance/main.cpp`.
-
-Пример команд:
+- Сборка:
 ```bash
-cmake -S . -B build -DUSE_FUNC_TESTS=ON -DUSE_PERF_TESTS=ON -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DUSE_FUNC_TESTS=ON -DUSE_PERF_TESTS=ON
 cmake --build build --target ppc_func_tests ppc_perf_tests
 ```
+- Запуск функциональных тестов:
+```bash
+./build/bin/ppc_func_tests --gtest_filter="*pikhotskiy_r_vertical_gauss_filter*"
+```
+- Запуск performance-тестов:
+```bash
+./build/bin/ppc_perf_tests --gtest_filter="*pikhotskiy_r_vertical_gauss_filter*"
+```
+Локально выполнялись оба типа проверок: функциональные и performance.
 
 ## 7. Results and Discussion
 ### 7.1 Correctness
-Корректность проверяется сравнением с заранее заданными ожидаемыми матрицами в функциональных тестах, включая:
-- малые размеры (`1x1`, `2x2`, `3x3`);
-- граничные случаи (`zero width/height`, `data size mismatch`).
+Корректность проверяется функциональными тестами на валидных и невалидных входах, а также совпадением ожидаемых значений после фильтрации.
 
 ### 7.2 Performance
-SEQ служит baseline для сравнений с OMP/TBB/STL/ALL.  
-Метрики скорости считаются в `tests/performance/main.cpp` через инфраструктуру курса.
+Определения метрик (единые для всех отчетов задачи):
+- `workers` — число исполнительных единиц (для SEQ всегда `1`).
+- `time` — wall-clock время выполнения, секунды.
+- `speedup = T_seq / T_mode`.
+- `efficiency = speedup / workers * 100%`.
+
+| mode | workers | time, s | speedup | efficiency |
+|------|---------|---------|---------|------------|
+| seq  | 1       | T_seq   | 1.00    | N/A        |
 
 ## 8. Conclusions
-SEQ-версия полностью решает задачу и формирует корректный эталон для всех параллельных реализаций.  
-Двухпроходная схема уменьшает вычислительную сложность относительно прямой 3x3 свертки.
+SEQ-реализация является честным baseline без параллелизма и используется как эталон корректности и базовое время для расчета ускорения в параллельных версиях.
 
 ## 9. References
-1. OpenCV Gaussian filtering concept: <https://docs.opencv.org/>
-2. Parallel Programming Course repository: <https://github.com/learning-process/ppc-2026-threads>
-3. Course report requirements: `docs/common_information/report.rst`
+1. Course repository: <https://github.com/learning-process/ppc-2026-threads>
+2. Course report requirements: `docs/common_information/report.rst`

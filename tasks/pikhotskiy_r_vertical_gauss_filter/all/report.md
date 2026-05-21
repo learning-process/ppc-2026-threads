@@ -1,71 +1,75 @@
 # Линейная фильтрация изображений (вертикальное разбиение). Ядро Гаусса 3x3 — ALL
 
-- Student: Пихотский Роман Владимирович, group 3823Б1ФИ1
+- Student: Pikhotskiy Roman Vladimirovich, group 3823B1FI1
 - Technology: ALL
 - Variant: 25
 
 ## 1. Introduction
-ALL-версия объединяет реализацию задачи в backend с типом `kALL`, сохраняя ту же вычислительную схему, что и в остальных вариантах.
+ALL-версия объединяет общий pipeline задачи и предоставляет универсальный backend для запуска в общей инфраструктуре курса.
 
 ## 2. Problem Statement
-- Вход: изображение в формате (`width`, `height`, `data`).
-- Выход: изображение того же размера после фильтра Гаусса 3x3.
-- Валидность входа:
-  - положительные размеры;
-  - совпадение `data.size()` и `width * height`.
+- Вход: `width`, `height`, `data` (`std::vector<std::uint8_t>`), где `data.size() == width * height`.
+- Выход: изображение после фильтра Гаусса 3x3 с сохранением размеров.
+- Ограничения: `width > 0`, `height > 0`, корректная обработка границ.
 
 ## 3. Baseline Algorithm (Sequential)
-Выполняется сепарабельная свертка:
+Вычислительное ядро одинаково с SEQ:
 1. Вертикальный проход `[1, 2, 1]`.
 2. Горизонтальный проход `[1, 2, 1]`.
-3. Округляющая нормировка `(sum + 15) / 16`.
-4. Граничные условия через `clamp`.
+3. Нормализация `(sum + 15) / 16`.
+4. Границы через `clamp`.
 
 ## 4. Parallelization Scheme
-В текущем `ALL`-решении используется потоковая декомпозиция `std::thread` по вертикальным полосам:
-- расчет числа полос;
-- равномерное распределение полос между workers;
-- два последовательных этапа (vertical-pass, horizontal-pass), внутри каждого — параллельная обработка.
+Для задачи типа `threads` конфигурация выполнения интерпретируется как `ranks x threads = 1 x N`:
+- `ranks = 1`, межпроцессного обмена нет.
+- `threads = N`, обработка выполняется по вертикальным полосам.
 
-Для запуска проходов применяется вспомогательная функция `RunPassInParallel(...)`.
+Смысл MPI-синхронизации в этой конфигурации:
+- отдельные MPI-барьеры не используются, так как расчет идет в одном процессе;
+- роль синхронизации выполняют фазовые границы между проходами (после завершения vertical-pass запускается horizontal-pass).
 
 ## 5. Implementation Details
+- Файлы: `all/include/ops_all.hpp`, `all/src/ops_all.cpp`.
 - Класс: `PikhotskiyRVerticalGaussFilterALL`.
-- Файлы:
-  - `all/include/ops_all.hpp`
-  - `all/src/ops_all.cpp`
-- Архитектура полностью совместима с инфраструктурой курса:
-  - `ValidationImpl`;
-  - `PreProcessingImpl`;
-  - `RunImpl`;
-  - `PostProcessingImpl`.
+- Pipeline:
+  - `ValidationImpl`
+  - `PreProcessingImpl`
+  - `RunImpl`
+  - `PostProcessingImpl`
 
 ## 6. Experimental Setup
-- Сборка в `Release`.
-- Управление потоками: `PPC_NUM_THREADS`.
-- Проверки:
-  - functional: проверка точности и валидации;
-  - performance: сравнение с другими backend-ами.
-
-Пример:
+- Сборка:
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DUSE_FUNC_TESTS=ON -DUSE_PERF_TESTS=ON
+cmake --build build --target ppc_func_tests ppc_perf_tests
+```
+- Пример запуска:
 ```bash
 export PPC_NUM_THREADS=4
+./build/bin/ppc_func_tests --gtest_filter="*pikhotskiy_r_vertical_gauss_filter*"
 ./build/bin/ppc_perf_tests --gtest_filter="*pikhotskiy_r_vertical_gauss_filter*"
 ```
+Локально выполнялись оба типа проверок: функциональные и performance.
 
 ## 7. Results and Discussion
 ### 7.1 Correctness
-ALL-версия проверяется теми же функциональными тестами и должна выдавать результат, идентичный SEQ.
+ALL-версия проверяется теми же функциональными тестами и должна совпадать с baseline по выходным данным.
 
 ### 7.2 Performance
-Производительность зависит от числа полос, размера изображения и затрат на создание/синхронизацию потоков.
-Для небольших изображений overhead может быть сопоставим с полезной работой.
+Определения метрик (единые для всех отчетов задачи):
+- `workers` — число потоков в процессе (`workers = threads`, так как `ranks = 1`).
+- `time` — wall-clock время выполнения, секунды.
+- `speedup = T_seq / T_mode`.
+- `efficiency = speedup / workers * 100%`.
+
+| mode | workers | time, s | speedup | efficiency |
+|------|---------|---------|---------|------------|
+| seq  | 1       | T_seq   | 1.00    | N/A        |
+| all  | N       | T_all   | T_seq / T_all | (T_seq / T_all) / N * 100% |
 
 ## 8. Conclusions
-ALL-реализация корректно встроена в task pipeline и совместима с тестовой инфраструктурой.  
-Поведение по корректности соответствует другим backend-ам задачи.
+ALL-версия поддерживает единый запуск в framework-е курса, при этом сохраняет те же вычисления и проверяемую корректность, что и остальные реализации задачи.
 
 ## 9. References
-1. C++ reference (`std::thread`): <https://en.cppreference.com/w/cpp/thread/thread>
-2. Parallel Programming Course repository: <https://github.com/learning-process/ppc-2026-threads>
-3. Course report requirements: `docs/common_information/report.rst`
+1. Course repository: <https://github.com/learning-process/ppc-2026-threads>
+2. Course report requirements: `docs/common_information/report.rst`
