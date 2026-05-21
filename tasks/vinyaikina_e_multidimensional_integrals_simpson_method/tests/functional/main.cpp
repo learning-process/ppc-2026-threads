@@ -115,7 +115,6 @@ double IntexpSum3d(double a1, double b1, double a2, double b2, double a3, double
 }
 
 auto one = [](const std::vector<double> &) { return 1.0; };
-auto linear1d = [](const std::vector<double> &x) { return x[0]; };
 auto sin1d = [](const std::vector<double> &x) { return std::sin(x[0]); };
 auto x21d = [](const std::vector<double> &x) { return x[0] * x[0]; };
 auto x31d = [](const std::vector<double> &x) { return x[0] * x[0] * x[0]; };
