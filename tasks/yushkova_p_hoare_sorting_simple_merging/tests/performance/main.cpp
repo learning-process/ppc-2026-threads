@@ -8,6 +8,8 @@
 #include "yushkova_p_hoare_sorting_simple_merging/common/include/common.hpp"
 #include "yushkova_p_hoare_sorting_simple_merging/omp/include/ops_omp.hpp"
 #include "yushkova_p_hoare_sorting_simple_merging/seq/include/ops_seq.hpp"
+#include "yushkova_p_hoare_sorting_simple_merging/stl/include/ops_stl.hpp"
+#include "yushkova_p_hoare_sorting_simple_merging/tbb/include/ops_tbb.hpp"
 
 namespace yushkova_p_hoare_sorting_simple_merging {
 
@@ -28,7 +30,9 @@ class YushkovaPRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data.size() == input_data_.size() && std::ranges::is_sorted(output_data);
+    return output_data.size() == input_data_.size() &&
+           std::ranges::adjacent_find(output_data, [](const int &a, const int &b) { return a > b; }) ==
+               output_data.end();
   }
 
   InType GetTestInputData() final {
@@ -43,7 +47,8 @@ TEST_P(YushkovaPRunPerfTestsThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, YushkovaPHoareSortingSimpleMergingSEQ, YushkovaPHoareSortingSimpleMergingOMP>(
+    ppc::util::MakeAllPerfTasks<InType, YushkovaPHoareSortingSimpleMergingSEQ, YushkovaPHoareSortingSimpleMergingOMP,
+                                YushkovaPHoareSortingSimpleMergingSTL, YushkovaPHoareSortingSimpleMergingTBB>(
         PPC_SETTINGS_yushkova_p_hoare_sorting_simple_merging);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
