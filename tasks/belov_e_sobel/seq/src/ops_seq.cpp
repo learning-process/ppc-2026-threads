@@ -1,10 +1,11 @@
 #include "belov_e_sobel/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <vector>
 
 #include "belov_e_sobel/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace belov_e_sobel {
 
@@ -28,23 +29,23 @@ bool BelovESobelSEQ::RunImpl() {
   int width = std::get<1>(GetInput());
   int height = std::get<2>(GetInput());
 
-  auto get_px = [&](int x, int y) -> float {
-    x = std::clamp(x, 0, width - 1);
-    y = std::clamp(y, 0, height - 1);
-    return static_cast<float>(input[(y * width) + x]);
+  auto get_px = [&](int col, int row) -> float {
+    int clamped_x = std::clamp(col, 0, width - 1);
+    int clamped_y = std::clamp(row, 0, height - 1);
+    return static_cast<float>(input[(static_cast<size_t>(clamped_y) * width) + clamped_x]);
   };
 
-  for (int y = 0; y < height; ++y) {
-    for (int x = 0; x < width; ++x) {
+  for (int row = 0; row < height; ++row) {
+    for (int col = 0; col < width; ++col) {
       // ядро Gx (горизонтальное)
-      float gx = (-1 * get_px(x - 1, y - 1)) + (1 * get_px(x + 1, y - 1)) + (-2 * get_px(x - 1, y)) +
-                 (2 * get_px(x + 1, y)) + (-1 * get_px(x - 1, y + 1)) + (1 * get_px(x + 1, y + 1));
+      float gx = (-1 * get_px(col - 1, row - 1)) + (1 * get_px(col + 1, row - 1)) + (-2 * get_px(col - 1, row)) +
+                 (2 * get_px(col + 1, row)) + (-1 * get_px(col - 1, row + 1)) + (1 * get_px(col + 1, row + 1));
       // ядро Gy (вертикальное)
-      float gy = (-1 * get_px(x - 1, y - 1)) - (2 * get_px(x, y - 1)) - (1 * get_px(x + 1, y - 1)) +
-                 (1 * get_px(x - 1, y + 1)) + (2 * get_px(x, y + 1)) + (1 * get_px(x + 1, y + 1));
+      float gy = (-1 * get_px(col - 1, row - 1)) - (2 * get_px(col, row - 1)) - (1 * get_px(col + 1, row - 1)) +
+                 (1 * get_px(col - 1, row + 1)) + (2 * get_px(col, row + 1)) + (1 * get_px(col + 1, row + 1));
       // Результат
-      float magnitude = std::sqrt(gx * gx + gy * gy);
-      output[y * width + x] = static_cast<uint8_t>(std::min(255.0f, magnitude));
+      float magnitude = std::sqrt((gx * gx) + (gy * gy));
+      output[(static_cast<size_t>(row) * width) + col] = static_cast<uint8_t>(std::min(255.0F, magnitude));
     }
   }
 

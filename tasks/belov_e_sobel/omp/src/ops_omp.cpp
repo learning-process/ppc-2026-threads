@@ -4,10 +4,10 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <vector>
 
 #include "belov_e_sobel/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace belov_e_sobel {
 
@@ -31,24 +31,30 @@ bool BelovESobelOMP::RunImpl() {
   int width = std::get<1>(GetInput());
   int height = std::get<2>(GetInput());
 
-#pragma omp parallel for schedule(static)
-  for (int y = 0; y < height; ++y) {
-    for (int x = 0; x < width; ++x) {
-      int x_minus = std::clamp(x - 1, 0, width - 1);
-      int x_plus = std::clamp(x + 1, 0, width - 1);
-      int y_minus = std::clamp(y - 1, 0, height - 1);
-      int y_plus = std::clamp(y + 1, 0, height - 1);
+#pragma omp parallel for default(none) shared(input, output, width, height) schedule(static)
+  for (int row = 0; row < height; ++row) {
+    for (int col = 0; col < width; ++col) {
+      int x_minus = std::clamp(col - 1, 0, width - 1);
+      int x_plus = std::clamp(col + 1, 0, width - 1);
+      int y_minus = std::clamp(row - 1, 0, height - 1);
+      int y_plus = std::clamp(row + 1, 0, height - 1);
 
-      float gx = (-1.0f * input[y_minus * width + x_minus]) + (1.0f * input[y_minus * width + x_plus]) +
-                 (-2.0f * input[y * width + x_minus]) + (2.0f * input[y * width + x_plus]) +
-                 (-1.0f * input[y_plus * width + x_minus]) + (1.0f * input[y_plus * width + x_plus]);
+      float gx = (-1.0F * static_cast<float>(input[static_cast<size_t>(y_minus) * width + x_minus])) +
+                 (1.0F * static_cast<float>(input[static_cast<size_t>(y_minus) * width + x_plus])) +
+                 (-2.0F * static_cast<float>(input[static_cast<size_t>(row) * width + x_minus])) +
+                 (2.0F * static_cast<float>(input[static_cast<size_t>(row) * width + x_plus])) +
+                 (-1.0F * static_cast<float>(input[static_cast<size_t>(y_plus) * width + x_minus])) +
+                 (1.0F * static_cast<float>(input[static_cast<size_t>(y_plus) * width + x_plus]));
 
-      float gy = (-1.0f * input[y_minus * width + x_minus]) - (2.0f * input[y_minus * width + x]) -
-                 (1.0f * input[y_minus * width + x_plus]) + (1.0f * input[y_plus * width + x_minus]) +
-                 (2.0f * input[y_plus * width + x]) + (1.0f * input[y_plus * width + x_plus]);
+      float gy = (-1.0F * static_cast<float>(input[static_cast<size_t>(y_minus) * width + x_minus])) -
+                 (2.0F * static_cast<float>(input[static_cast<size_t>(y_minus) * width + col])) -
+                 (1.0F * static_cast<float>(input[static_cast<size_t>(y_minus) * width + x_plus])) +
+                 (1.0F * static_cast<float>(input[static_cast<size_t>(y_plus) * width + x_minus])) +
+                 (2.0F * static_cast<float>(input[static_cast<size_t>(y_plus) * width + col])) +
+                 (1.0F * static_cast<float>(input[static_cast<size_t>(y_plus) * width + x_plus]));
 
-      float magnitude = std::sqrt(gx * gx + gy * gy);
-      output[y * width + x] = static_cast<uint8_t>(std::min(255.0f, magnitude));
+      float magnitude = std::sqrt((gx * gx) + (gy * gy));
+      output[static_cast<size_t>(row) * width + col] = static_cast<uint8_t>(std::min(255.0F, magnitude));
     }
   }
 

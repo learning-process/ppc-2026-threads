@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <cstdint>
 #include <tuple>
+#include <vector>
 
 #include "belov_e_sobel/all/include/ops_all.hpp"
 #include "belov_e_sobel/common/include/common.hpp"
@@ -18,14 +21,12 @@ class BelovESobelPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
   InType input_data_;
 
   void SetUp() override {
-    std::vector<uint8_t> vec(w_ * h_, 0);
+    std::vector<uint8_t> vec(static_cast<std::size_t>(w_) * static_cast<std::size_t>(h_), 0);
     input_data_ = std::make_tuple(vec, w_, h_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data == output_data) {
-      return true;
-    }
+    (void)output_data;
     return true;
   }
 

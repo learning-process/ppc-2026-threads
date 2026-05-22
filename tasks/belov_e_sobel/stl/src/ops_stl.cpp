@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <thread>
 #include <vector>
 
@@ -30,33 +31,33 @@ bool BelovESobelSTL::RunImpl() {
   int width = std::get<1>(GetInput());
   int height = std::get<2>(GetInput());
 
-  auto get_px = [&](int x, int y) -> float {
-    x = std::clamp(x, 0, width - 1);
-    y = std::clamp(y, 0, height - 1);
-    return static_cast<float>(input[(y * width) + x]);
+  auto get_px = [&](int col, int row) -> float {
+    int clamped_x = std::clamp(col, 0, width - 1);
+    int clamped_y = std::clamp(row, 0, height - 1);
+    return static_cast<float>(input[(static_cast<size_t>(clamped_y) * width) + clamped_x]);
   };
 
-  unsigned int num_threads = ppc::util::GetNumThreads();
+  int num_threads = static_cast<int>(ppc::util::GetNumThreads());
 
   std::vector<std::thread> threads;
   int rows_per_thread = height / num_threads;
 
   auto worker = [&](int start_y, int end_y) {
-    for (int y = start_y; y < end_y; ++y) {
-      for (int x = 0; x < width; ++x) {
-        float gx = (-1 * get_px(x - 1, y - 1)) + (1 * get_px(x + 1, y - 1)) + (-2 * get_px(x - 1, y)) +
-                   (2 * get_px(x + 1, y)) + (-1 * get_px(x - 1, y + 1)) + (1 * get_px(x + 1, y + 1));
+    for (int row = start_y; row < end_y; ++row) {
+      for (int col = 0; col < width; ++col) {
+        float gx = (-1 * get_px(col - 1, row - 1)) + (1 * get_px(col + 1, row - 1)) + (-2 * get_px(col - 1, row)) +
+                   (2 * get_px(col + 1, row)) + (-1 * get_px(col - 1, row + 1)) + (1 * get_px(col + 1, row + 1));
 
-        float gy = (-1 * get_px(x - 1, y - 1)) - (2 * get_px(x, y - 1)) - (1 * get_px(x + 1, y - 1)) +
-                   (1 * get_px(x - 1, y + 1)) + (2 * get_px(x, y + 1)) + (1 * get_px(x + 1, y + 1));
+        float gy = (-1 * get_px(col - 1, row - 1)) - (2 * get_px(col, row - 1)) - (1 * get_px(col + 1, row - 1)) +
+                   (1 * get_px(col - 1, row + 1)) + (2 * get_px(col, row + 1)) + (1 * get_px(col + 1, row + 1));
 
-        float magnitude = std::sqrt(gx * gx + gy * gy);
-        output[y * width + x] = static_cast<uint8_t>(std::min(255.0f, magnitude));
+        float magnitude = std::sqrt((gx * gx) + (gy * gy));
+        output[(static_cast<size_t>(row) * width) + col] = static_cast<uint8_t>(std::min(255.0F, magnitude));
       }
     }
   };
 
-  for (unsigned int i = 0; i < num_threads; ++i) {
+  for (int i = 0; i < num_threads; ++i) {
     int start_y = i * rows_per_thread;
     int end_y = (i == num_threads - 1) ? height : start_y + rows_per_thread;
 

@@ -5,11 +5,11 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
+#include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "belov_e_sobel/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace belov_e_sobel {
 
@@ -28,8 +28,8 @@ bool BelovESobelALL::PreProcessingImpl() {
 }
 
 bool BelovESobelALL::RunImpl() {
-  int rank;
-  int size;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -42,7 +42,7 @@ bool BelovESobelALL::RunImpl() {
     global_input = std::get<0>(GetInput());
     width = std::get<1>(GetInput());
     height = std::get<2>(GetInput());
-    global_output.resize(width * height);
+    global_output.resize(static_cast<size_t>(width) * height);
   }
 
   MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -67,40 +67,40 @@ bool BelovESobelALL::RunImpl() {
   int start_y_global = displacements[rank] / width;
   int end_y_global = start_y_global + local_rows;
 
-  std::vector<uint8_t> local_output(local_rows * width);
+  std::vector<uint8_t> local_output(static_cast<size_t>(local_rows) * width);
 
   if (rank != 0) {
-    global_input.resize(width * height);
+    global_input.resize(static_cast<size_t>(width) * height);
   }
-  MPI_Bcast(global_input.data(), width * height, MPI_UINT8_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(global_input.data(), static_cast<int>(static_cast<size_t>(width) * height), MPI_BYTE, 0, MPI_COMM_WORLD);
 
-  auto get_px = [&](int x, int y) -> float {
-    x = std::clamp(x, 0, width - 1);
-    y = std::clamp(y, 0, height - 1);
-    return static_cast<float>(global_input[y * width + x]);
+  auto get_px = [&](int col, int row) -> float {
+    int clamped_x = std::clamp(col, 0, width - 1);
+    int clamped_y = std::clamp(row, 0, height - 1);
+    return static_cast<float>(global_input[static_cast<size_t>(clamped_y) * width + clamped_x]);
   };
 
-#pragma omp parallel for shared(global_input, local_output, width, start_y_global, end_y_global, get_px) \
-    schedule(dynamic)
-  for (int y = start_y_global; y < end_y_global; ++y) {
-    int local_y = y - start_y_global;
+#pragma omp parallel for default(none) \
+    shared(global_input, local_output, width, height, start_y_global, end_y_global, get_px) schedule(dynamic)
+  for (int row = start_y_global; row < end_y_global; ++row) {
+    int local_y = row - start_y_global;
 
-    for (int x = 0; x < width; ++x) {
-      float gx = (-1 * get_px(x - 1, y - 1)) + (1 * get_px(x + 1, y - 1)) + (-2 * get_px(x - 1, y)) +
-                 (2 * get_px(x + 1, y)) + (-1 * get_px(x - 1, y + 1)) + (1 * get_px(x + 1, y + 1));
+    for (int col = 0; col < width; ++col) {
+      float gx = (-1 * get_px(col - 1, row - 1)) + (1 * get_px(col + 1, row - 1)) + (-2 * get_px(col - 1, row)) +
+                 (2 * get_px(col + 1, row)) + (-1 * get_px(col - 1, row + 1)) + (1 * get_px(col + 1, row + 1));
 
-      float gy = (-1 * get_px(x - 1, y - 1)) - (2 * get_px(x, y - 1)) - (1 * get_px(x + 1, y - 1)) +
-                 (1 * get_px(x - 1, y + 1)) + (2 * get_px(x, y + 1)) + (1 * get_px(x + 1, y + 1));
+      float gy = (-1 * get_px(col - 1, row - 1)) - (2 * get_px(col, row - 1)) - (1 * get_px(col + 1, row - 1)) +
+                 (1 * get_px(col - 1, row + 1)) + (2 * get_px(col, row + 1)) + (1 * get_px(col + 1, row + 1));
 
-      float magnitude = std::sqrt(gx * gx + gy * gy);
-      local_output[local_y * width + x] = static_cast<uint8_t>(std::min(255.0f, magnitude));
+      float magnitude = std::sqrt((gx * gx) + (gy * gy));
+      local_output[static_cast<size_t>(local_y) * width + col] = static_cast<uint8_t>(std::min(255.0F, magnitude));
     }
   }
 
-  global_output.resize(width * height);
+  global_output.resize(static_cast<size_t>(width) * height);
 
-  MPI_Allgatherv(local_output.data(), local_output.size(), MPI_UINT8_T, global_output.data(), send_counts.data(),
-                 displacements.data(), MPI_UINT8_T, MPI_COMM_WORLD);
+  MPI_Allgatherv(local_output.data(), static_cast<int>(local_output.size()), MPI_BYTE, global_output.data(),
+                 send_counts.data(), displacements.data(), MPI_BYTE, MPI_COMM_WORLD);
 
   std::get<0>(GetOutput()) = std::move(global_output);
 
