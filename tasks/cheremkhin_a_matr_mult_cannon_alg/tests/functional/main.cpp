@@ -7,9 +7,11 @@
 #include <tuple>
 #include <vector>
 
+#include "cheremkhin_a_matr_mult_cannon_alg/all/include/ops_all.hpp"
 #include "cheremkhin_a_matr_mult_cannon_alg/common/include/common.hpp"
 #include "cheremkhin_a_matr_mult_cannon_alg/omp/include/ops_omp.hpp"
 #include "cheremkhin_a_matr_mult_cannon_alg/seq/include/ops_seq.hpp"
+#include "cheremkhin_a_matr_mult_cannon_alg/stl/include/ops_stl.hpp"
 #include "cheremkhin_a_matr_mult_cannon_alg/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -92,7 +94,11 @@ const std::array<TestType, 7> kTestParams = {
     std::make_tuple(7, 300, "medium3_matrix"),     std::make_tuple(10, 700, "large_matrix"),
     std::make_tuple(15, 1500, "very_large_matrix")};
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<CheremkhinAMatrMultCannonAlgSEQ, InType>(
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<CheremkhinAMatrMultCannonAlgALL, InType>(
+                                               kTestParams, PPC_SETTINGS_cheremkhin_a_matr_mult_cannon_alg),
+                                           ppc::util::AddFuncTask<CheremkhinAMatrMultCannonAlgSEQ, InType>(
+                                               kTestParams, PPC_SETTINGS_cheremkhin_a_matr_mult_cannon_alg),
+                                           ppc::util::AddFuncTask<CheremkhinAMatrMultCannonAlgSTL, InType>(
                                                kTestParams, PPC_SETTINGS_cheremkhin_a_matr_mult_cannon_alg),
                                            ppc::util::AddFuncTask<CheremkhinAMatrMultCannonAlgOMP, InType>(
                                                kTestParams, PPC_SETTINGS_cheremkhin_a_matr_mult_cannon_alg),

@@ -1,3 +1,4 @@
+// yurkin_g_graham_scan/test/perf_tests.cpp
 #include <gtest/gtest.h>
 
 #include <cstddef>
@@ -7,6 +8,8 @@
 #include "yurkin_g_graham_scan/common/include/common.hpp"
 #include "yurkin_g_graham_scan/omp/include/ops_omp.hpp"
 #include "yurkin_g_graham_scan/seq/include/ops_seq.hpp"
+#include "yurkin_g_graham_scan/stl/include/ops_stl.hpp"
+#include "yurkin_g_graham_scan/tbb/include/ops_tbb.hpp"
 
 namespace yurkin_g_graham_scan {
 
@@ -64,7 +67,8 @@ TEST_P(YurkinGGrahamScanPerfTets, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, YurkinGGrahamScanSEQ, YurkinGGrahamScanOMP>(PPC_SETTINGS_yurkin_g_graham_scan);
+    ppc::util::MakeAllPerfTasks<InType, YurkinGGrahamScanSEQ, YurkinGGrahamScanOMP, YurkinGGrahamScanTBB,
+                                YurkinGGrahamScanSTL>(PPC_SETTINGS_yurkin_g_graham_scan);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

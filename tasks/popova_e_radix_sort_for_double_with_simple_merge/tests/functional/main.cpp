@@ -5,9 +5,11 @@
 #include <string>
 #include <tuple>
 
+#include "popova_e_radix_sort_for_double_with_simple_merge/all/include/ops_all.hpp"
 #include "popova_e_radix_sort_for_double_with_simple_merge/common/include/common.hpp"
 #include "popova_e_radix_sort_for_double_with_simple_merge/omp/include/ops_omp.hpp"
 #include "popova_e_radix_sort_for_double_with_simple_merge/seq/include/ops_seq.hpp"
+#include "popova_e_radix_sort_for_double_with_simple_merge/stl/include/ops_stl.hpp"
 #include "popova_e_radix_sort_for_double_with_simple_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -59,15 +61,25 @@ const auto kTasksOMP = ppc::util::AddFuncTask<PopovaERadixSorForDoubleWithSimple
 const auto kTasksTBB = ppc::util::AddFuncTask<PopovaERadixSorForDoubleWithSimpleMergeTBB, InType>(
     kTestParam, PPC_SETTINGS_popova_e_radix_sort_for_double_with_simple_merge);
 
+const auto kTasksSTL = ppc::util::AddFuncTask<PopovaERadixSorForDoubleWithSimpleMergeSTL, InType>(
+    kTestParam, PPC_SETTINGS_popova_e_radix_sort_for_double_with_simple_merge);
+
+const auto kTasksALL = ppc::util::AddFuncTask<PopovaERadixSorForDoubleWithSimpleMergeALL, InType>(
+    kTestParam, PPC_SETTINGS_popova_e_radix_sort_for_double_with_simple_merge);
+
 const auto kValuesSEQ = ppc::util::ExpandToValues(kTasksSEQ);
 const auto kValuesOMP = ppc::util::ExpandToValues(kTasksOMP);
 const auto kValuesTBB = ppc::util::ExpandToValues(kTasksTBB);
+const auto kValuesSTL = ppc::util::ExpandToValues(kTasksSTL);
+const auto kValuesALL = ppc::util::ExpandToValues(kTasksALL);
 
 const auto kTestName = PopovaERunFuncTests::PrintFuncTestName<PopovaERunFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(RadixSortSEQ, PopovaERunFuncTests, kValuesSEQ, kTestName);
 INSTANTIATE_TEST_SUITE_P(RadixSortOMP, PopovaERunFuncTests, kValuesOMP, kTestName);
 INSTANTIATE_TEST_SUITE_P(RadixSortTBB, PopovaERunFuncTests, kValuesTBB, kTestName);
+INSTANTIATE_TEST_SUITE_P(RadixSortSTL, PopovaERunFuncTests, kValuesSTL, kTestName);
+INSTANTIATE_TEST_SUITE_P(RadixSortALL, PopovaERunFuncTests, kValuesALL, kTestName);
 
 }  // namespace
 }  // namespace popova_e_radix_sort_for_double_with_simple_merge_threads

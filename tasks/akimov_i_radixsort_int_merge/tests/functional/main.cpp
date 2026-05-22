@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <algorithm>
 #include <array>
@@ -7,9 +8,11 @@
 #include <string>
 #include <tuple>
 
+#include "akimov_i_radixsort_int_merge/all/include/ops_all.hpp"
 #include "akimov_i_radixsort_int_merge/common/include/common.hpp"
 #include "akimov_i_radixsort_int_merge/omp/include/ops_omp.hpp"
 #include "akimov_i_radixsort_int_merge/seq/include/ops_seq.hpp"
+#include "akimov_i_radixsort_int_merge/stl/include/ops_stl.hpp"
 #include "akimov_i_radixsort_int_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -39,6 +42,13 @@ class AkimovIRadixSortIntMergeFuncTests : public ppc::util::BaseRunFuncTests<InT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+    if (ppc::util::IsUnderMpirun()) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+    if (rank != 0) {
+      return true;
+    }
     return output_data == expected_sorted_;
   }
 
@@ -63,7 +73,9 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(10, "10"), std::make
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<AkimovIRadixSortIntMergeSEQ, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge),
     ppc::util::AddFuncTask<AkimovIRadixSortIntMergeOMP, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge),
-    ppc::util::AddFuncTask<AkimovIRadixSortIntMergeTBB, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge));
+    ppc::util::AddFuncTask<AkimovIRadixSortIntMergeTBB, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge),
+    ppc::util::AddFuncTask<AkimovIRadixSortIntMergeSTL, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge),
+    ppc::util::AddFuncTask<AkimovIRadixSortIntMergeALL, InType>(kTestParam, PPC_SETTINGS_akimov_i_radixsort_int_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
