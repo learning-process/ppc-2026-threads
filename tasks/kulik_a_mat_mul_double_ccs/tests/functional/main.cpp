@@ -10,6 +10,7 @@
 #include <tuple>
 #include <vector>
 
+#include "kulik_a_mat_mul_double_ccs/all/include/ops_all.hpp"
 #include "kulik_a_mat_mul_double_ccs/common/include/common.hpp"
 #include "kulik_a_mat_mul_double_ccs/omp/include/ops_omp.hpp"
 #include "kulik_a_mat_mul_double_ccs/seq/include/ops_seq.hpp"
@@ -105,7 +106,8 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KulikAMatMulDoubleCcsSEQ, InType>(kTestParam, PPC_SETTINGS_kulik_a_mat_mul_double_ccs),
     ppc::util::AddFuncTask<KulikAMatMulDoubleCcsOMP, InType>(kTestParam, PPC_SETTINGS_kulik_a_mat_mul_double_ccs),
     ppc::util::AddFuncTask<KulikAMatMulDoubleCcsTBB, InType>(kTestParam, PPC_SETTINGS_kulik_a_mat_mul_double_ccs),
-    ppc::util::AddFuncTask<KulikAMatMulDoubleCcsSTL, InType>(kTestParam, PPC_SETTINGS_kulik_a_mat_mul_double_ccs));
+    ppc::util::AddFuncTask<KulikAMatMulDoubleCcsSTL, InType>(kTestParam, PPC_SETTINGS_kulik_a_mat_mul_double_ccs),
+    ppc::util::AddFuncTask<KulikAMatMulDoubleCcsALL, InType>(kTestParam, PPC_SETTINGS_kulik_a_mat_mul_double_ccs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
