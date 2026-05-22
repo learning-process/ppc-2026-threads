@@ -1,8 +1,8 @@
 # Поразрядная сортировка для вещественных чисел (тип double) с простым слиянием
-- Student: Голованов Даниил 
-- Group: 3823Б1ПР1
-- Variant: 19
-- Local reports: `seq/report.md`, `omp/report.md`, `tbb/report.md`, `stl/report.md`, `all/report.md`
+- Студент: Голованов Даниил 
+- Группа: 3823Б1ПР1
+- Вариант: 19
+- Локальные отчеты: `seq/report.md`, `omp/report.md`, `tbb/report.md`, `stl/report.md`, `all/report.md`
 
 ## 1. Введение
 
@@ -39,7 +39,6 @@
 - ОС: Windows 11 + WSL2 (Ubuntu)
 - CPU: 11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz (6 ядер / 12 потоков)
 - RAM: 8 ГБ DDR5 @ 3200 MT/s
-- Хранилище: SSD 477 ГБ
 
 **Программное обеспечение:**
 - Компилятор: GCC/Clang (Release-сборка)
