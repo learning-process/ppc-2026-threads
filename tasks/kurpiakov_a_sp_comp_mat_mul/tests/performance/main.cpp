@@ -70,7 +70,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, KurpiskovACRSMatMulSEQ, KurpiakovACRSMatMulOMP, KurpiakovACRSMatMulSTL,
-                                KurpiakovACRSMatMulTBB, KurpiakovACRSMatMulALL>(PPC_SETTINGS_kurpiakov_a_sp_comp_mat_mul);
+                                KurpiakovACRSMatMulTBB, KurpiakovACRSMatMulALL>(
+        PPC_SETTINGS_kurpiakov_a_sp_comp_mat_mul);
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = KurpiakovRunPerfTests::CustomPerfTestName;
 
