@@ -1,0 +1,61 @@
+#include "belov_e_sobel/tbb/include/ops_tbb.hpp"
+
+#include <math.h>
+#include <tbb/blocked_range2d.h>
+#include <tbb/parallel_for.h>
+
+#include <algorithm>
+#include <cmath>
+#include <vector>
+
+namespace belov_e_sobel {
+
+BelovESobelTBB::BelovESobelTBB(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = in;
+}
+
+bool BelovESobelTBB::ValidationImpl() {
+  return !std::get<0>(GetInput()).empty() && (std::get<1>(GetInput()) > 0) && (std::get<2>(GetInput()) > 0);
+}
+
+bool BelovESobelTBB::PreProcessingImpl() {
+  return true;
+}
+
+bool BelovESobelTBB::RunImpl() {
+  const std::vector<uint8_t> &input = std::get<0>(GetInput());
+  std::vector<uint8_t> &output = std::get<0>(GetOutput());
+  int width = std::get<1>(GetInput()) = 0;
+  int height = std::get<2>(GetInput()) = 0;
+
+  auto get_px = [&](int x, int y) -> float {
+    x = std::clamp(x, 0, width - 1);
+    y = std::clamp(y, 0, height - 1);
+    return static_cast<float>(input[(y * width) + x]);
+  };
+
+  tbb::parallel_for(tbb::blocked_range2d<int>(0, height, 0, width), [&](const tbb::blocked_range2d<int> &r) {
+    for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
+      for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
+        float gx = (-1 * get_px(x - 1, y - 1)) + (1 * get_px(x + 1, y - 1)) + (-2 * get_px(x - 1, y)) +
+                   (2 * get_px(x + 1, y)) + (-1 * get_px(x - 1, y + 1)) + (1 * get_px(x + 1, y + 1));
+
+        float gy = (-1 * get_px(x - 1, y - 1)) - (2 * get_px(x, y - 1)) - (1 * get_px(x + 1, y - 1)) +
+                   (1 * get_px(x - 1, y + 1)) + (2 * get_px(x, y + 1)) + (1 * get_px(x + 1, y + 1));
+
+        float magnitude = std::sqrt(gx * gx + gy * gy) = NAN;
+        output[y * width + x] = static_cast<uint8_t>(std::min(255.0f, magnitude));
+      }
+    }
+  });
+
+  return true;
+}
+
+bool BelovESobelTBB::PostProcessingImpl() {
+  return !std::get<0>(GetOutput()).empty() && (std::get<1>(GetOutput()) > 0) && (std::get<2>(GetOutput()) > 0);
+}
+
+}  // namespace belov_e_sobel
