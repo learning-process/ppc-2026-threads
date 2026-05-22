@@ -73,6 +73,7 @@ CompressedRowMatrix CreateRandomCompressedRowMatrix(int rows, int cols, double d
   if (!mat.row_pointer_data.empty()) {
     mat.row_pointer_data.back() = offset;
   }
+
   mat.non_zero_count = static_cast<int>(mat.value_data.size());
 
   return mat;
@@ -101,7 +102,7 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, SmallMatrices) {
   RunTest(a, b);
   EXPECT_EQ(result.row_count, 10);
   EXPECT_EQ(result.column_count, 10);
-  EXPECT_GE(result.value_data.size(), 0);
+  EXPECT_GE(result.value_data.size(), static_cast<size_t>(0));
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, RectangularMatrices) {
@@ -110,7 +111,7 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, RectangularMatrices) {
   RunTest(a, b);
   EXPECT_EQ(result.row_count, 10);
   EXPECT_EQ(result.column_count, 8);
-  EXPECT_GE(result.value_data.size(), 0);
+  EXPECT_GE(result.value_data.size(), static_cast<size_t>(0));
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, SparseMatrices) {
@@ -119,7 +120,7 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, SparseMatrices) {
   RunTest(a, b);
   EXPECT_EQ(result.row_count, 50);
   EXPECT_EQ(result.column_count, 50);
-  EXPECT_GE(result.value_data.size(), 0);
+  EXPECT_GE(result.value_data.size(), static_cast<size_t>(0));
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, DenseMatrices) {
@@ -128,7 +129,7 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, DenseMatrices) {
   RunTest(a, b);
   EXPECT_EQ(result.row_count, 20);
   EXPECT_EQ(result.column_count, 20);
-  EXPECT_GE(result.value_data.size(), 0);
+  EXPECT_GE(result.value_data.size(), static_cast<size_t>(0));
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, LargeRowsSmallCols) {
@@ -137,7 +138,7 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, LargeRowsSmallCols) {
   RunTest(a, b);
   EXPECT_EQ(result.row_count, 100);
   EXPECT_EQ(result.column_count, 5);
-  EXPECT_GE(result.value_data.size(), 0);
+  EXPECT_GE(result.value_data.size(), static_cast<size_t>(0));
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, SmallRowsLargeCols) {
@@ -146,7 +147,7 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, SmallRowsLargeCols) {
   RunTest(a, b);
   EXPECT_EQ(result.row_count, 3);
   EXPECT_EQ(result.column_count, 5);
-  EXPECT_GE(result.value_data.size(), 0);
+  EXPECT_GE(result.value_data.size(), static_cast<size_t>(0));
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, IdentityMultiplication) {
@@ -177,7 +178,7 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, ZeroMatrix) {
   RunTest(zero, b);
   EXPECT_EQ(result.row_count, 5);
   EXPECT_EQ(result.column_count, 5);
-  EXPECT_EQ(result.value_data.size(), 0);
+  EXPECT_EQ(result.value_data.size(), static_cast<size_t>(0));
 }
 
 TEST_F(LobanovDMultiplyMatrixFuncTest, ValidationFailure) {
