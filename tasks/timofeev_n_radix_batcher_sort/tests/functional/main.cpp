@@ -8,7 +8,6 @@
 #include <utility>
 #include <vector>
 
-#include "timofeev_n_radix_batcher_sort/all/include/ops_all.hpp"
 #include "timofeev_n_radix_batcher_sort/common/include/common.hpp"
 #include "timofeev_n_radix_batcher_sort/omp/include/ops_omp.hpp"
 #include "timofeev_n_radix_batcher_sort/seq/include/ops_seq.hpp"
