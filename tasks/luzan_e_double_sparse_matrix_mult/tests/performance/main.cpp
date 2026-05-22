@@ -1,14 +1,17 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <tuple>
 #include <vector>
 
+#include "luzan_e_double_sparse_matrix_mult/all/include/ops_all.hpp"
 #include "luzan_e_double_sparse_matrix_mult/common/include/common.hpp"
 #include "luzan_e_double_sparse_matrix_mult/omp/include/ops_omp.hpp"
 #include "luzan_e_double_sparse_matrix_mult/seq/include/ops_seq.hpp"
 #include "luzan_e_double_sparse_matrix_mult/stl/include/ops_stl.hpp"
 #include "luzan_e_double_sparse_matrix_mult/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace luzan_e_double_sparse_matrix_mult {
 
@@ -34,6 +37,15 @@ class LuzanEDoubleSparseMatrixMultSeqPerfTestThreads : public ppc::util::BaseRun
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+
+    if (ppc::util::IsUnderMpirun()) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+
+    if (rank != 0) {
+      return true;
+    }
     return (output_data == output_data_);
   }
 
@@ -50,8 +62,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, LuzanEDoubleSparseMatrixMultSeq, LuzanEDoubleSparseMatrixMultOMP,
-                                LuzanEDoubleSparseMatrixMultTBB, LuzanEDoubleSparseMatrixMultSTL>(
-        PPC_SETTINGS_luzan_e_double_sparse_matrix_mult);
+                                LuzanEDoubleSparseMatrixMultTBB, LuzanEDoubleSparseMatrixMultSTL,
+                                LuzanEDoubleSparseMatrixMultALL>(PPC_SETTINGS_luzan_e_double_sparse_matrix_mult);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

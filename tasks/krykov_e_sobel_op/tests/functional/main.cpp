@@ -7,6 +7,7 @@
 #include <tuple>
 #include <vector>
 
+#include "krykov_e_sobel_op/all/include/ops_all.hpp"
 #include "krykov_e_sobel_op/common/include/common.hpp"
 #include "krykov_e_sobel_op/omp/include/ops_omp.hpp"
 #include "krykov_e_sobel_op/seq/include/ops_seq.hpp"
@@ -114,7 +115,8 @@ const auto kTestTasksList =
 
                    ppc::util::AddFuncTask<KrykovESobelOpOMP, InType>(kTestParam, PPC_SETTINGS_krykov_e_sobel_op),
                    ppc::util::AddFuncTask<KrykovESobelOpTBB, InType>(kTestParam, PPC_SETTINGS_krykov_e_sobel_op),
-                   ppc::util::AddFuncTask<KrykovESobelOpSTL, InType>(kTestParam, PPC_SETTINGS_krykov_e_sobel_op));
+                   ppc::util::AddFuncTask<KrykovESobelOpSTL, InType>(kTestParam, PPC_SETTINGS_krykov_e_sobel_op),
+                   ppc::util::AddFuncTask<KrykovESobelOpALL, InType>(kTestParam, PPC_SETTINGS_krykov_e_sobel_op));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
