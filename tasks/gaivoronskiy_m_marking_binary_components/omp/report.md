@@ -31,13 +31,13 @@ OpenMP-версия распараллеливает strip-пайплайн ма
 Число потоков: `num_threads = min(PPC_NUM_THREADS, rows)`. Число потоков задаётся через `PPC_NUM_THREADS`
 (экспортируется также как `OMP_NUM_THREADS`).
 
-| Этап | Директива OpenMP | shared / private | schedule | Барьер |
-|------|------------------|------------------|----------|--------|
-| Маркировка полос | `#pragma omp parallel` | shared: input, output, labels_used, row_starts, cols; private: tid, next_label, локальные циклы | — | неявный в конце `parallel` |
-| Смещение меток | `#pragma omp parallel for` | shared: output, row_starts, base | `static` | неявный |
-| Union-find на границах | последовательно | — | — | — |
-| Первые позиции меток | `#pragma omp parallel` + `#pragma omp parallel for` | shared: thread_first, first_pos; private: tid, local | `static` (второй цикл) | неявный |
-| Финальный remap | `#pragma omp parallel for` | shared: input, output, parent, remap | `static` | неявный |
+| Этап                   | Директива OpenMP                                    | shared / private                                                                                | schedule               | Барьер                     |
+| ---------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------- | -------------------------- |
+| Маркировка полос       | `#pragma omp parallel`                              | shared: input, output, labels_used, row_starts, cols; private: tid, next_label, локальные циклы | —                      | неявный в конце `parallel` |
+| Смещение меток         | `#pragma omp parallel for`                          | shared: output, row_starts, base                                                                | `static`               | неявный                    |
+| Union-find на границах | последовательно                                     | —                                                                                               | —                      | —                          |
+| Первые позиции меток   | `#pragma omp parallel` + `#pragma omp parallel for` | shared: thread_first, first_pos; private: tid, local                                            | `static` (второй цикл) | неявный                    |
+| Финальный remap        | `#pragma omp parallel for`                          | shared: input, output, parent, remap                                                            | `static`               | неявный                    |
 
 **`default(none)`** используется во всех регионах — все переменные явно перечислены в `shared`.
 
@@ -82,27 +82,27 @@ Pipeline `RunImpl`:
 
 ## 6. Проверка корректности
 
-| Тест | Описание |
-|------|----------|
-| `single_L_component` | L-образная компонента 3×3 |
+| Тест                   | Описание                     |
+| ---------------------- | ---------------------------- |
+| `single_L_component`   | L-образная компонента 3×3    |
 | `four_separate_pixels` | четыре изолированных объекта |
-| `all_background` | только фон |
-| `all_objects` | только объекты |
-| `two_horizontal_bars` | две горизонтальные полосы |
+| `all_background`       | только фон                   |
+| `all_objects`          | только объекты               |
+| `two_horizontal_bars`  | две горизонтальные полосы    |
 
 Результат: **5/5** функциональных тестов пройдено. Сравнение с SEQ — побайтовое совпадение выхода.
 
 ## 7. Экспериментальная среда
 
-| Параметр | Значение |
-|----------|----------|
-| CPU | Apple M4, 10 ядер |
-| ОС | macOS 15.5 |
-| Компилятор | Apple Clang 17.0.0 + libomp |
-| Сборка | Release, `USE_FUNC_TESTS=ON`, `USE_PERF_TESTS=ON` |
-| Perf-вход | 2000×2000, чётные строки — объект |
-| Повторы | медиана по 3 сериям |
-| Переменные | `PPC_NUM_THREADS` / `OMP_NUM_THREADS` |
+| Параметр   | Значение                                          |
+| ---------- | ------------------------------------------------- |
+| CPU        | Apple M4, 10 ядер                                 |
+| ОС         | macOS 15.5                                        |
+| Компилятор | Apple Clang 17.0.0 + libomp                       |
+| Сборка     | Release, `USE_FUNC_TESTS=ON`, `USE_PERF_TESTS=ON` |
+| Perf-вход  | 2000×2000, чётные строки — объект                 |
+| Повторы    | медиана по 3 сериям                               |
+| Переменные | `PPC_NUM_THREADS` / `OMP_NUM_THREADS`             |
 
 Команды:
 
@@ -124,28 +124,28 @@ PPC_NUM_THREADS=4 ./build/bin/ppc_perf_tests \
 
 Baseline SEQ — из `seq/report.md` (медиана 3 серий, perf-вход 2000×2000):
 
-| Потоки | SEQ, с |
-|--------|--------|
-| 1 | 0.002901 |
-| 2 | 0.002711 |
-| 4 | 0.002683 |
+| Потоки   | SEQ, с   |
+| -------- | -------- |
+| 1        | 0.002901 |
+| 2        | 0.002711 |
+| 4        | 0.002683 |
 
 Speedup = `T_seq / T_omp` при том же числе потоков (см. корневой `report.md`).
 
 ### task_run
 
-| Потоки | OMP, с | Speedup vs SEQ | Efficiency |
-|--------|--------|----------------|------------|
-| 1 | 0.002615 | 1.11 | 111% |
-| 2 | 0.001753 | 1.55 | 77% |
-| 4 | 0.001388 | **1.93** | **48%** |
+| Потоки   | OMP, с   | Speedup vs SEQ   | Efficiency   |
+| -------- | -------- | ---------------- | ------------ |
+| 1        | 0.002615 | 1.11             | 111%         |
+| 2        | 0.001753 | 1.55             | 77%          |
+| 4        | 0.001388 | **1.93**         | **48%**      |
 
 ### pipeline (4 потока)
 
-| Backend | Время, с | Speedup vs SEQ |
-|---------|----------|----------------|
-| SEQ | 0.007558 | 1.00 |
-| OMP | 0.003381 | 2.24 |
+| Backend   | Время, с   | Speedup vs SEQ   |
+| --------- | ---------- | ---------------- |
+| SEQ       | 0.007558   | 1.00             |
+| OMP       | 0.003381   | 2.24             |
 
 На 500×500 OMP не обгонял SEQ из‑за overhead параллельных регионов. На 2000×2000 ускорение **~1.9×** при
 4 потоках; `pipeline` — **~2.2×**.
