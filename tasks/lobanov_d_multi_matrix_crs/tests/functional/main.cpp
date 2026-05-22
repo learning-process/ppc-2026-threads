@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "lobanov_d_multi_matrix_crs/common/include/common.hpp"
-#include "lobanov_d_multi_matrix_crs/tbb/include/ops_tbb.hpp" 
+#include "lobanov_d_multi_matrix_crs/tbb/include/ops_tbb.hpp"
 
 namespace lobanov_d_multi_matrix_crs {
 namespace {

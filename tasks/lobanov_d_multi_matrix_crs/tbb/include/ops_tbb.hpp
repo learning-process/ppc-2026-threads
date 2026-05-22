@@ -20,6 +20,4 @@ class LobanovMultyMatrixTBB : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-using LobanovMultyMatrixOMP = LobanovMultyMatrixTBB;
-
 }  // namespace lobanov_d_multi_matrix_crs

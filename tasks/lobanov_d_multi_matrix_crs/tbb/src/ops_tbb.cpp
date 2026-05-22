@@ -37,65 +37,59 @@ bool LobanovMultyMatrixTBB::RunImpl() {
   c.value_data.clear();
   c.column_index_data.clear();
 
-  if (a.row_count == 0 || b.column_count == 0 || 
-      a.non_zero_count == 0 || b.non_zero_count == 0) {
+  if (a.row_count == 0 || b.column_count == 0 || a.non_zero_count == 0 || b.non_zero_count == 0) {
     return true;
   }
 
-  std::vector<std::vector<std::pair<int, double>>> local_entries(
-      static_cast<std::size_t>(a.row_count));
+  std::vector<std::vector<std::pair<int, double>>> local_entries(static_cast<std::size_t>(a.row_count));
 
-  tbb::parallel_for(
-      tbb::blocked_range<int>(0, a.row_count),
-      [&](const tbb::blocked_range<int> &range) {
-        for (int i = range.begin(); i != range.end(); ++i) {
-          std::vector<std::pair<int, double>> row_pairs;
+  tbb::parallel_for(tbb::blocked_range<int>(0, a.row_count), [&](const tbb::blocked_range<int> &range) {
+    for (int i = range.begin(); i != range.end(); ++i) {
+      std::vector<std::pair<int, double>> row_pairs;
 
-          for (int pos_a = a.row_pointer_data[i];
-               pos_a < a.row_pointer_data[i + 1]; ++pos_a) {
-            int col_a = a.column_index_data[pos_a];
-            double val_a = a.value_data[pos_a];
+      for (int pos_a = a.row_pointer_data[i]; pos_a < a.row_pointer_data[i + 1]; ++pos_a) {
+        int col_a = a.column_index_data[pos_a];
+        double val_a = a.value_data[pos_a];
 
-            for (int pos_b = b.row_pointer_data[col_a];
-                 pos_b < b.row_pointer_data[col_a + 1]; ++pos_b) {
-              int col_b = b.column_index_data[pos_b];
-              double val_b = b.value_data[pos_b];
-              row_pairs.emplace_back(col_b, val_a * val_b);
-            }
-          }
-
-          if (row_pairs.empty()) continue;
-
-          std::sort(row_pairs.begin(), row_pairs.end(),
-                    [](const auto &lhs, const auto &rhs) {
-                      return lhs.first < rhs.first;
-                    });
-
-          std::vector<std::pair<int, double>> merged;
-          double sum = row_pairs[0].second;
-          int prev_col = row_pairs[0].first;
-
-          for (std::size_t k = 1; k < row_pairs.size(); ++k) {
-            if (row_pairs[k].first == prev_col) {
-              sum += row_pairs[k].second;
-            } else {
-              if (std::abs(sum) > 1e-15)
-                merged.emplace_back(prev_col, sum);
-              prev_col = row_pairs[k].first;
-              sum = row_pairs[k].second;
-            }
-          }
-          if (std::abs(sum) > 1e-15)
-            merged.emplace_back(prev_col, sum);
-
-          local_entries[static_cast<std::size_t>(i)] = std::move(merged);
+        for (int pos_b = b.row_pointer_data[col_a]; pos_b < b.row_pointer_data[col_a + 1]; ++pos_b) {
+          int col_b = b.column_index_data[pos_b];
+          double val_b = b.value_data[pos_b];
+          row_pairs.emplace_back(col_b, val_a * val_b);
         }
-      });
+      }
+
+      if (row_pairs.empty()) {
+        continue;
+      }
+
+      std::sort(row_pairs.begin(), row_pairs.end(),
+                [](const auto &lhs, const auto &rhs) { return lhs.first < rhs.first; });
+
+      std::vector<std::pair<int, double>> merged;
+      double sum = row_pairs[0].second;
+      int prev_col = row_pairs[0].first;
+
+      for (std::size_t k = 1; k < row_pairs.size(); ++k) {
+        if (row_pairs[k].first == prev_col) {
+          sum += row_pairs[k].second;
+        } else {
+          if (std::abs(sum) > 1e-15) {
+            merged.emplace_back(prev_col, sum);
+          }
+          prev_col = row_pairs[k].first;
+          sum = row_pairs[k].second;
+        }
+      }
+      if (std::abs(sum) > 1e-15) {
+        merged.emplace_back(prev_col, sum);
+      }
+
+      local_entries[static_cast<std::size_t>(i)] = std::move(merged);
+    }
+  });
 
   for (int i = 0; i < c.row_count; ++i) {
-    c.row_pointer_data[i + 1] =
-        c.row_pointer_data[i] +
-        static_cast<int>(local_entries[i].size());
+    c.row_pointer_data[i + 1] = c.row_pointer_data[i] + static_cast<int>(local_entries[i].size());
   }
 
   const int total_nnz = c.row_pointer_data[c.row_count];
