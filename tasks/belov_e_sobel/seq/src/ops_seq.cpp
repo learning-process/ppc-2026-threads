@@ -1,7 +1,6 @@
 #include "belov_e_sobel/seq/include/ops_seq.hpp"
 
 #include <cmath>
-
 #include <vector>
 
 #include "belov_e_sobel/common/include/common.hpp"

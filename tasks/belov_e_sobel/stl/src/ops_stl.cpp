@@ -1,9 +1,9 @@
 #include "belov_e_sobel/stl/include/ops_stl.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <thread>
 #include <vector>
-#include <cmath>
-#include <algorithm>
 
 #include "belov_e_sobel/common/include/common.hpp"
 #include "util/include/util.hpp"

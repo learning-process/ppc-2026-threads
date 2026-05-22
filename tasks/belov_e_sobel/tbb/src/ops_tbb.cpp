@@ -1,9 +1,10 @@
 #include "belov_e_sobel/tbb/include/ops_tbb.hpp"
 
-#include <tbb/parallel_for.h>
 #include <tbb/blocked_range2d.h>
-#include <cmath>
+#include <tbb/parallel_for.h>
+
 #include <algorithm>
+#include <cmath>
 #include <vector>
 
 #include "belov_e_sobel/common/include/common.hpp"

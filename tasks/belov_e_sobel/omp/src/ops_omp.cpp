@@ -1,8 +1,9 @@
 #include "belov_e_sobel/omp/include/ops_omp.hpp"
 
 #include <omp.h>
-#include <cmath>
+
 #include <algorithm>
+#include <cmath>
 #include <vector>
 
 #include "belov_e_sobel/common/include/common.hpp"

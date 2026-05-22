@@ -2,10 +2,11 @@
 
 #include <mpi.h>
 #include <omp.h>
-#include <vector>
-#include <cmath>
+
 #include <algorithm>
+#include <cmath>
 #include <iostream>
+#include <vector>
 
 #include "belov_e_sobel/common/include/common.hpp"
 #include "util/include/util.hpp"
