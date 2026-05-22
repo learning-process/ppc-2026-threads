@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "lobanov_d_multi_matrix_crs/common/include/common.hpp"
-#include "lobanov_d_multi_matrix_crs/omp/include/ops_omp.hpp"
+#include "lobanov_d_multi_matrix_crs/tbb/include/ops_tbb.hpp"
 
 namespace lobanov_d_multi_matrix_crs {
 namespace {
@@ -77,7 +77,6 @@ CompressedRowMatrix CreateRandomCompressedRowMatrix(int row_count, int column_co
     auto &row_cols = col_indices_per_row[static_cast<std::size_t>(i)];
     auto &row_vals = values_per_row[static_cast<std::size_t>(i)];
 
-    // Reserve space for sorted pairs
     std::vector<std::pair<int, double>> sorted_pairs;
     sorted_pairs.reserve(row_cols.size());
 
@@ -119,25 +118,23 @@ class LobanovDMultiplyMatrixPerfTest : public ::testing::TestWithParam<std::tupl
             CreateRandomCompressedRowMatrix(dimension, dimension, density, 200)};
   }
 
-  static bool ExecuteTask(LobanovMultyMatrixOMP &task) {
+  static bool ExecuteTask(LobanovMultyMatrixTBB &task) {
     return task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing();
   }
 
   template <typename Func>
   auto MeasureTime(Func &&func) const {
     const auto start = std::chrono::high_resolution_clock::now();
-    std::forward<Func>(func)();  // используем std::forward
+    std::forward<Func>(func)();
     const auto end = std::chrono::high_resolution_clock::now();
     return std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
   }
 
-  // Функция для проверки результатов
   void ValidateResult(const CompressedRowMatrix &result) const {
     EXPECT_EQ(result.row_count, dimension);
     EXPECT_EQ(result.column_count, dimension);
   }
 
-  // Функция для вывода результатов
   void PrintResults(const std::string &test_name, int dimension, double density, const CompressedRowMatrix &matrix_a,
                     const CompressedRowMatrix &matrix_b, const CompressedRowMatrix &result, auto duration) const {
     std::cout << "Test: " << test_name << '\n';
@@ -150,20 +147,14 @@ class LobanovDMultiplyMatrixPerfTest : public ::testing::TestWithParam<std::tupl
     std::cout << "------------------------\n";
   }
 
-  // Основная функция теперь очень простая
   void RunPerformanceTest() {
-    // Подготовка
     const auto [matrix_a, matrix_b] = PrepareMatrices();
-    LobanovMultyMatrixOMP task(std::make_pair(matrix_a, matrix_b));
+    LobanovMultyMatrixTBB task(std::make_pair(matrix_a, matrix_b));
 
-    // Выполнение с измерением времени
     const auto duration = MeasureTime([&]() { ASSERT_TRUE(ExecuteTask(task)); });
 
-    // Получение и проверка результата
     const auto result = task.GetOutput();
     ValidateResult(result);
-
-    // Вывод результатов
     PrintResults(test_name, dimension, density, matrix_a, matrix_b, result, duration);
   }
 
