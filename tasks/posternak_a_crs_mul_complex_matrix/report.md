@@ -3,11 +3,11 @@
 - Student: Постернак Алексей Николаевич
 - Variant: 6
 - Local reports:
-    - [SEQ](seq/report.md)
-    - [OMP](omp/report.md)
-    - [STL](stl/report.md)
-    - [TBB](tbb/report.md)
-    - [ALL (MPI+OpenMP)](all/report.md)
+  - [SEQ](seq/report.md)
+  - [OMP](omp/report.md)
+  - [STL](stl/report.md)
+  - [TBB](tbb/report.md)
+  - [ALL (MPI+OpenMP)](all/report.md)
 
 ## 1. Введение
 
