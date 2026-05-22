@@ -163,7 +163,7 @@ void LocalTbbSort(std::vector<double> &data) {
 struct DistributionParams {
   std::vector<int> send_counts;
   std::vector<int> send_displs;
-  int local_size;
+  int local_size{};
 };
 
 DistributionParams ComputeDistributionParams(size_t global_size, int num_processes, int rank) {
@@ -176,7 +176,7 @@ DistributionParams ComputeDistributionParams(size_t global_size, int num_process
 
   size_t offset = 0;
   for (int proc = 0; proc < num_processes; ++proc) {
-    const size_t count = base_count + (static_cast<size_t>(proc) < remainder ? 1ULL : 0ULL);
+    const size_t count = base_count + (std::cmp_less(static_cast<size_t>(proc), remainder) ? 1ULL : 0ULL);
     params.send_counts[static_cast<size_t>(proc)] = static_cast<int>(count);
     params.send_displs[static_cast<size_t>(proc)] = static_cast<int>(offset);
     offset += count;
@@ -191,8 +191,8 @@ void DistributeData(const std::vector<double> &source_data, std::vector<double> 
   local_data.resize(static_cast<size_t>(params.local_size));
 
   if (rank == 0) {
-    MPI_Scatterv(const_cast<double *>(source_data.data()), params.send_counts.data(), params.send_displs.data(),
-                 MPI_DOUBLE, local_data.data(), params.local_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(source_data.data(), params.send_counts.data(), params.send_displs.data(), MPI_DOUBLE,
+                 local_data.data(), params.local_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   } else {
     MPI_Scatterv(nullptr, nullptr, nullptr, MPI_DOUBLE, local_data.data(), params.local_size, MPI_DOUBLE, 0,
                  MPI_COMM_WORLD);
@@ -254,7 +254,7 @@ void RunMpiVersion(std::vector<double> &local_data, const std::vector<double> &i
   const DistributionParams params = ComputeDistributionParams(global_size, num_processes, rank);
 
   // Создаём копию для распределения (MPI требует не const данные)
-  std::vector<double> mutable_input = input_data;
+  const std::vector<double> &mutable_input = input_data;
   DistributeData(mutable_input, local_data, params, rank);
 
   // 2. Локальная TBB-сортировка
