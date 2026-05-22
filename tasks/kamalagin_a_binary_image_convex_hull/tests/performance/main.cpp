@@ -25,7 +25,6 @@ BinaryImage MakeSyntheticPerfImage() {
   img.cols = kCols;
   const size_t total = static_cast<size_t>(kRows) * static_cast<size_t>(kCols);
   img.data.assign(total, 0);
-  // Sparse foreground: two pixels per row (~10k components), similar load to large-image perf tests.
   for (int row = 0; row < kRows; ++row) {
     const auto urow = static_cast<size_t>(row);
     const int col1 = (row * 13) % kCols;
