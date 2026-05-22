@@ -1,15 +1,18 @@
 #include "solonin_v_radix_sort_batcher/tbb/include/ops_tbb.hpp"
-#include "solonin_v_radix_sort_batcher/common/include/common.hpp"
-#include "util/include/util.hpp"
-#include <algorithm>
-#include <cstddef>
-#include <iterator>
+
 #include <tbb/blocked_range.h>
 #include <tbb/global_control.h>
 #include <tbb/parallel_for.h>
 #include <tbb/parallel_invoke.h>
+
+#include <algorithm>
+#include <cstddef>
+#include <iterator>
 #include <utility>
 #include <vector>
+
+#include "solonin_v_radix_sort_batcher/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace solonin_v_radix_sort_batcher {
 
@@ -83,9 +86,8 @@ std::vector<int> RadixSortBatcherTBB::MergeBatcher(const std::vector<int> &left,
   std::vector<int> merged_even;
   std::vector<int> merged_odd;
 
-  tbb::parallel_invoke(
-      [&]() { std::ranges::merge(even_l, even_r, std::back_inserter(merged_even)); },
-      [&]() { std::ranges::merge(odd_l, odd_r, std::back_inserter(merged_odd)); });
+  tbb::parallel_invoke([&]() { std::ranges::merge(even_l, even_r, std::back_inserter(merged_even)); },
+                       [&]() { std::ranges::merge(odd_l, odd_r, std::back_inserter(merged_odd)); });
 
   std::vector<int> result(left.size() + right.size());
   for (size_t i = 0; i < merged_even.size(); ++i) {

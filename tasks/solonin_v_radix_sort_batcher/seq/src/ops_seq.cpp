@@ -1,7 +1,9 @@
 #include "solonin_v_radix_sort_batcher/seq/include/ops_seq.hpp"
-#include "solonin_v_radix_sort_batcher/common/include/common.hpp"
+
 #include <cstddef>
 #include <vector>
+
+#include "solonin_v_radix_sort_batcher/common/include/common.hpp"
 
 namespace solonin_v_radix_sort_batcher {
 
