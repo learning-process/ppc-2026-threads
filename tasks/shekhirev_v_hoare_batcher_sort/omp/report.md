@@ -53,6 +53,7 @@ int chunk_size = n_pow2 / p_threads;
 ```
 
 **Распараллеливание локальной сортировки:** Цикл раскидывает независимые вызовы функции по потокам.
+
 ```cpp
 #pragma omp parallel for default(none) shared(a, p_threads, chunk_size)
 for (int i = 0; i < p_threads; i++) {
@@ -62,6 +63,7 @@ for (int i = 0; i < p_threads; i++) {
 
 **Распараллеливание слияния:** Директива применяется ко внутреннему циклу `for (int step = 0; step <
 total_pairs; ++step)`.
+
 ```cpp
 #pragma omp parallel for default(none) shared(a, step_p, step_k, start, total_pairs)
 for (int step = 0; step < total_pairs; ++step) {
@@ -77,6 +79,7 @@ for (int step = 0; step < total_pairs; ++step) {
 менеджер памяти.
 
 **Анализ параметров OpenMP (`shared/private/reduction/schedule`):**
+
 - **`shared`**: Массив данных `a`, конфигурация пула `p_threads` и параметры сети Бэтчера (`step_p`, `step_k`)
   объявляются общими. Разделение доступа к памяти гарантируется математикой алгоритма (каждый поток трогает
   строго только свои непересекающиеся индексы).
