@@ -92,8 +92,8 @@ PPC_NUM_THREADS=4 ./build/bin/ppc_perf_tests \
 ## 8. Заключение
 
 На 2000×2000 все оптимизированные backend-ы (OMP, STL, TBB, ALL) устойчиво быстрее SEQ (baseline — `seq/report.md`).
-Лучший `task_run`: **STL** (~2.6×). ALL и STL близки по времени, поскольку используют одинаковое thread-based ядро. OMP лидирует
-по `pipeline`. Для полной func-проверки ALL нужен запуск в CI под `mpirun`.
+Лучший `task_run`: **STL** (~2.6×). ALL и STL близки по времени, поскольку используют одинаковое thread-based
+ядро. OMP лидирует по `pipeline`. Для полной func-проверки ALL нужен запуск в CI под `mpirun`.
 
 ## 9. Источники
 
