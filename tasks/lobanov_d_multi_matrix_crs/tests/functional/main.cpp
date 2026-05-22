@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "lobanov_d_multi_matrix_crs/common/include/common.hpp"
-#include "lobanov_d_multi_matrix_crs/omp/include/ops_omp.hpp"
+#include "lobanov_d_multi_matrix_crs/stl/include/ops_stl.hpp"
 
 namespace lobanov_d_multi_matrix_crs {
 namespace {
@@ -74,7 +74,6 @@ CompressedRowMatrix CreateRandomCompressedRowMatrix(int row_count, int column_co
     auto &row_cols = col_indices_per_row[static_cast<std::size_t>(i)];
     auto &row_vals = values_per_row[static_cast<std::size_t>(i)];
 
-    // Reserve space for sorted pairs
     std::vector<std::pair<int, double>> sorted_pairs;
     sorted_pairs.reserve(row_cols.size());
 
@@ -106,12 +105,12 @@ class LobanovDMultiplyMatrixFuncTest : public ::testing::Test {
  protected:
   void SetUp() override {}
 
-  static bool ExecuteFullTask(LobanovMultyMatrixOMP &task) {
+  static bool ExecuteFullTask(LobanovMultyMatrixSTL &task) {
     return task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing();
   }
 
   void RunTest(const CompressedRowMatrix &matrix_a, const CompressedRowMatrix &matrix_b) {
-    LobanovMultyMatrixOMP task(std::make_pair(matrix_a, matrix_b));
+    LobanovMultyMatrixSTL task(std::make_pair(matrix_a, matrix_b));
     ASSERT_TRUE(ExecuteFullTask(task));
     result = task.GetOutput();
   }
@@ -227,7 +226,7 @@ TEST_F(LobanovDMultiplyMatrixFuncTest, ValidationFailure) {
   const auto matrix_a = CreateRandomCompressedRowMatrix(5, 3, 0.3, 1);
   const auto matrix_b = CreateRandomCompressedRowMatrix(4, 5, 0.3, 2);
 
-  LobanovMultyMatrixOMP task(std::make_pair(matrix_a, matrix_b));
+  LobanovMultyMatrixSTL task(std::make_pair(matrix_a, matrix_b));
 
   EXPECT_FALSE(task.Validation());
 }
