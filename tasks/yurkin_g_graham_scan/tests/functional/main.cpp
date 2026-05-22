@@ -1,4 +1,3 @@
-// yurkin_g_graham_scan/test/func_tests.cpp
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -8,6 +7,7 @@
 #include <vector>
 
 #include "util/include/func_test_util.hpp"
+#include "yurkin_g_graham_scan/all/include/ops_all.hpp"
 #include "yurkin_g_graham_scan/common/include/common.hpp"
 #include "yurkin_g_graham_scan/omp/include/ops_omp.hpp"
 #include "yurkin_g_graham_scan/seq/include/ops_seq.hpp"
@@ -69,7 +69,8 @@ const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<YurkinGGrahamScanSEQ, InType>(kTestParam, PPC_SETTINGS_yurkin_g_graham_scan),
                    ppc::util::AddFuncTask<YurkinGGrahamScanOMP, InType>(kTestParam, PPC_SETTINGS_yurkin_g_graham_scan),
                    ppc::util::AddFuncTask<YurkinGGrahamScanTBB, InType>(kTestParam, PPC_SETTINGS_yurkin_g_graham_scan),
-                   ppc::util::AddFuncTask<YurkinGGrahamScanSTL, InType>(kTestParam, PPC_SETTINGS_yurkin_g_graham_scan));
+                   ppc::util::AddFuncTask<YurkinGGrahamScanSTL, InType>(kTestParam, PPC_SETTINGS_yurkin_g_graham_scan),
+                   ppc::util::AddFuncTask<YurkinGGrahamScanALL, InType>(kTestParam, PPC_SETTINGS_yurkin_g_graham_scan));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
