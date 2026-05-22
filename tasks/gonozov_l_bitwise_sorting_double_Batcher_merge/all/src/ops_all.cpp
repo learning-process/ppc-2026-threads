@@ -200,7 +200,6 @@ void DistributeData(const std::vector<double> &source_data, std::vector<double> 
 }
 
 // ==================== ФУНКЦИИ ДЛЯ СБОРА РЕЗУЛЬТАТОВ ====================
-
 void GatherResultsToRoot(std::vector<double> &local_data, int rank, int num_processes) {
   if (rank == 0) {
     std::vector<double> all_data = std::move(local_data);
