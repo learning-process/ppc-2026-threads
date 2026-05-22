@@ -2,7 +2,6 @@
 
 - Студент: Четверикова Е.Е.
 - Группа: 3823Б1ПМоп3
-- Технология: TBB
 - Вариант: 15
 - Локальные отчеты: seq/report.md, omp/report.md, tbb/report.md, stl/report.md, all/report.md
 
