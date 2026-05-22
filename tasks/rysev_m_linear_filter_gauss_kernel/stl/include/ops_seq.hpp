@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stb/stb_image.h>
-
 #include <cstdint>
 #include <vector>
 
@@ -10,12 +8,12 @@
 
 namespace rysev_m_linear_filter_gauss_kernel {
 
-class RysevMGaussFilterTBB : public BaseTask {
+class RysevMGaussFilterSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kTBB;
+    return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit RysevMGaussFilterTBB(const InType &in);
+  explicit RysevMGaussFilterSEQ(const InType &in);
 
   [[nodiscard]] const std::vector<uint8_t> &GetInputImage() const {
     return input_image_;

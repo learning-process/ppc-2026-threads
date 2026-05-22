@@ -31,8 +31,9 @@ TEST_P(RysevMPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, RysevMGaussFilterSEQ, RysevMGaussFilterOMP, RysevMGaussFilterTBB>(
-    PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, RysevMGaussFilterSEQ, RysevMGaussFilterOMP, RysevMGaussFilterTBB>(
+        PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = RysevMPerfTests::CustomPerfTestName;

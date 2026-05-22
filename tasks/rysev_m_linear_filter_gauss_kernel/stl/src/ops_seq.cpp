@@ -1,7 +1,6 @@
-#include "rysev_m_linear_filter_gauss_kernel/tbb/include/ops_tbb.hpp"
+#include "rysev_m_linear_filter_gauss_kernel/seq/include/ops_seq.hpp"
 
 #include <stb/stb_image.h>
-#include <tbb/tbb.h>
 
 #include <algorithm>
 #include <array>
@@ -47,17 +46,17 @@ float ComputePixelValue(int row, int col, int channel, int rows, int cols, int c
 
 }  // namespace
 
-RysevMGaussFilterTBB::RysevMGaussFilterTBB(const InType &in) {
+RysevMGaussFilterSEQ::RysevMGaussFilterSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
 }
 
-bool RysevMGaussFilterTBB::ValidationImpl() {
+bool RysevMGaussFilterSEQ::ValidationImpl() {
   return GetInput() >= 0 && GetOutput() == 0;
 }
 
-bool RysevMGaussFilterTBB::PreProcessingImpl() {
+bool RysevMGaussFilterSEQ::PreProcessingImpl() {
   if (GetInput() == 0) {
     std::string abs_path =
         ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_rysev_m_linear_filter_gauss_kernel), "pic.ppm");
@@ -92,22 +91,18 @@ bool RysevMGaussFilterTBB::PreProcessingImpl() {
   return true;
 }
 
-void RysevMGaussFilterTBB::ApplyKernelToChannel(int channel, int rows, int cols) {
-  const auto &input = input_image_;
-  auto &output = output_image_;
-  int channels = channels_;
-
-  tbb::parallel_for(0, rows, [&](int row) {
+void RysevMGaussFilterSEQ::ApplyKernelToChannel(int channel, int rows, int cols) {
+  for (int row = 0; row < rows; ++row) {
     for (int col = 0; col < cols; ++col) {
-      float sum = ComputePixelValue(row, col, channel, rows, cols, channels, input);
+      float sum = ComputePixelValue(row, col, channel, rows, cols, channels_, input_image_);
       std::size_t out_idx = (static_cast<std::size_t>(row) * cols) + col;
-      out_idx = (out_idx * channels) + channel;
-      output[out_idx] = static_cast<uint8_t>(std::clamp(sum, 0.0F, 255.0F));
+      out_idx = (out_idx * channels_) + channel;
+      output_image_[out_idx] = static_cast<uint8_t>(std::clamp(sum, 0.0F, 255.0F));
     }
-  });
+  }
 }
 
-bool RysevMGaussFilterTBB::RunImpl() {
+bool RysevMGaussFilterSEQ::RunImpl() {
   int rows = height_;
   int cols = width_;
   int ch = channels_;
@@ -119,7 +114,7 @@ bool RysevMGaussFilterTBB::RunImpl() {
   return true;
 }
 
-bool RysevMGaussFilterTBB::PostProcessingImpl() {
+bool RysevMGaussFilterSEQ::PostProcessingImpl() {
   int64_t total = 0;
   for (uint8_t pixel : output_image_) {
     total += pixel;
