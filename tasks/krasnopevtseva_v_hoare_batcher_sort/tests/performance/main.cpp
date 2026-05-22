@@ -5,6 +5,7 @@
 #include <random>
 #include <vector>
 
+#include "krasnopevtseva_v_hoare_batcher_sort/all/include/ops_all.hpp"
 #include "krasnopevtseva_v_hoare_batcher_sort/common/include/common.hpp"
 #include "krasnopevtseva_v_hoare_batcher_sort/omp/include/ops_omp.hpp"
 #include "krasnopevtseva_v_hoare_batcher_sort/seq/include/ops_seq.hpp"
