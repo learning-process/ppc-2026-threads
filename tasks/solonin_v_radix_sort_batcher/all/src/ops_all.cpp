@@ -1,13 +1,16 @@
 #include "solonin_v_radix_sort_batcher/all/include/ops_all.hpp"
-#include "solonin_v_radix_sort_batcher/common/include/common.hpp"
-#include "util/include/util.hpp"
-#include <algorithm>
-#include <cstddef>
+
 #include <mpi.h>
 #include <omp.h>
+
+#include <algorithm>
+#include <cstddef>
 #include <thread>
 #include <utility>
 #include <vector>
+
+#include "solonin_v_radix_sort_batcher/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace solonin_v_radix_sort_batcher {
 
@@ -95,8 +98,12 @@ std::vector<int> RadixSortBatcherALL::OddEvenMerge(const std::vector<int> &a, co
   return result;
 }
 
-bool RadixSortBatcherALL::ValidationImpl() { return !GetInput().empty(); }
-bool RadixSortBatcherALL::PreProcessingImpl() { return true; }
+bool RadixSortBatcherALL::ValidationImpl() {
+  return !GetInput().empty();
+}
+bool RadixSortBatcherALL::PreProcessingImpl() {
+  return true;
+}
 
 bool RadixSortBatcherALL::RunImpl() {
   GetOutput() = GetInput();
@@ -130,9 +137,7 @@ bool RadixSortBatcherALL::RunImpl() {
     std::vector<std::thread> mt;
     merged.resize((blocks.size() + 1) / 2);
     for (size_t i = 0; i + 1 < blocks.size(); i += 2) {
-      mt.emplace_back([&blocks, &merged, i]() {
-        merged[i / 2] = OddEvenMerge(blocks[i], blocks[i + 1]);
-      });
+      mt.emplace_back([&blocks, &merged, i]() { merged[i / 2] = OddEvenMerge(blocks[i], blocks[i + 1]); });
     }
     if (blocks.size() % 2 == 1) {
       merged.back() = blocks.back();
@@ -148,6 +153,8 @@ bool RadixSortBatcherALL::RunImpl() {
   return true;
 }
 
-bool RadixSortBatcherALL::PostProcessingImpl() { return true; }
+bool RadixSortBatcherALL::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace solonin_v_radix_sort_batcher
