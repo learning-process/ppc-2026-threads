@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -39,22 +40,22 @@ bool BelovESobelOMP::RunImpl() {
       int y_minus = std::clamp(row - 1, 0, height - 1);
       int y_plus = std::clamp(row + 1, 0, height - 1);
 
-      float gx = (-1.0F * static_cast<float>(input[static_cast<size_t>(y_minus) * width + x_minus])) +
-                 (1.0F * static_cast<float>(input[static_cast<size_t>(y_minus) * width + x_plus])) +
-                 (-2.0F * static_cast<float>(input[static_cast<size_t>(row) * width + x_minus])) +
-                 (2.0F * static_cast<float>(input[static_cast<size_t>(row) * width + x_plus])) +
-                 (-1.0F * static_cast<float>(input[static_cast<size_t>(y_plus) * width + x_minus])) +
-                 (1.0F * static_cast<float>(input[static_cast<size_t>(y_plus) * width + x_plus]));
+      float gx = (-1.0F * static_cast<float>(input[(static_cast<std::size_t>(y_minus) * width) + x_minus])) +
+                 (1.0F * static_cast<float>(input[(static_cast<std::size_t>(y_minus) * width) + x_plus])) +
+                 (-2.0F * static_cast<float>(input[(static_cast<std::size_t>(row) * width) + x_minus])) +
+                 (2.0F * static_cast<float>(input[(static_cast<std::size_t>(row) * width) + x_plus])) +
+                 (-1.0F * static_cast<float>(input[(static_cast<std::size_t>(y_plus) * width) + x_minus])) +
+                 (1.0F * static_cast<float>(input[(static_cast<std::size_t>(y_plus) * width) + x_plus]));
 
-      float gy = (-1.0F * static_cast<float>(input[static_cast<size_t>(y_minus) * width + x_minus])) -
-                 (2.0F * static_cast<float>(input[static_cast<size_t>(y_minus) * width + col])) -
-                 (1.0F * static_cast<float>(input[static_cast<size_t>(y_minus) * width + x_plus])) +
-                 (1.0F * static_cast<float>(input[static_cast<size_t>(y_plus) * width + x_minus])) +
-                 (2.0F * static_cast<float>(input[static_cast<size_t>(y_plus) * width + col])) +
-                 (1.0F * static_cast<float>(input[static_cast<size_t>(y_plus) * width + x_plus]));
+      float gy = (-1.0F * static_cast<float>(input[(static_cast<std::size_t>(y_minus) * width) + x_minus])) -
+                 (2.0F * static_cast<float>(input[(static_cast<std::size_t>(y_minus) * width) + col])) -
+                 (1.0F * static_cast<float>(input[(static_cast<std::size_t>(y_minus) * width) + x_plus])) +
+                 (1.0F * static_cast<float>(input[(static_cast<std::size_t>(y_plus) * width) + x_minus])) +
+                 (2.0F * static_cast<float>(input[(static_cast<std::size_t>(y_plus) * width) + col])) +
+                 (1.0F * static_cast<float>(input[(static_cast<std::size_t>(y_plus) * width) + x_plus]));
 
       float magnitude = std::sqrt((gx * gx) + (gy * gy));
-      output[static_cast<size_t>(row) * width + col] = static_cast<uint8_t>(std::min(255.0F, magnitude));
+      output[(static_cast<std::size_t>(row) * width) + col] = static_cast<uint8_t>(std::min(255.0F, magnitude));
     }
   }
 

@@ -81,7 +81,7 @@ class BelovESobelFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
       }
     }
 
-    std::size_t max_allowed_errors = static_cast<std::size_t>(static_cast<double>(ref_vector.size()) * 0.0005);
+    auto max_allowed_errors = static_cast<std::size_t>(static_cast<double>(ref_vector.size()) * 0.0005);
 
     return structural_errors <= max_allowed_errors;
   }

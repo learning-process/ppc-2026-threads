@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <utility>
 #include <vector>
@@ -42,7 +43,7 @@ bool BelovESobelALL::RunImpl() {
     global_input = std::get<0>(GetInput());
     width = std::get<1>(GetInput());
     height = std::get<2>(GetInput());
-    global_output.resize(static_cast<size_t>(width) * height);
+    global_output.resize(static_cast<std::size_t>(width) * height);
   }
 
   MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -67,17 +68,18 @@ bool BelovESobelALL::RunImpl() {
   int start_y_global = displacements[rank] / width;
   int end_y_global = start_y_global + local_rows;
 
-  std::vector<uint8_t> local_output(static_cast<size_t>(local_rows) * width);
+  std::vector<uint8_t> local_output(static_cast<std::size_t>(local_rows) * width);
 
   if (rank != 0) {
-    global_input.resize(static_cast<size_t>(width) * height);
+    global_input.resize(static_cast<std::size_t>(width) * height);
   }
-  MPI_Bcast(global_input.data(), static_cast<int>(static_cast<size_t>(width) * height), MPI_BYTE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(global_input.data(), static_cast<int>(static_cast<std::size_t>(width) * height), MPI_BYTE, 0,
+            MPI_COMM_WORLD);
 
   auto get_px = [&](int col, int row) -> float {
     int clamped_x = std::clamp(col, 0, width - 1);
     int clamped_y = std::clamp(row, 0, height - 1);
-    return static_cast<float>(global_input[static_cast<size_t>(clamped_y) * width + clamped_x]);
+    return static_cast<float>(global_input[(static_cast<std::size_t>(clamped_y) * width) + clamped_x]);
   };
 
 #pragma omp parallel for default(none) \
@@ -93,11 +95,12 @@ bool BelovESobelALL::RunImpl() {
                  (1 * get_px(col - 1, row + 1)) + (2 * get_px(col, row + 1)) + (1 * get_px(col + 1, row + 1));
 
       float magnitude = std::sqrt((gx * gx) + (gy * gy));
-      local_output[static_cast<size_t>(local_y) * width + col] = static_cast<uint8_t>(std::min(255.0F, magnitude));
+      local_output[(static_cast<std::size_t>(local_y) * width) + col] =
+          static_cast<uint8_t>(std::min(255.0F, magnitude));
     }
   }
 
-  global_output.resize(static_cast<size_t>(width) * height);
+  global_output.resize(static_cast<std::size_t>(width) * height);
 
   MPI_Allgatherv(local_output.data(), static_cast<int>(local_output.size()), MPI_BYTE, global_output.data(),
                  send_counts.data(), displacements.data(), MPI_BYTE, MPI_COMM_WORLD);

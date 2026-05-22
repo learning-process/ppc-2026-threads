@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -35,7 +36,7 @@ bool BelovESobelTBB::RunImpl() {
   auto get_px = [&](int col, int row) -> float {
     int clamped_x = std::clamp(col, 0, width - 1);
     int clamped_y = std::clamp(row, 0, height - 1);
-    return static_cast<float>(input[(static_cast<size_t>(clamped_y) * width) + clamped_x]);
+    return static_cast<float>(input[(static_cast<std::size_t>(clamped_y) * width) + clamped_x]);
   };
 
   tbb::parallel_for(tbb::blocked_range2d<int>(0, height, 0, width), [&](const tbb::blocked_range2d<int> &r) {
@@ -48,7 +49,7 @@ bool BelovESobelTBB::RunImpl() {
                    (1 * get_px(col - 1, row + 1)) + (2 * get_px(col, row + 1)) + (1 * get_px(col + 1, row + 1));
 
         float magnitude = std::sqrt((gx * gx) + (gy * gy));
-        output[(static_cast<size_t>(row) * width) + col] = static_cast<uint8_t>(std::min(255.0F, magnitude));
+        output[(static_cast<std::size_t>(row) * width) + col] = static_cast<uint8_t>(std::min(255.0F, magnitude));
       }
     }
   });
