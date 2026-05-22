@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 
+#include "ovchinnikov_m_shell_sort_batcher_merge/all/include/ops_all.hpp"
 #include "ovchinnikov_m_shell_sort_batcher_merge/common/include/common.hpp"
 #include "ovchinnikov_m_shell_sort_batcher_merge/omp/include/ops_omp.hpp"
 #include "ovchinnikov_m_shell_sort_batcher_merge/seq/include/ops_seq.hpp"
@@ -15,7 +16,7 @@ namespace ovchinnikov_m_shell_sort_batcher_merge {
 class OvchinnikovMRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    constexpr std::size_t kSize = 5000000;
+    constexpr std::size_t kSize = 10000000;
     input_data_.resize(kSize);
     for (std::size_t i = 0; i < kSize; ++i) {
       input_data_[i] = static_cast<int>(kSize - i);
@@ -42,7 +43,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, OvchinnikovMShellSortBatcherMergeSEQ, OvchinnikovMShellSortBatcherMergeOMP,
-                                OvchinnikovMShellSortBatcherMergeSTL, OvchinnikovMShellSortBatcherMergeTBB>(
+                                OvchinnikovMShellSortBatcherMergeSTL, OvchinnikovMShellSortBatcherMergeTBB,
+                                OvchinnikovMShellSortBatcherMergeALL>(
         PPC_SETTINGS_ovchinnikov_m_shell_sort_batcher_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
