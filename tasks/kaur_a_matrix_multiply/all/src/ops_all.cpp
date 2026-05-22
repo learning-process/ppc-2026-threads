@@ -1,5 +1,3 @@
-#include "../include/all.hpp"
-
 #include <mpi.h>
 
 #include <algorithm>
@@ -12,6 +10,7 @@
 #include <vector>
 
 #include "../../common/include/common.hpp"
+#include "../include/all.hpp"
 
 namespace kaur_a_matrix_multiply {
 

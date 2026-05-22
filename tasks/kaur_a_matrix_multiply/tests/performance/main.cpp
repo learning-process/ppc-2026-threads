@@ -104,9 +104,8 @@ TEST_P(KaurAMatrixMultiplyPerfTest, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KaurAMatrixMultiplySEQ, KaurAMatrixMultiplyOMP,
-                                KaurAMatrixMultiplyTBB, KaurAMatrixMultiplySTL,
-                                KaurAMatrixMultiplyALL>(PPC_SETTINGS_kaur_a_matrix_multiply);
+    ppc::util::MakeAllPerfTasks<InType, KaurAMatrixMultiplySEQ, KaurAMatrixMultiplyOMP, KaurAMatrixMultiplyTBB,
+                                KaurAMatrixMultiplySTL, KaurAMatrixMultiplyALL>(PPC_SETTINGS_kaur_a_matrix_multiply);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

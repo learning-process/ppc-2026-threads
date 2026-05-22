@@ -1,5 +1,3 @@
-#include "../include/stl.hpp"
-
 #include <algorithm>
 #include <cstddef>
 #include <map>
@@ -8,6 +6,7 @@
 #include <vector>
 
 #include "../../common/include/common.hpp"
+#include "../include/stl.hpp"
 
 namespace kaur_a_matrix_multiply {
 

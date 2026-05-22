@@ -1,5 +1,3 @@
-#include "../include/tbb.hpp"
-
 #include <tbb/tbb.h>
 
 #include <cstddef>
@@ -8,6 +6,7 @@
 #include <vector>
 
 #include "../../common/include/common.hpp"
+#include "../include/tbb.hpp"
 
 namespace kaur_a_matrix_multiply {
 

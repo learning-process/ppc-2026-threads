@@ -133,21 +133,16 @@ const std::array<TestType, 10> kTestParam = {
     std::make_tuple(6, 6, 5), std::make_tuple(6, 5, 6),   std::make_tuple(5, 6, 6), std::make_tuple(8, 8, 8),
     std::make_tuple(9, 9, 9), std::make_tuple(10, 10, 10)};
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KaurAMatrixMultiplySEQ, InType>(
-                                               kTestParam, PPC_SETTINGS_kaur_a_matrix_multiply),
-                                           ppc::util::AddFuncTask<KaurAMatrixMultiplyOMP, InType>(
-                                               kTestParam, PPC_SETTINGS_kaur_a_matrix_multiply),
-                                           ppc::util::AddFuncTask<KaurAMatrixMultiplyTBB, InType>(
-                                               kTestParam, PPC_SETTINGS_kaur_a_matrix_multiply),
-                                           ppc::util::AddFuncTask<KaurAMatrixMultiplySTL, InType>(
-                                               kTestParam, PPC_SETTINGS_kaur_a_matrix_multiply),
-                                           ppc::util::AddFuncTask<KaurAMatrixMultiplyALL, InType>(
-                                               kTestParam, PPC_SETTINGS_kaur_a_matrix_multiply));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<KaurAMatrixMultiplySEQ, InType>(kTestParam, PPC_SETTINGS_kaur_a_matrix_multiply),
+    ppc::util::AddFuncTask<KaurAMatrixMultiplyOMP, InType>(kTestParam, PPC_SETTINGS_kaur_a_matrix_multiply),
+    ppc::util::AddFuncTask<KaurAMatrixMultiplyTBB, InType>(kTestParam, PPC_SETTINGS_kaur_a_matrix_multiply),
+    ppc::util::AddFuncTask<KaurAMatrixMultiplySTL, InType>(kTestParam, PPC_SETTINGS_kaur_a_matrix_multiply),
+    ppc::util::AddFuncTask<KaurAMatrixMultiplyALL, InType>(kTestParam, PPC_SETTINGS_kaur_a_matrix_multiply));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName =
-    KaurAMatrixMultiplyFuncTests::PrintFuncTestName<KaurAMatrixMultiplyFuncTests>;
+const auto kPerfTestName = KaurAMatrixMultiplyFuncTests::PrintFuncTestName<KaurAMatrixMultiplyFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(FuncTests, KaurAMatrixMultiplyFuncTests, kGtestValues, kPerfTestName);
 

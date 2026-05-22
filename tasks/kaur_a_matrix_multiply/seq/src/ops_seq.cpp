@@ -1,11 +1,10 @@
-#include "../include/seq.hpp"
-
 #include <cstddef>
 #include <map>
 #include <utility>
 #include <vector>
 
 #include "../../common/include/common.hpp"
+#include "../include/seq.hpp"
 
 namespace kaur_a_matrix_multiply {
 
