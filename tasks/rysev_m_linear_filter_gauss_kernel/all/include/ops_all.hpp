@@ -8,18 +8,28 @@
 
 namespace rysev_m_linear_filter_gauss_kernel {
 
-class RysevMGaussFilterAll: public BaseTask {
+class RysevMGaussFilterAll : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kALL;
   }
   explicit RysevMGaussFilterAll(const InType &in);
 
-  [[nodiscard]] const std::vector<uint8_t> &GetInputImage() const { return input_image_; }
-  [[nodiscard]] const std::vector<uint8_t> &GetOutputImage() const { return output_image_; }
-  [[nodiscard]] int GetWidth() const { return width_; }
-  [[nodiscard]] int GetHeight() const { return height_; }
-  [[nodiscard]] int GetChannels() const { return channels_; }
+  [[nodiscard]] const std::vector<uint8_t> &GetInputImage() const {
+    return input_image_;
+  }
+  [[nodiscard]] const std::vector<uint8_t> &GetOutputImage() const {
+    return output_image_;
+  }
+  [[nodiscard]] int GetWidth() const {
+    return width_;
+  }
+  [[nodiscard]] int GetHeight() const {
+    return height_;
+  }
+  [[nodiscard]] int GetChannels() const {
+    return channels_;
+  }
 
  private:
   bool ValidationImpl() override;

@@ -24,14 +24,10 @@ struct KernelElement {
 };
 
 const std::array<KernelElement, 9> kKernelElements = {
-    {KernelElement{.dr = -1, .dc = -1, .weight = 1.0F / 16},
-     KernelElement{.dr = -1, .dc = 0, .weight = 2.0F / 16},
-     KernelElement{.dr = -1, .dc = 1, .weight = 1.0F / 16},
-     KernelElement{.dr = 0, .dc = -1, .weight = 2.0F / 16},
-     KernelElement{.dr = 0, .dc = 0, .weight = 4.0F / 16},
-     KernelElement{.dr = 0, .dc = 1, .weight = 2.0F / 16},
-     KernelElement{.dr = 1, .dc = -1, .weight = 1.0F / 16},
-     KernelElement{.dr = 1, .dc = 0, .weight = 2.0F / 16},
+    {KernelElement{.dr = -1, .dc = -1, .weight = 1.0F / 16}, KernelElement{.dr = -1, .dc = 0, .weight = 2.0F / 16},
+     KernelElement{.dr = -1, .dc = 1, .weight = 1.0F / 16}, KernelElement{.dr = 0, .dc = -1, .weight = 2.0F / 16},
+     KernelElement{.dr = 0, .dc = 0, .weight = 4.0F / 16}, KernelElement{.dr = 0, .dc = 1, .weight = 2.0F / 16},
+     KernelElement{.dr = 1, .dc = -1, .weight = 1.0F / 16}, KernelElement{.dr = 1, .dc = 0, .weight = 2.0F / 16},
      KernelElement{.dr = 1, .dc = 1, .weight = 1.0F / 16}}};
 
 // Вспомогательная функция для одного пикселя (та же, что в SEQ)
@@ -68,7 +64,9 @@ bool RysevMGaussFilterAll::PreProcessingImpl() {
         ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_rysev_m_linear_filter_gauss_kernel), "pic.ppm");
     int w = 0, h = 0, ch = 0;
     unsigned char *data = stbi_load(abs_path.c_str(), &w, &h, &ch, STBI_rgb);
-    if (data == nullptr) return false;
+    if (data == nullptr) {
+      return false;
+    }
     width_ = w;
     height_ = h;
     channels_ = STBI_rgb;
@@ -83,7 +81,9 @@ bool RysevMGaussFilterAll::PreProcessingImpl() {
     input_image_.resize(total_pixels);
     std::mt19937 gen(static_cast<unsigned int>(GetInput()));
     std::uniform_int_distribution<int> dist(0, 255);
-    for (auto &pixel : input_image_) pixel = static_cast<uint8_t>(dist(gen));
+    for (auto &pixel : input_image_) {
+      pixel = static_cast<uint8_t>(dist(gen));
+    }
   }
   output_image_.resize(input_image_.size(), 0);
   return true;
@@ -104,11 +104,17 @@ void RysevMGaussFilterAll::ProcessBlockSequential(int start_row, int end_row) {
 
 bool RysevMGaussFilterAll::RunImpl() {
   int rows = height_;
-  if (rows == 0) return true;
+  if (rows == 0) {
+    return true;
+  }
 
   unsigned int num_threads = std::thread::hardware_concurrency();
-  if (num_threads == 0) num_threads = 1;
-  if (static_cast<int>(num_threads) > rows) num_threads = rows;
+  if (num_threads == 0) {
+    num_threads = 1;
+  }
+  if (static_cast<int>(num_threads) > rows) {
+    num_threads = rows;
+  }
 
   std::vector<std::thread> workers;
   int rows_per_thread = rows / num_threads;
@@ -122,7 +128,9 @@ bool RysevMGaussFilterAll::RunImpl() {
   }
 
   for (auto &worker : workers) {
-    if (worker.joinable()) worker.join();
+    if (worker.joinable()) {
+      worker.join();
+    }
   }
 
   return true;
@@ -130,7 +138,9 @@ bool RysevMGaussFilterAll::RunImpl() {
 
 bool RysevMGaussFilterAll::PostProcessingImpl() {
   int64_t total = 0;
-  for (uint8_t pixel : output_image_) total += pixel;
+  for (uint8_t pixel : output_image_) {
+    total += pixel;
+  }
   GetOutput() = static_cast<int>(total);
   return true;
 }
