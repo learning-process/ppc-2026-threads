@@ -25,14 +25,10 @@ struct KernelElement {
 };
 
 const std::array<KernelElement, 9> kKernelElements = {
-    {KernelElement{.dr = -1, .dc = -1, .weight = 1.0F / 16},
-     KernelElement{.dr = -1, .dc = 0, .weight = 2.0F / 16},
-     KernelElement{.dr = -1, .dc = 1, .weight = 1.0F / 16},
-     KernelElement{.dr = 0, .dc = -1, .weight = 2.0F / 16},
-     KernelElement{.dr = 0, .dc = 0, .weight = 4.0F / 16},
-     KernelElement{.dr = 0, .dc = 1, .weight = 2.0F / 16},
-     KernelElement{.dr = 1, .dc = -1, .weight = 1.0F / 16},
-     KernelElement{.dr = 1, .dc = 0, .weight = 2.0F / 16},
+    {KernelElement{.dr = -1, .dc = -1, .weight = 1.0F / 16}, KernelElement{.dr = -1, .dc = 0, .weight = 2.0F / 16},
+     KernelElement{.dr = -1, .dc = 1, .weight = 1.0F / 16}, KernelElement{.dr = 0, .dc = -1, .weight = 2.0F / 16},
+     KernelElement{.dr = 0, .dc = 0, .weight = 4.0F / 16}, KernelElement{.dr = 0, .dc = 1, .weight = 2.0F / 16},
+     KernelElement{.dr = 1, .dc = -1, .weight = 1.0F / 16}, KernelElement{.dr = 1, .dc = 0, .weight = 2.0F / 16},
      KernelElement{.dr = 1, .dc = 1, .weight = 1.0F / 16}}};
 
 float ComputePixelValue(int row, int col, int channel, int rows, int cols, int channels,
@@ -116,8 +112,7 @@ void RysevMGaussFilterSTL::ApplyKernelToChannel(int channel, int rows, int cols)
 
   int start_row = 0;
   for (unsigned int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
-    int end_row = start_row + rows_per_thread +
-                  (std::cmp_less(static_cast<int>(thread_idx), remainder) ? 1 : 0);
+    int end_row = start_row + rows_per_thread + (std::cmp_less(static_cast<int>(thread_idx), remainder) ? 1 : 0);
     workers.emplace_back([&, start_row, end_row]() {
       for (int row = start_row; row < end_row; ++row) {
         for (int col = 0; col < cols; ++col) {
