@@ -24,10 +24,14 @@ struct KernelElement {
 };
 
 const std::array<KernelElement, 9> kKernelElements = {
-    {KernelElement{.dr = -1, .dc = -1, .weight = 1.0F / 16}, KernelElement{.dr = -1, .dc = 0, .weight = 2.0F / 16},
-     KernelElement{.dr = -1, .dc = 1, .weight = 1.0F / 16}, KernelElement{.dr = 0, .dc = -1, .weight = 2.0F / 16},
-     KernelElement{.dr = 0, .dc = 0, .weight = 4.0F / 16}, KernelElement{.dr = 0, .dc = 1, .weight = 2.0F / 16},
-     KernelElement{.dr = 1, .dc = -1, .weight = 1.0F / 16}, KernelElement{.dr = 1, .dc = 0, .weight = 2.0F / 16},
+    {KernelElement{.dr = -1, .dc = -1, .weight = 1.0F / 16},
+     KernelElement{.dr = -1, .dc = 0, .weight = 2.0F / 16},
+     KernelElement{.dr = -1, .dc = 1, .weight = 1.0F / 16},
+     KernelElement{.dr = 0, .dc = -1, .weight = 2.0F / 16},
+     KernelElement{.dr = 0, .dc = 0, .weight = 4.0F / 16},
+     KernelElement{.dr = 0, .dc = 1, .weight = 2.0F / 16},
+     KernelElement{.dr = 1, .dc = -1, .weight = 1.0F / 16},
+     KernelElement{.dr = 1, .dc = 0, .weight = 2.0F / 16},
      KernelElement{.dr = 1, .dc = 1, .weight = 1.0F / 16}}};
 
 float ComputePixelValue(int row, int col, int channel, int rows, int cols, int channels,
@@ -101,17 +105,18 @@ void RysevMGaussFilterSTL::ApplyKernelToChannel(int channel, int rows, int cols)
   if (num_threads == 0) {
     num_threads = 1;
   }
-  if (static_cast<int>(num_threads) > rows) {
-    num_threads = rows;
+  if (num_threads > static_cast<unsigned int>(rows)) {
+    num_threads = static_cast<unsigned int>(rows);
   }
 
   std::vector<std::thread> workers;
-  int rows_per_thread = rows / num_threads;
-  int remainder = rows % num_threads;
+  int rows_per_thread = rows / static_cast<int>(num_threads);
+  int remainder = rows % static_cast<int>(num_threads);
 
   int start_row = 0;
-  for (unsigned int t = 0; t < num_threads; ++t) {
-    int end_row = start_row + rows_per_thread + (t < static_cast<unsigned int>(remainder) ? 1 : 0);
+  for (unsigned int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+    int end_row = start_row + rows_per_thread +
+                  (static_cast<int>(thread_idx) < remainder ? 1 : 0);
     workers.emplace_back([&, start_row, end_row]() {
       for (int row = start_row; row < end_row; ++row) {
         for (int col = 0; col < cols; ++col) {
