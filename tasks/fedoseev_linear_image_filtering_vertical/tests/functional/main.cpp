@@ -68,8 +68,9 @@ void FillGrad(Image &img, [[maybe_unused]] int size) {
   }
 }
 
-void FillRand(Image &img, [[maybe_unused]] int size) {
-  std::mt19937 gen(42);
+void FillRand(Image &img, int size) {
+  unsigned seed = static_cast<unsigned>(size) * 0x9e3779b9u;
+  std::mt19937 gen(seed);
   std::uniform_int_distribution<int> dist(0, 255);
   for (auto &v : img.data) {
     v = dist(gen);
