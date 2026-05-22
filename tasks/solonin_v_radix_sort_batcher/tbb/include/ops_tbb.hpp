@@ -1,8 +1,9 @@
 #pragma once
-#include "solonin_v_radix_sort_batcher/common/include/common.hpp"
-#include "task/include/task.hpp"
 #include <cstddef>
 #include <vector>
+
+#include "solonin_v_radix_sort_batcher/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace solonin_v_radix_sort_batcher {
 class RadixSortBatcherTBB : public BaseTask {
