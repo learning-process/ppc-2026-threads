@@ -1,86 +1,124 @@
-
-
 ```markdown
-# Параллельная сортировка слиянием на основе поразрядной сортировки (Radix Merge) — ALL (MPI + OpenMP)
+#Параллельная сортировка слиянием на основе поразрядной сортировки(Radix Merge) — ALL(MPI + OpenMP)
 
-- **Студент:** Голованов Д.
-- **Группа:** 3823Б1ПР1
-- **Технология:** OMP
-- **Вариант:** 19
+    - **Студент : **Голованов Д.- **Группа : **3823Б1ПР1 - **Технология : **OMP -
+    **Вариант : **19
 
----
+                -- -
 
-## 1. Контекст
+                ##1. Контекст
 
-Реализация ALL представляет собой **гибридную** версию алгоритма, использующую два уровня параллелизма:
+                    Реализация ALL представляет собой * *
+        гибридную * *версию алгоритма,
+    использующую два уровня параллелизма :
 
-- **Межпроцессный уровень (MPI):** данные распределяются между несколькими MPI-процессами. Каждый процесс получает свою часть массива.
-- **Внутрипроцессный уровень (OpenMP):** внутри каждого MPI-процесса сортировка локальной части выполняется параллельно с использованием OpenMP.
+    -**Межпроцессный уровень(MPI)
+    : **данные распределяются между несколькими MPI - процессами.Каждый процесс получает свою часть массива.-
+      **Внутрипроцессный уровень(OpenMP)
+    : **внутри каждого MPI
+      -
+      процесса сортировка локальной части выполняется параллельно с использованием OpenMP.
 
-Такой подход предназначен для работы на кластерах с распределённой памятью, где массив целиком не помещается в памяти одного узла, а также для гибридных систем, где узлы имеют многоядерные процессоры. В рамках данной работы ALL-версия тестируется на **одном узле** (ноутбуке) для оценки накладных расходов на MPI-коммуникации в изолированной среде.
+      Такой подход предназначен для работы на кластерах с распределённой памятью,
+где массив целиком не помещается в памяти одного узла, а также для гибридных систем,
+где узлы имеют многоядерные процессоры.В рамках данной работы ALL
+    - версия тестируется на * *одном узле * *(ноутбуке)для оценки накладных расходов на MPI -
+    коммуникации в изолированной среде.
 
-## 2. Постановка задачи
+        ##2. Постановка задачи
 
-**Цель.** Дан одномерный массив чисел с плавающей запятой двойной точности (`double`). Требуется построить **перестановку** тех же элементов, упорядоченную по **неубыванию**.
+        * *Цель.**Дан одномерный массив чисел с плавающей запятой двойной точности(`double`).Требуется построить *
+        *перестановку * *тех же элементов,
+упорядоченную по **неубыванию **.
 
-**Типы.** В `common/include/common.hpp`: **`InType` = `OutType` = `std::vector<double>`**, задача наследует **`BaseTask` = `ppc::task::Task<InType, OutType>`**.
+            **Типы
+        .**В `common
+    / include / common.hpp`: **`InType` = `OutType` = `std::vector<double>`**,
+                                      задача наследует **`BaseTask` = `ppc::task::Task<InType, OutType>`* *.
 
-**Вход.** Вектор `data` типа `InType`, **`|data| ≥ 0`**. Пустой вход корректно обрабатывается.
+                                                                      * *Вход.**Вектор `data` типа `InType`,
+                                      **`| data | ≥ 0`**.Пустой вход корректно обрабатывается.
 
-**Выход.** Вектор `OutType` той же длины, **отсортированный по неубыванию**.
+                                                          **Выход
+                                                      .**Вектор `OutType` той же длины,
+                                      **отсортированный по неубыванию **.
 
-**Проверка корректности.** Функциональные тесты, сравнение с SEQ.
+                                              **Проверка корректности
+                                          .**Функциональные тесты,
+                                      сравнение с SEQ.
 
-**Особые случаи.** При **`|data| ≤ 1`** сортировка тривиальна.
+                                                  **Особые случаи
+                                              .**При **`|
+                                          data | ≤ 1`**сортировка тривиальна.
 
-## 3. Базовый алгоритм
+                                                         ##3. Базовый алгоритм
 
-Гибридная версия объединяет два уровня распараллеливания:
+                                                         Гибридная версия объединяет два уровня распараллеливания :
 
-1. **MPI-уровень:** исходный массив с помощью `MPI_Scatterv` распределяется между процессами. Каждый процесс получает непрерывный фрагмент.
-2. **OpenMP-уровень:** внутри каждого процесса полученный фрагмент сортируется параллельно (поразрядная сортировка с разбиением на блоки).
-3. **MPI-слияние:** после локальной сортировки выполняется параллельное слияние (параллельный merge sort) через обмен данными между процессами.
-4. **Сбор результатов:** финальный отсортированный массив собирается на процессе 0 с помощью `MPI_Gatherv`.
+                                                         1. *
+                                                         *MPI
+                                                     -
+                                                     уровень
+    : **исходный массив с помощью `MPI_Scatterv` распределяется между
+      процессами.Каждый процесс получает непрерывный фрагмент.2. *
+                                                         *OpenMP
+                                                     -
+                                                     уровень
+    : **внутри каждого процесса полученный фрагмент сортируется
+      параллельно(поразрядная сортировка с разбиением на блоки)
+          .3. * *MPI -
+                                                     слияние
+    : **после локальной сортировки выполняется параллельное
+      слияние(параллельный merge sort) через обмен данными между процессами.4. *
+                                                         *Сбор результатов
+    : **финальный отсортированный массив собирается на процессе 0 с помощью `MPI_Gatherv`.
 
-## 4. Межпроцессная схема (MPI)
+      ##4. Межпроцессная схема(MPI)
 
-1. **Инициализация:** MPI инициализируется раннером курса. В `RunImpl()` определяются `rank` (номер процесса) и `world_size` (общее число процессов).
+          1. *
+                                                         *Инициализация
+    : **MPI инициализируется раннером курса
+          .В `RunImpl()` определяются `rank` (номер процесса)и `world_size` (общее число процессов)
+          .
 
-2. **Распределение данных (Scatter):**
-   - На процессе 0 исходный массив находится в `GetInput()`.
-   - Вычисляются `send_counts` (сколько элементов получит каждый процесс) и `displs` (смещения).
-   - `MPI_Scatterv` распределяет данные:
-     ```cpp
-     MPI_Scatterv(send_buffer, send_counts.data(), displs.data(), MPI_DOUBLE,
-                  local_data.data(), send_counts[rank], MPI_DOUBLE,
-                  0, MPI_COMM_WORLD);
-     ```
+      2. *
+                                                         *Распределение данных(Scatter)
+    : **-На процессе 0 исходный массив находится в `GetInput()`.-
+                                                     Вычисляются `send_counts` (
+                                                         сколько элементов получит каждый процесс)и `displs` (смещения)
+                                                         .- `MPI_Scatterv` распределяет данные :
+     ```cpp MPI_Scatterv(send_buffer, send_counts.data(), displs.data(), MPI_DOUBLE, local_data.data(),
+                                                     send_counts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
+```
 
-3. **Локальная сортировка:** каждый процесс сортирует свою часть с помощью OpenMP.
+        3. *
+        *Локальная сортировка : **каждый процесс сортирует свою часть с помощью OpenMP.
 
-4. **Параллельное слияние (Parallel Merge Sort):**
-   - Реализовано через последовательные шаги слияния пар процессов.
-   - На каждом шаге `step = 1, 2, 4, ...`:
-     - Процессы с чётным индексом в группе принимают данные от соседа.
-     - Процессы с нечётным индексом отправляют свои данные и завершают работу.
-     - Принимающий процесс сливает свои данные с полученными через `MergeSortedVectors`.
-   - Алгоритм завершается, когда все данные оказываются на процессе 0.
+                                4. *
+        *Параллельное слияние(Parallel Merge Sort)
+    : **-Реализовано через последовательные шаги слияния пар процессов.-
+    На каждом шаге `step = 1,
+                   2, 4, ...`: -Процессы с чётным индексом в группе принимают данные от соседа.-
+                             Процессы с нечётным индексом отправляют свои данные и завершают работу.-
+                             Принимающий процесс сливает свои данные с полученными через `MergeSortedVectors`.-
+                             Алгоритм завершается,
+                   когда все данные оказываются на процессе 0.
 
-5. **Сбор результатов (Gather):**
-   - После завершения слияния все данные находятся на процессе 0.
-   - `MPI_Bcast` рассылает результат всем процессам (для единообразия выхода).
+                               5. *
+                               *Сбор результатов(Gather)
+    : **-После завершения слияния все данные находятся на процессе
+      0. - `MPI_Bcast` рассылает результат всем процессам(для единообразия выхода).
 
-**Ключевые MPI-вызовы:**
-| Вызов | Назначение |
-|-------|------------|
-| `MPI_Comm_rank` | Получение номера процесса |
-| `MPI_Comm_size` | Получение числа процессов |
-| `MPI_Scatterv` | Распределение данных (разноразмерные блоки) |
-| `MPI_Send` / `MPI_Recv` | Обмен данными при слиянии |
-| `MPI_Bcast` | Рассылка результата всем процессам |
-| `MPI_Barrier` | Синхронизация (в коде не используется явно, но подразумевается в коммуникациях) |
+                               * *Ключевые MPI
+                           - вызовы : **|
+                       Вызов | Назначение | | -- -- -- -| -- -- -- -- -- --|
+                       | `MPI_Comm_rank` | Получение номера процесса | | `MPI_Comm_size` | Получение числа процессов |
+                       | `MPI_Scatterv` | Распределение данных(разноразмерные блоки) |
+                       | `MPI_Send` / `MPI_Recv` | Обмен данными при слиянии |
+                       | `MPI_Bcast` | Рассылка результата всем процессам | | `MPI_Barrier` |
+                       Синхронизация(в коде не используется явно, но подразумевается в коммуникациях) |
 
-## 5. Внутрипроцессная схема (OpenMP)
+                       ##5. Внутрипроцессная схема(OpenMP)
 
 Внутри каждого MPI-процесса сортировка локального фрагмента выполняется с помощью **OpenMP** (аналогично OMP-версии):
 
@@ -105,56 +143,60 @@ std::vector<double> local_data(dist_params.send_counts[rank]);
 double *send_buffer = (rank == 0) ? GetInput().data() : nullptr;
 
 MPI_Scatterv(send_buffer, dist_params.send_counts.data(), dist_params.displs.data(), MPI_DOUBLE,
-             local_data.empty() ? nullptr : local_data.data(), dist_params.send_counts[rank], MPI_DOUBLE,
-             0, MPI_COMM_WORLD);
+             local_data.empty() ? nullptr : local_data.data(), dist_params.send_counts[rank], MPI_DOUBLE, 0,
+             MPI_COMM_WORLD);
 ```
 
-**Фрагмент параллельного слияния (MPI-обмены):**
+    **Фрагмент параллельного
+    слияния(MPI - обмены)
+    : **
 
 ```cpp
-// Файл: ops_all.cpp
-bool PerformMergeStep(std::vector<double> &local_data, int rank, int step, int world_size) {
-    const int group_size = step << 1;
+      // Файл: ops_all.cpp
+      bool PerformMergeStep(std::vector<double> & local_data, int rank, int step, int world_size) {
+  const int group_size = step << 1;
 
-    if ((rank % group_size) == 0) {
-        const int src = rank + step;
-        if (src < world_size) {
-            int recv_count = 0;
-            MPI_Recv(&recv_count, 1, MPI_INT, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  if ((rank % group_size) == 0) {
+    const int src = rank + step;
+    if (src < world_size) {
+      int recv_count = 0;
+      MPI_Recv(&recv_count, 1, MPI_INT, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-            if (recv_count > 0) {
-                std::vector<double> received_data(recv_count);
-                MPI_Recv(received_data.data(), recv_count, MPI_DOUBLE, src, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                MergeSortedVectors(local_data, received_data);
-            }
-        }
-        return true;
+      if (recv_count > 0) {
+        std::vector<double> received_data(recv_count);
+        MPI_Recv(received_data.data(), recv_count, MPI_DOUBLE, src, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MergeSortedVectors(local_data, received_data);
+      }
     }
+    return true;
+  }
 
-    const int dst = rank - step;
-    const int send_count = static_cast<int>(local_data.size());
-    MPI_Send(&send_count, 1, MPI_INT, dst, 0, MPI_COMM_WORLD);
+  const int dst = rank - step;
+  const int send_count = static_cast<int>(local_data.size());
+  MPI_Send(&send_count, 1, MPI_INT, dst, 0, MPI_COMM_WORLD);
 
-    if (send_count > 0) {
-        MPI_Send(local_data.data(), send_count, MPI_DOUBLE, dst, 1, MPI_COMM_WORLD);
-    }
-    local_data.clear();
-    return false;
+  if (send_count > 0) {
+    MPI_Send(local_data.data(), send_count, MPI_DOUBLE, dst, 1, MPI_COMM_WORLD);
+  }
+  local_data.clear();
+  return false;
 }
 ```
 
-**Фрагмент гибридной сортировки (вызов OpenMP внутри MPI-процесса):**
+    **Фрагмент гибридной
+    сортировки(вызов OpenMP внутри MPI - процесса)
+    : **
 
 ```cpp
-// Файл: ops_all.cpp
-void ParallelMergeSort(std::vector<double> &local_data, int rank, int world_size, int num_threads) {
-    RadixSortOMP::Sort(local_data);  // внутри OpenMP
+      // Файл: ops_all.cpp
+      void ParallelMergeSort(std::vector<double> & local_data, int rank, int world_size, int num_threads) {
+  RadixSortOMP::Sort(local_data);  // внутри OpenMP
 
-    for (int step = 1; step < world_size; step <<= 1) {
-        if (!PerformMergeStep(local_data, rank, step, world_size)) {
-            break;
-        }
+  for (int step = 1; step < world_size; step <<= 1) {
+    if (!PerformMergeStep(local_data, rank, step, world_size)) {
+      break;
     }
+  }
 }
 ```
 
@@ -205,11 +247,11 @@ void ParallelMergeSort(std::vector<double> &local_data, int rank, int world_size
 $env:PPC_NUM_THREADS="4"
 mpiexec -n 1 .\ppc_perf_tests --gtest_filter="*RadixMergePerf*ALL*"
 
-# 2 процесса × 4 потока (всего 8 работников)
+# 2 процесса × 4 потока(всего 8 работников)
 $env:PPC_NUM_THREADS="4"
 mpiexec -n 2 .\ppc_perf_tests --gtest_filter="*RadixMergePerf*ALL*"
 
-# 4 процесса × 3 потока (всего 12 работников)
+# 4 процесса × 3 потока(всего 12 работников)
 $env:PPC_NUM_THREADS="3"
 mpiexec -n 4 .\ppc_perf_tests --gtest_filter="*RadixMergePerf*ALL*"
 ```

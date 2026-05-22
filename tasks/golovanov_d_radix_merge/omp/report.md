@@ -1,6 +1,4 @@
-
-
-# Параллельная сортировка слиянием на основе поразрядной сортировки (Radix Merge) — OMP
+#Параллельная сортировка слиянием на основе поразрядной сортировки(Radix Merge) — OMP
 
 - **Студент:** Голованов Д.
 - **Группа:** 3823Б1ПР1
@@ -23,42 +21,64 @@
 
 **Выход.** Вектор `OutType` той же длины, **отсортированный по неубыванию**, с совпадающим с входом **мультимножеством** значений.
 
-**Проверка корректности.** Общие функциональные тесты в `tests/functional/main.cpp`, сравнение с эталонной последовательной реализацией SEQ; в **`RunImpl()`** дополнительно проверяется **`std::ranges::is_sorted`**.
+**Проверка корректности.** Общие функциональные тесты в `tests/functional/main.cpp`, сравнение с эталонной последовательной реализацией SEQ;
+в **`RunImpl()`**дополнительно проверяется **`std::ranges::is_sorted`**.
 
-**Особые случаи.** При **`|data| ≤ 1`** сортировка тривиальна (массив уже отсортирован).
+            **Особые случаи
+        .**При **`|
+    data | ≤ 1`**сортировка тривиальна(массив уже отсортирован)
+                   .
 
-Постановка **полностью совпадает** с корневым `report.md` и с веткой **SEQ**; в ветке **OMP** меняется только способ распараллеливания внутри **`RunImpl`**.
+               Постановка **полностью совпадает **с корневым `report.md` и с веткой * *
+               SEQ * *;
+в ветке * * OMP *
+    *меняется только способ распараллеливания внутри **`RunImpl`**.
 
-## 3. Базовый алгоритм
+     ##3. Базовый алгоритм
 
-Последовательная суть (SEQ): LSD radix sort по 8 байтам (64 бита), 8 проходов, преобразование знака для `double` через побитовые операции; затем — при необходимости — слияние отсортированных последовательностей (однако в базовой SEQ сортировка выполняется целиком, без разбиения на части).
+         Последовательная суть(SEQ)
+    : LSD radix sort по 8 байтам(64 бита),
+8 проходов, преобразование знака для `double` через побитовые операции;
+затем — при необходимости — слияние отсортированных
+    последовательностей(однако в базовой SEQ сортировка выполняется целиком, без разбиения на части)
+        .
 
-В OpenMP-версии массив режется на **`num_parts`** частей, каждая часть независимо проходит поразрядную сортировку `RadixSortLSD`, после чего выполняется итеративное попарное слияние (`SimpleMerge`) отсортированных частей в дереве.
+    В OpenMP
+    - версии массив режется на **`num_parts`**частей,
+    каждая часть независимо проходит поразрядную сортировку `RadixSortLSD`,
+    после чего выполняется итеративное попарное слияние(`SimpleMerge`) отсортированных частей в дереве.
 
-## 4. Схема распараллеливания
+    ##4. Схема распараллеливания
 
-1. **Определение числа частей:**  
-   `num_parts = std::min(GetNumThreads(), static_cast<int>(data.size()))`  
-   Число потоков на фазе radix совпадает с числом частей. Верхняя граница — по размеру массива (нельзя создать частей больше, чем элементов).
+    1. **Определение числа частей : **  
+   `num_parts = std::min(GetNumThreads(),
+                          static_cast<int>(data.size()))` Число потоков на фазе radix совпадает с числом частей
+                     .Верхняя граница — по размеру массива(нельзя создать частей больше, чем элементов)
+                     .
 
-2. **Фаза radix (поразрядная сортировка частей):**  
+                 2. *
+                 *Фаза radix(поразрядная сортировка частей)
+    : **  
    ```cpp
-   #pragma omp parallel for num_threads(num_parts) default(none) shared(parts, sizes, num_parts)
-   for (int i = 0; i < num_parts; ++i) {
-       std::vector<double> buffer(sizes[i]);
-       RadixSortLSD(parts[i], buffer);  // локальная поразрядная сортировка i-й части
-   }
-   ```  
-   Каждая итерация `i` обрабатывает `parts[i]` с **локальным** буфером в теле цикла — гонок по данным между итерациями нет.  
-   **`default(none)`** требует явного перечисления всех используемых переменных в клаузах `shared`/`private`, что повышает читаемость и безопасность.
+#pragma omp parallel for num_threads(num_parts) default(none) shared(parts, sizes, num_parts)
+      for (int i = 0; i < num_parts; ++i) {
+  std::vector<double> buffer(sizes[i]);
+  RadixSortLSD(parts[i], buffer);  // локальная поразрядная сортировка i-й части
+}
+``` Каждая итерация `i` обрабатывает `parts[i]` с * * локальным *
+    *буфером в теле цикла — гонок по данным между итерациями
+         нет.**`default(none)`**требует явного перечисления всех используемых переменных в клаузах `shared`/`private`,
+    что повышает читаемость и безопасность.
 
-3. **Фаза merge (слияние):**  
-   Цикл по уровням дерева (`while (parts.size() > 1)`). На каждом уровне:
+        3. *
+        *Фаза merge(слияние)
+    : **Цикл по уровням дерева(`while (parts.size() > 1)`)
+          .На каждом уровне :
    ```cpp
-   #pragma omp parallel for default(none) shared(current, next, pair_count) schedule(static)
-   for (int i = 0; i < pair_count; ++i) {
-       next[i] = SimpleMerge(current[2 * i], current[2 * i + 1]);
-   }
+#pragma omp parallel for default(none) shared(current, next, pair_count) schedule(static)
+    for (int i = 0; i < pair_count; ++i) {
+  next[i] = SimpleMerge(current[2 * i], current[2 * i + 1]);
+}
    ```  
    - **`schedule(static)`** — статическое разбиение итераций по потокам. При примерно равных размерах сливаемых пар на уровне даёт предсказуемое и сбалансированное распределение нагрузки.
    - **Неявный барьер** в конце каждой `parallel for` области синхронизирует потоки перед следующей итерацией `while`.
@@ -79,18 +99,22 @@
 ```cpp
 // Файл: omp/src/ops_omp.cpp (аналог RadixSortOMP::Sort)
 int num_threads = ppc::util::GetNumThreads();
-if (num_threads <= 0) num_threads = 1;
-if (static_cast<size_t>(num_threads) > arr.size()) num_threads = static_cast<int>(arr.size());
+   if (num_threads <= 0) {
+     num_threads = 1;
+   }
+   if (static_cast<size_t>(num_threads) > arr.size()) {
+     num_threads = static_cast<int>(arr.size());
+   }
 
-std::vector<std::pair<size_t, size_t>> ranges(num_threads);
-// ... вычисление ranges (блоков) ...
+   std::vector<std::pair<size_t, size_t>> ranges(num_threads);
+   // ... вычисление ranges (блоков) ...
 
 #pragma omp parallel for num_threads(num_threads) default(none) shared(arr, ranges, num_threads)
-for (int i = 0; i < num_threads; ++i) {
-    SortRange(arr, ranges[i].first, ranges[i].second);  // LSD radix внутри блока
-}
+   for (int i = 0; i < num_threads; ++i) {
+     SortRange(arr, ranges[i].first, ranges[i].second);  // LSD radix внутри блока
+   }
 
-// ... затем параллельное слияние через parallel for ...
+   // ... затем параллельное слияние через parallel for ...
 ```
 
 ## 6. Проверка корректности
@@ -126,11 +150,11 @@ for (int i = 0; i < num_threads; ++i) {
 
 **Команды запуска:**
 ```powershell
-# Функциональные тесты
+#Функциональные тесты
 $env:PPC_NUM_THREADS="4"
 .\ppc_func_tests --gtest_filter="*RadixMergeFunc*OMP*"
 
-# Тесты производительности (OpenMP, 8 потоков)
+#Тесты производительности(OpenMP, 8 потоков)
 $env:PPC_NUM_THREADS="8"
 .\ppc_perf_tests --gtest_filter="*RadixMergePerf*OMP*"
 ```
