@@ -126,12 +126,12 @@ auto xyz_3d = [](const std::vector<double> &x) { return x[0] * x[1] * x[2]; };
 auto x2_y2_z2_3d = [](const std::vector<double> &x) { return x[0] * x[0] * x[1] * x[1] * x[2] * x[2]; };
 
 const std::array<TestType, 12> kTests = {{
-    TestType{"volume_3d_0_05_x3", InType{0.005, {{0.0, 0.25}, {0.0, 0.25}, {0.0, 0.25}}, one},
+    TestType{"volume_3d_0_05_x3", InType{0.002, {{0.0, 0.25}, {0.0, 0.25}, {0.0, 0.25}}, one},
              CountNDimArea({{0.0, 0.25}, {0.0, 0.25}, {0.0, 0.25}})},
 
     TestType{"x21d_0_1", InType{0.002, {{0.0, 1.0}}, x21d}, Intx21d(0.0, 1.0)},
 
-    TestType{"x31d_0_1", InType{0.002, {{0.0, 1.0}}, x31d}, Intx31d(0.0, 1.0)},
+    TestType{"x31d_0_1", InType{0.002, {{0.0, 0.5}}, x31d}, Intx31d(0.0, 0.5)},
 
     TestType{"x41d_0_1", InType{0.002, {{0.0, 1.0}}, x41d}, Intx41d(0.0, 1.0)},
 
