@@ -9,6 +9,7 @@
 #include <tuple>
 #include <vector>
 
+#include "borunov_v_complex_ccs/all/include/ops_all.hpp"
 #include "borunov_v_complex_ccs/common/include/common.hpp"
 #include "borunov_v_complex_ccs/omp/include/ops_omp.hpp"
 #include "borunov_v_complex_ccs/seq/include/ops_seq.hpp"
@@ -173,6 +174,7 @@ const std::array<TestType, 3> kTestParam = {
 };
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<BorunovVComplexCcsALL, InType>(kTestParam, PPC_SETTINGS_borunov_v_complex_ccs),
     ppc::util::AddFuncTask<BorunovVComplexCcsOMP, InType>(kTestParam, PPC_SETTINGS_borunov_v_complex_ccs),
     ppc::util::AddFuncTask<BorunovVComplexCcsSEQ, InType>(kTestParam, PPC_SETTINGS_borunov_v_complex_ccs),
     ppc::util::AddFuncTask<BorunovVComplexCcsTBB, InType>(kTestParam, PPC_SETTINGS_borunov_v_complex_ccs),

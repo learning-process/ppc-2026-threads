@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <utility>
 
+#include "timofeev_n_radix_batcher_sort/all/include/ops_all.hpp"
 #include "timofeev_n_radix_batcher_sort/common/include/common.hpp"
 #include "timofeev_n_radix_batcher_sort/omp/include/ops_omp.hpp"
 #include "timofeev_n_radix_batcher_sort/seq/include/ops_seq.hpp"
@@ -46,7 +47,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, TimofeevNRadixBatcherSEQ, TimofeevNRadixBatcherTBB, TimofeevNRadixBatcherOMP,
-                                TimofeevNRadixBatcherSTL>(PPC_SETTINGS_timofeev_n_radix_batcher_sort);
+                                TimofeevNRadixBatcherSTL, TimofeevNRadixBatcherALL>(
+        PPC_SETTINGS_timofeev_n_radix_batcher_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
