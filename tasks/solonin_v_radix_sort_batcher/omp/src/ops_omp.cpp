@@ -1,10 +1,13 @@
 #include "solonin_v_radix_sort_batcher/omp/include/ops_omp.hpp"
-#include "solonin_v_radix_sort_batcher/common/include/common.hpp"
-#include "util/include/util.hpp"
+
+#include <omp.h>
+
 #include <algorithm>
 #include <cstddef>
-#include <omp.h>
 #include <vector>
+
+#include "solonin_v_radix_sort_batcher/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace solonin_v_radix_sort_batcher {
 
