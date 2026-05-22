@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "muhammadkhon_i_stressen_alg/common/include/common.hpp"
-#include "muhammadkhon_i_stressen_alg/seq/include/ops_seq.hpp"
+#include "muhammadkhon_i_stressen_alg/stl/include/ops_stl.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -88,7 +88,7 @@ const std::array<TestType, 6> kTestParam = {
     std::make_tuple(63, 63, 63, 300, "LargePadded"), std::make_tuple(64, 64, 64, 300, "LargePowerOfTwo_64x64")};
 
 const auto kTestTasksList =
-    ppc::util::AddFuncTask<MuhammadkhonIStressenAlgSEQ, InType>(kTestParam, PPC_SETTINGS_muhammadkhon_i_stressen_alg);
+    ppc::util::AddFuncTask<MuhammadkhonIStressenAlgSTL, InType>(kTestParam, PPC_SETTINGS_muhammadkhon_i_stressen_alg);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

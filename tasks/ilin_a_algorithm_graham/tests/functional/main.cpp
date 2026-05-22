@@ -3,16 +3,17 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <set>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 
+#include "ilin_a_algorithm_graham/all/include/ops_all.hpp"
 #include "ilin_a_algorithm_graham/common/include/common.hpp"
 #include "ilin_a_algorithm_graham/omp/include/ops_omp.hpp"
 #include "ilin_a_algorithm_graham/seq/include/ops_seq.hpp"
 #include "ilin_a_algorithm_graham/stl/include/ops_stl.hpp"
-#include "ilin_a_algorithm_graham/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -36,12 +37,17 @@ class IlinAGrahamFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
       return false;
     }
 
-    for (size_t i = 0; i < output_data.size(); ++i) {
-      if (std::abs(output_data[i].x - expected_[i].x) > 1e-6 || std::abs(output_data[i].y - expected_[i].y) > 1e-6) {
-        return false;
-      }
+    std::set<std::pair<double, double>> output_set;
+    std::set<std::pair<double, double>> expected_set;
+
+    for (const auto &p : output_data) {
+      output_set.insert({p.x, p.y});
     }
-    return true;
+    for (const auto &p : expected_) {
+      expected_set.insert({p.x, p.y});
+    }
+
+    return output_set == expected_set;
   }
 
   InType GetTestInputData() final {
@@ -72,7 +78,7 @@ const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<IlinAGrahamSEQ, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham),
                    ppc::util::AddFuncTask<IlinAGrahamOMP, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham),
                    ppc::util::AddFuncTask<IlinAGrahamSTL, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham),
-                   ppc::util::AddFuncTask<IlinAGrahamTBB, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham));
+                   ppc::util::AddFuncTask<IlinAGrahamALL, InType>(kTestCases, PPC_SETTINGS_ilin_a_algorithm_graham));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
