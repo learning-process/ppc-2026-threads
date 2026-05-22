@@ -31,20 +31,21 @@ bool BelovESobelOMP::RunImpl() {
   int width = std::get<1>(GetInput());
   int height = std::get<2>(GetInput());
 
-  auto get_px = [&](int x, int y) -> float {
-    x = std::clamp(x, 0, width - 1);
-    y = std::clamp(y, 0, height - 1);
-    return static_cast<float>(input[(y * width) + x]);
-  };
-
-#pragma omp parallel for shared(input, output, width, height, get_px) schedule(dynamic)
+#pragma omp parallel for schedule(static)
   for (int y = 0; y < height; ++y) {
     for (int x = 0; x < width; ++x) {
-      float gx = (-1 * get_px(x - 1, y - 1)) + (1 * get_px(x + 1, y - 1)) + (-2 * get_px(x - 1, y)) +
-                 (2 * get_px(x + 1, y)) + (-1 * get_px(x - 1, y + 1)) + (1 * get_px(x + 1, y + 1));
+      int x_minus = std::clamp(x - 1, 0, width - 1);
+      int x_plus = std::clamp(x + 1, 0, width - 1);
+      int y_minus = std::clamp(y - 1, 0, height - 1);
+      int y_plus = std::clamp(y + 1, 0, height - 1);
 
-      float gy = (-1 * get_px(x - 1, y - 1)) - (2 * get_px(x, y - 1)) - (1 * get_px(x + 1, y - 1)) +
-                 (1 * get_px(x - 1, y + 1)) + (2 * get_px(x, y + 1)) + (1 * get_px(x + 1, y + 1));
+      float gx = (-1.0f * input[y_minus * width + x_minus]) + (1.0f * input[y_minus * width + x_plus]) +
+                 (-2.0f * input[y * width + x_minus]) + (2.0f * input[y * width + x_plus]) +
+                 (-1.0f * input[y_plus * width + x_minus]) + (1.0f * input[y_plus * width + x_plus]);
+
+      float gy = (-1.0f * input[y_minus * width + x_minus]) - (2.0f * input[y_minus * width + x]) -
+                 (1.0f * input[y_minus * width + x_plus]) + (1.0f * input[y_plus * width + x_minus]) +
+                 (2.0f * input[y_plus * width + x]) + (1.0f * input[y_plus * width + x_plus]);
 
       float magnitude = std::sqrt(gx * gx + gy * gy);
       output[y * width + x] = static_cast<uint8_t>(std::min(255.0f, magnitude));

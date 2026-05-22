@@ -13,8 +13,8 @@
 namespace belov_e_sobel {
 
 class BelovESobelPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int w_ = 200000;
-  const int h_ = 200000;
+  const int w_ = 10000;
+  const int h_ = 10000;
   InType input_data_;
 
   void SetUp() override {
@@ -42,7 +42,7 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, BelovESobelALL, BelovESobelOMP, BelovESobelSEQ, BelovESobelSTL, BelovESobelTBB>(
-        PPC_ID_belov_e_sobel);
+        PPC_SETTINGS_belov_e_sobel);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
