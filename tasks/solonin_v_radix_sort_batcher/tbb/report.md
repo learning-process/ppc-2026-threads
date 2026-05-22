@@ -4,7 +4,8 @@
 
 ### Схема параллелизма
 
-Используется `tbb::parallel_for` с `tbb::blocked_range<int>` для параллельной сортировки блоков.
+Используется `tbb::parallel_for` с `tbb::blocked_range<int>`
+для параллельной сортировки блоков.
 
 ```cpp
 tbb::parallel_for(tbb::blocked_range<int>(0, actual_blocks),
@@ -22,11 +23,11 @@ tbb::parallel_for(tbb::blocked_range<int>(0, actual_blocks),
 - **blocked_range:** диапазон `[0, actual_blocks)` — индексы блоков
 - **grainsize:** не задан явно, TBB выбирает автоматически
 - **partitioner:** auto_partitioner (по умолчанию)
-- **ограничение конкуренции:** `tbb::global_control::max_allowed_parallelism = nthreads`
+- **ограничение:** `tbb::global_control::max_allowed_parallelism = nthreads`
 
 ### Слияние
 
-Последовательное попарное слияние через `MergeBatcher` после параллельной сортировки.
+Последовательное попарное слияние через `MergeBatcher`.
 
 ## Корректность
 
@@ -35,7 +36,7 @@ tbb::parallel_for(tbb::blocked_range<int>(0, actual_blocks),
 ## Производительность
 
 | N | Потоки | Время (мс) | Ускорение |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 1 000 000 | 1 | ~150 | 1.0x |
 | 1 000 000 | 2 | ~80 | 1.88x |
 | 1 000 000 | 4 | ~50 | 3.0x |
@@ -49,4 +50,5 @@ PPC_NUM_THREADS=4 ./build/bin/ppc_perf_tests \
 
 ## Выводы
 
-TBB-версия показывает хорошее ускорение благодаря автоматическому балансированию нагрузки через work-stealing планировщик.
+TBB-версия показывает хорошее ускорение благодаря автоматическому
+балансированию нагрузки через work-stealing планировщик.
