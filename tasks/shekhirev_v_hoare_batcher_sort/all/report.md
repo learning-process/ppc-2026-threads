@@ -94,12 +94,12 @@ void MpiCompareAndSwap(std::vector<int> &local_arr, int neighbor, bool keep_low_
 Ниже приведена агрегированная статистика времени (в режиме `task_run`) на 1000000 элементов из предыдущих
 прогонов. (Значения 1, 2, 4 и 8 отражают комбинацию масштабирования `PPC_NUM_THREADS` и `OMP_NUM_THREADS`).
 
-| workers                 | time, s | speedup | efficiency |
-| :---------------------- | :-----: | :-----: | :--------: |
-| 1 (1 rank × 1 thread)   | 0.0527  |  4.86   |   > 100%   |
-| 2 (1 rank × 2 threads)  | 0.0498  |  5.15   |   > 100%   |
-| 4 (2 ranks × 2 threads) | 0.0543  |  4.72   |   > 100%   |
-| 8 (2 ranks × 4 threads) | 0.0659  |  3.89   |    48%     |
+| workers | time, s | speedup | efficiency |
+| :--- | :--- | :--- | :--- |
+| 1 (1 rank × 1 th) | 0.0527 | 4.86 | > 100% |
+| 2 (1 rank × 2 th) | 0.0498 | 5.15 | > 100% |
+| 4 (2 ranks × 2 th) | 0.0543 | 4.72 | > 100% |
+| 8 (2 ranks × 4 th) | 0.0659 | 3.89 | 48% |
 
 ### Научный анализ архитектуры и узких мест
 

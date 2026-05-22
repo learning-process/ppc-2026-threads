@@ -83,12 +83,12 @@ threads.clear();
 Ниже приведена таблица агрегированного времени работы для STL-реализации (режим `task_run`) на массиве в 1 000
 000 элементов.
 
-|       workers       | time, s | speedup | efficiency |
-| :-----------------: | :-----: | :-----: | :--------: |
-| 16 (hw_concurrency) | 0.0478  |  5.36   |    ~33%    |
-| 16 (hw_concurrency) | 0.0497  |  5.16   |    ~32%    |
-| 16 (hw_concurrency) | 0.0465  |  5.51   |    ~34%    |
-| 16 (hw_concurrency) | 0.0518  |  4.95   |    ~31%    |
+| workers | time, s | speedup | efficiency |
+| :--- | :--- | :--- | :--- |
+| 16 (hw_concurrency) | 0.0478 | 5.36 | ~33% |
+| 16 (hw_concurrency) | 0.0497 | 5.16 | ~32% |
+| 16 (hw_concurrency) | 0.0465 | 5.51 | ~34% |
+| 16 (hw_concurrency) | 0.0518 | 4.95 | ~31% |
 
 ### Анализ результатов
 
