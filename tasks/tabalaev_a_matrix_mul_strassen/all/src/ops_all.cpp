@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "tabalaev_a_matrix_mul_strassen/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace tabalaev_a_matrix_mul_strassen {
 
@@ -27,12 +28,11 @@ TabalaevAMatrixMulStrassenALL::TabalaevAMatrixMulStrassenALL(const InType &in) {
 bool TabalaevAMatrixMulStrassenALL::ValidationImpl() {
   int rank = 0;
   int size = 1;
+
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int hw_concurrency = omp_get_num_procs();
-  int threads_per_process = std::max(1, hw_concurrency / size);
-  omp_set_num_threads(threads_per_process);
+  omp_set_num_threads(ppc::util::GetNumThreads());
 
   int is_valid = 0;
   if (rank == 0) {

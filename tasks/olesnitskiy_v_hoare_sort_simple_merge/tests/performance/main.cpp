@@ -4,9 +4,11 @@
 #include <cstddef>
 #include <random>
 
+#include "olesnitskiy_v_hoare_sort_simple_merge/all/include/ops_all.hpp"
 #include "olesnitskiy_v_hoare_sort_simple_merge/common/include/common.hpp"
 #include "olesnitskiy_v_hoare_sort_simple_merge/omp/include/ops_omp.hpp"
 #include "olesnitskiy_v_hoare_sort_simple_merge/seq/include/ops_seq.hpp"
+#include "olesnitskiy_v_hoare_sort_simple_merge/stl/include/ops_stl.hpp"
 #include "olesnitskiy_v_hoare_sort_simple_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -45,7 +47,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, OlesnitskiyVHoareSortSimpleMergeSEQ, OlesnitskiyVHoareSortSimpleMergeOMP,
-                                OlesnitskiyVHoareSortSimpleMergeTBB>(
+                                OlesnitskiyVHoareSortSimpleMergeSTL, OlesnitskiyVHoareSortSimpleMergeTBB,
+                                OlesnitskiyVHoareSortSimpleMergeALL>(
         PPC_SETTINGS_olesnitskiy_v_hoare_sort_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
