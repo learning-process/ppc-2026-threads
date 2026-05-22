@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <utility>
 #include <vector>
 
@@ -17,7 +18,7 @@ LobanovMultyMatrixTBB::LobanovMultyMatrixTBB(const InType &in) {
 bool LobanovMultyMatrixTBB::ValidationImpl() {
   const auto &a = std::get<0>(GetInput());
   const auto &b = std::get<1>(GetInput());
-  return a.column_count == b.row_count;
+  return a.column_count == b.row_count && a.row_count > 0 && b.column_count > 0;
 }
 
 bool LobanovMultyMatrixTBB::PreProcessingImpl() {
@@ -62,8 +63,9 @@ bool LobanovMultyMatrixTBB::RunImpl() {
         continue;
       }
 
-      std::sort(row_pairs.begin(), row_pairs.end(),
-                [](const auto &lhs, const auto &rhs) { return lhs.first < rhs.first; });
+      std::ranges::sort(row_pairs, [](const auto &lhs, const auto &rhs) {
+        return lhs.first < rhs.first;
+      });
 
       std::vector<std::pair<int, double>> merged;
       double sum = row_pairs[0].second;
@@ -89,7 +91,7 @@ bool LobanovMultyMatrixTBB::RunImpl() {
   });
 
   for (int i = 0; i < c.row_count; ++i) {
-    c.row_pointer_data[i + 1] = c.row_pointer_data[i] + static_cast<int>(local_entries[i].size());
+    c.row_pointer_data[i + 1] = c.row_pointer_data[i] + static_cast<int>(local_entries[static_cast<std::size_t>(i)].size());
   }
 
   const int total_nnz = c.row_pointer_data[c.row_count];
@@ -97,7 +99,7 @@ bool LobanovMultyMatrixTBB::RunImpl() {
   c.column_index_data.reserve(static_cast<std::size_t>(total_nnz));
 
   for (int i = 0; i < c.row_count; ++i) {
-    for (const auto &[col, val] : local_entries[i]) {
+    for (const auto &[col, val] : local_entries[static_cast<std::size_t>(i)]) {
       c.value_data.push_back(val);
       c.column_index_data.push_back(col);
     }
