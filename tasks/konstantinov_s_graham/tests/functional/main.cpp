@@ -10,13 +10,15 @@
 #include <string>
 #include <tuple>
 // #include <utility>
+#include <mpi.h>
+
 #include <vector>
 
-// #include "konstantinov_s_graham/all/include/ops_all.hpp"
+#include "konstantinov_s_graham/all/include/ops_all.hpp"
 #include "konstantinov_s_graham/common/include/common.hpp"
 #include "konstantinov_s_graham/omp/include/ops_omp.hpp"
 #include "konstantinov_s_graham/seq/include/ops_seq.hpp"
-// #include "konstantinov_s_graham/stl/include/ops_stl.hpp"
+#include "konstantinov_s_graham/stl/include/ops_stl.hpp"
 #include "konstantinov_s_graham/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -51,7 +53,13 @@ class KonstantinovSRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InTy
     //   // std::cout << test_expected_output_[i].first<< " "<<test_expected_output_[i].second;
     //   // std::cout<<std::endl;
     // }
-
+    if (ppc::util::IsUnderMpirun()) {
+      int rank = 0;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      if (rank != 0) {
+        return true;
+      }
+    }
     return test_expected_output_ == output_data;
   }
 
@@ -102,7 +110,9 @@ const std::array<TestType, 10> kTestParam = {
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KonstantinovAGrahamSEQ, InType>(kTestParam, PPC_SETTINGS_konstantinov_s_graham),
     ppc::util::AddFuncTask<KonstantinovAGrahamOMP, InType>(kTestParam, PPC_SETTINGS_konstantinov_s_graham),
-    ppc::util::AddFuncTask<KonstantinovAGrahamTBB, InType>(kTestParam, PPC_SETTINGS_konstantinov_s_graham));
+    ppc::util::AddFuncTask<KonstantinovAGrahamTBB, InType>(kTestParam, PPC_SETTINGS_konstantinov_s_graham),
+    ppc::util::AddFuncTask<KonstantinovAGrahamSTL, InType>(kTestParam, PPC_SETTINGS_konstantinov_s_graham),
+    ppc::util::AddFuncTask<KonstantinovAGrahamALL, InType>(kTestParam, PPC_SETTINGS_konstantinov_s_graham));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

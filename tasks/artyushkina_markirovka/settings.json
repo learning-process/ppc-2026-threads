@@ -1,8 +1,10 @@
 {
   "tasks": {
+    "all": "enabled",
     "mpi": "enabled",
     "omp": "enabled",
-    "seq": "enabled"
+    "seq": "enabled",
+    "stl": "enabled"
   },
   "tasks_type": "processes"
 }
