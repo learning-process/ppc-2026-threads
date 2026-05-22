@@ -1,12 +1,10 @@
 #include <gtest/gtest.h>
-
-#include "oneapi/tbb/global_control.h"
-#include "runners/include/runners.hpp"
-#include "util/include/util.hpp"
+#include <mpi.h>
 
 int main(int argc, char **argv) {
-  if (ppc::util::IsUnderMpirun()) {
-    return ppc::runners::Init(argc, argv);
-  }
-  return ppc::runners::SimpleInit(argc, argv);
+  MPI_Init(&argc, &argv);
+  ::testing::InitGoogleTest(&argc, argv);
+  int result = RUN_ALL_TESTS();
+  MPI_Finalize();
+  return result;
 }
