@@ -1,5 +1,13 @@
 #include <gtest/gtest.h>
 
+#include <tuple>
+
+#include "belov_e_sobel/all/include/ops_all.hpp"
+#include "belov_e_sobel/common/include/common.hpp"
+#include "belov_e_sobel/omp/include/ops_omp.hpp"
+#include "belov_e_sobel/seq/include/ops_seq.hpp"
+#include "belov_e_sobel/stl/include/ops_stl.hpp"
+#include "belov_e_sobel/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace belov_e_sobel {
@@ -14,7 +22,7 @@ class BelovESobelPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
     input_data_ = std::make_tuple(vec, w_, h_);
   }
 
-  static bool CheckTestOutputData(OutType &output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     if (output_data == output_data) {
       return true;
     }

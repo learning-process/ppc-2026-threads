@@ -7,6 +7,12 @@
 #include <utility>
 #include <vector>
 
+#include "belov_e_sobel/all/include/ops_all.hpp"
+#include "belov_e_sobel/common/include/common.hpp"
+#include "belov_e_sobel/omp/include/ops_omp.hpp"
+#include "belov_e_sobel/seq/include/ops_seq.hpp"
+#include "belov_e_sobel/stl/include/ops_stl.hpp"
+#include "belov_e_sobel/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 
 namespace belov_e_sobel {
@@ -21,7 +27,7 @@ class BelovESobelFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
   }
 
  protected:
-  static void SetUp() override {
+  void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_belov_e_sobel), params);
 
@@ -38,7 +44,7 @@ class BelovESobelFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
   InType GetTestInputData() final {
     return input_data_;
   }
-  static bool CheckTestOutputData(OutType &output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     std::string params =
         "ref" + std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(std::string(PPC_ID_belov_e_sobel), params);

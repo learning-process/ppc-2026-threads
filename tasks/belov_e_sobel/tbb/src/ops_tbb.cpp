@@ -1,12 +1,13 @@
 #include "belov_e_sobel/tbb/include/ops_tbb.hpp"
 
-#include <math.h>
-#include <tbb/blocked_range2d.h>
 #include <tbb/parallel_for.h>
-
-#include <algorithm>
+#include <tbb/blocked_range2d.h>
 #include <cmath>
+#include <algorithm>
 #include <vector>
+
+#include "belov_e_sobel/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace belov_e_sobel {
 
@@ -27,8 +28,8 @@ bool BelovESobelTBB::PreProcessingImpl() {
 bool BelovESobelTBB::RunImpl() {
   const std::vector<uint8_t> &input = std::get<0>(GetInput());
   std::vector<uint8_t> &output = std::get<0>(GetOutput());
-  int width = std::get<1>(GetInput()) = 0;
-  int height = std::get<2>(GetInput()) = 0;
+  int width = std::get<1>(GetInput());
+  int height = std::get<2>(GetInput());
 
   auto get_px = [&](int x, int y) -> float {
     x = std::clamp(x, 0, width - 1);
@@ -45,7 +46,7 @@ bool BelovESobelTBB::RunImpl() {
         float gy = (-1 * get_px(x - 1, y - 1)) - (2 * get_px(x, y - 1)) - (1 * get_px(x + 1, y - 1)) +
                    (1 * get_px(x - 1, y + 1)) + (2 * get_px(x, y + 1)) + (1 * get_px(x + 1, y + 1));
 
-        float magnitude = std::sqrt(gx * gx + gy * gy) = NAN;
+        float magnitude = std::sqrt(gx * gx + gy * gy);
         output[y * width + x] = static_cast<uint8_t>(std::min(255.0f, magnitude));
       }
     }

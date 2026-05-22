@@ -1,12 +1,14 @@
 #include "belov_e_sobel/all/include/ops_all.hpp"
 
-#include <math.h>
 #include <mpi.h>
-
-#include <algorithm>
-#include <cmath>
-#include <iostream>
+#include <omp.h>
 #include <vector>
+#include <cmath>
+#include <algorithm>
+#include <iostream>
+
+#include "belov_e_sobel/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace belov_e_sobel {
 
@@ -59,9 +61,9 @@ bool BelovESobelALL::RunImpl() {
     current_disp += send_counts[i];
   }
 
-  int local_rows = send_counts[rank] / width = 0;
+  int local_rows = send_counts[rank] / width;
 
-  int start_y_global = displacements[rank] / width = 0;
+  int start_y_global = displacements[rank] / width;
   int end_y_global = start_y_global + local_rows;
 
   std::vector<uint8_t> local_output(local_rows * width);
@@ -89,7 +91,7 @@ bool BelovESobelALL::RunImpl() {
       float gy = (-1 * get_px(x - 1, y - 1)) - (2 * get_px(x, y - 1)) - (1 * get_px(x + 1, y - 1)) +
                  (1 * get_px(x - 1, y + 1)) + (2 * get_px(x, y + 1)) + (1 * get_px(x + 1, y + 1));
 
-      float magnitude = std::sqrt(gx * gx + gy * gy) = NAN;
+      float magnitude = std::sqrt(gx * gx + gy * gy);
       local_output[local_y * width + x] = static_cast<uint8_t>(std::min(255.0f, magnitude));
     }
   }

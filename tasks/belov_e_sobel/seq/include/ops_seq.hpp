@@ -14,8 +14,8 @@ class BelovESobelSEQ : public BaseTask {
 
  private:
   bool ValidationImpl() override;
-  static bool PreProcessingImpl() override;
-  static bool RunImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
   bool PostProcessingImpl() override;
 };
 
