@@ -24,7 +24,7 @@ int ComputePixel(const std::vector<int> &img, int w, int h, int row, int col,
       int py = row + ky;
       px = std::clamp(px, 0, w - 1);
       py = std::clamp(py, 0, h - 1);
-      sum += img[static_cast<size_t>(py) * static_cast<size_t>(w) + static_cast<size_t>(px)] *
+      sum += img[(static_cast<size_t>(py) * static_cast<size_t>(w)) + static_cast<size_t>(px)] *
              kernel.at(ky + 1).at(kx + 1);
     }
   }
@@ -93,7 +93,7 @@ bool LinearImageFilteringVerticalAll::RunImpl() {
 
   for (int row = 0; row < h; ++row) {
     for (int col = 0; col < w; ++col) {
-      result[static_cast<size_t>(row) * static_cast<size_t>(w) + static_cast<size_t>(col)] =
+      result[(static_cast<size_t>(row) * static_cast<size_t>(w)) + static_cast<size_t>(col)] =
           ComputePixel(img, w, h, row, col, kernel);
     }
   }

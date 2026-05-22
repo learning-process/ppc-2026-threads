@@ -69,14 +69,12 @@ void FillGrad(Image &img, [[maybe_unused]] int size) {
 }
 
 void FillRand(Image &img, [[maybe_unused]] int size) {
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_int_distribution<int> dist(0, 255);
-  for (auto &v : img.data) {
-    v = dist(gen);
-  }
+    std::mt19937 gen(42);
+    std::uniform_int_distribution<int> dist(0, 255);
+    for (auto &v : img.data) {
+        v = dist(gen);
+    }
 }
-
 void FillCheckerboard(Image &img, int size) {
   const int cell = 16;
   for (int row = 0; row < size; ++row) {
