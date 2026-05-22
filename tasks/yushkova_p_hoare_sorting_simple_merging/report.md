@@ -69,13 +69,20 @@ Speedup считался как `T_seq / T_backend`, efficiency - как `speedu
 - backend: omp, 2 threads; time: 0.0021860800 s; speedup: 1.395; efficiency: 0.698; notes: `PPC_NUM_THREADS=2`.
 - backend: omp, 4 threads; time: 0.0018365600 s; speedup: 1.661; efficiency: 0.415; notes: `PPC_NUM_THREADS=4`.
 - backend: stl, workers: 1; time: 0.0028924000 s; speedup: 1.054; efficiency: 1.054; notes: `PPC_NUM_THREADS=1`.
-- backend: stl, workers: 2; time: 0.0021834000 s; speedup: 1.397; efficiency: 0.698; notes: `PPC_NUM_THREADS=4` (включает параллельную ветку).
-- backend: tbb, 1 worker; time: 0.0076817000 s; speedup: 0.397; efficiency: 0.397; notes: `PPC_NUM_THREADS=1`, `global_control`.
-- backend: tbb, 2 workers; time: 0.0048485400 s; speedup: 0.629; efficiency: 0.315; notes: `PPC_NUM_THREADS=2`, `global_control`.
-- backend: tbb, 4 workers; time: 0.0028551400 s; speedup: 1.068; efficiency: 0.267; notes: `PPC_NUM_THREADS=4`, `global_control`.
-- backend: all; ranks: 1; threads_per_rank: 12; total_workers: 12; time: 0.0159865600 s; speedup: 0.191; efficiency: 0.016; notes: `mpiexec -n 1`.
-- backend: all; ranks: 2; threads_per_rank: 12; total_workers: 24; time: 0.0155627800 s; speedup: 0.196; efficiency: 0.008; notes: `mpiexec -n 2`.
-- backend: all; ranks: 4; threads_per_rank: 12; total_workers: 48; time: 0.0125462200 s; speedup: 0.243; efficiency: 0.005; notes: `mpiexec -n 4`.
+- backend: stl, workers: 2; time: 0.0021834000 s; speedup: 1.397; efficiency: 0.698;
+  notes: `PPC_NUM_THREADS=4` включает параллельную ветку.
+- backend: tbb, 1 worker; time: 0.0076817000 s; speedup: 0.397; efficiency: 0.397;
+  notes: `PPC_NUM_THREADS=1`, `global_control`.
+- backend: tbb, 2 workers; time: 0.0048485400 s; speedup: 0.629; efficiency: 0.315;
+  notes: `PPC_NUM_THREADS=2`, `global_control`.
+- backend: tbb, 4 workers; time: 0.0028551400 s; speedup: 1.068; efficiency: 0.267;
+  notes: `PPC_NUM_THREADS=4`, `global_control`.
+- backend: all; ranks: 1; threads_per_rank: 12; total_workers: 12; time: 0.0159865600 s;
+  speedup: 0.191; efficiency: 0.016; notes: `mpiexec -n 1`.
+- backend: all; ranks: 2; threads_per_rank: 12; total_workers: 24; time: 0.0155627800 s;
+  speedup: 0.196; efficiency: 0.008; notes: `mpiexec -n 2`.
+- backend: all; ranks: 4; threads_per_rank: 12; total_workers: 48; time: 0.0125462200 s;
+  speedup: 0.243; efficiency: 0.005; notes: `mpiexec -n 4`.
 
 ## 9. Результаты Pipeline
 
@@ -83,11 +90,16 @@ Speedup считался как `T_seq / T_backend`, efficiency - как `speedu
 - backend: omp, 1 thread; time: 0.0112251400 s; speedup: 0.742; efficiency: 0.742; notes: `PPC_NUM_THREADS=1`.
 - backend: omp, 4 threads; time: 0.0037493600 s; speedup: 2.220; efficiency: 0.555; notes: `PPC_NUM_THREADS=4`.
 - backend: stl, workers: 1; time: 0.0086819200 s; speedup: 0.959; efficiency: 0.959; notes: `PPC_NUM_THREADS=1`.
-- backend: stl, workers: 2; time: 0.0055119600 s; speedup: 1.510; efficiency: 0.755; notes: `PPC_NUM_THREADS=4`.
-- backend: tbb, 1 worker; time: 0.0113887600 s; speedup: 0.731; efficiency: 0.731; notes: `PPC_NUM_THREADS=1`, `global_control`.
-- backend: tbb, 4 workers; time: 0.0037098400 s; speedup: 2.244; efficiency: 0.561; notes: `PPC_NUM_THREADS=4`, `global_control`.
-- backend: all; ranks: 1; threads_per_rank: 12; total_workers: 12; time: 0.0173728400 s; speedup: 0.479; efficiency: 0.040; notes: `mpiexec -n 1`.
-- backend: all; ranks: 4; threads_per_rank: 12; total_workers: 48; time: 0.0142562000 s; speedup: 0.584; efficiency: 0.012; notes: `mpiexec -n 4`.
+- backend: stl, workers: 2; time: 0.0055119600 s; speedup: 1.510; efficiency: 0.755;
+  notes: `PPC_NUM_THREADS=4`.
+- backend: tbb, 1 worker; time: 0.0113887600 s; speedup: 0.731; efficiency: 0.731;
+  notes: `PPC_NUM_THREADS=1`, `global_control`.
+- backend: tbb, 4 workers; time: 0.0037098400 s; speedup: 2.244; efficiency: 0.561;
+  notes: `PPC_NUM_THREADS=4`, `global_control`.
+- backend: all; ranks: 1; threads_per_rank: 12; total_workers: 12; time: 0.0173728400 s;
+  speedup: 0.479; efficiency: 0.040; notes: `mpiexec -n 1`.
+- backend: all; ranks: 4; threads_per_rank: 12; total_workers: 48; time: 0.0142562000 s;
+  speedup: 0.584; efficiency: 0.012; notes: `mpiexec -n 4`.
 
 ## 10. Интерпретация результатов
 
