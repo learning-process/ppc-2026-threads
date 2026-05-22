@@ -7,6 +7,7 @@
 #include <tuple>
 #include <vector>
 
+#include "leonova_a_radix_merge_sort/all/include/ops_all.hpp"
 #include "leonova_a_radix_merge_sort/common/include/common.hpp"
 #include "leonova_a_radix_merge_sort/omp/include/ops_omp.hpp"
 #include "leonova_a_radix_merge_sort/seq/include/ops_seq.hpp"
@@ -417,7 +418,8 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<LeonovaARadixMergeSortTBB, InType>(kTestParam, PPC_SETTINGS_leonova_a_radix_merge_sort),
     ppc::util::AddFuncTask<LeonovaARadixMergeSortOMP, InType>(kTestParam, PPC_SETTINGS_leonova_a_radix_merge_sort),
     ppc::util::AddFuncTask<LeonovaARadixMergeSortSEQ, InType>(kTestParam, PPC_SETTINGS_leonova_a_radix_merge_sort),
-    ppc::util::AddFuncTask<LeonovaARadixMergeSortSTL, InType>(kTestParam, PPC_SETTINGS_leonova_a_radix_merge_sort));
+    ppc::util::AddFuncTask<LeonovaARadixMergeSortSTL, InType>(kTestParam, PPC_SETTINGS_leonova_a_radix_merge_sort),
+    ppc::util::AddFuncTask<LeonovaARadixMergeSortALL, InType>(kTestParam, PPC_SETTINGS_leonova_a_radix_merge_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
