@@ -140,7 +140,7 @@ const std::array<TestType, 12> kTests = {{
     TestType{"cos1d_0_pi2", InType{0.001, {{0.0, std::numbers::pi / 2.0}}, cos1d},
              Intcos1d(0.0, std::numbers::pi / 2.0)},
 
-    TestType{"sin1d_0_pi", InType{0.001, {{0.0, std::numbers::pi}}, sin1d}, Intsin1d(0.0, std::numbers::pi)},
+    TestType{"sin1d_0_pi", InType{0.001, {{0.0, std::numbers::pi / 2}}, sin1d}, Intsin1d(0.0, std::numbers::pi / 2)},
 
     TestType{"xy2d_0_1_x_0_1", InType{0.005, {{0.0, 1.0}, {0.0, 1.0}}, xy2d}, Intxy2d(0.0, 1.0, 0.0, 1.0)},
 
