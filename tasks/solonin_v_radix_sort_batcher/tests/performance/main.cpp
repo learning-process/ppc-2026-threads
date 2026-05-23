@@ -1,3 +1,8 @@
+#include <gtest/gtest.h>
+
+#include <climits>
+#include <cstddef>
+
 #include "solonin_v_radix_sort_batcher/all/include/ops_all.hpp"
 #include "solonin_v_radix_sort_batcher/common/include/common.hpp"
 #include "solonin_v_radix_sort_batcher/omp/include/ops_omp.hpp"
@@ -5,9 +10,6 @@
 #include "solonin_v_radix_sort_batcher/stl/include/ops_stl.hpp"
 #include "solonin_v_radix_sort_batcher/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
-#include <gtest/gtest.h>
-#include <climits>
-#include <cstddef>
 
 namespace solonin_v_radix_sort_batcher {
 
@@ -36,17 +38,20 @@ class RadixBatcherPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
     return true;
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 };
 
-TEST_P(RadixBatcherPerfTests, RunPerfModes) { ExecuteTest(GetParam()); }
+TEST_P(RadixBatcherPerfTests, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
 
 namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, RadixSortBatcherSEQ, RadixSortBatcherOMP, RadixSortBatcherTBB,
-                                RadixSortBatcherSTL, RadixSortBatcherALL>(
-        PPC_SETTINGS_solonin_v_radix_sort_batcher);
+                                RadixSortBatcherSTL, RadixSortBatcherALL>(PPC_SETTINGS_solonin_v_radix_sort_batcher);
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = RadixBatcherPerfTests::CustomPerfTestName;
 
