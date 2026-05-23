@@ -1,8 +1,9 @@
 #pragma once
-#include "task/include/task.hpp"
 #include <string>
 #include <tuple>
 #include <vector>
+
+#include "task/include/task.hpp"
 
 namespace solonin_v_radix_sort_batcher {
 using InType = std::vector<int>;
