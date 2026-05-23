@@ -1,3 +1,11 @@
+#include <gtest/gtest.h>
+
+#include <array>
+#include <climits>
+#include <cstddef>
+#include <string>
+#include <tuple>
+
 #include "solonin_v_radix_sort_batcher/all/include/ops_all.hpp"
 #include "solonin_v_radix_sort_batcher/common/include/common.hpp"
 #include "solonin_v_radix_sort_batcher/omp/include/ops_omp.hpp"
@@ -6,12 +14,6 @@
 #include "solonin_v_radix_sort_batcher/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
-#include <gtest/gtest.h>
-#include <array>
-#include <climits>
-#include <cstddef>
-#include <string>
-#include <tuple>
 
 namespace solonin_v_radix_sort_batcher {
 
@@ -49,7 +51,9 @@ class RadixBatcherFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
     return true;
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
  private:
   InType input_data_;
@@ -57,11 +61,13 @@ class RadixBatcherFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
 
 namespace {
 
-TEST_P(RadixBatcherFuncTests, RadixBatcherSortTests) { ExecuteTest(GetParam()); }
+TEST_P(RadixBatcherFuncTests, RadixBatcherSortTests) {
+  ExecuteTest(GetParam());
+}
 
 const std::array<TestType, 6> kParams = {
-    std::make_tuple(1, "single"),   std::make_tuple(2, "positive"), std::make_tuple(3, "negative"),
-    std::make_tuple(4, "mixed"),    std::make_tuple(5, "extremes"), std::make_tuple(6, "duplicates"),
+    std::make_tuple(1, "single"), std::make_tuple(2, "positive"), std::make_tuple(3, "negative"),
+    std::make_tuple(4, "mixed"),  std::make_tuple(5, "extremes"), std::make_tuple(6, "duplicates"),
 };
 
 const auto kTasks = std::tuple_cat(
