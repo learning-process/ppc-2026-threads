@@ -10,6 +10,7 @@
 #include <tuple>
 #include <vector>
 
+#include "litvyakov_d_shell_sort/all/include/ops_all.hpp"
 #include "litvyakov_d_shell_sort/common/include/common.hpp"
 #include "litvyakov_d_shell_sort/omp/include/ops_omp.hpp"
 #include "litvyakov_d_shell_sort/seq/include/ops_seq.hpp"
@@ -26,8 +27,8 @@ class LitvyakovDShellSortFuncTests : public ppc::util::BaseRunFuncTests<InType, 
     TestType param = std::get<static_cast<int>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int sz = param;
     input_data_ = std::vector<int>(sz, 0);
-    std::random_device rd;
-    std::mt19937_64 rng(rd());
+    int seed = 1;
+    std::mt19937 rng(seed);
     std::uniform_int_distribution<int> dist(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
     for (auto &i : input_data_) {
       i = dist(rng);
@@ -76,7 +77,8 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<LitvyakovDShellSortSEQ, InType>(kTestParam, PPC_SETTINGS_litvyakov_d_shell_sort),
     ppc::util::AddFuncTask<LitvyakovDShellSortOMP, InType>(kTestParam, PPC_SETTINGS_litvyakov_d_shell_sort),
     ppc::util::AddFuncTask<LitvyakovDShellSortTBB, InType>(kTestParam, PPC_SETTINGS_litvyakov_d_shell_sort),
-    ppc::util::AddFuncTask<LitvyakovDShellSortSTL, InType>(kTestParam, PPC_SETTINGS_litvyakov_d_shell_sort));
+    ppc::util::AddFuncTask<LitvyakovDShellSortSTL, InType>(kTestParam, PPC_SETTINGS_litvyakov_d_shell_sort),
+    ppc::util::AddFuncTask<LitvyakovDShellSortALL, InType>(kTestParam, PPC_SETTINGS_litvyakov_d_shell_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
