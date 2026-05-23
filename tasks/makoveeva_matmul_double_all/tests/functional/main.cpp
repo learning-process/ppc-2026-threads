@@ -111,10 +111,6 @@ const auto kTestName = MakoveevaALLRunFuncTests::PrintFuncTestName<MakoveevaALLR
 
 INSTANTIATE_TEST_SUITE_P(MatMulFoxAlg_Basic, MakoveevaALLRunFuncTests, kGtestValues, kTestName);
 
-// ============================================================================
-// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ UNIT ТЕСТОВ
-// ============================================================================
-
 void ExpectMatrixNear(const std::vector<double> &actual, const std::vector<double> &expected, double epsilon = 1e-10) {
   ASSERT_EQ(actual.size(), expected.size());
   for (size_t i = 0; i < actual.size(); ++i) {
