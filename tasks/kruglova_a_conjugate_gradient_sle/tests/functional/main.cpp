@@ -8,9 +8,11 @@
 #include <tuple>
 #include <vector>
 
+#include "kruglova_a_conjugate_gradient_sle/all/include/ops_all.hpp"
 #include "kruglova_a_conjugate_gradient_sle/common/include/common.hpp"
 #include "kruglova_a_conjugate_gradient_sle/omp/include/ops_omp.hpp"
 #include "kruglova_a_conjugate_gradient_sle/seq/include/ops_seq.hpp"
+#include "kruglova_a_conjugate_gradient_sle/stl/include/ops_stl.hpp"
 #include "kruglova_a_conjugate_gradient_sle/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 
@@ -104,7 +106,9 @@ const std::array<TestType, 6> kTestParam = {std::make_tuple(1, "Size1"),    std:
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KruglovaAConjGradSleSEQ, InType>(kTestParam, PPC_SETTINGS_kruglova_a_conjugate_gradient_sle),
     ppc::util::AddFuncTask<KruglovaAConjGradSleOMP, InType>(kTestParam, PPC_SETTINGS_kruglova_a_conjugate_gradient_sle),
-    ppc::util::AddFuncTask<KruglovaAConjGradSleTBB, InType>(kTestParam,
+    ppc::util::AddFuncTask<KruglovaAConjGradSleTBB, InType>(kTestParam, PPC_SETTINGS_kruglova_a_conjugate_gradient_sle),
+    ppc::util::AddFuncTask<KruglovaAConjGradSleSTL, InType>(kTestParam, PPC_SETTINGS_kruglova_a_conjugate_gradient_sle),
+    ppc::util::AddFuncTask<KruglovaAConjGradSleALL, InType>(kTestParam,
                                                             PPC_SETTINGS_kruglova_a_conjugate_gradient_sle));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

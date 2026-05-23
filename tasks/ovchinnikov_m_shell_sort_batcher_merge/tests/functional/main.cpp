@@ -5,6 +5,7 @@
 #include <string>
 #include <tuple>
 
+#include "ovchinnikov_m_shell_sort_batcher_merge/all/include/ops_all.hpp"
 #include "ovchinnikov_m_shell_sort_batcher_merge/common/include/common.hpp"
 #include "ovchinnikov_m_shell_sort_batcher_merge/omp/include/ops_omp.hpp"
 #include "ovchinnikov_m_shell_sort_batcher_merge/seq/include/ops_seq.hpp"
@@ -61,6 +62,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<OvchinnikovMSh
                                            ppc::util::AddFuncTask<OvchinnikovMShellSortBatcherMergeSTL, InType>(
                                                kTestParam, PPC_SETTINGS_ovchinnikov_m_shell_sort_batcher_merge),
                                            ppc::util::AddFuncTask<OvchinnikovMShellSortBatcherMergeTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_ovchinnikov_m_shell_sort_batcher_merge),
+                                           ppc::util::AddFuncTask<OvchinnikovMShellSortBatcherMergeALL, InType>(
                                                kTestParam, PPC_SETTINGS_ovchinnikov_m_shell_sort_batcher_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
