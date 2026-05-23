@@ -30,12 +30,12 @@ BorunovVComplexCcsSEQ - последовательный baseline: один по
 
 ## 4. Отличия от других реализаций
 
-| Аспект           | SEQ               | OMP / TBB             | STL                    |
-|------------------|-------------------|-----------------------|------------------------|
-| Потоки           | 1                 | PPC_NUM_THREADS       | hardware_concurrency() |
-| Маркер ненулевых | vector<bool>      | marker[i] != j        | vector<bool>           |
-| Сортировка       | std::ranges::sort | CustomShellSort       | std::ranges::sort      |
-| Слияние          | не нужно          | merge буферов потоков | merge после join()     |
+| Аспект           | SEQ                | OMP / TBB             | STL                    |
+|------------------|--------------------|-----------------------|------------------------|
+| Потоки           | 1                  | PPC_NUM_THREADS       | hardware_concurrency() |
+| Маркер ненулевых | `vector<bool>`     | marker[i] != j        | `vector<bool>`         |
+| Сортировка       | std::ranges::sort  | CustomShellSort       | std::ranges::sort      |
+| Слияние          | не нужно           | merge буферов потоков | merge после join()     |
 
 SEQ может быть медленнее OMP/TBB даже при малом workers из-за других структур в горячем цикле, а не из-за скрытого параллелизма.
 
@@ -50,20 +50,22 @@ workers = 1 (не используется PPC_NUM_THREADS в RunImpl).
 | task_run | 0.0408020800 | 1 (baseline) | —          |
 | pipeline | 0.0332925600 | 1 (baseline) | —          |
 
-\* Отношение \(T_{\mathrm{task\_run}} / T_{\mathrm{pipeline}}\) для той же SEQ-реализации (внутреннее сравнение этапов), не speedup относительно других технологий.
+\* Отношение \(T_{\mathrm{task\_run}} / T_{\mathrm{pipeline}}\) для той же SEQ-реализации
+(внутреннее сравнение этапов), не speedup относительно других технологий.
 
 ## 7. Pipeline задачи
 
 | Этап | Действие |
-|--------------------|-------------------------------------------------|
-| ValidationImpl     | A.num_cols == B.num_rows, размеры col_ptrs      |
-| PreProcessingImpl  | размеры C, обнуление col_ptrs, очистка массивов |
-| RunImpl            | умножение                                |
-| PostProcessingImpl | без работы                                      |
+|-------------------|----------------------------------------------|
+| ValidationImpl     | A.num_cols == B.num_rows, размеры col_ptrs  |
+| PreProcessingImpl  | размеры C, обнуление col_ptrs, очистка       |
+| RunImpl            | умножение                                  |
+| PostProcessingImpl | без работы                                 |
 
 ## 8. Наблюдения
 
-- pipeline быстрее task_run у SEQ из-за учёта только RunImpl в task_run и полного конвейера в pipeline при сопоставимой нагрузке на один поток.
+- pipeline быстрее task_run у SEQ из-за учёта только RunImpl в task_run и полного
+  конвейера в pipeline при сопоставимой нагрузке на один поток.
 - Для сравнения OMP/TBB/STL/ALL baseline всегда SEQ task_run.
 
 ## 9. Вывод

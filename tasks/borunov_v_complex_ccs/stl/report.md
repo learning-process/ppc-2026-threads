@@ -10,7 +10,8 @@
 
 ## 1. Назначение
 
-BorunovVComplexCcsSTL - параллельное умножение на std::thread: разбиение столбцов B, локальные буферы, join() до merge в главном потоке.
+BorunovVComplexCcsSTL - параллельное умножение на std::thread:
+разбиение столбцов B, локальные буферы, join() до merge в главном потоке.
 
 ## 2. Распараллеливание
 
@@ -29,7 +30,8 @@ if (num_threads == 0) num_threads = 4;
 if (num_threads > num_cols) num_threads = num_cols;
 ```
 
-WorkerThread: для каждого j в диапазоне - накопление (как SEQ), std::ranges::sort, запись в thread_val, thread_row_idx, thread_col_ptr; порог |z| > 1e-9.
+WorkerThread: для каждого j в диапазоне - накопление (как SEQ),
+std::ranges::sort, запись в thread_val, thread_row_idx, thread_col_ptr; порог |z| > 1e-9.
 
 ## 3. Синхронизация
 
@@ -43,14 +45,15 @@ for (auto &t : threads) {
 // merge - только после join
 ```
 
-Главный поток не пишет в C во время работы workers - data race отсутствуют. Merge: сборка col_ptrs, insert в C.values / C.row_indices.
+Главный поток не пишет в C во время работы workers -
+data race отсутствуют. Merge: сборка col_ptrs, insert в C.values / C.row_indices.
 
 ## 4. Отличия от других реализаций
 
 | Аспект      | STL                         | OMP / TBB       | SEQ               |
 |-------------|-----------------------------|-----------------|-------------------|
 | workers     | hardware_concurrency()      | PPC_NUM_THREADS | 1                 |
-| Маркер      | vector<bool>                | marker[i]!=j    | vector<bool>      |
+| Маркер      | `vector<bool>`              | marker[i]!=j    | `vector<bool>`    |
 | Сортировка  | std::ranges::sort           | Shell sort      | std::ranges::sort |
 | Пул потоков | создаётся на каждый RunImpl | runtime OMP/TBB | —                 |
 
@@ -84,8 +87,10 @@ Baseline: SEQ task_run = 0.0408020800 с., SEQ pipeline = 0.0332925600 с.
 
 - Создание/уничтожение потоков на каждый RunImpl добавляет накладные расходы в task_run.
 - pipeline при 8 workers даёт \(S = 1.10\) - сопоставимо с TBB при том же режиме.
-- При сравнении на другой машине нужно явно фиксировать hardware_concurrency(), иначе efficiency по PPC_NUM_THREADS будет некорректна.
+- При сравнении на другой машине нужно явно фиксировать
+  hardware_concurrency(), иначе efficiency по PPC_NUM_THREADS будет некорректна.
 
 ## 8. Вывод
 
-STL - явное разбиение столбцов B, параллельная фаза с обязательным **join() до merge**. Наилучший результат на стенде: pipeline, 8 workers (\(S = 1.10\)).
+STL - явное разбиение столбцов B, параллельная фаза с обязательным
+join() до merge. Наилучший результат на стенде: pipeline, 8 workers (\(S = 1.10\)).
