@@ -3,9 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <limits>
-#include <queue>
 #include <utility>
 #include <vector>
 
@@ -16,20 +14,6 @@ namespace nalitov_d_dijkstras_algorithm {
 namespace {
 
 using OutgoingTable = std::vector<std::vector<std::pair<NodeId, Cost>>>;
-
-struct FrontierNode {
-  Cost dist{};
-  NodeId node{};
-  friend bool operator<(const FrontierNode &a, const FrontierNode &b) {
-    if (a.dist != b.dist) {
-      return a.dist < b.dist;
-    }
-    return a.node < b.node;
-  }
-  friend bool operator>(const FrontierNode &a, const FrontierNode &b) {
-    return b < a;
-  }
-};
 
 bool CheckedSum(std::int64_t acc, Cost addend, std::int64_t &out) {
   const auto x = static_cast<std::int64_t>(addend);
@@ -43,35 +27,50 @@ bool CheckedSum(std::int64_t acc, Cost addend, std::int64_t &out) {
   return true;
 }
 
+std::int64_t FindNextNode(const std::vector<Cost> &best, const std::vector<char> &visited) {
+  const auto vertex_count = best.size();
+  int best_c = kInf;
+  std::int64_t best_v = -1;
+
+  for (std::size_t i = 0; i < vertex_count; ++i) {
+    if (visited[i] == 0 && best[i] < best_c) {
+      best_c = best[i];
+      best_v = static_cast<std::int64_t>(i);
+    }
+  }
+  return best_v;
+}
+
+void RelaxNeighborsSeq(std::size_t u, Cost u_dist, const OutgoingTable &graph, std::vector<Cost> &best,
+                       const std::vector<char> &visited) {
+  for (const auto &neighbor : graph[u]) {
+    const NodeId v = neighbor.first;
+    const Cost w = neighbor.second;
+    const auto vi = static_cast<std::size_t>(v);
+
+    if (visited[vi] == 0 && u_dist <= kInf - w && u_dist + w < best[vi]) {
+      best[vi] = u_dist + w;
+    }
+  }
+}
+
 std::vector<Cost> FindShortestPaths(NodeId start, const OutgoingTable &graph) {
   const auto vertex_count = graph.size();
   std::vector<Cost> best(vertex_count, kInf);
-  std::priority_queue<FrontierNode, std::vector<FrontierNode>, std::greater<>> pq;
+  std::vector<char> visited(vertex_count, 0);
 
   best[static_cast<std::size_t>(start)] = 0;
-  pq.push({0, start});
 
-  while (!pq.empty()) {
-    const FrontierNode top = pq.top();
-    pq.pop();
-    const Cost dist_u = top.dist;
-    const NodeId u = top.node;
+  for (std::size_t step = 0; step < vertex_count; ++step) {
+    std::int64_t u = FindNextNode(best, visited);
+    if (u == -1) {
+      break;
+    }
+
     const auto ui = static_cast<std::size_t>(u);
+    visited[ui] = 1;
 
-    if (dist_u != best[ui]) {
-      continue;
-    }
-
-    for (const auto &neighbor : graph[ui]) {
-      const NodeId v = neighbor.first;
-      const Cost w = neighbor.second;
-      const auto vi = static_cast<std::size_t>(v);
-
-      if (dist_u <= kInf - w && dist_u + w < best[vi]) {
-        best[vi] = dist_u + w;
-        pq.push({best[vi], v});
-      }
-    }
+    RelaxNeighborsSeq(ui, best[ui], graph, best, visited);
   }
 
   return best;
@@ -109,10 +108,7 @@ bool NalitovDDijkstrasAlgorithmSeq::ValidationImpl() {
 
   const InType &in = GetInput();
   constexpr int kMaxVertices = 10000;
-  if (in.n <= 0 || in.n > kMaxVertices) {
-    return false;
-  }
-  if (in.source < 0 || in.source >= in.n) {
+  if (in.n <= 0 || in.n > kMaxVertices || in.source < 0 || in.source >= in.n) {
     return false;
   }
 

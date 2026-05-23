@@ -1,10 +1,9 @@
 #pragma once
 
-#include <array>
-#include <condition_variable>
-#include <cstddef>
+#include <atomic>
+#include <barrier>
 #include <cstdint>
-#include <mutex>
+#include <memory>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -35,8 +34,6 @@ class NalitovDDijkstrasAlgorithmSTL : public BaseTask {
   ~NalitovDDijkstrasAlgorithmSTL() override;
 
  private:
-  static constexpr std::size_t kDistLockStripes = 256;
-
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
@@ -54,27 +51,23 @@ class NalitovDDijkstrasAlgorithmSTL : public BaseTask {
   void WorkerBody(int slot);
   void PartitionScanBest(int slot);
   void PartitionPushDist(int slot);
-  void LaunchBarrier(WorkMode mode);
 
   using OutgoingTable = std::vector<std::vector<std::pair<NodeId, Cost>>>;
-  OutgoingTable graph_;
 
+  OutgoingTable graph_;
   std::vector<Cost> dist_;
   std::vector<char> visited_;
 
   int worker_slots_{};
   std::vector<std::thread> pool_;
   std::vector<ShardResult> shard_results_;
-
   NodeId pivot_{};
 
-  std::mutex sync_;
-  std::array<std::mutex, kDistLockStripes> dist_stripes_{};
-  std::condition_variable go_;
-  std::condition_variable settled_;
-  WorkMode mode_{WorkMode::kParked};
-  int epoch_{};
-  int unfinished_{};
+  std::atomic<WorkMode> mode_{WorkMode::kParked};
+  std::atomic<bool> shutdown_{false};
+
+  std::unique_ptr<std::barrier<>> bar_start_;
+  std::unique_ptr<std::barrier<>> bar_done_;
 
   bool pool_active_{false};
 };

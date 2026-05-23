@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "samoylenko_i_integral_trapezoid/all/include/ops_all.hpp"
 #include "samoylenko_i_integral_trapezoid/common/include/common.hpp"
 #include "samoylenko_i_integral_trapezoid/omp/include/ops_omp.hpp"
 #include "samoylenko_i_integral_trapezoid/seq/include/ops_seq.hpp"
@@ -36,8 +37,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, SamoylenkoIIntegralTrapezoidSEQ, SamoylenkoIIntegralTrapezoidOMP,
-                                SamoylenkoIIntegralTrapezoidTBB, SamoylenkoIIntegralTrapezoidSTL>(
-        PPC_SETTINGS_samoylenko_i_integral_trapezoid);
+                                SamoylenkoIIntegralTrapezoidTBB, SamoylenkoIIntegralTrapezoidSTL,
+                                SamoylenkoIIntegralTrapezoidALL>(PPC_SETTINGS_samoylenko_i_integral_trapezoid);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
