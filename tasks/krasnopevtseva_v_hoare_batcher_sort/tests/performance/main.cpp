@@ -53,7 +53,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, KrasnopevtsevaVHoareBatcherSortSEQ, KrasnopevtsevaVHoareBatcherSortOMP,
-                                KrasnopevtsevaVHoareBatcherSortTBB>(PPC_SETTINGS_krasnopevtseva_v_hoare_batcher_sort);
+                                KrasnopevtsevaVHoareBatcherSortTBB, KrasnopevtsevaVHoareBatcherSortALL>(
+        PPC_SETTINGS_krasnopevtseva_v_hoare_batcher_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
