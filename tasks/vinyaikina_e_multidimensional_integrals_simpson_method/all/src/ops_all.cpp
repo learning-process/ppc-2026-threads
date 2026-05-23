@@ -119,7 +119,8 @@ bool VinyaikinaEMultidimIntegrSimpsonALL::RunImpl() {
     simpson_factor *= actual_step[i] / 3.0;
   }
 
-  int mpi_rank, mpi_size;
+  int mpi_rank = 0;
+  int mpi_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
@@ -129,10 +130,10 @@ bool VinyaikinaEMultidimIntegrSimpsonALL::RunImpl() {
   double proc_right = limits[0].second;
 
   if (mpi_rank != 0) {
-    proc_left = CustomRound(limits[0].first + delta_mpi * mpi_rank, actual_step[0]);
+    proc_left = CustomRound(limits[0].first + (delta_mpi * mpi_rank), actual_step[0]);
   }
   if (mpi_rank != mpi_size - 1) {
-    proc_right = CustomRound(limits[0].second - delta_mpi * (mpi_size - mpi_rank - 1), actual_step[0]);
+    proc_right = CustomRound(limits[0].second - (delta_mpi * (mpi_size - mpi_rank - 1)), actual_step[0]);
   }
 
   double res = 0.0;
@@ -147,10 +148,10 @@ bool VinyaikinaEMultidimIntegrSimpsonALL::RunImpl() {
     int tid = omp_get_thread_num();
 
     if (tid != 0) {
-      left_border = CustomRound(proc_left + delta_omp * tid, actual_step[0]);
+      left_border = CustomRound(proc_left + (delta_omp * tid), actual_step[0]);
     }
     if (tid != num_threads - 1) {
-      right_border = CustomRound(proc_right - delta_omp * (num_threads - tid - 1), actual_step[0]);
+      right_border = CustomRound(proc_right - (delta_omp * (num_threads - tid - 1)), actual_step[0]);
     }
 
     res += OuntNtIntegral(left_border, right_border, simpson_factor, limits, actual_step, function);
