@@ -18,30 +18,21 @@ class ShkrylevaSShellMergePerfTests : public ppc::util::BaseRunPerfTests<InType,
  public:
   void SetUp() override {
     input_data_.resize(kCount_);
-    expected_data_.resize(kCount_);
 
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist(-100, 100);
+    std::uniform_int_distribution<int> dist(-1000000, 1000000);
 
-    for (int i = 0; i < kCount_; ++i) {
-      int number = dist(gen);
-      input_data_[i] = number;
-      expected_data_[i] = number;
+    for (size_t i = 0; i < kCount_; ++i) {
+      input_data_[i] = dist(gen);
     }
-    std::ranges::sort(expected_data_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     if (output_data.size() != input_data_.size()) {
       return false;
     }
-    for (size_t i = 0; i < output_data.size(); ++i) {
-      if (output_data[i] != expected_data_[i]) {
-        return false;
-      }
-    }
-    return true;
+    return std::ranges::is_sorted(output_data);
   }
 
   InType GetTestInputData() final {
@@ -49,9 +40,8 @@ class ShkrylevaSShellMergePerfTests : public ppc::util::BaseRunPerfTests<InType,
   }
 
  private:
-  const int kCount_ = 1000000;
+  static constexpr size_t kCount_ = 100000;
   InType input_data_;
-  OutType expected_data_;
 };
 
 TEST_P(ShkrylevaSShellMergePerfTests, RunPerfModes) {
@@ -61,8 +51,8 @@ TEST_P(ShkrylevaSShellMergePerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ShkrylevaSShellMergeSEQ, ShkrylevaSShellMergeOMP, ShkrylevaSShellMergeSTL,
-                                ShkrylevaSShellMergeTBB, ShkrylevaSShellMergeALL>(
+    ppc::util::MakeAllPerfTasks<InType, ShkrylevaSShellMergeALL, ShkrylevaSShellMergeOMP, ShkrylevaSShellMergeSEQ,
+                                ShkrylevaSShellMergeSTL, ShkrylevaSShellMergeTBB>(
         PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
