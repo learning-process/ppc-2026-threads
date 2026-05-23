@@ -186,7 +186,7 @@ const auto kTestTasksList =
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kFuncTestName = LiulinYComplexCcsFuncTestsFromFile::PrintFuncTestName<LiulinYComplexCcsFuncTestsFromFile>;
 
-git merge master INSTANTIATE_TEST_SUITE_P(SeqAndOmp, LiulinYComplexCcsFuncTestsFromFile, kGtestValues, kFuncTestName);
+INSTANTIATE_TEST_SUITE_P(SeqAndOmp, LiulinYComplexCcsFuncTestsFromFile, kGtestValues, kFuncTestName);
 
 }  // namespace
 }  // namespace liulin_y_complex_ccs
