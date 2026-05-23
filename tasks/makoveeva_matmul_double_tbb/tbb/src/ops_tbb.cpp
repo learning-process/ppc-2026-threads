@@ -1,8 +1,8 @@
 #include "makoveeva_matmul_double_tbb/tbb/include/ops_tbb.hpp"
 
-#include <oneapi/tbb/blocked_range.h>
-#include <oneapi/tbb/mutex.h>
-#include <oneapi/tbb/parallel_for.h>
+#include <tbb/blocked_range.h>
+#include <tbb/mutex.h>
+#include <tbb/parallel_for.h>
 
 #include <cmath>
 #include <cstddef>
@@ -46,8 +46,8 @@ void ComputeBlock(const std::vector<double> &matrix_a, const std::vector<double>
 
 // Безопасно добавляет результат из local_block в матрицу C
 void AccumulateResult(std::vector<double> &matrix_c, const std::vector<double> &local_block, size_t i, size_t j,
-                      size_t block_size, size_t n, oneapi::tbb::mutex &write_mutex) {
-  oneapi::tbb::mutex::scoped_lock lock(write_mutex);
+                      size_t block_size, size_t n, tbb::mutex &write_mutex) {
+  tbb::mutex::scoped_lock lock(write_mutex);
   for (size_t bi = 0; bi < block_size; ++bi) {
     for (size_t bj = 0; bj < block_size; ++bj) {
       const size_t idx_c = ((i * block_size + bi) * n) + (j * block_size + bj);
@@ -93,41 +93,29 @@ bool MatmulDoubleTBBTask::RunImpl() {
   const auto &b = B_;
   auto &c = C_;
 
-  // Выбираем размер блока для оптимальной локальности кэша
   const size_t block_size = SelectBlockSize(n);
 
-  // Проверяем что матрица делится нацело на размер блока
   if (n % block_size != 0) {
     return RunSimpleMultiply();
   }
 
   const size_t grid_size = n / block_size;
 
-  // Создаём mutex для синхронизации доступа к матрице C
-  oneapi::tbb::mutex write_mutex;
+  tbb::mutex write_mutex;
 
-  // ========================================================================
-  // ОСНОВНОЙ ПАРАЛЛЕЛЬНЫЙ ЦИКЛ - АЛГОРИТМ ФОКСА С TBB
-  // ========================================================================
-  oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<size_t>(0, grid_size * grid_size * grid_size),
-                            [&](const oneapi::tbb::blocked_range<size_t> &range) {
+  tbb::parallel_for(tbb::blocked_range<size_t>(0, grid_size * grid_size * grid_size),
+                    [&](const tbb::blocked_range<size_t> &range) {
     for (size_t step_i_j = range.begin(); step_i_j != range.end(); ++step_i_j) {
-      // ЭТАП 1: Декодирование одномерного индекса в трёхмерный (step, i, j)
       const size_t step = step_i_j / (grid_size * grid_size);
       const size_t i = (step_i_j % (grid_size * grid_size)) / grid_size;
       const size_t j = step_i_j % grid_size;
 
-      // ЭТАП 2: Вычисление root блока для алгоритма Фокса
-      // root = (i + step) % grid_size - КЛЮЧЕВАЯ ЛИНИЯ!
       const size_t root = (i + step) % grid_size;
 
-      // ЭТАП 3: Создание локального буфера (не общего!)
       std::vector<double> local_block(block_size * block_size, 0.0);
 
-      // ЭТАП 4: Умножение блока A[i][root] на блок B[root][j]
       ComputeBlock(a, b, local_block, i, j, root, block_size, n);
 
-      // ЭТАП 5: Безопасное добавление результата в матрицу C
       AccumulateResult(c, local_block, i, j, block_size, n, write_mutex);
     }
   });
@@ -142,9 +130,7 @@ bool MatmulDoubleTBBTask::RunSimpleMultiply() {
   const auto &b = B_;
   auto &c = C_;
 
-  // Простое параллельное умножение для маленьких матриц
-  oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<size_t>(0, n),
-                            [&](const oneapi::tbb::blocked_range<size_t> &range) {
+  tbb::parallel_for(tbb::blocked_range<size_t>(0, n), [&](const tbb::blocked_range<size_t> &range) {
     for (size_t i = range.begin(); i != range.end(); ++i) {
       for (size_t j = 0; j < n; ++j) {
         double sum = 0.0;
