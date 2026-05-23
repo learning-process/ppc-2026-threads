@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "rozenberg_a_quicksort_simple_merge/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace rozenberg_a_quicksort_simple_merge {
 
@@ -122,7 +123,7 @@ bool RozenbergAQuicksortSimpleMergeSTL::RunImpl() {
   InType data = GetInput();
   int n = static_cast<int>(data.size());
 
-  int num_threads = static_cast<int>(std::thread::hardware_concurrency());
+  int num_threads = ppc::util::GetNumThreads();
   if (num_threads == 0) {
     num_threads = 2;
   }

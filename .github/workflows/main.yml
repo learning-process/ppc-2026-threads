@@ -19,25 +19,32 @@ jobs:
   ubuntu:
     needs:
       - pre-commit
+    if: ${{ needs.pre-commit.outputs.md_only != 'true' }}
     uses: ./.github/workflows/ubuntu.yml
     with:
       is_nightly: ${{ github.event_name == 'schedule' }}
   mac:
     needs:
       - pre-commit
+    if: ${{ needs.pre-commit.outputs.md_only != 'true' }}
     uses: ./.github/workflows/mac.yml
   windows:
     needs:
       - pre-commit
+    if: ${{ needs.pre-commit.outputs.md_only != 'true' }}
     uses: ./.github/workflows/windows.yml
   perf:
     needs:
+      - pre-commit
       - ubuntu
       - mac
       - windows
+    if: ${{ needs.pre-commit.outputs.md_only != 'true' }}
     uses: ./.github/workflows/perf.yml
 
   pages:
     needs:
+      - pre-commit
       - perf
+    if: ${{ needs.pre-commit.outputs.md_only != 'true' }}
     uses: ./.github/workflows/pages.yml
