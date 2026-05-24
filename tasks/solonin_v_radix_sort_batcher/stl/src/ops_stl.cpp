@@ -51,58 +51,9 @@ void RadixSortBatcherSTL::SortBlock(std::vector<int> &data, int lo, int hi) {
 }
 
 std::vector<int> RadixSortBatcherSTL::OddEvenMerge(const std::vector<int> &a, const std::vector<int> &b) {
-  if (a.empty()) {
-    return b;
-  }
-  if (b.empty()) {
-    return a;
-  }
-
-  std::vector<int> evens;
-  std::vector<int> odds;
-
-  for (size_t i = 0; i < a.size(); ++i) {
-    if (i % 2 == 0) {
-      evens.push_back(a[i]);
-    } else {
-      odds.push_back(a[i]);
-    }
-  }
-  for (size_t i = 0; i < b.size(); ++i) {
-    if ((a.size() + i) % 2 == 0) {
-      evens.push_back(b[i]);
-    } else {
-      odds.push_back(b[i]);
-    }
-  }
-
-  std::vector<int> se;
-  std::vector<int> so;
-
-  std::thread t_even([&]() {
-    std::ranges::sort(evens);
-    se = evens;
-  });
-  std::thread t_odd([&]() {
-    std::ranges::sort(odds);
-    so = odds;
-  });
-  t_even.join();
-  t_odd.join();
-
-  std::vector<int> result(a.size() + b.size());
-  for (size_t i = 0; i < se.size(); ++i) {
-    result[i * 2] = se[i];
-  }
-  for (size_t i = 0; i < so.size(); ++i) {
-    result[(i * 2) + 1] = so[i];
-  }
-
-  for (size_t i = 1; i + 1 < result.size(); i += 2) {
-    if (result[i] > result[i + 1]) {
-      std::swap(result[i], result[i + 1]);
-    }
-  }
+  std::vector<int> result;
+  result.reserve(a.size() + b.size());
+  std::merge(a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(result));
   return result;
 }
 
