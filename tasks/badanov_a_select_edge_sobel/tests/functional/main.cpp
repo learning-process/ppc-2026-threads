@@ -16,6 +16,7 @@
 #include "badanov_a_select_edge_sobel/omp/include/ops_omp.hpp"
 #include "badanov_a_select_edge_sobel/seq/include/ops_seq.hpp"
 #include "badanov_a_select_edge_sobel/stl/include/ops_stl.hpp"
+#include "badanov_a_select_edge_sobel/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -260,6 +261,24 @@ TEST(BadanovASelectEdgeSobelOMPEdgeCases, ConstantImageNoEdges) {
   }
 }
 
+TEST(BadanovASelectEdgeSobelTBBEdgeCases, VerySmallImage2x2) {
+  InType small_input(4, 0);
+  small_input[0] = 0;
+  small_input[1] = 255;
+  small_input[2] = 255;
+  small_input[3] = 0;
+
+  BadanovASelectEdgeSobelTBB task(small_input);
+  task.Validation();
+  task.PreProcessing();
+  task.Run();
+  task.PostProcessing();
+
+  auto output = task.GetOutput();
+  EXPECT_EQ(output.size(), static_cast<size_t>(4));
+  EXPECT_EQ(output, small_input);
+}
+
 namespace {
 
 TEST_P(BadanovASelectEdgeSobelFuncTests, SobelOnFiles) {
@@ -282,6 +301,7 @@ const std::array<TestType, 10> kTestParam = {
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<BadanovASelectEdgeSobelSEQ, InType>(kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel),
     ppc::util::AddFuncTask<BadanovASelectEdgeSobelOMP, InType>(kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel),
+    ppc::util::AddFuncTask<BadanovASelectEdgeSobelTBB, InType>(kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel),
     ppc::util::AddFuncTask<BadanovASelectEdgeSobelSTL, InType>(kTestParam, PPC_SETTINGS_badanov_a_select_edge_sobel));
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

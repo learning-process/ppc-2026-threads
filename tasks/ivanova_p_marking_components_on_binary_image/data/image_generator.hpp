@@ -135,17 +135,37 @@ inline uint8_t GetPixelForTestCase10(int xx, int yy, int width, int height) {
 
 }  // namespace test_case_generators
 
+// Вспомогательные функции для работы с кодированным test_case
+// Формат: test_case = (размер << 16) | тип_теста
+// Если размер не указан (старшие биты = 0), используется размер по умолчанию 500x500
+
+inline int ExtractImageSize(int test_case) {
+  int size = (test_case >> 16) & 0xFFFF;
+  return (size > 0) ? size : 500;  // По умолчанию 500
+}
+
+inline int ExtractTestType(int test_case) {
+  return test_case & 0xFFFF;
+}
+
+inline int EncodeTestCase(int size, int test_type) {
+  return (size << 16) | test_type;
+}
+
 // Вспомогательная функция для создания тестовых изображений
 inline Image CreateTestImage(int width, int height, int test_case) {
+  // Извлекаем реальный тип теста из закодированного значения
+  int test_type = ExtractTestType(test_case);
+
   Image img;
   img.width = width;
   img.height = height;
   img.data.resize(static_cast<size_t>(width) * static_cast<size_t>(height));
 
-  // Выбираем функцию-генератор в зависимости от test_case
+  // Выбираем функцию-генератор в зависимости от test_type
   uint8_t (*generator)(int, int, int, int) = nullptr;
 
-  switch (test_case) {
+  switch (test_type) {
     case 1:
       generator = test_case_generators::GetPixelForTestCase1;
       break;
