@@ -85,10 +85,10 @@ embarrassingly parallel, так как компоненты независимы
 
 | Метод               | Действие                                                              |
 |---------------------|-----------------------------------------------------------------------|
-| `ValidationImpl`    | Проверяет `width > 0`, `height > 0`, `data.size() == width * height` |
+| `ValidationImpl`    | Проверяет `width > 0`, `height > 0`, `data.size() == width * height`  |
 | `PreProcessingImpl` | Очищает `local_out_`                                                  |
-| `RunImpl`           | Вызывает `SolveSEQ`, результат сохраняет в `local_out_`              |
-| `PostProcessingImpl`| Копирует `local_out_` в `GetOutput()`                                |
+| `RunImpl`           | Вызывает `SolveSEQ`, результат сохраняет в `local_out_`               |
+| `PostProcessingImpl`| Копирует `local_out_` в `GetOutput()`                                 |
 
 **Структура данных `BinaryImage`:**
 
