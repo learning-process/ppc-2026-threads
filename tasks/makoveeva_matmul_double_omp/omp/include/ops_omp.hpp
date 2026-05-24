@@ -22,14 +22,16 @@ class MatmulDoubleOMPTask : public BaseTask {
   bool PostProcessingImpl() override;
 
   [[nodiscard]] const std::vector<double> &GetResult() const {
-    return C_;
+    return c_;
   }
 
  private:
   size_t n_ = 0;
-  std::vector<double> A_;
-  std::vector<double> B_;
-  std::vector<double> C_;
+  std::vector<double> a_;
+  std::vector<double> b_;
+  std::vector<double> c_;
+
+  bool RunSimpleMultiply();
 };
 
 }  // namespace makoveeva_matmul_double_omp
