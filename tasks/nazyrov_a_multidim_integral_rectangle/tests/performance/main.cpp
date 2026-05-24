@@ -8,6 +8,7 @@
 #include "nazyrov_a_multidim_integral_rectangle/common/include/common.hpp"
 #include "nazyrov_a_multidim_integral_rectangle/omp/include/ops_omp.hpp"
 #include "nazyrov_a_multidim_integral_rectangle/seq/include/ops_seq.hpp"
+#include "nazyrov_a_multidim_integral_rectangle/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -54,7 +55,8 @@ TEST_P(NazyrovAMultidimIntegralRectanglePerfTest, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NazyrovAMultidimIntegralRectangleSeq, NazyrovAMultidimIntegralRectangleOmp>(
+    ppc::util::MakeAllPerfTasks<InType, NazyrovAMultidimIntegralRectangleSeq, NazyrovAMultidimIntegralRectangleOmp,
+                                NazyrovAMultidimIntegralRectangleTbb>(
         PPC_SETTINGS_nazyrov_a_multidim_integral_rectangle);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

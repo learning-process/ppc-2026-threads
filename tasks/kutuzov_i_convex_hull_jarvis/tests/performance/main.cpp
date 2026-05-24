@@ -2,6 +2,7 @@
 
 #include <random>
 
+#include "kutuzov_i_convex_hull_jarvis/all/include/ops_all.hpp"
 #include "kutuzov_i_convex_hull_jarvis/common/include/common.hpp"
 #include "kutuzov_i_convex_hull_jarvis/omp/include/ops_omp.hpp"
 #include "kutuzov_i_convex_hull_jarvis/seq/include/ops_seq.hpp"
@@ -48,7 +49,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, KutuzovITestConvexHullSEQ, KutuzovITestConvexHullOMP, KutuzovITestConvexHullTBB,
-                                KutuzovITestConvexHullSTL>(PPC_SETTINGS_kutuzov_i_convex_hull_jarvis);
+                                KutuzovITestConvexHullSTL, KutuzovITestConvexHullALL>(
+        PPC_SETTINGS_kutuzov_i_convex_hull_jarvis);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
