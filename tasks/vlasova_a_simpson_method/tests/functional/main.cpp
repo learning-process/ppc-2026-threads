@@ -10,10 +10,12 @@
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
+#include "vlasova_a_simpson_method/all/include/ops_all.hpp"
 #include "vlasova_a_simpson_method/common/include/common.hpp"
 #include "vlasova_a_simpson_method/omp/include/ops_omp.hpp"
 #include "vlasova_a_simpson_method/seq/include/ops_seq.hpp"
 #include "vlasova_a_simpson_method/stl/include/ops_stl.hpp"
+#include "vlasova_a_simpson_method/tbb/include/ops_tbb.hpp"
 
 namespace vlasova_a_simpson_method {
 
@@ -61,7 +63,7 @@ class VlasovaASimpsonMethodFuncTests : public ppc::util::BaseRunFuncTests<InType
       func = [](const std::vector<double> &) { return 0.0; };
     }
 
-    input_data_ = SimpsonTask(func, a, b, n);
+    input_data_ = SimpsonTask(func, a, b, n);  // функция Гаусса на кубе [-2,2]^3 с сеткой 200x200x200
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -80,7 +82,7 @@ class VlasovaASimpsonMethodFuncTests : public ppc::util::BaseRunFuncTests<InType
 namespace {
 
 const std::array<TestType, 22> kTestCases = {
-    // 1D
+    // 1D tests
     std::make_tuple(std::vector<double>{0.0}, std::vector<double>{1.0}, std::vector<int>{10}, 1.0, "constant_1d"),
     std::make_tuple(std::vector<double>{0.0}, std::vector<double>{1.0}, std::vector<int>{10}, 0.5, "linear_1d"),
     std::make_tuple(std::vector<double>{0.0}, std::vector<double>{1.0}, std::vector<int>{10}, 1.0 / 3.0,
@@ -94,7 +96,7 @@ const std::array<TestType, 22> kTestCases = {
                     "cubic_1d_symmetric"),
     std::make_tuple(std::vector<double>{0.0}, std::vector<double>{2.0}, std::vector<int>{20}, 2.0, "linear_1d_double"),
 
-    // 2D
+    // 2D tests
     std::make_tuple(std::vector<double>{0.0, 0.0}, std::vector<double>{1.0, 1.0}, std::vector<int>{10, 10}, 1.0,
                     "constant_2d"),
     std::make_tuple(std::vector<double>{0.0, 0.0}, std::vector<double>{1.0, 1.0}, std::vector<int>{10, 10}, 0.25,
@@ -107,7 +109,7 @@ const std::array<TestType, 22> kTestCases = {
                     "quadratic_2d_only_x"),
     std::make_tuple(std::vector<double>{0.0, 0.0}, std::vector<double>{1.0, 1.0}, std::vector<int>{10, 10}, 1.0 / 3.0,
                     "quadratic_2d_only_y"),
-    // 3D
+    // 3D tests
     std::make_tuple(std::vector<double>{0.0, 0.0, 0.0}, std::vector<double>{1.0, 1.0, 1.0}, std::vector<int>{8, 8, 8},
                     1.0, "constant_3d"),
     std::make_tuple(std::vector<double>{0.0, 0.0, 0.0}, std::vector<double>{1.0, 1.0, 1.0}, std::vector<int>{8, 8, 8},
@@ -127,6 +129,8 @@ const std::array<TestType, 22> kTestCases = {
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<VlasovaASimpsonMethodSEQ, InType>(kTestCases, PPC_SETTINGS_vlasova_a_simpson_method),
     ppc::util::AddFuncTask<VlasovaASimpsonMethodOMP, InType>(kTestCases, PPC_SETTINGS_vlasova_a_simpson_method),
+    ppc::util::AddFuncTask<VlasovaASimpsonMethodTBB, InType>(kTestCases, PPC_SETTINGS_vlasova_a_simpson_method),
+    ppc::util::AddFuncTask<VlasovaASimpsonMethodALL, InType>(kTestCases, PPC_SETTINGS_vlasova_a_simpson_method),
     ppc::util::AddFuncTask<VlasovaASimpsonMethodSTL, InType>(kTestCases, PPC_SETTINGS_vlasova_a_simpson_method));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

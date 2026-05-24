@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "all": "disabled",
+    "all": "enabled",
     "omp": "enabled",
     "seq": "enabled",
     "stl": "enabled",
