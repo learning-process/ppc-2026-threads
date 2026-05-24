@@ -10,7 +10,8 @@
 
 ## 1. Назначение
 
-BorunovVComplexCcsTBB - параллельное умножение через Intel oneTBB: та же логика столбца, что у OMP (ProcessColumn), оркестрация через task_arena и parallel_for.
+BorunovVComplexCcsTBB - параллельное умножение через Intel oneTBB: та же логика столбца, что
+у OMP (ProcessColumn), оркестрация через task_arena и parallel_for.
 
 ## 2. Распараллеливание
 
@@ -95,4 +96,6 @@ Baseline: SEQ task_run = 0.0408020800 с., SEQ pipeline = 0.0332925600 с.
 
 ## 8. Вывод
 
-TBB использует task_arena, blocked_range с grainsize=1 и static_partitioner; конкуренция снята раздельными буферами и двухфазным слиянием. Наилучший результат на стенде: task_run, 16 workers (\(S = 1.10\)) и task_run, 4 workers (\(E = 26.2\%\)).
+TBB использует task_arena, blocked_range с grainsize=1 и static_partitioner; конкуренция снята
+раздельными буферами и двухфазным слиянием. Наилучший результат на стенде: task_run, 16
+workers (\(S = 1.10\)) и task_run, 4 workers (\(E = 26.2\%\)).

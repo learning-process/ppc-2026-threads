@@ -10,11 +10,12 @@
 
 ## 1. Назначение
 
-BorunovVComplexCcsALL (TypeOfTask::kALL) - гибрид в одном процессе: первая половина столбцов B - OpenMP, вторая - oneTBB; финальная сборка CCS - последовательные операции STL (std::vector, insert).
+BorunovVComplexCcsALL (TypeOfTask::kALL) - гибрид в одном процессе: первая половина столбцов B - OpenMP,
+вторая - oneTBB; финальная сборка CCS - последовательные операции STL (std::vector, insert).
 
 ## 2. Распараллеливание
 
-```
+```mermaid
 flowchart TB
   subgraph split [Разбиение столбцов B]
     H1[столбцы 0 … half_cols-1]
@@ -91,8 +92,11 @@ Baseline: SEQ task_run = 0.0408020800 с., SEQ pipeline = 0.0332925600 с.
 
 ## 8. Корректность
 
-BorunovVComplexCcsALL включён в tests/functional/main.cpp (BorunovVRunFuncTestsThreads). Сравнение с плотным эталоном, допуск 1e-6 по значениям - локально пройдено вместе с SEQ, OMP, TBB, STL.
+BorunovVComplexCcsALL включён в tests/functional/main.cpp (BorunovVRunFuncTestsThreads). Сравнение
+с плотным эталоном, допуск 1e-6 по значениям - локально пройдено вместе с SEQ, OMP, TBB, STL.
 
 ## 9. Вывод
 
-ALL демонстрирует совмещение OpenMP, TBB и STL-сборки в одном RunImpl. По таблицам perf наилучший компромисс: pipeline, 8 workers (\(S = 1.39\)). Ускорение не достигает максимума чистого OMP из-за последовательных фаз и двойных накладных расходов.
+ALL демонстрирует совмещение OpenMP, TBB и STL-сборки в одном RunImpl. По таблицам perf наилучший
+компромисс: pipeline, 8 workers (\(S = 1.39\)). Ускорение не достигает максимума чистого OMP из-за
+последовательных фаз и двойных накладных расходов.

@@ -55,12 +55,12 @@ workers = 1 (не используется PPC_NUM_THREADS в RunImpl).
 
 ## 7. Pipeline задачи
 
-| Этап | Действие |
-|-------------------|----------------------------------------------|
-| ValidationImpl     | A.num_cols == B.num_rows, размеры col_ptrs  |
+| Этап               | Действие                                     |
+|--------------------|----------------------------------------------|
+| ValidationImpl     | A.num_cols == B.num_rows, размеры col_ptrs   |
 | PreProcessingImpl  | размеры C, обнуление col_ptrs, очистка       |
-| RunImpl            | умножение                                  |
-| PostProcessingImpl | без работы                                 |
+| RunImpl            | умножение                                    |
+| PostProcessingImpl | без работы                                   |
 
 ## 8. Наблюдения
 
