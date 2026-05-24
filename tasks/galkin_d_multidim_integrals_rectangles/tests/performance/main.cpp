@@ -5,9 +5,11 @@
 #include <utility>
 #include <vector>
 
+#include "galkin_d_multidim_integrals_rectangles/all/include/ops_all.hpp"
 #include "galkin_d_multidim_integrals_rectangles/common/include/common.hpp"
 #include "galkin_d_multidim_integrals_rectangles/omp/include/ops_omp.hpp"
 #include "galkin_d_multidim_integrals_rectangles/seq/include/ops_seq.hpp"
+#include "galkin_d_multidim_integrals_rectangles/stl/include/ops_stl.hpp"
 #include "galkin_d_multidim_integrals_rectangles/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -45,7 +47,8 @@ TEST_P(GalkinDRunPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, GalkinDMultidimIntegralsRectanglesOMP, GalkinDMultidimIntegralsRectanglesSEQ,
+    ppc::util::MakeAllPerfTasks<InType, GalkinDMultidimIntegralsRectanglesALL, GalkinDMultidimIntegralsRectanglesOMP,
+                                GalkinDMultidimIntegralsRectanglesSEQ, GalkinDMultidimIntegralsRectanglesSTL,
                                 GalkinDMultidimIntegralsRectanglesTBB>(
         PPC_SETTINGS_galkin_d_multidim_integrals_rectangles);
 

@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "litvyakov_d_shell_sort/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace litvyakov_d_shell_sort {
 
@@ -64,7 +65,7 @@ bool LitvyakovDShellSortOMP::RunImpl() {
     return true;
   }
 
-  const std::size_t threads = std::max(1, omp_get_max_threads());
+  const std::size_t threads = std::max(1, ppc::util::GetNumThreads());
   const std::size_t parts_count = std::min<std::size_t>(threads, vec.size());
   const auto bounds = GetBounds(vec.size(), parts_count);
   int parts_count_t = static_cast<int>(parts_count);

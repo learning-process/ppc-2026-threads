@@ -3,8 +3,12 @@
 #include <cstddef>
 #include <vector>
 
+#include "dorogin_v_bin_img_conv_hull/all/include/ops_all.hpp"
 #include "dorogin_v_bin_img_conv_hull/common/include/common.hpp"
+#include "dorogin_v_bin_img_conv_hull/omp/include/ops_omp.hpp"
 #include "dorogin_v_bin_img_conv_hull/seq/include/ops_seq.hpp"
+#include "dorogin_v_bin_img_conv_hull/stl/include/ops_stl.hpp"
+#include "dorogin_v_bin_img_conv_hull/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace dorogin_v_bin_img_conv_hull {
@@ -52,7 +56,9 @@ TEST_P(DoroginVBinImgConvHullPerfTests, RunPerf) {
 namespace {
 
 const auto kPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, DoroginVBinImgConvHullSeq>(PPC_SETTINGS_dorogin_v_bin_img_conv_hull);
+    ppc::util::MakeAllPerfTasks<InType, DoroginVBinImgConvHullSeq, DoroginVBinImgConvHullOMP, DoroginVBinImgConvHullTBB,
+                                DoroginVBinImgConvHullSTL, DoroginVBinImgConvHullALL>(
+        PPC_SETTINGS_dorogin_v_bin_img_conv_hull);
 
 const auto kValues = ppc::util::TupleToGTestValues(kPerfTasks);
 

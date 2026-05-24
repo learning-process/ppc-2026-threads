@@ -8,6 +8,7 @@
 #include <tuple>
 #include <vector>
 
+#include "pylaeva_s_inc_contrast_img_by_lsh/all/include/ops_all.hpp"
 #include "pylaeva_s_inc_contrast_img_by_lsh/common/include/common.hpp"
 #include "pylaeva_s_inc_contrast_img_by_lsh/omp/include/ops_omp.hpp"
 #include "pylaeva_s_inc_contrast_img_by_lsh/seq/include/ops_seq.hpp"
@@ -145,6 +146,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<PylaevaSIncCon
                                            ppc::util::AddFuncTask<PylaevaSIncContrastImgByLshOMP, InType>(
                                                kTestParam, PPC_SETTINGS_pylaeva_s_inc_contrast_img_by_lsh),
                                            ppc::util::AddFuncTask<PylaevaSIncContrastImgByLshTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_pylaeva_s_inc_contrast_img_by_lsh),
+                                           ppc::util::AddFuncTask<PylaevaSIncContrastImgByLshALL, InType>(
                                                kTestParam, PPC_SETTINGS_pylaeva_s_inc_contrast_img_by_lsh));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
