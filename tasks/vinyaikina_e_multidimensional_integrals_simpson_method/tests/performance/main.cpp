@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
+#include "vinyaikina_e_multidimensional_integrals_simpson_method/all/include/ops_all.hpp"
 #include "vinyaikina_e_multidimensional_integrals_simpson_method/common/include/common.hpp"
 #include "vinyaikina_e_multidimensional_integrals_simpson_method/omp/include/ops_omp.hpp"
 #include "vinyaikina_e_multidimensional_integrals_simpson_method/seq/include/ops_seq.hpp"
@@ -45,8 +46,8 @@ const auto kPerfTaskName = PPC_SETTINGS_vinyaikina_e_multidimensional_integrals_
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, VinyaikinaEMultidimIntegrSimpsonSEQ, VinyaikinaEMultidimIntegrSimpsonOMP,
-                                VinyaikinaEMultidimIntegrSimpsonTBB, VinyaikinaEMultidimIntegrSimpsonSTL>(
-        kPerfTaskName);
+                                VinyaikinaEMultidimIntegrSimpsonTBB, VinyaikinaEMultidimIntegrSimpsonSTL,
+                                VinyaikinaEMultidimIntegrSimpsonALL>(kPerfTaskName);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
