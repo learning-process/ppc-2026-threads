@@ -87,6 +87,7 @@ tbb::parallel_for(0, rows, [&](int i) {
     temp_cols[i] = std::move(local_cols);
 });
 ```
+
 ### 4.2 Параметры разбиения
 
 | Параметр     | Значение по умолчанию | Роль                                                       |
@@ -112,6 +113,7 @@ tbb::parallel_for(0, rows, [&](int i) {
     temp_cols[i] = std::move(local_cols);
 });
 ```
+
 ```cpp
 //Проход 2 (последовательный)  сборка CRS-структуры:
 // Вычисление префиксных сумм для row_pointers
