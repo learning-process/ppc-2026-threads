@@ -22,7 +22,7 @@ class LobanovMultyMatrixALL : public BaseTask {
 
   static void DistributeSparseMatrix(CompressedRowMatrix &mat, int root, int rows, int cols);
   static CompressedRowMatrix TransposeSparseMatrix(const CompressedRowMatrix &src);
-  static void ComputeLocalProduct(const CompressedRowMatrix &A, const CompressedRowMatrix &B_tr, int start_row,
+  static void ComputeLocalProduct(const CompressedRowMatrix &a, const CompressedRowMatrix &b_tr, int start_row,
                                   int local_rows, std::vector<int> &row_nnz_counts, std::vector<double> &packed_vals,
                                   std::vector<int> &packed_cols);
   static void MergeLocalResults(int rank, int comm_size, int total_rows, int result_cols, int local_rows,

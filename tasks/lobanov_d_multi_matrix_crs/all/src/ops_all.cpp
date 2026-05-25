@@ -15,7 +15,7 @@
 namespace lobanov_d_multi_matrix_crs {
 
 void LobanovMultyMatrixALL::SortIndices(std::vector<int> &vec) {
-  std::sort(vec.begin(), vec.end());
+  std::ranges::sort(vec);
 }
 
 LobanovMultyMatrixALL::LobanovMultyMatrixALL(const InType &in) {
@@ -93,7 +93,8 @@ CompressedRowMatrix LobanovMultyMatrixALL::TransposeSparseMatrix(const Compresse
   for (int i = 0; i < src.row_count; ++i) {
     for (int j = src.row_pointer_data[i]; j < src.row_pointer_data[i + 1]; ++j) {
       int col = src.column_index_data[j];
-      int pos = cursor[col]++;
+      int pos = cursor[col];
+      cursor[col]++;
       dst.value_data[pos] = src.value_data[j];
       dst.column_index_data[pos] = i;
     }
@@ -101,18 +102,18 @@ CompressedRowMatrix LobanovMultyMatrixALL::TransposeSparseMatrix(const Compresse
   return dst;
 }
 
-void LobanovMultyMatrixALL::ComputeLocalProduct(const CompressedRowMatrix &A, const CompressedRowMatrix &B_tr,
+void LobanovMultyMatrixALL::ComputeLocalProduct(const CompressedRowMatrix &a, const CompressedRowMatrix &b_tr,
                                                 int start_row, int local_rows, std::vector<int> &row_nnz_counts,
                                                 std::vector<double> &packed_vals, std::vector<int> &packed_cols) {
   if (local_rows <= 0) {
     return;
   }
-  int result_cols = B_tr.row_count;
+  int result_cols = b_tr.row_count;
 
   std::vector<std::vector<double>> row_vals(local_rows);
   std::vector<std::vector<int>> row_cols(local_rows);
 
-#pragma omp parallel default(none) shared(A, B_tr, start_row, local_rows, row_vals, row_cols, row_nnz_counts, \
+#pragma omp parallel default(none) shared(a, b_tr, start_row, local_rows, row_vals, row_cols, row_nnz_counts, \
                                               result_cols) num_threads(ppc::util::GetNumThreads())
   {
     std::vector<int> marker(result_cols, -1);
@@ -124,13 +125,13 @@ void LobanovMultyMatrixALL::ComputeLocalProduct(const CompressedRowMatrix &A, co
       int global_row = start_row + i;
       active_columns.clear();
 
-      for (int idx = A.row_pointer_data[global_row]; idx < A.row_pointer_data[global_row + 1]; ++idx) {
-        int col_a = A.column_index_data[idx];
-        double val_a = A.value_data[idx];
+      for (int idx = a.row_pointer_data[global_row]; idx < a.row_pointer_data[global_row + 1]; ++idx) {
+        int col_a = a.column_index_data[idx];
+        double val_a = a.value_data[idx];
 
-        for (int j = B_tr.row_pointer_data[col_a]; j < B_tr.row_pointer_data[col_a + 1]; ++j) {
-          int col_res = B_tr.column_index_data[j];
-          double contrib = val_a * B_tr.value_data[j];
+        for (int j = b_tr.row_pointer_data[col_a]; j < b_tr.row_pointer_data[col_a + 1]; ++j) {
+          int col_res = b_tr.column_index_data[j];
+          double contrib = val_a * b_tr.value_data[j];
           if (marker[col_res] != i) {
             marker[col_res] = i;
             active_columns.push_back(col_res);
@@ -168,6 +169,11 @@ void LobanovMultyMatrixALL::MergeLocalResults(int rank, int comm_size, int total
   MPI_Gather(&local_total_nnz, 1, MPI_INT, global_nnz_counts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Gather(&local_rows, 1, MPI_INT, global_row_counts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
 
+  // Создаем неконстантные копии для MPI (mpi не меняет данные)
+  std::vector<double> packed_vals_copy = packed_vals;
+  std::vector<int> packed_cols_copy = packed_cols;
+  std::vector<int> row_nnz_counts_copy = row_nnz_counts;
+
   if (rank == 0) {
     result_mat.row_count = total_rows;
     result_mat.column_count = result_cols;
@@ -175,11 +181,11 @@ void LobanovMultyMatrixALL::MergeLocalResults(int rank, int comm_size, int total
     std::vector<int> nnz_offsets(comm_size, 0);
     std::vector<int> row_offsets(comm_size, 0);
     int total_nnz = 0;
-    for (int p = 0; p < comm_size; ++p) {
-      nnz_offsets[p] = total_nnz;
-      total_nnz += global_nnz_counts[p];
-      if (p > 0) {
-        row_offsets[p] = row_offsets[p - 1] + global_row_counts[p - 1];
+    for (int proc = 0; proc < comm_size; ++proc) {
+      nnz_offsets[proc] = total_nnz;
+      total_nnz += global_nnz_counts[proc];
+      if (proc > 0) {
+        row_offsets[proc] = row_offsets[proc - 1] + global_row_counts[proc - 1];
       }
     }
 
@@ -188,31 +194,31 @@ void LobanovMultyMatrixALL::MergeLocalResults(int rank, int comm_size, int total
     result_mat.row_pointer_data.assign(static_cast<size_t>(total_rows) + 1, 0);
     result_mat.non_zero_count = total_nnz;
 
-    MPI_Gatherv(const_cast<double *>(packed_vals.data()), local_total_nnz, MPI_DOUBLE, result_mat.value_data.data(),
+    MPI_Gatherv(packed_vals_copy.data(), local_total_nnz, MPI_DOUBLE, result_mat.value_data.data(),
                 global_nnz_counts.data(), nnz_offsets.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(const_cast<int *>(packed_cols.data()), local_total_nnz, MPI_INT, result_mat.column_index_data.data(),
+    MPI_Gatherv(packed_cols_copy.data(), local_total_nnz, MPI_INT, result_mat.column_index_data.data(),
                 global_nnz_counts.data(), nnz_offsets.data(), MPI_INT, 0, MPI_COMM_WORLD);
 
     std::vector<int> all_row_nnz(total_rows);
-    MPI_Gatherv(const_cast<int *>(row_nnz_counts.data()), local_rows, MPI_INT, all_row_nnz.data(),
-                global_row_counts.data(), row_offsets.data(), MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(row_nnz_counts_copy.data(), local_rows, MPI_INT, all_row_nnz.data(), global_row_counts.data(),
+                row_offsets.data(), MPI_INT, 0, MPI_COMM_WORLD);
     for (int i = 0; i < total_rows; ++i) {
       result_mat.row_pointer_data[i + 1] = result_mat.row_pointer_data[i] + all_row_nnz[i];
     }
   } else {
-    MPI_Gatherv(const_cast<double *>(packed_vals.data()), local_total_nnz, MPI_DOUBLE, nullptr, nullptr, nullptr,
-                MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(const_cast<int *>(packed_cols.data()), local_total_nnz, MPI_INT, nullptr, nullptr, nullptr, MPI_INT, 0,
+    MPI_Gatherv(packed_vals_copy.data(), local_total_nnz, MPI_DOUBLE, nullptr, nullptr, nullptr, MPI_DOUBLE, 0,
                 MPI_COMM_WORLD);
-    MPI_Gatherv(const_cast<int *>(row_nnz_counts.data()), local_rows, MPI_INT, nullptr, nullptr, nullptr, MPI_INT, 0,
+    MPI_Gatherv(packed_cols_copy.data(), local_total_nnz, MPI_INT, nullptr, nullptr, nullptr, MPI_INT, 0,
                 MPI_COMM_WORLD);
+    MPI_Gatherv(row_nnz_counts_copy.data(), local_rows, MPI_INT, nullptr, nullptr, nullptr, MPI_INT, 0, MPI_COMM_WORLD);
   }
 
   DistributeSparseMatrix(result_mat, 0, total_rows, result_cols);
 }
 
 bool LobanovMultyMatrixALL::RunImpl() {
-  int comm_size = 0, rank = 0;
+  int comm_size = 0;
+  int rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -229,26 +235,27 @@ bool LobanovMultyMatrixALL::RunImpl() {
   int a_cols = dimensions[1];
   int b_cols = dimensions[2];
 
-  CompressedRowMatrix matrixA, matrixB;
+  CompressedRowMatrix matrix_a;
+  CompressedRowMatrix matrix_b;
   if (rank == 0) {
-    matrixA = GetInput().first;
-    matrixB = GetInput().second;
+    matrix_a = GetInput().first;
+    matrix_b = GetInput().second;
   }
-  DistributeSparseMatrix(matrixA, 0, a_rows, a_cols);
-  DistributeSparseMatrix(matrixB, 0, a_cols, b_cols);
+  DistributeSparseMatrix(matrix_a, 0, a_rows, a_cols);
+  DistributeSparseMatrix(matrix_b, 0, a_cols, b_cols);
 
-  CompressedRowMatrix matrixB_transposed = TransposeSparseMatrix(matrixB);
+  CompressedRowMatrix matrix_b_transposed = TransposeSparseMatrix(matrix_b);
 
   int base_chunk = a_rows / comm_size;
   int remainder = a_rows % comm_size;
-  int start_row = rank * base_chunk + std::min(rank, remainder);
+  int start_row = (rank * base_chunk) + std::min(rank, remainder);
   int local_rows = base_chunk + (rank < remainder ? 1 : 0);
 
   std::vector<int> local_row_nnz(local_rows, 0);
   std::vector<double> flat_values;
   std::vector<int> flat_columns;
 
-  ComputeLocalProduct(matrixA, matrixB_transposed, start_row, local_rows, local_row_nnz, flat_values, flat_columns);
+  ComputeLocalProduct(matrix_a, matrix_b_transposed, start_row, local_rows, local_row_nnz, flat_values, flat_columns);
 
   CompressedRowMatrix result_matrix;
   MergeLocalResults(rank, comm_size, a_rows, b_cols, local_rows, result_matrix, local_row_nnz, flat_values,
