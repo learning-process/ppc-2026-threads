@@ -9,6 +9,8 @@
 #include "nikolaev_d_block_linear_image_filtering/common/include/common.hpp"
 #include "nikolaev_d_block_linear_image_filtering/omp/include/ops_omp.hpp"
 #include "nikolaev_d_block_linear_image_filtering/seq/include/ops_seq.hpp"
+#include "nikolaev_d_block_linear_image_filtering/stl/include/ops_stl.hpp"
+#include "nikolaev_d_block_linear_image_filtering/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace nikolaev_d_block_linear_image_filtering {
@@ -40,6 +42,7 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, NikolaevDBlockLinearImageFilteringSEQ, NikolaevDBlockLinearImageFilteringOMP,
+                                NikolaevDBlockLinearImageFilteringTBB, NikolaevDBlockLinearImageFilteringSTL,
                                 NikolaevDBlockLinearImageFilteringALL>(
         PPC_SETTINGS_nikolaev_d_block_linear_image_filtering);
 
