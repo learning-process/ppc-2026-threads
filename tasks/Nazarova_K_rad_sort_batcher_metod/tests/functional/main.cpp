@@ -8,9 +8,11 @@
 #include <utility>
 #include <vector>
 
+#include "Nazarova_K_rad_sort_batcher_metod/all/include/ops_all.hpp"
 #include "Nazarova_K_rad_sort_batcher_metod/common/include/common.hpp"
 #include "Nazarova_K_rad_sort_batcher_metod/omp/include/ops_omp.hpp"
 #include "Nazarova_K_rad_sort_batcher_metod/seq/include/ops_seq.hpp"
+#include "Nazarova_K_rad_sort_batcher_metod/stl/include/ops_stl.hpp"
 #include "Nazarova_K_rad_sort_batcher_metod/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -99,10 +101,15 @@ const auto kOmpTestTasksList = ppc::util::AddFuncTask<NazarovaKCalcIntegRectangl
     kTestParam, PPC_SETTINGS_Nazarova_K_rad_sort_batcher_metod);
 const auto kTbbTestTasksList = ppc::util::AddFuncTask<NazarovaKCalcIntegRectanglesTBB, InType>(
     kTestParam, PPC_SETTINGS_Nazarova_K_rad_sort_batcher_metod);
+const auto kStlTestTasksList = ppc::util::AddFuncTask<NazarovaKCalcIntegRectanglesSTL, InType>(
+    kTestParam, PPC_SETTINGS_Nazarova_K_rad_sort_batcher_metod);
 const auto kTestTasksList = ppc::util::AddFuncTask<NazarovaKCalcIntegRectanglesSEQ, InType>(
     kTestParam, PPC_SETTINGS_Nazarova_K_rad_sort_batcher_metod);
+const auto kAllTestTasksList = ppc::util::AddFuncTask<NazarovaKCalcIntegRectanglesALL, InType>(
+    kTestParam, PPC_SETTINGS_Nazarova_K_rad_sort_batcher_metod);
 
-const auto kAllTestTasks = std::tuple_cat(kOmpTestTasksList, kTestTasksList, kTbbTestTasksList);
+const auto kAllTestTasks =
+    std::tuple_cat(kOmpTestTasksList, kTestTasksList, kTbbTestTasksList, kStlTestTasksList, kAllTestTasksList);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kAllTestTasks);
 
