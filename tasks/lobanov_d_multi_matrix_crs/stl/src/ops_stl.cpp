@@ -6,12 +6,63 @@
 #include <utility>
 #include <vector>
 
+#include "lobanov_d_multi_matrix_crs/common/include/common.hpp"
 #include "util/include/util.hpp"
 
 namespace lobanov_d_multi_matrix_crs {
 
 namespace {
 constexpr double kEpsilon = 1e-15;
+
+CompressedRowMatrix TransposeMatrix(const CompressedRowMatrix &matrix) {
+  CompressedRowMatrix result;
+  result.row_count = matrix.column_count;
+  result.column_count = matrix.row_count;
+  result.row_pointer_data.assign(result.row_count + 1, 0);
+
+  for (int col : matrix.column_index_data) {
+    result.row_pointer_data[col + 1]++;
+  }
+  for (int i = 0; i < result.row_count; ++i) {
+    result.row_pointer_data[i + 1] += result.row_pointer_data[i];
+  }
+
+  result.value_data.resize(matrix.value_data.size());
+  result.column_index_data.resize(matrix.column_index_data.size());
+
+  std::vector<int> current_pos = result.row_pointer_data;
+  for (int i = 0; i < matrix.row_count; ++i) {
+    for (int j = matrix.row_pointer_data[i]; j < matrix.row_pointer_data[i + 1]; ++j) {
+      int col = matrix.column_index_data[j];
+      int dest = current_pos[col]++;
+      result.value_data[dest] = matrix.value_data[j];
+      result.column_index_data[dest] = i;
+    }
+  }
+  return result;
+}
+
+double DotProduct(const CompressedRowMatrix &a, int row_a, const CompressedRowMatrix &bt, int row_bt) {
+  double sum = 0.0;
+  int pa = a.row_pointer_data[row_a];
+  int pb = bt.row_pointer_data[row_bt];
+  const int ea = a.row_pointer_data[row_a + 1];
+  const int eb = bt.row_pointer_data[row_bt + 1];
+
+  while (pa < ea && pb < eb) {
+    if (a.column_index_data[pa] == bt.column_index_data[pb]) {
+      sum += a.value_data[pa] * bt.value_data[pb];
+      ++pa;
+      ++pb;
+    } else if (a.column_index_data[pa] < bt.column_index_data[pb]) {
+      ++pa;
+    } else {
+      ++pb;
+    }
+  }
+  return sum;
+}
+
 }  // namespace
 
 LobanovMultyMatrixSTL::LobanovMultyMatrixSTL(const InType &in) {
@@ -31,7 +82,7 @@ bool LobanovMultyMatrixSTL::PreProcessingImpl() {
 }
 
 void LobanovMultyMatrixSTL::SortIndices(std::vector<int> &vec) {
-  std::ranges::sort(vec);  // Используйте ranges::sort
+  std::ranges::sort(vec);
 }
 
 CompressedRowMatrix LobanovMultyMatrixSTL::MultiplyMatrices(const CompressedRowMatrix &a,
@@ -41,33 +92,8 @@ CompressedRowMatrix LobanovMultyMatrixSTL::MultiplyMatrices(const CompressedRowM
   result.column_count = b.column_count;
   result.row_pointer_data.assign(a.row_count + 1, 0);
 
-  // Транспонирование b
-  CompressedRowMatrix bt;
-  bt.row_count = b.column_count;
-  bt.column_count = b.row_count;
-  bt.row_pointer_data.assign(bt.row_count + 1, 0);
+  CompressedRowMatrix bt = TransposeMatrix(b);
 
-  for (int col : b.column_index_data) {
-    bt.row_pointer_data[col + 1]++;
-  }
-  for (int i = 0; i < bt.row_count; ++i) {
-    bt.row_pointer_data[i + 1] += bt.row_pointer_data[i];
-  }
-
-  bt.value_data.resize(b.value_data.size());
-  bt.column_index_data.resize(b.column_index_data.size());
-
-  std::vector<int> current_pos = bt.row_pointer_data;
-  for (int i = 0; i < b.row_count; ++i) {
-    for (int j = b.row_pointer_data[i]; j < b.row_pointer_data[i + 1]; ++j) {
-      int col = b.column_index_data[j];
-      int dest = current_pos[col]++;
-      bt.value_data[dest] = b.value_data[j];
-      bt.column_index_data[dest] = i;
-    }
-  }
-
-  // Временные хранилища для результата
   std::vector<std::vector<double>> temp_values(a.row_count);
   std::vector<std::vector<int>> temp_cols(a.row_count);
 
@@ -78,26 +104,11 @@ CompressedRowMatrix LobanovMultyMatrixSTL::MultiplyMatrices(const CompressedRowM
     for (int i = start_row; i < end_row; ++i) {
       std::vector<double> vals;
       std::vector<int> cols;
+      vals.reserve(bt.row_count / 10);
+      cols.reserve(bt.row_count / 10);
 
       for (int j = 0; j < bt.row_count; ++j) {
-        double sum = 0.0;
-        int pa = a.row_pointer_data[i];
-        int pb = bt.row_pointer_data[j];
-        const int ea = a.row_pointer_data[i + 1];
-        const int eb = bt.row_pointer_data[j + 1];
-
-        while (pa < ea && pb < eb) {
-          if (a.column_index_data[pa] == bt.column_index_data[pb]) {
-            sum += a.value_data[pa] * bt.value_data[pb];
-            ++pa;
-            ++pb;
-          } else if (a.column_index_data[pa] < bt.column_index_data[pb]) {
-            ++pa;
-          } else {
-            ++pb;
-          }
-        }
-
+        double sum = DotProduct(a, i, bt, j);
         if (std::abs(sum) > kEpsilon) {
           vals.push_back(sum);
           cols.push_back(j);
@@ -124,7 +135,6 @@ CompressedRowMatrix LobanovMultyMatrixSTL::MultiplyMatrices(const CompressedRowM
     thread.join();
   }
 
-  // Сборка результата
   for (int i = 0; i < a.row_count; ++i) {
     result.row_pointer_data[i + 1] = result.row_pointer_data[i] + static_cast<int>(temp_values[i].size());
   }
