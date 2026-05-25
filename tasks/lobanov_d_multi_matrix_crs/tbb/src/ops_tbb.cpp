@@ -8,26 +8,14 @@
 #include <utility>
 #include <vector>
 
+#include "lobanov_d_multi_matrix_crs/common/include/common.hpp"
+
 namespace lobanov_d_multi_matrix_crs {
 
-LobanovMultyMatrixTBB::LobanovMultyMatrixTBB(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-}
+namespace {
 
-bool LobanovMultyMatrixTBB::ValidationImpl() {
-  const auto &a = std::get<0>(GetInput());
-  const auto &b = std::get<1>(GetInput());
-  return a.column_count == b.row_count && a.row_count > 0 && b.column_count > 0;
-}
-
-bool LobanovMultyMatrixTBB::PreProcessingImpl() {
-  GetOutput() = {};
-  return true;
-}
-
-static void ProcessRow(const CompressedRowMatrix &a, const CompressedRowMatrix &b, int row_idx,
-                       std::vector<std::pair<int, double>> &row_pairs) {
+void ProcessRow(const CompressedRowMatrix &a, const CompressedRowMatrix &b, int row_idx,
+                std::vector<std::pair<int, double>> &row_pairs) {
   row_pairs.clear();
 
   for (int pos_a = a.row_pointer_data[row_idx]; pos_a < a.row_pointer_data[row_idx + 1]; ++pos_a) {
@@ -42,7 +30,7 @@ static void ProcessRow(const CompressedRowMatrix &a, const CompressedRowMatrix &
   }
 }
 
-static void MergeRowPairs(std::vector<std::pair<int, double>> &row_pairs) {
+void MergeRowPairs(std::vector<std::pair<int, double>> &row_pairs) {
   if (row_pairs.empty()) {
     return;
   }
@@ -69,6 +57,24 @@ static void MergeRowPairs(std::vector<std::pair<int, double>> &row_pairs) {
   }
 
   row_pairs = std::move(merged);
+}
+
+}  // namespace
+
+LobanovMultyMatrixTBB::LobanovMultyMatrixTBB(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+}
+
+bool LobanovMultyMatrixTBB::ValidationImpl() {
+  const auto &a = std::get<0>(GetInput());
+  const auto &b = std::get<1>(GetInput());
+  return a.column_count == b.row_count && a.row_count > 0 && b.column_count > 0;
+}
+
+bool LobanovMultyMatrixTBB::PreProcessingImpl() {
+  GetOutput() = {};
+  return true;
 }
 
 bool LobanovMultyMatrixTBB::RunImpl() {
