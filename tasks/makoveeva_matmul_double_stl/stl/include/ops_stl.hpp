@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <mutex>
 #include <vector>
 
 #include "makoveeva_matmul_double_stl/common/include/common.hpp"
@@ -27,12 +28,18 @@ class MatmulDoubleSTLTask : public BaseTask {
 
   using BaseTask::GetInput;
   using BaseTask::GetOutput;
-  // hii
+
  private:
-  size_t n_{0};
+  size_t n_ = 0;
   std::vector<double> A_;
   std::vector<double> B_;
   std::vector<double> C_;
+
+  // Вспомогательный метод для простого умножения маленьких матриц
+  bool RunSimpleMultiply();
+
+  // Worker функция для обработки диапазона итераций в отдельном потоке
+  void Worker(size_t start_step, size_t end_step, size_t grid_size, size_t block_size, std::mutex &write_mutex);
 };
 
 }  // namespace makoveeva_matmul_double_stl
