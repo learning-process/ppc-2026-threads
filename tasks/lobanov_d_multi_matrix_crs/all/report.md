@@ -121,7 +121,7 @@ void DistributeSparseMatrix(CompressedRowMatrix& mat, int root, int rows, int co
 | `ValidationImpl()`    | Проверка согласованности размерностей (с `MPI_Bcast` результата)  |
 | `PreProcessingImpl()` | Подготовка к вычислениям (пустая, т.к. вся логика в `RunImpl`)    |
 | `RunImpl()`           | Основная логика: распределение данных, вычисления, сборка         |
-| `PostProcessingImpl()`| Финальная проверка                                                | 
+| `PostProcessingImpl()`| Финальная проверка                                                |
 
 ### 5.2 Вспомогательные функции
 
