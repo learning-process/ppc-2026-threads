@@ -21,7 +21,6 @@ void RadixSortBatcherSTL::SortByDigit(std::vector<int> &data, size_t pos) {
   std::vector<int> freq(k_base, 0);
   std::vector<int> out(data.size());
   bool last = (pos == sizeof(int) - 1ULL);
-
   for (int v : data) {
     int bv = (v >> (pos * 8ULL)) & 0xFF;
     if (last) {
@@ -77,8 +76,6 @@ bool RadixSortBatcherSTL::RunImpl() {
   int chunk = (n + nthreads - 1) / nthreads;
 
   std::vector<std::vector<int>> blocks;
-  std::vector<std::thread> workers;
-
   for (int thread_idx = 0; thread_idx < nthreads; ++thread_idx) {
     int lo = thread_idx * chunk;
     int hi = std::min(lo + chunk, n);
@@ -86,7 +83,10 @@ bool RadixSortBatcherSTL::RunImpl() {
       break;
     }
     blocks.emplace_back(GetInput().begin() + lo, GetInput().begin() + hi);
-    int block_idx = static_cast<int>(blocks.size()) - 1;
+  }
+
+  std::vector<std::thread> workers;
+  for (int block_idx = 0; block_idx < static_cast<int>(blocks.size()); ++block_idx) {
     workers.emplace_back([&blocks, block_idx]() {
       for (size_t pos_idx = 0; pos_idx < sizeof(int); ++pos_idx) {
         SortByDigit(blocks[block_idx], pos_idx);
@@ -101,7 +101,6 @@ bool RadixSortBatcherSTL::RunImpl() {
     std::vector<std::vector<int>> merged;
     std::vector<std::thread> mt;
     merged.resize((blocks.size() + 1) / 2);
-
     for (size_t i = 0; i + 1 < blocks.size(); i += 2) {
       mt.emplace_back([&blocks, &merged, i]() { merged[i / 2] = OddEvenMerge(blocks[i], blocks[i + 1]); });
     }
