@@ -4,9 +4,11 @@
 #include <cstdint>
 #include <random>
 
+#include "lopatin_a_sobel_operator/all/include/ops_all.hpp"
 #include "lopatin_a_sobel_operator/common/include/common.hpp"
 #include "lopatin_a_sobel_operator/omp/include/ops_omp.hpp"
 #include "lopatin_a_sobel_operator/seq/include/ops_seq.hpp"
+#include "lopatin_a_sobel_operator/stl/include/ops_stl.hpp"
 #include "lopatin_a_sobel_operator/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -52,7 +54,8 @@ TEST_P(LopatinARunPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, LopatinASobelOperatorSEQ, LopatinASobelOperatorOMP, LopatinASobelOperatorTBB>(
+    ppc::util::MakeAllPerfTasks<InType, LopatinASobelOperatorSEQ, LopatinASobelOperatorOMP, LopatinASobelOperatorTBB,
+                                LopatinASobelOperatorSTL, LopatinASobelOperatorALL>(
         PPC_SETTINGS_lopatin_a_sobel_operator);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

@@ -45,10 +45,8 @@ bool IvanovaPMarkingComponentsOnBinaryImageOMP::PreProcessingImpl() {
     }
     input_image_ = LoadImageFromTxt(filename);
   } else {
-    // Функциональные тесты создают изображения размера 100x100.
-    const int width = 100;
-    const int height = 100;
-    input_image_ = CreateTestImage(width, height, test_case);
+    int size = ExtractImageSize(test_case);
+    input_image_ = CreateTestImage(size, size, test_case);
   }
 
   if (input_image_.width <= 0 || input_image_.height <= 0 || input_image_.data.empty()) {
@@ -72,97 +70,109 @@ bool IvanovaPMarkingComponentsOnBinaryImageOMP::PreProcessingImpl() {
 }
 
 int IvanovaPMarkingComponentsOnBinaryImageOMP::FindRoot(int i) {
-  while (parent_[i] != i) {
-    parent_[i] = parent_[parent_[i]];
-    i = parent_[i];
+  int root = i;
+  while (parent_[root] != root) {
+    root = parent_[root];
   }
-  return i;
+  return root;
 }
 
 void IvanovaPMarkingComponentsOnBinaryImageOMP::UnionLabels(int i, int j) {
-  int r_i = FindRoot(i);
-  int r_j = FindRoot(j);
-  if (r_i == r_j) {
-    return;  // Быстрый выход без блокировки
-  }
-
+  // Убран вызов FindRoot вне критической секции во избежание Data Race
+  // при одновременном чтении и записи в массив parent_.
 #pragma omp critical(dsu_union)
   {
-    // Повторная проверка внутри блокировки (на случай, если за это время корень изменился)
-    r_i = FindRoot(i);
-    r_j = FindRoot(j);
-    if (r_i != r_j) {
-      if (r_i < r_j) {
-        parent_[r_j] = r_i;
+    int root_i = FindRoot(i);
+    int root_j = FindRoot(j);
+    if (root_i != root_j) {
+      if (root_i < root_j) {
+        parent_[root_j] = root_i;
       } else {
-        parent_[r_i] = r_j;
+        parent_[root_i] = root_j;
       }
     }
   }
 }
 
 void IvanovaPMarkingComponentsOnBinaryImageOMP::InitLabelsOmp(int total_pixels, int n_threads) {
-#pragma omp parallel for default(none) shared(total_pixels) num_threads(n_threads)
+  // Локальные копии для решения проблем с default(none)
+  auto &labels = labels_;
+  auto &input_image = input_image_;
+
+#pragma omp parallel for default(none) shared(total_pixels, labels, input_image) num_threads(n_threads)
   for (int i = 0; i < total_pixels; ++i) {
-    if (input_image_.data[i] != 0) {
-      labels_[i] = i + 1;
+    if (input_image.data[i] != 0) {
+      labels[i] = i + 1;
     }
   }
 }
 
 void IvanovaPMarkingComponentsOnBinaryImageOMP::MergeHorizontalPairsOmp(int n_threads) {
-#pragma omp parallel for default(none) shared(n_threads) num_threads(n_threads)
-  for (int yy = 0; yy < height_; ++yy) {
-    for (int xx = 0; xx < width_ - 1; ++xx) {
-      const int idx = (yy * width_) + xx;
-      const int cur_label = labels_[idx];
-      if (cur_label == 0) {
-        continue;
-      }
+  // Локальные копии для MSVC
+  int w = width_;
+  int h = height_;
+  auto &labels = labels_;
+  auto *self = this;  // Локальный указатель на объект
 
-      const int right_label = labels_[idx + 1];
-      if (right_label != 0) {
-        UnionLabels(cur_label, right_label);
+#pragma omp parallel for default(none) shared(w, h, labels, self, n_threads) num_threads(n_threads)
+  for (int yy = 0; yy < h; ++yy) {
+    for (int xx = 0; xx < w - 1; ++xx) {
+      const int idx = (yy * w) + xx;
+      const int cur_label = labels[idx];
+      if (cur_label != 0) {
+        const int right_label = labels[idx + 1];
+        if (right_label != 0) {
+          self->UnionLabels(cur_label, right_label);
+        }
       }
     }
   }
 }
 
 void IvanovaPMarkingComponentsOnBinaryImageOMP::MergeVerticalPairsOmp(int n_threads) {
-#pragma omp parallel for default(none) shared(n_threads) num_threads(n_threads)
-  for (int yy = 0; yy < height_ - 1; ++yy) {
-    for (int xx = 0; xx < width_; ++xx) {
-      const int idx = (yy * width_) + xx;
-      const int cur_label = labels_[idx];
-      if (cur_label == 0) {
-        continue;
-      }
+  // Локальные переменные для MSVC
+  int w = width_;
+  int h = height_;
+  auto &labels = labels_;
+  auto *self = this;
 
-      const int bottom_label = labels_[idx + width_];
-      if (bottom_label != 0) {
-        UnionLabels(cur_label, bottom_label);
+#pragma omp parallel for default(none) shared(w, h, labels, self, n_threads) num_threads(n_threads)
+  for (int yy = 0; yy < h - 1; ++yy) {
+    for (int xx = 0; xx < w; ++xx) {
+      const int idx = (yy * w) + xx;
+      const int cur_label = labels[idx];
+
+      if (cur_label != 0) {
+        const int bottom_label = labels[idx + w];
+        if (bottom_label != 0) {
+          self->UnionLabels(cur_label, bottom_label);
+        }
       }
     }
   }
 }
 
 void IvanovaPMarkingComponentsOnBinaryImageOMP::FinalizeRootsOmp(int total_pixels, int n_threads) {
-#pragma omp parallel for default(none) shared(total_pixels) num_threads(n_threads)
+  auto &labels = labels_;
+  auto *self = this;
+
+#pragma omp parallel for default(none) shared(total_pixels, labels, self, n_threads) num_threads(n_threads)
   for (int i = 0; i < total_pixels; ++i) {
-    if (labels_[i] != 0) {
-      labels_[i] = FindRoot(labels_[i]);
+    if (labels[i] != 0) {
+      labels[i] = self->FindRoot(labels[i]);
     }
   }
 }
 
 void IvanovaPMarkingComponentsOnBinaryImageOMP::NormalizeLabelsOmp(int total_pixels, int n_threads) {
-  // Создаем временный массив для пометки используемых корней
   std::vector<uint8_t> is_root_used(total_pixels + 1, 0);
+  auto &labels = labels_;
 
-#pragma omp parallel for default(none) shared(total_pixels, is_root_used) num_threads(n_threads)
+  // Убрали #pragma omp parallel for, чтобы не было гонки данных
+  // при множественной записи в массив is_root_used
   for (int i = 0; i < total_pixels; ++i) {
-    if (labels_[i] != 0) {
-      is_root_used[labels_[i]] = 1;  // Помечаем, что этот корень реально существует
+    if (labels[i] != 0) {
+      is_root_used[labels[i]] = 1;
     }
   }
 
@@ -176,11 +186,11 @@ void IvanovaPMarkingComponentsOnBinaryImageOMP::NormalizeLabelsOmp(int total_pix
   }
   current_label_ = next_id - 1;
 
-  // В параллели обновляем метки через маппинг (O(1) доступ вместо lower_bound)
-#pragma omp parallel for default(none) shared(total_pixels, mapping) num_threads(n_threads)
+  // В параллели обновляем метки через маппинг
+#pragma omp parallel for default(none) shared(total_pixels, mapping, labels) num_threads(n_threads)
   for (int i = 0; i < total_pixels; ++i) {
-    if (labels_[i] != 0) {
-      labels_[i] = mapping[labels_[i]];
+    if (labels[i] != 0) {
+      labels[i] = mapping[labels[i]];
     }
   }
 }

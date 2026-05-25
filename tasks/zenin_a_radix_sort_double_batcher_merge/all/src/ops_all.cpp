@@ -1,19 +1,15 @@
 #include "zenin_a_radix_sort_double_batcher_merge/all/include/ops_all.hpp"
 
 #include <mpi.h>
-#include <omp.h>
-#include <tbb/parallel_for.h>
+#include <tbb/parallel_invoke.h>
 
 #include <algorithm>
-#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <limits>
-#include <thread>
 #include <vector>
 
-#include "util/include/util.hpp"
 #include "zenin_a_radix_sort_double_batcher_merge/common/include/common.hpp"
 
 namespace zenin_a_radix_sort_double_batcher_merge {
@@ -28,12 +24,14 @@ bool ZeninARadixSortDoubleBatcherMergeALL::ValidationImpl() {
   return true;
 }
 bool ZeninARadixSortDoubleBatcherMergeALL::PreProcessingImpl() {
-  return true;
-}
-bool ZeninARadixSortDoubleBatcherMergeALL::PostProcessingImpl() {
+  local_data_ = GetInput();
   return true;
 }
 
+bool ZeninARadixSortDoubleBatcherMergeALL::PostProcessingImpl() {
+  GetOutput() = local_data_;
+  return true;
+}
 uint64_t ZeninARadixSortDoubleBatcherMergeALL::PackDouble(double v) noexcept {
   uint64_t bits = 0ULL;
   std::memcpy(&bits, &v, sizeof(bits));
@@ -126,94 +124,96 @@ void ZeninARadixSortDoubleBatcherMergeALL::BatcherOddEvenMerge(std::vector<doubl
   }
 }
 
-void ZeninARadixSortDoubleBatcherMergeALL::BatcherMergeSort(std::vector<double> &arr) {
-  size_t n = arr.size();
-  if (n <= 1) {
-    return;
-  }
-
-  size_t pow2 = 1;
-  while (pow2 < n) {
-    pow2 <<= 1;
-  }
-  arr.resize(pow2, std::numeric_limits<double>::max());
-
-  size_t half = pow2 / 2;
-  std::vector<double> left(arr.begin(), arr.begin() + static_cast<std::ptrdiff_t>(half));
-  std::vector<double> right(arr.begin() + static_cast<std::ptrdiff_t>(half), arr.end());
-
-  LSDRadixSort(left);
-  LSDRadixSort(right);
-
-  std::ranges::copy(left, arr.begin());
-  std::ranges::copy(right, arr.begin() + static_cast<std::ptrdiff_t>(half));
-
-  BatcherOddEvenMerge(arr, pow2);
-  arr.resize(n);
-}
-
-namespace {
-
-void RunDummyLinkageChecks(int num_threads) {
-  int dummy = 1;
-  dummy *= num_threads;
-
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  if (rank == 0) {
-    std::atomic<int> counter(0);
-#pragma omp parallel default(none) shared(counter) num_threads(num_threads)
-    {
-      counter++;
-    }
-    dummy /= (counter > 0 ? counter.load() : 1);
+void ZeninARadixSortDoubleBatcherMergeALL::SortChunk(std::vector<double> &chunk, size_t chunk_size) {
+  size_t half = chunk_size / 2;
+  if (half > 0) {
+    std::vector<double> left(chunk.begin(), chunk.begin() + static_cast<std::ptrdiff_t>(half));
+    std::vector<double> right(chunk.begin() + static_cast<std::ptrdiff_t>(half), chunk.end());
+    tbb::parallel_invoke([&]() { LSDRadixSort(left); }, [&]() { LSDRadixSort(right); });
+    std::ranges::copy(left, chunk.begin());
+    std::ranges::copy(right, chunk.begin() + static_cast<std::ptrdiff_t>(half));
+    BatcherOddEvenMerge(chunk, chunk_size);
   } else {
-    dummy /= num_threads;
+    LSDRadixSort(chunk);
   }
-
-  {
-    dummy *= num_threads;
-    std::vector<std::thread> threads(num_threads);
-    std::atomic<int> counter(0);
-    for (int ti = 0; ti < num_threads; ti++) {
-      threads[ti] = std::thread([&]() { counter++; });
-    }
-    for (auto &th : threads) {
-      th.join();
-    }
-    dummy /= (counter > 0 ? counter.load() : 1);
-  }
-
-  {
-    dummy *= num_threads;
-    std::atomic<int> counter(0);
-    tbb::parallel_for(0, num_threads, [&](int /*i*/) { counter++; });
-    dummy /= (counter > 0 ? counter.load() : 1);
-  }
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  (void)dummy;
 }
 
-}  // namespace
+void ZeninARadixSortDoubleBatcherMergeALL::FinalMerge(size_t chunk_size, size_t pow2, size_t original_size) {
+  for (size_t size = chunk_size; size < pow2; size *= 2) {
+    size_t merges_count = pow2 / (size * 2);
+    for (size_t i = 0; i < merges_count; ++i) {
+      size_t lo = i * 2 * size;
+      std::vector<double> block(local_data_.begin() + static_cast<std::ptrdiff_t>(lo),
+                                local_data_.begin() + static_cast<std::ptrdiff_t>(lo + (2 * size)));
+      BatcherOddEvenMerge(block, (2 * size));
+      std::ranges::copy(block, local_data_.begin() + static_cast<std::ptrdiff_t>(lo));
+    }
+  }
+  local_data_.resize(original_size);
+}
 
 bool ZeninARadixSortDoubleBatcherMergeALL::RunImpl() {
-  auto data = GetInput();
-  if (data.empty()) {
-    GetOutput() = data;
+  int rank = 0;
+  int num_procs = 1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+
+  size_t original_size = 0;
+  if (rank == 0) {
+    original_size = local_data_.size();
+  }
+  MPI_Bcast(&original_size, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+
+  if (original_size == 0) {
     return true;
   }
 
-  int num_threads = ppc::util::GetNumThreads();
-  if (num_threads <= 0) {
-    num_threads = 1;
+  bool procs_is_pow2 = (num_procs > 1) && ((num_procs & (num_procs - 1)) == 0);
+
+  if (!procs_is_pow2) {
+    if (rank == 0) {
+      LSDRadixSort(local_data_);
+    }
+    if (rank != 0) {
+      local_data_.resize(original_size);
+    }
+    MPI_Bcast(local_data_.data(), static_cast<int>(original_size), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    return true;
   }
 
-  BatcherMergeSort(data);
+  size_t pow2 = 1;
+  while (pow2 < original_size) {
+    pow2 <<= 1;
+  }
+  while (pow2 % static_cast<size_t>(num_procs) != 0) {
+    pow2 <<= 1;
+  }
+  MPI_Bcast(&pow2, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
 
-  RunDummyLinkageChecks(num_threads);
+  if (rank == 0) {
+    local_data_.resize(pow2, std::numeric_limits<double>::max());
+  }
 
-  GetOutput() = data;
+  size_t chunk_size = pow2 / static_cast<size_t>(num_procs);
+  std::vector<double> chunk(chunk_size);
+
+  MPI_Scatter(local_data_.data(), static_cast<int>(chunk_size), MPI_DOUBLE, chunk.data(), static_cast<int>(chunk_size),
+              MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  SortChunk(chunk, chunk_size);
+
+  MPI_Gather(chunk.data(), static_cast<int>(chunk_size), MPI_DOUBLE, local_data_.data(), static_cast<int>(chunk_size),
+             MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    FinalMerge(chunk_size, pow2, original_size);
+  }
+
+  if (rank != 0) {
+    local_data_.resize(original_size);
+  }
+  MPI_Bcast(local_data_.data(), static_cast<int>(original_size), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
   return true;
 }
 

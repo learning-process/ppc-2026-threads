@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "muhammadkhon_i_stressen_alg/common/include/common.hpp"
+#include "muhammadkhon_i_stressen_alg/omp/include/ops_omp.hpp"
 #include "muhammadkhon_i_stressen_alg/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -87,8 +88,9 @@ const std::array<TestType, 6> kTestParam = {
     std::make_tuple(15, 5, 15, 150, "MediumPadded"), std::make_tuple(16, 16, 16, 150, "MediumPowerOfTwo_16x16"),
     std::make_tuple(63, 63, 63, 300, "LargePadded"), std::make_tuple(64, 64, 64, 300, "LargePowerOfTwo_64x64")};
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<MuhammadkhonIStressenAlgSEQ, InType>(kTestParam, PPC_SETTINGS_muhammadkhon_i_stressen_alg);
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<MuhammadkhonIStressenAlgSEQ, InType>(kTestParam, PPC_SETTINGS_muhammadkhon_i_stressen_alg),
+    ppc::util::AddFuncTask<MuhammadkhonIStressenAlgOMP, InType>(kTestParam, PPC_SETTINGS_muhammadkhon_i_stressen_alg));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
