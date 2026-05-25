@@ -1,11 +1,14 @@
 #include "nalitov_d_dijkstras_algorithm/stl/include/ops_stl.hpp"
 
 #include <algorithm>
+#include <atomic>
+#include <barrier>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
-#include <mutex>
+#include <memory>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "nalitov_d_dijkstras_algorithm/common/include/common.hpp"
@@ -81,12 +84,10 @@ void NalitovDDijkstrasAlgorithmSTL::StopWorkers() {
   if (!pool_active_) {
     return;
   }
-  {
-    std::scoped_lock<std::mutex> hold(sync_);
-    mode_ = WorkMode::kShutdown;
-    ++epoch_;
-    go_.notify_all();
-  }
+  shutdown_.store(true, std::memory_order_release);
+  mode_.store(WorkMode::kShutdown, std::memory_order_release);
+  bar_start_->arrive_and_wait();
+
   for (std::thread &t : pool_) {
     if (t.joinable()) {
       t.join();
@@ -98,19 +99,28 @@ void NalitovDDijkstrasAlgorithmSTL::StopWorkers() {
 
 void NalitovDDijkstrasAlgorithmSTL::PartitionScanBest(int slot) {
   const int n = GetInput().n;
+  const auto n_u = static_cast<std::size_t>(n);
+  const auto slots_u = static_cast<std::size_t>(worker_slots_);
+  const auto slot_u = static_cast<std::size_t>(slot);
+
+  const std::size_t chunk = n_u / slots_u;
+  const std::size_t rem = n_u % slots_u;
+  const std::size_t lo = (slot_u * chunk) + std::min(slot_u, rem);
+  const std::size_t hi = lo + chunk + (slot_u < rem ? 1U : 0U);
+
   Cost best_c = kInf;
   NodeId best_i = -1;
-  for (int vid = slot; vid < n; vid += worker_slots_) {
-    if (visited_[static_cast<std::size_t>(vid)] != 0) {
+  for (std::size_t vid = lo; vid < hi; ++vid) {
+    if (visited_[vid] != 0) {
       continue;
     }
-    const Cost d = dist_[static_cast<std::size_t>(vid)];
-    if (d < best_c || (d == best_c && (best_i == -1 || vid < best_i))) {
+    const Cost d = dist_[vid];
+    if (d < best_c || (d == best_c && (best_i == -1 || std::cmp_less(vid, best_i)))) {
       best_c = d;
       best_i = static_cast<NodeId>(vid);
     }
   }
-  shard_results_[static_cast<std::size_t>(slot)] = ShardResult{.cost = best_c, .id = best_i};
+  shard_results_[slot_u] = ShardResult{.cost = best_c, .id = best_i};
 }
 
 void NalitovDDijkstrasAlgorithmSTL::PartitionPushDist(int slot) {
@@ -120,8 +130,11 @@ void NalitovDDijkstrasAlgorithmSTL::PartitionPushDist(int slot) {
   if (m == 0) {
     return;
   }
-  const std::size_t lo = (static_cast<std::size_t>(slot) * m) / static_cast<std::size_t>(worker_slots_);
-  const std::size_t hi = ((static_cast<std::size_t>(slot) + 1U) * m) / static_cast<std::size_t>(worker_slots_);
+
+  const auto slot_u = static_cast<std::size_t>(slot);
+  const auto slots_u = static_cast<std::size_t>(worker_slots_);
+  const std::size_t lo = (slot_u * m) / slots_u;
+  const std::size_t hi = ((slot_u + 1U) * m) / slots_u;
 
   const Cost anchor = dist_[hub];
   if (anchor == kInf) {
@@ -131,56 +144,44 @@ void NalitovDDijkstrasAlgorithmSTL::PartitionPushDist(int slot) {
   for (std::size_t j = lo; j < hi; ++j) {
     const NodeId tgt = bundle[j].first;
     const Cost w = bundle[j].second;
-    if (visited_[static_cast<std::size_t>(tgt)] != 0) {
+    const auto tgt_u = static_cast<std::size_t>(tgt);
+
+    if (visited_[tgt_u] != 0) {
       continue;
     }
     if (anchor > kInf - w) {
       continue;
     }
     const Cost cand = anchor + w;
-    const std::size_t stripe = static_cast<std::size_t>(tgt) % kDistLockStripes;
-    std::scoped_lock<std::mutex> hold(dist_stripes_.at(stripe));
-    dist_[static_cast<std::size_t>(tgt)] = std::min(dist_[static_cast<std::size_t>(tgt)], cand);
-  }
-}
 
-void NalitovDDijkstrasAlgorithmSTL::WorkerBody(int slot) {
-  int seen = 0;
-  for (;;) {
-    WorkMode job = WorkMode::kParked;
-    {
-      std::unique_lock<std::mutex> hold(sync_);
-      go_.wait(hold, [&] { return epoch_ > seen; });
-      seen = epoch_;
-      job = mode_;
-    }
-    if (job == WorkMode::kShutdown) {
-      return;
-    }
-    if (job == WorkMode::kScanBest) {
-      PartitionScanBest(slot);
-    } else if (job == WorkMode::kPushDist) {
-      PartitionPushDist(slot);
-    }
-    {
-      std::scoped_lock<std::mutex> hold(sync_);
-      if (--unfinished_ == 0) {
-        settled_.notify_one();
+    std::atomic_ref<Cost> ref(dist_[tgt_u]);
+    Cost old_val = ref.load(std::memory_order_relaxed);
+    while (cand < old_val) {
+      if (ref.compare_exchange_weak(old_val, cand, std::memory_order_relaxed)) {
+        break;
       }
     }
   }
 }
 
-void NalitovDDijkstrasAlgorithmSTL::LaunchBarrier(WorkMode mode) {
-  {
-    std::scoped_lock<std::mutex> hold(sync_);
-    mode_ = mode;
-    unfinished_ = worker_slots_;
-    ++epoch_;
-    go_.notify_all();
+void NalitovDDijkstrasAlgorithmSTL::WorkerBody(int slot) {
+  for (;;) {
+    bar_start_->arrive_and_wait();
+
+    if (shutdown_.load(std::memory_order_acquire)) {
+      return;
+    }
+
+    const WorkMode job = mode_.load(std::memory_order_acquire);
+
+    if (job == WorkMode::kScanBest) {
+      PartitionScanBest(slot);
+    } else if (job == WorkMode::kPushDist) {
+      PartitionPushDist(slot);
+    }
+
+    bar_done_->arrive_and_wait();
   }
-  std::unique_lock<std::mutex> hold(sync_);
-  settled_.wait(hold, [&] { return unfinished_ == 0; });
 }
 
 bool NalitovDDijkstrasAlgorithmSTL::ValidationImpl() {
@@ -215,9 +216,12 @@ bool NalitovDDijkstrasAlgorithmSTL::PreProcessingImpl() {
   worker_slots_ = std::max(1, ppc::util::GetNumThreads());
   shard_results_.assign(static_cast<std::size_t>(worker_slots_), ShardResult{});
 
-  epoch_ = 0;
-  unfinished_ = 0;
-  mode_ = WorkMode::kParked;
+  shutdown_.store(false, std::memory_order_relaxed);
+  mode_.store(WorkMode::kParked, std::memory_order_relaxed);
+
+  const int total_parties = worker_slots_ + 1;
+  bar_start_ = std::make_unique<std::barrier<>>(total_parties);
+  bar_done_ = std::make_unique<std::barrier<>>(total_parties);
 
   pool_.resize(static_cast<std::size_t>(worker_slots_));
   for (int thread_idx = 0; thread_idx < worker_slots_; ++thread_idx) {
@@ -239,7 +243,10 @@ bool NalitovDDijkstrasAlgorithmSTL::RunImpl() {
   }
 
   for (int step = 0; step < in.n; ++step) {
-    LaunchBarrier(WorkMode::kScanBest);
+    mode_.store(WorkMode::kScanBest, std::memory_order_release);
+    bar_start_->arrive_and_wait();
+    bar_done_->arrive_and_wait();
+
     Cost pick_c = kInf;
     NodeId pick_v = -1;
     if (!ReduceShardResults(shard_results_, worker_slots_, &pick_c, &pick_v)) {
@@ -248,7 +255,9 @@ bool NalitovDDijkstrasAlgorithmSTL::RunImpl() {
     visited_[static_cast<std::size_t>(pick_v)] = 1;
     pivot_ = pick_v;
 
-    LaunchBarrier(WorkMode::kPushDist);
+    mode_.store(WorkMode::kPushDist, std::memory_order_release);
+    bar_start_->arrive_and_wait();
+    bar_done_->arrive_and_wait();
   }
 
   OutType total = 0;
