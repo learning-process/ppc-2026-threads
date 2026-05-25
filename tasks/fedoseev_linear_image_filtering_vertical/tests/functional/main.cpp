@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "fedoseev_linear_image_filtering_vertical/all/include/ops_all.hpp"
 #include "fedoseev_linear_image_filtering_vertical/common/include/common.hpp"
 #include "fedoseev_linear_image_filtering_vertical/omp/include/ops_omp.hpp"
 #include "fedoseev_linear_image_filtering_vertical/seq/include/ops_seq.hpp"
@@ -27,6 +28,7 @@ Image ReferenceFilter(const Image &input) {
   int w = input.width;
   int h = input.height;
   const std::vector<int> &src = input.data;
+
   if (w < 3 || h < 3) {
     return Image{};
   }
@@ -66,15 +68,14 @@ void FillGrad(Image &img, [[maybe_unused]] int size) {
   }
 }
 
-void FillRand(Image &img, [[maybe_unused]] int size) {
-  std::random_device rd;
-  std::mt19937 gen(rd());
+void FillRand(Image &img, int size) {
+  unsigned seed = static_cast<unsigned>(size) * 0x9e3779b9U;
+  std::mt19937 gen(seed);
   std::uniform_int_distribution<int> dist(0, 255);
   for (auto &v : img.data) {
     v = dist(gen);
   }
 }
-
 void FillCheckerboard(Image &img, int size) {
   const int cell = 16;
   for (int row = 0; row < size; ++row) {
@@ -201,11 +202,13 @@ const auto kSeqTasks = ppc::util::AddFuncTask<LinearImageFilteringVerticalSeq, I
     kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
 const auto kOmpTasks = ppc::util::AddFuncTask<LinearImageFilteringVerticalOMP, Image>(
     kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
-const auto kStlTasks = ppc::util::AddFuncTask<LinearImageFilteringVerticalSTL, Image>(
-    kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
 const auto kTbbTasks = ppc::util::AddFuncTask<LinearImageFilteringVerticalTBB, Image>(
     kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
-const auto kTestTasksList = std::tuple_cat(kSeqTasks, kOmpTasks, kTbbTasks, kStlTasks);
+const auto kStlTasks = ppc::util::AddFuncTask<LinearImageFilteringVerticalSTL, Image>(
+    kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
+const auto kAllTasks = ppc::util::AddFuncTask<LinearImageFilteringVerticalAll, Image>(
+    kTestParams, PPC_SETTINGS_fedoseev_linear_image_filtering_vertical);
+const auto kTestTasksList = std::tuple_cat(kSeqTasks, kOmpTasks, kTbbTasks, kStlTasks, kAllTasks);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = FedoseevFuncTest::PrintFuncTestName<FedoseevFuncTest>;
