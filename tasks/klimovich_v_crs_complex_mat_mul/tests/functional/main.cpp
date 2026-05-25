@@ -10,7 +10,9 @@
 #include <vector>
 
 #include "klimovich_v_crs_complex_mat_mul/common/include/common.hpp"
+#include "klimovich_v_crs_complex_mat_mul/omp/include/ops_omp.hpp"
 #include "klimovich_v_crs_complex_mat_mul/seq/include/ops_seq.hpp"
+#include "klimovich_v_crs_complex_mat_mul/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -154,7 +156,11 @@ const std::array<TestType, 10> kTestParams = {
 };
 
 const auto kTaskList = std::tuple_cat(ppc::util::AddFuncTask<KlimovichVCrsComplexMatMulSeq, InType>(
-    kTestParams, PPC_SETTINGS_klimovich_v_crs_complex_mat_mul));
+                                          kTestParams, PPC_SETTINGS_klimovich_v_crs_complex_mat_mul),
+                                      ppc::util::AddFuncTask<KlimovichVCrsComplexMatMulOmp, InType>(
+                                          kTestParams, PPC_SETTINGS_klimovich_v_crs_complex_mat_mul),
+                                      ppc::util::AddFuncTask<KlimovichVCrsComplexMatMulTbb, InType>(
+                                          kTestParams, PPC_SETTINGS_klimovich_v_crs_complex_mat_mul));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTaskList);
 const auto kPerfTestName = KlimovichVCrsComplexFuncTests::PrintFuncTestName<KlimovichVCrsComplexFuncTests>;

@@ -33,6 +33,9 @@ class MatmulDoubleTBBTask : public BaseTask {
   std::vector<double> A_;
   std::vector<double> B_;
   std::vector<double> C_;
+
+  // Вспомогательный метод для простого умножения маленьких матриц
+  bool RunSimpleMultiply();
 };
 
 }  // namespace makoveeva_matmul_double_tbb

@@ -4,10 +4,12 @@
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
+#include "vlasova_a_simpson_method/all/include/ops_all.hpp"
 #include "vlasova_a_simpson_method/common/include/common.hpp"
 #include "vlasova_a_simpson_method/omp/include/ops_omp.hpp"
 #include "vlasova_a_simpson_method/seq/include/ops_seq.hpp"
 #include "vlasova_a_simpson_method/stl/include/ops_stl.hpp"
+#include "vlasova_a_simpson_method/tbb/include/ops_tbb.hpp"
 
 namespace vlasova_a_simpson_method {
 
@@ -24,7 +26,7 @@ class VlasovaASimpsonMethodPerfTests : public ppc::util::BaseRunPerfTests<InType
     std::vector<double> b = {2.0, 2.0, 2.0};
     std::vector<int> n = {200, 200, 200};
 
-    input_data_ = SimpsonTask(Gaussian3D, a, b, n);
+    input_data_ = SimpsonTask(Gaussian3D, a, b, n);  // функция Гаусса на кубе [-2,2]^3 с сеткой 200x200x200
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -45,7 +47,8 @@ TEST_P(VlasovaASimpsonMethodPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, VlasovaASimpsonMethodSEQ, VlasovaASimpsonMethodOMP, VlasovaASimpsonMethodSTL>(
+    ppc::util::MakeAllPerfTasks<InType, VlasovaASimpsonMethodSEQ, VlasovaASimpsonMethodOMP, VlasovaASimpsonMethodTBB,
+                                VlasovaASimpsonMethodSTL, VlasovaASimpsonMethodALL>(
         PPC_SETTINGS_vlasova_a_simpson_method);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
