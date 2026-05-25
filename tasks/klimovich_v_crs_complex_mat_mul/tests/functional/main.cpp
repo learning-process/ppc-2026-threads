@@ -13,7 +13,10 @@
 #include "klimovich_v_crs_complex_mat_mul/common/include/common.hpp"
 #include "klimovich_v_crs_complex_mat_mul/omp/include/ops_omp.hpp"
 #include "klimovich_v_crs_complex_mat_mul/seq/include/ops_seq.hpp"
+<<<<<<< all
 #include "klimovich_v_crs_complex_mat_mul/stl/include/ops_stl.hpp"
+=======
+>>>>>>> master
 #include "klimovich_v_crs_complex_mat_mul/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -162,10 +165,13 @@ const auto kTaskList = std::tuple_cat(ppc::util::AddFuncTask<KlimovichVCrsComple
                                       ppc::util::AddFuncTask<KlimovichVCrsComplexMatMulOmp, InType>(
                                           kTestParams, PPC_SETTINGS_klimovich_v_crs_complex_mat_mul),
                                       ppc::util::AddFuncTask<KlimovichVCrsComplexMatMulTbb, InType>(
+<<<<<<< all
                                           kTestParams, PPC_SETTINGS_klimovich_v_crs_complex_mat_mul),
                                       ppc::util::AddFuncTask<KlimovichVCrsComplexMatMulStl, InType>(
                                           kTestParams, PPC_SETTINGS_klimovich_v_crs_complex_mat_mul),
                                       ppc::util::AddFuncTask<KlimovichVCrsComplexMatMulAll, InType>(
+=======
+>>>>>>> master
                                           kTestParams, PPC_SETTINGS_klimovich_v_crs_complex_mat_mul));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTaskList);
