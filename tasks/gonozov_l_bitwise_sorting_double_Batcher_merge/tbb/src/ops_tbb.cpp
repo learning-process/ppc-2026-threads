@@ -1,16 +1,15 @@
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/tbb/include/ops_tbb.hpp"
 
-#include <oneapi/tbb/blocked_range.h>
 #include <oneapi/tbb/parallel_for.h>
 #include <oneapi/tbb/parallel_invoke.h>
 #include <tbb/tbb.h>
 
 #include <algorithm>
-#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <limits>
+#include <utility>
 #include <vector>
 
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/common/include/common.hpp"
@@ -23,7 +22,7 @@ GonozovLBitSortBatcherMergeTBB::GonozovLBitSortBatcherMergeTBB(const InType &in)
 }
 
 bool GonozovLBitSortBatcherMergeTBB::ValidationImpl() {
-  return !GetInput().empty();  // проверка на то, что исходный массив непустой
+  return !GetInput().empty();
 }
 
 bool GonozovLBitSortBatcherMergeTBB::PreProcessingImpl() {
@@ -31,73 +30,29 @@ bool GonozovLBitSortBatcherMergeTBB::PreProcessingImpl() {
 }
 
 namespace {
+
 /// double -> uint64_t
 uint64_t DoubleToSortableInt(double d) {
   uint64_t bits = 0;
   std::memcpy(&bits, &d, sizeof(double));
-  if ((bits >> 63) != 0) {  // Отрицательное число
-    return ~bits;           // Инвертируем все биты
-  }  // Положительное число или ноль
+  if ((bits >> 63) != 0) {
+    return ~bits;
+  }
   return bits | 0x8000000000000000ULL;
 }
 
-// uint64_t -> double
+/// uint64_t -> double
 double SortableIntToDouble(uint64_t bits) {
-  if ((bits >> 63) != 0) {           // Если старший бит установлен (было положительное)
-    bits &= ~0x8000000000000000ULL;  // Убираем старший бит
-  } else {                           // Если старший бит не установлен (было отрицательное число)
-    bits = ~bits;                    // Инвертируем все биты обратно
+  if ((bits >> 63) != 0) {
+    bits &= ~0x8000000000000000ULL;
+  } else {
+    bits = ~bits;
   }
-
   double result = 0.0;
   std::memcpy(&result, &bits, sizeof(double));
   return result;
 }
 
-void RadixSortDouble(std::vector<double> &data, size_t begin, size_t end) {
-  if (end <= begin + 1) {
-    return;
-  }
-
-  size_t size = end - begin;
-
-  std::vector<uint64_t> keys(size);
-
-  for (size_t i = 0; i < size; ++i) {
-    keys[i] = DoubleToSortableInt(data[begin + i]);
-  }
-
-  constexpr int kRadix = 256;
-
-  std::vector<uint64_t> temp_keys(size);
-
-  for (int pass = 0; pass < 8; ++pass) {
-    std::vector<size_t> count(kRadix, 0);
-
-    int shift = pass * 8;
-
-    for (uint64_t key : keys) {
-      count[(key >> shift) & 0xFF]++;
-    }
-
-    for (int i = 1; i < kRadix; ++i) {
-      count[i] += count[i - 1];
-    }
-
-    for (int i = static_cast<int>(size) - 1; i >= 0; --i) {
-      uint8_t byte = (keys[i] >> shift) & 0xFF;
-      temp_keys[--count[byte]] = keys[i];
-    }
-
-    keys.swap(temp_keys);
-  }
-
-  for (size_t i = 0; i < size; ++i) {
-    data[begin + i] = SortableIntToDouble(keys[i]);
-  }
-}
-
-// Нахождение ближайшей степени двойки, большей или равной n
 size_t NextPowerOfTwo(size_t n) {
   size_t power = 1;
   while (power < n) {
@@ -106,45 +61,103 @@ size_t NextPowerOfTwo(size_t n) {
   return power;
 }
 
+constexpr size_t kRadix = 256;
+
+/// Поразрядная сортировка для vector<double> (работает с копией)
+void RadixSortDouble(std::vector<double> &data) {
+  if (data.empty()) {
+    return;
+  }
+
+  std::vector<uint64_t> keys(data.size());
+  for (size_t i = 0; i < data.size(); ++i) {
+    keys[i] = DoubleToSortableInt(data[i]);
+  }
+
+  std::vector<uint64_t> temp_keys(data.size());
+
+  for (int pass = 0; pass < 8; ++pass) {
+    std::vector<size_t> count(kRadix, 0);
+    int shift = pass * 8;
+
+    for (uint64_t key : keys) {
+      uint8_t byte = (key >> shift) & 0xFF;
+      count[byte]++;
+    }
+
+    for (int i = 1; std::cmp_less(i, kRadix); ++i) {
+      count[i] += count[i - 1];
+    }
+
+    for (int i = static_cast<int>(keys.size()) - 1; i >= 0; --i) {
+      uint8_t byte = (keys[i] >> shift) & 0xFF;
+      temp_keys[--count[byte]] = keys[i];
+    }
+    keys.swap(temp_keys);
+  }
+
+  for (size_t i = 0; i < data.size(); ++i) {
+    data[i] = SortableIntToDouble(keys[i]);
+  }
+}
+
+/// Слияние половинок для сети Бэтчера
+void MergingHalves(std::vector<double> &arr, size_t i, size_t len) {
+  size_t half = len / 2;
+  size_t end = std::min(i + len, arr.size());
+
+  for (size_t step = half; step > 0; step /= 2) {
+    for (size_t j = i; j + step < end; ++j) {
+      if (arr[j] > arr[j + step]) {
+        std::swap(arr[j], arr[j + step]);
+      }
+    }
+  }
+}
+
+/// Итеративная сеть Бэтчера (параллельная)
+void BatcherOddEvenMergeIterative(std::vector<double> &arr, size_t n) {
+  if (n <= 1) {
+    return;
+  }
+  n = std::min(n, arr.size());
+
+  for (size_t len = 2; len <= n; len *= 2) {
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, n, len), [&](const tbb::blocked_range<size_t> &r) {
+      for (size_t i = r.begin(); i < r.end(); i += len) {
+        MergingHalves(arr, i, len);
+      }
+    });
+  }
+}
+
+/// Гибридная сортировка (с копированием половин, как в OMP)
 void HybridSortDouble(std::vector<double> &data) {
   if (data.size() <= 1) {
     return;
   }
 
   size_t original_size = data.size();
-
   size_t new_size = NextPowerOfTwo(original_size);
+  data.resize(new_size, std::numeric_limits<double>::max());
 
-  data.resize(new_size, std::numeric_limits<double>::infinity());
+  size_t mid = new_size / 2;
 
-  size_t threads = oneapi::tbb::this_task_arena::max_concurrency();
+  // Копируем половины
+  std::vector<double> left(data.begin(), data.begin() + static_cast<ptrdiff_t>(mid));
+  std::vector<double> right(data.begin() + static_cast<ptrdiff_t>(mid), data.end());
 
-  size_t block_size = NextPowerOfTwo((new_size + threads - 1) / threads);
+  // Параллельно сортируем две половины
+  tbb::parallel_invoke([&]() { RadixSortDouble(left); }, [&]() { RadixSortDouble(right); });
 
-  // parallel radix sort
-  oneapi::tbb::parallel_for(static_cast<size_t>(0), threads, [&](size_t t) {
-    size_t begin = t * block_size;
+  // Собираем обратно
+  std::ranges::copy(left.begin(), left.end(), data.begin());
+  std::ranges::copy(right.begin(), right.end(), data.begin() + static_cast<ptrdiff_t>(mid));
 
-    size_t end = std::min(begin + block_size, new_size);
+  // Слияние Бэтчера
+  BatcherOddEvenMergeIterative(data, new_size);
 
-    if (begin < end) {
-      RadixSortDouble(data, begin, end);
-    }
-  });
-
-  // parallel batcher merge tree
-  for (size_t merge_size = block_size; merge_size < new_size; merge_size *= 2) {
-    oneapi::tbb::parallel_for(static_cast<size_t>(0), new_size, merge_size * 2, [&](size_t i) {
-      size_t mid = std::min(i + merge_size, new_size);
-      size_t end = std::min(i + (merge_size * 2), new_size);
-
-      using DiffT = std::vector<double>::difference_type;
-
-      std::inplace_merge(data.begin() + static_cast<DiffT>(i), data.begin() + static_cast<DiffT>(mid),
-                         data.begin() + static_cast<DiffT>(end));
-    });
-  }
-
+  // Обрезаем до исходного размера
   data.resize(original_size);
 }
 
