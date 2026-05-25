@@ -1,10 +1,9 @@
 #include "shakirova_e_sobel_edge_detection/tbb/include/ops_tbb.hpp"
 
-#include <oneapi/tbb/blocked_range2d.h>
+#include <oneapi/tbb/blocked_range.h>
 #include <oneapi/tbb/parallel_for.h>
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <cstddef>
 #include <vector>
@@ -33,28 +32,26 @@ bool ShakirovaESobelEdgeDetectionTBB::RunImpl() {
   const auto &img = GetInput();
   const int h = img.height;
   const int w = img.width;
-  const auto &inp = img.pixels;
-  auto &out = GetOutput();
+  const int *inp = img.pixels.data();
+  int *out = GetOutput().data();
 
-  constexpr std::array<std::array<int, 3>, 3> k_gx = {{{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}}};
-  constexpr std::array<std::array<int, 3>, 3> k_gy = {{{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}}};
+  tbb::parallel_for(tbb::blocked_range<int>(1, h - 1, 8), [inp, out, w](const tbb::blocked_range<int> &r) {
+    for (int row = r.begin(); row < r.end(); ++row) {
+      const int *prev = inp + static_cast<ptrdiff_t>((row - 1) * w);
+      const int *curr = inp + static_cast<ptrdiff_t>((row)*w);
+      const int *next = inp + static_cast<ptrdiff_t>((row + 1) * w);
+      int *out_row = out + static_cast<ptrdiff_t>((row)*w);
 
-  tbb::parallel_for(tbb::blocked_range2d<int>(1, h - 1, 32, 1, w - 1, 64), [&](const tbb::blocked_range2d<int> &r) {
-    for (int row = r.rows().begin(); row < r.rows().end(); ++row) {
-      for (int col = r.cols().begin(); col < r.cols().end(); ++col) {
-        int gx = 0;
-        int gy = 0;
-        for (int ky = -1; ky <= 1; ++ky) {
-          for (int kx = -1; kx <= 1; ++kx) {
-            const int pixel = inp[static_cast<size_t>((row + ky) * w) + static_cast<size_t>(col + kx)];
-            const auto ky_idx = static_cast<size_t>(ky + 1);
-            const auto kx_idx = static_cast<size_t>(kx + 1);
-            gx += pixel * k_gx[ky_idx][kx_idx];
-            gy += pixel * k_gy[ky_idx][kx_idx];
-          }
-        }
-        const int magnitude = static_cast<int>(std::sqrt(static_cast<double>((gx * gx) + (gy * gy))));
-        out[static_cast<size_t>(row * w) + static_cast<size_t>(col)] = std::clamp(magnitude, 0, 255);
+      for (int col = 1; col < w - 1; ++col) {
+        const int gx =
+            -prev[col - 1] + prev[col + 1] - (2 * curr[col - 1]) + (2 * curr[col + 1]) - next[col - 1] + next[col + 1];
+        const int gy =
+            -prev[col - 1] - (2 * prev[col]) - prev[col + 1] + next[col - 1] + (2 * next[col]) + next[col + 1];
+
+        const int agx = std::abs(gx);
+        const int agy = std::abs(gy);
+        const int magnitude = ((std::max(agx, agy) * 123) + (std::min(agx, agy) * 51)) >> 7;
+        out_row[col] = magnitude > 255 ? 255 : magnitude;
       }
     }
   });
