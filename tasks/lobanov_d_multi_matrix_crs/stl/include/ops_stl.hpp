@@ -21,7 +21,7 @@ class LobanovMultyMatrixSTL : public BaseTask {
   bool PostProcessingImpl() override;
 
   static void SortIndices(std::vector<int> &vec);
-  static CompressedRowMatrix MultiplyMatrices(const CompressedRowMatrix &A, const CompressedRowMatrix &B);
+  static CompressedRowMatrix MultiplyMatrices(const CompressedRowMatrix &a, const CompressedRowMatrix &b);
 };
 
 }  // namespace lobanov_d_multi_matrix_crs
