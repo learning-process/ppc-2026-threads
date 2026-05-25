@@ -9,6 +9,7 @@
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
+#include "volkov_a_sparse_mat_mul_ccs/all/include/ops_all.hpp"
 #include "volkov_a_sparse_mat_mul_ccs/common/include/common.hpp"
 #include "volkov_a_sparse_mat_mul_ccs/omp/include/ops_omp.hpp"
 #include "volkov_a_sparse_mat_mul_ccs/seq/include/ops_seq.hpp"
@@ -188,6 +189,7 @@ const std::array<TestType, 5> kTestParams = {
     std::make_tuple("NegativeValuesTest", "")};
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<VolkovASparseMatMulCcsAll, InType>(kTestParams, PPC_SETTINGS_volkov_a_sparse_mat_mul_ccs),
     ppc::util::AddFuncTask<VolkovASparseMatMulCcsSeq, InType>(kTestParams, PPC_SETTINGS_volkov_a_sparse_mat_mul_ccs),
     ppc::util::AddFuncTask<VolkovASparseMatMulCcsOmp, InType>(kTestParams, PPC_SETTINGS_volkov_a_sparse_mat_mul_ccs),
     ppc::util::AddFuncTask<VolkovASparseMatMulCcsTbb, InType>(kTestParams, PPC_SETTINGS_volkov_a_sparse_mat_mul_ccs),

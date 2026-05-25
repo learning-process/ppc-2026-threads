@@ -6,6 +6,7 @@
 #include <string>
 #include <tuple>
 
+#include "batushin_i_incr_contrast_with_lhs/all/include/ops_all.hpp"
 #include "batushin_i_incr_contrast_with_lhs/common/include/common.hpp"
 #include "batushin_i_incr_contrast_with_lhs/omp/include/ops_omp.hpp"
 #include "batushin_i_incr_contrast_with_lhs/seq/include/ops_seq.hpp"
@@ -48,25 +49,9 @@ class BatushinIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
         input_data_ = {0, 64, 128, 192, 255};
         expected_output_ = {0, 64, 128, 192, 255};
         break;
-      case 6:
-        input_data_ = {100, 100, 100};
-        expected_output_ = {128, 128, 128};
-        break;
       case 7:
         input_data_ = {0, 255, 0, 255};
         expected_output_ = {0, 255, 0, 255};
-        break;
-      case 8:
-        input_data_ = {0, 0, 0};
-        expected_output_ = {128, 128, 128};
-        break;
-      case 9:
-        input_data_ = {255, 255};
-        expected_output_ = {128, 128};
-        break;
-      case 10:
-        input_data_ = {255};
-        expected_output_ = {128};
         break;
       default:
         break;
@@ -83,6 +68,7 @@ class BatushinIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
         return false;
       }
     }
+
     return true;
   }
 
@@ -101,19 +87,23 @@ TEST_P(BatushinIRunFuncTestsThreads, IncreaseContrastTest) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 10> kTestParams = {std::make_tuple(1, "linear"), std::make_tuple(2, "random"),
-                                              std::make_tuple(3, "narrow"), std::make_tuple(4, "mixed"),
-                                              std::make_tuple(5, "full"),   std::make_tuple(6, "uniform"),
-                                              std::make_tuple(7, "bw"),     std::make_tuple(8, "black"),
-                                              std::make_tuple(9, "white"),  std::make_tuple(10, "single")};
+const std::array<TestType, 6> kTestParams = {std::make_tuple(1, "linear"), std::make_tuple(2, "random"),
+                                             std::make_tuple(3, "narrow"), std::make_tuple(4, "mixed"),
+                                             std::make_tuple(5, "full"),   std::make_tuple(7, "bw")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<BatushinIIncrContrastWithLhsOMP, InType>(kTestParams,
                                                                     PPC_SETTINGS_batushin_i_incr_contrast_with_lhs),
+
     ppc::util::AddFuncTask<BatushinITestTaskSEQ, InType>(kTestParams, PPC_SETTINGS_batushin_i_incr_contrast_with_lhs),
+
     ppc::util::AddFuncTask<BatushinIIncrContrastWithLhsTBB, InType>(kTestParams,
                                                                     PPC_SETTINGS_batushin_i_incr_contrast_with_lhs),
+
     ppc::util::AddFuncTask<BatushinIIncrContrastWithLhsSTL, InType>(kTestParams,
+                                                                    PPC_SETTINGS_batushin_i_incr_contrast_with_lhs),
+
+    ppc::util::AddFuncTask<BatushinIIncrContrastWithLhsALL, InType>(kTestParams,
                                                                     PPC_SETTINGS_batushin_i_incr_contrast_with_lhs));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

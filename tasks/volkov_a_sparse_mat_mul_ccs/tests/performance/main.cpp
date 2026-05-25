@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
+#include "volkov_a_sparse_mat_mul_ccs/all/include/ops_all.hpp"
 #include "volkov_a_sparse_mat_mul_ccs/common/include/common.hpp"
 #include "volkov_a_sparse_mat_mul_ccs/omp/include/ops_omp.hpp"
 #include "volkov_a_sparse_mat_mul_ccs/seq/include/ops_seq.hpp"
@@ -19,7 +20,8 @@ namespace volkov_a_sparse_mat_mul_ccs {
 class VolkovAPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
 
-  static SparseMatCCS GenerateRandomSparseMatrix(int rows, int cols) {
+  // Добавлен параметр seed для детерминированной генерации на всех MPI-процессах
+  static SparseMatCCS GenerateRandomSparseMatrix(int rows, int cols, int seed) {
     SparseMatCCS mat;
     mat.rows_count = rows;
     mat.cols_count = cols;
@@ -28,8 +30,8 @@ class VolkovAPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
     size_t elems_per_col = 50;
     int band = 150;
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    // Используем переданный seed вместо random_device
+    std::mt19937 gen(seed);
     std::uniform_real_distribution<double> val_dist(-5.0, 5.0);
 
     for (int j = 0; j < cols; ++j) {
@@ -73,7 +75,8 @@ class VolkovAPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
     int n = 20000;
     int k = 20000;
     int m = 20000;
-    input_data_ = std::make_tuple(GenerateRandomSparseMatrix(n, k), GenerateRandomSparseMatrix(k, m));
+    // Передаем фиксированные seed-значения, чтобы данные на всех ранках совпадали
+    input_data_ = std::make_tuple(GenerateRandomSparseMatrix(n, k, 12345), GenerateRandomSparseMatrix(k, m, 54321));
   }
 
   bool CheckTestOutputData(OutType &matrix_c) final {
@@ -126,7 +129,8 @@ TEST_P(VolkovAPerfTests, RunPerfTest) {
 namespace {
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, VolkovASparseMatMulCcsSeq, VolkovASparseMatMulCcsOmp, VolkovASparseMatMulCcsTbb,
-                                VolkovASparseMatMulCcsStl>(PPC_SETTINGS_volkov_a_sparse_mat_mul_ccs);
+                                VolkovASparseMatMulCcsStl, VolkovASparseMatMulCcsAll>(
+        PPC_SETTINGS_volkov_a_sparse_mat_mul_ccs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = VolkovAPerfTests::CustomPerfTestName;
