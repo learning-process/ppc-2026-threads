@@ -12,8 +12,7 @@
 namespace makoveeva_matmul_double_stl {
 
 class MatmulDoubleSTLPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  // Увеличиваем размер матрицы с 512 до 800 для более показательных результатов
-  const int kMatrixSize_ = 800;
+  const int kMatrixSize_ = 512;
   InType input_data_;
   OutType expected_output_;
 

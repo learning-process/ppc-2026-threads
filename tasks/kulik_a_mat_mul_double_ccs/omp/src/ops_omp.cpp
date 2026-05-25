@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <limits>
 #include <tuple>
 #include <vector>
 
@@ -11,38 +12,50 @@
 
 namespace kulik_a_mat_mul_double_ccs {
 
-void KulikAMatMulDoubleCcsOMP::ProcessColumn(size_t j, int tid, const CCS &a, const CCS &b,
-                                             std::vector<std::vector<double>> &thread_accum,
-                                             std::vector<std::vector<bool>> &thread_nz,
-                                             std::vector<std::vector<size_t>> &thread_nnz_rows,
-                                             std::vector<std::vector<double>> &local_values,
-                                             std::vector<std::vector<size_t>> &local_rows) {
+namespace {
+
+inline void MatMultPhase1(size_t j, const CCS &a, const CCS &b, std::vector<size_t> &was,
+                          std::vector<size_t> &col_nnz) {
+  size_t count = 0;
   for (size_t k = b.col_ind[j]; k < b.col_ind[j + 1]; ++k) {
-    size_t ind = b.row[k];
-    double b_val = b.value[k];
-    for (size_t zc = a.col_ind[ind]; zc < a.col_ind[ind + 1]; ++zc) {
-      size_t i = a.row[zc];
-      double a_val = a.value[zc];
-      thread_accum[tid][i] += a_val * b_val;
-      if (!thread_nz[tid][i]) {
-        thread_nz[tid][i] = true;
-        thread_nnz_rows[tid].push_back(i);
+    const size_t b_row = b.row[k];
+    for (size_t zc = a.col_ind[b_row]; zc < a.col_ind[b_row + 1]; ++zc) {
+      const size_t a_row = a.row[zc];
+      if (was[a_row] != j) {
+        was[a_row] = j;
+        ++count;
       }
     }
   }
-
-  std::ranges::sort(thread_nnz_rows[tid]);
-
-  for (size_t i : thread_nnz_rows[tid]) {
-    if (thread_accum[tid][i] != 0.0) {
-      local_rows[j].push_back(i);
-      local_values[j].push_back(thread_accum[tid][i]);
-    }
-    thread_accum[tid][i] = 0.0;
-    thread_nz[tid][i] = false;
-  }
-  thread_nnz_rows[tid].clear();
+  col_nnz[j] = count;
 }
+
+inline void MatMultPhase2(size_t j, const CCS &a, const CCS &b, CCS &c, size_t stamp, std::vector<size_t> &was,
+                          std::vector<double> &accum, std::vector<size_t> &rows) {
+  rows.clear();
+  for (size_t k = b.col_ind[j]; k < b.col_ind[j + 1]; ++k) {
+    const double b_val = b.value[k];
+    const size_t b_row = b.row[k];
+    for (size_t zc = a.col_ind[b_row]; zc < a.col_ind[b_row + 1]; ++zc) {
+      const size_t a_row = a.row[zc];
+      accum[a_row] += a.value[zc] * b_val;
+      if (was[a_row] != stamp) {
+        was[a_row] = stamp;
+        rows.push_back(a_row);
+      }
+    }
+  }
+  std::ranges::sort(rows);
+  size_t write = c.col_ind[j];
+  for (const size_t i : rows) {
+    c.row[write] = i;
+    c.value[write] = accum[i];
+    accum[i] = 0.0;
+    ++write;
+  }
+}
+
+}  // namespace
 
 KulikAMatMulDoubleCcsOMP::KulikAMatMulDoubleCcsOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -67,40 +80,35 @@ bool KulikAMatMulDoubleCcsOMP::RunImpl() {
   c.m = b.m;
   c.col_ind.assign(c.m + 1, 0);
 
-  std::vector<std::vector<double>> local_values(b.m);
-  std::vector<std::vector<size_t>> local_rows(b.m);
+  std::vector<size_t> col_nnz(b.m, 0);
 
-  int num_threads = omp_get_max_threads();
-
-  std::vector<std::vector<double>> thread_accum(num_threads, std::vector<double>(a.n, 0.0));
-  std::vector<std::vector<bool>> thread_nz(num_threads, std::vector<bool>(a.n, false));
-  std::vector<std::vector<size_t>> thread_nnz_rows(num_threads);
-
-#pragma omp parallel for default(none) schedule(static) \
-    shared(a, b, thread_accum, thread_nz, thread_nnz_rows, local_values, local_rows)
-  for (size_t j = 0; j < b.m; ++j) {
-    int tid = omp_get_thread_num();
-    ProcessColumn(j, tid, a, b, thread_accum, thread_nz, thread_nnz_rows, local_values, local_rows);
+#pragma omp parallel default(none) shared(a, b, col_nnz)
+  {
+    std::vector<size_t> was(a.n, std::numeric_limits<size_t>::max());
+#pragma omp for schedule(static)
+    for (size_t j = 0; j < b.m; ++j) {
+      MatMultPhase1(j, a, b, was, col_nnz);
+    }
   }
 
   size_t total_nz = 0;
   for (size_t j = 0; j < b.m; ++j) {
     c.col_ind[j] = total_nz;
-    total_nz += local_values[j].size();
+    total_nz += col_nnz[j];
   }
   c.col_ind[b.m] = total_nz;
   c.nz = total_nz;
-
   c.value.resize(total_nz);
   c.row.resize(total_nz);
 
-#pragma omp parallel for default(none) schedule(static) shared(b, c, local_values, local_rows)
-  for (size_t j = 0; j < b.m; ++j) {
-    size_t offset = c.col_ind[j];
-    size_t col_nz = local_values[j].size();
-    for (size_t k = 0; k < col_nz; ++k) {
-      c.value[offset + k] = local_values[j][k];
-      c.row[offset + k] = local_rows[j][k];
+#pragma omp parallel default(none) shared(a, b, c)
+  {
+    std::vector<size_t> was(a.n, std::numeric_limits<size_t>::max());
+    std::vector<double> accum(a.n, 0.0);
+    std::vector<size_t> rows;
+#pragma omp for schedule(static)
+    for (size_t j = 0; j < b.m; ++j) {
+      MatMultPhase2(j, a, b, c, b.m + j, was, accum, rows);
     }
   }
 

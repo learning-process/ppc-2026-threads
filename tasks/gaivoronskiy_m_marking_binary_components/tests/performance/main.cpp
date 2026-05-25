@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 
+#include "gaivoronskiy_m_marking_binary_components/all/include/ops_all.hpp"
 #include "gaivoronskiy_m_marking_binary_components/common/include/common.hpp"
 #include "gaivoronskiy_m_marking_binary_components/omp/include/ops_omp.hpp"
 #include "gaivoronskiy_m_marking_binary_components/seq/include/ops_seq.hpp"
@@ -50,7 +51,7 @@ namespace {
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, GaivoronskiyMMarkingBinaryComponentsSEQ,
                                 GaivoronskiyMMarkingBinaryComponentsOMP, GaivoronskiyMMarkingBinaryComponentsSTL,
-                                GaivoronskiyMMarkingBinaryComponentsTBB>(
+                                GaivoronskiyMMarkingBinaryComponentsTBB, GaivoronskiyMMarkingBinaryComponentsALL>(
         PPC_SETTINGS_gaivoronskiy_m_marking_binary_components);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

@@ -4,11 +4,11 @@
 #include <cmath>
 #include <cstddef>
 #include <future>
-#include <thread>
 #include <tuple>
 #include <vector>
 
 #include "kosolapov_v_calc_mult_integrals_m_rectangles/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace kosolapov_v_calc_mult_integrals_m_rectangles {
 
@@ -94,7 +94,7 @@ double KosolapovVCalcMultIntegralsMRectanglesSTL::RectanglesIntegral(int func_id
   double hx = (b - a) / steps;
   double hy = (d - c) / steps;
   size_t total = static_cast<size_t>(steps) * steps;
-  unsigned int num_threads = std::max(1U, std::thread::hardware_concurrency());
+  unsigned int num_threads = ppc::util::GetNumThreads();
   size_t chunk_size = (total + num_threads - 1) / num_threads;
   std::vector<std::future<double>> futures;
   futures.reserve(num_threads);
