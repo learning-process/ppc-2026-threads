@@ -39,23 +39,17 @@ inline std::vector<int> BuildBalancedStarts(const std::vector<size_t> &weights, 
   if (parts <= 0) {
     parts = 1;
   }
-
   const int n = static_cast<int>(weights.size());
   std::vector<int> starts(static_cast<size_t>(parts) + 1, 0);
-
   if (n == 0) {
     return starts;
   }
-
   std::vector<size_t> prefix(weights.size() + 1, 0);
   for (size_t i = 0; i < weights.size(); ++i) {
     prefix[i + 1] = prefix[i] + weights[i];
   }
-
   const size_t total = prefix.back();
   int cur = 0;
-  starts[0] = 0;
-
   for (int part = 1; part < parts; ++part) {
     const size_t target = total * static_cast<size_t>(part) / static_cast<size_t>(parts);
     while (cur < n && prefix[static_cast<size_t>(cur)] < target) {
@@ -63,67 +57,51 @@ inline std::vector<int> BuildBalancedStarts(const std::vector<size_t> &weights, 
     }
     starts[static_cast<size_t>(part)] = cur;
   }
-
   starts[static_cast<size_t>(parts)] = n;
-
   for (int part = 1; part <= parts; ++part) {
     starts[part] = std::max(starts[part], starts[part - 1]);
   }
-
   return starts;
 }
 
-inline void ProcessColumn(size_t j, const CCS &a, const CCS &b, std::vector<double> &accum,
-                          std::vector<bool> &nz_elem_rows, std::vector<size_t> &nnz_rows,
-                          std::vector<std::vector<double>> &local_values,
-                          std::vector<std::vector<size_t>> &local_rows) {
+inline void MatMultPhase1(size_t j, const CCS &a, const CCS &b, std::vector<size_t> &was,
+                          std::vector<size_t> &col_nnz) {
+  size_t count = 0;
   for (size_t k = b.col_ind[j]; k < b.col_ind[j + 1]; ++k) {
-    const size_t ind = b.row[k];
-    const double b_val = b.value[k];
-    for (size_t zc = a.col_ind[ind]; zc < a.col_ind[ind + 1]; ++zc) {
-      const size_t i = a.row[zc];
-      const double a_val = a.value[zc];
-
-      accum[i] += a_val * b_val;
-      if (!nz_elem_rows[i]) {
-        nz_elem_rows[i] = true;
-        nnz_rows.push_back(i);
+    const size_t b_row = b.row[k];
+    for (size_t zc = a.col_ind[b_row]; zc < a.col_ind[b_row + 1]; ++zc) {
+      const size_t a_row = a.row[zc];
+      if (was[a_row] != j) {
+        was[a_row] = j;
+        ++count;
       }
     }
   }
+  col_nnz[j] = count;
+}
 
-  std::ranges::sort(nnz_rows);
-
-  for (size_t i : nnz_rows) {
-    if (accum[i] != 0.0) {
-      local_rows[j].push_back(i);
-      local_values[j].push_back(accum[i]);
+inline void MatMultPhase2(size_t j, const CCS &a, const CCS &b, CCS &c, size_t stamp, std::vector<size_t> &was,
+                          std::vector<double> &accum, std::vector<size_t> &rows) {
+  rows.clear();
+  for (size_t k = b.col_ind[j]; k < b.col_ind[j + 1]; ++k) {
+    const double b_val = b.value[k];
+    const size_t b_row = b.row[k];
+    for (size_t zc = a.col_ind[b_row]; zc < a.col_ind[b_row + 1]; ++zc) {
+      const size_t a_row = a.row[zc];
+      accum[a_row] += a.value[zc] * b_val;
+      if (was[a_row] != stamp) {
+        was[a_row] = stamp;
+        rows.push_back(a_row);
+      }
     }
+  }
+  std::ranges::sort(rows);
+  size_t write = c.col_ind[j];
+  for (const size_t i : rows) {
+    c.row[write] = i;
+    c.value[write] = accum[i];
     accum[i] = 0.0;
-    nz_elem_rows[i] = false;
-  }
-  nnz_rows.clear();
-}
-
-inline void CopyColumn(size_t j, CCS &c, const std::vector<std::vector<double>> &local_values,
-                       const std::vector<std::vector<size_t>> &local_rows) {
-  const size_t offset = c.col_ind[j];
-  const size_t col_nz = local_values[j].size();
-  for (size_t k = 0; k < col_nz; ++k) {
-    c.value[offset + k] = local_values[j][k];
-    c.row[offset + k] = local_rows[j][k];
-  }
-}
-
-void ProcessColumnsRange(size_t jstart, size_t jend, const CCS &a, const CCS &b,
-                         std::vector<std::vector<double>> &local_values, std::vector<std::vector<size_t>> &local_rows) {
-  std::vector<double> accum(a.n, 0.0);
-  std::vector<bool> nz_elem_rows(a.n, false);
-  std::vector<size_t> nnz_rows;
-  nnz_rows.reserve(a.n);
-
-  for (size_t j = jstart; j < jend; ++j) {
-    ProcessColumn(j, a, b, accum, nz_elem_rows, nnz_rows, local_values, local_rows);
+    ++write;
   }
 }
 
@@ -155,10 +133,8 @@ void BcastCCS(CCS &m, int root_rank = 0) {
 void SendCCS(const CCS &m, int dest) {
   MPI_Send(&m.m, 1, MPI_INT, dest, kTagMatrix, MPI_COMM_WORLD);
   MPI_Send(&m.n, 1, MPI_INT, dest, kTagMatrix, MPI_COMM_WORLD);
-
   const int nz = static_cast<int>(m.value.size());
   MPI_Send(&nz, 1, MPI_INT, dest, kTagMatrix, MPI_COMM_WORLD);
-
   MPI_Send(m.col_ind.data(), ToIntCount(m.col_ind.size() * sizeof(size_t)), MPI_BYTE, dest, kTagMatrix, MPI_COMM_WORLD);
   MPI_Send(m.row.data(), ToIntCount(m.row.size() * sizeof(size_t)), MPI_BYTE, dest, kTagMatrix, MPI_COMM_WORLD);
   MPI_Send(m.value.data(), nz, MPI_DOUBLE, dest, kTagMatrix, MPI_COMM_WORLD);
@@ -166,17 +142,13 @@ void SendCCS(const CCS &m, int dest) {
 
 void RecvCCS(CCS &m, int src) {
   MPI_Status st;
-
   MPI_Recv(&m.m, 1, MPI_INT, src, kTagMatrix, MPI_COMM_WORLD, &st);
   MPI_Recv(&m.n, 1, MPI_INT, src, kTagMatrix, MPI_COMM_WORLD, &st);
-
   int nz = 0;
   MPI_Recv(&nz, 1, MPI_INT, src, kTagMatrix, MPI_COMM_WORLD, &st);
-
   m.col_ind.resize(static_cast<size_t>(m.m) + 1);
   m.row.resize(static_cast<size_t>(nz));
   m.value.resize(static_cast<size_t>(nz));
-
   MPI_Recv(m.col_ind.data(), ToIntCount(m.col_ind.size() * sizeof(size_t)), MPI_BYTE, src, kTagMatrix, MPI_COMM_WORLD,
            &st);
   MPI_Recv(m.row.data(), ToIntCount(m.row.size() * sizeof(size_t)), MPI_BYTE, src, kTagMatrix, MPI_COMM_WORLD, &st);
@@ -312,7 +284,6 @@ bool KulikAMatMulDoubleCcsALL::RunImpl() {
   } else {
     col_starts.resize(static_cast<size_t>(world_size) + 1, 0);
   }
-
   MPI_Bcast(col_starts.data(), world_size + 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   BcastCCS(a);
@@ -320,47 +291,45 @@ bool KulikAMatMulDoubleCcsALL::RunImpl() {
   CCS local_b;
   ScatterB(b, local_b, col_starts, world_rank, world_size);
 
+  const auto local_cols = static_cast<size_t>(local_b.m);
+
   CCS local_c;
   local_c.m = local_b.m;
   local_c.n = a.n;
-  local_c.col_ind.assign(static_cast<size_t>(local_c.m) + 1, 0);
+  local_c.col_ind.assign(local_cols + 1, 0);
 
-  const int omp_threads = std::max(1, ppc::util::GetNumThreads());
-  const int threads_count = std::max(1, std::min(omp_threads, std::max(1, static_cast<int>(local_b.m))));
+  std::vector<size_t> col_nnz(local_cols, 0);
 
-  std::vector<size_t> thread_weights(static_cast<size_t>(local_b.m), 0);
-  for (size_t j = 0; j < static_cast<size_t>(local_b.m); ++j) {
-    thread_weights[j] = EstimateColumnCost(a, local_b, j);
-  }
-
-  std::vector<int> thread_starts = BuildBalancedStarts(thread_weights, threads_count);
-
-  std::vector<std::vector<double>> local_values(static_cast<size_t>(local_b.m));
-  std::vector<std::vector<size_t>> local_rows(static_cast<size_t>(local_b.m));
-
-#pragma omp parallel num_threads(threads_count) default(none) \
-    shared(a, local_b, local_values, local_rows, thread_starts)
+#pragma omp parallel num_threads(std::max(1, ppc::util::GetNumThreads())) default(none) \
+    shared(a, local_b, col_nnz, local_cols)
   {
-    const int tid = omp_get_thread_num();
-    const auto jstart = static_cast<size_t>(thread_starts[static_cast<size_t>(tid)]);
-    const auto jend = static_cast<size_t>(thread_starts[static_cast<size_t>(tid) + 1]);
-
-    ProcessColumnsRange(jstart, jend, a, local_b, local_values, local_rows);
+    std::vector<size_t> was(static_cast<size_t>(a.n), std::numeric_limits<size_t>::max());
+#pragma omp for schedule(static)
+    for (size_t j = 0; j < local_cols; ++j) {
+      MatMultPhase1(j, a, local_b, was, col_nnz);
+    }
   }
 
   size_t total_nz = 0;
-  for (size_t j = 0; j < static_cast<size_t>(local_b.m); ++j) {
+  for (size_t j = 0; j < local_cols; ++j) {
     local_c.col_ind[j] = total_nz;
-    total_nz += local_values[j].size();
+    total_nz += col_nnz[j];
   }
-  local_c.col_ind[static_cast<size_t>(local_b.m)] = total_nz;
+  local_c.col_ind[local_cols] = total_nz;
+  local_c.nz = total_nz;
   local_c.value.resize(total_nz);
   local_c.row.resize(total_nz);
 
-#pragma omp parallel for num_threads(threads_count) schedule(static) default(none) \
-    shared(local_b, local_c, local_values, local_rows)
-  for (size_t j = 0; j < static_cast<size_t>(local_b.m); ++j) {
-    CopyColumn(j, local_c, local_values, local_rows);
+#pragma omp parallel num_threads(std::max(1, ppc::util::GetNumThreads())) default(none) \
+    shared(a, local_b, local_c, local_cols)
+  {
+    std::vector<size_t> was(static_cast<size_t>(a.n), std::numeric_limits<size_t>::max());
+    std::vector<double> accum(static_cast<size_t>(a.n), 0.0);
+    std::vector<size_t> rows;
+#pragma omp for schedule(static)
+    for (size_t j = 0; j < local_cols; ++j) {
+      MatMultPhase2(j, a, local_b, local_c, local_cols + j, was, accum, rows);
+    }
   }
 
   GatherC(c, local_c, col_starts, world_rank, world_size);
