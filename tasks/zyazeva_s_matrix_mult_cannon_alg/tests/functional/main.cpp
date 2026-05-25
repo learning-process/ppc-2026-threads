@@ -9,15 +9,19 @@
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
+#include "zyazeva_s_matrix_mult_cannon_alg/all/include/ops_all.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/common/include/common.hpp"
+#include "zyazeva_s_matrix_mult_cannon_alg/omp/include/ops_omp.hpp"
 #include "zyazeva_s_matrix_mult_cannon_alg/seq/include/ops_seq.hpp"
+#include "zyazeva_s_matrix_mult_cannon_alg/stl/include/ops_stl.hpp"
+#include "zyazeva_s_matrix_mult_cannon_alg/tbb/include/ops_tbb.hpp"
 
 namespace zyazeva_s_matrix_mult_cannon_alg {
 
 class ZyazevaARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::get<2>(test_param) + "_" + std::to_string(std::get<0>(test_param)) + "by" +
+    return std::get<2>(test_param) + "_" + std::to_string(std::get<0>(test_param)) + "_by_" +
            std::to_string(std::get<0>(test_param)) + "_" + std::to_string(std::get<1>(test_param));
   }
 
@@ -26,7 +30,7 @@ class ZyazevaARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     size_t sz = std::get<0>(params);
-    size_t size = sz * sz;
+    size_t size = sz * sz;  // 3
 
     int up_to = std::get<1>(params);
 
@@ -90,9 +94,16 @@ const std::array<TestType, 7> kTestParams = {
     std::make_tuple(7, 300, "medium3_matrix"),     std::make_tuple(10, 700, "large_matrix"),
     std::make_tuple(15, 1500, "very_large_matrix")};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<ZyazevaSMatrixMultCannonAlgSEQ, InType>(
-    kTestParams, PPC_SETTINGS_zyazeva_s_matrix_mult_cannon_alg);
-
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ZyazevaSMatrixMultCannonAlgSEQ, InType>(
+                                               kTestParams, PPC_SETTINGS_zyazeva_s_matrix_mult_cannon_alg),
+                                           ppc::util::AddFuncTask<ZyazevaSMatrixMultCannonAlgOMP, InType>(
+                                               kTestParams, PPC_SETTINGS_zyazeva_s_matrix_mult_cannon_alg),
+                                           ppc::util::AddFuncTask<ZyazevaSMatrixMultCannonAlgTBB, InType>(
+                                               kTestParams, PPC_SETTINGS_zyazeva_s_matrix_mult_cannon_alg),
+                                           ppc::util::AddFuncTask<ZyazevaSMatrixMultCannonAlgSTL, InType>(
+                                               kTestParams, PPC_SETTINGS_zyazeva_s_matrix_mult_cannon_alg),
+                                           ppc::util::AddFuncTask<ZyazevaSMatrixMultCannonAlgALL, InType>(
+                                               kTestParams, PPC_SETTINGS_zyazeva_s_matrix_mult_cannon_alg));
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = ZyazevaARunFuncTestsThreads::PrintFuncTestName<ZyazevaARunFuncTestsThreads>;

@@ -2,11 +2,16 @@
 
 #include <cstddef>
 #include <random>
+#include <tuple>
 #include <utility>
 #include <vector>
 
+#include "liulin_y_complex_ccs/all/include/ops_all.hpp"
 #include "liulin_y_complex_ccs/common/include/common.hpp"
+#include "liulin_y_complex_ccs/omp/include/ops_omp.hpp"
 #include "liulin_y_complex_ccs/seq/include/ops_seq.hpp"
+#include "liulin_y_complex_ccs/stl/include/ops_stl.hpp"
+#include "liulin_y_complex_ccs/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace liulin_y_complex_ccs {
@@ -17,7 +22,7 @@ CCSMatrix CreateRandomSparseComplexMatrix(int rows, int cols, double density) {
   CCSMatrix matrix;
   matrix.count_rows = rows;
   matrix.count_cols = cols;
-  matrix.col_index.resize(cols + 1, 0);
+  matrix.col_index.resize(static_cast<size_t>(cols) + 1, 0);
 
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -38,7 +43,7 @@ CCSMatrix CreateRandomSparseComplexMatrix(int rows, int cols, double density) {
       matrix.row_index.push_back(row);
       total_nnz++;
     }
-    matrix.col_index[j + 1] = total_nnz;
+    matrix.col_index[static_cast<size_t>(j) + 1] = total_nnz;
   }
 
   return matrix;
@@ -92,7 +97,17 @@ TEST_P(LiulinYComplexCcsPerfTest, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LiulinYComplexCcs>(PPC_SETTINGS_liulin_y_complex_ccs);
+const auto kAllPerfTasksSeq = ppc::util::MakeAllPerfTasks<InType, LiulinYComplexCcs>(PPC_SETTINGS_liulin_y_complex_ccs);
+const auto kAllPerfTasksOmp =
+    ppc::util::MakeAllPerfTasks<InType, LiulinYComplexCcsOmp>(PPC_SETTINGS_liulin_y_complex_ccs);
+const auto kAllPerfTasksTbb =
+    ppc::util::MakeAllPerfTasks<InType, LiulinYComplexCcsTbb>(PPC_SETTINGS_liulin_y_complex_ccs);
+const auto kAllPerfTasksStl =
+    ppc::util::MakeAllPerfTasks<InType, LiulinYComplexCcsStl>(PPC_SETTINGS_liulin_y_complex_ccs);
+const auto kAllPerfTasksAll =
+    ppc::util::MakeAllPerfTasks<InType, LiulinYComplexCcsAll>(PPC_SETTINGS_liulin_y_complex_ccs);
+const auto kAllPerfTasks =
+    std::tuple_cat(kAllPerfTasksSeq, kAllPerfTasksOmp, kAllPerfTasksTbb, kAllPerfTasksStl, kAllPerfTasksAll);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

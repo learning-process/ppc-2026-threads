@@ -21,7 +21,7 @@
 namespace sabutay_sparse_complex_ccs_mult_all {
 namespace {
 
-constexpr double kDropMagnitude = 1e-14;
+constexpr double kDropMagnitude = (1e-14);
 
 auto IsValidStructure(const CCS &matrix) -> bool {
   if (matrix.row_count < 0 || matrix.col_count < 0) {

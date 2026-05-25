@@ -6,7 +6,10 @@
 #include <vector>
 
 #include "ashihmin_d_mult_matr_crs/common/include/common.hpp"
+#include "ashihmin_d_mult_matr_crs/omp/include/ops_omp.hpp"
 #include "ashihmin_d_mult_matr_crs/seq/include/ops_seq.hpp"
+#include "ashihmin_d_mult_matr_crs/stl/include/ops_stl.hpp"
+#include "ashihmin_d_mult_matr_crs/tbb/include/ops_tbb.hpp"
 #include "performance/include/performance.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -77,7 +80,8 @@ TEST_P(AshihminDMultMatrCrsPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, AshihminDMultMatrCrsSEQ>(PPC_SETTINGS_ashihmin_d_mult_matr_crs);
+    ppc::util::MakeAllPerfTasks<InType, AshihminDMultMatrCrsSEQ, AshihminDMultMatrCrsOMP, AshihminDMultMatrCrsTBB,
+                                AshihminDMultMatrCrsSTL>(PPC_SETTINGS_ashihmin_d_mult_matr_crs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

@@ -6,9 +6,14 @@
 #include <cmath>
 #include <cstddef>
 #include <string>
+#include <tuple>
 
+#include "lukin_i_ench_contr_lin_hist/all/include/ops_all.hpp"
 #include "lukin_i_ench_contr_lin_hist/common/include/common.hpp"
+#include "lukin_i_ench_contr_lin_hist/omp/include/ops_omp.hpp"
 #include "lukin_i_ench_contr_lin_hist/seq/include/ops_seq.hpp"
+#include "lukin_i_ench_contr_lin_hist/stl/include/ops_stl.hpp"
+#include "lukin_i_ench_contr_lin_hist/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -27,8 +32,14 @@ class LukinIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
 
     input_data_.resize(count);
 
-    for (int i = 0; i < count; i++) {
-      input_data_[i] = 80 + (i % 81);  // [80,160] - как на обычных фото
+    if (image_size == 32) {
+      for (int i = 0; i < count; i++) {
+        input_data_[i] = 128;  // однотонное изображение
+      }
+    } else {
+      for (int i = 0; i < count; i++) {
+        input_data_[i] = 80 + (i % 81);  // [80,160] - как на обычных фото
+      }
     }
   }
 
@@ -38,6 +49,9 @@ class LukinIRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Out
 
     unsigned char min = *min_it;
     unsigned char max = *max_it;
+    if (max == min) {
+      return true;
+    }
 
     float scale = 255.0F / static_cast<float>(max - min);
 
@@ -67,10 +81,14 @@ TEST_P(LukinIRunFuncTestsThreads, LinearHist) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {128, 256, 512};  // размер изображения
+const std::array<TestType, 4> kTestParam = {128, 256, 512, 32};  // размер изображения
 
-const auto kTestTasksList =
-    ppc::util::AddFuncTask<LukinITestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_lukin_i_ench_contr_lin_hist);
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<LukinITestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_lukin_i_ench_contr_lin_hist),
+    ppc::util::AddFuncTask<LukinITestTaskOMP, InType>(kTestParam, PPC_SETTINGS_lukin_i_ench_contr_lin_hist),
+    ppc::util::AddFuncTask<LukinITestTaskTBB, InType>(kTestParam, PPC_SETTINGS_lukin_i_ench_contr_lin_hist),
+    ppc::util::AddFuncTask<LukinITestTaskSTL, InType>(kTestParam, PPC_SETTINGS_lukin_i_ench_contr_lin_hist),
+    ppc::util::AddFuncTask<LukinITestTaskALL, InType>(kTestParam, PPC_SETTINGS_lukin_i_ench_contr_lin_hist));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

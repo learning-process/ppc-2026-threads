@@ -6,7 +6,10 @@
 
 #include "util/include/perf_test_util.hpp"
 #include "zyuzin_n_multi_integrals_simpson/common/include/common.hpp"
+#include "zyuzin_n_multi_integrals_simpson/omp/include/ops_omp.hpp"
 #include "zyuzin_n_multi_integrals_simpson/seq/include/ops_seq.hpp"
+#include "zyuzin_n_multi_integrals_simpson/stl/include/ops_stl.hpp"
+#include "zyuzin_n_multi_integrals_simpson/tbb/include/ops_tbb.hpp"
 
 namespace zyuzin_n_multi_integrals_simpson {
 
@@ -37,7 +40,8 @@ TEST_P(ZyuzinNRunPerfTestThreads, SimpsonTestRunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZyuzinNSimpsonSEQ>(PPC_SETTINGS_zyuzin_n_multi_integrals_simpson);
+    ppc::util::MakeAllPerfTasks<InType, ZyuzinNSimpsonSEQ, ZyuzinNSimpsonOMP, ZyuzinNSimpsonSTL, ZyuzinNSimpsonTBB>(
+        PPC_SETTINGS_zyuzin_n_multi_integrals_simpson);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
