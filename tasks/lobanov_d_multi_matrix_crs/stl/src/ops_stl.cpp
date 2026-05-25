@@ -63,6 +63,45 @@ double DotProduct(const CompressedRowMatrix &a, int row_a, const CompressedRowMa
   return sum;
 }
 
+void ProcessRowRange(const CompressedRowMatrix &a, const CompressedRowMatrix &bt, int start_row, int end_row,
+                     std::vector<std::vector<double>> &temp_values, std::vector<std::vector<int>> &temp_cols) {
+  for (int i = start_row; i < end_row; ++i) {
+    std::vector<double> vals;
+    std::vector<int> cols;
+    vals.reserve(bt.row_count / 10);
+    cols.reserve(bt.row_count / 10);
+
+    for (int j = 0; j < bt.row_count; ++j) {
+      double sum = DotProduct(a, i, bt, j);
+      if (std::abs(sum) > kEpsilon) {
+        vals.push_back(sum);
+        cols.push_back(j);
+      }
+    }
+    temp_values[i] = std::move(vals);
+    temp_cols[i] = std::move(cols);
+  }
+}
+
+void AssembleResult(const std::vector<std::vector<double>> &temp_values, const std::vector<std::vector<int>> &temp_cols,
+                    int row_count, CompressedRowMatrix &result) {
+  result.row_pointer_data.assign(row_count + 1, 0);
+
+  for (int i = 0; i < row_count; ++i) {
+    result.row_pointer_data[i + 1] = result.row_pointer_data[i] + static_cast<int>(temp_values[i].size());
+  }
+
+  int total_nz = result.row_pointer_data[row_count];
+  result.value_data.reserve(total_nz);
+  result.column_index_data.reserve(total_nz);
+  result.non_zero_count = total_nz;
+
+  for (int i = 0; i < row_count; ++i) {
+    result.value_data.insert(result.value_data.end(), temp_values[i].begin(), temp_values[i].end());
+    result.column_index_data.insert(result.column_index_data.end(), temp_cols[i].begin(), temp_cols[i].end());
+  }
+}
+
 }  // namespace
 
 LobanovMultyMatrixSTL::LobanovMultyMatrixSTL(const InType &in) {
@@ -90,7 +129,6 @@ CompressedRowMatrix LobanovMultyMatrixSTL::MultiplyMatrices(const CompressedRowM
   CompressedRowMatrix result;
   result.row_count = a.row_count;
   result.column_count = b.column_count;
-  result.row_pointer_data.assign(a.row_count + 1, 0);
 
   CompressedRowMatrix bt = TransposeMatrix(b);
 
@@ -100,25 +138,6 @@ CompressedRowMatrix LobanovMultyMatrixSTL::MultiplyMatrices(const CompressedRowM
   int num_threads = ppc::util::GetNumThreads();
   std::vector<std::thread> threads;
 
-  auto worker = [&](int start_row, int end_row) {
-    for (int i = start_row; i < end_row; ++i) {
-      std::vector<double> vals;
-      std::vector<int> cols;
-      vals.reserve(bt.row_count / 10);
-      cols.reserve(bt.row_count / 10);
-
-      for (int j = 0; j < bt.row_count; ++j) {
-        double sum = DotProduct(a, i, bt, j);
-        if (std::abs(sum) > kEpsilon) {
-          vals.push_back(sum);
-          cols.push_back(j);
-        }
-      }
-      temp_values[i] = std::move(vals);
-      temp_cols[i] = std::move(cols);
-    }
-  };
-
   int rows_per_thread = a.row_count / num_threads;
   int remainder = a.row_count % num_threads;
   int current_start = 0;
@@ -126,7 +145,8 @@ CompressedRowMatrix LobanovMultyMatrixSTL::MultiplyMatrices(const CompressedRowM
   for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
     int current_end = current_start + rows_per_thread + (thread_idx < remainder ? 1 : 0);
     if (current_start < current_end) {
-      threads.emplace_back(worker, current_start, current_end);
+      threads.emplace_back(ProcessRowRange, std::cref(a), std::cref(bt), current_start, current_end,
+                           std::ref(temp_values), std::ref(temp_cols));
     }
     current_start = current_end;
   }
@@ -135,19 +155,7 @@ CompressedRowMatrix LobanovMultyMatrixSTL::MultiplyMatrices(const CompressedRowM
     thread.join();
   }
 
-  for (int i = 0; i < a.row_count; ++i) {
-    result.row_pointer_data[i + 1] = result.row_pointer_data[i] + static_cast<int>(temp_values[i].size());
-  }
-
-  int total_nz = result.row_pointer_data[a.row_count];
-  result.value_data.reserve(total_nz);
-  result.column_index_data.reserve(total_nz);
-  result.non_zero_count = total_nz;
-
-  for (int i = 0; i < a.row_count; ++i) {
-    result.value_data.insert(result.value_data.end(), temp_values[i].begin(), temp_values[i].end());
-    result.column_index_data.insert(result.column_index_data.end(), temp_cols[i].begin(), temp_cols[i].end());
-  }
+  AssembleResult(temp_values, temp_cols, a.row_count, result);
 
   return result;
 }
