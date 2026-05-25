@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
-#include <functional>
 #include <iostream>
 #include <random>
 #include <string>
@@ -91,7 +90,7 @@ class LobanovDMultiplyMatrixPerfTest : public ::testing::TestWithParam<std::tupl
     test_name_ = std::get<2>(params);
   }
 
-  std::pair<CompressedRowMatrix, CompressedRowMatrix> PrepareMatrices() const {
+  [[nodiscard]] std::pair<CompressedRowMatrix, CompressedRowMatrix> PrepareMatrices() const {
     return {CreateRandomCompressedRowMatrix(dimension_, dimension_, density_, 100),
             CreateRandomCompressedRowMatrix(dimension_, dimension_, density_, 200)};
   }
