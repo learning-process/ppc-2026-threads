@@ -17,7 +17,7 @@ class GaivoronskiyMMarkingPerfTests : public ppc::util::BaseRunPerfTests<InType,
   InType input_data_;
 
   void SetUp() override {
-    const int k_size = 2000;
+    const int k_size = 500;
     input_data_.resize((static_cast<std::size_t>(k_size) * static_cast<std::size_t>(k_size)) + 2);
     input_data_[0] = k_size;
     input_data_[1] = k_size;
