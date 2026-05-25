@@ -26,6 +26,11 @@ class TimurACannonMatrixMultiplicationALL : public BaseTask {
   static void BlockMultiplyAccumulate(const std::vector<std::vector<double>> &a,
                                       const std::vector<std::vector<double>> &b, std::vector<std::vector<double>> &c,
                                       int b_size);
+
+  static std::vector<std::vector<double>> ComputeLocalResult(const std::vector<std::vector<double>> &src_a,
+                                                             const std::vector<std::vector<double>> &src_b, int b_size,
+                                                             int grid_sz, int block_row_start, int local_block_rows,
+                                                             int n);
 };
 
 }  // namespace timur_a_cannon

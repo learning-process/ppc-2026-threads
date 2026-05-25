@@ -7,6 +7,7 @@
 #include <tuple>
 #include <vector>
 
+#include "trofimov_n_hoar_sort_batcher/all/include/ops_all.hpp"
 #include "trofimov_n_hoar_sort_batcher/common/include/common.hpp"
 #include "trofimov_n_hoar_sort_batcher/omp/include/ops_omp.hpp"
 #include "trofimov_n_hoar_sort_batcher/seq/include/ops_seq.hpp"
@@ -69,7 +70,8 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<TrofimovNHoarSortBatcherOMP, InType>(kTestParam, PPC_SETTINGS_trofimov_n_hoar_sort_batcher),
     ppc::util::AddFuncTask<TrofimovNHoarSortBatcherSEQ, InType>(kTestParam, PPC_SETTINGS_trofimov_n_hoar_sort_batcher),
     ppc::util::AddFuncTask<TrofimovNHoarSortBatcherSTL, InType>(kTestParam, PPC_SETTINGS_trofimov_n_hoar_sort_batcher),
-    ppc::util::AddFuncTask<TrofimovNHoarSortBatcherTBB, InType>(kTestParam, PPC_SETTINGS_trofimov_n_hoar_sort_batcher));
+    ppc::util::AddFuncTask<TrofimovNHoarSortBatcherTBB, InType>(kTestParam, PPC_SETTINGS_trofimov_n_hoar_sort_batcher),
+    ppc::util::AddFuncTask<TrofimovNHoarSortBatcherALL, InType>(kTestParam, PPC_SETTINGS_trofimov_n_hoar_sort_batcher));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = TrofimovNHoarSortBatcherFuncTests::PrintFuncTestName<TrofimovNHoarSortBatcherFuncTests>;

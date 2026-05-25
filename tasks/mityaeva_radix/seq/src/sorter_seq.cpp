@@ -35,6 +35,7 @@ void SorterSeq::CountingSortAsc(std::vector<double> &source, std::vector<double>
 void SorterSeq::CountingSortDesc(std::vector<double> &source, std::vector<double> &destination, int byte) {
   auto *mas = reinterpret_cast<unsigned char *>(source.data());
   std::vector<int> count(256, 0);
+
   auto size = source.size();
   for (std::size_t i = 0; i < size; i++) {
     count[mas[(8 * i) + byte]]++;

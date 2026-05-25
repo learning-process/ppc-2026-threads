@@ -7,9 +7,11 @@
 #include <tuple>
 #include <vector>
 
+#include "egorova_l_binary_convex_hull/all/include/ops_all.hpp"
 #include "egorova_l_binary_convex_hull/common/include/common.hpp"
 #include "egorova_l_binary_convex_hull/omp/include/ops_omp.hpp"
 #include "egorova_l_binary_convex_hull/seq/include/ops_seq.hpp"
+#include "egorova_l_binary_convex_hull/stl/include/ops_stl.hpp"
 #include "egorova_l_binary_convex_hull/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -125,34 +127,38 @@ class EgorovaLFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, Tes
 static const std::array<TestType, 8> kTestParams = {
     {std::make_tuple(
          []() {
-  auto img = CreateEmptyImage(10, 10);
-  DrawRectangle(img, 1, 1, 3, 3);
-  return img;
-}(), std::vector<std::vector<Point>>{GetRectangleHull(1, 1, 3, 3)}, "single_square"),
+           auto img = CreateEmptyImage(10, 10);
+           DrawRectangle(img, 1, 1, 3, 3);
+           return img;
+         }(),
+         std::vector<std::vector<Point>>{GetRectangleHull(1, 1, 3, 3)}, "single_square"),
 
      std::make_tuple(
          []() {
-  auto img = CreateEmptyImage(20, 20);
-  DrawRectangle(img, 2, 2, 4, 4);
-  DrawRectangle(img, 10, 10, 12, 12);
-  return img;
-}(), std::vector<std::vector<Point>>{GetRectangleHull(2, 2, 4, 4), GetRectangleHull(10, 10, 12, 12)}, "two_squares"),
+           auto img = CreateEmptyImage(20, 20);
+           DrawRectangle(img, 2, 2, 4, 4);
+           DrawRectangle(img, 10, 10, 12, 12);
+           return img;
+         }(),
+         std::vector<std::vector<Point>>{GetRectangleHull(2, 2, 4, 4), GetRectangleHull(10, 10, 12, 12)},
+         "two_squares"),
 
      std::make_tuple(
          []() {
-  auto img = CreateEmptyImage(15, 15);
-  DrawRectangle(img, 2, 3, 6, 5);
-  return img;
-}(), std::vector<std::vector<Point>>{GetRectangleHull(2, 3, 6, 5)}, "rectangle"),
+           auto img = CreateEmptyImage(15, 15);
+           DrawRectangle(img, 2, 3, 6, 5);
+           return img;
+         }(),
+         std::vector<std::vector<Point>>{GetRectangleHull(2, 3, 6, 5)}, "rectangle"),
 
      std::make_tuple(
          []() {
-  auto img = CreateEmptyImage(30, 30);
-  DrawRectangle(img, 1, 1, 3, 3);
-  DrawRectangle(img, 10, 10, 12, 12);
-  DrawRectangle(img, 20, 5, 22, 7);
-  return img;
-}(),
+           auto img = CreateEmptyImage(30, 30);
+           DrawRectangle(img, 1, 1, 3, 3);
+           DrawRectangle(img, 10, 10, 12, 12);
+           DrawRectangle(img, 20, 5, 22, 7);
+           return img;
+         }(),
          std::vector<std::vector<Point>>{GetRectangleHull(1, 1, 3, 3), GetRectangleHull(10, 10, 12, 12),
                                          GetRectangleHull(20, 5, 22, 7)},
          "three_components"),
@@ -161,42 +167,48 @@ static const std::array<TestType, 8> kTestParams = {
 
      std::make_tuple(
          []() {
-  auto img = CreateEmptyImage(10, 10);
-  for (int col = 2; col <= 5; ++col) {
-    const size_t index = (static_cast<size_t>(5) * static_cast<size_t>(10)) + static_cast<size_t>(col);
-    img.data[index] = 255;
-  }
-  return img;
-}(), std::vector<std::vector<Point>>{GetLineHull(2, 5, 5, 5)}, "horizontal_line"),
+           auto img = CreateEmptyImage(10, 10);
+           for (int col = 2; col <= 5; ++col) {
+             const size_t index = (static_cast<size_t>(5) * static_cast<size_t>(10)) + static_cast<size_t>(col);
+             img.data[index] = 255;
+           }
+           return img;
+         }(),
+         std::vector<std::vector<Point>>{GetLineHull(2, 5, 5, 5)}, "horizontal_line"),
 
      std::make_tuple(
          []() {
-  auto img = CreateEmptyImage(10, 10);
-  for (int row = 2; row <= 5; ++row) {
-    const size_t index = (static_cast<size_t>(row) * static_cast<size_t>(10)) + static_cast<size_t>(5);
-    img.data[index] = 255;
-  }
-  return img;
-}(), std::vector<std::vector<Point>>{GetLineHull(5, 2, 5, 5)}, "vertical_line"),
+           auto img = CreateEmptyImage(10, 10);
+           for (int row = 2; row <= 5; ++row) {
+             const size_t index = (static_cast<size_t>(row) * static_cast<size_t>(10)) + static_cast<size_t>(5);
+             img.data[index] = 255;
+           }
+           return img;
+         }(),
+         std::vector<std::vector<Point>>{GetLineHull(5, 2, 5, 5)}, "vertical_line"),
 
-     std::make_tuple([]() {
-  auto img = CreateEmptyImage(10, 10);
-  for (int col = 2; col <= 5; ++col) {
-    const size_t index = (static_cast<size_t>(2) * static_cast<size_t>(10)) + static_cast<size_t>(col);
-    img.data[index] = 255;
-  }
-  for (int row = 2; row <= 5; ++row) {
-    const size_t index = (static_cast<size_t>(row) * static_cast<size_t>(10)) + static_cast<size_t>(2);
-    img.data[index] = 255;
-  }
-  return img;
-}(), std::vector<std::vector<Point>>{{{2, 2}, {5, 2}, {2, 5}}}, "l_shape")}};
+     std::make_tuple(
+         []() {
+           auto img = CreateEmptyImage(10, 10);
+           for (int col = 2; col <= 5; ++col) {
+             const size_t index = (static_cast<size_t>(2) * static_cast<size_t>(10)) + static_cast<size_t>(col);
+             img.data[index] = 255;
+           }
+           for (int row = 2; row <= 5; ++row) {
+             const size_t index = (static_cast<size_t>(row) * static_cast<size_t>(10)) + static_cast<size_t>(2);
+             img.data[index] = 255;
+           }
+           return img;
+         }(),
+         std::vector<std::vector<Point>>{{{2, 2}, {5, 2}, {2, 5}}}, "l_shape")}};
 
 namespace {
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<BinaryConvexHullSEQ, InType>(kTestParams, PPC_SETTINGS_egorova_l_binary_convex_hull),
     ppc::util::AddFuncTask<BinaryConvexHullOMP, InType>(kTestParams, PPC_SETTINGS_egorova_l_binary_convex_hull),
-    ppc::util::AddFuncTask<BinaryConvexHullTBB, InType>(kTestParams, PPC_SETTINGS_egorova_l_binary_convex_hull));
+    ppc::util::AddFuncTask<BinaryConvexHullTBB, InType>(kTestParams, PPC_SETTINGS_egorova_l_binary_convex_hull),
+    ppc::util::AddFuncTask<BinaryConvexHullSTL, InType>(kTestParams, PPC_SETTINGS_egorova_l_binary_convex_hull),
+    ppc::util::AddFuncTask<BinaryConvexHullALL, InType>(kTestParams, PPC_SETTINGS_egorova_l_binary_convex_hull));
 
 INSTANTIATE_TEST_SUITE_P(BinaryConvexHullTests, EgorovaLFuncTest, ppc::util::ExpandToValues(kTestTasksList),
                          EgorovaLFuncTest::PrintFuncTestName<EgorovaLFuncTest>);

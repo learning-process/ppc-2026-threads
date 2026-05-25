@@ -22,12 +22,15 @@ class ZeninARadixSortDoubleBatcherMergeALL : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static void LSDRadixSort(std::vector<double> &array);
   static uint64_t PackDouble(double v) noexcept;
   static double UnpackDouble(uint64_t k) noexcept;
-  static void BatcherOddEvenMerge(std::vector<double> &array, size_t n);
-  static void BatcherMergeSort(std::vector<double> &array);
+  static void LSDRadixSort(std::vector<double> &array);
   static void BlocksComparing(std::vector<double> &arr, size_t i, size_t step);
+  static void BatcherOddEvenMerge(std::vector<double> &arr, size_t n);
+  static void SortChunk(std::vector<double> &chunk, size_t chunk_size);
+  void FinalMerge(size_t chunk_size, size_t pow2, size_t original_size);
+
+  std::vector<double> local_data_;
 };
 
 }  // namespace zenin_a_radix_sort_double_batcher_merge

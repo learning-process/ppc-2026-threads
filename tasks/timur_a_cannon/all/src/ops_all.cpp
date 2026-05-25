@@ -1,94 +1,80 @@
 #include "timur_a_cannon/all/include/ops_all.hpp"
 
+#include <mpi.h>
+#include <omp.h>
+
 #include <algorithm>
 #include <cstddef>
-#include <thread>
+#include <tuple>
 #include <utility>
 #include <vector>
-
-#include "timur_a_cannon/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace timur_a_cannon {
 
 namespace {
 
 using Matrix = std::vector<std::vector<double>>;
-using BlockGrid = std::vector<std::vector<Matrix>>;
 
-template <typename Func>
-void ParallelFor(int work_size, const Func &func) {
-  if (work_size <= 0) {
-    return;
-  }
-
-  const int num_threads = std::max(1, std::min(ppc::util::GetNumThreads(), work_size));
-  std::vector<std::thread> threads;
-  threads.reserve(static_cast<std::size_t>(num_threads));
-
-  for (int thread_id = 0; thread_id < num_threads; ++thread_id) {
-    threads.emplace_back([&, thread_id]() {
-      for (int index = thread_id; index < work_size; index += num_threads) {
-        func(index);
-      }
-    });
-  }
-
-  for (auto &thread : threads) {
-    thread.join();
+void CopyBlocksForStep(const Matrix &src_a, const Matrix &src_b, int b_size, int global_i, int shift, int j,
+                       Matrix &block_a, Matrix &block_b) {
+  for (int row = 0; row < b_size; ++row) {
+    for (int col = 0; col < b_size; ++col) {
+      block_a[row][col] = src_a[(global_i * b_size) + row][(shift * b_size) + col];
+      block_b[row][col] = src_b[(shift * b_size) + row][(j * b_size) + col];
+    }
   }
 }
 
-void DistributeData(const Matrix &src_a, const Matrix &src_b, BlockGrid &bl_a, BlockGrid &bl_b, int b_size,
-                    int grid_sz) {
-  ParallelFor(grid_sz, [&](int i) {
-    for (int j = 0; j < grid_sz; ++j) {
-      const int shift = (i + j) % grid_sz;
-      for (int row = 0; row < b_size; ++row) {
-        for (int col = 0; col < b_size; ++col) {
-          bl_a[i][j][row][col] = src_a[(i * b_size) + row][(shift * b_size) + col];
-          bl_b[i][j][row][col] = src_b[(shift * b_size) + row][(j * b_size) + col];
-        }
-      }
+void ScatterBlockIntoResult(Matrix &local_result, const Matrix &block_c, int local_i, int j, int b_size) {
+  for (int row = 0; row < b_size; ++row) {
+    for (int col = 0; col < b_size; ++col) {
+      local_result[(local_i * b_size) + row][(j * b_size) + col] = block_c[row][col];
     }
-  });
+  }
 }
 
-void RotateBlocksA(BlockGrid &blocks, int grid_sz) {
-  ParallelFor(grid_sz, [&](int i) {
-    Matrix first_block = std::move(blocks[i][0]);
-    for (int j = 0; j < grid_sz - 1; ++j) {
-      blocks[i][j] = std::move(blocks[i][j + 1]);
-    }
-    blocks[i][grid_sz - 1] = std::move(first_block);
-  });
+std::vector<double> FlattenMatrix(const Matrix &matrix) {
+  const std::size_t rows = matrix.size();
+  const std::size_t cols = rows == 0 ? 0 : matrix[0].size();
+  std::vector<double> flat(rows * cols);
+
+  for (std::size_t row = 0; row < rows; ++row) {
+    std::copy(matrix[row].begin(), matrix[row].end(), flat.begin() + static_cast<std::ptrdiff_t>(row * cols));
+  }
+
+  return flat;
 }
 
-void RotateBlocksB(BlockGrid &blocks, int grid_sz) {
-  ParallelFor(grid_sz, [&](int j) {
-    Matrix first_block = std::move(blocks[0][j]);
-    for (int i = 0; i < grid_sz - 1; ++i) {
-      blocks[i][j] = std::move(blocks[i + 1][j]);
-    }
-    blocks[grid_sz - 1][j] = std::move(first_block);
-  });
+Matrix UnflattenMatrix(const std::vector<double> &flat, std::size_t rows, std::size_t cols) {
+  Matrix matrix(rows, std::vector<double>(cols));
+
+  for (std::size_t row = 0; row < rows; ++row) {
+    const std::ptrdiff_t begin_idx = (static_cast<std::ptrdiff_t>(row) * static_cast<std::ptrdiff_t>(cols));
+    const std::ptrdiff_t end_idx = (static_cast<std::ptrdiff_t>(row + 1) * static_cast<std::ptrdiff_t>(cols));
+    std::copy(flat.begin() + begin_idx, flat.begin() + end_idx, matrix[row].begin());
+  }
+
+  return matrix;
 }
 
-void CollectResult(const BlockGrid &bl_c, Matrix &result, int b_size, int grid_sz) {
-  ParallelFor(grid_sz, [&](int i) {
-    for (int j = 0; j < grid_sz; ++j) {
-      for (int row = 0; row < b_size; ++row) {
-        for (int col = 0; col < b_size; ++col) {
-          result[(i * b_size) + row][(j * b_size) + col] = bl_c[i][j][row][col];
-        }
-      }
-    }
-  });
+std::pair<std::vector<int>, std::vector<int>> BuildGatherLayout(int size, int base_block_rows, int extra_block_rows,
+                                                                int b_size, int n) {
+  std::vector<int> recv_counts(size);
+  std::vector<int> displs(size);
+  int offset = 0;
+  for (int proc = 0; proc < size; ++proc) {
+    const int proc_block_rows = base_block_rows + (proc < extra_block_rows ? 1 : 0);
+    recv_counts[proc] = proc_block_rows * b_size * n;
+    displs[proc] = offset;
+    offset += recv_counts[proc];
+  }
+  return {recv_counts, displs};
 }
 
 }  // namespace
 
-TimurACannonMatrixMultiplicationALL::TimurACannonMatrixMultiplicationALL(const InType &in) {
+TimurACannonMatrixMultiplicationALL::TimurACannonMatrixMultiplicationALL(
+    const std::tuple<int, std::vector<std::vector<double>>, std::vector<std::vector<double>>> &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
@@ -133,37 +119,74 @@ void TimurACannonMatrixMultiplicationALL::BlockMultiplyAccumulate(const std::vec
   }
 }
 
-bool TimurACannonMatrixMultiplicationALL::RunImpl() {
-  const auto &input = GetInput();
-  const int b_size = std::get<0>(input);
-  const auto &src_a = std::get<1>(input);
-  const auto &src_b = std::get<2>(input);
-  const int n = static_cast<int>(src_a.size());
-  const int grid_sz = n / b_size;
+std::vector<std::vector<double>> TimurACannonMatrixMultiplicationALL::ComputeLocalResult(const Matrix &src_a,
+                                                                                         const Matrix &src_b,
+                                                                                         int b_size, int grid_sz,
+                                                                                         int block_row_start,
+                                                                                         int local_block_rows, int n) {
+  Matrix local_result(static_cast<std::size_t>(local_block_rows) * static_cast<std::size_t>(b_size),
+                      std::vector<double>(static_cast<std::size_t>(n), 0.0));
 
-  BlockGrid bl_a(grid_sz, std::vector<Matrix>(grid_sz, Matrix(b_size, std::vector<double>(b_size))));
-  BlockGrid bl_b(grid_sz, std::vector<Matrix>(grid_sz, Matrix(b_size, std::vector<double>(b_size))));
-  BlockGrid bl_c(grid_sz, std::vector<Matrix>(grid_sz, Matrix(b_size, std::vector<double>(b_size, 0.0))));
+#pragma omp parallel for default(none) \
+    shared(local_result, src_a, src_b, b_size, grid_sz, block_row_start, local_block_rows)
+  for (int local_i = 0; local_i < local_block_rows; ++local_i) {
+    for (int j = 0; j < grid_sz; ++j) {
+      Matrix block_c(b_size, std::vector<double>(b_size, 0.0));
+      const int global_i = block_row_start + local_i;
 
-  DistributeData(src_a, src_b, bl_a, bl_b, b_size, grid_sz);
-
-  for (int step = 0; step < grid_sz; ++step) {
-    ParallelFor(grid_sz, [&](int i) {
-      for (int j = 0; j < grid_sz; ++j) {
-        BlockMultiplyAccumulate(bl_a[i][j], bl_b[i][j], bl_c[i][j], b_size);
+      for (int step = 0; step < grid_sz; ++step) {
+        const int shift = (global_i + j + step) % grid_sz;
+        Matrix block_a(b_size, std::vector<double>(b_size));
+        Matrix block_b(b_size, std::vector<double>(b_size));
+        CopyBlocksForStep(src_a, src_b, b_size, global_i, shift, j, block_a, block_b);
+        BlockMultiplyAccumulate(block_a, block_b, block_c, b_size);
       }
-    });
 
-    if (step < grid_sz - 1) {
-      RotateBlocksA(bl_a, grid_sz);
-      RotateBlocksB(bl_b, grid_sz);
+      ScatterBlockIntoResult(local_result, block_c, local_i, j, b_size);
     }
   }
 
-  Matrix result(n, std::vector<double>(n));
-  CollectResult(bl_c, result, b_size, grid_sz);
+  return local_result;
+}
 
-  GetOutput() = std::move(result);
+bool TimurACannonMatrixMultiplicationALL::RunImpl() {
+  const auto &input = GetInput();
+  const int b_size = std::get<0>(input);
+  Matrix src_a = std::get<1>(input);
+  Matrix src_b = std::get<2>(input);
+  const int n = static_cast<int>(src_a.size());
+  const int grid_sz = n / b_size;
+  const int total_elems = n * n;
+
+  int rank = 0;
+  int size = 1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  std::vector<double> flat_a = FlattenMatrix(src_a);
+  std::vector<double> flat_b = FlattenMatrix(src_b);
+
+  MPI_Bcast(flat_a.data(), total_elems, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(flat_b.data(), total_elems, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  src_a = UnflattenMatrix(flat_a, static_cast<std::size_t>(n), static_cast<std::size_t>(n));
+  src_b = UnflattenMatrix(flat_b, static_cast<std::size_t>(n), static_cast<std::size_t>(n));
+
+  const int base_block_rows = grid_sz / size;
+  const int extra_block_rows = grid_sz % size;
+  const int local_block_rows = base_block_rows + (rank < extra_block_rows ? 1 : 0);
+  const int block_row_start = (rank * base_block_rows) + std::min(rank, extra_block_rows);
+
+  Matrix local_result = ComputeLocalResult(src_a, src_b, b_size, grid_sz, block_row_start, local_block_rows, n);
+
+  std::vector<double> local_flat = FlattenMatrix(local_result);
+  auto [recv_counts, displs] = BuildGatherLayout(size, base_block_rows, extra_block_rows, b_size, n);
+
+  std::vector<double> global_flat(total_elems);
+  MPI_Allgatherv(local_flat.data(), static_cast<int>(local_flat.size()), MPI_DOUBLE, global_flat.data(),
+                 recv_counts.data(), displs.data(), MPI_DOUBLE, MPI_COMM_WORLD);
+
+  GetOutput() = UnflattenMatrix(global_flat, static_cast<std::size_t>(n), static_cast<std::size_t>(n));
   return true;
 }
 

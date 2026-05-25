@@ -183,8 +183,12 @@ void ScatterData(const std::vector<int> &array, std::vector<int> &local_data, co
     send_displs[i] = static_cast<int>(offsets[static_cast<size_t>(i)]);
   }
 
-  MPI_Scatterv(array.data(), send_counts.data(), send_displs.data(), MPI_INT, local_data.data(),
-               static_cast<int>(local_data.size()), MPI_INT, 0, MPI_COMM_WORLD);
+  int recv_dummy = 0;
+  int *const recv_buf = local_data.empty() ? &recv_dummy : local_data.data();
+  const int *const send_buf = array.empty() ? &recv_dummy : array.data();
+
+  MPI_Scatterv(send_buf, send_counts.data(), send_displs.data(), MPI_INT, recv_buf, static_cast<int>(local_data.size()),
+               MPI_INT, 0, MPI_COMM_WORLD);
 }
 
 std::vector<int> MergeTwoSorted(const std::vector<int> &left, const std::vector<int> &right) {
@@ -213,17 +217,33 @@ std::vector<int> MergeTwoSorted(const std::vector<int> &left, const std::vector<
 }
 
 void ExchangeAndMerge(int partner, std::vector<int> &merged_data) {
-  const size_t my_size = merged_data.size();
-  size_t partner_size = 0;
+  const auto my_size_u64 = static_cast<uint64_t>(merged_data.size());
+  uint64_t partner_size_u64 = 0;
 
-  MPI_Sendrecv(&my_size, 1, MPI_UNSIGNED_LONG, partner, 0, &partner_size, 1, MPI_UNSIGNED_LONG, partner, 0,
+  MPI_Sendrecv(&my_size_u64, 1, MPI_UINT64_T, partner, 0, &partner_size_u64, 1, MPI_UINT64_T, partner, 0,
                MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  std::vector<int> partner_data(partner_size);
-  MPI_Sendrecv(merged_data.data(), static_cast<int>(my_size), MPI_INT, partner, 1, partner_data.data(),
-               static_cast<int>(partner_size), MPI_INT, partner, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  const size_t my_size = merged_data.size();
+  const auto partner_size = static_cast<size_t>(partner_size_u64);
 
-  merged_data = MergeTwoSorted(merged_data, partner_data);
+  if (my_size == 0 && partner_size == 0) {
+    return;
+  }
+
+  std::vector<int> partner_data(partner_size);
+  int send_dummy = 0;
+  int recv_dummy = 0;
+  int *const send_buf = (my_size > 0) ? merged_data.data() : &send_dummy;
+  int *const recv_buf = (partner_size > 0) ? partner_data.data() : &recv_dummy;
+
+  MPI_Sendrecv(send_buf, static_cast<int>(my_size), MPI_INT, partner, 1, recv_buf, static_cast<int>(partner_size),
+               MPI_INT, partner, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  if (my_size == 0) {
+    merged_data = std::move(partner_data);
+  } else if (partner_size > 0) {
+    merged_data = MergeTwoSorted(merged_data, partner_data);
+  }
 }
 
 void ParallelHypercubeMerge(std::vector<int> &merged_data, int mpi_rank, int mpi_size) {
@@ -241,8 +261,9 @@ void ParallelHypercubeMerge(std::vector<int> &merged_data, int mpi_rank, int mpi
 }
 
 void BcastSortedVector(std::vector<int> &data, int mpi_rank) {
-  size_t n = data.size();
-  MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+  auto n_u64 = static_cast<uint64_t>(data.size());
+  MPI_Bcast(&n_u64, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+  const auto n = static_cast<size_t>(n_u64);
   if (mpi_rank != 0) {
     data.resize(n);
   }

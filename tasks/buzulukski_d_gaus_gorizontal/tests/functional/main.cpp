@@ -8,6 +8,7 @@
 #include <tuple>
 #include <vector>
 
+#include "buzulukski_d_gaus_gorizontal/all/include/ops_all.hpp"
 #include "buzulukski_d_gaus_gorizontal/common/include/common.hpp"
 #include "buzulukski_d_gaus_gorizontal/omp/include/ops_omp.hpp"
 #include "buzulukski_d_gaus_gorizontal/seq/include/ops_seq.hpp"
@@ -51,6 +52,7 @@ const std::array<TestType, 2> kTestParamSeq = {std::make_tuple(3, "seq_size_3"),
 const std::array<TestType, 2> kTestParamOmp = {std::make_tuple(3, "omp_size_3"), std::make_tuple(10, "omp_size_10")};
 const std::array<TestType, 2> kTestParamTbb = {std::make_tuple(3, "tbb_size_3"), std::make_tuple(10, "tbb_size_10")};
 const std::array<TestType, 2> kTestParamStl = {std::make_tuple(3, "stl_size_3"), std::make_tuple(10, "stl_size_10")};
+const std::array<TestType, 2> kTestParamAll = {std::make_tuple(3, "all_size_3"), std::make_tuple(10, "all_size_10")};
 
 INSTANTIATE_TEST_SUITE_P(
     buzulukski_d_gaus_gorizontal_combined, BuzulukskiDGausGorizontalFuncTests,
@@ -62,6 +64,8 @@ INSTANTIATE_TEST_SUITE_P(
         ppc::util::AddFuncTask<BuzulukskiDGausGorizontalTBB, InType>(kTestParamTbb,
                                                                      PPC_SETTINGS_buzulukski_d_gaus_gorizontal),
         ppc::util::AddFuncTask<BuzulukskiDGausGorizontalSTL, InType>(kTestParamStl,
+                                                                     PPC_SETTINGS_buzulukski_d_gaus_gorizontal),
+        ppc::util::AddFuncTask<BuzulukskiDGausGorizontalALL, InType>(kTestParamAll,
                                                                      PPC_SETTINGS_buzulukski_d_gaus_gorizontal))),
     BuzulukskiDGausGorizontalFuncTests::PrintTestParam);
 
