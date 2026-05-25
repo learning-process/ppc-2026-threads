@@ -14,6 +14,7 @@
 #include "eremin_v_integrals_monte_carlo/common/include/common.hpp"
 #include "eremin_v_integrals_monte_carlo/omp/include/ops_omp.hpp"
 #include "eremin_v_integrals_monte_carlo/seq/include/ops_seq.hpp"
+#include "eremin_v_integrals_monte_carlo/stl/include/ops_stl.hpp"
 #include "eremin_v_integrals_monte_carlo/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -66,18 +67,21 @@ TEST_P(EreminVRunFuncTestsThreadsIntegralsMonteCarlo, IntegralsMonteCarloFunc) {
 
 const std::array<TestType, 3> kTestParam = {
 
-    std::make_tuple(1, std::vector<std::pair<double, double>>{{0.0, 1.0}}, 500000,
+    std::make_tuple(1, std::vector<std::pair<double, double>>{{0.0, 1.0}}, 100'000,
                     [](const std::vector<double> &x) { return x[0] * x[0]; }, 1.0 / 3.0),
 
-    std::make_tuple(2, std::vector<std::pair<double, double>>{{0.0, 1.0}, {0.0, 1.0}}, 500000,
+    std::make_tuple(2, std::vector<std::pair<double, double>>{{0.0, 1.0}, {0.0, 1.0}}, 100'000,
                     [](const std::vector<double> &x) { return x[0] * x[1]; }, 0.25),
 
-    std::make_tuple(3, std::vector<std::pair<double, double>>{{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}}, 500000,
+    std::make_tuple(3, std::vector<std::pair<double, double>>{{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}}, 100'000,
+
                     [](const std::vector<double> &x) { return x[0] + x[1] + x[2]; }, 1.5)};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<EreminVIntegralsMonteCarloSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_eremin_v_integrals_monte_carlo),
                                            ppc::util::AddFuncTask<EreminVIntegralsMonteCarloOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_eremin_v_integrals_monte_carlo),
+                                           ppc::util::AddFuncTask<EreminVIntegralsMonteCarloSTL, InType>(
                                                kTestParam, PPC_SETTINGS_eremin_v_integrals_monte_carlo),
                                            ppc::util::AddFuncTask<EreminVIntegralsMonteCarloTBB, InType>(
                                                kTestParam, PPC_SETTINGS_eremin_v_integrals_monte_carlo),

@@ -11,9 +11,11 @@
 #include <tuple>
 #include <vector>
 
+#include "liulin_y_complex_ccs/all/include/ops_all.hpp"
 #include "liulin_y_complex_ccs/common/include/common.hpp"
 #include "liulin_y_complex_ccs/omp/include/ops_omp.hpp"
 #include "liulin_y_complex_ccs/seq/include/ops_seq.hpp"
+#include "liulin_y_complex_ccs/stl/include/ops_stl.hpp"
 #include "liulin_y_complex_ccs/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -174,7 +176,12 @@ const auto kTestTasksListOmp =
     ppc::util::AddFuncTask<LiulinYComplexCcsOmp, InType>(kTestParam, PPC_SETTINGS_liulin_y_complex_ccs);
 const auto kTestTasksListTbb =
     ppc::util::AddFuncTask<LiulinYComplexCcsTbb, InType>(kTestParam, PPC_SETTINGS_liulin_y_complex_ccs);
-const auto kTestTasksList = std::tuple_cat(kTestTasksListSeq, kTestTasksListOmp, kTestTasksListTbb);
+const auto kTestTasksListStl =
+    ppc::util::AddFuncTask<LiulinYComplexCcsStl, InType>(kTestParam, PPC_SETTINGS_liulin_y_complex_ccs);
+const auto kTestTasksListAll =
+    ppc::util::AddFuncTask<LiulinYComplexCcsAll, InType>(kTestParam, PPC_SETTINGS_liulin_y_complex_ccs);
+const auto kTestTasksList =
+    std::tuple_cat(kTestTasksListSeq, kTestTasksListOmp, kTestTasksListTbb, kTestTasksListStl, kTestTasksListAll);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kFuncTestName = LiulinYComplexCcsFuncTestsFromFile::PrintFuncTestName<LiulinYComplexCcsFuncTestsFromFile>;

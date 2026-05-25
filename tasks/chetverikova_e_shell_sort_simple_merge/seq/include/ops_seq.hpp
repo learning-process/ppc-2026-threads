@@ -21,7 +21,6 @@ class ChetverikovaEShellSortSimpleMergeSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 
   static void ShellSort(std::vector<int> &data);
-  static std::vector<int> MergeSort(const std::vector<int> &left, const std::vector<int> &right);
 };
 
 }  // namespace chetverikova_e_shell_sort_simple_merge

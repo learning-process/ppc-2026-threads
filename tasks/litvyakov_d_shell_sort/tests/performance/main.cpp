@@ -6,6 +6,7 @@
 #include <limits>
 #include <random>
 
+#include "litvyakov_d_shell_sort/all/include/ops_all.hpp"
 #include "litvyakov_d_shell_sort/common/include/common.hpp"
 #include "litvyakov_d_shell_sort/omp/include/ops_omp.hpp"
 #include "litvyakov_d_shell_sort/seq/include/ops_seq.hpp"
@@ -18,14 +19,14 @@ namespace litvyakov_d_shell_sort {
 class LitvyakovDShellSortRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    int dim = 1000000;
+    int dim = 2000000;
 
     InType &in = input_data_;
     in.clear();
     in.reserve(dim);
 
-    std::random_device rd;
-    std::mt19937_64 rng(rd());
+    int seed = 1;
+    std::mt19937 rng(seed);
     std::uniform_int_distribution<int> dist(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
 
     for (int i = 0; i < dim; ++i) {
@@ -65,7 +66,7 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, LitvyakovDShellSortSEQ, LitvyakovDShellSortOMP, LitvyakovDShellSortTBB,
-                                LitvyakovDShellSortSTL>(PPC_SETTINGS_litvyakov_d_shell_sort);
+                                LitvyakovDShellSortSTL, LitvyakovDShellSortALL>(PPC_SETTINGS_litvyakov_d_shell_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
