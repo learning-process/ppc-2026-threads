@@ -8,11 +8,14 @@
 
 #include "solonin_v_radix_sort_batcher/common/include/common.hpp"
 #include "util/include/util.hpp"
+
 namespace solonin_v_radix_sort_batcher {
+
 RadixSortBatcherOMP::RadixSortBatcherOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
+
 void RadixSortBatcherOMP::SortByDigit(std::vector<int> &data, size_t pos) {
   const size_t k_base = 256;
   std::vector<int> freq(k_base, 0);
@@ -37,6 +40,7 @@ void RadixSortBatcherOMP::SortByDigit(std::vector<int> &data, size_t pos) {
   }
   data = out;
 }
+
 void RadixSortBatcherOMP::SortChunk(std::vector<int> &data, int left, int right) {
   std::vector<int> chunk(data.begin() + left, data.begin() + right);
   for (size_t pos_idx = 0; pos_idx < sizeof(int); ++pos_idx) {
@@ -44,34 +48,15 @@ void RadixSortBatcherOMP::SortChunk(std::vector<int> &data, int left, int right)
   }
   std::ranges::copy(chunk, data.begin() + left);
 }
-void RadixSortBatcherOMP::CompareSwapRange(std::vector<int> &data, int offset, int step, int half) {
-  int lim = std::min(step, static_cast<int>(data.size()) - offset - step);
-  for (int i = 0; i < lim; ++i) {
-    int a = offset + i;
-    int b = offset + i + step;
-    if ((a & half) == (b & half) && data[a] > data[b]) {
-      std::swap(data[a], data[b]);
-    }
-  }
-}
-void RadixSortBatcherOMP::BatcherNetwork(std::vector<int> &data, int p, int nthreads) {
-  int n = static_cast<int>(data.size());
-  for (int pv = p; pv < n; pv <<= 1) {
-    int half = pv << 1;
-    for (int step = pv; step > 0; step >>= 1) {
-#pragma omp parallel for schedule(static) default(none) shared(n, pv, half, step, data) num_threads(nthreads)
-      for (int j = step % pv; j < n - step; j += 2 * step) {
-        CompareSwapRange(data, j, step, half);
-      }
-    }
-  }
-}
+
 bool RadixSortBatcherOMP::ValidationImpl() {
   return !GetInput().empty();
 }
+
 bool RadixSortBatcherOMP::PreProcessingImpl() {
   return true;
 }
+
 bool RadixSortBatcherOMP::RunImpl() {
   std::vector<int> tmp(GetInput().begin(), GetInput().end());
   int n = static_cast<int>(tmp.size());
@@ -81,24 +66,45 @@ bool RadixSortBatcherOMP::RunImpl() {
   }
   int nthreads = std::min(ppc::util::GetNumThreads(), n);
   int chunk = (n + nthreads - 1) / nthreads;
-#pragma omp parallel default(none) shared(nthreads, chunk, n, tmp) num_threads(nthreads)
-  {
-    int tid = omp_get_thread_num();
-    int lo = tid * chunk;
+
+  std::vector<std::vector<int>> blocks;
+  for (int i = 0; i < nthreads; ++i) {
+    int lo = i * chunk;
     int hi = std::min(lo + chunk, n);
-    if (lo < hi) {
-      SortChunk(tmp, lo, hi);
+    if (lo >= n) {
+      break;
+    }
+    blocks.emplace_back(tmp.begin() + lo, tmp.begin() + hi);
+  }
+
+#pragma omp parallel for schedule(static) default(none) shared(blocks) num_threads(nthreads)
+  for (int i = 0; i < static_cast<int>(blocks.size()); ++i) {
+    for (size_t pos_idx = 0; pos_idx < sizeof(int); ++pos_idx) {
+      SortByDigit(blocks[i], pos_idx);
     }
   }
-  int start = 1;
-  while (start < chunk) {
-    start <<= 1;
+
+  while (blocks.size() > 1) {
+    std::vector<std::vector<int>> merged;
+    for (size_t i = 0; i + 1 < blocks.size(); i += 2) {
+      std::vector<int> result;
+      result.reserve(blocks[i].size() + blocks[i + 1].size());
+      std::merge(blocks[i].begin(), blocks[i].end(), blocks[i + 1].begin(), blocks[i + 1].end(),
+                 std::back_inserter(result));
+      merged.push_back(std::move(result));
+    }
+    if (blocks.size() % 2 == 1) {
+      merged.push_back(std::move(blocks.back()));
+    }
+    blocks = std::move(merged);
   }
-  BatcherNetwork(tmp, start, nthreads);
-  GetOutput() = std::move(tmp);
+
+  GetOutput() = std::move(blocks.front());
   return true;
 }
+
 bool RadixSortBatcherOMP::PostProcessingImpl() {
   return true;
 }
+
 }  // namespace solonin_v_radix_sort_batcher
