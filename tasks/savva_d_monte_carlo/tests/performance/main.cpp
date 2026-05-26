@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 
+#include "savva_d_monte_carlo/all/include/ops_all.hpp"
 #include "savva_d_monte_carlo/common/include/common.hpp"
 #include "savva_d_monte_carlo/omp/include/ops_omp.hpp"
 #include "savva_d_monte_carlo/seq/include/ops_seq.hpp"
@@ -51,8 +52,7 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, SavvaDMonteCarloSEQ, SavvaDMonteCarloTBB, SavvaDMonteCarloSTL,
-                                SavvaDMonteCarloOMP>(PPC_SETTINGS_savva_d_monte_carlo);
-// SavvaDMonteCarloALL
+                                SavvaDMonteCarloALL, SavvaDMonteCarloOMP>(PPC_SETTINGS_savva_d_monte_carlo);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

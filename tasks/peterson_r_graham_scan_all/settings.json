@@ -1,0 +1,6 @@
+{
+  "tasks": {
+    "all": "enabled"
+  },
+  "tasks_type": "threads"
+}
