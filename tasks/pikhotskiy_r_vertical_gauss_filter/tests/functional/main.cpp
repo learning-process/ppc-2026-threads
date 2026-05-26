@@ -88,13 +88,11 @@ std::vector<ParamType> CreateTestParams() {
       return std::make_shared<PikhotskiyRVerticalGaussFilterOMP>(in);
     }, "omp", test_case);
     params.emplace_back([](const InType &in) -> std::shared_ptr<BaseTask> {
-    params.emplace_back([](const InType &in) -> std::shared_ptr<BaseTask> {
       return std::make_shared<PikhotskiyRVerticalGaussFilterALL>(in);
     }, "all", test_case);
     params.emplace_back([](const InType &in) -> std::shared_ptr<BaseTask> {
       return std::make_shared<PikhotskiyRVerticalGaussFilterTBB>(in);
-    }, "tbb", test_case); 
-
+    }, "tbb", test_case);
   }
   return params;
 }
@@ -217,4 +215,3 @@ TEST(PikhotskiyRVerticalGaussFilterInvalidTestTBB, DataSizeMismatch) {
 }
 
 }  // namespace pikhotskiy_r_vertical_gauss_filter
-
