@@ -8,6 +8,7 @@
 #include <tuple>
 #include <vector>
 
+#include "nikolaev_d_block_linear_image_filtering/all/include/ops_all.hpp"
 #include "nikolaev_d_block_linear_image_filtering/common/include/common.hpp"
 #include "nikolaev_d_block_linear_image_filtering/omp/include/ops_omp.hpp"
 #include "nikolaev_d_block_linear_image_filtering/seq/include/ops_seq.hpp"
@@ -66,6 +67,8 @@ const std::array<TestType, 5> kTestParam = {
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<NikolaevDBlockLinearImageFilteringSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_nikolaev_d_block_linear_image_filtering),
                                            ppc::util::AddFuncTask<NikolaevDBlockLinearImageFilteringOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_nikolaev_d_block_linear_image_filtering),
+                                           ppc::util::AddFuncTask<NikolaevDBlockLinearImageFilteringALL, InType>(
                                                kTestParam, PPC_SETTINGS_nikolaev_d_block_linear_image_filtering),
                                            ppc::util::AddFuncTask<NikolaevDBlockLinearImageFilteringSTL, InType>(
                                                kTestParam, PPC_SETTINGS_nikolaev_d_block_linear_image_filtering));
