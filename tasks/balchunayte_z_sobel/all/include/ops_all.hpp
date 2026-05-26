@@ -20,4 +20,3 @@ class BalchunayteZSobelOpALL : public BaseTask {
 };
 
 }  // namespace balchunayte_z_sobel
-
