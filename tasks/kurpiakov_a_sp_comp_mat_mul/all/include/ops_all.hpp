@@ -19,4 +19,4 @@ class KurpiakovACRSMatMulALL : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace kurpiakov_a_sp_comp_mat_mul 
+}  // namespace kurpiakov_a_sp_comp_mat_mul
