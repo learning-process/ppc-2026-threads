@@ -5,6 +5,7 @@
 - Вариант: 4\
 
 ## 1. Контекст
+
 STL (Standard Template Library) в контексте многопоточности предоставляет низкоуровневые примитивы для ручного управления потоками: `std::thread`, `std::mutex`, `std::atomic`, `std::future` и другие. В отличие от OpenMP или TBB, где параллелизм описывается декларативно (директивами или алгоритмами), STL требует явного создания потоков, распределения работы и синхронизации.
 
 В данной реализации STL применяется для распараллеливания умножения разреженных матриц. Основная сложность заключается в ручном разбиении диапазона строк между потоками и последующем объединении результатов.
@@ -21,7 +22,7 @@ STL (Standard Template Library) в контексте многопоточнос
 - ```rows``` (тип: ```int```) - количество строк
 - ```cols``` (тип: ```int```) - количество столбцов
 
-### Выходные данные 
+### Выходные данные
 
 Результирующая матрица ```C = A * B``` в формате CRS.
 
@@ -40,6 +41,7 @@ STL (Standard Template Library) в контексте многопоточнос
 - если умножение диагональных матриц, то результат - диагональная матрица.
 
 ### Особенности STL-версии
+
 - Ручное создание и управление потоками через `std::thread`
 
 - Явное разбиение строк на диапазоны (статическое распределение)
@@ -98,6 +100,7 @@ for (int tt = 0; tt < num_threads; ++tt) {
 Оставшиеся значения и индексы столбцов сохраняются в `row_values[i]` и `row_cols[i]`.
 
 7. **Ожидание завершения потоков**
+
 ```
 for (auto &th : threads) {
     th.join();
@@ -122,6 +125,7 @@ for (auto &th : threads) {
 ## 4. Схема распараллеливания
 
 ### Распараллеливаемая область
+
 Внешний цикл по строкам матрицы A является идеальным кандидатом для распараллеливания, поскольку:
 
 - Вычисления для каждой строки полностью независимы
@@ -131,6 +135,7 @@ for (auto &th : threads) {
 - Нет необходимости в синхронизации между итерациями
 
 ### Ручное распределение работы (статическое)
+
 В отличие от OpenMP (где распределение управляется директивой schedule) и TBB (где используется work-stealing), в STL-версии программист явно разбивает диапазон строк на блоки:
 
 ```
@@ -149,17 +154,21 @@ for (int tt = 0; tt < num_threads; ++tt) {
 ```
 
 ### Анализ схемы распределения
+
 <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; text-align: left; width: 100%;"> <thead> <tr style="background-color: #f2f2f2;"> <th>Параметр</th> <th>Значение</th> <th>Обоснование</th> </tr> </thead> <tbody> <tr> <td><strong>Тип распределения</strong></code></code></td> <td>Статическое (фиксированные блоки)</code></code></td> <td>Потоки создаются один раз, каждый получает непрерывный диапазон строк</code></code></td> </tr> <tr> <td><strong>Размер блока (chunk)</strong></code></code></td> <td><code>(rows + num_threads - 1) / num_threads</code></code></td> <td>Равномерное распределение с округлением вверх</code></code></td> </tr> <tr> <td><strong>Балансировка нагрузки</strong></code></code></td> <td>Отсутствует (статическая)</code></code></td> <td>При нерегулярной плотности строк возможен дисбаланс</code></code></td> </tr> <tr> <td><strong>Overhead управления</strong></code></code></td> <td>Минимальный</code></code></td> <td>Нет Coordination между потоками во время выполнения</code></code></td> </tr> </tbody> </table>
 
 ### Переменные и их доступ
+
 <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; text-align: left; width: 100%;"> <thead> <tr style="background-color: #f2f2f2;"> <th>Переменная</th> <th>Доступ</th> <th>Обоснование</th> </tr> </thead> <tbody> <tr> <td><code>a</code></code></td> <td>Только чтение (shared)</code></code></td> <td>Все потоки читают одну матрицу A</code></code></td> </tr> <tr> <td><code>b</code></code></td> <td>Только чтение (shared)</code></code></td> <td>Все потоки читают одну матрицу B</code></code></td> </tr> <tr> <td><code>row_values</code></code></td> <td>Запись по индексу i (разные строки)</code></code></td> <td>Гонок нет — разные потоки пишут в разные строки</code></code></td> </tr> <tr> <td><code>row_cols</code></code></td> <td>Запись по индексу i (разные строки)</code></code></td> <td>Аналогично row_values</code></code></td> </tr> <tr> <td><code>acc</code></code> (в ComputeRow)</code></code></td> <td>Локальная</code></code></td> <td>Уникальна для каждой строки</code></code></td> </tr> </tbody> </table>
 
 ### Синхронизация
+
 - Отсутствует — гонок данных нет, так как каждый поток работает со своими уникальными строками
 
 - `std::thread::join()` используется только для ожидания завершения потоков, не для синхронизации доступа к данным
 
 ### Почему не нужны мьютексы
+
 В данной реализации не требуются `std::mutex`, `std::atomic` или критические секции, потому что:
 
 - Каждый поток накапливает результаты в свой локальный `std::unordered_map` (через acc внутри `ComputeRow`)
@@ -169,15 +178,19 @@ for (int tt = 0; tt < num_threads; ++tt) {
 - Нет глобального аккумулятора, который разделялся бы между потоками
 
 ## 5. Детали реализации
+
 ### Файлы
+
 `stl/include/ops_stl.hpp` — заголовочный файл
 
 `stl/src/ops_stl.cpp` — реализация
 
 ### Основные изменения относительно SEQ
+
 <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; text-align: left; width: 100%;"> <thead> <tr style="background-color: #f2f2f2;"> <th>Аспект</th> <th>SEQ</th> <th>STL</th> </tr> </thead> <tbody> <tr> <td><strong>Цикл по строкам</strong></code></code></td> <td>Последовательный</code></code></td> <td>Параллельный (ручное распределение по потокам)</code></code></td> </tr> <tr> <td><strong>Создание потоков</strong></code></code></td> <td>—</code></code></td> <td><code>std::thread</code> для каждого worker'а</code></code></td> </tr> <tr> <td><strong>Распределение итераций</strong></code></code></td> <td>—</code></code></td> <td>Статическое (chunk-based), ручное</code></code></td> </tr> <tr> <td><strong>Контейнер для накопления</strong></code></code></td> <td><code>std::map&lt;int, double&gt;</code></code></td> <td><code>std::unordered_map&lt;int, double&gt;</code></code></td> </tr> <tr> <td><strong>Сбор результатов</strong></code></code></td> <td>Прямая запись в <code>c.values</code></code></code></td> <td>Промежуточные <code>row_values</code> и <code>row_cols</code> с последующим объединением</code></code></td> </tr> <tr> <td><strong>Синхронизация</strong></code></code></td> <td>—</code></code></td> <td><code>join()</code> для ожидания потоков</code></code></td> </tr> </tbody> </table>
 
 ### Ключевые фрагменты кода
+
 Создание потоков и распределение работы:
 
 ```
@@ -200,6 +213,7 @@ for (auto &th : threads) {
     th.join();
 }
 ```
+
 Функция ```ComputeRow``` (вычислительное ядро):
 
 ```
@@ -230,6 +244,7 @@ void ComputeRow(const SparseMatrixCRS &a, const SparseMatrixCRS &b,
 ```
 
 ### Особенности реализации
+
 1. Ручное управление потоками:
 
 - Программист явно создаёт P потоков
@@ -259,7 +274,9 @@ void ComputeRow(const SparseMatrixCRS &a, const SparseMatrixCRS &b,
 - `values.reserve(acc.size())` уменьшает количество переаллокаций
 
 ## 6. Проверка корректности
+
 ### Метод верификации
+
 Корректность STL-версии проверяется сравнением с SEQ:
 
 - Все функциональные тесты прогоняются на обеих реализациях
@@ -269,18 +286,21 @@ void ComputeRow(const SparseMatrixCRS &a, const SparseMatrixCRS &b,
 - Проверяется валидность CRS-формата выходной матрицы
 
 ### Функциональные тесты
+
 <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; text-align: center;"> <thead> <tr style="background-color: #f2f2f2;"> <th>№</th> <th>Название</th> <th>Размеры</th> <th>Описание</th> <th>Ожидаемый nnz</th> </tr> </thead> <tbody> <tr> <td>1</code></code></td> <td>identity</code></code></td> <td>2×2 × 2×2</code></code></td> <td>A = [[1,0],[0,1]], B = [[2,0],[0,3]]</code></code></td> <td>2</code></code></td> </tr> <tr> <td>2</code></code></td> <td>simple_2x2</code></code></td> <td>2×2 × 2×2</code></code></td> <td>Разреженные матрицы с 3 ненулевыми в A</code></code></td> <td>3</code></code></td> </tr> <tr> <td>3</code></code></td> <td>zero_matrix</code></code></td> <td>2×2 × 2×2</code></code></td> <td>B — нулевая матрица</code></code></td> <td>0</code></code></td> </tr> <tr> <td>4</code></code></td> <td>sparse_3x3</code></code></td> <td>3×3 × 3×3</code></code></td> <td>Разреженные матрицы сложной структуры</code></code></td> <td>4</code></code></td> </tr> </tbody> </table>
 
-## 7. Экспериментальная среда:
+## 7. Экспериментальная среда
 
 ### Аппаратное обеспечение
-- Процессор: 12th Gen Intel(R) Core(TM) i5-12500H 
+
+- Процессор: 12th Gen Intel(R) Core(TM) i5-12500H
 - Кол-во ядер / потоков: 12
 - Оперативная память: 7.6 Gi (из 16 Gi физических Windows)
 - Операционная система: WSL-2 Ubuntu 24.04
 - Архитектура: x86_64
 
 ### Инструментарий
+
 - Компилятор: Microsoft Visual C++ (MSVC)
 - Версия: Visual Studio Code 1.120.0
 - Тип сборки: Release
@@ -290,17 +310,20 @@ void ComputeRow(const SparseMatrixCRS &a, const SparseMatrixCRS &b,
 ## 8. Результаты
 
 ### Замеры производительности (диагональные матрицы)
+
 Тесты производительности запускались на матрицах размера 100,000×100,000 с диагональным заполнением. Плотность ненулевых элементов составляет 0.0001% (1 ненулевой элемент на строку).
 
 ### SEQ (baseline)
+
 <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; text-align: center;"> <thead> <tr style="background-color: #f2f2f2;"> <th>Mode</th> <th>Time, s</th> </tr> </thead> <tbody> <tr> <td><strong>seq (task)</strong></code></code></td> <td>0.0119372845</code></code></td> </tr> <tr> <td><strong>seq (pipeline)</strong></code></code></td> <td>0.0141376019</code></code></td> </tr> </tbody> </table>
 STL (parallel)
 <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; text-align: center;"> <thead> <tr style="background-color: #f2f2f2;"> <th>Mode</th> <th>Time, s</th> <th>Speedup (vs SEQ task)</th> </tr> </thead> <tbody> <tr> <td><strong>stl (task)</strong></code></code></td> <td>0.0354698658</code></code></td> <td><strong style="color: #e67e22;">0.34×</strong> (в 2.97× медленнее)</code></code></td> </tr> <tr> <td><strong>stl (pipeline)</strong></code></code></td> <td>0.0251841545</code></code></td> <td><strong style="color: #e67e22;">0.47×</strong> (в 2.11× медленнее)</code></code></td> </tr> </tbody> </table>
 
 ### Анализ производительности (диагональные матрицы)
+
 Наблюдение: STL-версия работает медленнее последовательной в 2-3 раза, что лучше, чем OpenMP (6× медленнее), но хуже, чем TBB (1.6× медленнее).
 
-### Причины замедления:
+### Причины замедления
 
 1. Слишком малая вычислительная работа на строку:
 
@@ -319,6 +342,7 @@ STL (parallel)
 - Все строки одинаковы, но STL не использует динамическую балансировку
 
 ### Дополнительное тестирование на случайных матрицах (плотность 0.1%)
+
 Для реалистичной оценки производительности были проведены дополнительные замеры на матрицах размера 10,000×10,000 со случайным заполнением и плотностью ненулевых элементов 0.1% (≈100 ненулевых элементов на строку).
 
 ```
@@ -370,9 +394,11 @@ SparseMatrixCRS GenerateRandomSparseMatrix(int size, double density, double min_
 ```
 
 ### Результаты тестирования
+
 <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; text-align: center;"> <thead> <tr style="background-color: #f2f2f2;"> <th>Технология</th> <th>Mode</th> <th>Time, s</th> <th>Speedup (vs SEQ)</th> <th>Efficiency</th> </tr> </thead> <tbody> <tr> <td><strong>SEQ</strong></code></code></td> <td>task_run</code></code></td> <td>0.260065</code></code></td> <td><strong>1.00×</strong></code></code></td> <td>—</code></code></td> </tr> <tr> <td><strong>OMP</strong></code></code></td> <td>task_run</code></code></td> <td>0.077307</code></code></td> <td><strong style="color: #27ae60;">3.36×</strong></code></code></td> <td>28%</code></code></td> </tr> <tr> <td><strong>TBB</strong></code></code></td> <td>task_run</code></code></td> <td>0.084945</code></code></td> <td><strong style="color: #27ae60;">3.06×</strong></code></code></td> <td>26%</code></code></td> </tr> <tr> <td><strong>STL</strong></code></code></td> <td>task_run</code></code></td> <td>0.084496</code></code></td> <td><strong style="color: #27ae60;">3.08×</strong></code></code></td> <td>26%</code></code></td> </tr> </tbody> </table>
 
 ### Анализ тестов со случайным заполнением
+
 - STL показал значительное ускорение: 3.08× на 4 потоках
 - STL оказался на уровне TBB (3.06-3.08×):
 - STL: 3.08× (4 потока, статическое распределение)
@@ -381,11 +407,11 @@ SparseMatrixCRS GenerateRandomSparseMatrix(int size, double density, double min_
 
 Задача имеет хорошую вычислительную плотность (100 операций на строку)
 
-### Эффективность параллелизации:
+### Эффективность параллелизации
 
 При 4 потоках максимальное теоретическое ускорение — 4×
 
-Достигнуто +-3× (75% эффективности) 
+Достигнуто +-3× (75% эффективности)
 
 На 4 потоках STL показывает наивысшую эффективность (77% против 26-28% у OMP/TBB), поскольку отсутствует оверхэд от динамического распределения и work-stealing. Однако для масштабирования на большее количество потоков (8-16) STL потребовала бы более сложной балансировки.
 

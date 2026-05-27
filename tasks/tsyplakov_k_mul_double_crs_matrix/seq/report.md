@@ -28,7 +28,7 @@
 - ```rows``` (тип: ```int```) - количество строк
 - ```cols``` (тип: ```int```) - количество столбцов
 
-### Выходные данные 
+### Выходные данные
 
 Результирующая матрица ```C = A * B``` в формате CRS.
 
@@ -116,6 +116,7 @@
 ### Ключевые фрагменты кода
 
 Основной цикл умножения (```RunImpl```):
+
 ```
 for (int i = 0; i < a.rows; ++i) {
     int start_a = a.row_ptr[i];
@@ -155,6 +156,7 @@ c.row_ptr[a.rows] = static_cast<int>(c.values.size());
 ```
 
 Валидация входных данных (```ValidationImpl```):
+
 ```
 bool TsyplakovKTestTaskSEQ::ValidationImpl() {
     return (GetInput().a.cols == GetInput().b.rows) &&
@@ -191,39 +193,48 @@ bool TsyplakovKTestTaskSEQ::ValidationImpl() {
 <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; text-align: center; font-family: Arial, sans-serif;"> <thead> <tr> <th>№</th> <th>Название</th> <th>Размеры</th> <th>Описание</th> <th>Ожидаемый nnz</th> </tr> </thead> <tbody> <tr> <td>1</td> <td>identity</td> <td>2×2 × 2×2</td> <td>A = [[1,0],[0,1]], B = [[2,0],[0,3]]</td> <td>2</td> </tr> <tr> <td>2</td> <td>simple_2x2</td> <td>2×2 × 2×2</td> <td>Разреженные матрицы с 3 ненулевыми в A</td> <td>3</td> </tr> <tr> <td>3</td> <td>zero_matrix</td> <td>2×2 × 2×2</td> <td>B — нулевая матрица</td> <td>0</td> </tr> <tr> <td>4</td> <td>sparse_3x3</td> <td>3×3 × 3×3</td> <td>Разреженные матрицы сложной структуры</td> <td>4</td> </tr> </tbody> </table>
 
 ### Пример тестового случая (```simple_2x2```)
+
 **Матрица А**:
+
 ```
 [1.0, 2.0]
 [3.0, 0.0]
 ```
+
 CRS: ```values = [1.0, 2.0, 3.0]```, ```col_index = [0, 0, 1]```, ```row_ptr = [0, 1, 3]```.
 
 **Матрица В**:
+
 ```
 [4.0, 0.0],
 [5.0, 6.0]
 ```
+
 CRS: ```values = [4.0, 5.0, 6.0]```, ```col_index = [0, 0, 1]```, ```row_ptr = [0, 1, 3]```.
 
 **Ожидаемый результат ```C = A * B```**:
+
 ```
 [1*4 + 2*5, 1*0 + 2*6] = [4+10, 0+12] = [14.0, 12.0]
 [3*4 + 0*5, 3*0 + 0*6] = [12.0, 0.0]
 ```
+
 CRS: ```values = [14.0, 12.0, 12.0]```, ```col_index = [0, 1, 0]```, ```row_ptr = [0, 2, 3]```.
 
 Допустимая погрешность: ```e = 1e-10``` для сравнения значений с плавающей точкой.
 
-## 6. Экспериментальная среда:
+## 6. Экспериментальная среда
 
 ### Аппаратное обеспечение
-- Процессор: 12th Gen Intel(R) Core(TM) i5-12500H 
+
+- Процессор: 12th Gen Intel(R) Core(TM) i5-12500H
 - Кол-во ядер / потоков: 12
 - Оперативная память: 7.6 Gi (из 16 Gi физических Windows)
 - Операционная система: WSL-2 Ubuntu 24.04
 - Архитектура: x86_64
 
 ### Инструментарий
+
 - Компилятор: Microsoft Visual C++ (MSVC)
 - Версия: Visual Studio Code 1.120.0
 - Тип сборки: Release
@@ -233,32 +244,33 @@ CRS: ```values = [14.0, 12.0, 12.0]```, ```col_index = [0, 1, 0]```, ```row_ptr 
 ## 7. Результаты
 
 ### Замеры производительности
+
 Тесты производительности запускались на матрицах размера 100000×100000 с диагональным заполнением (каждая матрица содержит ровно 100000 ненулевых элементов — единицы на главной диагонали). Плотность ненулевых элементов составляет 0.0001%.
 
-<table> 
+<table>
     <thead>
-        <tr> 
-            <th>Mode</th> 
-            <th>Workers</th> 
-            <th>Time, s</th> 
-            <th>Speedup</th> 
-            <th>Efficiency</th> 
-        </tr> 
-    </thead> 
-    <tbody> 
-        <tr> 
-            <td><strong>seq (task)</strong></td> 
-            <td>1</td> <td><strong>0.0116648674</strong></td> 
-            <td>1.00</td> <td>—</td> 
-        </tr> 
-        <tr> 
-            <td><strong>seq (pipeline)</strong></td> 
-            <td>1</td> 
-            <td><strong>0.0119276047</strong></td> 
-            <td>1.00</td> 
-            <td>—</td> 
-        </tr> 
-    </tbody> 
+        <tr>
+            <th>Mode</th>
+            <th>Workers</th>
+            <th>Time, s</th>
+            <th>Speedup</th>
+            <th>Efficiency</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>seq (task)</strong></td>
+            <td>1</td> <td><strong>0.0116648674</strong></td>
+            <td>1.00</td> <td>—</td>
+        </tr>
+        <tr>
+            <td><strong>seq (pipeline)</strong></td>
+            <td>1</td>
+            <td><strong>0.0119276047</strong></td>
+            <td>1.00</td>
+            <td>—</td>
+        </tr>
+    </tbody>
 </table>
 
 ### Комментарий к производительности
@@ -280,6 +292,7 @@ CRS: ```values = [14.0, 12.0, 12.0]```, ```col_index = [0, 1, 0]```, ```row_ptr 
 ## 8. Выводы
 
 **Почему SEQ используется как эталон для ускорения:**
+
 1. **Детерминированность**: При одинаковых входных данных результат всегда одинаков (с точностью до машинной погрешности);
 2. **Простота верификации**: Отсутствие гонок данных и проблем синхронизации упрощает проверку корректности;
 3. **Прозрачность**: Алгоритм напрямую отражает математическую формулу умножения матриц;
