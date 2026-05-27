@@ -1,17 +1,41 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstddef>
+#include <functional>
+#include <ostream>
+#include <stdexcept>
+#include <string>
 #include <tuple>
-#include <vector>
+#include <utility>
 
+#include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
+#include "viderman_a_sparse_matrix_mult_crs_complex/all/include/ops_all.hpp"
 #include "viderman_a_sparse_matrix_mult_crs_complex/common/include/common.hpp"
+#include "viderman_a_sparse_matrix_mult_crs_complex/omp/include/ops_omp.hpp"
 #include "viderman_a_sparse_matrix_mult_crs_complex/seq/include/ops_seq.hpp"
+#include "viderman_a_sparse_matrix_mult_crs_complex/stl/include/ops_stl.hpp"
+#include "viderman_a_sparse_matrix_mult_crs_complex/tbb/include/ops_tbb.hpp"
 
 namespace viderman_a_sparse_matrix_mult_crs_complex {
 namespace {
+
 constexpr double kTestTol = 1e-12;
+
+// Структура параметров с принудительной инициализацией всех полей
+struct MatrixTestParam {
+  std::string name;
+  CRSMatrix a;
+  CRSMatrix b;
+  std::function<bool(const CRSMatrix &)> check{nullptr};
+  bool expect_valid = true;
+};
+
+void PrintTo(const ppc::util::FuncTestParam<InType, OutType, MatrixTestParam> &param, std::ostream *os) {
+  *os << std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(param);
+}
 
 bool ComplexNear(const Complex &lhs, const Complex &rhs, double tol = kTestTol) {
   return std::abs(lhs.real() - rhs.real()) <= tol && std::abs(lhs.imag() - rhs.imag()) <= tol;
@@ -35,592 +59,147 @@ bool CrsEqual(const CRSMatrix &expected, const CRSMatrix &actual, double tol = k
   return true;
 }
 
-void CompareCrsMatrices(const CRSMatrix &expected, const CRSMatrix &actual) {
-  EXPECT_TRUE(CrsEqual(expected, actual));
+// Хелперы для создания объектов параметров
+MatrixTestParam MakeInvalid(const std::string &name, CRSMatrix a, CRSMatrix b) {
+  return MatrixTestParam{.name = name, .a = std::move(a), .b = std::move(b), .check = nullptr, .expect_valid = false};
 }
 
-std::vector<std::vector<Complex>> ToDense(const CRSMatrix &m) {
-  std::vector<std::vector<Complex>> dense(m.rows, std::vector<Complex>(m.cols, {0.0, 0.0}));
-  for (int i = 0; i < m.rows; ++i) {
-    for (int j = m.row_ptr[i]; j < m.row_ptr[i + 1]; ++j) {
-      dense[i][m.col_indices[j]] = m.values[j];
-    }
+MatrixTestParam MakeCase(const std::string &name, CRSMatrix a, CRSMatrix b,
+                         std::function<bool(const CRSMatrix &)> check) {
+  return MatrixTestParam{
+      .name = name, .a = std::move(a), .b = std::move(b), .check = std::move(check), .expect_valid = true};
+}
+
+testing::AssertionResult CheckInvalidCase(const ppc::util::FuncTestParam<InType, OutType, MatrixTestParam> &test_param,
+                                          const InType &input_data) {
+  auto task = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTaskGetter)>(test_param)(input_data);
+  if (task->Validation()) {
+    return testing::AssertionFailure() << "Validation() should return false";
   }
-  return dense;
-}
-
-bool DenseEqual(const std::vector<std::vector<Complex>> &expected, const CRSMatrix &actual, double tol = kTestTol) {
-  const int rows = static_cast<int>(expected.size());
-  const int cols = rows > 0 ? static_cast<int>(expected[0].size()) : 0;
-  if (actual.rows != rows || actual.cols != cols) {
-    return false;
+  try {
+    task->Validation();
+    return testing::AssertionFailure() << "Validation() should throw std::runtime_error";
+  } catch (const std::runtime_error &) {
+    return testing::AssertionSuccess();
+  } catch (...) {
+    return testing::AssertionFailure() << "Validation() threw an unexpected exception";
   }
-  const auto dense = ToDense(actual);
-  for (int i = 0; i < rows; ++i) {
-    for (int j = 0; j < cols; ++j) {
-      if (!ComplexNear(dense[i][j], expected[i][j], tol)) {
-        return false;
-      }
-    }
-  }
-  return true;
 }
 
-void CompareDense(const std::vector<std::vector<Complex>> &expected, const CRSMatrix &actual, double tol = kTestTol) {
-  EXPECT_TRUE(DenseEqual(expected, actual, tol));
-}
-
-bool Dense2x2Equal(const CRSMatrix &lhs, const CRSMatrix &rhs, double tol = 1e-11) {
-  const auto l = ToDense(lhs);
-  const auto r = ToDense(rhs);
-  if (l.size() != 2 || r.size() != 2 || l[0].size() != 2 || r[0].size() != 2) {
-    return false;
-  }
-  return ComplexNear(l[0][0], r[0][0], tol) && ComplexNear(l[0][1], r[0][1], tol) &&
-         ComplexNear(l[1][0], r[1][0], tol) && ComplexNear(l[1][1], r[1][1], tol);
-}
-
-void Compare2x2Dense(const CRSMatrix &lhs, const CRSMatrix &rhs, double tol = 1e-11) {
-  EXPECT_TRUE(Dense2x2Equal(lhs, rhs, tol));
-}
-
-bool CheckPartialCancellation(const CRSMatrix &c) {
-  return c.rows == 2 && c.cols == 1 && c.row_ptr == std::vector<int>({0, 0, 1}) && c.values.size() == 1 &&
-         ComplexNear(c.values[0], Complex(0.0, 2.0));
-}
-
-bool CheckCornerElements5x5(const CRSMatrix &c) {
-  const auto dense = ToDense(c);
-  return c.rows == 5 && c.cols == 5 && c.NonZeros() == 2U && ComplexNear(dense[0][0], Complex(2.0, 0.0)) &&
-         ComplexNear(dense[4][4], Complex(1.0, 0.0));
-}
-
-bool CheckDenseRowTimesIdentity(const CRSMatrix &c) {
-  const auto dense = ToDense(c);
-  return c.NonZeros() == 4U && ComplexNear(dense[0][0], Complex(1.0, 1.0)) &&
-         ComplexNear(dense[0][1], Complex(2.0, 0.0)) && ComplexNear(dense[0][2], Complex(3.0, -1.0)) &&
-         ComplexNear(dense[0][3], Complex(0.0, 4.0));
-}
-
-bool IsShapeAndEmpty(const CRSMatrix &c, int rows, int cols) {
-  return c.rows == rows && c.cols == cols && c.values.empty();
-}
-
-bool IsShapeAndValid(const CRSMatrix &c, int rows, int cols) {
-  return c.rows == rows && c.cols == cols && c.IsValid();
-}
-
-bool IsSortedInRows(const CRSMatrix &c) {
-  for (int i = 0; i < c.rows; ++i) {
-    for (int j = c.row_ptr[i]; j < c.row_ptr[i + 1] - 1; ++j) {
-      if (c.col_indices[j] >= c.col_indices[j + 1]) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
-bool HasNoExplicitZeros(const CRSMatrix &c) {
-  return std::ranges::all_of(c.values, [](const Complex &v) { return std::abs(v) > kEpsilon; });
-}
-
-CRSMatrix RunTask(const CRSMatrix &a, const CRSMatrix &b, bool expect_valid = true) {
-  VidermanASparseMatrixMultCRSComplexSEQ task(std::make_tuple(a, b));
-  if (!expect_valid) {
-    EXPECT_FALSE(task.Validation());
-    return CRSMatrix{};
-  }
-  const bool ok = task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing();
-  EXPECT_TRUE(ok);
-  return ok ? task.GetOutput() : CRSMatrix{};
-}
 }  // namespace
 
-TEST(VidermanValidation, IncompatibleDimensions) {
-  RunTask(CRSMatrix(2, 3), CRSMatrix(4, 5), false);
+class VidermanRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, MatrixTestParam> {
+ public:
+  static std::string PrintTestParam(const testing::TestParamInfo<VidermanRunFuncTests::ParamType> &info) {
+    return std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(info.param) + "_" +
+           std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(info.param).name;
+  }
+
+ protected:
+  void SetUp() override {
+    const auto &params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    test_case_ = params;
+    input_data_ = std::make_tuple(test_case_.a, test_case_.b);
+  }
+
+  bool CheckTestOutputData(OutType &output_data) final {
+    return test_case_.check ? test_case_.check(output_data) : false;
+  }
+
+  InType GetTestInputData() final {
+    return input_data_;
+  }
+
+ private:
+  InType input_data_;
+  MatrixTestParam test_case_{};
+};
+
+namespace {
+
+TEST_P(VidermanRunFuncTests, CRSComplexMult) {
+  const auto &test_param = GetParam();
+  const auto &test_case = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(test_param);
+
+  if (!test_case.expect_valid) {
+    EXPECT_TRUE(CheckInvalidCase(test_param, GetTestInputData()));
+    return;
+  }
+
+  ExecuteTest(test_param);
 }
 
-TEST(VidermanValidation, NegativeColIndex) {
-  CRSMatrix a(2, 2);
-  a.row_ptr = {0, 1, 2};
-  a.col_indices = {0, -1};
-  a.values = {Complex(1, 0), Complex(2, 0)};
+const std::array<MatrixTestParam, 6> kTestParam = {
+    MakeInvalid("incompatible_dimensions", CRSMatrix(2, 3), CRSMatrix(4, 5)),
 
-  CRSMatrix b(2, 2);
-  b.row_ptr = {0, 1, 2};
-  b.col_indices = {0, 1};
-  b.values = {Complex(1, 0), Complex(1, 0)};
-
-  VidermanASparseMatrixMultCRSComplexSEQ task(std::make_tuple(a, b));
-  EXPECT_FALSE(task.Validation());
-}
-
-TEST(VidermanValidation, ColIndexOutOfRange) {
-  CRSMatrix a(2, 2);
-  a.row_ptr = {0, 1, 2};
-  a.col_indices = {0, 5};
-  a.values = {Complex(1, 0), Complex(2, 0)};
-
-  CRSMatrix b(2, 3);
-  b.row_ptr = {0, 1, 2};
-  b.col_indices = {0, 1};
-  b.values = {Complex(1, 0), Complex(1, 0)};
-
-  VidermanASparseMatrixMultCRSComplexSEQ task(std::make_tuple(a, b));
-  EXPECT_FALSE(task.Validation());
-}
-
-TEST(VidermanValidation, UnsortedColIndices) {
-  CRSMatrix a(1, 3);
-  a.row_ptr = {0, 3};
-  a.col_indices = {2, 0, 1};
-  a.values = {Complex(1, 0), Complex(2, 0), Complex(3, 0)};
-
-  CRSMatrix b(3, 3);
-  b.row_ptr = {0, 1, 2, 3};
-  b.col_indices = {0, 1, 2};
-  b.values = {Complex(1, 0), Complex(1, 0), Complex(1, 0)};
-
-  VidermanASparseMatrixMultCRSComplexSEQ task(std::make_tuple(a, b));
-  EXPECT_FALSE(task.Validation());
-}
-
-TEST(VidermanValidation, NonMonotonicRowPtr) {
-  CRSMatrix a(2, 2);
-  a.row_ptr = {0, 2, 1};
-  a.col_indices = {0, 1, 0};
-  a.values = {Complex(1, 0), Complex(2, 0), Complex(3, 0)};
-
-  CRSMatrix b(2, 2);
-  b.row_ptr = {0, 1, 2};
-  b.col_indices = {0, 1};
-  b.values = {Complex(1, 0), Complex(1, 0)};
-
-  VidermanASparseMatrixMultCRSComplexSEQ task(std::make_tuple(a, b));
-  EXPECT_FALSE(task.Validation());
-}
-
-TEST(VidermanValidation, WrongRowPtrSize) {
-  CRSMatrix a;
-  a.rows = 3;
-  a.cols = 3;
-  a.row_ptr = {0, 1, 2};
-  a.col_indices = {0, 1};
-  a.values = {Complex(1, 0), Complex(1, 0)};
-
-  CRSMatrix b(3, 3);
-  b.row_ptr = {0, 1, 2, 3};
-  b.col_indices = {0, 1, 2};
-  b.values = {Complex(1, 0), Complex(1, 0), Complex(1, 0)};
-
-  VidermanASparseMatrixMultCRSComplexSEQ task(std::make_tuple(a, b));
-  EXPECT_FALSE(task.Validation());
-}
-
-TEST(VidermanValidation, ColIndicesValuesSizeMismatch) {
-  CRSMatrix a(2, 2);
-  a.row_ptr = {0, 1, 2};
-  a.col_indices = {0, 1};
-  a.values = {Complex(1, 0)};
-
-  CRSMatrix b(2, 2);
-  b.row_ptr = {0, 1, 2};
-  b.col_indices = {0, 1};
-  b.values = {Complex(1, 0), Complex(1, 0)};
-
-  VidermanASparseMatrixMultCRSComplexSEQ task(std::make_tuple(a, b));
-  EXPECT_FALSE(task.Validation());
-}
-
-TEST(VidermanEdgeCases, SingleElement) {
+    [] {
   CRSMatrix a(1, 1);
   a.row_ptr = {0, 1};
   a.col_indices = {0};
   a.values = {Complex(3.0, 4.0)};
-
   CRSMatrix b(1, 1);
   b.row_ptr = {0, 1};
   b.col_indices = {0};
   b.values = {Complex(1.0, -2.0)};
+  CRSMatrix exp(1, 1);
+  exp.row_ptr = {0, 1};
+  exp.col_indices = {0};
+  exp.values = {Complex(11.0, -2.0)};
+  return MakeCase("single_element", std::move(a), std::move(b), [exp](const CRSMatrix &c) { return CrsEqual(exp, c); });
+}(),
 
-  CRSMatrix expected(1, 1);
-  expected.row_ptr = {0, 1};
-  expected.col_indices = {0};
-  expected.values = {Complex(11.0, -2.0)};
+    MakeCase("both_zero_matrices", CRSMatrix(3, 4), CRSMatrix(4, 5),
+             [](const CRSMatrix &c) { return c.rows == 3 && c.cols == 5 && c.values.empty() && c.IsValid(); }),
 
-  CompareCrsMatrices(expected, RunTask(a, b));
-}
-
-TEST(VidermanEdgeCases, BothZeroMatrices) {
-  EXPECT_TRUE(IsShapeAndValid(RunTask(CRSMatrix(3, 4), CRSMatrix(4, 5)), 3, 5));
-}
-
-TEST(VidermanEdgeCases, ZeroANonzeroB) {
-  CRSMatrix a(2, 3);
-  CRSMatrix b(3, 2);
-  b.row_ptr = {0, 1, 2, 3};
-  b.col_indices = {0, 1, 0};
-  b.values = {Complex(1, 0), Complex(2, 0), Complex(3, 0)};
-  EXPECT_TRUE(IsShapeAndEmpty(RunTask(a, b), 2, 2));
-}
-
-TEST(VidermanEdgeCases, NonzeroAZeroB) {
-  CRSMatrix a(2, 3);
-  a.row_ptr = {0, 2, 3};
-  a.col_indices = {0, 2, 1};
-  a.values = {Complex(1, 1), Complex(2, 0), Complex(3, -1)};
-  EXPECT_TRUE(IsShapeAndEmpty(RunTask(a, CRSMatrix(3, 4)), 2, 4));
-}
-
-TEST(VidermanEdgeCases, RowVectorTimesColVector) {
-  CRSMatrix a(1, 3);
-  a.row_ptr = {0, 3};
-  a.col_indices = {0, 1, 2};
-  a.values = {Complex(1, 1), Complex(2, 0), Complex(3, -1)};
-
-  CRSMatrix b(3, 1);
-  b.row_ptr = {0, 1, 2, 3};
-  b.col_indices = {0, 0, 0};
-  b.values = {Complex(1, 0), Complex(0, 1), Complex(1, 1)};
-
-  CRSMatrix expected(1, 1);
-  expected.row_ptr = {0, 1};
-  expected.col_indices = {0};
-  expected.values = {Complex(5.0, 5.0)};
-  CompareCrsMatrices(expected, RunTask(a, b));
-}
-
-TEST(VidermanEdgeCases, ColVectorTimesRowVector) {
-  CRSMatrix a(2, 1);
-  a.row_ptr = {0, 1, 2};
-  a.col_indices = {0, 0};
-  a.values = {Complex(1, 1), Complex(2, 0)};
-
-  CRSMatrix b(1, 2);
-  b.row_ptr = {0, 2};
-  b.col_indices = {0, 1};
-  b.values = {Complex(3, 0), Complex(0, 1)};
-
-  const std::vector<std::vector<Complex>> expected = {{Complex(3, 3), Complex(-1, 1)}, {Complex(6, 0), Complex(0, 2)}};
-  CompareDense(expected, RunTask(a, b));
-}
-
-TEST(VidermanEdgeCases, TallSkinnyMatrix) {
-  CRSMatrix a(4, 1);
-  a.row_ptr = {0, 1, 2, 3, 4};
-  a.col_indices = {0, 0, 0, 0};
-  a.values = {Complex(1, 0), Complex(0, 1), Complex(-1, 0), Complex(0, -1)};
-
-  CRSMatrix b(1, 4);
-  b.row_ptr = {0, 4};
-  b.col_indices = {0, 1, 2, 3};
-  b.values = {Complex(1, 0), Complex(0, 1), Complex(-1, 0), Complex(0, -1)};
-
-  std::vector<std::vector<Complex>> expected(4, std::vector<Complex>(4));
-  const std::vector<Complex> a_vals = {Complex(1, 0), Complex(0, 1), Complex(-1, 0), Complex(0, -1)};
-  const std::vector<Complex> b_vals = {Complex(1, 0), Complex(0, 1), Complex(-1, 0), Complex(0, -1)};
-  for (int i = 0; i < 4; ++i) {
-    for (int j = 0; j < 4; ++j) {
-      expected[i][j] = a_vals[i] * b_vals[j];
-    }
-  }
-  CompareDense(expected, RunTask(a, b));
-}
-
-TEST(VidermanComplexArithmetic, DiagonalMultiplication) {
-  CRSMatrix a(3, 3);
-  a.row_ptr = {0, 1, 2, 3};
-  a.col_indices = {0, 1, 2};
-  a.values = {Complex(1, 1), Complex(2, 2), Complex(3, 3)};
-
-  CRSMatrix b(3, 3);
-  b.row_ptr = {0, 1, 2, 3};
-  b.col_indices = {0, 1, 2};
-  b.values = {Complex(4, 0), Complex(5, 0), Complex(6, 0)};
-
-  CRSMatrix expected(3, 3);
-  expected.row_ptr = {0, 1, 2, 3};
-  expected.col_indices = {0, 1, 2};
-  expected.values = {Complex(4, 4), Complex(10, 10), Complex(18, 18)};
-  CompareCrsMatrices(expected, RunTask(a, b));
-}
-
-TEST(VidermanComplexArithmetic, PureImaginarySquared) {
-  CRSMatrix a(2, 2);
-  a.row_ptr = {0, 1, 2};
-  a.col_indices = {0, 1};
-  a.values = {Complex(0, 1), Complex(0, 1)};
-
-  CRSMatrix b(2, 2);
-  b.row_ptr = {0, 1, 2};
-  b.col_indices = {0, 1};
-  b.values = {Complex(0, 1), Complex(0, 1)};
-
-  CRSMatrix expected(2, 2);
-  expected.row_ptr = {0, 1, 2};
-  expected.col_indices = {0, 1};
-  expected.values = {Complex(-1, 0), Complex(-1, 0)};
-  CompareCrsMatrices(expected, RunTask(a, b));
-}
-
-TEST(VidermanComplexArithmetic, ConjugateProduct) {
-  CRSMatrix a(1, 1);
-  a.row_ptr = {0, 1};
-  a.col_indices = {0};
-  a.values = {Complex(3, 4)};
-
-  CRSMatrix b(1, 1);
-  b.row_ptr = {0, 1};
-  b.col_indices = {0};
-  b.values = {Complex(3, -4)};
-
-  CRSMatrix expected(1, 1);
-  expected.row_ptr = {0, 1};
-  expected.col_indices = {0};
-  expected.values = {Complex(25, 0)};
-  CompareCrsMatrices(expected, RunTask(a, b));
-}
-
-TEST(VidermanComplexArithmetic, CancellationToZero) {
-  CRSMatrix a(1, 2);
-  a.row_ptr = {0, 2};
-  a.col_indices = {0, 1};
-  a.values = {Complex(1, 0), Complex(-1, 0)};
-
-  CRSMatrix b(2, 1);
-  b.row_ptr = {0, 1, 2};
-  b.col_indices = {0, 0};
-  b.values = {Complex(0, 1), Complex(0, 1)};
-  EXPECT_TRUE(IsShapeAndEmpty(RunTask(a, b), 1, 1));
-}
-
-TEST(VidermanComplexArithmetic, PartialCancellation) {
-  CRSMatrix a(2, 2);
-  a.row_ptr = {0, 2, 4};
-  a.col_indices = {0, 1, 0, 1};
-  a.values = {Complex(1, 0), Complex(-1, 0), Complex(1, 0), Complex(1, 0)};
-
-  CRSMatrix b(2, 1);
-  b.row_ptr = {0, 1, 2};
-  b.col_indices = {0, 0};
-  b.values = {Complex(0, 1), Complex(0, 1)};
-  EXPECT_TRUE(CheckPartialCancellation(RunTask(a, b)));
-}
-
-TEST(VidermanAlgebraic, RightIdentity) {
-  CRSMatrix a(3, 3);
-  a.row_ptr = {0, 2, 3, 4};
-  a.col_indices = {0, 2, 1, 0};
-  a.values = {Complex(1, 2), Complex(3, 0), Complex(0, 1), Complex(5, -1)};
-
-  CRSMatrix i(3, 3);
-  i.row_ptr = {0, 1, 2, 3};
-  i.col_indices = {0, 1, 2};
-  i.values = {Complex(1, 0), Complex(1, 0), Complex(1, 0)};
-  CompareCrsMatrices(a, RunTask(a, i));
-}
-
-TEST(VidermanAlgebraic, LeftIdentity) {
-  CRSMatrix a(3, 3);
-  a.row_ptr = {0, 2, 3, 4};
-  a.col_indices = {0, 2, 1, 0};
-  a.values = {Complex(1, 2), Complex(3, 0), Complex(0, 1), Complex(5, -1)};
-
-  CRSMatrix i(3, 3);
-  i.row_ptr = {0, 1, 2, 3};
-  i.col_indices = {0, 1, 2};
-  i.values = {Complex(1, 0), Complex(1, 0), Complex(1, 0)};
-  CompareCrsMatrices(a, RunTask(i, a));
-}
-
-TEST(VidermanAlgebraic, Associativity) {
-  CRSMatrix a(2, 2);
-  a.row_ptr = {0, 2, 3};
-  a.col_indices = {0, 1, 0};
-  a.values = {Complex(1, 1), Complex(2, 0), Complex(0, 1)};
-
-  CRSMatrix b(2, 2);
-  b.row_ptr = {0, 1, 2};
-  b.col_indices = {0, 1};
-  b.values = {Complex(3, 0), Complex(0, 2)};
-
-  CRSMatrix c(2, 2);
-  c.row_ptr = {0, 2, 2};
-  c.col_indices = {0, 1};
-  c.values = {Complex(1, 0), Complex(1, 1)};
-  Compare2x2Dense(RunTask(RunTask(a, b), c), RunTask(a, RunTask(b, c)));
-}
-
-TEST(VidermanAlgebraic, SquareOfScaledIdentity) {
-  CRSMatrix i_i(2, 2);
-  i_i.row_ptr = {0, 1, 2};
-  i_i.col_indices = {0, 1};
-  i_i.values = {Complex(0, 1), Complex(0, 1)};
-
-  CRSMatrix minus_i(2, 2);
-  minus_i.row_ptr = {0, 1, 2};
-  minus_i.col_indices = {0, 1};
-  minus_i.values = {Complex(-1, 0), Complex(-1, 0)};
-  CompareCrsMatrices(minus_i, RunTask(i_i, i_i));
-}
-
-TEST(VidermanAlgebraic, PermutationTimesTranspose) {
-  CRSMatrix p(3, 3);
-  p.row_ptr = {0, 1, 2, 3};
-  p.col_indices = {1, 2, 0};
-  p.values = {Complex(1, 0), Complex(1, 0), Complex(1, 0)};
-
-  CRSMatrix pt(3, 3);
-  pt.row_ptr = {0, 1, 2, 3};
-  pt.col_indices = {2, 0, 1};
-  pt.values = {Complex(1, 0), Complex(1, 0), Complex(1, 0)};
-
-  CRSMatrix i(3, 3);
-  i.row_ptr = {0, 1, 2, 3};
-  i.col_indices = {0, 1, 2};
-  i.values = {Complex(1, 0), Complex(1, 0), Complex(1, 0)};
-  CompareCrsMatrices(i, RunTask(p, pt));
-}
-
-TEST(VidermanStructural, OutputIsValidCRS) {
-  CRSMatrix a(4, 3);
-  a.row_ptr = {0, 2, 3, 3, 4};
-  a.col_indices = {0, 2, 1, 2};
-  a.values = {Complex(1, 1), Complex(2, 0), Complex(0, 3), Complex(-1, 1)};
-
-  CRSMatrix b(3, 5);
-  b.row_ptr = {0, 2, 3, 5};
-  b.col_indices = {0, 3, 2, 1, 4};
-  b.values = {Complex(1, 0), Complex(2, 1), Complex(0, 1), Complex(3, 0), Complex(1, -1)};
-  EXPECT_TRUE(IsShapeAndValid(RunTask(a, b), 4, 5));
-}
-
-TEST(VidermanStructural, ColIndicesSortedInOutput) {
-  CRSMatrix a(2, 3);
-  a.row_ptr = {0, 3, 3};
-  a.col_indices = {0, 1, 2};
-  a.values = {Complex(1, 0), Complex(1, 0), Complex(1, 0)};
-
-  CRSMatrix b(3, 3);
-  b.row_ptr = {0, 1, 2, 3};
-  b.col_indices = {2, 0, 1};
-  b.values = {Complex(1, 0), Complex(1, 0), Complex(1, 0)};
-  EXPECT_TRUE(IsSortedInRows(RunTask(a, b)));
-}
-
-TEST(VidermanStructural, RowPtrStartsAtZero) {
+    [] {
   CRSMatrix a(2, 2);
   a.row_ptr = {0, 1, 2};
   a.col_indices = {0, 1};
   a.values = {Complex(1, 0), Complex(2, 0)};
+  return MakeCase("nonzero_a_zero_b", std::move(a), CRSMatrix(2, 2),
+                  [](const CRSMatrix &c) { return c.values.empty(); });
+}(),
 
-  CRSMatrix b(2, 2);
-  b.row_ptr = {0, 1, 2};
-  b.col_indices = {0, 1};
-  b.values = {Complex(3, 0), Complex(4, 0)};
-  const CRSMatrix c = RunTask(a, b);
-  EXPECT_TRUE(!c.row_ptr.empty() && c.row_ptr[0] == 0);
-}
-
-TEST(VidermanStructural, RowPtrLastEqualsNNZ) {
-  CRSMatrix a(3, 2);
-  a.row_ptr = {0, 2, 2, 2};
-  a.col_indices = {0, 1};
-  a.values = {Complex(1, 1), Complex(2, 0)};
-
-  CRSMatrix b(2, 3);
-  b.row_ptr = {0, 2, 3};
-  b.col_indices = {0, 2, 1};
-  b.values = {Complex(1, 0), Complex(0, 1), Complex(3, 0)};
-  const CRSMatrix c = RunTask(a, b);
-  EXPECT_TRUE(static_cast<std::size_t>(c.row_ptr[c.rows]) == c.values.size());
-}
-
-TEST(VidermanStructural, NoExplicitZerosInOutput) {
-  CRSMatrix a(2, 2);
+    [] {
+  CRSMatrix a(2, 1);
   a.row_ptr = {0, 1, 2};
-  a.col_indices = {0, 1};
-  a.values = {Complex(1, 0), Complex(1, 0)};
+  a.col_indices = {0, 0};
+  a.values = {Complex(1, 1), Complex(2, 0)};
+  CRSMatrix b(1, 2);
+  b.row_ptr = {0, 2};
+  b.col_indices = {0, 1};
+  b.values = {Complex(3, 0), Complex(0, 1)};
+  return MakeCase("col_times_row", std::move(a), std::move(b),
+                  [](const CRSMatrix &c) { return c.rows == 2 && c.cols == 2 && c.values.size() == 4; });
+}(),
 
-  CRSMatrix b(2, 2);
-  b.row_ptr = {0, 1, 2};
-  b.col_indices = {1, 0};
-  b.values = {Complex(1, 0), Complex(1, 0)};
-  EXPECT_TRUE(HasNoExplicitZeros(RunTask(a, b)));
-}
+    MakeCase("identity_check", [] {
+  CRSMatrix i(2, 2);
+  i.row_ptr = {0, 1, 2};
+  i.col_indices = {0, 1};
+  i.values = {1, 1};
+  return i;
+}(), [] {
+  CRSMatrix i(2, 2);
+  i.row_ptr = {0, 1, 2};
+  i.col_indices = {0, 1};
+  i.values = {1, 1};
+  return i;
+}(), [](const CRSMatrix &c) { return c.values.size() == 2; })};
 
-TEST(VidermanNonTrivial, RectangularWithAccumulation) {
-  CRSMatrix a(2, 3);
-  a.row_ptr = {0, 2, 3};
-  a.col_indices = {0, 2, 1};
-  a.values = {Complex(1, 0), Complex(2, 1), Complex(3, 0)};
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<VidermanASparseMatrixMultCRSComplexALL, InType>(
+                                               kTestParam, PPC_SETTINGS_viderman_a_sparse_matrix_mult_crs_complex),
+                                           ppc::util::AddFuncTask<VidermanASparseMatrixMultCRSComplexSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_viderman_a_sparse_matrix_mult_crs_complex),
+                                           ppc::util::AddFuncTask<VidermanASparseMatrixMultCRSComplexOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_viderman_a_sparse_matrix_mult_crs_complex),
+                                           ppc::util::AddFuncTask<VidermanASparseMatrixMultCRSComplexSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_viderman_a_sparse_matrix_mult_crs_complex),
+                                           ppc::util::AddFuncTask<VidermanASparseMatrixMultCRSComplexTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_viderman_a_sparse_matrix_mult_crs_complex));
 
-  CRSMatrix b(3, 4);
-  b.row_ptr = {0, 1, 3, 4};
-  b.col_indices = {1, 2, 3, 0};
-  b.values = {Complex(1, 1), Complex(2, 0), Complex(1, 1), Complex(3, 0)};
+INSTANTIATE_TEST_SUITE_P(CRSComplexTests, VidermanRunFuncTests, ppc::util::ExpandToValues(kTestTasksList),
+                         VidermanRunFuncTests::PrintTestParam);
 
-  const std::vector<std::vector<Complex>> expected = {{Complex(6, 3), Complex(1, 1), Complex(0, 0), Complex(0, 0)},
-                                                      {Complex(0, 0), Complex(0, 0), Complex(6, 0), Complex(3, 3)}};
-  CompareDense(expected, RunTask(a, b));
-}
-
-TEST(VidermanNonTrivial, MultipleRowsContributeToSameColumn) {
-  CRSMatrix a(3, 2);
-  a.row_ptr = {0, 2, 4, 6};
-  a.col_indices = {0, 1, 0, 1, 0, 1};
-  a.values = {Complex(1, 0), Complex(0, 1), Complex(2, 0), Complex(0, 2), Complex(3, 0), Complex(0, 3)};
-
-  CRSMatrix b(2, 1);
-  b.row_ptr = {0, 1, 2};
-  b.col_indices = {0, 0};
-  b.values = {Complex(1, 1), Complex(1, -1)};
-
-  CRSMatrix expected(3, 1);
-  expected.row_ptr = {0, 1, 2, 3};
-  expected.col_indices = {0, 0, 0};
-  expected.values = {Complex(2, 2), Complex(4, 4), Complex(6, 6)};
-  CompareCrsMatrices(expected, RunTask(a, b));
-}
-
-TEST(VidermanNonTrivial, CornerElementsOnly5x5) {
-  CRSMatrix a(5, 5);
-  a.row_ptr = {0, 1, 1, 1, 1, 2};
-  a.col_indices = {0, 4};
-  a.values = {Complex(1, 0), Complex(0, 1)};
-
-  CRSMatrix b(5, 5);
-  b.row_ptr = {0, 1, 1, 1, 1, 2};
-  b.col_indices = {0, 4};
-  b.values = {Complex(2, 0), Complex(0, -1)};
-  EXPECT_TRUE(CheckCornerElements5x5(RunTask(a, b)));
-}
-
-TEST(VidermanNonTrivial, DenseRowTimesIdentity) {
-  CRSMatrix a(1, 4);
-  a.row_ptr = {0, 4};
-  a.col_indices = {0, 1, 2, 3};
-  a.values = {Complex(1, 1), Complex(2, 0), Complex(3, -1), Complex(0, 4)};
-
-  CRSMatrix i(4, 4);
-  i.row_ptr = {0, 1, 2, 3, 4};
-  i.col_indices = {0, 1, 2, 3};
-  i.values = {Complex(1, 0), Complex(1, 0), Complex(1, 0), Complex(1, 0)};
-  EXPECT_TRUE(CheckDenseRowTimesIdentity(RunTask(a, i)));
-}
-
-TEST(VidermanNonTrivial, MatrixSquaredKnownResult) {
-  CRSMatrix j(2, 2);
-  j.row_ptr = {0, 1, 2};
-  j.col_indices = {1, 0};
-  j.values = {Complex(1, 0), Complex(-1, 0)};
-
-  CRSMatrix minus_i(2, 2);
-  minus_i.row_ptr = {0, 1, 2};
-  minus_i.col_indices = {0, 1};
-  minus_i.values = {Complex(-1, 0), Complex(-1, 0)};
-  CompareCrsMatrices(minus_i, RunTask(j, j));
-}
-
+}  // namespace
 }  // namespace viderman_a_sparse_matrix_mult_crs_complex

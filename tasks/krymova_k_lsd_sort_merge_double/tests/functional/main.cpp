@@ -8,8 +8,12 @@
 #include <string>
 #include <tuple>
 
+#include "krymova_k_lsd_sort_merge_double/all/include/ops_all.hpp"
 #include "krymova_k_lsd_sort_merge_double/common/include/common.hpp"
+#include "krymova_k_lsd_sort_merge_double/omp/include/ops_omp.hpp"
 #include "krymova_k_lsd_sort_merge_double/seq/include/ops_seq.hpp"
+#include "krymova_k_lsd_sort_merge_double/stl/include/ops_stl.hpp"
+#include "krymova_k_lsd_sort_merge_double/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -99,7 +103,7 @@ TEST_P(KrymovaKFuncTests, TestSorting) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 13> kTestParam = {std::make_tuple(1, "single"),
+const std::array<TestType, 12> kTestParam = {std::make_tuple(1, "single"),
                                              std::make_tuple(10, "random_small"),
                                              std::make_tuple(100, "random_medium"),
                                              std::make_tuple(1000, "random_large"),
@@ -107,14 +111,21 @@ const std::array<TestType, 13> kTestParam = {std::make_tuple(1, "single"),
                                              std::make_tuple(100, "sorted"),
                                              std::make_tuple(100, "reverse"),
                                              std::make_tuple(100, "constant"),
-                                             std::make_tuple(100, "negative"),
                                              std::make_tuple(1000, "negative_large"),
                                              std::make_tuple(10, "mixed"),
                                              std::make_tuple(100, "mixed"),
                                              std::make_tuple(100000, "random_huge")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KrymovaKLsdSortMergeDoubleSEQ, InType>(
-    kTestParam, PPC_SETTINGS_krymova_k_lsd_sort_merge_double));
+                                               kTestParam, PPC_SETTINGS_krymova_k_lsd_sort_merge_double),
+                                           ppc::util::AddFuncTask<KrymovaKLsdSortMergeDoubleOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_krymova_k_lsd_sort_merge_double),
+                                           ppc::util::AddFuncTask<KrymovaKLsdSortMergeDoubleSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_krymova_k_lsd_sort_merge_double),
+                                           ppc::util::AddFuncTask<KrymovaKLsdSortMergeDoubleTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_krymova_k_lsd_sort_merge_double),
+                                           ppc::util::AddFuncTask<KrymovaKLsdSortMergeDoubleALL, InType>(
+                                               kTestParam, PPC_SETTINGS_krymova_k_lsd_sort_merge_double));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

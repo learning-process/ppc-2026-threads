@@ -11,8 +11,12 @@
 #include <utility>
 #include <vector>
 
+#include "boltenkov_s_gaussian_kernel/all/include/ops_all.hpp"
 #include "boltenkov_s_gaussian_kernel/common/include/common.hpp"
+#include "boltenkov_s_gaussian_kernel/omp/include/ops_omp.hpp"
 #include "boltenkov_s_gaussian_kernel/seq/include/ops_seq.hpp"
+#include "boltenkov_s_gaussian_kernel/stl/include/ops_stl.hpp"
+#include "boltenkov_s_gaussian_kernel/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -100,7 +104,11 @@ TEST_P(BoltenkovSRunFuncTestsProcesses, MatmulFromPic) {
 const std::array<TestType, 2> kTestParam = {"pic1", "pic2"};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<BoltenkovSGaussianKernelSEQ, InType>(kTestParam, PPC_SETTINGS_boltenkov_s_gaussian_kernel));
+    ppc::util::AddFuncTask<BoltenkovSGaussianKernelSEQ, InType>(kTestParam, PPC_SETTINGS_boltenkov_s_gaussian_kernel),
+    ppc::util::AddFuncTask<BoltenkovSGaussianKernelOMP, InType>(kTestParam, PPC_SETTINGS_boltenkov_s_gaussian_kernel),
+    ppc::util::AddFuncTask<BoltenkovSGaussianKernelTBB, InType>(kTestParam, PPC_SETTINGS_boltenkov_s_gaussian_kernel),
+    ppc::util::AddFuncTask<BoltenkovSGaussianKernelALL, InType>(kTestParam, PPC_SETTINGS_boltenkov_s_gaussian_kernel),
+    ppc::util::AddFuncTask<BoltenkovSGaussianKernelSTL, InType>(kTestParam, PPC_SETTINGS_boltenkov_s_gaussian_kernel));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

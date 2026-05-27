@@ -1,11 +1,17 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <algorithm>
 #include <random>
 
+#include "akimov_i_radixsort_int_merge/all/include/ops_all.hpp"
 #include "akimov_i_radixsort_int_merge/common/include/common.hpp"
+#include "akimov_i_radixsort_int_merge/omp/include/ops_omp.hpp"
 #include "akimov_i_radixsort_int_merge/seq/include/ops_seq.hpp"
+#include "akimov_i_radixsort_int_merge/stl/include/ops_stl.hpp"
+#include "akimov_i_radixsort_int_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace akimov_i_radixsort_int_merge {
 
@@ -26,6 +32,13 @@ class AkimovIRadixSortIntMergePerfTests : public ppc::util::BaseRunPerfTests<InT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+    if (ppc::util::IsUnderMpirun()) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+    if (rank != 0) {
+      return true;
+    }
     return output_data == expected_sorted_;
   }
 
@@ -41,7 +54,9 @@ TEST_P(AkimovIRadixSortIntMergePerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, AkimovIRadixSortIntMergeSEQ>(PPC_SETTINGS_akimov_i_radixsort_int_merge);
+    ppc::util::MakeAllPerfTasks<InType, AkimovIRadixSortIntMergeSEQ, AkimovIRadixSortIntMergeOMP,
+                                AkimovIRadixSortIntMergeTBB, AkimovIRadixSortIntMergeSTL, AkimovIRadixSortIntMergeALL>(
+        PPC_SETTINGS_akimov_i_radixsort_int_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

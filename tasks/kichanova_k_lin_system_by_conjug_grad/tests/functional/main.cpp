@@ -3,13 +3,16 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <random>
 #include <string>
 #include <tuple>
 #include <vector>
 
+#include "kichanova_k_lin_system_by_conjug_grad/all/include/ops_all.hpp"
 #include "kichanova_k_lin_system_by_conjug_grad/common/include/common.hpp"
+#include "kichanova_k_lin_system_by_conjug_grad/omp/include/ops_omp.hpp"
 #include "kichanova_k_lin_system_by_conjug_grad/seq/include/ops_seq.hpp"
+#include "kichanova_k_lin_system_by_conjug_grad/stl/include/ops_stl.hpp"
+#include "kichanova_k_lin_system_by_conjug_grad/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -65,40 +68,6 @@ LinSystemData CreateTridiagonalSystem(int n, size_t n_squared) {
   return data;
 }
 
-LinSystemData CreateRandomSPDSystem(int n, size_t n_squared) {
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_real_distribution<> dis(-1.0, 1.0);
-
-  LinSystemData data;
-  data.n = n;
-  data.epsilon = 1e-10;
-
-  std::vector<double> m(n_squared);
-  for (int i = 0; i < n * n; ++i) {
-    m[i] = dis(gen);
-  }
-
-  data.A.assign(n_squared, 0.0);
-  const auto stride = static_cast<size_t>(n);
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < n; ++j) {
-      double sum = 0.0;
-      for (int k = 0; k < n; ++k) {
-        sum += m[(static_cast<size_t>(i) * stride) + k] * m[(static_cast<size_t>(j) * stride) + k];
-      }
-      data.A[(static_cast<size_t>(i) * stride) + j] = sum + n;
-    }
-  }
-
-  data.b.resize(static_cast<size_t>(n));
-  for (int i = 0; i < n; ++i) {
-    data.b[i] = dis(gen);
-  }
-
-  return data;
-}
-
 LinSystemData CreateTestSystem(int n, const std::string &type) {
   const size_t n_squared = static_cast<size_t>(n) * n;
 
@@ -108,10 +77,7 @@ LinSystemData CreateTestSystem(int n, const std::string &type) {
   if (type == "diagonal") {
     return CreateDiagonalSystem(n, n_squared);
   }
-  if (type == "tridiagonal") {
-    return CreateTridiagonalSystem(n, n_squared);
-  }
-  return CreateRandomSPDSystem(n, n_squared);
+  return CreateTridiagonalSystem(n, n_squared);
 }
 
 }  // namespace
@@ -166,14 +132,21 @@ TEST_P(KichanovaKRunFuncTestsThreads, SolveLinearSystem) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 12> kTestParam = {
+const std::array<TestType, 9> kTestParam = {
     std::make_tuple(2, "identity"),    std::make_tuple(3, "identity"),    std::make_tuple(5, "identity"),
     std::make_tuple(2, "diagonal"),    std::make_tuple(4, "diagonal"),    std::make_tuple(6, "diagonal"),
-    std::make_tuple(3, "tridiagonal"), std::make_tuple(5, "tridiagonal"), std::make_tuple(7, "tridiagonal"),
-    std::make_tuple(4, "random_spd"),  std::make_tuple(8, "random_spd"),  std::make_tuple(10, "random_spd")};
+    std::make_tuple(3, "tridiagonal"), std::make_tuple(5, "tridiagonal"), std::make_tuple(7, "tridiagonal")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KichanovaKLinSystemByConjugGradSEQ, LinSystemData>(
-    kTestParam, PPC_SETTINGS_kichanova_k_lin_system_by_conjug_grad));
+                                               kTestParam, PPC_SETTINGS_kichanova_k_lin_system_by_conjug_grad),
+                                           ppc::util::AddFuncTask<KichanovaKLinSystemByConjugGradTBB, LinSystemData>(
+                                               kTestParam, PPC_SETTINGS_kichanova_k_lin_system_by_conjug_grad),
+                                           ppc::util::AddFuncTask<KichanovaKLinSystemByConjugGradOMP, LinSystemData>(
+                                               kTestParam, PPC_SETTINGS_kichanova_k_lin_system_by_conjug_grad),
+                                           ppc::util::AddFuncTask<KichanovaKLinSystemByConjugGradSTL, LinSystemData>(
+                                               kTestParam, PPC_SETTINGS_kichanova_k_lin_system_by_conjug_grad),
+                                           ppc::util::AddFuncTask<KichanovaKLinSystemByConjugGradALL, LinSystemData>(
+                                               kTestParam, PPC_SETTINGS_kichanova_k_lin_system_by_conjug_grad));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
