@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <vector>
 
+#include "kruglova_a_conjugate_gradient_sle/all/include/ops_all.hpp"
 #include "kruglova_a_conjugate_gradient_sle/common/include/common.hpp"
 #include "kruglova_a_conjugate_gradient_sle/omp/include/ops_omp.hpp"
 #include "kruglova_a_conjugate_gradient_sle/seq/include/ops_seq.hpp"
@@ -52,10 +53,11 @@ TEST_P(KruglovaAPerfTestAConjGradSle, RunPerfTask) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KruglovaAConjGradSleSEQ, KruglovaAConjGradSleOMP,
-                                                       KruglovaAConjGradSleTBB, KruglovaAConjGradSleSTL
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, KruglovaAConjGradSleSEQ, KruglovaAConjGradSleOMP, KruglovaAConjGradSleTBB,
+                                KruglovaAConjGradSleSTL, KruglovaAConjGradSleALL
 
-                                                       >(PPC_SETTINGS_kruglova_a_conjugate_gradient_sle);
+                                >(PPC_SETTINGS_kruglova_a_conjugate_gradient_sle);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
