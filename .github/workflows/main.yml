@@ -13,9 +13,18 @@ concurrency:
         github.event_name != 'merge_group' &&
         !startsWith(github.ref, 'refs/heads/gh-readonly-queue') }}
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  packages: read
+  pages: write
+  id-token: write
+
 jobs:
   pre-commit:
     uses: ./.github/workflows/pre-commit.yml
+
   ubuntu:
     needs:
       - pre-commit
@@ -23,16 +32,19 @@ jobs:
     uses: ./.github/workflows/ubuntu.yml
     with:
       is_nightly: ${{ github.event_name == 'schedule' }}
+
   mac:
     needs:
       - pre-commit
     if: ${{ needs.pre-commit.outputs.md_only != 'true' }}
     uses: ./.github/workflows/mac.yml
+
   windows:
     needs:
       - pre-commit
     if: ${{ needs.pre-commit.outputs.md_only != 'true' }}
     uses: ./.github/workflows/windows.yml
+
   perf:
     needs:
       - pre-commit

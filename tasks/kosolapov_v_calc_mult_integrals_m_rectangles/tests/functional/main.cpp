@@ -6,6 +6,7 @@
 #include <string>
 #include <tuple>
 
+#include "kosolapov_v_calc_mult_integrals_m_rectangles/all/include/ops_all.hpp"
 #include "kosolapov_v_calc_mult_integrals_m_rectangles/common/include/common.hpp"
 #include "kosolapov_v_calc_mult_integrals_m_rectangles/omp/include/ops_omp.hpp"
 #include "kosolapov_v_calc_mult_integrals_m_rectangles/seq/include/ops_seq.hpp"
@@ -74,6 +75,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KosolapovVCalc
                                            ppc::util::AddFuncTask<KosolapovVCalcMultIntegralsMRectanglesTBB, InType>(
                                                kTestParam, PPC_SETTINGS_kosolapov_v_calc_mult_integrals_m_rectangles),
                                            ppc::util::AddFuncTask<KosolapovVCalcMultIntegralsMRectanglesSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_kosolapov_v_calc_mult_integrals_m_rectangles),
+                                           ppc::util::AddFuncTask<KosolapovVCalcMultIntegralsMRectanglesALL, InType>(
                                                kTestParam, PPC_SETTINGS_kosolapov_v_calc_mult_integrals_m_rectangles));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
