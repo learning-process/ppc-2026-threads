@@ -8,7 +8,8 @@
 
 Гибридная технология ALL сочетает два уровня параллелизма:
 
-- Межпроцессный уровень (MPI) — распределение работы между независимыми процессами. Каждый процесс имеет свою собственную память и может работать на отдельном ядре/узле.
+- Межпроцессный уровень (MPI) — распределение работы между независимыми процессами. Каждый процесс имеет свою
+  собственную память и может работать на отдельном ядре/узле.
 
 - Внутрипроцессный уровень (OpenMP) — распараллеливание внутри каждого процесса с использованием общей памяти.
 
@@ -20,36 +21,37 @@
 
 - Задач с естественным разделением данных, где каждый процесс может обрабатывать свой блок независимо
 
-В данной реализации ALL применяется для умножения разреженных матриц: MPI распределяет строки матрицы A между процессами, а внутри каждого процесса OpenMP распараллеливает обработку строк.
+В данной реализации ALL применяется для умножения разреженных матриц: MPI распределяет строки матрицы A между
+процессами, а внутри каждого процесса OpenMP распараллеливает обработку строк.
 
 ## 2. Постановка задачи
 
 ### Входные данные
 
-Две разреженные матрицы ```A``` и ```B``` в формате CRS. Структура ```SparseMatrixCRS```:
+Две разреженные матрицы `A` и `B` в формате CRS. Структура `SparseMatrixCRS`:
 
-- ```values``` (тип: ```std::vector<double>```) - массив ненулевых значений (построчно)
-- ```col_index``` (тип: ```std::vector<int>```) - массив индексов столбцов для каждого значения
-- ```row_ptr``` (тип: ```std::vector<int>```) - указатели на начало каждой строки (размер ```rows + 1```)
-- ```rows``` (тип: ```int```) - количество строк
-- ```cols``` (тип: ```int```) - количество столбцов
+- `values` (тип: `std::vector<double>`) - массив ненулевых значений (построчно)
+- `col_index` (тип: `std::vector<int>`) - массив индексов столбцов для каждого значения
+- `row_ptr` (тип: `std::vector<int>`) - указатели на начало каждой строки (размер `rows + 1`)
+- `rows` (тип: `int`) - количество строк
+- `cols` (тип: `int`) - количество столбцов
 
 ### Выходные данные
 
-Результирующая матрица ```C = A * B``` в формате CRS.
+Результирующая матрица `C = A * B` в формате CRS.
 
 ### Ограничения
 
-- количество столбцов матрицы A должно равняться количеству строк матрицы B (```A.cols == B.rows```).
-- все индексы находятся в диапазоне ```[0, cols - 1]```.
-- Указатели ```row_ptr``` образуют неубывающую последовательность.
-- ```row_ptr[0]```, ```row_ptr[rows] = nnz```- общее количество ненулевых элементов.
-- размерности матриц положительны: ```rows > 0```, ```cols > 0```.
+- количество столбцов матрицы A должно равняться количеству строк матрицы B (`A.cols == B.rows`).
+- все индексы находятся в диапазоне `[0, cols - 1]`.
+- Указатели `row_ptr` образуют неубывающую последовательность.
+- `row_ptr[0]`, `row_ptr[rows] = nnz`- общее количество ненулевых элементов.
+- размерности матриц положительны: `rows > 0`, `cols > 0`.
 
 ### Крайние случаи
 
-- при нулевой матрице ```B``` результатом будет нулевая матрица.
-- если ```B``` - единичная матрица, то ```A * B = A```.
+- при нулевой матрице `B` результатом будет нулевая матрица.
+- если `B` - единичная матрица, то `A * B = A`.
 - если умножение диагональных матриц, то результат - диагональная матрица.
 
 ### Особенности ALL-версии
@@ -102,27 +104,46 @@
 
 ### Асимптотическая сложность
 
-<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; text-align: center; width: 100%;"> <thead> <tr style="background-color: #f2f2f2;"> <th>Метрика</th> <th>Формула</th> <th>Примечание</th> </tr> </thead> <tbody> <tr> <td><strong>Время (параллельное)</strong></code></code></td> <td><code>T_parallel ≈ T_compute / (P_mpi × P_omp) + T_comm + T_overhead</code></code></td> <td>T_comm — время на MPI коммуникации (распределение + сбор)</code></code></td> </tr> <tr> <td><strong>Время (коммуникации)</strong></code></code></td> <td><code>T_comm ∝ P_mpi × (размер сообщения)</code></code></td> <td>Линейно зависит от числа процессов</code></code></td> </tr> <tr> <td><strong>Время (худший случай)</strong></code></code></td> <td><code>O(n³ / (P_mpi × P_omp)) + O(P_mpi × n²)</code></code></td> <td>Первое слагаемое — вычисления, второе — коммуникации</code></code></td> </tr> </tbody> </table>
+| Метрика                   | Формула                                                          | Примечание                                                |
+| ------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------- |
+| **Время (параллельное)**  | `T_parallel ≈ T_compute / (P_mpi × P_omp) + T_comm + T_overhead` | T_comm — время на MPI коммуникации (распределение + сбор) |
+| **Время (коммуникации)**  | `T_comm ∝ P_mpi × (размер сообщения)`                            | Линейно зависит от числа процессов                        |
+| **Время (худший случай)** | `O(n³ / (P_mpi × P_omp)) + O(P_mpi × n²)`                        | Первое слагаемое — вычисления, второе — коммуникации      |
 
 ### Критерий корректности
 
-Результат умножения должен совпадать с результатом умножения плотных матриц, преобразованных из CRS-формата. Допустимая погрешность: `e = 1e-12`.
+Результат умножения должен совпадать с результатом умножения плотных матриц, преобразованных из CRS-формата. Допустимая
+погрешность: `e = 1e-12`.
 
-## 4. Схема распараллеливания
+## 4. Межпроцессная схема
 
-### MPI уровень (межпроцессный)
+| Параметр                | Значение                                 | Обоснование                                                        |
+| ----------------------- | ---------------------------------------- | ------------------------------------------------------------------ |
+| **Распределение строк** | Статическое (непрерывные блоки)          | Каждый процесс получает последовательный диапазон строк матрицы A  |
+| **Коммуникация B**      | `MPI_Bcast` (широковещательная рассылка) | Матрица B реплицируется во все процессы для локального доступа     |
+| **Сбор результатов**    | `MPI_Gather` / `MPI_Send` + `MPI_Recv`   | Каждый процесс отправляет свою часть C в корневой процесс (rank 0) |
+| **Синхронизация**       | `MPI_Barrier` (при необходимости)        | Гарантирует готовность данных перед началом вычислений             |
 
-<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; text-align: left; width: 100%;"> <thead> <tr style="background-color: #f2f2f2;"> <th>Параметр</th> <th>Значение</th> <th>Обоснование</th> </tr> </thead> <tbody> <tr> <td><strong>Распределение строк</strong></code></code></td> <td>Статическое (непрерывные блоки)</code></code></td> <td>Каждый процесс получает последовательный диапазон строк матрицы A</code></code></td> </tr> <tr> <td><strong>Коммуникация B</strong></code></code></td> <td><code>MPI_Bcast</code> (широковещательная рассылка)</code></code></td> <td>Матрица B реплицируется во все процессы для локального доступа</code></code></td> </tr> <tr> <td><strong>Сбор результатов</strong></code></code></td> <td><code>MPI_Gather</code> / <code>MPI_Send</code> + <code>MPI_Recv</code></code></code></td> <td>Каждый процесс отправляет свою часть C в корневой процесс (rank 0)</code></code></td> </tr> <tr> <td><strong>Синхронизация</strong></code></code></td> <td><code>MPI_Barrier</code> (при необходимости)</code></code></td> <td>Гарантирует готовность данных перед началом вычислений</code></code></td> </tr> </tbody> </table>
+## 5. Внутрипроцессная схема
 
-### OpenMP уровень (внутрипроцессный)
-
-<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; text-align: left; width: 100%;"> <thead> <tr style="background-color: #f2f2f2;"> <th>Параметр</th> <th>Значение</th> <th>Обоснование</th> </tr> </thead> <tbody> <tr> <td><strong>Распараллеливаемая область</strong></code></code></td> <td>Цикл по локальным строкам матрицы A</code></code></td> <td>Вычисления для каждой строки полностью независимы</code></code></td> </tr> <tr> <td><strong>Директива</strong></code></code></td> <td><code>#pragma omp parallel for schedule(dynamic)</code></code></code></td> <td>Параллельное выполнение итераций с динамической балансировкой</code></code></td> </tr> <tr> <td><strong>Распределение итераций</strong></code></code></td> <td><code>schedule(dynamic)</code></code></code></td> <td>Компенсирует возможную неравномерность плотности строк</code></code></td> </tr> <tr> <td><strong>Атрибуты переменных</strong></code></code></td> <td><code>default(none) shared(a, b, row_values, row_cols)</code></code></code></td> <td>Явное указание атрибутов повышает безопасность</code></code></td> </tr> <tr> <td><strong>Синхронизация</strong></code></code></td> <td>Неявный барьер в конце <code>parallel for</code></code></code></td> <td>Ожидание завершения всех потоков перед продолжением</code></code></td> </tr> </tbody> </table>
+| Параметр                       | Значение                                           | Обоснование                                                   |
+| ------------------------------ | -------------------------------------------------- | ------------------------------------------------------------- |
+| **Распараллеливаемая область** | Цикл по локальным строкам матрицы A                | Вычисления для каждой строки полностью независимы             |
+| **Директива**                  | `#pragma omp parallel for schedule(dynamic)`       | Параллельное выполнение итераций с динамической балансировкой |
+| **Распределение итераций**     | `schedule(dynamic)`                                | Компенсирует возможную неравномерность плотности строк        |
+| **Атрибуты переменных**        | `default(none) shared(a, b, row_values, row_cols)` | Явное указание атрибутов повышает безопасность                |
+| **Синхронизация**              | Неявный барьер в конце `parallel for`              | Ожидание завершения всех потоков перед продолжением           |
 
 ### Переменные и их доступ
 
-<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; text-align: left; width: 100%;"> <thead> <tr style="background-color: #f2f2f2;"> <th>Переменная</th> <th>Уровень</th> <th>Доступ</th> <th>Обоснование</th> </tr> </thead> <tbody> <tr> <td><code>A</code></code></td> <td>MPI (распределена)</code></code></td> <td>Каждый процесс — свой блок</code></code></td> <td>Строки разделены между процессами</code></code></td> </tr> <tr> <td><code>B</code></code></td> <td>MPI (реплицирована)</code></code></td> <td>Только чтение во всех процессах</code></code></td> <td>Репликация для локального доступа</code></code></td> </tr> <tr> <td><code>local_C</code></code></td> <td>Локальная для процесса</code></code></td> <td>Каждый процесс пишет в свою часть</code></code></td> <td>Гонок между процессами нет</code></code></td> </tr> <tr> <td><code>row_values</code></code> (OpenMP)</code></code></td> <td>Внутри процесса</code></code></td> <td>Разные потоки — разные строки</code></code></td> <td>Гонок внутри процесса нет</code></code></td> </tr> </tbody> </table>
+| Переменная            | Уровень                | Доступ                            | Обоснование                       |
+| --------------------- | ---------------------- | --------------------------------- | --------------------------------- |
+| `A`                   | MPI (распределена)     | Каждый процесс — свой блок        | Строки разделены между процессами |
+| `B`                   | MPI (реплицирована)    | Только чтение во всех процессах   | Репликация для локального доступа |
+| `local_C`             | Локальная для процесса | Каждый процесс пишет в свою часть | Гонок между процессами нет        |
+| `row_values` (OpenMP) | Внутри процесса        | Разные потоки — разные строки     | Гонок внутри процесса нет         |
 
-## 5. Детали реализации
+## 6. Детали реализации
 
 ### Файлы
 
@@ -134,32 +155,32 @@
 
 Основная логика RunImpl (псевдокод на основе типовой реализации):
 
-```
+```cpp
 bool TsyplakovKTestTaskALL::RunImpl() {
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    
+
     const auto &a = GetInput().a;
     const auto &b = GetInput().b;
-    
+
     // Репликация матрицы B во все процессы
     SparseMatrixCRS local_b = b;
     MPI_Bcast(&local_b, ...);
-    
+
     // Распределение строк A между процессами
     int rows_per_proc = a.rows / size;
     int start_row = rank * rows_per_proc;
     int end_row = (rank == size - 1) ? a.rows : start_row + rows_per_proc;
-    
+
     // Локальное умножение с OpenMP
     SparseMatrixCRS local_c(a.rows, b.cols);
-    
+
     #pragma omp parallel for schedule(dynamic)
     for (int i = start_row; i < end_row; ++i) {
         ComputeRow(a, b, i, local_c);
     }
-    
+
     // Сбор результатов в процесс 0
     if (rank == 0) {
         // Объединение всех local_c в итоговую C
@@ -167,28 +188,28 @@ bool TsyplakovKTestTaskALL::RunImpl() {
     } else {
         MPI_Send(local_c, ..., 0, ...);
     }
-    
+
     return true;
 }
 ```
 
 Функция ComputeRow (аналогична STL/TBB версиям):
 
-```
+```cpp
 void ComputeRow(const SparseMatrixCRS &a, const SparseMatrixCRS &b,
                 int row, SparseMatrixCRS &c) {
     std::unordered_map<int, double> acc;
-    
+
     for (int idx_a = a.row_ptr[row]; idx_a < a.row_ptr[row + 1]; ++idx_a) {
         const int k = a.col_index[idx_a];
         const double val_a = a.values[idx_a];
-        
+
         for (int idx_b = b.row_ptr[k]; idx_b < b.row_ptr[k + 1]; ++idx_b) {
             const int j = b.col_index[idx_b];
             acc[j] += val_a * b.values[idx_b];
         }
     }
-    
+
     for (const auto &[col, val] : acc) {
         if (std::fabs(val) > 1e-12) {
             c.values.push_back(val);
@@ -226,7 +247,7 @@ void ComputeRow(const SparseMatrixCRS &a, const SparseMatrixCRS &b,
 
 - Процесс 0 объединяет результаты
 
-## 6. Проверка корректности
+## 7. Проверка корректности
 
 ### Метод верификации
 
@@ -240,9 +261,14 @@ void ComputeRow(const SparseMatrixCRS &a, const SparseMatrixCRS &b,
 
 ### Функциональные тесты
 
-<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; text-align: center;"> <thead> <tr style="background-color: #f2f2f2;"> <th>№</th> <th>Название</th> <th>Размеры</th> <th>Описание</th> <th>Ожидаемый nnz</th> </tr> </thead> <tbody> <tr> <td>1</code></code></td> <td>identity</code></code></td> <td>2×2 × 2×2</code></code></td> <td>A = [[1,0],[0,1]], B = [[2,0],[0,3]]</code></code></td> <td>2</code></code></td> </tr> <tr> <td>2</code></code></td> <td>simple_2x2</code></code></td> <td>2×2 × 2×2</code></code></td> <td>Разреженные матрицы с 3 ненулевыми в A</code></code></td> <td>3</code></code></td> </tr> <tr> <td>3</code></code></td> <td>zero_matrix</code></code></td> <td>2×2 × 2×2</code></code></td> <td>B — нулевая матрица</code></code></td> <td>0</code></code></td> </tr> <tr> <td>4</code></code></td> <td>sparse_3x3</code></code></td> <td>3×3 × 3×3</code></code></td> <td>Разреженные матрицы сложной структуры</code></code></td> <td>4</code></code></td> </tr> </tbody> </table>
+| №   | Название    | Размеры   | Описание                               | Ожидаемый nnz |
+| --- | ----------- | --------- | -------------------------------------- | ------------- |
+| 1   | identity    | 2×2 × 2×2 | A = [[1,0],[0,1]], B = [[2,0],[0,3]]   | 2             |
+| 2   | simple_2x2  | 2×2 × 2×2 | Разреженные матрицы с 3 ненулевыми в A | 3             |
+| 3   | zero_matrix | 2×2 × 2×2 | B — нулевая матрица                    | 0             |
+| 4   | sparse_3x3  | 3×3 × 3×3 | Разреженные матрицы сложной структуры  | 4             |
 
-## 7. Экспериментальная среда
+## 8. Экспериментальная среда
 
 ### Аппаратное обеспечение
 
@@ -260,13 +286,25 @@ void ComputeRow(const SparseMatrixCRS &a, const SparseMatrixCRS &b,
 - Система сборки: CMake
 - Версия MPI: mpirun (Open MPI) 4.1.6
 
-## 8. Результаты
+## 9. Результаты
 
-Тесты производительности запускались на матрицах размера 100,000×100,000 с диагональным заполнением. Плотность ненулевых элементов составляет 0.0001% (1 ненулевой элемент на строку).
+Тесты производительности запускались на матрицах размера 100,000×100,000 с диагональным заполнением. Плотность ненулевых
+элементов составляет 0.0001% (1 ненулевой элемент на строку).
 
 ### Полная сводная таблица всех технологий
 
-<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; text-align: center;"> <thead> <tr style="background-color: #f2f2f2;"> <th>Технология</th> <th>Mode</th> <th>Time, s</th> <th>Speedup (vs SEQ task)</th> </tr> </thead> <tbody> <tr> <td><strong>SEQ</strong></code></code></td> <td>task_run</code></code></td> <td>0.0121132356</code></code></td> <td><strong>1.00×</strong></code></code> (baseline)</code></code></td> </tr> <tr> <td><strong>SEQ</strong></code></code></td> <td>pipeline</code></code></td> <td>0.0135521440</code></code></td> <td>0.89×</code></code></td> </tr> <tr> <td><strong>OMP</strong></code></code></td> <td>task_run</code></code></td> <td>0.0691685780</code></code></td> <td><strong style="color: #e74c3c;">0.18×</strong> (в 5.7× медленнее)</code></code></td> </tr> <tr> <td><strong>OMP</strong></code></code></td> <td>pipeline</code></code></td> <td>0.0437379110</code></code></td> <td>0.28×</code></code></td> </tr> <tr> <td><strong>TBB</strong></code></code></td> <td>task_run</code></code></td> <td>0.0188774118</code></code></td> <td>0.64×</code></code></td> </tr> <tr> <td><strong>TBB</strong></code></code></td> <td>pipeline</code></code></td> <td>0.0200403730</code></code></td> <td>0.60×</code></code></td> </tr> <tr> <td><strong>STL</strong></code></code></td> <td>task_run</code></code></td> <td>0.0326702604</code></code></td> <td>0.37×</code></code></td> </tr> <tr> <td><strong>STL</strong></code></code></td> <td>pipeline</code></code></td> <td>0.0207790404</code></code></td> <td>0.58×</code></code></td> </tr> <tr> <td><strong style="color: #27ae60;">ALL (MPI+OMP)</strong></code></code></td> <td>pipeline</code></code></td> <td>0.0064839572</code></code></td> <td><strong style="color: #27ae60;">1.87×</strong></code></code> </code></code></td> </tr> <tr> <td><strong style="color: #27ae60;">ALL (MPI+OMP)</strong></code></code></td> <td>task_run</code></code></td> <td><strong>0.0056650746</strong></code></code></td> <td><strong style="color: #27ae60;">2.14×</strong></code></code> </code></code></td> </tr> </tbody> </table>
+| Технология        | Mode     | Time, s          | Speedup (vs SEQ task)        |
+| ----------------- | -------- | ---------------- | ---------------------------- |
+| **SEQ**           | task_run | 0.0121132356     | **1.00×** (baseline)         |
+| **SEQ**           | pipeline | 0.0135521440     | 0.89×                        |
+| **OMP**           | task_run | 0.0691685780     | **0.18×** (в 5.7× медленнее) |
+| **OMP**           | pipeline | 0.0437379110     | 0.28×                        |
+| **TBB**           | task_run | 0.0188774118     | 0.64×                        |
+| **TBB**           | pipeline | 0.0200403730     | 0.60×                        |
+| **STL**           | task_run | 0.0326702604     | 0.37×                        |
+| **STL**           | pipeline | 0.0207790404     | 0.58×                        |
+| **ALL (MPI+OMP)** | pipeline | 0.0064839572     | **1.87×**                    |
+| **ALL (MPI+OMP)** | task_run | **0.0056650746** | **2.14×**                    |
 
 ### Анализ производительности
 
@@ -300,11 +338,11 @@ void ComputeRow(const SparseMatrixCRS &a, const SparseMatrixCRS &b,
 
 - При малом количестве процессов оверхэд незначителен
 
-## 9. Выводы
+## 10. Выводы
 
 ALL — единственная технология, достигшая ускорения >1× на диагональных матрицах.
 
-```Speedup: 2.14× (task_run) и 1.87× (pipeline)```
+`Speedup: 2.14× (task_run) и 1.87× (pipeline)`
 
 Это лучший результат среди всех пяти реализаций.
 
@@ -338,6 +376,9 @@ ALL — единственная технология, достигшая уск
 
 ### Итог
 
-ALL-реализация показала, что гибридный подход (MPI + OpenMP) является наиболее мощным инструментом для параллельного умножения разреженных матриц, особенно на диагональных/разреженных данных. Даже при микроскопической вычислительной нагрузке ALL смогла достичь ускорения 2.14×, в то время как все остальные технологии показали замедление.
+ALL-реализация показала, что гибридный подход (MPI + OpenMP) является наиболее мощным инструментом для параллельного
+умножения разреженных матриц, особенно на диагональных/разреженных данных. Даже при микроскопической вычислительной
+нагрузке ALL смогла достичь ускорения 2.14×, в то время как все остальные технологии показали замедление.
 
-Это подтверждает, что для максимальной производительности на современных гибридных системах (многоядерные узлы + кластеризация) необходимо использовать двухуровневый параллелизм.
+Это подтверждает, что для максимальной производительности на современных гибридных системах (многоядерные узлы +
+кластеризация) необходимо использовать двухуровневый параллелизм.
