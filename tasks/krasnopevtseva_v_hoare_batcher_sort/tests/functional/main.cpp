@@ -11,6 +11,7 @@
 #include "krasnopevtseva_v_hoare_batcher_sort/common/include/common.hpp"
 #include "krasnopevtseva_v_hoare_batcher_sort/omp/include/ops_omp.hpp"
 #include "krasnopevtseva_v_hoare_batcher_sort/seq/include/ops_seq.hpp"
+#include "krasnopevtseva_v_hoare_batcher_sort/stl/include/ops_stl.hpp"
 #include "krasnopevtseva_v_hoare_batcher_sort/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -86,6 +87,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<Krasnopevtseva
                                            ppc::util::AddFuncTask<KrasnopevtsevaVHoareBatcherSortTBB, InType>(
                                                kTestParam, PPC_SETTINGS_krasnopevtseva_v_hoare_batcher_sort),
                                            ppc::util::AddFuncTask<KrasnopevtsevaVHoareBatcherSortALL, InType>(
+                                               kTestParam, PPC_SETTINGS_krasnopevtseva_v_hoare_batcher_sort),
+                                           ppc::util::AddFuncTask<KrasnopevtsevaVHoareBatcherSortSTL, InType>(
                                                kTestParam, PPC_SETTINGS_krasnopevtseva_v_hoare_batcher_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
