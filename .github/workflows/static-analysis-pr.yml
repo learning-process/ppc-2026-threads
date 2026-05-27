@@ -2,15 +2,8 @@ name: Static analysis
 
 on:
   pull_request:
-    paths:
-      - '**/*.cpp'
-      - '**/*.hpp'
-      - '**/*.c'
-      - '**/*.h'
-      - '**/CMakeLists.txt'
-      - '**/*.cmake'
-      - '**/.clang-tidy'
-      - '.github/workflows/static-analysis-pr.yml'
+    paths-ignore:
+      - '**/*.md'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -24,7 +17,41 @@ permissions:
   packages: read
 
 jobs:
+  detect-static-analysis-inputs:
+    runs-on: ubuntu-24.04
+    outputs:
+      run_static_analysis: ${{ steps.detect.outputs.run_static_analysis }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Detect static analysis inputs
+        id: detect
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          changed_files="$(git diff --name-only "$BASE_SHA"..."$HEAD_SHA")"
+          run_static_analysis=false
+
+          while IFS= read -r file; do
+            case "$file" in
+              *.cpp|*.hpp|*.c|*.h|*.cmake|CMakeLists.txt|*/CMakeLists.txt|*/.clang-tidy|.github/workflows/static-analysis-pr.yml)
+                run_static_analysis=true
+                break
+                ;;
+            esac
+          done <<< "$changed_files"
+
+          echo "run_static_analysis=$run_static_analysis" >> "$GITHUB_OUTPUT"
+
   clang-tidy:
+    needs:
+      - detect-static-analysis-inputs
+    if: ${{ needs.detect-static-analysis-inputs.outputs.run_static_analysis == 'true' }}
     runs-on: ubuntu-24.04
     container:
       image: ghcr.io/learning-process/ppc-ubuntu:1.1
@@ -73,7 +100,9 @@ jobs:
           exit 1
   clang-tidy-for-gcc-build:
     needs:
+      - detect-static-analysis-inputs
       - clang-tidy
+    if: ${{ needs.detect-static-analysis-inputs.outputs.run_static_analysis == 'true' }}
     runs-on: ubuntu-24.04
     container:
       image: ghcr.io/learning-process/ppc-ubuntu:1.1
@@ -121,6 +150,9 @@ jobs:
           echo "clang-tidy run has failed. See previous 'Run clang-tidy' stage logs"
           exit 1
   nolint-check:
+    needs:
+      - detect-static-analysis-inputs
+    if: ${{ needs.detect-static-analysis-inputs.outputs.run_static_analysis == 'true' }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6

@@ -1,9 +1,14 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <cstdint>
 
+#include "levonychev_i_radix_batcher_sort/all/include/ops_all.hpp"
 #include "levonychev_i_radix_batcher_sort/common/include/common.hpp"
+#include "levonychev_i_radix_batcher_sort/omp/include/ops_omp.hpp"
 #include "levonychev_i_radix_batcher_sort/seq/include/ops_seq.hpp"
+#include "levonychev_i_radix_batcher_sort/stl/include/ops_stl.hpp"
+#include "levonychev_i_radix_batcher_sort/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace levonychev_i_radix_batcher_sort {
@@ -16,7 +21,7 @@ class LevonychevIRadixBatcherSortRunPerfTestsThreads : public ppc::util::BaseRun
     const int c = 1013904223;
     const int m = INT32_MAX;
     int seed = 15;
-    const int size = 10'000'000;
+    const int size = 16777216;
     input_data_.clear();
     input_data_.resize(size);
 
@@ -27,7 +32,12 @@ class LevonychevIRadixBatcherSortRunPerfTestsThreads : public ppc::util::BaseRun
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return !output_data.empty();
+    for (size_t i = 1; i < output_data.size(); ++i) {
+      if (output_data[i - 1] > output_data[i]) {
+        return false;
+      }
+    }
+    return true;
   }
 
   InType GetTestInputData() final {
@@ -42,7 +52,9 @@ TEST_P(LevonychevIRadixBatcherSortRunPerfTestsThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, LevonychevIRadixBatcherSortSEQ>(PPC_SETTINGS_levonychev_i_radix_batcher_sort);
+    ppc::util::MakeAllPerfTasks<InType, LevonychevIRadixBatcherSortSEQ, LevonychevIRadixBatcherSortOMP,
+                                LevonychevIRadixBatcherSortTBB, LevonychevIRadixBatcherSortSTL,
+                                LevonychevIRadixBatcherSortALL>(PPC_SETTINGS_levonychev_i_radix_batcher_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
