@@ -82,6 +82,7 @@ class BaseRunPerfTests : public ::testing::TestWithParam<PerfTestParam<InType, O
     task_ = task_getter(GetTestInputData());
     ppc::performance::Perf perf(task_);
     ppc::performance::PerfAttr perf_attr;
+    SynchronizeMpiRanks();
     SetPerfAttributes(perf_attr);
 
     if (mode == ppc::performance::PerfResults::TypeOfRunning::kPipeline) {

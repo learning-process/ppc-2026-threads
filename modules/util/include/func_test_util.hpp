@@ -101,6 +101,7 @@ class BaseRunFuncTests : public ::testing::TestWithParam<FuncTestParam<InType, O
   // NOLINTNEXTLINE(readability-function-cognitive-complexity)
   void ExecuteTaskPipeline() {
     EXPECT_TRUE(task_->Validation());
+    SynchronizeMpiRanks();
     EXPECT_TRUE(task_->PreProcessing());
     EXPECT_TRUE(task_->Run());
     EXPECT_TRUE(task_->PostProcessing());
