@@ -1,0 +1,6 @@
+{
+  "tasks": {
+    "tbb": "enabled"
+  },
+  "tasks_type": "threads"
+}

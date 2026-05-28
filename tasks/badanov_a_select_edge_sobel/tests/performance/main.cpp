@@ -4,10 +4,12 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "badanov_a_select_edge_sobel/all/include/ops_all.hpp"
 #include "badanov_a_select_edge_sobel/common/include/common.hpp"
 #include "badanov_a_select_edge_sobel/omp/include/ops_omp.hpp"
 #include "badanov_a_select_edge_sobel/seq/include/ops_seq.hpp"
 #include "badanov_a_select_edge_sobel/stl/include/ops_stl.hpp"
+#include "badanov_a_select_edge_sobel/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace badanov_a_select_edge_sobel {
@@ -50,7 +52,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, BadanovASelectEdgeSobelSEQ, BadanovASelectEdgeSobelOMP,
-                                BadanovASelectEdgeSobelSTL>(PPC_SETTINGS_badanov_a_select_edge_sobel);
+                                BadanovASelectEdgeSobelTBB, BadanovASelectEdgeSobelSTL, BadanovASelectEdgeSobelALL>(
+        PPC_SETTINGS_badanov_a_select_edge_sobel);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

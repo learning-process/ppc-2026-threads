@@ -3,7 +3,8 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <queue>
+#include <limits>
+#include <numeric>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -47,28 +48,65 @@ namespace {
 constexpr std::array<int, 4> kDx = {-1, 1, 0, 0};
 constexpr std::array<int, 4> kDy = {0, 0, -1, 1};
 
-void BfsLabelInStrip(const InType &input, std::vector<int> &local_plane, int cols, int r_begin, int r_end,
-                     int start_row, int start_col, int label) {
-  std::queue<std::pair<int, int>> queue;
-  queue.emplace(start_row, start_col);
-  local_plane[(start_row * cols) + start_col] = label;
+void BfsLabelFull(const InType &input, OutType &output, int rows, int cols, int start_row, int start_col, int label) {
+  std::vector<std::pair<int, int>> queue;
+  queue.reserve(64);
+  std::size_t head = 0;
+  queue.emplace_back(start_row, start_col);
+  output[(start_row * cols) + start_col + 2] = label;
 
-  while (!queue.empty()) {
-    auto [cx, cy] = queue.front();
-    queue.pop();
+  while (head < queue.size()) {
+    const auto [cx, cy] = queue[head++];
+    for (std::size_t dir = 0; dir < 4; dir++) {
+      const int nx = cx + kDx.at(dir);
+      const int ny = cy + kDy.at(dir);
+      if (nx < 0 || nx >= rows || ny < 0 || ny >= cols) {
+        continue;
+      }
+      const int nidx = (nx * cols) + ny + 2;
+      if (input[nidx] == 0 && output[nidx] == 0) {
+        output[nidx] = label;
+        queue.emplace_back(nx, ny);
+      }
+    }
+  }
+}
 
+void BfsLabelInStrip(const InType &input, OutType &output, int cols, int r_begin, int r_end, int start_row,
+                     int start_col, int label) {
+  std::vector<std::pair<int, int>> queue;
+  queue.reserve(64);
+  std::size_t head = 0;
+  queue.emplace_back(start_row, start_col);
+  output[(start_row * cols) + start_col + 2] = label;
+
+  while (head < queue.size()) {
+    const auto [cx, cy] = queue[head++];
     for (std::size_t dir = 0; dir < 4; dir++) {
       const int nx = cx + kDx.at(dir);
       const int ny = cy + kDy.at(dir);
       if (nx < r_begin || nx >= r_end || ny < 0 || ny >= cols) {
         continue;
       }
-      const int n_flat = (nx * cols) + ny;
-      const int nidx = n_flat + 2;
-      if (input[nidx] == 0 && local_plane[static_cast<std::size_t>(n_flat)] == 0) {
-        local_plane[static_cast<std::size_t>(n_flat)] = label;
-        queue.emplace(nx, ny);
+      const int nidx = (nx * cols) + ny + 2;
+      if (input[nidx] == 0 && output[nidx] == 0) {
+        output[nidx] = label;
+        queue.emplace_back(nx, ny);
       }
+    }
+  }
+}
+
+void RunSequentialMarking(const InType &input, OutType &output, int rows, int cols) {
+  int label = 0;
+  for (int row = 0; row < rows; row++) {
+    for (int col = 0; col < cols; col++) {
+      const int idx = (row * cols) + col + 2;
+      if (input[idx] != 0 || output[idx] != 0) {
+        continue;
+      }
+      label++;
+      BfsLabelFull(input, output, rows, cols, row, col, label);
     }
   }
 }
@@ -112,7 +150,7 @@ std::vector<int> MakeRowStarts(int rows, int num_threads) {
   return row_starts;
 }
 
-int LabelSingleStrip(const InType &input, int cols, int r_begin, int r_end, std::vector<int> &plane) {
+int LabelSingleStrip(const InType &input, OutType &output, int cols, int r_begin, int r_end) {
   if (r_begin >= r_end) {
     return 0;
   }
@@ -120,28 +158,26 @@ int LabelSingleStrip(const InType &input, int cols, int r_begin, int r_end, std:
   int next_label = 0;
   for (int row = r_begin; row < r_end; row++) {
     for (int col = 0; col < cols; col++) {
-      const int flat = (row * cols) + col;
-      const int idx = flat + 2;
-      if (input[idx] != 0 || plane[static_cast<std::size_t>(flat)] != 0) {
+      const int idx = (row * cols) + col + 2;
+      if (input[idx] != 0 || output[idx] != 0) {
         continue;
       }
       next_label++;
-      BfsLabelInStrip(input, plane, cols, r_begin, r_end, row, col, next_label);
+      BfsLabelInStrip(input, output, cols, r_begin, r_end, row, col, next_label);
     }
   }
   return next_label;
 }
 
-void ParallelLabelStrips(const InType &input, int cols, int num_threads, const std::vector<int> &row_starts,
-                         std::vector<std::vector<int>> &local_planes, std::vector<int> &labels_used) {
+void ParallelLabelStrips(const InType &input, OutType &output, int cols, int num_threads,
+                         const std::vector<int> &row_starts, std::vector<int> &labels_used) {
   std::vector<std::thread> workers;
   workers.reserve(static_cast<std::size_t>(std::max(0, num_threads - 1)));
 
   auto worker = [&](int tid) {
     const int r_begin = row_starts[static_cast<std::size_t>(tid)];
     const int r_end = row_starts[static_cast<std::size_t>(tid) + 1];
-    auto &plane = local_planes[static_cast<std::size_t>(tid)];
-    labels_used[static_cast<std::size_t>(tid)] = LabelSingleStrip(input, cols, r_begin, r_end, plane);
+    labels_used[static_cast<std::size_t>(tid)] = LabelSingleStrip(input, output, cols, r_begin, r_end);
   };
 
   for (int tid = 1; tid < num_threads; ++tid) {
@@ -163,33 +199,45 @@ std::pair<std::vector<int>, int> BuildLabelBases(const std::vector<int> &labels_
   return {base, sum};
 }
 
-void CopyStripsToGlobalOutput(OutType &output, int cols, int num_threads, const std::vector<int> &row_starts,
-                              const std::vector<int> &base, const std::vector<std::vector<int>> &local_planes) {
-  for (int thread_idx = 0; thread_idx < num_threads; thread_idx++) {
-    const int r_begin = row_starts[static_cast<std::size_t>(thread_idx)];
-    const int r_end = row_starts[static_cast<std::size_t>(thread_idx) + 1U];
-    if (r_begin >= r_end) {
-      continue;
-    }
-    const auto &plane = local_planes[static_cast<std::size_t>(thread_idx)];
-    const int offset = base[static_cast<std::size_t>(thread_idx)];
-    for (int row = r_begin; row < r_end; row++) {
-      for (int col = 0; col < cols; col++) {
-        const int flat = (row * cols) + col;
-        const int loc = plane[static_cast<std::size_t>(flat)];
-        if (loc > 0) {
-          output[static_cast<std::size_t>(flat) + 2] = offset + loc;
-        }
+void AddStripBaseOffset(int thread_idx, OutType &output, int cols, const std::vector<int> &row_starts,
+                        const std::vector<int> &base) {
+  const int offset = base[static_cast<std::size_t>(thread_idx)];
+  if (offset == 0) {
+    return;
+  }
+  const int r_begin = row_starts[static_cast<std::size_t>(thread_idx)];
+  const int r_end = row_starts[static_cast<std::size_t>(thread_idx) + 1U];
+  for (int row = r_begin; row < r_end; row++) {
+    for (int col = 0; col < cols; col++) {
+      const int idx = (row * cols) + col + 2;
+      const int lbl = output[idx];
+      if (lbl > 0) {
+        output[idx] = offset + lbl;
       }
     }
   }
 }
 
-void MergeBoundariesUnionFind(const InType &input, OutType &output, int rows, int cols, int num_threads,
+void AddBaseOffsets(OutType &output, int cols, int num_threads, const std::vector<int> &row_starts,
+                    const std::vector<int> &base) {
+  std::vector<std::thread> workers;
+  workers.reserve(static_cast<std::size_t>(std::max(0, num_threads - 1)));
+
+  auto worker = [&](int tid) { AddStripBaseOffset(tid, output, cols, row_starts, base); };
+
+  for (int tid = 1; tid < num_threads; ++tid) {
+    workers.emplace_back(worker, tid);
+  }
+  worker(0);
+  for (auto &thread : workers) {
+    thread.join();
+  }
+}
+
+void MergeBoundariesUnionFind(const InType &input, const OutType &output, int rows, int cols, int num_threads,
                               const std::vector<int> &row_starts, std::vector<int> &parent) {
   for (int thread_idx = 0; thread_idx + 1 < num_threads; thread_idx++) {
-    const int next_strip = thread_idx + 1;
-    const int boundary_row = row_starts[static_cast<std::size_t>(next_strip)];
+    const int boundary_row = row_starts[static_cast<std::size_t>(thread_idx) + 1U];
     if (boundary_row <= 0 || boundary_row >= rows) {
       continue;
     }
@@ -216,11 +264,29 @@ void FlattenParentForest(std::vector<int> &parent, int max_label) {
   }
 }
 
-std::vector<int> BuildFinalRemap(const InType &input, const OutType &output, const std::vector<int> &parent, int rows,
-                                 int cols, int max_label) {
-  std::vector<int> remap(static_cast<std::size_t>(max_label) + 1, 0);
+std::vector<int> BuildRemapFromFirstPositions(const std::vector<int> &first_pos) {
+  std::vector<int> roots;
+  roots.reserve(first_pos.size());
+  for (std::size_t root = 1; root < first_pos.size(); root++) {
+    if (first_pos[root] != std::numeric_limits<int>::max()) {
+      roots.push_back(static_cast<int>(root));
+    }
+  }
+  std::ranges::sort(roots, [&](int a, int b) {
+    return first_pos[static_cast<std::size_t>(a)] < first_pos[static_cast<std::size_t>(b)];
+  });
+
+  std::vector<int> remap(first_pos.size(), 0);
   int next_final = 1;
-  for (int row = 0; row < rows; row++) {
+  for (int root : roots) {
+    remap[static_cast<std::size_t>(root)] = next_final++;
+  }
+  return remap;
+}
+
+void CollectFirstPositionsForRows(const InType &input, const OutType &output, const std::vector<int> &parent, int cols,
+                                  int row_begin, int row_end, std::vector<int> &local) {
+  for (int row = row_begin; row < row_end; row++) {
     for (int col = 0; col < cols; col++) {
       const int idx = (row * cols) + col + 2;
       if (input[idx] != 0) {
@@ -231,12 +297,57 @@ std::vector<int> BuildFinalRemap(const InType &input, const OutType &output, con
         continue;
       }
       const int root = parent[static_cast<std::size_t>(lbl)];
-      if (remap[static_cast<std::size_t>(root)] == 0) {
-        remap[static_cast<std::size_t>(root)] = next_final++;
-      }
+      const int pos = (row * cols) + col;
+      local[static_cast<std::size_t>(root)] = std::min(local[static_cast<std::size_t>(root)], pos);
     }
   }
-  return remap;
+}
+
+void CollectFirstPositionsForThread(const InType &input, const OutType &output, const std::vector<int> &parent,
+                                    int rows, int cols, int tid, int num_threads,
+                                    std::vector<std::vector<int>> &thread_first) {
+  auto &local = thread_first[static_cast<std::size_t>(tid)];
+  const int row_begin = (tid * rows) / num_threads;
+  const int row_end = ((tid + 1) * rows) / num_threads;
+  CollectFirstPositionsForRows(input, output, parent, cols, row_begin, row_end, local);
+}
+
+void MergeRootFirstPositions(const std::vector<std::vector<int>> &thread_first, int num_threads, int root,
+                             std::vector<int> &first_pos) {
+  int min_pos = std::numeric_limits<int>::max();
+  for (int tid = 0; tid < num_threads; tid++) {
+    min_pos = std::min(min_pos, thread_first[static_cast<std::size_t>(tid)][static_cast<std::size_t>(root)]);
+  }
+  first_pos[static_cast<std::size_t>(root)] = min_pos;
+}
+
+std::vector<int> ComputeFirstPositionsParallel(const InType &input, const OutType &output,
+                                               const std::vector<int> &parent, int rows, int cols, int max_label,
+                                               int num_threads) {
+  std::vector<std::vector<int>> thread_first(
+      static_cast<std::size_t>(num_threads),
+      std::vector<int>(static_cast<std::size_t>(max_label) + 1U, std::numeric_limits<int>::max()));
+
+  std::vector<std::thread> workers;
+  workers.reserve(static_cast<std::size_t>(std::max(0, num_threads - 1)));
+
+  auto worker = [&](int tid) {
+    CollectFirstPositionsForThread(input, output, parent, rows, cols, tid, num_threads, thread_first);
+  };
+
+  for (int tid = 1; tid < num_threads; ++tid) {
+    workers.emplace_back(worker, tid);
+  }
+  worker(0);
+  for (auto &thread : workers) {
+    thread.join();
+  }
+
+  std::vector<int> first_pos(static_cast<std::size_t>(max_label) + 1U, std::numeric_limits<int>::max());
+  for (int root = 1; root <= max_label; root++) {
+    MergeRootFirstPositions(thread_first, num_threads, root, first_pos);
+  }
+  return first_pos;
 }
 
 void ApplyRemapParallel(const InType &input, OutType &output, const std::vector<int> &parent,
@@ -251,12 +362,14 @@ void ApplyRemapParallel(const InType &input, OutType &output, const std::vector<
       for (int col = 0; col < cols; col++) {
         const int idx = (row * cols) + col + 2;
         if (input[idx] != 0) {
-          output[idx] = 0;
-        } else {
-          const int lbl = output[idx];
-          const int root = parent[static_cast<std::size_t>(lbl)];
-          output[idx] = remap[static_cast<std::size_t>(root)];
+          continue;
         }
+        const int lbl = output[idx];
+        if (lbl <= 0) {
+          continue;
+        }
+        const int root = parent[static_cast<std::size_t>(lbl)];
+        output[idx] = remap[static_cast<std::size_t>(root)];
       }
     }
   };
@@ -284,30 +397,32 @@ bool GaivoronskiyMMarkingBinaryComponentsSTL::RunImpl() {
   }
 
   const int num_threads = NumThreadsForRows(rows);
-  const std::vector<int> row_starts = MakeRowStarts(rows, num_threads);
+  if (num_threads <= 1) {
+    RunSequentialMarking(input, output, rows, cols);
+    return true;
+  }
 
-  std::vector<std::vector<int>> local_planes(static_cast<std::size_t>(num_threads),
-                                             std::vector<int>(static_cast<std::size_t>(cells), 0));
+  const std::vector<int> row_starts = MakeRowStarts(rows, num_threads);
   std::vector<int> labels_used(static_cast<std::size_t>(num_threads), 0);
 
-  ParallelLabelStrips(input, cols, num_threads, row_starts, local_planes, labels_used);
+  ParallelLabelStrips(input, output, cols, num_threads, row_starts, labels_used);
 
   const auto [base, max_global_before_merge] = BuildLabelBases(labels_used, num_threads);
   if (max_global_before_merge == 0) {
     return true;
   }
 
-  CopyStripsToGlobalOutput(output, cols, num_threads, row_starts, base, local_planes);
+  AddBaseOffsets(output, cols, num_threads, row_starts, base);
 
-  std::vector<int> parent(static_cast<std::size_t>(max_global_before_merge) + 1);
-  for (int label_idx = 1; label_idx <= max_global_before_merge; label_idx++) {
-    parent[static_cast<std::size_t>(label_idx)] = label_idx;
-  }
+  std::vector<int> parent(static_cast<std::size_t>(max_global_before_merge) + 1U);
+  std::iota(parent.begin() + 1, parent.end(), 1);
 
   MergeBoundariesUnionFind(input, output, rows, cols, num_threads, row_starts, parent);
   FlattenParentForest(parent, max_global_before_merge);
 
-  const std::vector<int> remap = BuildFinalRemap(input, output, parent, rows, cols, max_global_before_merge);
+  const std::vector<int> first_pos =
+      ComputeFirstPositionsParallel(input, output, parent, rows, cols, max_global_before_merge, num_threads);
+  const std::vector<int> remap = BuildRemapFromFirstPositions(first_pos);
   ApplyRemapParallel(input, output, parent, remap, rows, cols, num_threads);
 
   return true;
