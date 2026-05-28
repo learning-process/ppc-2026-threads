@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "samoylenko_i_integral_trapezoid/all/include/ops_all.hpp"
 #include "samoylenko_i_integral_trapezoid/common/include/common.hpp"
 #include "samoylenko_i_integral_trapezoid/omp/include/ops_omp.hpp"
 #include "samoylenko_i_integral_trapezoid/seq/include/ops_seq.hpp"
@@ -66,6 +67,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SamoylenkoIInt
                                            ppc::util::AddFuncTask<SamoylenkoIIntegralTrapezoidTBB, InType>(
                                                kTestParam, PPC_SETTINGS_samoylenko_i_integral_trapezoid),
                                            ppc::util::AddFuncTask<SamoylenkoIIntegralTrapezoidSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_samoylenko_i_integral_trapezoid),
+                                           ppc::util::AddFuncTask<SamoylenkoIIntegralTrapezoidALL, InType>(
                                                kTestParam, PPC_SETTINGS_samoylenko_i_integral_trapezoid));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

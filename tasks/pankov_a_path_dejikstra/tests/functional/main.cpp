@@ -6,6 +6,7 @@
 #include <string>
 #include <tuple>
 
+#include "pankov_a_path_dejikstra/all/include/ops_all.hpp"
 #include "pankov_a_path_dejikstra/common/include/common.hpp"
 #include "pankov_a_path_dejikstra/omp/include/ops_omp.hpp"
 #include "pankov_a_path_dejikstra/seq/include/ops_seq.hpp"
@@ -68,6 +69,7 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(0, "basic_graph"), s
                                             std::make_tuple(2, "non_zero_source")};
 
 const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<PankovAPathDejikstraALL, InType>(kTestParam, PPC_SETTINGS_pankov_a_path_dejikstra),
     ppc::util::AddFuncTask<PankovAPathDejikstraSEQ, InType>(kTestParam, PPC_SETTINGS_pankov_a_path_dejikstra),
     ppc::util::AddFuncTask<PankovAPathDejikstraOMP, InType>(kTestParam, PPC_SETTINGS_pankov_a_path_dejikstra),
     ppc::util::AddFuncTask<PankovAPathDejikstraSTL, InType>(kTestParam, PPC_SETTINGS_pankov_a_path_dejikstra),

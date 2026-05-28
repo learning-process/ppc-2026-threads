@@ -11,6 +11,8 @@
 #include "nazyrov_a_multidim_integral_rectangle/common/include/common.hpp"
 #include "nazyrov_a_multidim_integral_rectangle/omp/include/ops_omp.hpp"
 #include "nazyrov_a_multidim_integral_rectangle/seq/include/ops_seq.hpp"
+#include "nazyrov_a_multidim_integral_rectangle/stl/include/ops_stl.hpp"
+#include "nazyrov_a_multidim_integral_rectangle/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -137,6 +139,10 @@ const std::array<TestType, 10> kTestParams = {
 const auto kTaskList = std::tuple_cat(ppc::util::AddFuncTask<NazyrovAMultidimIntegralRectangleSeq, InType>(
                                           kTestParams, PPC_SETTINGS_nazyrov_a_multidim_integral_rectangle),
                                       ppc::util::AddFuncTask<NazyrovAMultidimIntegralRectangleOmp, InType>(
+                                          kTestParams, PPC_SETTINGS_nazyrov_a_multidim_integral_rectangle),
+                                      ppc::util::AddFuncTask<NazyrovAMultidimIntegralRectangleTbb, InType>(
+                                          kTestParams, PPC_SETTINGS_nazyrov_a_multidim_integral_rectangle),
+                                      ppc::util::AddFuncTask<NazyrovAMultidimIntegralRectangleStl, InType>(
                                           kTestParams, PPC_SETTINGS_nazyrov_a_multidim_integral_rectangle));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTaskList);
