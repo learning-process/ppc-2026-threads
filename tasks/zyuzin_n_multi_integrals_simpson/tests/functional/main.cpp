@@ -13,6 +13,7 @@
 #include "zyuzin_n_multi_integrals_simpson/common/include/common.hpp"
 #include "zyuzin_n_multi_integrals_simpson/omp/include/ops_omp.hpp"
 #include "zyuzin_n_multi_integrals_simpson/seq/include/ops_seq.hpp"
+#include "zyuzin_n_multi_integrals_simpson/stl/include/ops_stl.hpp"
 #include "zyuzin_n_multi_integrals_simpson/tbb/include/ops_tbb.hpp"
 
 namespace zyuzin_n_multi_integrals_simpson {
@@ -178,6 +179,7 @@ const std::array<TestType, 12> kTestParam = {
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ZyuzinNSimpsonSEQ, InType>(kTestParam, PPC_SETTINGS_zyuzin_n_multi_integrals_simpson),
     ppc::util::AddFuncTask<ZyuzinNSimpsonOMP, InType>(kTestParam, PPC_SETTINGS_zyuzin_n_multi_integrals_simpson),
+    ppc::util::AddFuncTask<ZyuzinNSimpsonSTL, InType>(kTestParam, PPC_SETTINGS_zyuzin_n_multi_integrals_simpson),
     ppc::util::AddFuncTask<ZyuzinNSimpsonTBB, InType>(kTestParam, PPC_SETTINGS_zyuzin_n_multi_integrals_simpson));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

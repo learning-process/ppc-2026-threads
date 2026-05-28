@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <utility>
 
+#include "pankov_a_path_dejikstra/all/include/ops_all.hpp"
 #include "pankov_a_path_dejikstra/common/include/common.hpp"
 #include "pankov_a_path_dejikstra/omp/include/ops_omp.hpp"
 #include "pankov_a_path_dejikstra/seq/include/ops_seq.hpp"
@@ -59,8 +60,8 @@ TEST_P(PankovAPathDejikstraRunPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, PankovAPathDejikstraSEQ, PankovAPathDejikstraOMP, PankovAPathDejikstraSTL,
-                                PankovAPathDejikstraTBB>(PPC_SETTINGS_pankov_a_path_dejikstra);
+    ppc::util::MakeAllPerfTasks<InType, PankovAPathDejikstraALL, PankovAPathDejikstraSEQ, PankovAPathDejikstraOMP,
+                                PankovAPathDejikstraSTL, PankovAPathDejikstraTBB>(PPC_SETTINGS_pankov_a_path_dejikstra);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
