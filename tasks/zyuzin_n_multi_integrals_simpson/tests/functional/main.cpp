@@ -10,6 +10,7 @@
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
+#include "zyuzin_n_multi_integrals_simpson/all/include/ops_all.hpp"
 #include "zyuzin_n_multi_integrals_simpson/common/include/common.hpp"
 #include "zyuzin_n_multi_integrals_simpson/omp/include/ops_omp.hpp"
 #include "zyuzin_n_multi_integrals_simpson/seq/include/ops_seq.hpp"
@@ -180,7 +181,8 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ZyuzinNSimpsonSEQ, InType>(kTestParam, PPC_SETTINGS_zyuzin_n_multi_integrals_simpson),
     ppc::util::AddFuncTask<ZyuzinNSimpsonOMP, InType>(kTestParam, PPC_SETTINGS_zyuzin_n_multi_integrals_simpson),
     ppc::util::AddFuncTask<ZyuzinNSimpsonSTL, InType>(kTestParam, PPC_SETTINGS_zyuzin_n_multi_integrals_simpson),
-    ppc::util::AddFuncTask<ZyuzinNSimpsonTBB, InType>(kTestParam, PPC_SETTINGS_zyuzin_n_multi_integrals_simpson));
+    ppc::util::AddFuncTask<ZyuzinNSimpsonTBB, InType>(kTestParam, PPC_SETTINGS_zyuzin_n_multi_integrals_simpson),
+    ppc::util::AddFuncTask<ZyuzinNSimpsonALL, InType>(kTestParam, PPC_SETTINGS_zyuzin_n_multi_integrals_simpson));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
