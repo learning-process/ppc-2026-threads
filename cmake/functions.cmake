@@ -127,9 +127,8 @@ function(ppc_configure_subproject SUBDIR)
     list(JOIN DISABLED_IMPLEMENTATIONS ", " DISABLED_IMPLEMENTATIONS_STR)
     message(
       STATUS
-        "${SUBDIR} (skipped: disabled in settings.json -> ${DISABLED_IMPLEMENTATIONS_STR})"
+        "${SUBDIR} (disabled implementations in settings.json -> ${DISABLED_IMPLEMENTATIONS_STR})"
     )
-    return()
   endif()
 
   if(NOT ENABLED_IMPLEMENTATIONS)
