@@ -56,6 +56,71 @@ def _now_msk():
     return datetime.now()
 
 
+GROUP_TRANSLITERATION = {
+    "SHCH": "Щ",
+    "YO": "Ё",
+    "JO": "Ё",
+    "ZH": "Ж",
+    "KH": "Х",
+    "TS": "Ц",
+    "CH": "Ч",
+    "SH": "Ш",
+    "YU": "Ю",
+    "JU": "Ю",
+    "IU": "Ю",
+    "YA": "Я",
+    "JA": "Я",
+    "IA": "Я",
+    "A": "А",
+    "B": "Б",
+    "V": "В",
+    "G": "Г",
+    "D": "Д",
+    "E": "Е",
+    "Z": "З",
+    "I": "И",
+    "J": "Й",
+    "K": "К",
+    "L": "Л",
+    "M": "М",
+    "N": "Н",
+    "O": "О",
+    "P": "П",
+    "R": "Р",
+    "S": "С",
+    "T": "Т",
+    "U": "У",
+    "F": "Ф",
+    "H": "Х",
+    "C": "Ц",
+    "Y": "Й",
+}
+GROUP_TRANSLITERATION_KEYS = sorted(
+    GROUP_TRANSLITERATION, key=len, reverse=True
+)
+
+
+def _transliterate_group_number(group_number: str) -> str:
+    result = []
+    i = 0
+    while i < len(group_number):
+        for key in GROUP_TRANSLITERATION_KEYS:
+            if group_number.startswith(key, i):
+                result.append(GROUP_TRANSLITERATION[key])
+                i += len(key)
+                break
+        else:
+            result.append(group_number[i])
+            i += 1
+    return "".join(result)
+
+
+def normalize_group_number(group_number) -> str:
+    """Normalize group identifiers for display, grouping, and variant keys."""
+    normalized = " ".join(str(group_number or "").split()).upper()
+    return _transliterate_group_number(normalized)
+
+
 def _read_tasks_type(task_dir: Path) -> str | None:
     """Read tasks_type from settings.json in the task directory (if present)."""
     settings_path = task_dir / "settings.json"
@@ -572,7 +637,7 @@ def _build_rows_for_task_types(
                 str(s.get("last_name", "")),
                 str(s.get("first_name", "")),
                 str(s.get("middle_name", "")),
-                str(s.get("group_number", "")),
+                normalize_group_number(s.get("group_number", "")),
             )
         except Exception:
             return None
@@ -977,7 +1042,11 @@ def main():
         try:
             with open(info_path, "r") as f:
                 data = json.load(f)
-            return data.get("student", {})
+            student = dict(data.get("student", {}) or {})
+            student["group_number"] = normalize_group_number(
+                student.get("group_number", "")
+            )
+            return student
         except Exception as e:
             logger.warning("Failed to parse %s: %s", info_path, e)
             return None
@@ -1335,7 +1404,7 @@ def main():
         try:
             with open(info_path, "r") as f:
                 data = json.load(f)
-            return data.get("student", {}).get("group_number")
+            return normalize_group_number(data.get("student", {}).get("group_number"))
         except Exception:
             return None
 
@@ -1415,7 +1484,11 @@ def main():
             try:
                 with open(info_path, "r") as f:
                     data = json.load(f)
-                return data.get("student", {})
+                student = dict(data.get("student", {}) or {})
+                student["group_number"] = normalize_group_number(
+                    student.get("group_number", "")
+                )
+                return student
             except Exception:
                 return None
 

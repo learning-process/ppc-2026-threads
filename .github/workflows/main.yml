@@ -15,48 +15,8 @@ concurrency:
 
 permissions:
   contents: read
-  issues: write
-  pull-requests: write
   packages: read
-  pages: write
-  id-token: write
 
 jobs:
-  pre-commit:
-    uses: ./.github/workflows/pre-commit.yml
-
-  ubuntu:
-    needs:
-      - pre-commit
-    if: ${{ needs.pre-commit.outputs.md_only != 'true' }}
-    uses: ./.github/workflows/ubuntu.yml
-    with:
-      is_nightly: ${{ github.event_name == 'schedule' }}
-
-  mac:
-    needs:
-      - pre-commit
-    if: ${{ needs.pre-commit.outputs.md_only != 'true' }}
-    uses: ./.github/workflows/mac.yml
-
-  windows:
-    needs:
-      - pre-commit
-    if: ${{ needs.pre-commit.outputs.md_only != 'true' }}
-    uses: ./.github/workflows/windows.yml
-
   perf:
-    needs:
-      - pre-commit
-      - ubuntu
-      - mac
-      - windows
-    if: ${{ needs.pre-commit.outputs.md_only != 'true' }}
     uses: ./.github/workflows/perf.yml
-
-  pages:
-    needs:
-      - pre-commit
-      - perf
-    if: ${{ needs.pre-commit.outputs.md_only != 'true' }}
-    uses: ./.github/workflows/pages.yml
