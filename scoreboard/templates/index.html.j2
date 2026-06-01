@@ -139,7 +139,7 @@
                     <td style="text-align: center{% if (cell.report | int) > 0 %}; background-color: lightgreen{% endif %}">{{ cell.report }}</td>
                 {% endif %}
             {% endfor %}
-            <td style="text-align: center;">{{ row.total }}</td>
+            <td style="text-align: center;">{{ "%.2f"|format(row.total) }}</td>
         </tr>
         {% endfor %}
     </table>

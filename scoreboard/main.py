@@ -188,7 +188,7 @@ directories, tasks_type_map = discover_tasks(tasks_dir, task_types)
 
 
 def load_performance_data_threads(perf_stat_file_path: Path) -> dict:
-    """Load threads performance ratios (T_x/T_seq) from CSV.
+    """Load threads performance raw times from CSV.
     Expected header: Task, SEQ, OMP, TBB, STL, ALL
     """
     perf_stats: dict[str, dict] = {}
@@ -300,10 +300,11 @@ def load_performance_data_processes(perf_stat_file_path: Path) -> dict:
     return perf_stats
 
 
-def calculate_performance_metrics(perf_val, eff_num_proc, task_type, seq_val=None):
+def calculate_performance_metrics(perf_val, eff_num_proc, task_type="omp", seq_val=None):
     """Calculate acceleration and efficiency.
 
-    For processes table we pass raw times; for threads legacy ratios we keep old behavior.
+    When seq_val is provided, perf_val and seq_val are raw times in seconds.
+    Without seq_val, perf_val is treated as a legacy T_x/T_seq ratio.
     """
     acceleration = "?"
     efficiency = "?"
@@ -657,11 +658,13 @@ def _build_rows_for_task_types(
             )
             task_points += plagiarism_points
 
-            perf_val = perf_stats.get(dir, {}).get(task_type, "?")
+            perf_map = perf_stats.get(dir, {})
+            perf_val = perf_map.get(task_type, "?")
+            seq_val = perf_map.get("seq")
 
             # Calculate acceleration and efficiency if performance data is available
             acceleration, efficiency = calculate_performance_metrics(
-                perf_val, eff_num_proc, task_type
+                perf_val, eff_num_proc, task_type, seq_val=seq_val
             )
 
             # Calculate deadline penalty points
