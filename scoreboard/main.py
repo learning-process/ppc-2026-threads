@@ -663,7 +663,25 @@ def _build_rows_for_task_types(
         except Exception:
             return None
 
-    for dir in sorted(dir_names):
+    def _student_sort_key(dir_name: str):
+        fields = _load_student_fields(dir_name)
+        if not fields:
+            return (1, "", "", "", "", dir_name)
+        last, first, middle, group = fields
+
+        def _normalize_sort_part(value: str) -> str:
+            return " ".join(str(value or "").split()).casefold().replace("ё", "е")
+
+        return (
+            0,
+            _normalize_sort_part(last),
+            _normalize_sort_part(first),
+            _normalize_sort_part(middle),
+            _normalize_sort_part(group),
+            dir_name,
+        )
+
+    for dir in sorted(dir_names, key=_student_sort_key):
         row_types = []
         total_count = 0
         for task_type in selected_task_types:
