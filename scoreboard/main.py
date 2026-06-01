@@ -95,9 +95,7 @@ GROUP_TRANSLITERATION = {
     "C": "Ц",
     "Y": "Й",
 }
-GROUP_TRANSLITERATION_KEYS = sorted(
-    GROUP_TRANSLITERATION, key=len, reverse=True
-)
+GROUP_TRANSLITERATION_KEYS = sorted(GROUP_TRANSLITERATION, key=len, reverse=True)
 
 
 def _transliterate_group_number(group_number: str) -> str:
@@ -300,7 +298,9 @@ def load_performance_data_processes(perf_stat_file_path: Path) -> dict:
     return perf_stats
 
 
-def calculate_performance_metrics(perf_val, eff_num_proc, task_type="omp", seq_val=None):
+def calculate_performance_metrics(
+    perf_val, eff_num_proc, task_type="omp", seq_val=None
+):
     """Calculate acceleration and efficiency.
 
     When seq_val is provided, perf_val and seq_val are raw times in seconds.

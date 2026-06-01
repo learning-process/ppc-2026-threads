@@ -79,11 +79,7 @@ TASK_ALIASES = _load_task_aliases()
 
 
 def _known_task_prefix(task_name: str) -> str | None:
-    matches = [
-        known
-        for known in KNOWN_TASK_NAMES
-        if task_name.startswith(f"{known}_")
-    ]
+    matches = [known for known in KNOWN_TASK_NAMES if task_name.startswith(f"{known}_")]
     return max(matches, key=len) if matches else None
 
 
@@ -131,6 +127,7 @@ def _infer_task_category(task_name: str, task_type: str | None = None) -> str:
     if task_type == "mpi":
         return "processes"
     return "threads"
+
 
 # Compile patterns once
 OLD_PATTERN = re.compile(r"tasks[\/|\\](\w*)[\/|\\](\w*):(\w*):(-*\d*\.\d*)")
