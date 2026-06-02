@@ -44,7 +44,7 @@
 
 - добавлен `StrassenTopTbb(...)` с `parallel_invoke`;
 - внутренняя часть оставлена в `StrassenSeq(...)`;
-- рекурсия через `std::function impl` — без NOLINT.
+- рекурсия через `std::function impl`.
 
 ## 6. Проверка корректности
 
