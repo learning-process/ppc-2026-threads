@@ -369,6 +369,26 @@ def _find_report_max(points_info, task_type: str) -> int:
     return 0
 
 
+def _has_single_nonempty_markdown(directory: Path) -> bool:
+    """Check that a directory contains exactly one non-empty Markdown file."""
+    if not directory.exists() or not directory.is_dir():
+        return False
+    markdown_files = sorted(directory.glob("*.md"))
+    if len(markdown_files) != 1:
+        return False
+    try:
+        return bool(markdown_files[0].read_text(errors="ignore").strip())
+    except OSError:
+        return False
+
+
+def _has_thread_report(task_dir: Path, task_type: str) -> bool:
+    """Threads reports require one root report and one implementation report."""
+    return _has_single_nonempty_markdown(task_dir) and _has_single_nonempty_markdown(
+        task_dir / task_type
+    )
+
+
 def _find_performance_max(points_info, task_type: str) -> int:
     """Resolve max Performance (A) points for a given task type (threads)."""
     threads_tasks = (points_info.get("threads", {}) or {}).get("tasks", [])
@@ -643,7 +663,25 @@ def _build_rows_for_task_types(
         except Exception:
             return None
 
-    for dir in sorted(dir_names):
+    def _student_sort_key(dir_name: str):
+        fields = _load_student_fields(dir_name)
+        if not fields:
+            return (1, "", "", "", "", dir_name)
+        last, first, middle, group = fields
+
+        def _normalize_sort_part(value: str) -> str:
+            return " ".join(str(value or "").split()).casefold().replace("ё", "е")
+
+        return (
+            0,
+            _normalize_sort_part(last),
+            _normalize_sort_part(first),
+            _normalize_sort_part(middle),
+            _normalize_sort_part(group),
+            dir_name,
+        )
+
+    for dir in sorted(dir_names, key=_student_sort_key):
         row_types = []
         total_count = 0
         for task_type in selected_task_types:
@@ -672,8 +710,8 @@ def _build_rows_for_task_types(
                 dir, task_type, status, deadlines_cfg, tasks_dir
             )
 
-            # Report presence: award R only if report.md exists inside the task directory
-            report_present = (tasks_dir / dir / "report.md").exists()
+            # Threads report: one non-empty markdown in task root and one in the implementation directory.
+            report_present = _has_thread_report(tasks_dir / dir, task_type)
             report_points = _find_report_max(cfg, task_type) if report_present else 0
 
             # Performance points P for non-seq types, based on efficiency
