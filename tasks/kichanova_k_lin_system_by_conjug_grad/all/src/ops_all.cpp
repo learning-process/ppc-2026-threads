@@ -38,28 +38,25 @@ double DotProductHybrid(const std::vector<double> &a, const std::vector<double> 
   }
 
   double result = 0.0;
-  const int num_threads = omp_get_max_threads();
+  int num_threads = omp_get_max_threads();
 
 #pragma omp parallel for reduction(+ : result) schedule(static) default(none) shared(a, b, n, num_threads)
-  for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
-    const int start = thread_idx * (n / num_threads);
-    const int end = (thread_idx == num_threads - 1) ? n : (thread_idx + 1) * (n / num_threads);
-
+  for (int block = 0; block < num_threads; ++block) {
+    int start = block * (n / num_threads);
+    int end = (block == num_threads - 1) ? n : (block + 1) * (n / num_threads);
     if (start >= end) {
       continue;
     }
 
-    const double local_sum = tbb::parallel_reduce(tbb::blocked_range<int>(start, end, 256), 0.0,
-                                                  [&](const tbb::blocked_range<int> &range, double sum) {
+    double local_sum = tbb::parallel_reduce(tbb::blocked_range<int>(start, end, 256), 0.0,
+                                            [&](const tbb::blocked_range<int> &range, double sum) {
       for (int i = range.begin(); i < range.end(); ++i) {
         sum += a[i] * b[i];
       }
       return sum;
     }, [](double x, double y) { return x + y; });
-
     result += local_sum;
   }
-
   return result;
 }
 
@@ -71,13 +68,12 @@ void MatrixVectorProductHybrid(const std::vector<double> &a, const std::vector<d
 
   const auto stride = static_cast<size_t>(n);
   const double *v_ptr = v.data();
-  const int num_threads = omp_get_max_threads();
+  int num_threads = omp_get_max_threads();
 
 #pragma omp parallel for schedule(dynamic, 1) default(none) shared(a, result, n, stride, v_ptr, num_threads)
-  for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
-    const int start = thread_idx * (n / num_threads);
-    const int end = (thread_idx == num_threads - 1) ? n : (thread_idx + 1) * (n / num_threads);
-
+  for (int block = 0; block < num_threads; ++block) {
+    int start = block * (n / num_threads);
+    int end = (block == num_threads - 1) ? n : (block + 1) * (n / num_threads);
     if (start >= end) {
       continue;
     }
@@ -97,13 +93,12 @@ void UpdateSolutionAndResidualHybrid(std::vector<double> &x, std::vector<double>
     return;
   }
 
-  const int num_threads = omp_get_max_threads();
+  int num_threads = omp_get_max_threads();
 
 #pragma omp parallel for schedule(static) default(none) shared(x, r, p, ap, alpha, n, num_threads)
-  for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
-    const int start = thread_idx * (n / num_threads);
-    const int end = (thread_idx == num_threads - 1) ? n : (thread_idx + 1) * (n / num_threads);
-
+  for (int block = 0; block < num_threads; ++block) {
+    int start = block * (n / num_threads);
+    int end = (block == num_threads - 1) ? n : (block + 1) * (n / num_threads);
     if (start >= end) {
       continue;
     }
@@ -122,13 +117,12 @@ void UpdateDirectionHybrid(std::vector<double> &p, const std::vector<double> &r,
     return;
   }
 
-  const int num_threads = omp_get_max_threads();
+  int num_threads = omp_get_max_threads();
 
 #pragma omp parallel for schedule(static) default(none) shared(p, r, beta, n, num_threads)
-  for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
-    const int start = thread_idx * (n / num_threads);
-    const int end = (thread_idx == num_threads - 1) ? n : (thread_idx + 1) * (n / num_threads);
-
+  for (int block = 0; block < num_threads; ++block) {
+    int start = block * (n / num_threads);
+    int end = (block == num_threads - 1) ? n : (block + 1) * (n / num_threads);
     if (start >= end) {
       continue;
     }
@@ -142,13 +136,12 @@ void UpdateDirectionHybrid(std::vector<double> &p, const std::vector<double> &r,
 }
 
 void InitializeVectorsHybrid(std::vector<double> &r, std::vector<double> &p, const std::vector<double> &b, int n) {
-  const int num_threads = omp_get_max_threads();
+  int num_threads = omp_get_max_threads();
 
 #pragma omp parallel for schedule(static) default(none) shared(r, p, b, n, num_threads)
-  for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
-    const int start = thread_idx * (n / num_threads);
-    const int end = (thread_idx == num_threads - 1) ? n : (thread_idx + 1) * (n / num_threads);
-
+  for (int block = 0; block < num_threads; ++block) {
+    int start = block * (n / num_threads);
+    int end = (block == num_threads - 1) ? n : (block + 1) * (n / num_threads);
     if (start >= end) {
       continue;
     }
