@@ -176,8 +176,14 @@ export TBB_NUM_THREADS=6
 cmake -S . -B build -D USE_PERF_TESTS=ON -D CMAKE_BUILD_TYPE=Release
 cmake --build build --target baranov_a_mult_matrix_fox_algorithm_tbb_perf_tests
 
-# Запуск тестов производительности
-./build/bin/baranov_a_mult_matrix_fox_algorithm_tbb_perf_tests --gtest_filter="*TBB*"
+# Переход в папку с бинарниками
+cd build/bin
+
+# Запуск TBB performance тестов
+ppc_perf_tests.exe --gtest_filter="*PerfTestsTbb*"
+
+# Запуск TBB функциональных тестов
+ppc_func_tests.exe --gtest_filter="*FoxAlgorithmTBBTests*"
 ```
 
 ## 8. Результаты
