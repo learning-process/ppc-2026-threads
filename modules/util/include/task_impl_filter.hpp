@@ -4,6 +4,46 @@
 
 namespace ppc::util::detail {
 
+#ifdef PPC_TASK_IMPL_FILTERED
+
+#  ifdef PPC_TASK_IMPL_ALL
+constexpr bool kTaskImplAllEnabled = true;
+#  else
+constexpr bool kTaskImplAllEnabled = false;
+#  endif
+
+#  ifdef PPC_TASK_IMPL_MPI
+constexpr bool kTaskImplMpiEnabled = true;
+#  else
+constexpr bool kTaskImplMpiEnabled = false;
+#  endif
+
+#  ifdef PPC_TASK_IMPL_OMP
+constexpr bool kTaskImplOmpEnabled = true;
+#  else
+constexpr bool kTaskImplOmpEnabled = false;
+#  endif
+
+#  ifdef PPC_TASK_IMPL_SEQ
+constexpr bool kTaskImplSeqEnabled = true;
+#  else
+constexpr bool kTaskImplSeqEnabled = false;
+#  endif
+
+#  ifdef PPC_TASK_IMPL_STL
+constexpr bool kTaskImplStlEnabled = true;
+#  else
+constexpr bool kTaskImplStlEnabled = false;
+#  endif
+
+#  ifdef PPC_TASK_IMPL_TBB
+constexpr bool kTaskImplTbbEnabled = true;
+#  else
+constexpr bool kTaskImplTbbEnabled = false;
+#  endif
+
+#endif
+
 constexpr bool IsCompiledTaskImplEnabled(ppc::task::TypeOfTask task_type) {
 #ifndef PPC_TASK_IMPL_FILTERED
   (void)task_type;
@@ -11,41 +51,17 @@ constexpr bool IsCompiledTaskImplEnabled(ppc::task::TypeOfTask task_type) {
 #else
   switch (task_type) {
     case ppc::task::TypeOfTask::kALL:
-#  ifdef PPC_TASK_IMPL_ALL
-      return true;
-#  else
-      return false;
-#  endif
+      return kTaskImplAllEnabled;
     case ppc::task::TypeOfTask::kMPI:
-#  ifdef PPC_TASK_IMPL_MPI
-      return true;
-#  else
-      return false;
-#  endif
+      return kTaskImplMpiEnabled;
     case ppc::task::TypeOfTask::kOMP:
-#  ifdef PPC_TASK_IMPL_OMP
-      return true;
-#  else
-      return false;
-#  endif
+      return kTaskImplOmpEnabled;
     case ppc::task::TypeOfTask::kSEQ:
-#  ifdef PPC_TASK_IMPL_SEQ
-      return true;
-#  else
-      return false;
-#  endif
+      return kTaskImplSeqEnabled;
     case ppc::task::TypeOfTask::kSTL:
-#  ifdef PPC_TASK_IMPL_STL
-      return true;
-#  else
-      return false;
-#  endif
+      return kTaskImplStlEnabled;
     case ppc::task::TypeOfTask::kTBB:
-#  ifdef PPC_TASK_IMPL_TBB
-      return true;
-#  else
-      return false;
-#  endif
+      return kTaskImplTbbEnabled;
     case ppc::task::TypeOfTask::kUnknown:
       return true;
   }
