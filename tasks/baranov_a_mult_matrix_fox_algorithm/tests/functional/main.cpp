@@ -111,7 +111,8 @@ class BaranovAMatrixMultiplicationFuncTest
     } else if constexpr (std::is_same_v<T,
                                         baranov_a_mult_matrix_fox_algorithm_tbb::BaranovAMultMatrixFoxAlgorithmTBB>) {
       return "tbb";
-    } else if constexpr (std::is_same_v<T, baranov_a_mult_matrix_fox_algorithm_all::BaranovAMultMatrixFoxAlgorithmALL>) {
+    } else if constexpr (std::is_same_v<T,
+                                        baranov_a_mult_matrix_fox_algorithm_all::BaranovAMultMatrixFoxAlgorithmALL>) {
       return "all";
     }
     return "unknown";
@@ -275,7 +276,8 @@ const auto kTestTasksListALL =
                            baranov_a_mult_matrix_fox_algorithm::InType>(
         kTestParams, PPC_SETTINGS_baranov_a_mult_matrix_fox_algorithm);
 
-const auto kTestTasksList = std::tuple_cat(kTestTasksListSEQ, kTestTasksListOMP, kTestTasksListSTL, kTestTasksListTBB, kTestTasksListALL);
+const auto kTestTasksList =
+    std::tuple_cat(kTestTasksListSEQ, kTestTasksListOMP, kTestTasksListSTL, kTestTasksListTBB, kTestTasksListALL);
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kTestNameSEQ = BaranovASEQFuncTest::PrintFuncTestName<BaranovASEQFuncTest>;
