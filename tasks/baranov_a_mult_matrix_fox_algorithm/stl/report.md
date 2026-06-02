@@ -164,8 +164,14 @@ for (auto &thread : threads) thread.join();
 cmake -S . -B build -D USE_PERF_TESTS=ON -D CMAKE_BUILD_TYPE=Release
 cmake --build build --target baranov_a_mult_matrix_fox_algorithm_stl_perf_tests
 
+# Переход в папку с бинарниками
+cd build/bin
+
 # Запуск тестов производительности
-./build/bin/baranov_a_mult_matrix_fox_algorithm_stl_perf_tests --gtest_filter="*STL*"
+ppc_perf_tests.exe --gtest_filter="*PerfTestsStl*"
+
+# Запуск STL функциональных тестов
+ppc_func_tests.exe --gtest_filter="*FoxAlgorithmSTLTests*"
 ```
 
 ## 8. Результаты
