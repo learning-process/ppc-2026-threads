@@ -1,4 +1,3 @@
-// yurkin_g_graham_scan/all/include/ops_all.hpp
 #pragma once
 
 #include "task/include/task.hpp"
