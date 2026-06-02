@@ -115,7 +115,6 @@ class BaranovAMatrixMultiplicationFuncTest
                                         baranov_a_mult_matrix_fox_algorithm_all::BaranovAMultMatrixFoxAlgorithmALL>) {
       return "all";
     }
-    return "unknown";
   }
 
   static void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c,
