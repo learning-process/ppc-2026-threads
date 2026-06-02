@@ -86,22 +86,19 @@
 
 ```bash
 # SEQ
-./build/bin/baranov_a_mult_matrix_fox_algorithm_seq_perf_tests --gtest_filter="*SEQ*"
+ppc_func_tests.exe --gtest_filter="*FoxAlgorithmSEQTes*"
 
 # OpenMP
-export OMP_NUM_THREADS=12
-./build/bin/baranov_a_mult_matrix_fox_algorithm_omp_perf_tests --gtest_filter="*OMP*"
+ppc_func_tests.exe --gtest_filter="*FoxAlgorithmOMPTests*"
 
 # TBB
-export TBB_NUM_THREADS=12
-./build/bin/baranov_a_mult_matrix_fox_algorithm_tbb_perf_tests --gtest_filter="*TBB*"
+ppc_func_tests.exe --gtest_filter="*FoxAlgorithmTBBTests*"
 
 # STL
-./build/bin/baranov_a_mult_matrix_fox_algorithm_stl_perf_tests --gtest_filter="*STL*"
+ppc_func_tests.exe --gtest_filter="*FoxAlgorithmSTLTests*"
 
 # ALL (MPI + OMP)
-export OMP_NUM_THREADS=6
-mpiexec -np 2 ./build/bin/baranov_a_mult_matrix_fox_algorithm_all_perf_tests --gtest_filter="*ALL*"
+mpiexec -n 4 ppc_func_tests.exe --gtest_filter="*FoxAlgorithmALLTests*"
 ```
 
 **Команды запуска через скрипты курса:**
