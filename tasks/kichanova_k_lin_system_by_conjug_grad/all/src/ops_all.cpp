@@ -36,130 +36,72 @@ double DotProductHybrid(const std::vector<double> &a, const std::vector<double> 
   if (n <= 0) {
     return 0.0;
   }
-
-  double result = 0.0;
-  const int num_threads = omp_get_max_threads();
-
-#pragma omp parallel for reduction(+ : result) schedule(static) default(none) shared(a, b, n, num_threads)
-  for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
-    const int start = thread_idx * (n / num_threads);
-    const int end = (thread_idx == num_threads - 1) ? n : (thread_idx + 1) * (n / num_threads);
-
-    if (start >= end) {
-      continue;
-    }
-
-    const double local_sum = tbb::parallel_reduce(tbb::blocked_range<int>(start, end, 256), 0.0,
-                                                  [&](const tbb::blocked_range<int> &range, double sum) {
-      for (int i = range.begin(); i < range.end(); ++i) {
-        sum += a[i] * b[i];
-      }
-      return sum;
-    }, [](double x, double y) { return x + y; });
-
-    result += local_sum;
-  }
-
-  return result;
+  
+  return tbb::parallel_reduce(
+      tbb::blocked_range<int>(0, n, 256),
+      0.0,
+      [&](const tbb::blocked_range<int> &range, double sum) {
+        for (int i = range.begin(); i < range.end(); ++i) {
+          sum += a[i] * b[i];
+        }
+        return sum;
+      },
+      [](double x, double y) { return x + y; }
+  );
 }
 
-void MatrixVectorProductHybrid(const std::vector<double> &a, const std::vector<double> &v, std::vector<double> &result,
-                               int n) {
+void MatrixVectorProductHybrid(const std::vector<double> &a, const std::vector<double> &v, 
+                                std::vector<double> &result, int n) {
   if (n <= 0) {
     return;
   }
 
   const auto stride = static_cast<size_t>(n);
   const double *v_ptr = v.data();
-  const int num_threads = omp_get_max_threads();
 
-#pragma omp parallel for schedule(dynamic, 1) default(none) shared(a, result, n, stride, v_ptr, num_threads)
-  for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
-    const int start = thread_idx * (n / num_threads);
-    const int end = (thread_idx == num_threads - 1) ? n : (thread_idx + 1) * (n / num_threads);
-
-    if (start >= end) {
-      continue;
-    }
-
-    tbb::parallel_for(tbb::blocked_range<int>(start, end, 32), [&](const tbb::blocked_range<int> &range) {
-      for (int i = range.begin(); i < range.end(); ++i) {
-        const double *row = &a[i * stride];
-        result[i] = ComputeRowProduct(row, v_ptr, n);
-      }
-    });
-  }
+  tbb::parallel_for(tbb::blocked_range<int>(0, n, 32),
+      [&](const tbb::blocked_range<int> &range) {
+        for (int i = range.begin(); i < range.end(); ++i) {
+          const double *row = &a[i * stride];
+          result[i] = ComputeRowProduct(row, v_ptr, n);
+        }
+      });
 }
 
-void UpdateSolutionAndResidualHybrid(std::vector<double> &x, std::vector<double> &r, const std::vector<double> &p,
+void UpdateSolutionAndResidualHybrid(std::vector<double> &x, std::vector<double> &r, 
+                                     const std::vector<double> &p,
                                      const std::vector<double> &ap, double alpha, int n) {
-  if (n <= 0) {
-    return;
-  }
-
-  const int num_threads = omp_get_max_threads();
-
-#pragma omp parallel for schedule(static) default(none) shared(x, r, p, ap, alpha, n, num_threads)
-  for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
-    const int start = thread_idx * (n / num_threads);
-    const int end = (thread_idx == num_threads - 1) ? n : (thread_idx + 1) * (n / num_threads);
-
-    if (start >= end) {
-      continue;
-    }
-
-    tbb::parallel_for(tbb::blocked_range<int>(start, end, 512), [&](const tbb::blocked_range<int> &range) {
-      for (int i = range.begin(); i < range.end(); ++i) {
-        x[i] += alpha * p[i];
-        r[i] -= alpha * ap[i];
-      }
-    });
-  }
+  if (n <= 0) return;
+  
+  tbb::parallel_for(tbb::blocked_range<int>(0, n, 512),
+      [&](const tbb::blocked_range<int> &range) {
+        for (int i = range.begin(); i < range.end(); ++i) {
+          x[i] += alpha * p[i];
+          r[i] -= alpha * ap[i];
+        }
+      });
 }
 
 void UpdateDirectionHybrid(std::vector<double> &p, const std::vector<double> &r, double beta, int n) {
-  if (n <= 0) {
-    return;
-  }
-
-  const int num_threads = omp_get_max_threads();
-
-#pragma omp parallel for schedule(static) default(none) shared(p, r, beta, n, num_threads)
-  for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
-    const int start = thread_idx * (n / num_threads);
-    const int end = (thread_idx == num_threads - 1) ? n : (thread_idx + 1) * (n / num_threads);
-
-    if (start >= end) {
-      continue;
-    }
-
-    tbb::parallel_for(tbb::blocked_range<int>(start, end, 512), [&](const tbb::blocked_range<int> &range) {
-      for (int i = range.begin(); i < range.end(); ++i) {
-        p[i] = r[i] + (beta * p[i]);
-      }
-    });
-  }
+  if (n <= 0) return;
+  
+  tbb::parallel_for(tbb::blocked_range<int>(0, n, 512),
+      [&](const tbb::blocked_range<int> &range) {
+        for (int i = range.begin(); i < range.end(); ++i) {
+          p[i] = r[i] + beta * p[i];
+        }
+      });
 }
 
-void InitializeVectorsHybrid(std::vector<double> &r, std::vector<double> &p, const std::vector<double> &b, int n) {
-  const int num_threads = omp_get_max_threads();
-
-#pragma omp parallel for schedule(static) default(none) shared(r, p, b, n, num_threads)
-  for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
-    const int start = thread_idx * (n / num_threads);
-    const int end = (thread_idx == num_threads - 1) ? n : (thread_idx + 1) * (n / num_threads);
-
-    if (start >= end) {
-      continue;
-    }
-
-    tbb::parallel_for(tbb::blocked_range<int>(start, end, 1024), [&](const tbb::blocked_range<int> &range) {
-      for (int i = range.begin(); i < range.end(); ++i) {
-        r[i] = b[i];
-        p[i] = r[i];
-      }
-    });
-  }
+void InitializeVectorsHybrid(std::vector<double> &r, std::vector<double> &p, 
+                             const std::vector<double> &b, int n) {
+  tbb::parallel_for(tbb::blocked_range<int>(0, n, 1024),
+      [&](const tbb::blocked_range<int> &range) {
+        for (int i = range.begin(); i < range.end(); ++i) {
+          r[i] = b[i];
+          p[i] = r[i];
+        }
+      });
 }
 
 }  // namespace
