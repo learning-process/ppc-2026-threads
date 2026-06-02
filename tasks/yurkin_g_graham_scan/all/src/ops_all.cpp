@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <ranges>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "util/include/util.hpp"
@@ -19,50 +20,14 @@
 #endif
 
 namespace yurkin_g_graham_scan {
-
 namespace {
+
 long double Cross(const Point &o, const Point &a, const Point &b) {
   return (static_cast<long double>(a.x - o.x) * static_cast<long double>(b.y - o.y)) -
          (static_cast<long double>(a.y - o.y) * static_cast<long double>(b.x - o.x));
 }
-}  // namespace
 
-YurkinGGrahamScanALL::YurkinGGrahamScanALL(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput().clear();
-}
-
-bool YurkinGGrahamScanALL::ValidationImpl() {
-  return !GetInput().empty();
-}
-
-bool YurkinGGrahamScanALL::PreProcessingImpl() {
-  auto &pts = GetInput();
-  if (pts.empty()) {
-    return true;
-  }
-
-  std::ranges::sort(pts, [](const Point &a, const Point &b) {
-    if (a.x != b.x) {
-      return a.x < b.x;
-    }
-    return a.y < b.y;
-  });
-
-  std::vector<Point> tmp;
-  tmp.reserve(pts.size());
-  for (const auto &p : pts) {
-    if (tmp.empty() || tmp.back().x != p.x || tmp.back().y != p.y) {
-      tmp.push_back(p);
-    }
-  }
-  pts.swap(tmp);
-
-  return !pts.empty();
-}
-
-static OutType BuildHull(const InType &pts) {
+OutType BuildHull(const InType &pts) {
   const std::size_t n = pts.size();
   if (n == 0) {
     return {};
@@ -106,7 +71,7 @@ static OutType BuildHull(const InType &pts) {
   return hull;
 }
 
-static void RunOpenMPExercise(int num_threads) {
+void RunOpenMPExercise(int num_threads) {
 #ifdef _OPENMP
   int omp_counter = 0;
 #  pragma omp parallel reduction(+ : omp_counter) num_threads(num_threads) default(none) firstprivate(num_threads)
@@ -119,7 +84,7 @@ static void RunOpenMPExercise(int num_threads) {
 #endif
 }
 
-static void RunStdThreadExercise(int num_threads) {
+void RunStdThreadExercise(int num_threads) {
   std::atomic<int> th_counter{0};
   std::vector<std::thread> threads;
   threads.reserve(static_cast<std::size_t>(num_threads));
@@ -134,7 +99,7 @@ static void RunStdThreadExercise(int num_threads) {
   (void)th_counter.load(std::memory_order_relaxed);
 }
 
-static void RunTBBExercise(int num_threads) {
+void RunTBBExercise(int num_threads) {
 #ifdef USE_TBB
   std::atomic<int> tbb_counter{0};
   tbb::parallel_for(0, num_threads, [&](int /*i*/) { tbb_counter.fetch_add(1, std::memory_order_relaxed); });
@@ -144,7 +109,7 @@ static void RunTBBExercise(int num_threads) {
 #endif
 }
 
-static void RunMPIExercise() {
+void RunMPIExercise() {
 #ifdef USE_MPI
   int initialized = 0;
   MPI_Initialized(&initialized);
@@ -152,6 +117,43 @@ static void RunMPIExercise() {
     MPI_Barrier(MPI_COMM_WORLD);
   }
 #endif
+}
+
+}  // namespace
+
+YurkinGGrahamScanALL::YurkinGGrahamScanALL(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput().clear();
+}
+
+bool YurkinGGrahamScanALL::ValidationImpl() {
+  return !GetInput().empty();
+}
+
+bool YurkinGGrahamScanALL::PreProcessingImpl() {
+  auto &pts = GetInput();
+  if (pts.empty()) {
+    return true;
+  }
+
+  std::ranges::sort(pts, [](const Point &a, const Point &b) {
+    if (a.x != b.x) {
+      return a.x < b.x;
+    }
+    return a.y < b.y;
+  });
+
+  std::vector<Point> tmp;
+  tmp.reserve(pts.size());
+  for (const auto &p : pts) {
+    if (tmp.empty() || tmp.back().x != p.x || tmp.back().y != p.y) {
+      tmp.push_back(p);
+    }
+  }
+  pts.swap(tmp);
+
+  return !pts.empty();
 }
 
 bool YurkinGGrahamScanALL::RunImpl() {
