@@ -3,6 +3,7 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -24,7 +25,6 @@ bool GutyanskyAImgContrastIncrALL::ValidationImpl() {
 }
 
 bool GutyanskyAImgContrastIncrALL::PreProcessingImpl() {
-  GetOutput().resize(GetInput().size());
   return true;
 }
 
@@ -81,12 +81,15 @@ bool GutyanskyAImgContrastIncrALL::RunImpl() {
   uint8_t delta = upper_bound - lower_bound;
 
   if (delta != 0) {
-#pragma omp parallel for default(none) shared(local_data, local_count, lower_bound, delta)
-    for (size_t i = 0; i < local_count; i++) {
-      auto old_value = static_cast<uint16_t>(local_data[i]);
-      uint16_t new_value = (std::numeric_limits<uint8_t>::max() * (old_value - lower_bound)) / delta;
+    std::array<uint8_t, 256> lut{};
+    for (int pix = 0; pix < 256; pix++) {
+      int shifted = pix - lower_bound;
+      lut.at(pix) = static_cast<uint8_t>(255 * shifted / delta);
+    }
 
-      local_data[i] = static_cast<uint8_t>(new_value);
+#pragma omp parallel for default(none) shared(local_data, local_count, lut)
+    for (size_t i = 0; i < local_count; i++) {
+      local_data[i] = lut.at(local_data[i]);
     }
   }
 
