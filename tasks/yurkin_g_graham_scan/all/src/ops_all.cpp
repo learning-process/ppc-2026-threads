@@ -109,8 +109,7 @@ static OutType BuildHull(const InType &pts) {
 static void RunOpenMPExercise(int num_threads) {
 #ifdef _OPENMP
   int omp_counter = 0;
-#  pragma omp parallel reduction(+ : omp_counter) num_threads(num_threads) default(none) \
-      shared(omp_counter, num_threads)
+#  pragma omp parallel reduction(+ : omp_counter) num_threads(num_threads) default(none) firstprivate(num_threads)
   {
     omp_counter += 1;
   }

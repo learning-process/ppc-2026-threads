@@ -14,8 +14,8 @@ Variant: <22>
 
 ## 2. Problem Statement
 
-Вход: std::vector<Point> (Point { double x, double y }).
-Выход: std::vector<Point> — вершины выпуклой оболочки в обходе.
+Вход: `std::vector<Point>` (Point { double x, double y }).
+Выход: `std::vector<Point>` — вершины выпуклой оболочки в обходе.
 Ограничения: произвольное количество точек; возможны дубликаты и коллинеарные
 точки; корректная обработка случаев 0–2 точки.
 

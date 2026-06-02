@@ -95,7 +95,7 @@ Variant: <22>
 **Файловая структура:**
 
 | Технология | Заголовочный файл | Исходный файл |
-|------------|-------------------|----------------|
+| --- | --- | --- |
 | SEQ | `seq/include/ops_seq.hpp` | `seq/src/ops_seq.cpp` |
 | STL | `stl/include/ops_stl.hpp` | `stl/src/ops_stl.cpp` |
 | OMP | `omp/include/ops_omp.hpp` | `omp/src/ops_omp.cpp` |
@@ -153,35 +153,35 @@ Variant: <22>
 **SEQ / STL (эталоны):**
 
 | Mode | Threads | Count (n) | Time, s | Speedup | Efficiency |
-|------|---------|-----------|---------|---------|------------|
-| seq  | 1       | 2000      | 0.120   | 1.00    | 100.0%     |
-| stl  | 1       | 2000      | 0.118   | 1.02    | 101.7%     |
+| --- | --- | --- | --- | --- | --- |
+| seq | 1 | 2000 | 0.120 | 1.00 | 100.0% |
+| stl | 1 | 2000 | 0.118 | 1.02 | 101.7% |
 
 **OMP (параллельная сортировка):**
 
 | Mode | Threads | Count (n) | Time, s | Speedup | Efficiency |
-|------|---------|-----------|---------|---------|------------|
-| omp  | 1       | 2000      | 0.118   | 1.02    | 102.0%     |
-| omp  | 2       | 2000      | 0.085   | 1.41    | 70.6%      |
-| omp  | 4       | 2000      | 0.075   | 1.60    | 40.0%      |
-| omp  | 8       | 2000      | 0.065   | 1.85    | 23.1%      |
+| --- | --- | --- | --- | --- | --- |
+| omp | 1 | 2000 | 0.118 | 1.02 | 102.0% |
+| omp | 2 | 2000 | 0.085 | 1.41 | 70.6% |
+| omp | 4 | 2000 | 0.075 | 1.60 | 40.0% |
+| omp | 8 | 2000 | 0.065 | 1.85 | 23.1% |
 
 **TBB:**
 
 | Mode | Threads | Count (n) | Time, s | Speedup | Efficiency |
-|------|---------|-----------|---------|---------|------------|
-| tbb  | 1       | 2000      | 0.119   | 1.01    | 100.8%     |
-| tbb  | 2       | 2000      | 0.082   | 1.46    | 73.2%      |
-| tbb  | 4       | 2000      | 0.070   | 1.71    | 42.9%      |
-| tbb  | 8       | 2000      | 0.058   | 2.07    | 25.9%      |
+| --- | --- | --- | --- | --- | --- |
+| tbb | 1 | 2000 | 0.119 | 1.01 | 100.8% |
+| tbb | 2 | 2000 | 0.082 | 1.46 | 73.2% |
+| tbb | 4 | 2000 | 0.070 | 1.71 | 42.9% |
+| tbb | 8 | 2000 | 0.058 | 2.07 | 25.9% |
 
 **ALL (интеграционный модуль с упражнениями):**
 
 | Mode | Threads | Count (n) | Time, s | Speedup | Efficiency |
-|------|---------|-----------|---------|---------|------------|
-| all  | 1       | 2000      | 0.130   | 0.92    | 92.3%      |
-| all  | 4       | 2000      | 0.160   | 0.75    | 18.8%      |
-| all  | 8       | 2000      | 0.180   | 0.67    | 8.3%       |
+| --- | --- | --- | --- | --- | --- |
+| all | 1 | 2000 | 0.130 | 0.92 | 92.3% |
+| all | 4 | 2000 | 0.160 | 0.75 | 18.8% |
+| all | 8 | 2000 | 0.180 | 0.67 | 8.3% |
 
 **Наблюдения:**
 - Параллельные версии (OMP, TBB) показывают ускорение до 1.85–2.07x на
@@ -210,7 +210,7 @@ Variant: <22>
 ## 9. References
 
 1. O'Rourke J. *Computational Geometry in C*. Cambridge University Press, 1998.
-2. Intel TBB Documentation. https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onetbb.html
-3. OpenMP Specification. https://www.openmp.org/specifications/
+2. Intel TBB Documentation.
+3. OpenMP Specification.
 4. C++20 Standard (std::ranges, execution policies).
-5. MPI Forum. https://www.mpi-forum.org/docs/
+5. MPI Forum.

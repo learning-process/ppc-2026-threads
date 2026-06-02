@@ -13,7 +13,7 @@ Variant: <22>
 
 ## 2. Problem Statement
 
-Как в SEQ: вход — std::vector<Point>, выход — std::vector<Point> оболочки;
+Как в SEQ: вход — `std::vector<Point>`, выход — `std::vector<Point>` оболочки;
 корректная обработка дубликатов и коллинеарности.
 
 ## 3. Baseline Algorithm (Sequential)
