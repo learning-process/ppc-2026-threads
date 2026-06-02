@@ -95,17 +95,25 @@ bool DergynovSIntegralsMultistepRectangleALL::RunImpl() {
   double local_sum = 0.0;
   bool error_flag = false;
 
+  const auto func_copy = func;
+  const auto borders_copy = borders;
+  const auto h_copy = h;
+  const int n_copy = n;
+  const int dim_copy = dim;
+  const int64_t start_copy = start;
+  const int64_t end_copy = end;
+
 #pragma omp parallel for schedule(static) reduction(+ : local_sum) shared(error_flag) default(none) \
-    firstprivate(func, borders, h, n, dim, start, end)
-  for (int64_t linear_idx = start; linear_idx < end; ++linear_idx) {
+    firstprivate(func_copy, borders_copy, h_copy, n_copy, dim_copy, start_copy, end_copy)
+  for (int64_t linear_idx = start_copy; linear_idx < end_copy; ++linear_idx) {
     if (error_flag) {
       continue;
     }
 
-    std::vector<double> point(dim);
-    FillPoint(static_cast<size_t>(linear_idx), n, dim, borders, h, point);
+    std::vector<double> point(dim_copy);
+    FillPoint(static_cast<size_t>(linear_idx), n_copy, dim_copy, borders_copy, h_copy, point);
 
-    double f_val = func(point);
+    double f_val = func_copy(point);
     if (!std::isfinite(f_val)) {
 #pragma omp atomic write
       error_flag = true;
