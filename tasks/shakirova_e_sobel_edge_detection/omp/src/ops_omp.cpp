@@ -37,9 +37,9 @@ bool ShakirovaESobelEdgeDetectionOMP::RunImpl() {
 
 #pragma omp parallel for default(none) shared(out, inp) firstprivate(h, w) schedule(static)
   for (int row = 1; row < h - 1; ++row) {
-    const int *prev = inp + static_cast<ptrdiff_t>(row - 1) * w;
-    const int *curr = inp + static_cast<ptrdiff_t>(row) * w;
-    const int *next = inp + static_cast<ptrdiff_t>(row + 1) * w;
+    const int *prev = inp + (static_cast<ptrdiff_t>(row - 1) * w);
+    const int *curr = inp + (static_cast<ptrdiff_t>(row) * w);
+    const int *next = inp + (static_cast<ptrdiff_t>(row + 1) * w);
 
     for (int col = 1; col < w - 1; ++col) {
       const int gx =
