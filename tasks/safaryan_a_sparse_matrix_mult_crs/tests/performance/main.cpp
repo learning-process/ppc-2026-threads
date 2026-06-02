@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "performance/include/performance.hpp"
 #include "safaryan_a_sparse_matrix_mult_crs/all/include/ops_all.hpp"
 #include "safaryan_a_sparse_matrix_mult_crs/common/include/common.hpp"
 #include "safaryan_a_sparse_matrix_mult_crs/omp/include/ops_omp.hpp"
