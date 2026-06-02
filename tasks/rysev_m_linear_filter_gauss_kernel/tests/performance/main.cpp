@@ -3,6 +3,8 @@
 #include "rysev_m_linear_filter_gauss_kernel/common/include/common.hpp"
 #include "rysev_m_linear_filter_gauss_kernel/omp/include/ops_omp.hpp"
 #include "rysev_m_linear_filter_gauss_kernel/seq/include/ops_seq.hpp"
+#include "rysev_m_linear_filter_gauss_kernel/tbb/include/ops_all.hpp"
+#include "rysev_m_linear_filter_gauss_kernel/tbb/include/ops_stl.hpp"
 #include "rysev_m_linear_filter_gauss_kernel/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -32,7 +34,8 @@ TEST_P(RysevMPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, RysevMGaussFilterSEQ, RysevMGaussFilterOMP, RysevMGaussFilterTBB>(
+    ppc::util::MakeAllPerfTasks<InType, RysevMGaussFilterSEQ, RysevMGaussFilterOMP, RysevMGaussFilterTBB,
+                                RysevMGaussFilterSTL, RysevMGaussFilterALL>(
         PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
