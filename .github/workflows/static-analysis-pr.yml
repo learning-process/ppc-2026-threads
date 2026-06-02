@@ -17,6 +17,26 @@ permissions:
   packages: read
 
 jobs:
+  ci-scope:
+    runs-on: ubuntu-24.04
+    outputs:
+      ppc_tasks: ${{ steps.detect.outputs.ppc_tasks }}
+      task_scoped: ${{ steps.detect.outputs.task_scoped }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Detect CI task scope
+        id: detect
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python3 scripts/detect_ci_task_scope.py \
+            --base-sha "$BASE_SHA" \
+            --head-sha "$HEAD_SHA" \
+            --github-output "$GITHUB_OUTPUT"
+
   detect-static-analysis-inputs:
     runs-on: ubuntu-24.04
     outputs:
@@ -50,6 +70,7 @@ jobs:
 
   clang-tidy:
     needs:
+      - ci-scope
       - detect-static-analysis-inputs
     if: ${{ needs.detect-static-analysis-inputs.outputs.run_static_analysis == 'true' }}
     runs-on: ubuntu-24.04
@@ -75,6 +96,7 @@ jobs:
         run: >
           cmake -S . -B build -G Ninja
           -D CMAKE_BUILD_TYPE=RELEASE -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+          -D PPC_TASKS="${{ needs.ci-scope.outputs.ppc_tasks || 'all' }}"
         env:
           CC: clang-21
           CXX: clang++-21
@@ -100,6 +122,7 @@ jobs:
           exit 1
   clang-tidy-for-gcc-build:
     needs:
+      - ci-scope
       - detect-static-analysis-inputs
       - clang-tidy
     if: ${{ needs.detect-static-analysis-inputs.outputs.run_static_analysis == 'true' }}
@@ -126,6 +149,7 @@ jobs:
         run: >
           cmake -S . -B build -G Ninja
           -D CMAKE_BUILD_TYPE=RELEASE -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+          -D PPC_TASKS="${{ needs.ci-scope.outputs.ppc_tasks || 'all' }}"
         env:
           CC: gcc-14
           CXX: g++-14
