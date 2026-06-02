@@ -20,7 +20,7 @@
 
 Требуется вычислить:
 
-```
+```text
 C = A * B
 ```
 
@@ -102,7 +102,7 @@ mpiexec -n 1 ./ppc_perf_tests --gtest_filter=*muhammadkhon_i_stressen_alg*
 
 Формулы:
 
-```
+```text
 Speedup = T_seq / T_backend
 Efficiency = Speedup / Workers * 100%
 ```

@@ -2,10 +2,15 @@
 
 #include <cmath>
 #include <cstddef>
+#include <tuple>
 #include <vector>
 
 #include "muhammadkhon_i_stressen_alg/all/include/ops_all.hpp"
 #include "muhammadkhon_i_stressen_alg/common/include/common.hpp"
+#include "muhammadkhon_i_stressen_alg/omp/include/ops_omp.hpp"
+#include "muhammadkhon_i_stressen_alg/seq/include/ops_seq.hpp"
+#include "muhammadkhon_i_stressen_alg/stl/include/ops_stl.hpp"
+#include "muhammadkhon_i_stressen_alg/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace muhammadkhon_i_stressen_alg {
@@ -31,7 +36,7 @@ class MuhammadkhonIStressenAlgPerfTests : public ppc::util::BaseRunPerfTests<InT
 
     for (size_t i = 0; i < rc; ++i) {
       for (size_t k = 0; k < rc; ++k) {
-        double temp = input_data_.a[(i * rc) + k];
+        const double temp = input_data_.a[(i * rc) + k];
         for (size_t j = 0; j < rc; ++j) {
           expected_output_[(i * rc) + j] += temp * input_data_.b[(k * rc) + j];
         }
@@ -67,8 +72,12 @@ TEST_P(MuhammadkhonIStressenAlgPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, MuhammadkhonIStressenAlgALL>(PPC_SETTINGS_muhammadkhon_i_stressen_alg);
+const auto kAllPerfTasks = std::tuple_cat(
+    ppc::util::MakeAllPerfTasks<InType, MuhammadkhonIStressenAlgSEQ>(PPC_SETTINGS_muhammadkhon_i_stressen_alg),
+    ppc::util::MakeAllPerfTasks<InType, MuhammadkhonIStressenAlgOMP>(PPC_SETTINGS_muhammadkhon_i_stressen_alg),
+    ppc::util::MakeAllPerfTasks<InType, MuhammadkhonIStressenAlgTBB>(PPC_SETTINGS_muhammadkhon_i_stressen_alg),
+    ppc::util::MakeAllPerfTasks<InType, MuhammadkhonIStressenAlgSTL>(PPC_SETTINGS_muhammadkhon_i_stressen_alg),
+    ppc::util::MakeAllPerfTasks<InType, MuhammadkhonIStressenAlgALL>(PPC_SETTINGS_muhammadkhon_i_stressen_alg));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
