@@ -7,7 +7,7 @@ namespace sabutay_sparse_complex_ccs_mult_all {
 
 class SabutaySparseComplexCcsMultAll : public BaseTask {
  public:
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+  static constexpr auto GetStaticTypeOfTask() -> ppc::task::TypeOfTask {
     return ppc::task::TypeOfTask::kALL;
   }
   explicit SabutaySparseComplexCcsMultAll(const InType &in);

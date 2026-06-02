@@ -10,7 +10,6 @@
 
 namespace kamalagin_a_binary_image_convex_hull {
 
-/// Pixel coordinates for convex hull vertices (x = column, y = row).
 struct Point {
   int x = 0;
   int y = 0;
@@ -20,7 +19,6 @@ struct Point {
   }
 };
 
-/// Binary image: 0 = background, non-zero = foreground.
 struct BinaryImage {
   int rows = 0;
   int cols = 0;
@@ -36,9 +34,7 @@ struct BinaryImage {
   }
 };
 
-/// One convex hull = ordered list of vertices (e.g. clockwise).
 using Hull = std::vector<Point>;
-/// Output: one hull per connected component (same order as component discovery).
 using HullList = std::vector<Hull>;
 
 using InType = BinaryImage;

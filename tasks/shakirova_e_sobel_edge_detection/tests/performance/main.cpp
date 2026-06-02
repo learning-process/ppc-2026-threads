@@ -3,9 +3,12 @@
 #include <cmath>
 #include <numbers>
 
+#include "shakirova_e_sobel_edge_detection/all/include/ops_all.hpp"
 #include "shakirova_e_sobel_edge_detection/common/include/common.hpp"
 #include "shakirova_e_sobel_edge_detection/omp/include/ops_omp.hpp"
 #include "shakirova_e_sobel_edge_detection/seq/include/ops_seq.hpp"
+#include "shakirova_e_sobel_edge_detection/stl/include/ops_stl.hpp"
+#include "shakirova_e_sobel_edge_detection/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace shakirova_e_sobel_edge_detection {
@@ -64,8 +67,9 @@ TEST_P(ShakirovaESobelEdgeDetectionPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ShakirovaESobelEdgeDetectionSEQ, ShakirovaESobelEdgeDetectionOMP>(
-        PPC_SETTINGS_shakirova_e_sobel_edge_detection);
+    ppc::util::MakeAllPerfTasks<InType, ShakirovaESobelEdgeDetectionSEQ, ShakirovaESobelEdgeDetectionOMP,
+                                ShakirovaESobelEdgeDetectionTBB, ShakirovaESobelEdgeDetectionSTL,
+                                ShakirovaESobelEdgeDetectionALL>(PPC_SETTINGS_shakirova_e_sobel_edge_detection);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

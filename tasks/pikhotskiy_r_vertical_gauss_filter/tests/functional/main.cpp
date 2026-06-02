@@ -9,9 +9,12 @@
 #include <tuple>
 #include <vector>
 
+#include "pikhotskiy_r_vertical_gauss_filter/all/include/ops_all.hpp"
 #include "pikhotskiy_r_vertical_gauss_filter/common/include/common.hpp"
 #include "pikhotskiy_r_vertical_gauss_filter/omp/include/ops_omp.hpp"
 #include "pikhotskiy_r_vertical_gauss_filter/seq/include/ops_seq.hpp"
+#include "pikhotskiy_r_vertical_gauss_filter/stl/include/ops_stl.hpp"
+#include "pikhotskiy_r_vertical_gauss_filter/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -85,6 +88,15 @@ std::vector<ParamType> CreateTestParams() {
     params.emplace_back([](const InType &in) -> std::shared_ptr<BaseTask> {
       return std::make_shared<PikhotskiyRVerticalGaussFilterOMP>(in);
     }, "omp", test_case);
+    params.emplace_back([](const InType &in) -> std::shared_ptr<BaseTask> {
+      return std::make_shared<PikhotskiyRVerticalGaussFilterALL>(in);
+    }, "all", test_case);
+    params.emplace_back([](const InType &in) -> std::shared_ptr<BaseTask> {
+      return std::make_shared<PikhotskiyRVerticalGaussFilterSTL>(in);
+    }, "stl", test_case);
+    params.emplace_back([](const InType &in) -> std::shared_ptr<BaseTask> {
+      return std::make_shared<PikhotskiyRVerticalGaussFilterTBB>(in);
+    }, "tbb", test_case);
   }
   return params;
 }
@@ -149,6 +161,87 @@ TEST(PikhotskiyRVerticalGaussFilterInvalidTestOMP, DataSizeMismatch) {
   input.height = 3;
   input.data = {1, 2, 3};
   auto task = std::make_shared<PikhotskiyRVerticalGaussFilterOMP>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(PikhotskiyRVerticalGaussFilterInvalidTestALL, ZeroWidth) {
+  Matrix input;
+  input.width = 0;
+  input.height = 5;
+  input.data.resize(5);
+  auto task = std::make_shared<PikhotskiyRVerticalGaussFilterALL>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(PikhotskiyRVerticalGaussFilterInvalidTestALL, ZeroHeight) {
+  Matrix input;
+  input.width = 5;
+  input.height = 0;
+  input.data.resize(5);
+  auto task = std::make_shared<PikhotskiyRVerticalGaussFilterALL>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(PikhotskiyRVerticalGaussFilterInvalidTestALL, DataSizeMismatch) {
+  Matrix input;
+  input.width = 3;
+  input.height = 3;
+  input.data = {1, 2, 3};
+  auto task = std::make_shared<PikhotskiyRVerticalGaussFilterALL>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(PikhotskiyRVerticalGaussFilterInvalidTestSTL, ZeroWidth) {
+  Matrix input;
+  input.width = 0;
+  input.height = 5;
+  input.data.resize(5);
+  auto task = std::make_shared<PikhotskiyRVerticalGaussFilterSTL>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(PikhotskiyRVerticalGaussFilterInvalidTestSTL, ZeroHeight) {
+  Matrix input;
+  input.width = 5;
+  input.height = 0;
+  input.data.resize(5);
+  auto task = std::make_shared<PikhotskiyRVerticalGaussFilterSTL>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(PikhotskiyRVerticalGaussFilterInvalidTestSTL, DataSizeMismatch) {
+  Matrix input;
+  input.width = 3;
+  input.height = 3;
+  input.data = {1, 2, 3};
+  auto task = std::make_shared<PikhotskiyRVerticalGaussFilterSTL>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(PikhotskiyRVerticalGaussFilterInvalidTestTBB, ZeroWidth) {
+  Matrix input;
+  input.width = 0;
+  input.height = 5;
+  input.data.resize(5);
+  auto task = std::make_shared<PikhotskiyRVerticalGaussFilterTBB>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(PikhotskiyRVerticalGaussFilterInvalidTestTBB, ZeroHeight) {
+  Matrix input;
+  input.width = 5;
+  input.height = 0;
+  input.data.resize(5);
+  auto task = std::make_shared<PikhotskiyRVerticalGaussFilterTBB>(input);
+  EXPECT_FALSE(task->Validation());
+}
+
+TEST(PikhotskiyRVerticalGaussFilterInvalidTestTBB, DataSizeMismatch) {
+  Matrix input;
+  input.width = 3;
+  input.height = 3;
+  input.data = {1, 2, 3};
+  auto task = std::make_shared<PikhotskiyRVerticalGaussFilterTBB>(input);
   EXPECT_FALSE(task->Validation());
 }
 

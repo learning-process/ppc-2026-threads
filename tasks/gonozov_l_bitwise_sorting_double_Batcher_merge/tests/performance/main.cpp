@@ -2,9 +2,11 @@
 
 #include <cstddef>
 
+#include "gonozov_l_bitwise_sorting_double_Batcher_merge/all/include/ops_all.hpp"
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/common/include/common.hpp"
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/omp/include/ops_omp.hpp"
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/seq/include/ops_seq.hpp"
+#include "gonozov_l_bitwise_sorting_double_Batcher_merge/stl/include/ops_stl.hpp"
 #include "gonozov_l_bitwise_sorting_double_Batcher_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -47,7 +49,8 @@ TEST_P(GonozovLBitSortBatcherMergePerfTest, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, GonozovLBitSortBatcherMergeSEQ,
-                                                       GonozovLBitSortBatcherMergeOMP, GonozovLBitSortBatcherMergeTBB>(
+                                                       GonozovLBitSortBatcherMergeOMP, GonozovLBitSortBatcherMergeTBB,
+                                                       GonozovLBitSortBatcherMergeSTL, GonozovLBitSortBatcherMergeALL>(
     PPC_SETTINGS_gonozov_l_bitwise_sorting_double_Batcher_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

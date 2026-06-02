@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "util/include/func_test_util.hpp"
+#include "zorin_d_strassen_alg_matrix_seq/all/include/ops_all.hpp"
 #include "zorin_d_strassen_alg_matrix_seq/common/include/common.hpp"
 #include "zorin_d_strassen_alg_matrix_seq/omp/include/ops_omp.hpp"
 #include "zorin_d_strassen_alg_matrix_seq/seq/include/ops_seq.hpp"
@@ -106,7 +107,8 @@ const auto kTasks = std::tuple_cat(
     ppc::util::AddFuncTask<ZorinDStrassenAlgMatrixSEQ, InType>(kParams, PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq),
     ppc::util::AddFuncTask<ZorinDStrassenAlgMatrixOMP, InType>(kParams, PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq),
     ppc::util::AddFuncTask<ZorinDStrassenAlgMatrixSTL, InType>(kParams, PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq),
-    ppc::util::AddFuncTask<ZorinDStrassenAlgMatrixTBB, InType>(kParams, PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq));
+    ppc::util::AddFuncTask<ZorinDStrassenAlgMatrixTBB, InType>(kParams, PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq),
+    ppc::util::AddFuncTask<ZorinDStrassenAlgMatrixALL, InType>(kParams, PPC_SETTINGS_zorin_d_strassen_alg_matrix_seq));
 
 const auto kValues = ppc::util::ExpandToValues(kTasks);
 const auto kName = ZorinDRunFuncTests::PrintFuncTestName<ZorinDRunFuncTests>;

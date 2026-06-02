@@ -1,7 +1,9 @@
 import argparse
 import csv
+import json
 import os
 import re
+from collections import defaultdict
 
 import xlsxwriter
 
@@ -11,6 +13,121 @@ import xlsxwriter
 
 # Known task types (used to pre-initialize tables)
 list_of_type_of_tasks = ["all", "mpi", "omp", "seq", "stl", "tbb"]
+
+SOURCE_EXTENSIONS = (".cc", ".cpp", ".cxx", ".h", ".hpp", ".hh")
+NAMESPACE_PATTERN = re.compile(r"^\s*namespace\s+([A-Za-z_]\w*)\s*(?:\{|$)")
+
+
+def _load_task_categories() -> dict[str, str]:
+    tasks_root = os.path.join(os.getcwd(), "tasks")
+    categories: dict[str, str] = {}
+    if not os.path.isdir(tasks_root):
+        return categories
+    for task_name in os.listdir(tasks_root):
+        settings_path = os.path.join(tasks_root, task_name, "settings.json")
+        if not os.path.isfile(settings_path):
+            continue
+        try:
+            with open(settings_path, "r") as settings_file:
+                settings = json.load(settings_file)
+        except (OSError, json.JSONDecodeError):
+            continue
+        task_category = settings.get("tasks_type")
+        if task_category in ("threads", "processes"):
+            categories[task_name] = task_category
+    return categories
+
+
+KNOWN_TASK_CATEGORIES = _load_task_categories()
+KNOWN_TASK_NAMES = set(KNOWN_TASK_CATEGORIES)
+
+
+def _load_task_aliases() -> dict[str, str]:
+    tasks_root = os.path.join(os.getcwd(), "tasks")
+    aliases_by_name: dict[str, set[str]] = defaultdict(set)
+    if not os.path.isdir(tasks_root):
+        return {}
+
+    for task_name in KNOWN_TASK_NAMES:
+        task_root = os.path.join(tasks_root, task_name)
+        if not os.path.isdir(task_root):
+            continue
+
+        aliases_by_name[task_name].add(task_name)
+        for dirpath, _, filenames in os.walk(task_root):
+            for filename in filenames:
+                if not filename.endswith(SOURCE_EXTENSIONS):
+                    continue
+                source_path = os.path.join(dirpath, filename)
+                try:
+                    with open(source_path, "r", errors="ignore") as source_file:
+                        for line in source_file:
+                            namespace_match = NAMESPACE_PATTERN.match(line)
+                            if namespace_match:
+                                aliases_by_name[namespace_match.group(1)].add(task_name)
+                except OSError:
+                    continue
+
+    return {
+        alias: next(iter(task_names))
+        for alias, task_names in aliases_by_name.items()
+        if len(task_names) == 1
+    }
+
+
+TASK_ALIASES = _load_task_aliases()
+
+
+def _known_task_prefix(task_name: str) -> str | None:
+    matches = [known for known in KNOWN_TASK_NAMES if task_name.startswith(f"{known}_")]
+    return max(matches, key=len) if matches else None
+
+
+def _normalize_logged_task_name(task_name: str) -> str:
+    variants = [task_name]
+    for suffix in ("_task_threads", "_task_processes"):
+        if task_name.endswith(suffix):
+            variants.append(task_name[: -len(suffix)])
+
+    for variant in list(variants):
+        for task_type in list_of_type_of_tasks:
+            suffix = f"_{task_type}"
+            if variant.endswith(suffix):
+                variants.append(variant[: -len(suffix)])
+
+    for variant in variants:
+        if variant in KNOWN_TASK_NAMES:
+            return variant
+
+    for variant in variants:
+        alias = TASK_ALIASES.get(variant)
+        if alias is not None:
+            return alias
+
+    for variant in variants:
+        prefix = _known_task_prefix(variant)
+        if prefix is not None:
+            return prefix
+
+    alias_matches = [
+        (alias, task_name)
+        for alias, task_name in TASK_ALIASES.items()
+        for variant in variants
+        if variant.startswith(f"{alias}_")
+    ]
+    if alias_matches:
+        return max(alias_matches, key=lambda item: len(item[0]))[1]
+
+    return task_name
+
+
+def _infer_task_category(task_name: str, task_type: str | None = None) -> str:
+    if task_name in KNOWN_TASK_CATEGORIES:
+        return KNOWN_TASK_CATEGORIES[task_name]
+    if task_type == "mpi":
+        return "processes"
+    return "threads"
+
 
 # Compile patterns once
 OLD_PATTERN = re.compile(r"tasks[\/|\\](\w*)[\/|\\](\w*):(\w*):(-*\d*\.\d*)")
@@ -157,13 +274,13 @@ for line in logs_lines:
     simple_result = SIMPLE_PATTERN.findall(line)
 
     if len(old_result):
-        task_name = old_result[0][1]
+        task_name = _normalize_logged_task_name(old_result[0][1])
         perf_type = old_result[0][2]
         # legacy: track task in threads category by default
         _ensure_task_tables(result_tables, perf_type, task_name)
-        # Unknown category in legacy format; default to threads
-        task_categories[task_name] = "threads"
-        tasks_by_category["threads"].add(task_name)
+        task_category = _infer_task_category(task_name, old_result[0][0])
+        task_categories[task_name] = task_category
+        tasks_by_category[task_category].add(task_name)
     elif len(new_result):
         # Extract task name from namespace format; keep it specific (no collapsing to example_*),
         # so per-task-number data (processes_2, processes_3, etc.) is preserved.
@@ -178,9 +295,9 @@ for line in logs_lines:
         tasks_by_category[task_category].add(task_name)
     elif len(simple_result):
         # Extract task name in the current format (prefix already includes category suffix)
-        task_name = simple_result[0][0]
-        # Infer category by substring
-        task_category = "threads" if "threads" in task_name else "processes"
+        task_type = simple_result[0][1]
+        task_name = _normalize_logged_task_name(simple_result[0][0])
+        task_category = _infer_task_category(task_name, task_type)
         perf_type = simple_result[0][2]
 
         # no set tracking needed; category mapping below
@@ -198,7 +315,7 @@ for line in logs_lines:
 
     if len(old_result):
         task_type = old_result[0][0]
-        task_name = old_result[0][1]
+        task_name = _normalize_logged_task_name(old_result[0][1])
         perf_type = old_result[0][2]
         perf_time = float(old_result[0][3])
         result_tables[perf_type][task_name][task_type] = perf_time
@@ -228,10 +345,9 @@ for line in logs_lines:
         tasks_by_category[task_category].add(task_name)
     elif len(simple_result):
         # Extract details from the simplified pattern (current logs)
-        task_name = simple_result[0][0]
-        # Infer category by substring present in task_name
-        task_category = "threads" if "threads" in task_name else "processes"
         task_type = simple_result[0][1]
+        task_name = _normalize_logged_task_name(simple_result[0][0])
+        task_category = _infer_task_category(task_name, task_type)
         perf_type = simple_result[0][2]
         perf_time = float(simple_result[0][3])
 

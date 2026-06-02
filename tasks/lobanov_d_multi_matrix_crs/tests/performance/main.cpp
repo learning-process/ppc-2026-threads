@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
-#include <functional>
 #include <iostream>
 #include <random>
 #include <string>
@@ -11,165 +10,133 @@
 #include <utility>
 #include <vector>
 
+#include "lobanov_d_multi_matrix_crs/all/include/ops_all.hpp"
 #include "lobanov_d_multi_matrix_crs/common/include/common.hpp"
-#include "lobanov_d_multi_matrix_crs/omp/include/ops_omp.hpp"
 
 namespace lobanov_d_multi_matrix_crs {
 namespace {
 
-CompressedRowMatrix CreateRandomCompressedRowMatrix(int row_count, int column_count, double density_factor,
-                                                    int seed = 42) {
-  CompressedRowMatrix result_matrix;
-  result_matrix.row_count = row_count;
-  result_matrix.column_count = column_count;
-  result_matrix.non_zero_count = 0;
+CompressedRowMatrix CreateRandomCompressedRowMatrix(int rows, int cols, double density, int seed = 42) {
+  CompressedRowMatrix mat;
+  mat.row_count = rows;
+  mat.column_count = cols;
+  mat.row_pointer_data.clear();
+  mat.column_index_data.clear();
+  mat.value_data.clear();
 
-  result_matrix.value_data.clear();
-  result_matrix.column_index_data.clear();
-  result_matrix.row_pointer_data.clear();
-
-  if (row_count <= 0 || column_count <= 0) {
-    result_matrix.row_pointer_data.assign(static_cast<std::size_t>(row_count) + 1U, 0);
-    return result_matrix;
+  if (rows <= 0 || cols <= 0) {
+    mat.row_pointer_data.assign(static_cast<size_t>(rows) + 1, 0);
+    return mat;
   }
 
-  density_factor = std::clamp(density_factor, 0.0, 1.0);
-
+  density = std::clamp(density, 0.0, 1.0);
   std::mt19937 rng(static_cast<std::mt19937::result_type>(seed));
-
-  std::hash<std::string> hasher;
-  const std::string param_hash =
-      std::to_string(row_count) + "_" + std::to_string(column_count) + "_" + std::to_string(density_factor);
-  const auto hash_value = static_cast<std::mt19937::result_type>(hasher(param_hash));
-  rng.seed(static_cast<std::mt19937::result_type>(seed) + hash_value);
-
   std::uniform_real_distribution<double> val_dist(0.1, 10.0);
   std::uniform_real_distribution<double> prob_dist(0.0, 1.0);
 
-  std::vector<std::vector<int>> col_indices_per_row(static_cast<std::size_t>(row_count));
-  std::vector<std::vector<double>> values_per_row(static_cast<std::size_t>(row_count));
+  std::vector<std::vector<int>> col_indices_per_row(static_cast<size_t>(rows));
+  std::vector<std::vector<double>> values_per_row(static_cast<size_t>(rows));
+  int total_nnz = 0;
 
-  int nnz_counter = 0;
-
-  for (int i = 0; i < row_count; ++i) {
-    for (int j = 0; j < column_count; ++j) {
-      if (prob_dist(rng) < density_factor) {
-        col_indices_per_row[static_cast<std::size_t>(i)].push_back(j);
-        values_per_row[static_cast<std::size_t>(i)].push_back(val_dist(rng));
-        ++nnz_counter;
+  for (int i = 0; i < rows; ++i) {
+    for (int j = 0; j < cols; ++j) {
+      if (prob_dist(rng) < density) {
+        col_indices_per_row[static_cast<size_t>(i)].push_back(j);
+        values_per_row[static_cast<size_t>(i)].push_back(val_dist(rng));
+        ++total_nnz;
       }
     }
   }
 
-  result_matrix.non_zero_count = nnz_counter;
-
-  if (nnz_counter > 0) {
-    result_matrix.value_data.reserve(static_cast<std::size_t>(nnz_counter));
-    result_matrix.column_index_data.reserve(static_cast<std::size_t>(nnz_counter));
-  }
-
-  result_matrix.row_pointer_data.assign(static_cast<std::size_t>(row_count) + 1U, 0);
+  mat.value_data.reserve(static_cast<size_t>(total_nnz));
+  mat.column_index_data.reserve(static_cast<size_t>(total_nnz));
+  mat.row_pointer_data.assign(static_cast<size_t>(rows) + 1, 0);
 
   int offset = 0;
-  result_matrix.row_pointer_data[0] = 0;
+  for (int i = 0; i < rows; ++i) {
+    auto &row_cols = col_indices_per_row[static_cast<size_t>(i)];
+    auto &row_vals = values_per_row[static_cast<size_t>(i)];
 
-  for (int i = 0; i < row_count; ++i) {
-    auto &row_cols = col_indices_per_row[static_cast<std::size_t>(i)];
-    auto &row_vals = values_per_row[static_cast<std::size_t>(i)];
-
-    // Reserve space for sorted pairs
-    std::vector<std::pair<int, double>> sorted_pairs;
-    sorted_pairs.reserve(row_cols.size());
-
-    for (std::size_t k = 0; k < row_cols.size(); ++k) {
-      sorted_pairs.emplace_back(row_cols[k], row_vals[k]);
+    std::vector<std::pair<int, double>> sorted;
+    sorted.reserve(row_cols.size());
+    for (size_t k = 0; k < row_cols.size(); ++k) {
+      sorted.emplace_back(row_cols[k], row_vals[k]);
     }
+    std::ranges::sort(sorted);
 
-    std::ranges::sort(sorted_pairs);
-
-    for (const auto &pair : sorted_pairs) {
-      result_matrix.column_index_data.push_back(pair.first);
-      result_matrix.value_data.push_back(pair.second);
+    for (const auto &p : sorted) {
+      mat.column_index_data.push_back(p.first);
+      mat.value_data.push_back(p.second);
     }
-
     offset += static_cast<int>(row_cols.size());
-    result_matrix.row_pointer_data[static_cast<std::size_t>(i) + 1U] = offset;
+    mat.row_pointer_data[static_cast<size_t>(i) + 1] = offset;
   }
 
-  result_matrix.non_zero_count = static_cast<int>(result_matrix.value_data.size());
-
-  if (!result_matrix.row_pointer_data.empty()) {
-    result_matrix.row_pointer_data.back() = result_matrix.non_zero_count;
+  if (!mat.row_pointer_data.empty()) {
+    mat.row_pointer_data.back() = offset;
   }
 
-  return result_matrix;
+  mat.non_zero_count = static_cast<int>(mat.value_data.size());
+
+  return mat;
 }
 
 class LobanovDMultiplyMatrixPerfTest : public ::testing::TestWithParam<std::tuple<int, double, std::string>> {
  protected:
   void SetUp() override {
     const auto &params = GetParam();
-    dimension = std::get<0>(params);
-    density = std::get<1>(params);
-    test_name = std::get<2>(params);
+    dimension_ = std::get<0>(params);
+    density_ = std::get<1>(params);
+    test_name_ = std::get<2>(params);
   }
 
   [[nodiscard]] std::pair<CompressedRowMatrix, CompressedRowMatrix> PrepareMatrices() const {
-    return {CreateRandomCompressedRowMatrix(dimension, dimension, density, 100),
-            CreateRandomCompressedRowMatrix(dimension, dimension, density, 200)};
+    return {CreateRandomCompressedRowMatrix(dimension_, dimension_, density_, 100),
+            CreateRandomCompressedRowMatrix(dimension_, dimension_, density_, 200)};
   }
 
-  static bool ExecuteTask(LobanovMultyMatrixOMP &task) {
+  static bool ExecuteTask(LobanovMultyMatrixALL &task) {
     return task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing();
   }
 
   template <typename Func>
   auto MeasureTime(Func &&func) const {
     const auto start = std::chrono::high_resolution_clock::now();
-    std::forward<Func>(func)();  // используем std::forward
+    std::forward<Func>(func)();
     const auto end = std::chrono::high_resolution_clock::now();
     return std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
   }
 
-  // Функция для проверки результатов
   void ValidateResult(const CompressedRowMatrix &result) const {
-    EXPECT_EQ(result.row_count, dimension);
-    EXPECT_EQ(result.column_count, dimension);
+    EXPECT_EQ(result.row_count, dimension_);
+    EXPECT_EQ(result.column_count, dimension_);
   }
 
-  // Функция для вывода результатов
-  void PrintResults(const std::string &test_name, int dimension, double density, const CompressedRowMatrix &matrix_a,
-                    const CompressedRowMatrix &matrix_b, const CompressedRowMatrix &result, auto duration) const {
-    std::cout << "Test: " << test_name << '\n';
-    std::cout << "Matrix size: " << dimension << "x" << dimension << '\n';
-    std::cout << "Density: " << density << '\n';
-    std::cout << "NNZ in A: " << matrix_a.non_zero_count << '\n';
-    std::cout << "NNZ in B: " << matrix_b.non_zero_count << '\n';
-    std::cout << "NNZ in result: " << result.non_zero_count << '\n';
+  void PrintResults(const CompressedRowMatrix &a, const CompressedRowMatrix &b, const CompressedRowMatrix &result,
+                    auto duration) const {
+    std::cout << "Test: " << test_name_ << '\n';
+    std::cout << "Matrix size: " << dimension_ << "x" << dimension_ << '\n';
+    std::cout << "Density: " << density_ << '\n';
+    std::cout << "NNZ in A: " << a.value_data.size() << '\n';
+    std::cout << "NNZ in B: " << b.value_data.size() << '\n';
+    std::cout << "NNZ in result: " << result.value_data.size() << '\n';
     std::cout << "Execution time: " << duration.count() << " ms\n";
     std::cout << "------------------------\n";
   }
 
-  // Основная функция теперь очень простая
   void RunPerformanceTest() {
-    // Подготовка
-    const auto [matrix_a, matrix_b] = PrepareMatrices();
-    LobanovMultyMatrixOMP task(std::make_pair(matrix_a, matrix_b));
-
-    // Выполнение с измерением времени
+    const auto [a, b] = PrepareMatrices();
+    LobanovMultyMatrixALL task(std::make_pair(a, b));
     const auto duration = MeasureTime([&]() { ASSERT_TRUE(ExecuteTask(task)); });
-
-    // Получение и проверка результата
     const auto result = task.GetOutput();
     ValidateResult(result);
-
-    // Вывод результатов
-    PrintResults(test_name, dimension, density, matrix_a, matrix_b, result, duration);
+    PrintResults(a, b, result, duration);
   }
 
-  int dimension = 0;
-  double density = 0.0;
-  std::string test_name;
+ private:
+  int dimension_ = 0;
+  double density_ = 0.0;
+  std::string test_name_;
 };
 
 TEST_P(LobanovDMultiplyMatrixPerfTest, PerformanceTest) {

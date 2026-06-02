@@ -3,9 +3,11 @@
 #include <cstddef>
 #include <random>
 
+#include "krymova_k_lsd_sort_merge_double/all/include/ops_all.hpp"
 #include "krymova_k_lsd_sort_merge_double/common/include/common.hpp"
 #include "krymova_k_lsd_sort_merge_double/omp/include/ops_omp.hpp"
 #include "krymova_k_lsd_sort_merge_double/seq/include/ops_seq.hpp"
+#include "krymova_k_lsd_sort_merge_double/stl/include/ops_stl.hpp"
 #include "krymova_k_lsd_sort_merge_double/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -47,11 +49,11 @@ TEST_P(KrymovaKPerfTests, MeasurePerformance) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KrymovaKLsdSortMergeDoubleTBB, KrymovaKLsdSortMergeDoubleSEQ,
-                                KrymovaKLsdSortMergeDoubleOMP>(PPC_SETTINGS_krymova_k_lsd_sort_merge_double);
+    ppc::util::MakeAllPerfTasks<InType, KrymovaKLsdSortMergeDoubleSEQ, KrymovaKLsdSortMergeDoubleOMP,
+                                KrymovaKLsdSortMergeDoubleSTL, KrymovaKLsdSortMergeDoubleTBB,
+                                KrymovaKLsdSortMergeDoubleALL>(PPC_SETTINGS_krymova_k_lsd_sort_merge_double);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-
 const auto kPerfTestName = KrymovaKPerfTests::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(PerformanceTests, KrymovaKPerfTests, kGtestValues, kPerfTestName);
