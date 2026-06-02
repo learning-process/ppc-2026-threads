@@ -1,17 +1,51 @@
-# Sparse Matrix Multiplication
+# Умножение разреженных матриц в формате CCS
 
-- Student: Safaryan Grigor, group 3823B1PR5
-- Technology: TBB
-- Variant: 5
+- Студент: Сафарян Григор
+- Группа: 3823Б1ПР5
+- Технология: TBB
+- Вариант: 5
+- Тип элементов: `double`
+- Формат хранения: CCS, столбцовое сжатое хранение
 
-## 1. Introduction
+## Краткое описание
 
-This task implements sparse matrix multiplication for double values using the
-same CCS-compatible storage model as the existing sequential implementation.
+В лабораторной работе реализована oneTBB-версия умножения двух разреженных
+матриц с элементами типа `double`. Матрицы представлены в формате CCS и
+используют массивы `values`, `row_indices` и `col_ptrs`.
 
-## 2. Parallelization Scheme
+Имя директории содержит фрагмент `crs`, но в реализации и отчетах используется
+формат CCS. Папки и файлы не переименовывались, чтобы сохранить структуру
+учебного проекта.
 
-The TBB version splits result columns into independent chunks. Each chunk is
-computed in parallel with `tbb::parallel_for` into a local sparse matrix.
-After the parallel stage, partial matrices are merged in column order to
-preserve deterministic CCS output layout.
+## Расположение реализации
+
+Основные файлы TBB-версии:
+
+- `common/include/common.hpp` — структура `SparseMatrixCCS` и общие типы;
+- `tbb/include/ops_tbb.hpp` — объявление класса `SafaryanATaskTBB`;
+- `tbb/src/ops_tbb.cpp` — реализация алгоритма с oneTBB;
+- `tests/functional/main.cpp` — функциональные тесты;
+- `tests/performance/main.cpp` — производительные тесты.
+
+## Проверка
+
+Функциональные тесты проверяют фиксированные случаи умножения матриц в формате
+CCS. Производительные тесты запускают реализацию в режимах `pipeline` и
+`task_run`, а результат сравнивается с эталонным плотным умножением.
+
+## Команды запуска
+
+Команды для локального запуска TBB-тестов:
+
+```powershell
+cmake --build build --config Release --parallel
+$env:PPC_NUM_THREADS="4"
+.\build\bin\ppc_func_tests.exe --gtest_filter="*safaryan_a_sparse_matrix_mult_crs_tbb*"
+.\build\bin\ppc_perf_tests.exe --gtest_filter="*safaryan_a_sparse_matrix_mult_crs_tbb*"
+```
+
+## Итог
+
+TBB-реализация выполняет умножение разреженных матриц в формате CCS, сохраняет
+детерминированный порядок результата и проходит проверки в локальном
+окружении.

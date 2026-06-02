@@ -1,18 +1,54 @@
-# Sparse Matrix Multiplication
+# Умножение разреженных матриц в формате CCS
 
-- Student: Safaryan Grigor, group 3823B1PR5
-- Technology: ALL
-- Variant: 5
+- Студент: Сафарян Григор
+- Группа: 3823Б1ПР5
+- Технология: ALL
+- Вариант: 5
+- Тип элементов: `double`
+- Формат хранения: CCS, столбцовое сжатое хранение
 
-## 1. Introduction
+## Краткое описание
 
-This task implements sparse matrix multiplication for double values using the
-same CCS-compatible storage model as the existing sequential implementation.
+В лабораторной работе реализована комбинированная версия умножения разреженных
+матриц с элементами типа `double`. Матрицы представлены в формате CCS и
+используют массивы `values`, `row_indices` и `col_ptrs`.
 
-## 2. Parallelization Scheme
+Имя директории содержит фрагмент `crs`, но в реализации и отчетах используется
+формат CCS. Папки и файлы не переименовывались, чтобы сохранить структуру
+учебного проекта.
 
-The ALL version follows the project pattern for `kALL` tasks. MPI barriers
-synchronize ranks around the measured computation, OpenMP prepares independent
-column chunks, and TBB computes those chunks in parallel. Each rank builds the
-full CCS result so functional and performance checks can validate the same
-output on every process.
+## Расположение реализации
+
+Основные файлы ALL-версии:
+
+- `common/include/common.hpp` — структура `SparseMatrixCCS` и общие типы;
+- `all/include/ops_all.hpp` — объявление класса `SafaryanATaskALL`;
+- `all/src/ops_all.cpp` — гибридная реализация задачи;
+- `tests/functional/main.cpp` — функциональные тесты;
+- `tests/performance/main.cpp` — производительные тесты.
+
+## Проверка
+
+Функциональные тесты проверяют фиксированные случаи умножения матриц в формате
+CCS. Производительные тесты запускают реализацию в режимах `pipeline` и
+`task_run`, а результат сравнивается с эталонным плотным умножением.
+
+## Команды запуска
+
+Команды для локального запуска ALL-тестов:
+
+```powershell
+cmake --build build --config Release --parallel
+$env:PPC_NUM_PROC="2"
+$env:PPC_NUM_THREADS="4"
+mpiexec -n 2 .\build\bin\ppc_func_tests.exe --gtest_filter="*safaryan_a_sparse_matrix_mult_crs_all*"
+mpiexec -n 2 .\build\bin\ppc_perf_tests.exe --gtest_filter="*safaryan_a_sparse_matrix_mult_crs_all*"
+```
+
+Локальные проверки выполнялись с запуском через `mpiexec -n 2`.
+
+## Итог
+
+ALL-реализация выполняет умножение разреженных матриц в формате CCS и
+использует гибридную схему с MPI-синхронизацией и потоковым параллелизмом
+внутри задачи. Проверки выполняются в локальном окружении.

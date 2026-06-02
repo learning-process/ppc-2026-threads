@@ -1,17 +1,56 @@
-# Sparse Matrix Multiplication
+# Умножение разреженных матриц в формате CCS
 
-- Student: Safaryan Grigor, group 3823B1PR5
-- Technology: OMP
-- Variant: 5
+- Студент: Сафарян Григор
+- Группа: 3823Б1ПР5
+- Технология: OMP
+- Вариант: 5
+- Тип элементов: `double`
+- Формат хранения: CCS, столбцовое сжатое хранение
 
-## 1. Introduction
+## Краткое описание
 
-This task implements sparse matrix multiplication for double values using the
-same CCS-compatible storage model as the existing sequential implementation.
+В лабораторной работе реализована OpenMP-версия умножения двух разреженных
+матриц с элементами типа `double`. Матрицы представлены в формате CCS и
+используют массивы `values`, `row_indices` и `col_ptrs`.
 
-## 2. Parallelization Scheme
+Имя директории содержит фрагмент `crs`, но в реализации и отчетах используется
+формат CCS. Папки и файлы не переименовывались, чтобы сохранить структуру
+учебного проекта.
 
-The OpenMP version splits result columns between worker threads. Each thread
-computes an independent range of columns into a local partial sparse matrix.
-After the parallel region, partial matrices are merged in column order to
-preserve deterministic output layout.
+## Расположение реализации
+
+Основные файлы OMP-версии:
+
+- `common/include/common.hpp` — структура `SparseMatrixCCS` и общие типы;
+- `omp/include/ops_omp.hpp` — объявление класса `SafaryanATaskOMP`;
+- `omp/src/ops_omp.cpp` — реализация OpenMP-алгоритма;
+- `tests/functional/main.cpp` — функциональные тесты;
+- `tests/performance/main.cpp` — производительные тесты.
+
+## Проверка
+
+Функциональные тесты проверяют корректность результата на фиксированных
+матрицах: квадратных, прямоугольных, диагональных, единичных и дающих нулевой
+результат. Производительные тесты используют случайные разреженные матрицы и
+сравнивают ответ с эталонным плотным умножением.
+
+## Команды запуска
+
+Команды для локального запуска OMP-тестов:
+
+```powershell
+cmake --build build --config Release --parallel
+$env:PPC_NUM_THREADS="4"
+.\build\bin\ppc_func_tests.exe --gtest_filter="*safaryan_a_sparse_matrix_mult_crs_omp*"
+.\build\bin\ppc_perf_tests.exe --gtest_filter="*safaryan_a_sparse_matrix_mult_crs_omp*"
+```
+
+При необходимости число потоков OpenMP можно дополнительно задать переменной
+`OMP_NUM_THREADS`, однако в реализации используется значение из инфраструктуры
+курса через `PPC_NUM_THREADS`.
+
+## Итог
+
+OMP-реализация выполняет умножение разреженных матриц в формате CCS, сохраняет
+детерминированный порядок результата и проходит проверки корректности и
+производительности в локальном окружении.
