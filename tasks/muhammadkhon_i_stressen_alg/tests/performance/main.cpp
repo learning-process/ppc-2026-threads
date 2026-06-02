@@ -1,13 +1,11 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <cstddef>
-#include <cstdlib>
-#include <tuple>
 #include <vector>
 
+#include "muhammadkhon_i_stressen_alg/all/include/ops_all.hpp"
 #include "muhammadkhon_i_stressen_alg/common/include/common.hpp"
-#include "muhammadkhon_i_stressen_alg/omp/include/ops_omp.hpp"
-#include "muhammadkhon_i_stressen_alg/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace muhammadkhon_i_stressen_alg {
@@ -69,9 +67,8 @@ TEST_P(MuhammadkhonIStressenAlgPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = std::tuple_cat(
-    ppc::util::MakeAllPerfTasks<InType, MuhammadkhonIStressenAlgSEQ>(PPC_SETTINGS_muhammadkhon_i_stressen_alg),
-    ppc::util::MakeAllPerfTasks<InType, MuhammadkhonIStressenAlgOMP>(PPC_SETTINGS_muhammadkhon_i_stressen_alg));
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, MuhammadkhonIStressenAlgALL>(PPC_SETTINGS_muhammadkhon_i_stressen_alg);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
