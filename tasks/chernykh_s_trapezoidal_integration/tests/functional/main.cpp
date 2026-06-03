@@ -81,7 +81,7 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ChernykhSTrape
                                                kTestParam, PPC_SETTINGS_chernykh_s_trapezoidal_integration),
                                            ppc::util::AddFuncTask<ChernykhSTrapezoidalIntegrationTBB, InType>(
                                                kTestParam, PPC_SETTINGS_chernykh_s_trapezoidal_integration),
-                                                ppc::util::AddFuncTask<ChernykhSTrapezoidalIntegrationSTL, InType>(
+                                           ppc::util::AddFuncTask<ChernykhSTrapezoidalIntegrationSTL, InType>(
                                                kTestParam, PPC_SETTINGS_chernykh_s_trapezoidal_integration),
                                            ppc::util::AddFuncTask<ChernykhSTrapezoidalIntegrationALL, InType>(
                                                kTestParam, PPC_SETTINGS_chernykh_s_trapezoidal_integration));
