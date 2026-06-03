@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <tuple>
-#include <vector>
 
 #include "titaev_m_sortirovka_betchera/all/include/ops_all.hpp"
 #include "titaev_m_sortirovka_betchera/common/include/common.hpp"
@@ -26,7 +25,7 @@ class TitaevSortirovkaBetcheraPerfTests : public ppc::util::BaseRunPerfTests<InT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::is_sorted(output_data.begin(), output_data.end());
+    return std::ranges::is_sorted(output_data);
   }
 
   InType GetTestInputData() final {

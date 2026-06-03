@@ -5,8 +5,6 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "titaev_m_sortirovka_betchera/all/include/ops_all.hpp"
 #include "titaev_m_sortirovka_betchera/common/include/common.hpp"
@@ -29,17 +27,17 @@ class TitaevSortirovkaBetcheraFuncTests : public ppc::util::BaseRunFuncTests<InT
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     size_ = std::get<0>(params);
-    input_data_.resize(static_cast<size_t>(size_));
+    input_data_.resize(static_cast<std::size_t>(size_));
     for (int i = 0; i < size_; i++) {
       input_data_[i] = static_cast<double>(size_ - i) - 0.5;
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.size() != static_cast<size_t>(size_)) {
+    if (output_data.size() != static_cast<std::size_t>(size_)) {
       return false;
     }
-    return std::is_sorted(output_data.begin(), output_data.end());
+    return std::ranges::is_sorted(output_data);
   }
 
   InType GetTestInputData() final {

@@ -1,5 +1,4 @@
 #pragma once
-#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -23,8 +22,10 @@ class TitaevSortirovkaBetcheraSTL : public BaseTask {
 
   static void ConvertToKeys(const InType &input, std::vector<uint64_t> &keys);
   static void RadixSort(std::vector<uint64_t> &keys);
+  static void RadixCountPass(std::vector<uint64_t> &keys, std::vector<uint64_t> &tmp, int pass);
   static void ConvertFromKeys(const std::vector<uint64_t> &keys, OutType &output);
   void BatcherSort();
+  static void BatcherStage(OutType &result, std::size_t array_size, std::size_t block, std::size_t step);
 };
 
 }  // namespace titaev_m_sortirovka_betchera
