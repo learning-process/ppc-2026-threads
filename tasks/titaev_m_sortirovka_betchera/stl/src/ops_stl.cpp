@@ -1,6 +1,7 @@
 #include "titaev_m_sortirovka_betchera/stl/include/ops_stl.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <functional>
@@ -16,6 +17,7 @@ namespace {
 constexpr int kBits = 8;
 constexpr int kBuckets = 1 << kBits;
 constexpr int kPasses = 64 / kBits;
+constexpr std::size_t kSequentialThreshold = 1 << 16;
 
 uint64_t DoubleToOrderedUint(double value) {
   uint64_t bits = 0;
@@ -47,7 +49,13 @@ unsigned int GetThreadCount() {
 }
 
 void RunInParallel(std::size_t total, const std::function<void(std::size_t, std::size_t)> &body) {
-  const unsigned int num_threads = GetThreadCount();
+  const unsigned int num_threads = (total < kSequentialThreshold) ? 1U : GetThreadCount();
+
+  if (num_threads <= 1) {
+    body(0, total);
+    return;
+  }
+
   std::vector<std::thread> threads;
   threads.reserve(num_threads);
   const std::size_t chunk = (total + num_threads - 1) / num_threads;
@@ -92,36 +100,44 @@ void TitaevSortirovkaBetcheraSTL::ConvertToKeys(const InType &input, std::vector
 
 void TitaevSortirovkaBetcheraSTL::RadixCountPass(std::vector<uint64_t> &keys, std::vector<uint64_t> &tmp, int pass) {
   const std::size_t n = keys.size();
-  const unsigned int num_threads = GetThreadCount();
-  std::vector<std::vector<std::size_t>> local_count(num_threads, std::vector<std::size_t>(kBuckets, 0));
-
-  const std::size_t chunk = (n + num_threads - 1) / num_threads;
-  std::vector<std::thread> threads;
-  threads.reserve(num_threads);
-  for (unsigned int thr = 0; thr < num_threads; thr++) {
-    const std::size_t begin = thr * chunk;
-    const std::size_t end = std::min(begin + chunk, n);
-    if (begin >= end) {
-      break;
-    }
-    threads.emplace_back([&keys, &local_count, thr, begin, end, pass]() {
-      auto &lc = local_count[thr];
-      for (std::size_t i = begin; i < end; i++) {
-        const std::size_t bucket = (keys[i] >> (pass * kBits)) & (kBuckets - 1);
-        lc[bucket]++;
-      }
-    });
-  }
-  for (auto &th : threads) {
-    th.join();
-  }
+  const unsigned int num_threads = (n < kSequentialThreshold) ? 1U : GetThreadCount();
 
   std::vector<std::size_t> count(kBuckets, 0);
-  for (int bucket_idx = 0; bucket_idx < kBuckets; bucket_idx++) {
+
+  if (num_threads <= 1) {
+    for (std::size_t i = 0; i < n; i++) {
+      const std::size_t bucket = (keys[i] >> (pass * kBits)) & (kBuckets - 1);
+      count[bucket]++;
+    }
+  } else {
+    std::vector<std::vector<std::size_t>> local_count(num_threads, std::vector<std::size_t>(kBuckets, 0));
+    const std::size_t chunk = (n + num_threads - 1) / num_threads;
+    std::vector<std::thread> threads;
+    threads.reserve(num_threads);
     for (unsigned int thr = 0; thr < num_threads; thr++) {
-      count[bucket_idx] += local_count[thr][bucket_idx];
+      const std::size_t begin = thr * chunk;
+      const std::size_t end = std::min(begin + chunk, n);
+      if (begin >= end) {
+        break;
+      }
+      threads.emplace_back([&keys, &local_count, thr, begin, end, pass]() {
+        auto &lc = local_count[thr];
+        for (std::size_t i = begin; i < end; i++) {
+          const std::size_t bucket = (keys[i] >> (pass * kBits)) & (kBuckets - 1);
+          lc[bucket]++;
+        }
+      });
+    }
+    for (auto &th : threads) {
+      th.join();
+    }
+    for (int bucket_idx = 0; bucket_idx < kBuckets; bucket_idx++) {
+      for (unsigned int thr = 0; thr < num_threads; thr++) {
+        count[bucket_idx] += local_count[thr][bucket_idx];
+      }
     }
   }
+
   for (int i = 1; i < kBuckets; i++) {
     count[i] += count[i - 1];
   }
