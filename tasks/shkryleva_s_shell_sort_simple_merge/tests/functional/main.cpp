@@ -29,13 +29,11 @@ class ShkrylevaSShellMergeFuncTests : public ppc::util::BaseRunFuncTests<InType,
     if (output_data.size() != expected_data_.size()) {
       return false;
     }
-
-    for (std::size_t i = 0; i < output_data.size(); i++) {
+    for (std::size_t i = 0; i < output_data.size(); ++i) {
       if (output_data[i] != expected_data_[i]) {
         return false;
       }
     }
-
     return true;
   }
 
@@ -58,8 +56,8 @@ class ShkrylevaSShellMergeFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
 namespace {
 
-using shkryleva_s_shell_sort_shell_merge::OutType;
 using shkryleva_s_shell_sort_simple_merge::InType;
+using shkryleva_s_shell_sort_simple_merge::OutType;
 using shkryleva_s_shell_sort_simple_merge::ShkrylevaSShellMergeALL;
 using shkryleva_s_shell_sort_simple_merge::ShkrylevaSShellMergeFuncTests;
 using shkryleva_s_shell_sort_simple_merge::ShkrylevaSShellMergeOMP;

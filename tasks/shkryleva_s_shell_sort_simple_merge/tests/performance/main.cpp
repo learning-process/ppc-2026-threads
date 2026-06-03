@@ -11,9 +11,6 @@
 #include "shkryleva_s_shell_sort_simple_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
-// NOLINTNEXTLINE(misc-include-cleaner) — needed for std::vector via InType
-#include <vector>
-
 namespace shkryleva_s_shell_sort_simple_merge {
 
 class ShkrylevaSShellMergePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
