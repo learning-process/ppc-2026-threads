@@ -74,31 +74,34 @@ const std::array<TestType, 8> kTestParam = {
     TestType{InType{1, -2, 3, -5}, OutType{-5, -2, 1, 3}},
     TestType{InType{1, 22, 13, 51, 2, 1, 2, 2, 34, 41}, OutType{1, 1, 2, 2, 2, 13, 22, 34, 41, 51}}};
 
-// Создаём списки задач для каждой версии
-const auto kTestTasksListSeq = ppc::util::AddFuncTask<ShkrylevaSShellMergeSEQ, InType>(
-    kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
-const auto kTestTasksListOmp = ppc::util::AddFuncTask<ShkrylevaSShellMergeOMP, InType>(
-    kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
-const auto kTestTasksListStl = ppc::util::AddFuncTask<ShkrylevaSShellMergeSTL, InType>(
-    kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
-const auto kTestTasksListTbb = ppc::util::AddFuncTask<ShkrylevaSShellMergeTBB, InType>(
-    kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
-const auto kTestTasksListAll = ppc::util::AddFuncTask<ShkrylevaSShellMergeALL, InType>(
-    kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
+// --- Последовательная версия ---
+INSTANTIATE_TEST_SUITE_P(shellMergeTestSeq, ShkrylevaSShellMergeFuncTests,
+                         ppc::util::ExpandToValues(ppc::util::AddFuncTask<ShkrylevaSShellMergeSEQ, InType>(
+                             kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge)),
+                         ShkrylevaSShellMergeFuncTests::PrintFuncTestName<ShkrylevaSShellMergeFuncTests>);
 
-// Объединяем в один вектор
-std::vector<ppc::task::Task<InType, OutType>> kAllTestTasks;
-kAllTestTasks.reserve(kTestTasksListSeq.size() + kTestTasksListOmp.size() + kTestTasksListStl.size() +
-                      kTestTasksListTbb.size() + kTestTasksListAll.size());
-kAllTestTasks.insert(kAllTestTasks.end(), kTestTasksListSeq.begin(), kTestTasksListSeq.end());
-kAllTestTasks.insert(kAllTestTasks.end(), kTestTasksListOmp.begin(), kTestTasksListOmp.end());
-kAllTestTasks.insert(kAllTestTasks.end(), kTestTasksListStl.begin(), kTestTasksListStl.end());
-kAllTestTasks.insert(kAllTestTasks.end(), kTestTasksListTbb.begin(), kTestTasksListTbb.end());
-kAllTestTasks.insert(kAllTestTasks.end(), kTestTasksListAll.begin(), kTestTasksListAll.end());
+// --- OpenMP версия ---
+INSTANTIATE_TEST_SUITE_P(shellMergeTestOmp, ShkrylevaSShellMergeFuncTests,
+                         ppc::util::ExpandToValues(ppc::util::AddFuncTask<ShkrylevaSShellMergeOMP, InType>(
+                             kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge)),
+                         ShkrylevaSShellMergeFuncTests::PrintFuncTestName<ShkrylevaSShellMergeFuncTests>);
 
-const auto kGtestValues = ppc::util::ExpandToValues(kAllTestTasks);
-const auto kTestName = ShkrylevaSShellMergeFuncTests::PrintFuncTestName<ShkrylevaSShellMergeFuncTests>;
+// --- STL версия ---
+INSTANTIATE_TEST_SUITE_P(shellMergeTestStl, ShkrylevaSShellMergeFuncTests,
+                         ppc::util::ExpandToValues(ppc::util::AddFuncTask<ShkrylevaSShellMergeSTL, InType>(
+                             kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge)),
+                         ShkrylevaSShellMergeFuncTests::PrintFuncTestName<ShkrylevaSShellMergeFuncTests>);
 
-INSTANTIATE_TEST_SUITE_P(shellMergeTests, ShkrylevaSShellMergeFuncTests, kGtestValues, kTestName);
+// --- TBB версия ---
+INSTANTIATE_TEST_SUITE_P(shellMergeTestTbb, ShkrylevaSShellMergeFuncTests,
+                         ppc::util::ExpandToValues(ppc::util::AddFuncTask<ShkrylevaSShellMergeTBB, InType>(
+                             kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge)),
+                         ShkrylevaSShellMergeFuncTests::PrintFuncTestName<ShkrylevaSShellMergeFuncTests>);
+
+// --- ALL версия ---
+INSTANTIATE_TEST_SUITE_P(shellMergeTestAll, ShkrylevaSShellMergeFuncTests,
+                         ppc::util::ExpandToValues(ppc::util::AddFuncTask<ShkrylevaSShellMergeALL, InType>(
+                             kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge)),
+                         ShkrylevaSShellMergeFuncTests::PrintFuncTestName<ShkrylevaSShellMergeFuncTests>);
 
 }  // namespace

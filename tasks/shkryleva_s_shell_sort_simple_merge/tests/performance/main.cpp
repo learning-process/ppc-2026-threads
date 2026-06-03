@@ -61,30 +61,35 @@ namespace {
 // Один параметр (данные будут сгенерированы в SetUp)
 const std::array<TestType, 1> kPerfParam = {TestType{InType{}, OutType{}}};
 
-const auto kPerfTasksSeq = ppc::util::AddFuncTask<ShkrylevaSShellMergeSEQ, InType>(
-    kPerfParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
-const auto kPerfTasksOmp = ppc::util::AddFuncTask<ShkrylevaSShellMergeOMP, InType>(
-    kPerfParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
-const auto kPerfTasksStl = ppc::util::AddFuncTask<ShkrylevaSShellMergeSTL, InType>(
-    kPerfParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
-const auto kPerfTasksTbb = ppc::util::AddFuncTask<ShkrylevaSShellMergeTBB, InType>(
-    kPerfParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
-const auto kPerfTasksAll = ppc::util::AddFuncTask<ShkrylevaSShellMergeALL, InType>(
-    kPerfParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
+// --- Последовательная версия ---
+INSTANTIATE_TEST_SUITE_P(RunPerfSeq, ShkrylevaSShellMergePerfTests,
+                         ppc::util::TupleToGTestValues(ppc::util::AddFuncTask<ShkrylevaSShellMergeSEQ, InType>(
+                             kPerfParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge)),
+                         ShkrylevaSShellMergePerfTests::CustomPerfTestName);
 
-std::vector<ppc::task::Task<InType, OutType>> kAllPerfTasks;
-kAllPerfTasks.reserve(kPerfTasksSeq.size() + kPerfTasksOmp.size() + kPerfTasksStl.size() + kPerfTasksTbb.size() +
-                      kPerfTasksAll.size());
-kAllPerfTasks.insert(kAllPerfTasks.end(), kPerfTasksSeq.begin(), kPerfTasksSeq.end());
-kAllPerfTasks.insert(kAllPerfTasks.end(), kPerfTasksOmp.begin(), kPerfTasksOmp.end());
-kAllPerfTasks.insert(kAllPerfTasks.end(), kPerfTasksStl.begin(), kPerfTasksStl.end());
-kAllPerfTasks.insert(kAllPerfTasks.end(), kPerfTasksTbb.begin(), kPerfTasksTbb.end());
-kAllPerfTasks.insert(kAllPerfTasks.end(), kPerfTasksAll.begin(), kPerfTasksAll.end());
+// --- OpenMP версия ---
+INSTANTIATE_TEST_SUITE_P(RunPerfOmp, ShkrylevaSShellMergePerfTests,
+                         ppc::util::TupleToGTestValues(ppc::util::AddFuncTask<ShkrylevaSShellMergeOMP, InType>(
+                             kPerfParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge)),
+                         ShkrylevaSShellMergePerfTests::CustomPerfTestName);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-const auto kPerfTestName = ShkrylevaSShellMergePerfTests::CustomPerfTestName;
+// --- STL версия ---
+INSTANTIATE_TEST_SUITE_P(RunPerfStl, ShkrylevaSShellMergePerfTests,
+                         ppc::util::TupleToGTestValues(ppc::util::AddFuncTask<ShkrylevaSShellMergeSTL, InType>(
+                             kPerfParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge)),
+                         ShkrylevaSShellMergePerfTests::CustomPerfTestName);
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ShkrylevaSShellMergePerfTests, kGtestValues, kPerfTestName);
+// --- TBB версия ---
+INSTANTIATE_TEST_SUITE_P(RunPerfTbb, ShkrylevaSShellMergePerfTests,
+                         ppc::util::TupleToGTestValues(ppc::util::AddFuncTask<ShkrylevaSShellMergeTBB, InType>(
+                             kPerfParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge)),
+                         ShkrylevaSShellMergePerfTests::CustomPerfTestName);
+
+// --- ALL версия ---
+INSTANTIATE_TEST_SUITE_P(RunPerfAll, ShkrylevaSShellMergePerfTests,
+                         ppc::util::TupleToGTestValues(ppc::util::AddFuncTask<ShkrylevaSShellMergeALL, InType>(
+                             kPerfParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge)),
+                         ShkrylevaSShellMergePerfTests::CustomPerfTestName);
 
 }  // namespace
 }  // namespace shkryleva_s_shell_sort_simple_merge
