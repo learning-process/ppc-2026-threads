@@ -58,7 +58,15 @@ class ShkrylevaSShellMergeFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
 namespace {
 
-using namespace shkryleva_s_shell_sort_simple_merge;
+using shkryleva_s_shell_sort_shell_merge::OutType;
+using shkryleva_s_shell_sort_simple_merge::InType;
+using shkryleva_s_shell_sort_simple_merge::ShkrylevaSShellMergeALL;
+using shkryleva_s_shell_sort_simple_merge::ShkrylevaSShellMergeFuncTests;
+using shkryleva_s_shell_sort_simple_merge::ShkrylevaSShellMergeOMP;
+using shkryleva_s_shell_sort_simple_merge::ShkrylevaSShellMergeSEQ;
+using shkryleva_s_shell_sort_simple_merge::ShkrylevaSShellMergeSTL;
+using shkryleva_s_shell_sort_simple_merge::ShkrylevaSShellMergeTBB;
+using shkryleva_s_shell_sort_simple_merge::TestType;
 
 TEST_P(ShkrylevaSShellMergeFuncTests, shellMergeTest) {
   ExecuteTest(GetParam());

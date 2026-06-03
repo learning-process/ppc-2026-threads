@@ -1,9 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <cstddef>
 #include <random>
-#include <vector>
 
 #include "shkryleva_s_shell_sort_simple_merge/all/include/ops_all.hpp"
 #include "shkryleva_s_shell_sort_simple_merge/common/include/common.hpp"
@@ -12,7 +10,9 @@
 #include "shkryleva_s_shell_sort_simple_merge/stl/include/ops_stl.hpp"
 #include "shkryleva_s_shell_sort_simple_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
+
+// NOLINTNEXTLINE(misc-include-cleaner) — needed for std::vector via InType
+#include <vector>
 
 namespace shkryleva_s_shell_sort_simple_merge {
 
@@ -31,7 +31,7 @@ class ShkrylevaSShellMergePerfTests : public ppc::util::BaseRunPerfTests<InType,
       input_data_[i] = number;
       expected_data_[i] = number;
     }
-    std::sort(expected_data_.begin(), expected_data_.end());
+    std::ranges::sort(expected_data_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
