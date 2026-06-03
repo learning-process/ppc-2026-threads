@@ -71,11 +71,11 @@ OutType BuildHull(const InType &pts) {
   return hull;
 }
 
-void RunOpenMPExercise(int num_threads) {
-  // Принудительно "используем" параметр, взяв его адрес (работает всегда)
-  (void)&num_threads;
-
+// Убираем параметр, так как он нужен только внутри #ifdef _OPENMP
+void RunOpenMPExercise() {
 #ifdef _OPENMP
+  // Получаем количество потоков из глобальной настройки (или из другого места)
+  int num_threads = std::max(1, ppc::util::GetNumThreads());
   int omp_counter = 0;
 #  pragma omp parallel reduction(+ : omp_counter) num_threads(num_threads) default(none) firstprivate(num_threads)
   {
@@ -103,11 +103,10 @@ void RunStdThreadExercise(int num_threads) {
   (void)th_counter.load(std::memory_order_relaxed);
 }
 
-void RunTBBExercise(int num_threads) {
-  // Принудительно "используем" параметр, взяв его адрес (работает всегда)
-  (void)&num_threads;
-
+// Убираем параметр, так как он нужен только внутри #ifdef USE_TBB
+void RunTBBExercise() {
 #ifdef USE_TBB
+  int num_threads = std::max(1, ppc::util::GetNumThreads());
   std::atomic<int> tbb_counter{0};
 
   tbb::parallel_for(0, num_threads, [&](int /*i*/) { tbb_counter.fetch_add(1, std::memory_order_relaxed); });
@@ -185,9 +184,9 @@ bool YurkinGGrahamScanALL::RunImpl() {
 
   const int num_threads = std::max(1, ppc::util::GetNumThreads());
 
-  RunOpenMPExercise(num_threads);
+  RunOpenMPExercise();  // без параметра
   RunStdThreadExercise(num_threads);
-  RunTBBExercise(num_threads);
+  RunTBBExercise();  // без параметра
   RunMPIExercise();
 
   GetOutput() = std::move(hull);
