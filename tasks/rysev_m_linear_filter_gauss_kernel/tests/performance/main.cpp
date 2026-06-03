@@ -35,7 +35,7 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, RysevMGaussFilterSEQ, RysevMGaussFilterOMP, RysevMGaussFilterTBB,
-                                RysevMGaussFilterSTL, RysevMGaussFilterALL>(
+                                RysevMGaussFilterSTL, RysevMGaussFilterAll>(
         PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

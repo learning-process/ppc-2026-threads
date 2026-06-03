@@ -64,7 +64,7 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<RysevMGaussFilterOMP, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel),
     ppc::util::AddFuncTask<RysevMGaussFilterTBB, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel),
     ppc::util::AddFuncTask<RysevMGaussFilterSTL, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel),
-    ppc::util::AddFuncTask<RysevMGaussFilterALL, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel));
+    ppc::util::AddFuncTask<RysevMGaussFilterAll, InType>(kTestParam, PPC_SETTINGS_rysev_m_linear_filter_gauss_kernel));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kFuncTestName = RysevMFuncTests::PrintFuncTestName<RysevMFuncTests>;
