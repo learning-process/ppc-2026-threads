@@ -9,9 +9,11 @@
 #include <string>
 #include <tuple>
 
+#include "batkov_f_contrast_enh_lin_hist_stretch/all/include/ops_all.hpp"
 #include "batkov_f_contrast_enh_lin_hist_stretch/common/include/common.hpp"
 #include "batkov_f_contrast_enh_lin_hist_stretch/omp/include/ops_omp.hpp"
 #include "batkov_f_contrast_enh_lin_hist_stretch/seq/include/ops_seq.hpp"
+#include "batkov_f_contrast_enh_lin_hist_stretch/stl/include/ops_stl.hpp"
 #include "batkov_f_contrast_enh_lin_hist_stretch/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -28,7 +30,19 @@ class BatkovFRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Ou
   void SetUp() override {
     const TestType &params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    auto size = static_cast<size_t>(std::get<0>(params));
+    const auto size = static_cast<size_t>(std::get<0>(params));
+    const std::string &scenario = std::get<1>(params);
+
+    input_data_.resize(size * size);
+
+    if (scenario == "degenerate_uniform") {
+      expect_identity_ = true;
+      constexpr uint8_t kGray = 140;
+      std::ranges::fill(input_data_, kGray);
+      return;
+    }
+
+    expect_identity_ = false;
 
     int base_intensity = 120;
     int contrast_range = 40;
@@ -46,6 +60,10 @@ class BatkovFRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Ou
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    if (expect_identity_) {
+      return output_data == input_data_;
+    }
+
     auto [min_it, max_it] = std::ranges::minmax_element(output_data);
     uint8_t min_out = *min_it;
     uint8_t max_out = *max_it;
@@ -65,6 +83,7 @@ class BatkovFRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, Ou
   std::random_device rd_;
   std::mt19937 gen_{rd_()};
   InType input_data_;
+  bool expect_identity_ = false;
 };
 
 namespace {
@@ -73,14 +92,24 @@ TEST_P(BatkovFRunFuncTestsThreads, ContrastEnhLinHistStretch) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 4> kTestParam = {std::make_tuple(100, "small_image"), std::make_tuple(500, "medium_image"),
-                                            std::make_tuple(1000, "big_image"), std::make_tuple(2000, "large_image")};
+const std::array<TestType, 6> kTestParam = {
+    std::make_tuple(50, "small_image"),
+    std::make_tuple(100, "medium_image"),
+    std::make_tuple(500, "big_image"),
+    std::make_tuple(1000, "large_image"),
+    std::make_tuple(256, "degenerate_uniform_1"),
+    std::make_tuple(512, "degenerate_uniform_2"),
+};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch),
                                            ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchOMP, InType>(
                                                kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch),
                                            ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch),
+                                           ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch),
+                                           ppc::util::AddFuncTask<BatkovFContrastEnhLinHistStretchALL, InType>(
                                                kTestParam, PPC_SETTINGS_batkov_f_contrast_enh_lin_hist_stretch));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

@@ -5,9 +5,12 @@
 #include <string>
 #include <tuple>
 
+#include "gaivoronskiy_m_marking_binary_components/all/include/ops_all.hpp"
 #include "gaivoronskiy_m_marking_binary_components/common/include/common.hpp"
 #include "gaivoronskiy_m_marking_binary_components/omp/include/ops_omp.hpp"
 #include "gaivoronskiy_m_marking_binary_components/seq/include/ops_seq.hpp"
+#include "gaivoronskiy_m_marking_binary_components/stl/include/ops_stl.hpp"
+#include "gaivoronskiy_m_marking_binary_components/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -81,6 +84,12 @@ const std::array<TestType, 5> kTestParam = {
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<GaivoronskiyMMarkingBinaryComponentsSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_gaivoronskiy_m_marking_binary_components),
                                            ppc::util::AddFuncTask<GaivoronskiyMMarkingBinaryComponentsOMP, InType>(
+                                               kTestParam, PPC_SETTINGS_gaivoronskiy_m_marking_binary_components),
+                                           ppc::util::AddFuncTask<GaivoronskiyMMarkingBinaryComponentsSTL, InType>(
+                                               kTestParam, PPC_SETTINGS_gaivoronskiy_m_marking_binary_components),
+                                           ppc::util::AddFuncTask<GaivoronskiyMMarkingBinaryComponentsTBB, InType>(
+                                               kTestParam, PPC_SETTINGS_gaivoronskiy_m_marking_binary_components),
+                                           ppc::util::AddFuncTask<GaivoronskiyMMarkingBinaryComponentsALL, InType>(
                                                kTestParam, PPC_SETTINGS_gaivoronskiy_m_marking_binary_components));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

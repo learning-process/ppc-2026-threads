@@ -6,9 +6,12 @@
 #include <utility>
 #include <vector>
 
+#include "posternak_a_crs_mul_complex_matrix/all/include/ops_all.hpp"
 #include "posternak_a_crs_mul_complex_matrix/common/include/common.hpp"
 #include "posternak_a_crs_mul_complex_matrix/omp/include/ops_omp.hpp"
 #include "posternak_a_crs_mul_complex_matrix/seq/include/ops_seq.hpp"
+#include "posternak_a_crs_mul_complex_matrix/stl/include/ops_stl.hpp"
+#include "posternak_a_crs_mul_complex_matrix/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace posternak_a_crs_mul_complex_matrix {
@@ -127,8 +130,9 @@ TEST_P(PosternakARunPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, PosternakACRSMulComplexMatrixSEQ, PosternakACRSMulComplexMatrixOMP>(
-        PPC_SETTINGS_posternak_a_crs_mul_complex_matrix);
+    ppc::util::MakeAllPerfTasks<InType, PosternakACRSMulComplexMatrixSEQ, PosternakACRSMulComplexMatrixOMP,
+                                PosternakACRSMulComplexMatrixTBB, PosternakACRSMulComplexMatrixSTL,
+                                PosternakACRSMulComplexMatrixALL>(PPC_SETTINGS_posternak_a_crs_mul_complex_matrix);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

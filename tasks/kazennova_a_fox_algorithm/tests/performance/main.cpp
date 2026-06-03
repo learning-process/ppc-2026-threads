@@ -4,15 +4,18 @@
 #include <random>
 #include <vector>
 
+#include "kazennova_a_fox_algorithm/all/include/ops_all.hpp"
 #include "kazennova_a_fox_algorithm/common/include/common.hpp"
 #include "kazennova_a_fox_algorithm/omp/include/ops_omp.hpp"
 #include "kazennova_a_fox_algorithm/seq/include/ops_seq.hpp"
+#include "kazennova_a_fox_algorithm/stl/include/ops_stl.hpp"
+#include "kazennova_a_fox_algorithm/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace kazennova_a_fox_algorithm {
 
 class KazennovaAPerfTestSeq : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr int kMatrixSize = 500;
+  static constexpr int kMatrixSize = 700;
   InType input_data_;
 
   void SetUp() override {
@@ -51,11 +54,11 @@ TEST_P(KazennovaAPerfTestSeq, RunPerfTests) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KazennovaATestTaskSEQ, KazennovaATestTaskOMP>(
-    PPC_SETTINGS_kazennova_a_fox_algorithm);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, KazennovaATestTaskSEQ, KazennovaATestTaskOMP, KazennovaATestTaskTBB,
+                                KazennovaATestTaskSTL, KazennovaATestTaskALL>(PPC_SETTINGS_kazennova_a_fox_algorithm);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-
 const auto kPerfTestName = KazennovaAPerfTestSeq::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(RunPerfTests, KazennovaAPerfTestSeq, kGtestValues, kPerfTestName);

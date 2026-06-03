@@ -7,9 +7,11 @@
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
+#include "vdovin_a_gauss_block/all/include/ops_all.hpp"
 #include "vdovin_a_gauss_block/common/include/common.hpp"
 #include "vdovin_a_gauss_block/omp/include/ops_omp.hpp"
 #include "vdovin_a_gauss_block/seq/include/ops_seq.hpp"
+#include "vdovin_a_gauss_block/stl/include/ops_stl.hpp"
 #include "vdovin_a_gauss_block/tbb/include/ops_tbb.hpp"
 
 namespace vdovin_a_gauss_block {
@@ -51,8 +53,10 @@ const std::array<TestType, 10> kTestParam = {std::make_tuple(3, "side_3"),   std
                                              std::make_tuple(50, "side_50"), std::make_tuple(100, "side_100")};
 
 const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<VdovinAGaussBlockSEQ, InType>(kTestParam, PPC_SETTINGS_vdovin_a_gauss_block),
+    std::tuple_cat(ppc::util::AddFuncTask<VdovinAGaussBlockALL, InType>(kTestParam, PPC_SETTINGS_vdovin_a_gauss_block),
+                   ppc::util::AddFuncTask<VdovinAGaussBlockSEQ, InType>(kTestParam, PPC_SETTINGS_vdovin_a_gauss_block),
                    ppc::util::AddFuncTask<VdovinAGaussBlockOMP, InType>(kTestParam, PPC_SETTINGS_vdovin_a_gauss_block),
+                   ppc::util::AddFuncTask<VdovinAGaussBlockSTL, InType>(kTestParam, PPC_SETTINGS_vdovin_a_gauss_block),
                    ppc::util::AddFuncTask<VdovinAGaussBlockTBB, InType>(kTestParam, PPC_SETTINGS_vdovin_a_gauss_block));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

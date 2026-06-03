@@ -5,9 +5,11 @@
 #include <random>
 #include <vector>
 
+#include "terekhov_d_gauss_vert/all/include/ops_all.hpp"
 #include "terekhov_d_gauss_vert/common/include/common.hpp"
 #include "terekhov_d_gauss_vert/omp/include/ops_omp.hpp"
 #include "terekhov_d_gauss_vert/seq/include/ops_seq.hpp"
+#include "terekhov_d_gauss_vert/stl/include/ops_stl.hpp"
 #include "terekhov_d_gauss_vert/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
@@ -49,8 +51,8 @@ TEST_P(TerekhovDGaussVertPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, TerekhovDGaussVertSEQ, TerekhovDGaussVertOMP, TerekhovDGaussVertTBB>(
-        PPC_SETTINGS_terekhov_d_gauss_vert);
+    ppc::util::MakeAllPerfTasks<InType, TerekhovDGaussVertSEQ, TerekhovDGaussVertOMP, TerekhovDGaussVertTBB,
+                                TerekhovDGaussVertSTL, TerekhovDGaussVertALL>(PPC_SETTINGS_terekhov_d_gauss_vert);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = TerekhovDGaussVertPerfTests::CustomPerfTestName;

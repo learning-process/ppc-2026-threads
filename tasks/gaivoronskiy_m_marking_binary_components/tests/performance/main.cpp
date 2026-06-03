@@ -3,9 +3,12 @@
 #include <algorithm>
 #include <cstddef>
 
+#include "gaivoronskiy_m_marking_binary_components/all/include/ops_all.hpp"
 #include "gaivoronskiy_m_marking_binary_components/common/include/common.hpp"
 #include "gaivoronskiy_m_marking_binary_components/omp/include/ops_omp.hpp"
 #include "gaivoronskiy_m_marking_binary_components/seq/include/ops_seq.hpp"
+#include "gaivoronskiy_m_marking_binary_components/stl/include/ops_stl.hpp"
+#include "gaivoronskiy_m_marking_binary_components/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace gaivoronskiy_m_marking_binary_components {
@@ -14,7 +17,7 @@ class GaivoronskiyMMarkingPerfTests : public ppc::util::BaseRunPerfTests<InType,
   InType input_data_;
 
   void SetUp() override {
-    const int k_size = 500;
+    const int k_size = 2000;
     input_data_.resize((static_cast<std::size_t>(k_size) * static_cast<std::size_t>(k_size)) + 2);
     input_data_[0] = k_size;
     input_data_[1] = k_size;
@@ -45,9 +48,11 @@ TEST_P(GaivoronskiyMMarkingPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, GaivoronskiyMMarkingBinaryComponentsSEQ,
-                                                       GaivoronskiyMMarkingBinaryComponentsOMP>(
-    PPC_SETTINGS_gaivoronskiy_m_marking_binary_components);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, GaivoronskiyMMarkingBinaryComponentsSEQ,
+                                GaivoronskiyMMarkingBinaryComponentsOMP, GaivoronskiyMMarkingBinaryComponentsSTL,
+                                GaivoronskiyMMarkingBinaryComponentsTBB, GaivoronskiyMMarkingBinaryComponentsALL>(
+        PPC_SETTINGS_gaivoronskiy_m_marking_binary_components);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

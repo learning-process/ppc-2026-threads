@@ -1,12 +1,16 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <algorithm>
 #include <cstddef>
 #include <random>
 
+#include "chetverikova_e_shell_sort_simple_merge/all/include/ops_all.hpp"
 #include "chetverikova_e_shell_sort_simple_merge/common/include/common.hpp"
 #include "chetverikova_e_shell_sort_simple_merge/omp/include/ops_omp.hpp"
 #include "chetverikova_e_shell_sort_simple_merge/seq/include/ops_seq.hpp"
+#include "chetverikova_e_shell_sort_simple_merge/stl/include/ops_stl.hpp"
+#include "chetverikova_e_shell_sort_simple_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace chetverikova_e_shell_sort_simple_merge {
@@ -16,7 +20,7 @@ class ChetverikovaERunPerfTestThreads : public ppc::util::BaseRunPerfTests<InTyp
   OutType expected_data_;
 
   void SetUp() override {
-    constexpr std::size_t kSize = 400000;
+    constexpr std::size_t kSize = 4000000;
     std::random_device random_device;
     std::mt19937 generator(random_device());
     std::uniform_int_distribution<int> distribution(-100000, 100000);
@@ -31,6 +35,12 @@ class ChetverikovaERunPerfTestThreads : public ppc::util::BaseRunPerfTests<InTyp
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    if (rank != 0) {
+      return true;
+    }
     return expected_data_ == output_data;
   }
 
@@ -46,7 +56,9 @@ TEST_P(ChetverikovaERunPerfTestThreads, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ChetverikovaEShellSortSimpleMergeSEQ, ChetverikovaEShellSortSimpleMergeOMP>(
+    ppc::util::MakeAllPerfTasks<InType, ChetverikovaEShellSortSimpleMergeSEQ, ChetverikovaEShellSortSimpleMergeOMP,
+                                ChetverikovaEShellSortSimpleMergeTBB, ChetverikovaEShellSortSimpleMergeSTL,
+                                ChetverikovaEShellSortSimpleMergeALL>(
         PPC_SETTINGS_chetverikova_e_shell_sort_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

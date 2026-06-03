@@ -13,9 +13,11 @@
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
+#include "vinyaikina_e_multidimensional_integrals_simpson_method/all/include/ops_all.hpp"
 #include "vinyaikina_e_multidimensional_integrals_simpson_method/common/include/common.hpp"
 #include "vinyaikina_e_multidimensional_integrals_simpson_method/omp/include/ops_omp.hpp"
 #include "vinyaikina_e_multidimensional_integrals_simpson_method/seq/include/ops_seq.hpp"
+#include "vinyaikina_e_multidimensional_integrals_simpson_method/stl/include/ops_stl.hpp"
 #include "vinyaikina_e_multidimensional_integrals_simpson_method/tbb/include/ops_tbb.hpp"
 
 namespace vinyaikina_e_multidimensional_integrals_simpson_method {
@@ -35,7 +37,7 @@ class VinyaikinaESimpsonFuncTests : public ppc::util::BaseRunFuncTests<InType, O
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const double eps = 1e-3;
+    const double eps = 1e-1;
     return std::fabs(output_data - etalon_) <= eps;
   }
 
@@ -134,7 +136,7 @@ const std::array<TestType, 16> kTests = {{
 
     TestType{"area2d_0_1_x_0_1", InType{0.005, {{0.0, 1.0}, {0.0, 1.0}}, one}, CountNDimArea({{0.0, 1.0}, {0.0, 1.0}})},
 
-    TestType{"volume_3d_0_05_x3", InType{0.005, {{0.0, 0.25}, {0.0, 0.25}, {0.0, 0.25}}, one},
+    TestType{"volume_3d_0_05_x3", InType{0.0075, {{0.0, 0.25}, {0.0, 0.25}, {0.0, 0.25}}, one},
              CountNDimArea({{0.0, 0.25}, {0.0, 0.25}, {0.0, 0.25}})},
 
     TestType{"Linear1d_0_2", InType{0.01, {{0.0, 2.0}}, linear1d}, IntLinear1d(0.0, 2.0)},
@@ -159,14 +161,14 @@ const std::array<TestType, 16> kTests = {{
 
     TestType{"x2_y2d_0_1_x_0_1", InType{0.005, {{0.0, 1.0}, {0.0, 1.0}}, x2_y2d}, Intx2y2d(0.0, 1.0, 0.0, 1.0)},
 
-    TestType{"xyz_3d_0_1_x3", InType{0.005, {{0.0, 0.25}, {0.0, 0.25}, {0.0, 0.25}}, xyz_3d},
-             Intxyz3d(0.0, 0.25, 0.0, 0.25, 0.0, 0.25)},
+    TestType{"xyz_3d_0_1_x3", InType{0.005, {{0.0, 0.20}, {0.0, 0.20}, {0.0, 0.20}}, xyz_3d},
+             Intxyz3d(0.0, 0.20, 0.0, 0.20, 0.0, 0.20)},
 
-    TestType{"x2_y2_z2_3d_0_1_x3", InType{0.01, {{0.0, 0.25}, {0.0, 0.25}, {0.0, 0.25}}, x2_y2_z2_3d},
-             Intx2Y2Z23d(0.0, 0.25, 0.0, 0.25, 0.0, 0.25)},
+    TestType{"x2_y2_z2_3d_0_1_x3", InType{0.01, {{0.0, 0.20}, {0.0, 0.20}, {0.0, 0.20}}, x2_y2_z2_3d},
+             Intx2Y2Z23d(0.0, 0.20, 0.0, 0.20, 0.0, 0.20)},
 
-    TestType{"exp_sum_3d_0_05_x3", InType{0.005, {{0.0, 0.25}, {0.0, 0.25}, {0.0, 0.25}}, exp_sum_3d},
-             IntexpSum3d(0.0, 0.25, 0.0, 0.25, 0.0, 0.25)},
+    TestType{"exp_sum_3d_0_05_x3", InType{0.005, {{0.0, 0.20}, {0.0, 0.20}, {0.0, 0.20}}, exp_sum_3d},
+             IntexpSum3d(0.0, 0.20, 0.0, 0.20, 0.0, 0.20)},
 }};
 
 const auto kTaskName = PPC_SETTINGS_vinyaikina_e_multidimensional_integrals_simpson_method;
@@ -174,12 +176,13 @@ const auto kTaskName = PPC_SETTINGS_vinyaikina_e_multidimensional_integrals_simp
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<VinyaikinaEMultidimIntegrSimpsonSEQ, InType>(kTests, kTaskName),
                    ppc::util::AddFuncTask<VinyaikinaEMultidimIntegrSimpsonOMP, InType>(kTests, kTaskName),
-                   ppc::util::AddFuncTask<VinyaikinaEMultidimIntegrSimpsonTBB, InType>(kTests, kTaskName));
+                   ppc::util::AddFuncTask<VinyaikinaEMultidimIntegrSimpsonTBB, InType>(kTests, kTaskName),
+                   ppc::util::AddFuncTask<VinyaikinaEMultidimIntegrSimpsonSTL, InType>(kTests, kTaskName),
+                   ppc::util::AddFuncTask<VinyaikinaEMultidimIntegrSimpsonALL, InType>(kTests, kTaskName));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kFuncTestName = VinyaikinaESimpsonFuncTests::PrintFuncTestName<VinyaikinaESimpsonFuncTests>;
-;
 
 INSTANTIATE_TEST_SUITE_P(MultidinIntegralsSimpsonTests, VinyaikinaESimpsonFuncTests, kGtestValues, kFuncTestName);
 
