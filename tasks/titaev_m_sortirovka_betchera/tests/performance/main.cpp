@@ -1,60 +1,61 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstddef>
-#include <random>
+#include <tuple>
+#include <vector>
 
+#include "titaev_m_sortirovka_betchera/all/include/ops_all.hpp"
 #include "titaev_m_sortirovka_betchera/common/include/common.hpp"
 #include "titaev_m_sortirovka_betchera/omp/include/ops_omp.hpp"
+#include "titaev_m_sortirovka_betchera/seq/include/ops_seq.hpp"
+#include "titaev_m_sortirovka_betchera/stl/include/ops_stl.hpp"
+#include "titaev_m_sortirovka_betchera/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace titaev_m_sortirovka_betchera {
 
-class TitaevBatcherRadixPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class TitaevSortirovkaBetcheraPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  static constexpr size_t kSize = 1000000;
-  InType input;
-
   void SetUp() override {
-    std::random_device rd;
-    std::mt19937_64 gen(rd());
-    std::uniform_real_distribution<double> dist(-100000.0, 100000.0);
-
-    input.resize(kSize);
-    for (auto &val : input) {
-      val = dist(gen);
+    constexpr int kSize = 1 << 20;
+    input_data_.resize(kSize);
+    for (int i = 0; i < kSize; i++) {
+      input_data_[i] = static_cast<double>(kSize - i) - 0.5;
     }
   }
 
-  bool CheckTestOutputData(OutType &output) final {
-    if (output.size() != input.size()) {
-      return false;
-    }
-    for (size_t i = 1; i < output.size(); i++) {
-      if (output[i] < output[i - 1]) {
-        return false;
-      }
-    }
-    return true;
+  bool CheckTestOutputData(OutType &output_data) final {
+    return std::is_sorted(output_data.begin(), output_data.end());
   }
 
   InType GetTestInputData() final {
-    return input;
+    return input_data_;
   }
+
+ private:
+  InType input_data_;
 };
 
-TEST_P(TitaevBatcherRadixPerfTests, RunPerformanceOMP) {
+TEST_P(TitaevSortirovkaBetcheraPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 namespace {
-
-const auto kPerfTasks =
+const auto kSeqPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, TitaevSortirovkaBetcheraSEQ>(PPC_SETTINGS_titaev_m_sortirovka_betchera);
+const auto kOmpPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, TitaevSortirovkaBetcheraOMP>(PPC_SETTINGS_titaev_m_sortirovka_betchera);
+const auto kTbbPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, TitaevSortirovkaBetcheraTBB>(PPC_SETTINGS_titaev_m_sortirovka_betchera);
+const auto kStlPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, TitaevSortirovkaBetcheraSTL>(PPC_SETTINGS_titaev_m_sortirovka_betchera);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, TitaevSortirovkaBetcheraALL>(PPC_SETTINGS_titaev_m_sortirovka_betchera);
 
-const auto kValues = ppc::util::TupleToGTestValues(kPerfTasks);
-const auto kNameGen = TitaevBatcherRadixPerfTests::CustomPerfTestName;
-
-INSTANTIATE_TEST_SUITE_P(PerformanceSortingTests, TitaevBatcherRadixPerfTests, kValues, kNameGen);
-
+const auto kPerfTasks = std::tuple_cat(kSeqPerfTasks, kOmpPerfTasks, kTbbPerfTasks, kStlPerfTasks, kAllPerfTasks);
+const auto kGtestValues = ppc::util::TupleToGTestValues(kPerfTasks);
+const auto kPerfTestName = TitaevSortirovkaBetcheraPerfTests::CustomPerfTestName;
+INSTANTIATE_TEST_SUITE_P(RunModeTests, TitaevSortirovkaBetcheraPerfTests, kGtestValues, kPerfTestName);
 }  // namespace
 }  // namespace titaev_m_sortirovka_betchera

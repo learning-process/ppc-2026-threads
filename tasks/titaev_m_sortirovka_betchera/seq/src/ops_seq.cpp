@@ -104,28 +104,25 @@ void TitaevSortirovkaBetcheraSEQ::ConvertFromKeys(const std::vector<uint64_t> &k
   }
 }
 
-void TitaevSortirovkaBetcheraSEQ::BatcherStep(OutType &result, size_t n, size_t step, size_t stage) {
-  for (size_t i = 0; i < n; i++) {
-    size_t j = i ^ stage;
-    if (j <= i || j >= n) {
-      continue;
-    }
-
-    const bool ascending = (i & step) == 0;
-    const bool need_swap = ascending ? result[i] > result[j] : result[i] < result[j];
-    if (need_swap) {
-      std::swap(result[i], result[j]);
-    }
-  }
-}
-
 void TitaevSortirovkaBetcheraSEQ::BatcherSort() {
   auto &result = GetOutput();
   const size_t n = result.size();
+  if (n < 2) {
+    return;
+  }
 
-  for (size_t step = 1; step < n; step <<= 1) {
-    for (size_t stage = step; stage > 0; stage >>= 1) {
-      BatcherStep(result, n, step, stage);
+  for (size_t k = 2; k <= n; k <<= 1) {
+    for (size_t j = k >> 1; j > 0; j >>= 1) {
+      for (size_t i = 0; i < n; i++) {
+        const size_t l = i ^ j;
+        if (l > i) {
+          const bool ascending = ((i & k) == 0);
+          const bool need_swap = ascending ? (result[i] > result[l]) : (result[i] < result[l]);
+          if (need_swap) {
+            std::swap(result[i], result[l]);
+          }
+        }
+      }
     }
   }
 }

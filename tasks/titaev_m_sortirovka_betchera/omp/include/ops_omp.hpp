@@ -22,11 +22,9 @@ class TitaevSortirovkaBetcheraOMP : public BaseTask {
   bool PostProcessingImpl() override;
 
   static void ConvertToKeys(const InType &input, std::vector<uint64_t> &keys);
-  static void RadixSortParallel(std::vector<uint64_t> &keys);
+  static void RadixSort(std::vector<uint64_t> &keys);
   static void ConvertFromKeys(const std::vector<uint64_t> &keys, OutType &output);
-  void BatcherSortParallel();
-
-  static void BatcherStepParallel(OutType &result, size_t n, size_t step, size_t stage);
+  void BatcherSort();
 };
 
 }  // namespace titaev_m_sortirovka_betchera

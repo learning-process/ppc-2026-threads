@@ -1,6 +1,7 @@
-#include "titaev_m_sortirovka_betchera/omp/include/ops_omp.hpp"
+#include "titaev_m_sortirovka_betchera/tbb/include/ops_tbb.hpp"
 
-#include <omp.h>
+#include <oneapi/tbb/blocked_range.h>
+#include <oneapi/tbb/parallel_for.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -38,30 +39,31 @@ double OrderedUintToDouble(uint64_t x) {
 }
 }  // namespace
 
-TitaevSortirovkaBetcheraOMP::TitaevSortirovkaBetcheraOMP(const InType &in) {
+TitaevSortirovkaBetcheraTBB::TitaevSortirovkaBetcheraTBB(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput().clear();
 }
 
-bool TitaevSortirovkaBetcheraOMP::ValidationImpl() {
+bool TitaevSortirovkaBetcheraTBB::ValidationImpl() {
   return !GetInput().empty();
 }
 
-bool TitaevSortirovkaBetcheraOMP::PreProcessingImpl() {
+bool TitaevSortirovkaBetcheraTBB::PreProcessingImpl() {
   GetOutput() = GetInput();
   return true;
 }
 
-void TitaevSortirovkaBetcheraOMP::ConvertToKeys(const InType &input, std::vector<uint64_t> &keys) {
+void TitaevSortirovkaBetcheraTBB::ConvertToKeys(const InType &input, std::vector<uint64_t> &keys) {
   const size_t n = input.size();
-#pragma omp parallel for
-  for (long long i = 0; i < static_cast<long long>(n); i++) {
-    keys[i] = DoubleToOrderedUint(input[i]);
-  }
+  oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<size_t>(0, n), [&](const oneapi::tbb::blocked_range<size_t> &r) {
+    for (size_t i = r.begin(); i < r.end(); i++) {
+      keys[i] = DoubleToOrderedUint(input[i]);
+    }
+  });
 }
 
-void TitaevSortirovkaBetcheraOMP::RadixSort(std::vector<uint64_t> &keys) {
+void TitaevSortirovkaBetcheraTBB::RadixSort(std::vector<uint64_t> &keys) {
   const size_t n = keys.size();
   if (n <= 1) {
     return;
@@ -75,50 +77,32 @@ void TitaevSortirovkaBetcheraOMP::RadixSort(std::vector<uint64_t> &keys) {
 
   for (int pass = 0; pass < kPasses; pass++) {
     std::vector<size_t> count(kBuckets, 0);
-
-    const int num_threads = omp_get_max_threads();
-    std::vector<std::vector<size_t>> local_count(num_threads, std::vector<size_t>(kBuckets, 0));
-
-#pragma omp parallel
-    {
-      const int tid = omp_get_thread_num();
-      auto &lc = local_count[tid];
-#pragma omp for
-      for (long long i = 0; i < static_cast<long long>(n); i++) {
-        size_t bucket = (keys[i] >> (pass * kBits)) & (kBuckets - 1);
-        lc[bucket]++;
-      }
+    for (size_t i = 0; i < n; i++) {
+      size_t bucket = (keys[i] >> (pass * kBits)) & (kBuckets - 1);
+      count[bucket]++;
     }
-
-    for (int b = 0; b < kBuckets; b++) {
-      for (int t = 0; t < num_threads; t++) {
-        count[b] += local_count[t][b];
-      }
-    }
-
     for (int i = 1; i < kBuckets; i++) {
       count[i] += count[i - 1];
     }
-
     for (size_t i = n; i-- > 0;) {
       size_t bucket = (keys[i] >> (pass * kBits)) & (kBuckets - 1);
       tmp[--count[bucket]] = keys[i];
     }
-
     keys.swap(tmp);
   }
 }
 
-void TitaevSortirovkaBetcheraOMP::ConvertFromKeys(const std::vector<uint64_t> &keys, OutType &output) {
+void TitaevSortirovkaBetcheraTBB::ConvertFromKeys(const std::vector<uint64_t> &keys, OutType &output) {
   const size_t n = keys.size();
   output.resize(n);
-#pragma omp parallel for
-  for (long long i = 0; i < static_cast<long long>(n); i++) {
-    output[i] = OrderedUintToDouble(keys[i]);
-  }
+  oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<size_t>(0, n), [&](const oneapi::tbb::blocked_range<size_t> &r) {
+    for (size_t i = r.begin(); i < r.end(); i++) {
+      output[i] = OrderedUintToDouble(keys[i]);
+    }
+  });
 }
 
-void TitaevSortirovkaBetcheraOMP::BatcherSort() {
+void TitaevSortirovkaBetcheraTBB::BatcherSort() {
   auto &result = GetOutput();
   const size_t n = result.size();
   if (n < 2) {
@@ -127,23 +111,24 @@ void TitaevSortirovkaBetcheraOMP::BatcherSort() {
 
   for (size_t k = 2; k <= n; k <<= 1) {
     for (size_t j = k >> 1; j > 0; j >>= 1) {
-#pragma omp parallel for
-      for (long long ii = 0; ii < static_cast<long long>(n); ii++) {
-        const size_t i = static_cast<size_t>(ii);
-        const size_t l = i ^ j;
-        if (l > i) {
-          const bool ascending = ((i & k) == 0);
-          const bool need_swap = ascending ? (result[i] > result[l]) : (result[i] < result[l]);
-          if (need_swap) {
-            std::swap(result[i], result[l]);
+      oneapi::tbb::parallel_for(oneapi::tbb::blocked_range<size_t>(0, n),
+                                [&](const oneapi::tbb::blocked_range<size_t> &r) {
+        for (size_t i = r.begin(); i < r.end(); i++) {
+          const size_t l = i ^ j;
+          if (l > i && l < n) {
+            const bool ascending = ((i & k) == 0);
+            const bool need_swap = ascending ? (result[i] > result[l]) : (result[i] < result[l]);
+            if (need_swap) {
+              std::swap(result[i], result[l]);
+            }
           }
         }
-      }
+      });
     }
   }
 }
 
-bool TitaevSortirovkaBetcheraOMP::RunImpl() {
+bool TitaevSortirovkaBetcheraTBB::RunImpl() {
   auto &input = GetInput();
   const size_t n = input.size();
   if (n <= 1) {
@@ -159,7 +144,7 @@ bool TitaevSortirovkaBetcheraOMP::RunImpl() {
   return true;
 }
 
-bool TitaevSortirovkaBetcheraOMP::PostProcessingImpl() {
+bool TitaevSortirovkaBetcheraTBB::PostProcessingImpl() {
   return true;
 }
 

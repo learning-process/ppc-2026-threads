@@ -8,12 +8,12 @@
 
 namespace titaev_m_sortirovka_betchera {
 
-class TitaevSortirovkaBetcheraSEQ : public BaseTask {
+class TitaevSortirovkaBetcheraSTL : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kSEQ;
+    return ppc::task::TypeOfTask::kSTL;
   }
-  explicit TitaevSortirovkaBetcheraSEQ(const InType &in);
+  explicit TitaevSortirovkaBetcheraSTL(const InType &in);
 
  private:
   bool ValidationImpl() override;
