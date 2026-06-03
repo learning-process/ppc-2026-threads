@@ -67,7 +67,6 @@ OutType BuildHull(const InType &pts) {
   return hull;
 }
 
-// Функция для std::thread оставлена, так как она используется и не вызывает предупреждений.
 void RunStdThreadExercise(int num_threads) {
   std::atomic<int> th_counter{0};
   std::vector<std::thread> threads;
@@ -88,11 +87,14 @@ void RunStdThreadExercise(int num_threads) {
 
 void RunMPIExercise() {
 #ifdef USE_MPI
+  static bool finalized = false;
   int initialized = 0;
   MPI_Initialized(&initialized);
 
-  if (initialized) {
+  if (initialized && !finalized) {
     MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Finalize();
+    finalized = true;
   }
 #endif
 }
@@ -155,7 +157,6 @@ bool YurkinGGrahamScanALL::RunImpl() {
 
   const int num_threads = std::max(1, ppc::util::GetNumThreads());
 
-  // Вызов проблемных функций удалён
   RunStdThreadExercise(num_threads);
   RunMPIExercise();
 
@@ -167,7 +168,6 @@ bool YurkinGGrahamScanALL::PostProcessingImpl() {
   if (GetInput().empty()) {
     return true;
   }
-
   return !GetOutput().empty();
 }
 
