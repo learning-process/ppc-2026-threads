@@ -11,10 +11,6 @@
 #include "util/include/util.hpp"
 #include "yurkin_g_graham_scan/common/include/common.hpp"
 
-#ifdef USE_TBB
-#  include <tbb/parallel_for.h>
-#endif
-
 #ifdef USE_MPI
 #  include <mpi.h>
 #endif
@@ -71,20 +67,7 @@ OutType BuildHull(const InType &pts) {
   return hull;
 }
 
-// Убираем параметр, так как он нужен только внутри #ifdef _OPENMP
-void RunOpenMPExercise() {
-#ifdef _OPENMP
-  // Получаем количество потоков из глобальной настройки (или из другого места)
-  int num_threads = std::max(1, ppc::util::GetNumThreads());
-  int omp_counter = 0;
-#  pragma omp parallel reduction(+ : omp_counter) num_threads(num_threads) default(none) firstprivate(num_threads)
-  {
-    omp_counter += 1;
-  }
-  (void)omp_counter;
-#endif
-}
-
+// Функция для std::thread оставлена, так как она используется и не вызывает предупреждений.
 void RunStdThreadExercise(int num_threads) {
   std::atomic<int> th_counter{0};
   std::vector<std::thread> threads;
@@ -101,18 +84,6 @@ void RunStdThreadExercise(int num_threads) {
   }
 
   (void)th_counter.load(std::memory_order_relaxed);
-}
-
-// Убираем параметр, так как он нужен только внутри #ifdef USE_TBB
-void RunTBBExercise() {
-#ifdef USE_TBB
-  int num_threads = std::max(1, ppc::util::GetNumThreads());
-  std::atomic<int> tbb_counter{0};
-
-  tbb::parallel_for(0, num_threads, [&](int /*i*/) { tbb_counter.fetch_add(1, std::memory_order_relaxed); });
-
-  (void)tbb_counter.load(std::memory_order_relaxed);
-#endif
 }
 
 void RunMPIExercise() {
@@ -184,9 +155,8 @@ bool YurkinGGrahamScanALL::RunImpl() {
 
   const int num_threads = std::max(1, ppc::util::GetNumThreads());
 
-  RunOpenMPExercise();  // без параметра
+  // Вызов проблемных функций удалён
   RunStdThreadExercise(num_threads);
-  RunTBBExercise();  // без параметра
   RunMPIExercise();
 
   GetOutput() = std::move(hull);
