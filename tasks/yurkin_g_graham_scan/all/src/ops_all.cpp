@@ -72,9 +72,8 @@ OutType BuildHull(const InType &pts) {
 }
 
 void RunOpenMPExercise(int num_threads) {
-  // Принудительно используем параметр, чтобы избежать предупреждения C4101
-  if (num_threads == 0) {
-  }
+  // Принудительно "используем" параметр, взяв его адрес (работает всегда)
+  (void)&num_threads;
 
 #ifdef _OPENMP
   int omp_counter = 0;
@@ -105,9 +104,8 @@ void RunStdThreadExercise(int num_threads) {
 }
 
 void RunTBBExercise(int num_threads) {
-  // Принудительно используем параметр, чтобы избежать предупреждения C4101
-  if (num_threads == 0) {
-  }
+  // Принудительно "используем" параметр, взяв его адрес (работает всегда)
+  (void)&num_threads;
 
 #ifdef USE_TBB
   std::atomic<int> tbb_counter{0};
