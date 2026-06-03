@@ -54,7 +54,11 @@ class ShkrylevaSShellMergeFuncTests : public ppc::util::BaseRunFuncTests<InType,
   OutType expected_data_;
 };
 
+}  // namespace shkryleva_s_shell_sort_simple_merge
+
 namespace {
+
+using namespace shkryleva_s_shell_sort_simple_merge;
 
 TEST_P(ShkrylevaSShellMergeFuncTests, shellMergeTest) {
   ExecuteTest(GetParam());
@@ -70,22 +74,20 @@ const std::array<TestType, 8> kTestParam = {
     TestType{InType{1, -2, 3, -5}, OutType{-5, -2, 1, 3}},
     TestType{InType{1, 22, 13, 51, 2, 1, 2, 2, 34, 41}, OutType{1, 1, 2, 2, 2, 13, 22, 34, 41, 51}}};
 
+// Создаём списки задач для каждой версии
 const auto kTestTasksListSeq = ppc::util::AddFuncTask<ShkrylevaSShellMergeSEQ, InType>(
     kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
-
 const auto kTestTasksListOmp = ppc::util::AddFuncTask<ShkrylevaSShellMergeOMP, InType>(
     kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
-
 const auto kTestTasksListStl = ppc::util::AddFuncTask<ShkrylevaSShellMergeSTL, InType>(
     kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
-
 const auto kTestTasksListTbb = ppc::util::AddFuncTask<ShkrylevaSShellMergeTBB, InType>(
     kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
-
 const auto kTestTasksListAll = ppc::util::AddFuncTask<ShkrylevaSShellMergeALL, InType>(
     kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
 
-std::vector<ppc::util::Task<OutType>> kAllTestTasks;
+// Объединяем в один вектор
+std::vector<ppc::task::Task<InType, OutType>> kAllTestTasks;
 kAllTestTasks.reserve(kTestTasksListSeq.size() + kTestTasksListOmp.size() + kTestTasksListStl.size() +
                       kTestTasksListTbb.size() + kTestTasksListAll.size());
 kAllTestTasks.insert(kAllTestTasks.end(), kTestTasksListSeq.begin(), kTestTasksListSeq.end());
@@ -100,5 +102,3 @@ const auto kTestName = ShkrylevaSShellMergeFuncTests::PrintFuncTestName<Shkrylev
 INSTANTIATE_TEST_SUITE_P(shellMergeTests, ShkrylevaSShellMergeFuncTests, kGtestValues, kTestName);
 
 }  // namespace
-
-}  // namespace shkryleva_s_shell_sort_simple_merge

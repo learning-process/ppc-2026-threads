@@ -11,6 +11,7 @@
 #include "shkryleva_s_shell_sort_simple_merge/seq/include/ops_seq.hpp"
 #include "shkryleva_s_shell_sort_simple_merge/stl/include/ops_stl.hpp"
 #include "shkryleva_s_shell_sort_simple_merge/tbb/include/ops_tbb.hpp"
+#include "util/include/func_test_util.hpp"
 #include "util/include/perf_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -57,6 +58,7 @@ TEST_P(ShkrylevaSShellMergePerfTests, RunPerfModes) {
 
 namespace {
 
+// Один параметр (данные будут сгенерированы в SetUp)
 const std::array<TestType, 1> kPerfParam = {TestType{InType{}, OutType{}}};
 
 const auto kPerfTasksSeq = ppc::util::AddFuncTask<ShkrylevaSShellMergeSEQ, InType>(
@@ -70,7 +72,7 @@ const auto kPerfTasksTbb = ppc::util::AddFuncTask<ShkrylevaSShellMergeTBB, InTyp
 const auto kPerfTasksAll = ppc::util::AddFuncTask<ShkrylevaSShellMergeALL, InType>(
     kPerfParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
 
-std::vector<ppc::util::Task<InType, OutType>> kAllPerfTasks;
+std::vector<ppc::task::Task<InType, OutType>> kAllPerfTasks;
 kAllPerfTasks.reserve(kPerfTasksSeq.size() + kPerfTasksOmp.size() + kPerfTasksStl.size() + kPerfTasksTbb.size() +
                       kPerfTasksAll.size());
 kAllPerfTasks.insert(kAllPerfTasks.end(), kPerfTasksSeq.begin(), kPerfTasksSeq.end());
@@ -85,5 +87,4 @@ const auto kPerfTestName = ShkrylevaSShellMergePerfTests::CustomPerfTestName;
 INSTANTIATE_TEST_SUITE_P(RunModeTests, ShkrylevaSShellMergePerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
-
 }  // namespace shkryleva_s_shell_sort_simple_merge
