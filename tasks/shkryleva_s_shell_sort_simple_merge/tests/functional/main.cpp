@@ -3,9 +3,14 @@
 #include <array>
 #include <cstddef>
 #include <string>
+#include <vector>
 
+#include "shkryleva_s_shell_sort_simple_merge/all/include/ops_all.hpp"
 #include "shkryleva_s_shell_sort_simple_merge/common/include/common.hpp"
+#include "shkryleva_s_shell_sort_simple_merge/omp/include/ops_omp.hpp"
 #include "shkryleva_s_shell_sort_simple_merge/seq/include/ops_seq.hpp"
+#include "shkryleva_s_shell_sort_simple_merge/stl/include/ops_stl.hpp"
+#include "shkryleva_s_shell_sort_simple_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -65,11 +70,31 @@ const std::array<TestType, 8> kTestParam = {
     TestType{InType{1, -2, 3, -5}, OutType{-5, -2, 1, 3}},
     TestType{InType{1, 22, 13, 51, 2, 1, 2, 2, 34, 41}, OutType{1, 1, 2, 2, 2, 13, 22, 34, 41, 51}}};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<ShkrylevaSShellMergeSEQ, InType>(
+const auto kTestTasksListSeq = ppc::util::AddFuncTask<ShkrylevaSShellMergeSEQ, InType>(
     kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+const auto kTestTasksListOmp = ppc::util::AddFuncTask<ShkrylevaSShellMergeOMP, InType>(
+    kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
 
+const auto kTestTasksListStl = ppc::util::AddFuncTask<ShkrylevaSShellMergeSTL, InType>(
+    kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
+
+const auto kTestTasksListTbb = ppc::util::AddFuncTask<ShkrylevaSShellMergeTBB, InType>(
+    kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
+
+const auto kTestTasksListAll = ppc::util::AddFuncTask<ShkrylevaSShellMergeALL, InType>(
+    kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
+
+std::vector<ppc::util::Task<OutType>> kAllTestTasks;
+kAllTestTasks.reserve(kTestTasksListSeq.size() + kTestTasksListOmp.size() + kTestTasksListStl.size() +
+                      kTestTasksListTbb.size() + kTestTasksListAll.size());
+kAllTestTasks.insert(kAllTestTasks.end(), kTestTasksListSeq.begin(), kTestTasksListSeq.end());
+kAllTestTasks.insert(kAllTestTasks.end(), kTestTasksListOmp.begin(), kTestTasksListOmp.end());
+kAllTestTasks.insert(kAllTestTasks.end(), kTestTasksListStl.begin(), kTestTasksListStl.end());
+kAllTestTasks.insert(kAllTestTasks.end(), kTestTasksListTbb.begin(), kTestTasksListTbb.end());
+kAllTestTasks.insert(kAllTestTasks.end(), kTestTasksListAll.begin(), kTestTasksListAll.end());
+
+const auto kGtestValues = ppc::util::ExpandToValues(kAllTestTasks);
 const auto kTestName = ShkrylevaSShellMergeFuncTests::PrintFuncTestName<ShkrylevaSShellMergeFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(shellMergeTests, ShkrylevaSShellMergeFuncTests, kGtestValues, kTestName);
