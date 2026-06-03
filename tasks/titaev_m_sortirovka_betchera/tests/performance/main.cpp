@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <cstddef>
 #include <tuple>
 
 #include "titaev_m_sortirovka_betchera/all/include/ops_all.hpp"
