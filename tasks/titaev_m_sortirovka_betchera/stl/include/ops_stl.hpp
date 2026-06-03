@@ -23,6 +23,9 @@ class TitaevSortirovkaBetcheraSTL : public BaseTask {
 
   static void ConvertToKeys(const InType &input, std::vector<uint64_t> &keys);
   static void RadixSort(std::vector<uint64_t> &keys);
+  static void CountSequential(const std::vector<uint64_t> &keys, std::vector<std::size_t> &count, int pass);
+  static void CountParallel(const std::vector<uint64_t> &keys, std::vector<std::size_t> &count, int pass,
+                            unsigned int num_threads);
   static void RadixCountPass(std::vector<uint64_t> &keys, std::vector<uint64_t> &tmp, int pass);
   static void ConvertFromKeys(const std::vector<uint64_t> &keys, OutType &output);
   void BatcherSort();

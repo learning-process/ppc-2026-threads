@@ -98,44 +98,57 @@ void TitaevSortirovkaBetcheraSTL::ConvertToKeys(const InType &input, std::vector
   });
 }
 
+void TitaevSortirovkaBetcheraSTL::CountSequential(const std::vector<uint64_t> &keys, std::vector<std::size_t> &count,
+                                                  int pass) {
+  const std::size_t n = keys.size();
+  for (std::size_t i = 0; i < n; i++) {
+    const std::size_t bucket = (keys[i] >> (pass * kBits)) & (kBuckets - 1);
+    count[bucket]++;
+  }
+}
+
+void TitaevSortirovkaBetcheraSTL::CountParallel(const std::vector<uint64_t> &keys, std::vector<std::size_t> &count,
+                                                int pass, unsigned int num_threads) {
+  const std::size_t n = keys.size();
+  std::vector<std::vector<std::size_t>> local_count(num_threads, std::vector<std::size_t>(kBuckets, 0));
+  const std::size_t chunk = (n + num_threads - 1) / num_threads;
+
+  std::vector<std::thread> threads;
+  threads.reserve(num_threads);
+  for (unsigned int thr = 0; thr < num_threads; thr++) {
+    const std::size_t begin = thr * chunk;
+    const std::size_t end = std::min(begin + chunk, n);
+    if (begin >= end) {
+      break;
+    }
+    threads.emplace_back([&keys, &local_count, thr, begin, end, pass]() {
+      auto &lc = local_count[thr];
+      for (std::size_t i = begin; i < end; i++) {
+        const std::size_t bucket = (keys[i] >> (pass * kBits)) & (kBuckets - 1);
+        lc[bucket]++;
+      }
+    });
+  }
+  for (auto &th : threads) {
+    th.join();
+  }
+
+  for (int bucket_idx = 0; bucket_idx < kBuckets; bucket_idx++) {
+    for (unsigned int thr = 0; thr < num_threads; thr++) {
+      count[bucket_idx] += local_count[thr][bucket_idx];
+    }
+  }
+}
+
 void TitaevSortirovkaBetcheraSTL::RadixCountPass(std::vector<uint64_t> &keys, std::vector<uint64_t> &tmp, int pass) {
   const std::size_t n = keys.size();
   const unsigned int num_threads = (n < kSequentialThreshold) ? 1U : GetThreadCount();
 
   std::vector<std::size_t> count(kBuckets, 0);
-
   if (num_threads <= 1) {
-    for (std::size_t i = 0; i < n; i++) {
-      const std::size_t bucket = (keys[i] >> (pass * kBits)) & (kBuckets - 1);
-      count[bucket]++;
-    }
+    CountSequential(keys, count, pass);
   } else {
-    std::vector<std::vector<std::size_t>> local_count(num_threads, std::vector<std::size_t>(kBuckets, 0));
-    const std::size_t chunk = (n + num_threads - 1) / num_threads;
-    std::vector<std::thread> threads;
-    threads.reserve(num_threads);
-    for (unsigned int thr = 0; thr < num_threads; thr++) {
-      const std::size_t begin = thr * chunk;
-      const std::size_t end = std::min(begin + chunk, n);
-      if (begin >= end) {
-        break;
-      }
-      threads.emplace_back([&keys, &local_count, thr, begin, end, pass]() {
-        auto &lc = local_count[thr];
-        for (std::size_t i = begin; i < end; i++) {
-          const std::size_t bucket = (keys[i] >> (pass * kBits)) & (kBuckets - 1);
-          lc[bucket]++;
-        }
-      });
-    }
-    for (auto &th : threads) {
-      th.join();
-    }
-    for (int bucket_idx = 0; bucket_idx < kBuckets; bucket_idx++) {
-      for (unsigned int thr = 0; thr < num_threads; thr++) {
-        count[bucket_idx] += local_count[thr][bucket_idx];
-      }
-    }
+    CountParallel(keys, count, pass, num_threads);
   }
 
   for (int i = 1; i < kBuckets; i++) {
@@ -147,7 +160,6 @@ void TitaevSortirovkaBetcheraSTL::RadixCountPass(std::vector<uint64_t> &keys, st
   }
   keys.swap(tmp);
 }
-
 void TitaevSortirovkaBetcheraSTL::RadixSort(std::vector<uint64_t> &keys) {
   const std::size_t n = keys.size();
   if (n <= 1) {
