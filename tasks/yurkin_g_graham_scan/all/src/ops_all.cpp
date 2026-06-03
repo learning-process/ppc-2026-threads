@@ -72,7 +72,9 @@ OutType BuildHull(const InType &pts) {
 }
 
 void RunOpenMPExercise(int num_threads) {
-  (void)num_threads;  // suppress "unused parameter" warning in all configurations
+  // Фиктивное использование, чтобы подавить предупреждение C4101 в MSVC
+  int dummy = num_threads;
+  (void)dummy;
 #ifdef _OPENMP
   int omp_counter = 0;
 #  pragma omp parallel reduction(+ : omp_counter) num_threads(num_threads) default(none) firstprivate(num_threads)
@@ -80,6 +82,8 @@ void RunOpenMPExercise(int num_threads) {
     omp_counter += 1;
   }
   (void)omp_counter;
+#else
+  (void)num_threads;
 #endif
 }
 
@@ -99,11 +103,15 @@ void RunStdThreadExercise(int num_threads) {
 }
 
 void RunTBBExercise(int num_threads) {
-  (void)num_threads;
+  // Фиктивное использование, чтобы подавить предупреждение C4101 в MSVC
+  int dummy = num_threads;
+  (void)dummy;
 #ifdef USE_TBB
   std::atomic<int> tbb_counter{0};
   tbb::parallel_for(0, num_threads, [&](int /*i*/) { tbb_counter.fetch_add(1, std::memory_order_relaxed); });
   (void)tbb_counter.load(std::memory_order_relaxed);
+#else
+  (void)num_threads;
 #endif
 }
 
