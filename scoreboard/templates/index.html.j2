@@ -29,6 +29,36 @@
                 s = s.replace(/\s+/g,' ');
                 return s;
             }
+            const groupTransliteration = [
+                ['shch','щ'], ['yo','ё'], ['jo','ё'], ['zh','ж'], ['kh','х'],
+                ['ts','ц'], ['ch','ч'], ['sh','ш'], ['yu','ю'], ['ju','ю'],
+                ['iu','ю'], ['ya','я'], ['ja','я'], ['ia','я'], ['a','а'],
+                ['b','б'], ['v','в'], ['g','г'], ['d','д'], ['e','е'],
+                ['z','з'], ['i','и'], ['j','й'], ['k','к'], ['l','л'],
+                ['m','м'], ['n','н'], ['o','о'], ['p','п'], ['r','р'],
+                ['s','с'], ['t','т'], ['u','у'], ['f','ф'], ['h','х'],
+                ['c','ц'], ['y','й']
+            ];
+            function normGroup(s){
+                s = norm(s);
+                let out = '';
+                for(let i = 0; i < s.length;){
+                    let matched = false;
+                    for(const [latin, cyrillic] of groupTransliteration){
+                        if(s.startsWith(latin, i)){
+                            out += cyrillic;
+                            i += latin.length;
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if(!matched){
+                        out += s[i];
+                        i++;
+                    }
+                }
+                return out;
+            }
             async function sha256Bytes(str){
                 const enc = new TextEncoder();
                 const buf = enc.encode(str);
@@ -45,7 +75,7 @@
                 const last = norm(document.getElementById('vc_last').value);
                 const first = norm(document.getElementById('vc_first').value);
                 const middle = norm(document.getElementById('vc_middle').value);
-                const group = norm(document.getElementById('vc_group').value);
+                const group = normGroup(document.getElementById('vc_group').value);
                 if(!last || !first || !group || vmax < 1){
                     document.getElementById('vc_result').textContent = 'Fill Last, First, Group';
                     return;
@@ -109,7 +139,7 @@
                     <td style="text-align: center{% if (cell.report | int) > 0 %}; background-color: lightgreen{% endif %}">{{ cell.report }}</td>
                 {% endif %}
             {% endfor %}
-            <td style="text-align: center;">{{ row.total }}</td>
+            <td style="text-align: center;">{{ "%.2f"|format(row.total) }}</td>
         </tr>
         {% endfor %}
     </table>

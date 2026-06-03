@@ -1,0 +1,236 @@
+#include "makoveeva_matmul_double/all/include/ops_all.hpp"
+
+#include <mpi.h>
+#include <omp.h>
+
+#include <cmath>
+#include <cstddef>
+#include <vector>
+
+#include "makoveeva_matmul_double/all/include/common.hpp"
+
+namespace makoveeva_matmul_double_all {
+namespace {
+
+void ParallelMultiplyImpl(size_t n, const std::vector<double> &a, const std::vector<double> &b,
+                          std::vector<double> &c) {
+#pragma omp parallel for default(none) shared(n, a, b, c) collapse(2)
+  for (size_t i = 0; i < n; ++i) {
+    for (size_t j = 0; j < n; ++j) {
+      double sum = 0.0;
+      for (size_t k = 0; k < n; ++k) {
+        sum += a[(i * n) + k] * b[(k * n) + j];
+      }
+      c[(i * n) + j] = sum;
+    }
+  }
+}
+
+void SplitIntoBlocksImpl(const std::vector<double> &src, std::vector<double> &dst, size_t n, size_t bs, int grid_size) {
+#pragma omp parallel for default(none) shared(src, dst, n, bs, grid_size) collapse(2)
+  for (int bi = 0; bi < grid_size; ++bi) {
+    for (int bj = 0; bj < grid_size; ++bj) {
+      const size_t block_start = static_cast<size_t>((bi * grid_size) + bj) * (bs * bs);
+
+      for (size_t i = 0; i < bs; ++i) {
+        for (size_t j = 0; j < bs; ++j) {
+          const size_t src_pos = ((static_cast<size_t>(bi) * bs + i) * n) + (static_cast<size_t>(bj) * bs + j);
+          const size_t dst_pos = block_start + (i * bs) + j;
+          dst[dst_pos] = src[src_pos];
+        }
+      }
+    }
+  }
+}
+
+void MergeFromBlocksImpl(const std::vector<double> &src, std::vector<double> &dst, size_t n, size_t bs, int grid_size) {
+#pragma omp parallel for default(none) shared(src, dst, n, bs, grid_size) collapse(2)
+  for (int bi = 0; bi < grid_size; ++bi) {
+    for (int bj = 0; bj < grid_size; ++bj) {
+      const size_t block_start = static_cast<size_t>((bi * grid_size) + bj) * (bs * bs);
+
+      for (size_t i = 0; i < bs; ++i) {
+        for (size_t j = 0; j < bs; ++j) {
+          const size_t src_pos = block_start + (i * bs) + j;
+          const size_t dst_pos = ((static_cast<size_t>(bi) * bs + i) * n) + (static_cast<size_t>(bj) * bs + j);
+          dst[dst_pos] = src[src_pos];
+        }
+      }
+    }
+  }
+}
+
+void MultiplyBlockPairImpl(const std::vector<double> &block_a, const std::vector<double> &block_b,
+                           std::vector<double> &block_c, size_t bs) {
+#pragma omp parallel for default(none) shared(block_a, block_b, block_c, bs) collapse(2)
+  for (size_t i = 0; i < bs; ++i) {
+    for (size_t j = 0; j < bs; ++j) {
+      double sum = 0.0;
+      for (size_t k = 0; k < bs; ++k) {
+        sum += block_a[(i * bs) + k] * block_b[(k * bs) + j];
+      }
+      block_c[(i * bs) + j] += sum;
+    }
+  }
+}
+
+bool IsValidConfigurationImpl(size_t n, int grid_size, int num_procs) {
+  return ((grid_size * grid_size) == num_procs) && ((n % static_cast<size_t>(grid_size)) == 0);
+}
+
+void HandleFallbackImpl(int my_rank, size_t n, const std::vector<double> &a, const std::vector<double> &b,
+                        std::vector<double> &c) {
+  if (my_rank == 0) {
+    ParallelMultiplyImpl(n, a, b, c);
+  }
+  MPI_Bcast(c.data(), static_cast<int>(n * n), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+}
+
+void DistributeBlocksImpl(int my_rank, const std::vector<double> &blocks_a, const std::vector<double> &blocks_b,
+                          std::vector<double> &local_a, std::vector<double> &local_b, size_t block_sz) {
+  const double *send_a = (my_rank == 0) ? blocks_a.data() : nullptr;
+  const double *send_b = (my_rank == 0) ? blocks_b.data() : nullptr;
+
+  MPI_Scatter(send_a, static_cast<int>(block_sz), MPI_DOUBLE, local_a.data(), static_cast<int>(block_sz), MPI_DOUBLE, 0,
+              MPI_COMM_WORLD);
+
+  MPI_Scatter(send_b, static_cast<int>(block_sz), MPI_DOUBLE, local_b.data(), static_cast<int>(block_sz), MPI_DOUBLE, 0,
+              MPI_COMM_WORLD);
+}
+
+void ExecuteFoxIterationsImpl(int grid_dim, int row_id, int col_id, size_t bs, size_t block_sz, MPI_Comm row_comm,
+                              std::vector<double> &local_a, std::vector<double> &local_b,
+                              std::vector<double> &local_c) {
+  std::vector<double> broadcast_buffer(block_sz);
+
+  for (int stage = 0; stage < grid_dim; ++stage) {
+    const int source = (row_id + stage) % grid_dim;
+
+    if (col_id == source) {
+      broadcast_buffer = local_a;
+    }
+
+    MPI_Bcast(broadcast_buffer.data(), static_cast<int>(block_sz), MPI_DOUBLE, source, row_comm);
+
+    MultiplyBlockPairImpl(broadcast_buffer, local_b, local_c, bs);
+
+    const int target = (((row_id - 1 + grid_dim) % grid_dim) * grid_dim) + col_id;
+    // Исправлено: добавлены скобки для порядка операций
+    const int origin = ((((row_id + 1) % grid_dim) % grid_dim) * grid_dim) + col_id;
+
+    MPI_Sendrecv_replace(local_b.data(), static_cast<int>(block_sz), MPI_DOUBLE, target, 0, origin, 0, MPI_COMM_WORLD,
+                         MPI_STATUS_IGNORE);
+  }
+}
+
+void CollectResultsImpl(int my_rank, int num_procs, size_t n, size_t bs, size_t block_sz, int grid_dim,
+                        const std::vector<double> &local_c, std::vector<double> &c) {
+  std::vector<double> all_blocks;
+
+  if (my_rank == 0) {
+    all_blocks.resize(static_cast<size_t>(num_procs) * block_sz);
+  }
+
+  double *recv_buf = (my_rank == 0) ? all_blocks.data() : nullptr;
+
+  MPI_Gather(local_c.data(), static_cast<int>(block_sz), MPI_DOUBLE, recv_buf, static_cast<int>(block_sz), MPI_DOUBLE,
+             0, MPI_COMM_WORLD);
+
+  if (my_rank == 0) {
+    MergeFromBlocksImpl(all_blocks, c, n, bs, grid_dim);
+  }
+
+  MPI_Bcast(c.data(), static_cast<int>(n * n), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+}
+
+}  // namespace
+
+MatmulDoubleAllTask::MatmulDoubleAllTask(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = std::vector<double>();
+}
+
+bool MatmulDoubleAllTask::ValidationImpl() {
+  const auto &input = GetInput();
+  const size_t n = std::get<0>(input);
+  const auto &a = std::get<1>(input);
+  const auto &b = std::get<2>(input);
+
+  return n > 0 && a.size() == n * n && b.size() == n * n;
+}
+
+bool MatmulDoubleAllTask::PreProcessingImpl() {
+  const auto &input = GetInput();
+  matrix_size_ = std::get<0>(input);
+  matrix_a_ = std::get<1>(input);
+  matrix_b_ = std::get<2>(input);
+  result_matrix_.assign(matrix_size_ * matrix_size_, 0.0);
+
+  return true;
+}
+
+bool MatmulDoubleAllTask::RunImpl() {
+  int my_rank = 0;
+  int num_procs = 1;
+
+  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+
+  const size_t n = matrix_size_;
+  const auto &a = matrix_a_;
+  const auto &b = matrix_b_;
+  auto &c = result_matrix_;
+
+  const int grid_dim = static_cast<int>(std::sqrt(num_procs));
+
+  if (!IsValidConfigurationImpl(n, grid_dim, num_procs)) {
+    HandleFallbackImpl(my_rank, n, a, b, c);
+    GetOutput() = c;
+    return true;
+  }
+
+  const size_t bs = n / static_cast<size_t>(grid_dim);
+  const size_t block_sz = bs * bs;
+
+  const int row_idx = my_rank / grid_dim;
+  const int col_idx = my_rank % grid_dim;
+
+  std::vector<double> local_a_block(block_sz);
+  std::vector<double> local_b_block(block_sz);
+  std::vector<double> local_c_block(block_sz, 0.0);
+
+  std::vector<double> all_blocks_a;
+  std::vector<double> all_blocks_b;
+
+  if (my_rank == 0) {
+    all_blocks_a.resize(static_cast<size_t>(num_procs) * block_sz);
+    all_blocks_b.resize(static_cast<size_t>(num_procs) * block_sz);
+
+    SplitIntoBlocksImpl(a, all_blocks_a, n, bs, grid_dim);
+    SplitIntoBlocksImpl(b, all_blocks_b, n, bs, grid_dim);
+  }
+
+  DistributeBlocksImpl(my_rank, all_blocks_a, all_blocks_b, local_a_block, local_b_block, block_sz);
+
+  MPI_Comm row_comm = MPI_COMM_NULL;
+  MPI_Comm_split(MPI_COMM_WORLD, row_idx, col_idx, &row_comm);
+
+  ExecuteFoxIterationsImpl(grid_dim, row_idx, col_idx, bs, block_sz, row_comm, local_a_block, local_b_block,
+                           local_c_block);
+
+  CollectResultsImpl(my_rank, num_procs, n, bs, block_sz, grid_dim, local_c_block, c);
+
+  if (row_comm != MPI_COMM_NULL) {
+    MPI_Comm_free(&row_comm);
+  }
+
+  GetOutput() = c;
+  return true;
+}
+
+bool MatmulDoubleAllTask::PostProcessingImpl() {
+  return true;
+}
+
+}  // namespace makoveeva_matmul_double_all
