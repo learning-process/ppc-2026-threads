@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <climits>
 #include <cstddef>
-#include <numeric>
 #include <vector>
 
 #include "boltenkov_s_gaussian_kernel/common/include/common.hpp"
@@ -14,7 +13,7 @@
 
 namespace boltenkov_s_gaussian_kernel {
 
-BoltenkovSGaussianKernelALL::BoltenkovSGaussianKernelALL(const InType &in) : kernel_{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}} {
+BoltenkovSGaussianKernelALL::BoltenkovSGaussianKernelALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -54,7 +53,8 @@ bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
   if (n_size_t > INT_MAX || m_size_t > INT_MAX) {
     return false;
   }
-  int n_val = 0, m_val = 0;
+  int n_val = 0;
+  int m_val = 0;
   if (rank == 0) {
     n_val = static_cast<int>(n_size_t);
     m_val = static_cast<int>(m_size_t);
@@ -115,7 +115,7 @@ std::vector<int> BoltenkovSGaussianKernelALL::ApplyGaussianFilterFlat(const std:
                                                                       int shift) {
   const int tmp_rows = local_rows + 2;
   const int tmp_cols = m + 2;
-  std::vector<int> tmp(tmp_rows * tmp_cols, 0);
+  std::vector<int> tmp(static_cast<size_t>(tmp_rows) * static_cast<size_t>(tmp_cols), 0);
 
   const int halo_first = std::max(0, local_start_row - 1);
 
@@ -123,28 +123,34 @@ std::vector<int> BoltenkovSGaussianKernelALL::ApplyGaussianFilterFlat(const std:
     int global_row = local_start_row - 1 + i;
     if (global_row >= halo_first && global_row < halo_first + halo_rows) {
       const int src_offset = (global_row - halo_first) * m;
-      int *dst_row = tmp.data() + i * tmp_cols + 1;
-      std::copy_n(local_halo_flat.data() + src_offset, m, dst_row);
+      int *dst_row = &tmp[static_cast<size_t>(i) * static_cast<size_t>(tmp_cols) + 1];
+      std::copy_n(&local_halo_flat[src_offset], m, dst_row);
     }
   }
 
-  std::vector<int> local_res(local_rows * m, 0);
+  std::vector<int> local_res(static_cast<size_t>(local_rows) * static_cast<size_t>(m), 0);
 
 #pragma omp parallel for num_threads(ppc::util::GetNumThreads()) default(none) \
     shared(tmp, local_res, local_rows, m, kernel, shift, tmp_cols)
   for (int i = 0; i < local_rows; ++i) {
-    const int *row0 = tmp.data() + i * tmp_cols;
+    const int *row0 = &tmp[static_cast<size_t>(i) * static_cast<size_t>(tmp_cols)];
     const int *row1 = row0 + tmp_cols;
     const int *row2 = row1 + tmp_cols;
-    int *out_row = local_res.data() + i * m;
+    int *out_row = &local_res[static_cast<size_t>(i) * static_cast<size_t>(m)];
 
-    const int k00 = kernel[0][0], k01 = kernel[0][1], k02 = kernel[0][2];
-    const int k10 = kernel[1][0], k11 = kernel[1][1], k12 = kernel[1][2];
-    const int k20 = kernel[2][0], k21 = kernel[2][1], k22 = kernel[2][2];
+    const int k00 = kernel[0][0];
+    const int k01 = kernel[0][1];
+    const int k02 = kernel[0][2];
+    const int k10 = kernel[1][0];
+    const int k11 = kernel[1][1];
+    const int k12 = kernel[1][2];
+    const int k20 = kernel[2][0];
+    const int k21 = kernel[2][1];
+    const int k22 = kernel[2][2];
 
     for (int j = 0; j < m; ++j) {
-      int val = row0[j] * k00 + row0[j + 1] * k01 + row0[j + 2] * k02 + row1[j] * k10 + row1[j + 1] * k11 +
-                row1[j + 2] * k12 + row2[j] * k20 + row2[j + 1] * k21 + row2[j + 2] * k22;
+      int val = (row0[j] * k00) + (row0[j + 1] * k01) + (row0[j + 2] * k02) + (row1[j] * k10) + (row1[j + 1] * k11) +
+                (row1[j + 2] * k12) + (row2[j] * k20) + (row2[j + 1] * k21) + (row2[j + 2] * k22);
       out_row[j] = val >> shift;
     }
   }
@@ -153,7 +159,8 @@ std::vector<int> BoltenkovSGaussianKernelALL::ApplyGaussianFilterFlat(const std:
 }
 
 bool BoltenkovSGaussianKernelALL::RunImpl() {
-  int rank = 0, size = 0;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -166,11 +173,11 @@ bool BoltenkovSGaussianKernelALL::RunImpl() {
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&m, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<int> data_flat(n * m);
+  std::vector<int> data_flat(static_cast<size_t>(n) * static_cast<size_t>(m));
   if (rank == 0) {
     const auto &global_data = std::get<2>(GetInput());
     for (int i = 0; i < n; ++i) {
-      std::copy_n(global_data[i].data(), m, data_flat.data() + i * m);
+      std::copy_n(global_data[i].data(), m, &data_flat[static_cast<size_t>(i) * static_cast<size_t>(m)]);
     }
   }
 
@@ -191,10 +198,10 @@ bool BoltenkovSGaussianKernelALL::RunImpl() {
     ComputeScatterParams(n, m, size, rows_per_proc, send_counts, displs);
   }
 
-  std::vector<int> local_halo_flat(halo_rows * m);
+  std::vector<int> local_halo_flat(static_cast<size_t>(halo_rows) * static_cast<size_t>(m));
 
-  MPI_Scatterv(data_flat.data(), send_counts.data(), displs.data(), MPI_INT, local_halo_flat.data(), halo_rows * m,
-               MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(data_flat.data(), send_counts.data(), displs.data(), MPI_INT, local_halo_flat.data(),
+               static_cast<int>(local_halo_flat.size()), MPI_INT, 0, MPI_COMM_WORLD);
 
   std::vector<int> local_res_flat;
   if (local_rows > 0) {
@@ -210,16 +217,16 @@ bool BoltenkovSGaussianKernelALL::RunImpl() {
     ComputeGatherDispls(m, gather_counts, recv_counts, recv_displs);
   }
 
-  std::vector<int> out_flat(n * m);
+  std::vector<int> out_flat(static_cast<size_t>(n) * static_cast<size_t>(m));
 
-  MPI_Gatherv(local_res_flat.data(), local_rows * m, MPI_INT, out_flat.data(), recv_counts.data(), recv_displs.data(),
-              MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Gatherv(local_res_flat.data(), static_cast<int>(local_res_flat.size()), MPI_INT, out_flat.data(),
+              recv_counts.data(), recv_displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
 
-  MPI_Bcast(out_flat.data(), n * m, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(out_flat.data(), static_cast<int>(out_flat.size()), MPI_INT, 0, MPI_COMM_WORLD);
 
   auto &output = GetOutput();
   for (int i = 0; i < n; ++i) {
-    std::copy_n(out_flat.data() + i * m, m, output[i].data());
+    std::copy_n(&out_flat[static_cast<size_t>(i) * static_cast<size_t>(m)], m, output[i].data());
   }
 
   return true;
