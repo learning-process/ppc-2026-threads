@@ -4,6 +4,7 @@
 #include <omp.h>
 
 #include <algorithm>
+#include <array>
 #include <climits>
 #include <cstddef>
 #include <vector>
