@@ -72,9 +72,8 @@ OutType BuildHull(const InType &pts) {
 }
 
 void RunOpenMPExercise(int num_threads) {
-  // Фиктивное использование, чтобы подавить предупреждение C4101 в MSVC
-  int dummy = num_threads;
-  (void)dummy;
+  (void)num_threads;
+
 #ifdef _OPENMP
   int omp_counter = 0;
 #  pragma omp parallel reduction(+ : omp_counter) num_threads(num_threads) default(none) firstprivate(num_threads)
@@ -82,8 +81,6 @@ void RunOpenMPExercise(int num_threads) {
     omp_counter += 1;
   }
   (void)omp_counter;
-#else
-  (void)num_threads;
 #endif
 }
 
@@ -91,27 +88,29 @@ void RunStdThreadExercise(int num_threads) {
   std::atomic<int> th_counter{0};
   std::vector<std::thread> threads;
   threads.reserve(static_cast<std::size_t>(num_threads));
+
   for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
     threads.emplace_back([&th_counter]() { th_counter.fetch_add(1, std::memory_order_relaxed); });
   }
+
   for (auto &th : threads) {
     if (th.joinable()) {
       th.join();
     }
   }
+
   (void)th_counter.load(std::memory_order_relaxed);
 }
 
 void RunTBBExercise(int num_threads) {
-  // Фиктивное использование, чтобы подавить предупреждение C4101 в MSVC
-  int dummy = num_threads;
-  (void)dummy;
+  (void)num_threads;
+
 #ifdef USE_TBB
   std::atomic<int> tbb_counter{0};
+
   tbb::parallel_for(0, num_threads, [&](int /*i*/) { tbb_counter.fetch_add(1, std::memory_order_relaxed); });
+
   (void)tbb_counter.load(std::memory_order_relaxed);
-#else
-  (void)num_threads;
 #endif
 }
 
@@ -119,6 +118,7 @@ void RunMPIExercise() {
 #ifdef USE_MPI
   int initialized = 0;
   MPI_Initialized(&initialized);
+
   if (initialized) {
     MPI_Barrier(MPI_COMM_WORLD);
   }
@@ -139,6 +139,7 @@ bool YurkinGGrahamScanALL::ValidationImpl() {
 
 bool YurkinGGrahamScanALL::PreProcessingImpl() {
   auto &pts = GetInput();
+
   if (pts.empty()) {
     return true;
   }
@@ -152,11 +153,13 @@ bool YurkinGGrahamScanALL::PreProcessingImpl() {
 
   std::vector<Point> tmp;
   tmp.reserve(pts.size());
+
   for (const auto &p : pts) {
     if (tmp.empty() || tmp.back().x != p.x || tmp.back().y != p.y) {
       tmp.push_back(p);
     }
   }
+
   pts.swap(tmp);
 
   return !pts.empty();
@@ -165,10 +168,12 @@ bool YurkinGGrahamScanALL::PreProcessingImpl() {
 bool YurkinGGrahamScanALL::RunImpl() {
   const InType pts_in = GetInput();
   const std::size_t n = pts_in.size();
+
   if (n == 0) {
     GetOutput().clear();
     return true;
   }
+
   if (n == 1) {
     GetOutput() = pts_in;
     return true;
@@ -177,6 +182,7 @@ bool YurkinGGrahamScanALL::RunImpl() {
   OutType hull = BuildHull(pts_in);
 
   const int num_threads = std::max(1, ppc::util::GetNumThreads());
+
   RunOpenMPExercise(num_threads);
   RunStdThreadExercise(num_threads);
   RunTBBExercise(num_threads);
@@ -190,6 +196,7 @@ bool YurkinGGrahamScanALL::PostProcessingImpl() {
   if (GetInput().empty()) {
     return true;
   }
+
   return !GetOutput().empty();
 }
 
