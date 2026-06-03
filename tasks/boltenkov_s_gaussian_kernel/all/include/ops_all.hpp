@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <vector>
 
 #include "boltenkov_s_gaussian_kernel/common/include/common.hpp"
@@ -16,7 +17,7 @@ class BoltenkovSGaussianKernelALL : public BaseTask {
   explicit BoltenkovSGaussianKernelALL(const InType &in);
 
  private:
-  int kernel_[3][3];
+  std::array<std::array<int, 3>, 3> kernel_;
   int shift_ = 4;
 
   bool ValidationImpl() override;
@@ -30,8 +31,8 @@ class BoltenkovSGaussianKernelALL : public BaseTask {
   static void ComputeGatherDispls(int m, const std::vector<int> &gather_counts, std::vector<int> &recv_counts,
                                   std::vector<int> &recv_displs);
   static std::vector<int> ApplyGaussianFilterFlat(const std::vector<int> &local_halo_flat, int halo_rows,
-                                                  int local_start_row, int local_rows, int m, const int kernel[3][3],
-                                                  int shift);
+                                                  int local_start_row, int local_rows, int m,
+                                                  const std::array<std::array<int, 3>, 3> &kernel, int shift);
 };
 
 }  // namespace boltenkov_s_gaussian_kernel

@@ -13,7 +13,8 @@
 
 namespace boltenkov_s_gaussian_kernel {
 
-BoltenkovSGaussianKernelALL::BoltenkovSGaussianKernelALL(const InType &in) {
+BoltenkovSGaussianKernelALL::BoltenkovSGaussianKernelALL(const InType &in)
+    : kernel_{{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}} {
   SetTypeOfTask(GetStaticTypeOfTask());
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -111,7 +112,8 @@ void BoltenkovSGaussianKernelALL::ComputeGatherDispls(int m, const std::vector<i
 
 std::vector<int> BoltenkovSGaussianKernelALL::ApplyGaussianFilterFlat(const std::vector<int> &local_halo_flat,
                                                                       int halo_rows, int local_start_row,
-                                                                      int local_rows, int m, const int kernel[3][3],
+                                                                      int local_rows, int m,
+                                                                      const std::array<std::array<int, 3>, 3> &kernel,
                                                                       int shift) {
   const int tmp_rows = local_rows + 2;
   const int tmp_cols = m + 2;
@@ -123,7 +125,7 @@ std::vector<int> BoltenkovSGaussianKernelALL::ApplyGaussianFilterFlat(const std:
     int global_row = local_start_row - 1 + i;
     if (global_row >= halo_first && global_row < halo_first + halo_rows) {
       const int src_offset = (global_row - halo_first) * m;
-      int *dst_row = &tmp[static_cast<size_t>(i) * static_cast<size_t>(tmp_cols) + 1];
+      int *dst_row = &tmp[(static_cast<size_t>(i) * static_cast<size_t>(tmp_cols)) + 1];
       std::copy_n(&local_halo_flat[src_offset], m, dst_row);
     }
   }
