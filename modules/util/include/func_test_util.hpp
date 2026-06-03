@@ -14,6 +14,7 @@
 #include <utility>
 
 #include "task/include/task.hpp"
+#include "util/include/task_impl_filter.hpp"
 #include "util/include/util.hpp"
 
 namespace ppc::util {
@@ -101,6 +102,7 @@ class BaseRunFuncTests : public ::testing::TestWithParam<FuncTestParam<InType, O
   // NOLINTNEXTLINE(readability-function-cognitive-complexity)
   void ExecuteTaskPipeline() {
     EXPECT_TRUE(task_->Validation());
+    SynchronizeMpiRanks();
     EXPECT_TRUE(task_->PreProcessing());
     EXPECT_TRUE(task_->Run());
     EXPECT_TRUE(task_->PostProcessing());
@@ -125,10 +127,14 @@ auto ExpandToValues(const Tuple &t) {
 template <typename Task, typename InType, typename SizesContainer, std::size_t... Is>
 auto GenTaskTuplesImpl(const SizesContainer &sizes, const std::string &settings_path,
                        std::index_sequence<Is...> /*unused*/) {
-  return std::make_tuple(std::make_tuple(ppc::task::TaskGetter<Task, InType>,
-                                         std::string(GetNamespace<Task>()) + "_" +
-                                             ppc::task::GetStringTaskType(Task::GetStaticTypeOfTask(), settings_path),
-                                         sizes[Is])...);
+  if constexpr (!detail::IsCompiledTaskImplEnabled<Task::GetStaticTypeOfTask()>()) {
+    return std::tuple<>();
+  } else {
+    return std::make_tuple(std::make_tuple(ppc::task::TaskGetter<Task, InType>,
+                                           std::string(GetNamespace<Task>()) + "_" +
+                                               ppc::task::GetStringTaskType(Task::GetStaticTypeOfTask(), settings_path),
+                                           sizes[Is])...);
+  }
 }
 
 template <typename Task, typename InType, typename SizesContainer>
