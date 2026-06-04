@@ -218,5 +218,5 @@ perf tests:
 
 ```text
 cmake --build build --target ppc_perf_tests --config Debug -- /m:1
-.\build\bin\Debug\ppc_perf_tests.exe --gtest_filter="UrinOGrahamPassagePerfTest.*"
+.\build\bin\ppc_perf_tests.exe --gtest_filter="UrinOGrahamPassagePerfTest.*"
 ```

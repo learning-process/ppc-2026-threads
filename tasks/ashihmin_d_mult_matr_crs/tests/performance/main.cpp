@@ -5,6 +5,7 @@
 #include <tuple>
 #include <vector>
 
+#include "ashihmin_d_mult_matr_crs/all/include/ops_all.hpp"
 #include "ashihmin_d_mult_matr_crs/common/include/common.hpp"
 #include "ashihmin_d_mult_matr_crs/omp/include/ops_omp.hpp"
 #include "ashihmin_d_mult_matr_crs/seq/include/ops_seq.hpp"
@@ -81,7 +82,8 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, AshihminDMultMatrCrsSEQ, AshihminDMultMatrCrsOMP, AshihminDMultMatrCrsTBB,
-                                AshihminDMultMatrCrsSTL>(PPC_SETTINGS_ashihmin_d_mult_matr_crs);
+                                AshihminDMultMatrCrsSTL, AshihminDMultMatrCrsALL>(
+        PPC_SETTINGS_ashihmin_d_mult_matr_crs);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
