@@ -56,6 +56,69 @@ def _now_msk():
     return datetime.now()
 
 
+GROUP_TRANSLITERATION = {
+    "SHCH": "Щ",
+    "YO": "Ё",
+    "JO": "Ё",
+    "ZH": "Ж",
+    "KH": "Х",
+    "TS": "Ц",
+    "CH": "Ч",
+    "SH": "Ш",
+    "YU": "Ю",
+    "JU": "Ю",
+    "IU": "Ю",
+    "YA": "Я",
+    "JA": "Я",
+    "IA": "Я",
+    "A": "А",
+    "B": "Б",
+    "V": "В",
+    "G": "Г",
+    "D": "Д",
+    "E": "Е",
+    "Z": "З",
+    "I": "И",
+    "J": "Й",
+    "K": "К",
+    "L": "Л",
+    "M": "М",
+    "N": "Н",
+    "O": "О",
+    "P": "П",
+    "R": "Р",
+    "S": "С",
+    "T": "Т",
+    "U": "У",
+    "F": "Ф",
+    "H": "Х",
+    "C": "Ц",
+    "Y": "Й",
+}
+GROUP_TRANSLITERATION_KEYS = sorted(GROUP_TRANSLITERATION, key=len, reverse=True)
+
+
+def _transliterate_group_number(group_number: str) -> str:
+    result = []
+    i = 0
+    while i < len(group_number):
+        for key in GROUP_TRANSLITERATION_KEYS:
+            if group_number.startswith(key, i):
+                result.append(GROUP_TRANSLITERATION[key])
+                i += len(key)
+                break
+        else:
+            result.append(group_number[i])
+            i += 1
+    return "".join(result)
+
+
+def normalize_group_number(group_number) -> str:
+    """Normalize group identifiers for display, grouping, and variant keys."""
+    normalized = " ".join(str(group_number or "").split()).upper()
+    return _transliterate_group_number(normalized)
+
+
 def _read_tasks_type(task_dir: Path) -> str | None:
     """Read tasks_type from settings.json in the task directory (if present)."""
     settings_path = task_dir / "settings.json"
@@ -123,7 +186,7 @@ directories, tasks_type_map = discover_tasks(tasks_dir, task_types)
 
 
 def load_performance_data_threads(perf_stat_file_path: Path) -> dict:
-    """Load threads performance ratios (T_x/T_seq) from CSV.
+    """Load threads performance raw times from CSV.
     Expected header: Task, SEQ, OMP, TBB, STL, ALL
     """
     perf_stats: dict[str, dict] = {}
@@ -235,10 +298,13 @@ def load_performance_data_processes(perf_stat_file_path: Path) -> dict:
     return perf_stats
 
 
-def calculate_performance_metrics(perf_val, eff_num_proc, task_type, seq_val=None):
+def calculate_performance_metrics(
+    perf_val, eff_num_proc, task_type="omp", seq_val=None
+):
     """Calculate acceleration and efficiency.
 
-    For processes table we pass raw times; for threads legacy ratios we keep old behavior.
+    When seq_val is provided, perf_val and seq_val are raw times in seconds.
+    Without seq_val, perf_val is treated as a legacy T_x/T_seq ratio.
     """
     acceleration = "?"
     efficiency = "?"
@@ -301,6 +367,26 @@ def _find_report_max(points_info, task_type: str) -> int:
             except Exception:
                 return 0
     return 0
+
+
+def _has_single_nonempty_markdown(directory: Path) -> bool:
+    """Check that a directory contains exactly one non-empty Markdown file."""
+    if not directory.exists() or not directory.is_dir():
+        return False
+    markdown_files = sorted(directory.glob("*.md"))
+    if len(markdown_files) != 1:
+        return False
+    try:
+        return bool(markdown_files[0].read_text(errors="ignore").strip())
+    except OSError:
+        return False
+
+
+def _has_thread_report(task_dir: Path, task_type: str) -> bool:
+    """Threads reports require one root report and one implementation report."""
+    return _has_single_nonempty_markdown(task_dir) and _has_single_nonempty_markdown(
+        task_dir / task_type
+    )
 
 
 def _find_performance_max(points_info, task_type: str) -> int:
@@ -572,12 +658,30 @@ def _build_rows_for_task_types(
                 str(s.get("last_name", "")),
                 str(s.get("first_name", "")),
                 str(s.get("middle_name", "")),
-                str(s.get("group_number", "")),
+                normalize_group_number(s.get("group_number", "")),
             )
         except Exception:
             return None
 
-    for dir in sorted(dir_names):
+    def _student_sort_key(dir_name: str):
+        fields = _load_student_fields(dir_name)
+        if not fields:
+            return (1, "", "", "", "", dir_name)
+        last, first, middle, group = fields
+
+        def _normalize_sort_part(value: str) -> str:
+            return " ".join(str(value or "").split()).casefold().replace("ё", "е")
+
+        return (
+            0,
+            _normalize_sort_part(last),
+            _normalize_sort_part(first),
+            _normalize_sort_part(middle),
+            _normalize_sort_part(group),
+            dir_name,
+        )
+
+    for dir in sorted(dir_names, key=_student_sort_key):
         row_types = []
         total_count = 0
         for task_type in selected_task_types:
@@ -592,11 +696,13 @@ def _build_rows_for_task_types(
             )
             task_points += plagiarism_points
 
-            perf_val = perf_stats.get(dir, {}).get(task_type, "?")
+            perf_map = perf_stats.get(dir, {})
+            perf_val = perf_map.get(task_type, "?")
+            seq_val = perf_map.get("seq")
 
             # Calculate acceleration and efficiency if performance data is available
             acceleration, efficiency = calculate_performance_metrics(
-                perf_val, eff_num_proc, task_type
+                perf_val, eff_num_proc, task_type, seq_val=seq_val
             )
 
             # Calculate deadline penalty points
@@ -604,8 +710,8 @@ def _build_rows_for_task_types(
                 dir, task_type, status, deadlines_cfg, tasks_dir
             )
 
-            # Report presence: award R only if report.md exists inside the task directory
-            report_present = (tasks_dir / dir / "report.md").exists()
+            # Threads report: one non-empty markdown in task root and one in the implementation directory.
+            report_present = _has_thread_report(tasks_dir / dir, task_type)
             report_points = _find_report_max(cfg, task_type) if report_present else 0
 
             # Performance points P for non-seq types, based on efficiency
@@ -977,7 +1083,11 @@ def main():
         try:
             with open(info_path, "r") as f:
                 data = json.load(f)
-            return data.get("student", {})
+            student = dict(data.get("student", {}) or {})
+            student["group_number"] = normalize_group_number(
+                student.get("group_number", "")
+            )
+            return student
         except Exception as e:
             logger.warning("Failed to parse %s: %s", info_path, e)
             return None
@@ -1335,7 +1445,7 @@ def main():
         try:
             with open(info_path, "r") as f:
                 data = json.load(f)
-            return data.get("student", {}).get("group_number")
+            return normalize_group_number(data.get("student", {}).get("group_number"))
         except Exception:
             return None
 
@@ -1415,7 +1525,11 @@ def main():
             try:
                 with open(info_path, "r") as f:
                     data = json.load(f)
-                return data.get("student", {})
+                student = dict(data.get("student", {}) or {})
+                student["group_number"] = normalize_group_number(
+                    student.get("group_number", "")
+                )
+                return student
             except Exception:
                 return None
 

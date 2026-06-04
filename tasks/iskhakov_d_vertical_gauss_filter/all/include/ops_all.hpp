@@ -1,0 +1,22 @@
+#pragma once
+
+#include "iskhakov_d_vertical_gauss_filter/common/include/common.hpp"
+#include "task/include/task.hpp"
+
+namespace iskhakov_d_vertical_gauss_filter {
+
+class IskhakovDVerticalGaussFilterALL : public BaseTask {
+ public:
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kALL;
+  }
+  explicit IskhakovDVerticalGaussFilterALL(const InType &in);
+
+ private:
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
+};
+
+}  // namespace iskhakov_d_vertical_gauss_filter
