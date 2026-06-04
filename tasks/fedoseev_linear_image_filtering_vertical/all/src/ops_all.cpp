@@ -57,8 +57,8 @@ void ExchangeGhostRows(int rank, int size, int w, int local_rows, std::vector<in
   }
 
   if (rank < size - 1) {
-    MPI_Sendrecv(local_data.data() + (static_cast<ptrdiff_t>(local_rows) - 1) * w, w, MPI_INT, rank + 1, 0,
-                 ghost_src.data() + (static_cast<ptrdiff_t>(local_rows) + 1) * w, w, MPI_INT, rank + 1, 0,
+    MPI_Sendrecv(local_data.data() + ((static_cast<ptrdiff_t>(local_rows) - 1) * w), w, MPI_INT, rank + 1, 0,
+                 ghost_src.data() + ((static_cast<ptrdiff_t>(local_rows) + 1) * w), w, MPI_INT, rank + 1, 0,
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   } else {
     std::copy(local_data.begin() + (static_cast<ptrdiff_t>(local_rows) - 1) * w,

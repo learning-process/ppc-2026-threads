@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "fedoseev_linear_image_filtering_vertical/common/include/common.hpp"
 #include "task/include/task.hpp"
 
