@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <vector>
 
+#include "dorogin_v_bin_img_conv_hull/all/include/ops_all.hpp"
 #include "dorogin_v_bin_img_conv_hull/common/include/common.hpp"
 #include "dorogin_v_bin_img_conv_hull/omp/include/ops_omp.hpp"
 #include "dorogin_v_bin_img_conv_hull/seq/include/ops_seq.hpp"
@@ -56,7 +57,8 @@ namespace {
 
 const auto kPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, DoroginVBinImgConvHullSeq, DoroginVBinImgConvHullOMP, DoroginVBinImgConvHullTBB,
-                                DoroginVBinImgConvHullSTL>(PPC_SETTINGS_dorogin_v_bin_img_conv_hull);
+                                DoroginVBinImgConvHullSTL, DoroginVBinImgConvHullALL>(
+        PPC_SETTINGS_dorogin_v_bin_img_conv_hull);
 
 const auto kValues = ppc::util::TupleToGTestValues(kPerfTasks);
 

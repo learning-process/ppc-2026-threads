@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "litvyakov_d_shell_sort/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace litvyakov_d_shell_sort {
 
@@ -64,7 +65,7 @@ bool LitvyakovDShellSortTBB::RunImpl() {
     return true;
   }
 
-  const auto threads = static_cast<std::size_t>(tbb::info::default_concurrency());
+  const auto threads = static_cast<std::size_t>(ppc::util::GetNumThreads());
   const std::size_t parts_count = std::min<std::size_t>(threads, vec.size());
   const auto bounds = GetBounds(vec.size(), parts_count);
 
