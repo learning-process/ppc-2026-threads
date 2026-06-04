@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <tuple>
 
 #include "egashin_k_radix_simple_merge/all/include/ops_all.hpp"
 #include "egashin_k_radix_simple_merge/common/include/common.hpp"
