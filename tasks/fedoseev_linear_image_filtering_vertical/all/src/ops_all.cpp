@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <utility>
 #include <vector>
 
 #include "fedoseev_linear_image_filtering_vertical/common/include/common.hpp"
@@ -28,37 +29,41 @@ void BroadcastAndFilter(int w, int h, const std::vector<int> &img, std::vector<i
           int py = row + ky;
           px = std::clamp(px, 0, w - 1);
           py = std::clamp(py, 0, h - 1);
-          sum += img[py * w + px] * kKernel[ky + 1][kx + 1];
+          sum += img[static_cast<size_t>(py) * static_cast<size_t>(w) + static_cast<size_t>(px)] *
+                 kKernel.at(static_cast<size_t>(ky + 1)).at(static_cast<size_t>(kx + 1));
         }
       }
-      result[row * w + col] = sum / kKernelSum;
+      result[static_cast<size_t>(row) * static_cast<size_t>(w) + static_cast<size_t>(col)] = sum / kKernelSum;
     }
   }
 }
 
-void ExchangeGhostRows(int rank, int size, int w, int local_rows, const std::vector<int> &local_data,
+void ExchangeGhostRows(int rank, int size, int w, int local_rows, std::vector<int> &local_data,
                        std::vector<int> &ghost_src) {
   bool is_mpi = ppc::util::IsUnderMpirun();
   if (!is_mpi) {
     std::copy(local_data.begin(), local_data.begin() + w, ghost_src.begin());
-    std::copy(local_data.begin() + (local_rows - 1) * w, local_data.begin() + local_rows * w,
-              ghost_src.begin() + (local_rows + 1) * w);
+    std::copy(local_data.begin() + static_cast<ptrdiff_t>(local_rows - 1) * w,
+              local_data.begin() + static_cast<ptrdiff_t>(local_rows) * w,
+              ghost_src.begin() + static_cast<ptrdiff_t>(local_rows + 1) * w);
     return;
   }
 
   if (rank > 0) {
-    MPI_Sendrecv(const_cast<int *>(local_data.data()), w, MPI_INT, rank - 1, 0, ghost_src.data(), w, MPI_INT, rank - 1,
-                 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Sendrecv(local_data.data(), w, MPI_INT, rank - 1, 0, ghost_src.data(), w, MPI_INT, rank - 1, 0, MPI_COMM_WORLD,
+                 MPI_STATUS_IGNORE);
   } else {
     std::copy(local_data.begin(), local_data.begin() + w, ghost_src.begin());
   }
 
   if (rank < size - 1) {
-    MPI_Sendrecv(const_cast<int *>(local_data.data() + (local_rows - 1) * w), w, MPI_INT, rank + 1, 0,
-                 ghost_src.data() + (local_rows + 1) * w, w, MPI_INT, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Sendrecv(local_data.data() + static_cast<ptrdiff_t>(local_rows - 1) * w, w, MPI_INT, rank + 1, 0,
+                 ghost_src.data() + static_cast<ptrdiff_t>(local_rows + 1) * w, w, MPI_INT, rank + 1, 0, MPI_COMM_WORLD,
+                 MPI_STATUS_IGNORE);
   } else {
-    std::copy(local_data.begin() + (local_rows - 1) * w, local_data.begin() + local_rows * w,
-              ghost_src.begin() + (local_rows + 1) * w);
+    std::copy(local_data.begin() + static_cast<ptrdiff_t>(local_rows - 1) * w,
+              local_data.begin() + static_cast<ptrdiff_t>(local_rows) * w,
+              ghost_src.begin() + static_cast<ptrdiff_t>(local_rows + 1) * w);
   }
 }
 }  // namespace
@@ -145,22 +150,13 @@ void LinearImageFilteringVerticalAll::LocalProcessing(int rank, int size, int nu
         for (int kx = -1; kx <= 1; ++kx) {
           int px = col + kx;
           int py = row_in_ghost + ky;
-          if (px < 0) {
-            px = 0;
-          }
-          if (px >= w_) {
-            px = w_ - 1;
-          }
-          if (py < 0) {
-            py = 0;
-          }
-          if (py >= ghost_rows) {
-            py = ghost_rows - 1;
-          }
-          sum += ghost_src[py * w_ + px] * kKernel.at(ky + 1).at(kx + 1);
+          px = std::clamp(px, 0, w_ - 1);
+          py = std::clamp(py, 0, ghost_rows - 1);
+          sum += ghost_src[static_cast<size_t>(py) * static_cast<size_t>(w_) + static_cast<size_t>(px)] *
+                 kKernel.at(static_cast<size_t>(ky + 1)).at(static_cast<size_t>(kx + 1));
         }
       }
-      local_result_[i * w_ + col] = sum / kKernelSum;
+      local_result_[static_cast<size_t>(i) * static_cast<size_t>(w_) + static_cast<size_t>(col)] = sum / kKernelSum;
     }
   }
 }
@@ -181,7 +177,8 @@ void LinearImageFilteringVerticalAll::GatherData(int rank, int /*size*/) {
 }
 
 bool LinearImageFilteringVerticalAll::RunImpl() {
-  int rank = 0, size = 1;
+  int rank = 0;
+  int size = 1;
   bool is_mpi = ppc::util::IsUnderMpirun();
   if (is_mpi) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -202,13 +199,13 @@ bool LinearImageFilteringVerticalAll::RunImpl() {
       MPI_Bcast(&w, 1, MPI_INT, 0, MPI_COMM_WORLD);
       MPI_Bcast(&h, 1, MPI_INT, 0, MPI_COMM_WORLD);
       if (rank != 0) {
-        img.resize(w * h);
+        img.resize(static_cast<size_t>(w) * static_cast<size_t>(h));
       }
-      MPI_Bcast(img.data(), w * h, MPI_INT, 0, MPI_COMM_WORLD);
+      MPI_Bcast(img.data(), static_cast<int>(img.size()), MPI_INT, 0, MPI_COMM_WORLD);
     } else {
       img = input.data;
     }
-    std::vector<int> result(w * h, 0);
+    std::vector<int> result(static_cast<size_t>(w) * static_cast<size_t>(h), 0);
     int num_threads = ppc::util::GetNumThreads();
     BroadcastAndFilter(w, h, img, result, num_threads);
     GetOutput().width = w;
