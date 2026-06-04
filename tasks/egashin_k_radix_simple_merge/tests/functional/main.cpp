@@ -12,6 +12,7 @@
 #include "egashin_k_radix_simple_merge/omp/include/ops_omp.hpp"
 #include "egashin_k_radix_simple_merge/seq/include/ops_seq.hpp"
 #include "egashin_k_radix_simple_merge/stl/include/ops_stl.hpp"
+#include "egashin_k_radix_simple_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -65,6 +66,7 @@ const std::array<TestType, 8> kTestParam = {{
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<EgashinKRadixSimpleMergeSEQ, InType>(kTestParam, PPC_SETTINGS_egashin_k_radix_simple_merge),
     ppc::util::AddFuncTask<EgashinKRadixSimpleMergeOMP, InType>(kTestParam, PPC_SETTINGS_egashin_k_radix_simple_merge),
+    ppc::util::AddFuncTask<EgashinKRadixSimpleMergeTBB, InType>(kTestParam, PPC_SETTINGS_egashin_k_radix_simple_merge),
     ppc::util::AddFuncTask<EgashinKRadixSimpleMergeSTL, InType>(kTestParam, PPC_SETTINGS_egashin_k_radix_simple_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
