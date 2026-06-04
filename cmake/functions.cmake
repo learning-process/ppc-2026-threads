@@ -56,16 +56,34 @@ function(ppc_collect_implementations_from_settings SETTINGS_PATH SUBDIR
 endfunction()
 
 # Function to configure tests
+function(ppc_get_impl_filter_definitions OUT_DEFINITIONS)
+  set(IMPL_FILTER_DEFINITIONS PPC_TASK_IMPL_FILTERED=1)
+  foreach(IMPL IN LISTS ARGN)
+    string(TOUPPER "${IMPL}" IMPL_UPPER)
+    list(APPEND IMPL_FILTER_DEFINITIONS "PPC_TASK_IMPL_${IMPL_UPPER}=1")
+  endforeach()
+  set(${OUT_DEFINITIONS}
+      "${IMPL_FILTER_DEFINITIONS}"
+      PARENT_SCOPE)
+endfunction()
+
 function(add_tests test_flag exec_target subdir)
   if(${test_flag})
     # Gather all source files under tests/<subdir>
     file(GLOB_RECURSE src_files "${TEST_DIR}/${subdir}/*.cpp"
          "${TEST_DIR}/${subdir}/*.cxx" "${TEST_DIR}/${subdir}/*.cc")
-    target_sources(${exec_target} PRIVATE ${src_files})
-    list(APPEND TEST_EXECUTABLES ${exec_target})
-    set(TEST_EXECUTABLES
-        "${TEST_EXECUTABLES}"
-        PARENT_SCOPE)
+    if(src_files)
+      target_sources(${exec_target} PRIVATE ${src_files})
+      ppc_get_impl_filter_definitions(TEST_IMPL_FILTER_DEFINITIONS ${ARGN})
+      set_property(
+        SOURCE ${src_files}
+        APPEND
+        PROPERTY COMPILE_DEFINITIONS ${TEST_IMPL_FILTER_DEFINITIONS})
+      list(APPEND TEST_EXECUTABLES ${exec_target})
+      set(TEST_EXECUTABLES
+          "${TEST_EXECUTABLES}"
+          PARENT_SCOPE)
+    endif()
   endif()
 endfunction()
 
@@ -127,9 +145,8 @@ function(ppc_configure_subproject SUBDIR)
     list(JOIN DISABLED_IMPLEMENTATIONS ", " DISABLED_IMPLEMENTATIONS_STR)
     message(
       STATUS
-        "${SUBDIR} (skipped: disabled in settings.json -> ${DISABLED_IMPLEMENTATIONS_STR})"
+        "${SUBDIR} (disabled implementations in settings.json -> ${DISABLED_IMPLEMENTATIONS_STR})"
     )
-    return()
   endif()
 
   if(NOT ENABLED_IMPLEMENTATIONS)
@@ -147,8 +164,10 @@ function(ppc_configure_subproject SUBDIR)
   set(TEST_EXECUTABLES "")
 
   # Register functional and performance test runners
-  add_tests(USE_FUNC_TESTS ${FUNC_TEST_EXEC} functional)
-  add_tests(USE_PERF_TESTS ${PERF_TEST_EXEC} performance)
+  add_tests(USE_FUNC_TESTS ${FUNC_TEST_EXEC} functional
+            ${ENABLED_IMPLEMENTATIONS})
+  add_tests(USE_PERF_TESTS ${PERF_TEST_EXEC} performance
+            ${ENABLED_IMPLEMENTATIONS})
 
   message(STATUS "${SUBDIR}")
 
