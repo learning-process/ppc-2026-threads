@@ -29,11 +29,11 @@ void BroadcastAndFilter(int w, int h, const std::vector<int> &img, std::vector<i
           int py = row + ky;
           px = std::clamp(px, 0, w - 1);
           py = std::clamp(py, 0, h - 1);
-          sum += img[static_cast<size_t>(py) * static_cast<size_t>(w) + static_cast<size_t>(px)] *
-                 kKernel.at(static_cast<size_t>(ky + 1)).at(static_cast<size_t>(kx + 1));
+          sum += img[(static_cast<size_t>(py) * static_cast<size_t>(w)) + static_cast<size_t>(px)] *
+                 kKernel.at(ky + 1).at(kx + 1);
         }
       }
-      result[static_cast<size_t>(row) * static_cast<size_t>(w) + static_cast<size_t>(col)] = sum / kKernelSum;
+      result[(static_cast<size_t>(row) * static_cast<size_t>(w)) + static_cast<size_t>(col)] = sum / kKernelSum;
     }
   }
 }
@@ -43,9 +43,9 @@ void ExchangeGhostRows(int rank, int size, int w, int local_rows, std::vector<in
   bool is_mpi = ppc::util::IsUnderMpirun();
   if (!is_mpi) {
     std::copy(local_data.begin(), local_data.begin() + w, ghost_src.begin());
-    std::copy(local_data.begin() + static_cast<ptrdiff_t>(local_rows - 1) * w,
+    std::copy(local_data.begin() + (static_cast<ptrdiff_t>(local_rows) - 1) * w,
               local_data.begin() + static_cast<ptrdiff_t>(local_rows) * w,
-              ghost_src.begin() + static_cast<ptrdiff_t>(local_rows + 1) * w);
+              ghost_src.begin() + (static_cast<ptrdiff_t>(local_rows) + 1) * w);
     return;
   }
 
@@ -57,13 +57,13 @@ void ExchangeGhostRows(int rank, int size, int w, int local_rows, std::vector<in
   }
 
   if (rank < size - 1) {
-    MPI_Sendrecv(local_data.data() + static_cast<ptrdiff_t>(local_rows - 1) * w, w, MPI_INT, rank + 1, 0,
-                 ghost_src.data() + static_cast<ptrdiff_t>(local_rows + 1) * w, w, MPI_INT, rank + 1, 0, MPI_COMM_WORLD,
-                 MPI_STATUS_IGNORE);
+    MPI_Sendrecv(local_data.data() + (static_cast<ptrdiff_t>(local_rows) - 1) * w, w, MPI_INT, rank + 1, 0,
+                 ghost_src.data() + (static_cast<ptrdiff_t>(local_rows) + 1) * w, w, MPI_INT, rank + 1, 0,
+                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   } else {
-    std::copy(local_data.begin() + static_cast<ptrdiff_t>(local_rows - 1) * w,
+    std::copy(local_data.begin() + (static_cast<ptrdiff_t>(local_rows) - 1) * w,
               local_data.begin() + static_cast<ptrdiff_t>(local_rows) * w,
-              ghost_src.begin() + static_cast<ptrdiff_t>(local_rows + 1) * w);
+              ghost_src.begin() + (static_cast<ptrdiff_t>(local_rows) + 1) * w);
   }
 }
 }  // namespace
@@ -152,11 +152,11 @@ void LinearImageFilteringVerticalAll::LocalProcessing(int rank, int size, int nu
           int py = row_in_ghost + ky;
           px = std::clamp(px, 0, w_ - 1);
           py = std::clamp(py, 0, ghost_rows - 1);
-          sum += ghost_src[static_cast<size_t>(py) * static_cast<size_t>(w_) + static_cast<size_t>(px)] *
-                 kKernel.at(static_cast<size_t>(ky + 1)).at(static_cast<size_t>(kx + 1));
+          sum += ghost_src[(static_cast<size_t>(py) * static_cast<size_t>(w_)) + static_cast<size_t>(px)] *
+                 kKernel.at(ky + 1).at(kx + 1);
         }
       }
-      local_result_[static_cast<size_t>(i) * static_cast<size_t>(w_) + static_cast<size_t>(col)] = sum / kKernelSum;
+      local_result_[(static_cast<size_t>(i) * static_cast<size_t>(w_)) + static_cast<size_t>(col)] = sum / kKernelSum;
     }
   }
 }
