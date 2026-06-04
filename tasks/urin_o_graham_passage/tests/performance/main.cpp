@@ -78,11 +78,8 @@ bool PostProcessTask(TaskType &task) {
 }
 
 template <class TaskType>
-void RunTaskPipeline(TaskType &task) {
-  EXPECT_TRUE(ValidateTask(task));
-  EXPECT_TRUE(PreProcessTask(task));
-  EXPECT_TRUE(RunTask(task));
-  EXPECT_TRUE(PostProcessTask(task));
+bool RunTaskPipeline(TaskType &task) {
+  return ValidateTask(task) && PreProcessTask(task) && RunTask(task) && PostProcessTask(task);
 }
 
 void CheckHullValidity(const std::vector<Point> &hull) {
@@ -100,7 +97,7 @@ void RunPerformanceCase(std::string_view version, const InType &input_points) {
   TaskType task(input_points);
 
   auto start = std::chrono::high_resolution_clock::now();
-  RunTaskPipeline(task);
+  EXPECT_TRUE(RunTaskPipeline(task));
   auto end = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
@@ -114,7 +111,7 @@ void RunDifferentSizeCase(std::string_view version, const InType &test_points) {
   TaskType task(test_points);
 
   auto start = std::chrono::high_resolution_clock::now();
-  RunTaskPipeline(task);
+  EXPECT_TRUE(RunTaskPipeline(task));
   auto end = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
