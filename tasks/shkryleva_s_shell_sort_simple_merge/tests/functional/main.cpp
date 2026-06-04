@@ -3,9 +3,14 @@
 #include <array>
 #include <cstddef>
 #include <string>
+#include <vector>
 
+#include "shkryleva_s_shell_sort_simple_merge/all/include/ops_all.hpp"
 #include "shkryleva_s_shell_sort_simple_merge/common/include/common.hpp"
+#include "shkryleva_s_shell_sort_simple_merge/omp/include/ops_omp.hpp"
 #include "shkryleva_s_shell_sort_simple_merge/seq/include/ops_seq.hpp"
+#include "shkryleva_s_shell_sort_simple_merge/stl/include/ops_stl.hpp"
+#include "shkryleva_s_shell_sort_simple_merge/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -24,13 +29,11 @@ class ShkrylevaSShellMergeFuncTests : public ppc::util::BaseRunFuncTests<InType,
     if (output_data.size() != expected_data_.size()) {
       return false;
     }
-
-    for (std::size_t i = 0; i < output_data.size(); i++) {
+    for (std::size_t i = 0; i < output_data.size(); ++i) {
       if (output_data[i] != expected_data_[i]) {
         return false;
       }
     }
-
     return true;
   }
 
@@ -49,7 +52,19 @@ class ShkrylevaSShellMergeFuncTests : public ppc::util::BaseRunFuncTests<InType,
   OutType expected_data_;
 };
 
+}  // namespace shkryleva_s_shell_sort_simple_merge
+
 namespace {
+
+using shkryleva_s_shell_sort_simple_merge::InType;
+using shkryleva_s_shell_sort_simple_merge::OutType;
+using shkryleva_s_shell_sort_simple_merge::ShkrylevaSShellMergeALL;
+using shkryleva_s_shell_sort_simple_merge::ShkrylevaSShellMergeFuncTests;
+using shkryleva_s_shell_sort_simple_merge::ShkrylevaSShellMergeOMP;
+using shkryleva_s_shell_sort_simple_merge::ShkrylevaSShellMergeSEQ;
+using shkryleva_s_shell_sort_simple_merge::ShkrylevaSShellMergeSTL;
+using shkryleva_s_shell_sort_simple_merge::ShkrylevaSShellMergeTBB;
+using shkryleva_s_shell_sort_simple_merge::TestType;
 
 TEST_P(ShkrylevaSShellMergeFuncTests, shellMergeTest) {
   ExecuteTest(GetParam());
@@ -65,15 +80,34 @@ const std::array<TestType, 8> kTestParam = {
     TestType{InType{1, -2, 3, -5}, OutType{-5, -2, 1, 3}},
     TestType{InType{1, 22, 13, 51, 2, 1, 2, 2, 34, 41}, OutType{1, 1, 2, 2, 2, 13, 22, 34, 41, 51}}};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<ShkrylevaSShellMergeSEQ, InType>(
-    kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge);
+// --- Последовательная версия ---
+INSTANTIATE_TEST_SUITE_P(shellMergeTestSeq, ShkrylevaSShellMergeFuncTests,
+                         ppc::util::ExpandToValues(ppc::util::AddFuncTask<ShkrylevaSShellMergeSEQ, InType>(
+                             kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge)),
+                         ShkrylevaSShellMergeFuncTests::PrintFuncTestName<ShkrylevaSShellMergeFuncTests>);
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+// --- OpenMP версия ---
+INSTANTIATE_TEST_SUITE_P(shellMergeTestOmp, ShkrylevaSShellMergeFuncTests,
+                         ppc::util::ExpandToValues(ppc::util::AddFuncTask<ShkrylevaSShellMergeOMP, InType>(
+                             kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge)),
+                         ShkrylevaSShellMergeFuncTests::PrintFuncTestName<ShkrylevaSShellMergeFuncTests>);
 
-const auto kTestName = ShkrylevaSShellMergeFuncTests::PrintFuncTestName<ShkrylevaSShellMergeFuncTests>;
+// --- STL версия ---
+INSTANTIATE_TEST_SUITE_P(shellMergeTestStl, ShkrylevaSShellMergeFuncTests,
+                         ppc::util::ExpandToValues(ppc::util::AddFuncTask<ShkrylevaSShellMergeSTL, InType>(
+                             kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge)),
+                         ShkrylevaSShellMergeFuncTests::PrintFuncTestName<ShkrylevaSShellMergeFuncTests>);
 
-INSTANTIATE_TEST_SUITE_P(shellMergeTests, ShkrylevaSShellMergeFuncTests, kGtestValues, kTestName);
+// --- TBB версия ---
+INSTANTIATE_TEST_SUITE_P(shellMergeTestTbb, ShkrylevaSShellMergeFuncTests,
+                         ppc::util::ExpandToValues(ppc::util::AddFuncTask<ShkrylevaSShellMergeTBB, InType>(
+                             kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge)),
+                         ShkrylevaSShellMergeFuncTests::PrintFuncTestName<ShkrylevaSShellMergeFuncTests>);
+
+// --- ALL версия ---
+INSTANTIATE_TEST_SUITE_P(shellMergeTestAll, ShkrylevaSShellMergeFuncTests,
+                         ppc::util::ExpandToValues(ppc::util::AddFuncTask<ShkrylevaSShellMergeALL, InType>(
+                             kTestParam, PPC_SETTINGS_shkryleva_s_shell_sort_simple_merge)),
+                         ShkrylevaSShellMergeFuncTests::PrintFuncTestName<ShkrylevaSShellMergeFuncTests>);
 
 }  // namespace
-
-}  // namespace shkryleva_s_shell_sort_simple_merge
