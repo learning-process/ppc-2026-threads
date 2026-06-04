@@ -18,7 +18,7 @@ namespace fedoseev_linear_image_filtering_vertical {
 class FedoseevPerfTest : public ppc::util::BaseRunPerfTests<Image, Image> {
  protected:
   void SetUp() override {
-    const int size = 1024;
+    const int size = 4096;
     input_.width = size;
     input_.height = size;
     input_.data.resize(static_cast<size_t>(size) * static_cast<size_t>(size));
