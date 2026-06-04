@@ -6,11 +6,19 @@
 #include <numbers>
 #include <vector>
 
+#include "urin_o_graham_passage/all/include/ops_all.hpp"
 #include "urin_o_graham_passage/common/include/common.hpp"
+#include "urin_o_graham_passage/omp/include/ops_omp.hpp"
+#include "urin_o_graham_passage/seq/include/ops_seq.hpp"
 #include "urin_o_graham_passage/stl/include/ops_stl.hpp"
+#include "urin_o_graham_passage/tbb/include/ops_tbb.hpp"
 
 namespace urin_o_graham_passage {
 namespace {
+
+double Orientation(const Point &p, const Point &q, const Point &r) {
+  return ((q.x - p.x) * (r.y - p.y)) - ((q.y - p.y) * (r.x - p.x));
+}
 
 bool IsConvexHull(const std::vector<Point> &hull) {
   if (hull.size() < 3) {
@@ -21,46 +29,55 @@ bool IsConvexHull(const std::vector<Point> &hull) {
     size_t prev = (i == 0) ? hull.size() - 1 : i - 1;
     size_t next = (i + 1) % hull.size();
 
-    if (UrinOGrahamPassageSTL::Orientation(hull[prev], hull[i], hull[next]) < 0) {
+    if (Orientation(hull[prev], hull[i], hull[next]) < -1e-10) {
       return false;
     }
   }
   return true;
 }
 
-bool ValidateTask(const std::shared_ptr<UrinOGrahamPassageSTL> &task) {
+template <class TaskType>
+bool ValidateTask(const std::shared_ptr<TaskType> &task) {
   return task->Validation();
 }
 
-bool PreProcessTask(const std::shared_ptr<UrinOGrahamPassageSTL> &task) {
+template <class TaskType>
+bool PreProcessTask(const std::shared_ptr<TaskType> &task) {
   return task->PreProcessing();
 }
 
-bool RunTask(const std::shared_ptr<UrinOGrahamPassageSTL> &task) {
+template <class TaskType>
+bool RunTask(const std::shared_ptr<TaskType> &task) {
   return task->Run();
 }
 
-bool PostProcessTask(const std::shared_ptr<UrinOGrahamPassageSTL> &task) {
+template <class TaskType>
+bool PostProcessTask(const std::shared_ptr<TaskType> &task) {
   return task->PostProcessing();
 }
 
-void ExpectValidation(const std::shared_ptr<UrinOGrahamPassageSTL> &task) {
+template <class TaskType>
+void ExpectValidation(const std::shared_ptr<TaskType> &task) {
   EXPECT_TRUE(ValidateTask(task));
 }
 
-void ExpectPreProcessing(const std::shared_ptr<UrinOGrahamPassageSTL> &task) {
+template <class TaskType>
+void ExpectPreProcessing(const std::shared_ptr<TaskType> &task) {
   EXPECT_TRUE(PreProcessTask(task));
 }
 
-void ExpectRun(const std::shared_ptr<UrinOGrahamPassageSTL> &task) {
+template <class TaskType>
+void ExpectRun(const std::shared_ptr<TaskType> &task) {
   EXPECT_TRUE(RunTask(task));
 }
 
-void ExpectPostProcessing(const std::shared_ptr<UrinOGrahamPassageSTL> &task) {
+template <class TaskType>
+void ExpectPostProcessing(const std::shared_ptr<TaskType> &task) {
   EXPECT_TRUE(PostProcessTask(task));
 }
 
-void ExecuteTaskPipeline(const std::shared_ptr<UrinOGrahamPassageSTL> &task) {
+template <class TaskType>
+void ExecuteTaskPipeline(const std::shared_ptr<TaskType> &task) {
   ExpectValidation(task);
   ExpectPreProcessing(task);
   ExpectRun(task);
@@ -80,73 +97,90 @@ void VerifyHull(const std::vector<Point> &hull, size_t expected_size) {
   CheckHullConvexity(hull);
 }
 
+template <class TaskType>
 void RunAndCheckHull(const InType &points, size_t expected_size) {
-  auto task = std::make_shared<UrinOGrahamPassageSTL>(points);
+  auto task = std::make_shared<TaskType>(points);
   ExecuteTaskPipeline(task);
   VerifyHull(task->GetOutput(), expected_size);
 }
 
+template <class TaskType>
 void RunAndExpectFailure(const InType &points) {
-  auto task = std::make_shared<UrinOGrahamPassageSTL>(points);
+  auto task = std::make_shared<TaskType>(points);
   EXPECT_FALSE(task->Validation());
   EXPECT_TRUE(task->GetOutput().empty());
 }
 
-// Тесты
-TEST(UrinOGrahamPassageStl, EmptyInput) {
-  RunAndExpectFailure({});
+void RunAndCheckAllImplementations(const InType &points, size_t expected_size) {
+  RunAndCheckHull<UrinOGrahamPassageSEQ>(points, expected_size);
+  RunAndCheckHull<UrinOGrahamPassageSTL>(points, expected_size);
+  RunAndCheckHull<UrinOGrahamPassageOMP>(points, expected_size);
+  RunAndCheckHull<UrinOGrahamPassageTBB>(points, expected_size);
+  RunAndCheckHull<UrinOGrahamPassageALL>(points, expected_size);
 }
 
-TEST(UrinOGrahamPassageStl, SinglePoint) {
-  RunAndExpectFailure({Point(5.0, 3.0)});
+void RunAndExpectAllImplementationsFailure(const InType &points) {
+  RunAndExpectFailure<UrinOGrahamPassageSEQ>(points);
+  RunAndExpectFailure<UrinOGrahamPassageSTL>(points);
+  RunAndExpectFailure<UrinOGrahamPassageOMP>(points);
+  RunAndExpectFailure<UrinOGrahamPassageTBB>(points);
+  RunAndExpectFailure<UrinOGrahamPassageALL>(points);
 }
 
-TEST(UrinOGrahamPassageStl, TwoDistinctPoints) {
-  RunAndExpectFailure({Point(0.0, 0.0), Point(3.0, 4.0)});
+TEST(UrinOGrahamPassage, EmptyInput) {
+  RunAndExpectAllImplementationsFailure({});
 }
 
-TEST(UrinOGrahamPassageStl, CollinearPoints) {
+TEST(UrinOGrahamPassage, SinglePoint) {
+  RunAndExpectAllImplementationsFailure({Point(5.0, 3.0)});
+}
+
+TEST(UrinOGrahamPassage, TwoDistinctPoints) {
+  RunAndExpectAllImplementationsFailure({Point(0.0, 0.0), Point(3.0, 4.0)});
+}
+
+TEST(UrinOGrahamPassage, CollinearPoints) {
   InType pts = {Point(0.0, 0.0), Point(1.0, 0.0), Point(2.0, 0.0), Point(3.0, 0.0), Point(4.0, 0.0)};
-  RunAndCheckHull(pts, 2);
+  RunAndCheckAllImplementations(pts, 2);
 }
 
-TEST(UrinOGrahamPassageStl, TrianglePoints) {
+TEST(UrinOGrahamPassage, TrianglePoints) {
   InType pts = {Point(0.0, 0.0), Point(4.0, 0.0), Point(2.0, 3.0)};
-  RunAndCheckHull(pts, 3);
+  RunAndCheckAllImplementations(pts, 3);
 }
 
-TEST(UrinOGrahamPassageStl, SquarePoints) {
+TEST(UrinOGrahamPassage, SquarePoints) {
   InType pts = {Point(0.0, 0.0), Point(4.0, 0.0), Point(4.0, 4.0), Point(0.0, 4.0)};
-  RunAndCheckHull(pts, 4);
+  RunAndCheckAllImplementations(pts, 4);
 }
 
-TEST(UrinOGrahamPassageStl, SquareWithInteriorPoint) {
+TEST(UrinOGrahamPassage, SquareWithInteriorPoint) {
   InType pts = {Point(0.0, 0.0), Point(4.0, 0.0), Point(4.0, 4.0), Point(0.0, 4.0), Point(2.0, 2.0)};
-  RunAndCheckHull(pts, 4);
+  RunAndCheckAllImplementations(pts, 4);
 }
 
-TEST(UrinOGrahamPassageStl, RectangleWithCollinearPoints) {
+TEST(UrinOGrahamPassage, RectangleWithCollinearPoints) {
   InType pts = {Point(0.0, 0.0), Point(1.0, 0.0), Point(2.0, 0.0), Point(3.0, 0.0),
                 Point(3.0, 1.0), Point(2.0, 1.0), Point(1.0, 1.0), Point(0.0, 1.0)};
-  RunAndCheckHull(pts, 4);
+  RunAndCheckAllImplementations(pts, 4);
 }
 
-TEST(UrinOGrahamPassageStl, AllIdenticalPoints) {
+TEST(UrinOGrahamPassage, AllIdenticalPoints) {
   InType pts = {Point(3.0, 3.0), Point(3.0, 3.0), Point(3.0, 3.0), Point(3.0, 3.0), Point(3.0, 3.0)};
-  RunAndExpectFailure(pts);
+  RunAndExpectAllImplementationsFailure(pts);
 }
 
-TEST(UrinOGrahamPassageStl, PointOnBoundary) {
+TEST(UrinOGrahamPassage, PointOnBoundary) {
   InType pts = {Point(0.0, 0.0), Point(4.0, 0.0), Point(2.0, 0.0), Point(4.0, 4.0), Point(0.0, 4.0)};
-  RunAndCheckHull(pts, 4);
+  RunAndCheckAllImplementations(pts, 4);
 }
 
-TEST(UrinOGrahamPassageStl, VerticalCollinear) {
+TEST(UrinOGrahamPassage, VerticalCollinear) {
   InType pts = {Point(0.0, 0.0), Point(0.0, 1.0), Point(0.0, 2.0), Point(0.0, 5.0)};
-  RunAndCheckHull(pts, 2);
+  RunAndCheckAllImplementations(pts, 2);
 }
 
-TEST(UrinOGrahamPassageStl, LargeRandomSet) {
+TEST(UrinOGrahamPassage, LargeRandomSet) {
   InType pts;
   const int num_points = 100;
   pts.reserve(static_cast<size_t>(num_points));
@@ -156,13 +190,13 @@ TEST(UrinOGrahamPassageStl, LargeRandomSet) {
     pts.emplace_back(std::cos(angle) * 10.0, std::sin(angle) * 10.0);
   }
 
-  RunAndCheckHull(pts, 100);
+  RunAndCheckAllImplementations(pts, 100);
 }
 
-TEST(UrinOGrahamPassageStl, HexagonWithCenter) {
+TEST(UrinOGrahamPassage, HexagonWithCenter) {
   InType pts = {Point(2.0, 0.0),    Point(1.0, 1.73),  Point(-1.0, 1.73), Point(-2.0, 0.0),
                 Point(-1.0, -1.73), Point(1.0, -1.73), Point(0.0, 0.0)};
-  RunAndCheckHull(pts, 6);
+  RunAndCheckAllImplementations(pts, 6);
 }
 
 }  // namespace

@@ -165,3 +165,25 @@ flowchart TD
 ```
 
 Ключевой общий фрагмент алгоритма — стековое удаление вершин при не левом повороте; он остается последовательным во всех реализациях.
+
+## Инструкция для тестов
+
+func tests:
+```
+cd C:\parallel-programming-threads\ppc-2026-threads
+cmake --build build --target urin_o_graham_passage_seq urin_o_graham_passage_stl urin_o_graham_passage_omp urin_o_graham_passage_tbb urin_o_graham_passage_all --config Debug -- /m:1
+```
+
+```
+cmake --build build --target ppc_func_tests --config Debug -- /m:1
+```
+
+```
+.\build\bin\ppc_func_tests.exe --gtest_filter="UrinOGrahamPassage.*"
+```
+
+perf tests:
+```
+cmake --build build --target ppc_perf_tests --config Debug -- /m:1
+.\build\bin\Debug\ppc_perf_tests.exe --gtest_filter="UrinOGrahamPassagePerfTest.*"
+```
