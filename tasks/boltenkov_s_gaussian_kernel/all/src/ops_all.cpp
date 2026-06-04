@@ -4,6 +4,7 @@
 #include <omp.h>
 
 #include <algorithm>
+#include <array>
 #include <climits>
 #include <cstddef>
 #include <vector>
@@ -49,7 +50,6 @@ bool BoltenkovSGaussianKernelALL::ValidationImpl() {
 bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
   auto n_size_t = std::get<0>(GetInput());
   auto m_size_t = std::get<1>(GetInput());
   if (n_size_t > INT_MAX || m_size_t > INT_MAX) {
@@ -63,7 +63,6 @@ bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
   }
   MPI_Bcast(&n_val, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&m_val, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
   if (n_val < 1e6 && n_val > 0) {
     GetOutput().resize(static_cast<std::size_t>(n_val));
   } else {
@@ -76,231 +75,89 @@ bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
       return false;
     }
   }
-
   return true;
 }
 
-void BoltenkovSGaussianKernelALL::BcastSizes(int &n, int &m, int rank) {
-  if (rank == 0) {
-    n = static_cast<int>(std::get<0>(GetInput()));
-    m = static_cast<int>(std::get<1>(GetInput()));
-  }
-  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&m, 1, MPI_INT, 0, MPI_COMM_WORLD);
+bool BoltenkovSGaussianKernelALL::IsValidSize(int n, int m) {
+  return n > 0 && m > 0 && n < 1e6 && m < 1e6;
 }
 
-void BoltenkovSGaussianKernelALL::SendRowsToOneProcess(int proc, int rows_per_proc, int n, int m,
-                                                       const std::vector<std::vector<int>> &global_data) {
-  int p_start = proc * rows_per_proc;
-  int p_end = std::min(p_start + rows_per_proc, n) - 1;
-  int p_rows = (p_start < n) ? (p_end - p_start + 1) : 0;
-
-  if (p_rows == 0) {
-    int zero = 0;
-    MPI_Send(&zero, 1, MPI_INT, proc, 0, MPI_COMM_WORLD);
-    return;
-  }
-
-  int p_halo_first = std::max(0, p_start - 1);
-  int p_halo_last = std::min(n - 1, p_end + 1);
-  int p_halo_rows = p_halo_last - p_halo_first + 1;
-
-  MPI_Send(&p_halo_rows, 1, MPI_INT, proc, 0, MPI_COMM_WORLD);
-  MPI_Send(&p_halo_first, 1, MPI_INT, proc, 1, MPI_COMM_WORLD);
-  MPI_Send(&p_start, 1, MPI_INT, proc, 2, MPI_COMM_WORLD);
-  MPI_Send(&p_rows, 1, MPI_INT, proc, 3, MPI_COMM_WORLD);
-
-  for (int i = 0; i < p_halo_rows; ++i) {
-    const auto &row = global_data[p_halo_first + i];
-    MPI_Send(row.data(), m, MPI_INT, proc, 4 + i, MPI_COMM_WORLD);
-  }
-}
-
-void BoltenkovSGaussianKernelALL::FillLocalHaloForRoot(int local_start_row, int local_end_row, int n, int m,
-                                                       const std::vector<std::vector<int>> &global_data,
-                                                       std::vector<std::vector<int>> &local_halo) {
-  int halo_first = std::max(0, local_start_row - 1);
-  int halo_last = std::min(n - 1, local_end_row + 1);
-  int halo_rows = halo_last - halo_first + 1;
-
-  if (halo_rows > 0 && m > 0 && halo_rows < 1e6 && m < 1e6) {
-    local_halo.resize(halo_rows);
-    for (int i = 0; i < halo_rows; ++i) {
-      local_halo[i].resize(m);
-    }
-  } else {
-    return;
-  }
-
-  for (int i = 0; i < halo_rows; ++i) {
-    local_halo[i] = global_data[halo_first + i];
-  }
-}
-
-void BoltenkovSGaussianKernelALL::ReceiveRowsOnWorker(int m, int &local_start_row, int &local_rows,
-                                                      std::vector<std::vector<int>> &local_halo) {
-  int recv_halo_rows = 0;
-  MPI_Recv(&recv_halo_rows, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-  if (recv_halo_rows == 0) {
-    local_rows = 0;
-    return;
-  }
-
-  int recv_halo_first = 0;
-  MPI_Recv(&recv_halo_first, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  MPI_Recv(&local_start_row, 1, MPI_INT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  MPI_Recv(&local_rows, 1, MPI_INT, 0, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-  if (recv_halo_rows > 0 && m > 0 && recv_halo_rows < 1e6 && m < 1e6) {
-    local_halo.resize(recv_halo_rows);
-    for (int i = 0; i < recv_halo_rows; ++i) {
-      local_halo[i].resize(m);
-    }
-  } else {
-    return;
-  }
-  for (int i = 0; i < recv_halo_rows; ++i) {
-    MPI_Recv(local_halo[i].data(), m, MPI_INT, 0, 4 + i, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  }
-}
-
-void BoltenkovSGaussianKernelALL::ScatterRows(std::vector<std::vector<int>> &global_data,
-                                              std::vector<std::vector<int>> &local_halo, int &local_start_row,
-                                              int &local_rows, int m, int rank, int size) {
-  int n = static_cast<int>(global_data.size());
-  int rows_per_proc = (n + size - 1) / size;
-
-  local_start_row = rank * rows_per_proc;
-  int local_end_row = std::min(local_start_row + rows_per_proc, n) - 1;
-  local_rows = (local_start_row < n) ? (local_end_row - local_start_row + 1) : 0;
-
-  if (rank == 0) {
-    for (int proc = 1; proc < size; ++proc) {
-      SendRowsToOneProcess(proc, rows_per_proc, n, m, global_data);
-    }
-    if (local_rows > 0) {
-      FillLocalHaloForRoot(local_start_row, local_end_row, n, m, global_data, local_halo);
-    }
-  } else {
-    ReceiveRowsOnWorker(m, local_start_row, local_rows, local_halo);
-  }
-}
-
-void BoltenkovSGaussianKernelALL::GatherResultsRoot(std::vector<std::vector<int>> &local_res, int local_start_row,
-                                                    int local_rows, int m, int size) {
-  for (int i = 0; i < local_rows; ++i) {
-    GetOutput()[local_start_row + i] = local_res[i];
-  }
-
-  for (int proc = 1; proc < size; ++proc) {
-    int p_rows = 0;
-    MPI_Recv(&p_rows, 1, MPI_INT, proc, 10, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    if (p_rows == 0) {
-      continue;
-    }
-
-    int p_start = 0;
-    MPI_Recv(&p_start, 1, MPI_INT, proc, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-    std::vector<std::vector<int>> p_res = std::vector<std::vector<int>>();
-    if (p_rows > 0 && m > 0 && p_rows < 1e6 && m < 1e6) {
-      p_res.resize(p_rows);
-      for (int i = 0; i < p_rows; ++i) {
-        p_res[i].resize(m);
-      }
-    } else {
-      return;
-    }
-    for (int i = 0; i < p_rows; ++i) {
-      MPI_Recv(p_res[i].data(), m, MPI_INT, proc, 12 + i, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    }
-    for (int i = 0; i < p_rows; ++i) {
-      GetOutput()[p_start + i] = p_res[i];
+void BoltenkovSGaussianKernelALL::ComputeScatterParams(int n, int m, int size, int rows_per_proc,
+                                                       std::vector<int> &send_counts, std::vector<int> &displs) {
+  send_counts.assign(size, 0);
+  displs.assign(size, 0);
+  for (int i = 0; i < size; ++i) {
+    int s = i * rows_per_proc;
+    int e = std::min(s + rows_per_proc, n) - 1;
+    int rows = (s < n) ? (e - s + 1) : 0;
+    if (rows > 0) {
+      int h_first = std::max(0, s - 1);
+      int h_last = std::min(n - 1, e + 1);
+      int h_rows = h_last - h_first + 1;
+      send_counts[i] = h_rows * m;
+      displs[i] = h_first * m;
     }
   }
 }
 
-void BoltenkovSGaussianKernelALL::GatherResultsOthers(std::vector<std::vector<int>> &local_res, int local_start_row,
-                                                      int local_rows, int m) {
-  if (local_rows > 0) {
-    MPI_Send(&local_rows, 1, MPI_INT, 0, 10, MPI_COMM_WORLD);
-    MPI_Send(&local_start_row, 1, MPI_INT, 0, 11, MPI_COMM_WORLD);
-    for (int i = 0; i < local_rows; ++i) {
-      MPI_Send(local_res[i].data(), m, MPI_INT, 0, 12 + i, MPI_COMM_WORLD);
-    }
-  } else {
-    int zero = 0;
-    MPI_Send(&zero, 1, MPI_INT, 0, 10, MPI_COMM_WORLD);
+void BoltenkovSGaussianKernelALL::ComputeGatherDispls(int m, const std::vector<int> &gather_counts,
+                                                      std::vector<int> &recv_counts, std::vector<int> &recv_displs) {
+  int size = static_cast<int>(gather_counts.size());
+  recv_counts.resize(size);
+  recv_displs.resize(size);
+  for (int i = 0; i < size; ++i) {
+    recv_counts[i] = gather_counts[i] * m;
+    recv_displs[i] = (i == 0) ? 0 : recv_displs[i - 1] + recv_counts[i - 1];
   }
 }
 
-void BoltenkovSGaussianKernelALL::GatherResults(std::vector<std::vector<int>> &local_res, int local_start_row,
-                                                int local_rows, int m, int rank, int size) {
-  if (rank == 0) {
-    GatherResultsRoot(local_res, local_start_row, local_rows, m, size);
-  } else {
-    GatherResultsOthers(local_res, local_start_row, local_rows, m);
-  }
-}
+std::vector<int> BoltenkovSGaussianKernelALL::ApplyGaussianFilterFlat(const std::vector<int> &local_halo_flat,
+                                                                      int halo_rows, int local_start_row,
+                                                                      int local_rows, int m,
+                                                                      const std::array<std::array<int, 3>, 3> &kernel,
+                                                                      int shift) {
+  const int tmp_rows = local_rows + 2;
+  const int tmp_cols = m + 2;
+  std::vector<int> tmp(static_cast<size_t>(tmp_rows) * static_cast<size_t>(tmp_cols), 0);
 
-std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::CreateValidMatrix(int rows, int cols) {
-  std::vector<std::vector<int>> result;
-  if (rows > 0 && cols > 0 && rows < 1e6 && cols < 1e6) {
-    result.resize(rows);
-    for (int i = 0; i < rows; ++i) {
-      result[i].resize(cols, 0);
-    }
-  }
-  return result;
-}
+  const int halo_first = std::max(0, local_start_row - 1);
 
-void BoltenkovSGaussianKernelALL::FillTmpFromHalo(std::vector<std::vector<int>> &tmp,
-                                                  const std::vector<std::vector<int>> &local_halo, int local_start_row,
-                                                  int local_rows, int m) {
-  int halo_first = std::max(0, local_start_row - 1);
-  int halo_rows = static_cast<int>(local_halo.size());
-
-  for (int i = 0; i < local_rows + 2; ++i) {
+  for (int i = 0; i < tmp_rows; ++i) {
     int global_row = local_start_row - 1 + i;
     if (global_row >= halo_first && global_row < halo_first + halo_rows) {
-      const auto &src = local_halo[global_row - halo_first];
-      auto dst = tmp[i].begin() + 1;
-      for (int j = 0; j < m; ++j) {
-        dst[j] = src[j];
-      }
+      const int src_offset = (global_row - halo_first) * m;
+      int *dst_row = &tmp[(static_cast<size_t>(i) * static_cast<size_t>(tmp_cols)) + 1];
+      std::copy_n(&local_halo_flat[src_offset], m, dst_row);
     }
   }
-}
 
-std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
-    const std::vector<std::vector<int>> &local_halo, int local_start_row, int local_rows, int m) {
-  auto tmp = CreateValidMatrix(local_rows + 2, m + 2);
-  if (tmp.empty()) {
-    return {};
-  }
-
-  FillTmpFromHalo(tmp, local_halo, local_start_row, local_rows, m);
-
-  auto local_res = CreateValidMatrix(local_rows, m);
-  if (local_res.empty()) {
-    return {};
-  }
-
-  const auto &kernel = kernel_;
-  int shift = shift_;
+  std::vector<int> local_res(static_cast<size_t>(local_rows) * static_cast<size_t>(m), 0);
 
 #pragma omp parallel for num_threads(ppc::util::GetNumThreads()) default(none) \
-    shared(tmp, local_res, local_rows, m, kernel, shift)
+    shared(tmp, local_res, local_rows, m, kernel, shift, tmp_cols)
   for (int i = 0; i < local_rows; ++i) {
-    for (int j = 1; j <= m; ++j) {
-      int val = (tmp[i][j - 1] * kernel[0][0]) + (tmp[i][j] * kernel[0][1]) + (tmp[i][j + 1] * kernel[0][2]) +
-                (tmp[i + 1][j - 1] * kernel[1][0]) + (tmp[i + 1][j] * kernel[1][1]) +
-                (tmp[i + 1][j + 1] * kernel[1][2]) + (tmp[i + 2][j - 1] * kernel[2][0]) +
-                (tmp[i + 2][j] * kernel[2][1]) + (tmp[i + 2][j + 1] * kernel[2][2]);
-      local_res[i][j - 1] = val >> shift;
+    const int *row0 = &tmp[static_cast<size_t>(i) * static_cast<size_t>(tmp_cols)];
+    const int *row1 = row0 + tmp_cols;
+    const int *row2 = row1 + tmp_cols;
+    int *out_row = &local_res[static_cast<size_t>(i) * static_cast<size_t>(m)];
+
+    const int k00 = kernel[0][0];
+    const int k01 = kernel[0][1];
+    const int k02 = kernel[0][2];
+    const int k10 = kernel[1][0];
+    const int k11 = kernel[1][1];
+    const int k12 = kernel[1][2];
+    const int k20 = kernel[2][0];
+    const int k21 = kernel[2][1];
+    const int k22 = kernel[2][2];
+
+    for (int j = 0; j < m; ++j) {
+      int val = (row0[j] * k00) + (row0[j + 1] * k01) + (row0[j + 2] * k02) + (row1[j] * k10) + (row1[j + 1] * k11) +
+                (row1[j + 2] * k12) + (row2[j] * k20) + (row2[j + 1] * k21) + (row2[j + 2] * k22);
+      out_row[j] = val >> shift;
     }
   }
+
   return local_res;
 }
 
@@ -312,32 +169,67 @@ bool BoltenkovSGaussianKernelALL::RunImpl() {
 
   int n = static_cast<int>(GetOutput().size());
   int m = static_cast<int>(GetOutput()[0].size());
-  if (n <= 0 || m <= 0 || n >= 1e6 || m >= 1e6) {
+  if (!IsValidSize(n, m)) {
     return false;
   }
-  BcastSizes(n, m, rank);
 
-  std::vector<std::vector<int>> global_data = std::vector<std::vector<int>>();
+  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&m, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  std::vector<int> data_flat(static_cast<size_t>(n) * static_cast<size_t>(m));
   if (rank == 0) {
-    global_data = std::get<2>(GetInput());
-  }
-
-  std::vector<std::vector<int>> local_halo;
-  int local_start_row = 0;
-  int local_rows = 0;
-  ScatterRows(global_data, local_halo, local_start_row, local_rows, m, rank, size);
-
-  std::vector<std::vector<int>> local_res;
-  if (local_rows > 0) {
-    local_res = ApplyGaussianFilter(local_halo, local_start_row, local_rows, m);
-  }
-
-  GatherResults(local_res, local_start_row, local_rows, m, rank, size);
-
-  if (m > 0) {
+    const auto &global_data = std::get<2>(GetInput());
     for (int i = 0; i < n; ++i) {
-      MPI_Bcast(GetOutput()[i].data(), m, MPI_INT, 0, MPI_COMM_WORLD);
+      std::copy_n(global_data[i].data(), m, &data_flat[static_cast<size_t>(i) * static_cast<size_t>(m)]);
     }
+  }
+
+  int rows_per_proc = (n + size - 1) / size;
+  int local_start = rank * rows_per_proc;
+  int local_rows = 0;
+  if (local_start < n) {
+    local_rows = std::min(rows_per_proc, n - local_start);
+  }
+
+  int halo_first = std::max(0, local_start - 1);
+  int halo_last = std::min(n - 1, local_start + local_rows);
+  int halo_rows = (local_rows > 0) ? (halo_last - halo_first + 1) : 0;
+
+  std::vector<int> send_counts(size, 0);
+  std::vector<int> displs(size, 0);
+  if (rank == 0) {
+    ComputeScatterParams(n, m, size, rows_per_proc, send_counts, displs);
+  }
+
+  std::vector<int> local_halo_flat(static_cast<size_t>(halo_rows) * static_cast<size_t>(m));
+
+  MPI_Scatterv(data_flat.data(), send_counts.data(), displs.data(), MPI_INT, local_halo_flat.data(),
+               static_cast<int>(local_halo_flat.size()), MPI_INT, 0, MPI_COMM_WORLD);
+
+  std::vector<int> local_res_flat;
+  if (local_rows > 0) {
+    local_res_flat = ApplyGaussianFilterFlat(local_halo_flat, halo_rows, local_start, local_rows, m, kernel_, shift_);
+  }
+
+  std::vector<int> gather_counts(size, 0);
+  MPI_Gather(&local_rows, 1, MPI_INT, gather_counts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  std::vector<int> recv_counts(size, 0);
+  std::vector<int> recv_displs(size, 0);
+  if (rank == 0) {
+    ComputeGatherDispls(m, gather_counts, recv_counts, recv_displs);
+  }
+
+  std::vector<int> out_flat(static_cast<size_t>(n) * static_cast<size_t>(m));
+
+  MPI_Gatherv(local_res_flat.data(), static_cast<int>(local_res_flat.size()), MPI_INT, out_flat.data(),
+              recv_counts.data(), recv_displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
+
+  MPI_Bcast(out_flat.data(), static_cast<int>(out_flat.size()), MPI_INT, 0, MPI_COMM_WORLD);
+
+  auto &output = GetOutput();
+  for (int i = 0; i < n; ++i) {
+    std::copy_n(&out_flat[static_cast<size_t>(i) * static_cast<size_t>(m)], m, output[i].data());
   }
 
   return true;

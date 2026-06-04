@@ -7,9 +7,12 @@
 #include <tuple>
 #include <vector>
 
+#include "muhammadkhon_i_stressen_alg/all/include/ops_all.hpp"
 #include "muhammadkhon_i_stressen_alg/common/include/common.hpp"
 #include "muhammadkhon_i_stressen_alg/omp/include/ops_omp.hpp"
 #include "muhammadkhon_i_stressen_alg/seq/include/ops_seq.hpp"
+#include "muhammadkhon_i_stressen_alg/stl/include/ops_stl.hpp"
+#include "muhammadkhon_i_stressen_alg/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -47,7 +50,7 @@ class MuhammadkhonIStressenAlgFuncTests : public ppc::util::BaseRunFuncTests<InT
     expected_output_.assign(rows_a * cols_b, 0.0);
     for (size_t i = 0; i < rows_a; ++i) {
       for (size_t k = 0; k < cols_a_rows_b; ++k) {
-        double temp = input_data_.a[(i * cols_a_rows_b) + k];
+        const double temp = input_data_.a[(i * cols_a_rows_b) + k];
         for (size_t j = 0; j < cols_b; ++j) {
           expected_output_[(i * cols_b) + j] += temp * input_data_.b[(k * cols_b) + j];
         }
@@ -90,7 +93,10 @@ const std::array<TestType, 6> kTestParam = {
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<MuhammadkhonIStressenAlgSEQ, InType>(kTestParam, PPC_SETTINGS_muhammadkhon_i_stressen_alg),
-    ppc::util::AddFuncTask<MuhammadkhonIStressenAlgOMP, InType>(kTestParam, PPC_SETTINGS_muhammadkhon_i_stressen_alg));
+    ppc::util::AddFuncTask<MuhammadkhonIStressenAlgOMP, InType>(kTestParam, PPC_SETTINGS_muhammadkhon_i_stressen_alg),
+    ppc::util::AddFuncTask<MuhammadkhonIStressenAlgTBB, InType>(kTestParam, PPC_SETTINGS_muhammadkhon_i_stressen_alg),
+    ppc::util::AddFuncTask<MuhammadkhonIStressenAlgSTL, InType>(kTestParam, PPC_SETTINGS_muhammadkhon_i_stressen_alg),
+    ppc::util::AddFuncTask<MuhammadkhonIStressenAlgALL, InType>(kTestParam, PPC_SETTINGS_muhammadkhon_i_stressen_alg));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

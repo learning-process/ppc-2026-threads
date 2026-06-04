@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <vector>
 
 #include "boltenkov_s_gaussian_kernel/common/include/common.hpp"
@@ -16,7 +17,7 @@ class BoltenkovSGaussianKernelALL : public BaseTask {
   explicit BoltenkovSGaussianKernelALL(const InType &in);
 
  private:
-  std::vector<std::vector<int>> kernel_;
+  std::array<std::array<int, 3>, 3> kernel_;
   int shift_ = 4;
 
   bool ValidationImpl() override;
@@ -24,31 +25,14 @@ class BoltenkovSGaussianKernelALL : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void BcastSizes(int &n, int &m, int rank);
-  static void ScatterRows(std::vector<std::vector<int>> &global_data, std::vector<std::vector<int>> &local_halo,
-                          int &local_start_row, int &local_rows, int m, int rank, int size);
-  void GatherResults(std::vector<std::vector<int>> &local_res, int local_start_row, int local_rows, int m, int rank,
-                     int size);
-  void GatherResultsRoot(std::vector<std::vector<int>> &local_res, int local_start_row, int local_rows, int m,
-                         int size);
-  static void GatherResultsOthers(std::vector<std::vector<int>> &local_res, int local_start_row, int local_rows, int m);
-
-  std::vector<std::vector<int>> ApplyGaussianFilter(const std::vector<std::vector<int>> &local_halo,
-                                                    int local_start_row, int local_rows, int m);
-
-  static std::vector<std::vector<int>> CreateValidMatrix(int rows, int cols);
-  static void FillTmpFromHalo(std::vector<std::vector<int>> &tmp, const std::vector<std::vector<int>> &local_halo,
-                              int local_start_row, int local_rows, int m);
-
-  static void SendRowsToOneProcess(int proc, int rows_per_proc, int n, int m,
-                                   const std::vector<std::vector<int>> &global_data);
-
-  static void FillLocalHaloForRoot(int local_start_row, int local_end_row, int n, int m,
-                                   const std::vector<std::vector<int>> &global_data,
-                                   std::vector<std::vector<int>> &local_halo);
-
-  static void ReceiveRowsOnWorker(int m, int &local_start_row, int &local_rows,
-                                  std::vector<std::vector<int>> &local_halo);
+  static bool IsValidSize(int n, int m);
+  static void ComputeScatterParams(int n, int m, int size, int rows_per_proc, std::vector<int> &send_counts,
+                                   std::vector<int> &displs);
+  static void ComputeGatherDispls(int m, const std::vector<int> &gather_counts, std::vector<int> &recv_counts,
+                                  std::vector<int> &recv_displs);
+  static std::vector<int> ApplyGaussianFilterFlat(const std::vector<int> &local_halo_flat, int halo_rows,
+                                                  int local_start_row, int local_rows, int m,
+                                                  const std::array<std::array<int, 3>, 3> &kernel, int shift);
 };
 
 }  // namespace boltenkov_s_gaussian_kernel

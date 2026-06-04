@@ -8,6 +8,7 @@
 #include <tuple>
 #include <vector>
 
+#include "nazyrov_a_multidim_integral_rectangle/all/include/ops_all.hpp"
 #include "nazyrov_a_multidim_integral_rectangle/common/include/common.hpp"
 #include "nazyrov_a_multidim_integral_rectangle/omp/include/ops_omp.hpp"
 #include "nazyrov_a_multidim_integral_rectangle/seq/include/ops_seq.hpp"
@@ -143,6 +144,8 @@ const auto kTaskList = std::tuple_cat(ppc::util::AddFuncTask<NazyrovAMultidimInt
                                       ppc::util::AddFuncTask<NazyrovAMultidimIntegralRectangleTbb, InType>(
                                           kTestParams, PPC_SETTINGS_nazyrov_a_multidim_integral_rectangle),
                                       ppc::util::AddFuncTask<NazyrovAMultidimIntegralRectangleStl, InType>(
+                                          kTestParams, PPC_SETTINGS_nazyrov_a_multidim_integral_rectangle),
+                                      ppc::util::AddFuncTask<NazyrovAMultidimIntegralRectangleAll, InType>(
                                           kTestParams, PPC_SETTINGS_nazyrov_a_multidim_integral_rectangle));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTaskList);

@@ -1,7 +1,6 @@
 #include "shakirova_e_sobel_edge_detection/omp/include/ops_omp.hpp"
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <cstddef>
 #include <vector>
@@ -31,31 +30,27 @@ bool ShakirovaESobelEdgeDetectionOMP::PreProcessingImpl() {
 }
 
 bool ShakirovaESobelEdgeDetectionOMP::RunImpl() {
-  const std::array<std::array<int, 3>, 3> k_gx = {{{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}}};
-  const std::array<std::array<int, 3>, 3> k_gy = {{{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}}};
-
   auto &out = GetOutput();
   const int h = height_;
   const int w = width_;
+  const int *inp = input_.data();
 
-#pragma omp parallel for default(none) shared(out, k_gx, k_gy) firstprivate(h, w) schedule(static)
+#pragma omp parallel for default(none) shared(out, inp) firstprivate(h, w) schedule(static)
   for (int row = 1; row < h - 1; ++row) {
+    const int *prev = inp + (static_cast<ptrdiff_t>(row - 1) * w);
+    const int *curr = inp + (static_cast<ptrdiff_t>(row) * w);
+    const int *next = inp + (static_cast<ptrdiff_t>(row + 1) * w);
+
     for (int col = 1; col < w - 1; ++col) {
-      int gx = 0;
-      int gy = 0;
+      const int gx =
+          -prev[col - 1] + prev[col + 1] - (2 * curr[col - 1]) + (2 * curr[col + 1]) - next[col - 1] + next[col + 1];
 
-      for (int ky = -1; ky <= 1; ++ky) {
-        for (int kx = -1; kx <= 1; ++kx) {
-          const int pixel = input_[((row + ky) * w) + (col + kx)];
-          const auto ky_idx = static_cast<size_t>(ky) + 1;
-          const auto kx_idx = static_cast<size_t>(kx) + 1;
-          gx += pixel * k_gx.at(ky_idx).at(kx_idx);
-          gy += pixel * k_gy.at(ky_idx).at(kx_idx);
-        }
-      }
+      const int gy = -prev[col - 1] - (2 * prev[col]) - prev[col + 1] + next[col - 1] + (2 * next[col]) + next[col + 1];
 
-      const int magnitude = static_cast<int>(std::sqrt(static_cast<double>((gx * gx) + (gy * gy))));
-      out[(row * w) + col] = std::clamp(magnitude, 0, 255);
+      const int abs_gx = std::abs(gx);
+      const int abs_gy = std::abs(gy);
+      const int magnitude = (std::max(abs_gx, abs_gy) * 123 + std::min(abs_gx, abs_gy) * 51) >> 7;
+      out[(row * w) + col] = std::min(magnitude, 255);
     }
   }
 

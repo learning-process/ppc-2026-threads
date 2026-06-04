@@ -1,254 +1,43 @@
 #include "dergynov_s_integrals_multistep_rectangle/all/include/ops_all.hpp"
 
+#include <mpi.h>
 #include <omp.h>
-#include <tbb/blocked_range.h>
-#include <tbb/parallel_reduce.h>
 
 #include <algorithm>
-#include <atomic>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
-#include <thread>
 #include <utility>
 #include <vector>
 
 #include "dergynov_s_integrals_multistep_rectangle/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace dergynov_s_integrals_multistep_rectangle {
-namespace {
 
-bool ValidateBorders(const std::vector<std::pair<double, double>> &borders) {
-  return std::ranges::all_of(borders, [](const auto &border) {
-    return std::isfinite(border.first) && std::isfinite(border.second) && border.first < border.second;
-  });
-}
-
-void ComputePoint(size_t linear_idx, int steps_count, int dimensions,
-                  const std::vector<std::pair<double, double>> &limits, const std::vector<double> &step_sizes,
-                  std::vector<double> &coordinates) {
-  size_t temp = linear_idx;
-  for (int dimension = dimensions - 1; dimension >= 0; --dimension) {
-    int idx_val = static_cast<int>(temp % static_cast<size_t>(steps_count));
-    temp /= static_cast<size_t>(steps_count);
-    coordinates[dimension] = limits[dimension].first + ((static_cast<double>(idx_val) + 0.5) * step_sizes[dimension]);
-  }
-}
-
-double ComputeSEQ(const std::function<double(const std::vector<double> &)> &function,
-                  const std::vector<std::pair<double, double>> &limits, int steps_count, int dimensions,
-                  const std::vector<double> &step_sizes) {
-  size_t total_points = 1;
-  for (int dim_idx = 0; dim_idx < dimensions; ++dim_idx) {
-    total_points *= static_cast<size_t>(steps_count);
-  }
-
-  double total_sum = 0.0;
-  for (size_t linear_index = 0; linear_index < total_points; ++linear_index) {
-    std::vector<double> point(dimensions);
-    ComputePoint(linear_index, steps_count, dimensions, limits, step_sizes, point);
-    total_sum += function(point);
-  }
-  return total_sum;
-}
-
-double ComputeOMP(const std::function<double(const std::vector<double> &)> &function,
-                  const std::vector<std::pair<double, double>> &limits, int steps_count, int dimensions,
-                  const std::vector<double> &step_sizes) {
-  size_t total_points = 1;
-  for (int dim_idx = 0; dim_idx < dimensions; ++dim_idx) {
-    total_points *= static_cast<size_t>(steps_count);
-  }
-
-  std::vector<double> thread_sums(omp_get_max_threads(), 0.0);
-  int error_flag_value = 0;
-
-#pragma omp parallel default(none) \
-    shared(function, limits, step_sizes, steps_count, dimensions, total_points, thread_sums, error_flag_value)
-  {
-    int thread_id = omp_get_thread_num();
-    double local_sum = 0.0;
-
-#pragma omp for schedule(static)
-    for (size_t linear_index = 0; linear_index < total_points; ++linear_index) {
-      if (error_flag_value != 0) {
-        continue;
-      }
-
-      std::vector<double> point(dimensions);
-      ComputePoint(linear_index, steps_count, dimensions, limits, step_sizes, point);
-
-      double func_value = function(point);
-      if (!std::isfinite(func_value)) {
-#pragma omp atomic write
-        error_flag_value = 1;
-        continue;
-      }
-      local_sum += func_value;
-    }
-
-    thread_sums[thread_id] = local_sum;
-  }
-
-  if (error_flag_value != 0) {
-    return 0.0;
-  }
-
-  double total_sum = 0.0;
-  for (double sum_value : thread_sums) {
-    total_sum += sum_value;
-  }
-  return total_sum;
-}
-
-double ComputeTBB(const std::function<double(const std::vector<double> &)> &function,
-                  const std::vector<std::pair<double, double>> &limits, int steps_count, int dimensions,
-                  const std::vector<double> &step_sizes) {
-  size_t total_points = 1;
-  for (int dim_idx = 0; dim_idx < dimensions; ++dim_idx) {
-    total_points *= static_cast<size_t>(steps_count);
-  }
-
-  double total_sum = tbb::parallel_reduce(tbb::blocked_range<size_t>(0, total_points), 0.0,
-                                          [&](const tbb::blocked_range<size_t> &range, double local_sum) {
-    for (size_t linear_index = range.begin(); linear_index != range.end(); ++linear_index) {
-      std::vector<double> point(dimensions);
-      ComputePoint(linear_index, steps_count, dimensions, limits, step_sizes, point);
-      local_sum += function(point);
-    }
-    return local_sum;
-  }, [](double first, double second) { return first + second; });
-
-  return total_sum;
-}
-
-void ProcessRangeSTL(size_t start, size_t end, const std::function<double(const std::vector<double> &)> &function,
-                     const std::vector<std::pair<double, double>> &limits, int steps_count, int dimensions,
-                     const std::vector<double> &step_sizes, std::atomic<bool> &error_occurred, double &result) {
-  double local_sum = 0.0;
-  for (size_t linear_index = start; linear_index < end && !error_occurred.load(); ++linear_index) {
-    std::vector<double> point(dimensions);
-    ComputePoint(linear_index, steps_count, dimensions, limits, step_sizes, point);
-    double func_value = function(point);
-    if (!std::isfinite(func_value)) {
-      error_occurred.store(true);
-      return;
-    }
-    local_sum += func_value;
-  }
-  result = local_sum;
-}
-
-double ComputeSTL(const std::function<double(const std::vector<double> &)> &function,
-                  const std::vector<std::pair<double, double>> &limits, int steps_count, int dimensions,
-                  const std::vector<double> &step_sizes) {
-  size_t total_points = 1;
-  for (int dim_idx = 0; dim_idx < dimensions; ++dim_idx) {
-    total_points *= static_cast<size_t>(steps_count);
-  }
-
-  unsigned int thread_count = std::thread::hardware_concurrency();
-  if (thread_count == 0) {
-    thread_count = 1;
-  }
-  thread_count = std::min(thread_count, 2U);
-  thread_count = std::min(thread_count, static_cast<unsigned int>(total_points));
-  if (thread_count == 0) {
-    thread_count = 1;
-  }
-
-  std::vector<double> partial_results(thread_count, 0.0);
-  std::atomic<bool> error_occurred{false};
-  std::vector<std::thread> worker_threads;
-  worker_threads.reserve(thread_count);
-
-  size_t chunk_size = total_points / thread_count;
-  size_t remainder = total_points % thread_count;
-  size_t current_start = 0;
-
-  for (unsigned int thread_index = 0; thread_index < thread_count; ++thread_index) {
-    size_t current_end = current_start + chunk_size + (thread_index < remainder ? 1 : 0);
-    worker_threads.emplace_back(ProcessRangeSTL, current_start, current_end, std::cref(function), std::cref(limits),
-                                steps_count, dimensions, std::cref(step_sizes), std::ref(error_occurred),
-                                std::ref(partial_results[thread_index]));
-    current_start = current_end;
-  }
-
-  for (auto &worker : worker_threads) {
-    worker.join();
-  }
-
-  if (error_occurred.load()) {
-    return 0.0;
-  }
-
-  double total_sum = 0.0;
-  for (double partial_value : partial_results) {
-    total_sum += partial_value;
-  }
-  return total_sum;
-}
-
-// Returns false when backend results disagree; true and *out_value set on success (including zero).
-bool ComputeALL(const std::function<double(const std::vector<double> &)> &function,
-                const std::vector<std::pair<double, double>> &limits, int steps_count, int dimensions,
-                double *out_value) {
-  std::vector<double> step_sizes(dimensions);
-  double cell_volume = 1.0;
-
-  for (int dim_idx = 0; dim_idx < dimensions; ++dim_idx) {
-    step_sizes[dim_idx] = (limits[dim_idx].second - limits[dim_idx].first) / static_cast<double>(steps_count);
-    cell_volume *= step_sizes[dim_idx];
-  }
-
-  double seq_result = ComputeSEQ(function, limits, steps_count, dimensions, step_sizes);
-  double omp_result = ComputeOMP(function, limits, steps_count, dimensions, step_sizes);
-  double stl_result = ComputeSTL(function, limits, steps_count, dimensions, step_sizes);
-  double tbb_result = ComputeTBB(function, limits, steps_count, dimensions, step_sizes);
-
-  const double epsilon = 1e-6;
-  bool results_match = true;
-
-  if (std::abs(seq_result - omp_result) > epsilon) {
-    results_match = false;
-  }
-  if (std::abs(seq_result - stl_result) > epsilon) {
-    results_match = false;
-  }
-  if (std::abs(seq_result - tbb_result) > epsilon) {
-    results_match = false;
-  }
-
-  if (!results_match) {
-    return false;
-  }
-
-  *out_value = tbb_result * cell_volume;
-  return true;
-}
-
-}  // namespace
-
-DergynovSIntegralsMultistepRectangleALL::DergynovSIntegralsMultistepRectangleALL(const InType &input_params) {
+DergynovSIntegralsMultistepRectangleALL::DergynovSIntegralsMultistepRectangleALL(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = input_params;
+  GetInput() = in;
   GetOutput() = 0.0;
 }
 
 bool DergynovSIntegralsMultistepRectangleALL::ValidationImpl() {
-  const auto &[target_function, integration_limits, step_count] = GetInput();
+  const auto &[func, borders, n] = GetInput();
 
-  if (!target_function) {
+  if (borders.empty()) {
     return false;
   }
-  if (step_count <= 0) {
-    return false;
-  }
-  if (integration_limits.empty()) {
-    return false;
+  for (const auto &[left, right] : borders) {
+    if (!std::isfinite(left) || !std::isfinite(right)) {
+      return false;
+    }
+    if (left >= right) {
+      return false;
+    }
   }
 
-  return ValidateBorders(integration_limits);
+  return func && (n > 0);
 }
 
 bool DergynovSIntegralsMultistepRectangleALL::PreProcessingImpl() {
@@ -256,19 +45,93 @@ bool DergynovSIntegralsMultistepRectangleALL::PreProcessingImpl() {
   return true;
 }
 
-bool DergynovSIntegralsMultistepRectangleALL::RunImpl() {
-  const auto &input_data = GetInput();
-  const auto &target_function = std::get<0>(input_data);
-  const auto &integration_limits = std::get<1>(input_data);
-  const int step_count = std::get<2>(input_data);
-  const int total_dimensions = static_cast<int>(integration_limits.size());
+namespace {
 
-  double final_result = 0.0;
-  if (!ComputeALL(target_function, integration_limits, step_count, total_dimensions, &final_result)) {
+void FillPoint(size_t linear_idx, int n, int dim, const std::vector<std::pair<double, double>> &borders,
+               const std::vector<double> &h, std::vector<double> &point) {
+  size_t tmp = linear_idx;
+  for (int axis = dim - 1; axis >= 0; --axis) {
+    int idx_val = static_cast<int>(tmp % static_cast<size_t>(n));
+    tmp /= static_cast<size_t>(n);
+    point[axis] = borders[axis].first + ((static_cast<double>(idx_val) + 0.5) * h[axis]);
+  }
+}
+
+}  // namespace
+
+bool DergynovSIntegralsMultistepRectangleALL::RunImpl() {
+  const auto &input = GetInput();
+  const auto &func = std::get<0>(input);
+  const auto &borders = std::get<1>(input);
+  const int n = std::get<2>(input);
+  const int dim = static_cast<int>(borders.size());
+
+  std::vector<double> h(dim);
+  double cell_volume = 1.0;
+  for (int i = 0; i < dim; ++i) {
+    h[i] = (borders[i].second - borders[i].first) / static_cast<double>(n);
+    cell_volume *= h[i];
+  }
+
+  int64_t total_points = 1;
+  for (int i = 0; i < dim; ++i) {
+    total_points *= static_cast<int64_t>(n);
+  }
+
+  int rank = 0;
+  int world_size = 1;
+  const bool is_mpi = ppc::util::IsUnderMpirun();
+
+  if (is_mpi) {
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+  }
+
+  const int64_t chunk = total_points / world_size;
+  const int64_t rem = total_points % world_size;
+  const int64_t start = (rank * chunk) + std::min(rank, static_cast<int>(rem));
+  const int64_t end = start + chunk + (rank < rem ? 1 : 0);
+
+  double local_sum = 0.0;
+  bool error_flag = false;
+
+  const auto func_copy = func;
+  const auto borders_copy = borders;
+  const auto h_copy = h;
+  const int n_copy = n;
+  const int dim_copy = dim;
+  const int64_t start_copy = start;
+  const int64_t end_copy = end;
+
+#pragma omp parallel for schedule(static) reduction(+ : local_sum) shared(error_flag) default(none) \
+    firstprivate(func_copy, borders_copy, h_copy, n_copy, dim_copy, start_copy, end_copy)
+  for (int64_t linear_idx = start_copy; linear_idx < end_copy; ++linear_idx) {
+    if (error_flag) {
+      continue;
+    }
+
+    std::vector<double> point(dim_copy);
+    FillPoint(static_cast<size_t>(linear_idx), n_copy, dim_copy, borders_copy, h_copy, point);
+
+    double f_val = func_copy(point);
+    if (!std::isfinite(f_val)) {
+#pragma omp atomic write
+      error_flag = true;
+      continue;
+    }
+    local_sum += f_val;
+  }
+
+  if (error_flag) {
     return false;
   }
 
-  GetOutput() = final_result;
+  double global_sum = local_sum;
+  if (is_mpi && world_size > 1) {
+    MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  }
+
+  GetOutput() = global_sum * cell_volume;
   return std::isfinite(GetOutput());
 }
 

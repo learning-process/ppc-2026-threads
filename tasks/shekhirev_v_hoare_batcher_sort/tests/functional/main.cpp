@@ -7,6 +7,7 @@
 #include <string>
 #include <tuple>
 
+#include "shekhirev_v_hoare_batcher_sort/all/include/ops_all.hpp"
 #include "shekhirev_v_hoare_batcher_sort/common/include/common.hpp"
 #include "shekhirev_v_hoare_batcher_sort/omp/include/ops_omp.hpp"
 #include "shekhirev_v_hoare_batcher_sort/seq/include/ops_seq.hpp"
@@ -68,6 +69,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ShekhirevHoare
                                            ppc::util::AddFuncTask<ShekhirevHoareBatcherSortSTL, InType>(
                                                kTestParams, PPC_SETTINGS_shekhirev_v_hoare_batcher_sort),
                                            ppc::util::AddFuncTask<ShekhirevHoareBatcherSortTBB, InType>(
+                                               kTestParams, PPC_SETTINGS_shekhirev_v_hoare_batcher_sort),
+                                           ppc::util::AddFuncTask<ShekhirevHoareBatcherSortALL, InType>(
                                                kTestParams, PPC_SETTINGS_shekhirev_v_hoare_batcher_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

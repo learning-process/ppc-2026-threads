@@ -16,6 +16,7 @@
 
 #include "performance/include/performance.hpp"
 #include "task/include/task.hpp"
+#include "util/include/task_impl_filter.hpp"
 #include "util/include/util.hpp"
 
 namespace ppc::util {
@@ -82,6 +83,7 @@ class BaseRunPerfTests : public ::testing::TestWithParam<PerfTestParam<InType, O
     task_ = task_getter(GetTestInputData());
     ppc::performance::Perf perf(task_);
     ppc::performance::PerfAttr perf_attr;
+    SynchronizeMpiRanks();
     SetPerfAttributes(perf_attr);
 
     if (mode == ppc::performance::PerfResults::TypeOfRunning::kPipeline) {
@@ -108,13 +110,17 @@ class BaseRunPerfTests : public ::testing::TestWithParam<PerfTestParam<InType, O
 
 template <typename TaskType, typename InputType>
 auto MakePerfTaskTuples(const std::string &settings_path) {
-  const auto name = std::string(GetNamespace<TaskType>()) + "_" +
-                    ppc::task::GetStringTaskType(TaskType::GetStaticTypeOfTask(), settings_path);
+  if constexpr (!detail::IsCompiledTaskImplEnabled<TaskType::GetStaticTypeOfTask()>()) {
+    return std::tuple<>();
+  } else {
+    const auto name = std::string(GetNamespace<TaskType>()) + "_" +
+                      ppc::task::GetStringTaskType(TaskType::GetStaticTypeOfTask(), settings_path);
 
-  return std::make_tuple(std::make_tuple(ppc::task::TaskGetter<TaskType, InputType>, name,
-                                         ppc::performance::PerfResults::TypeOfRunning::kPipeline),
-                         std::make_tuple(ppc::task::TaskGetter<TaskType, InputType>, name,
-                                         ppc::performance::PerfResults::TypeOfRunning::kTaskRun));
+    return std::make_tuple(std::make_tuple(ppc::task::TaskGetter<TaskType, InputType>, name,
+                                           ppc::performance::PerfResults::TypeOfRunning::kPipeline),
+                           std::make_tuple(ppc::task::TaskGetter<TaskType, InputType>, name,
+                                           ppc::performance::PerfResults::TypeOfRunning::kTaskRun));
+  }
 }
 
 template <typename Tuple, std::size_t... I>

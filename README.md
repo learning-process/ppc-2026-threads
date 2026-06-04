@@ -4,7 +4,6 @@
 [![Pages](https://github.com/learning-process/parallel_programming_course/actions/workflows/pages.yml/badge.svg?branch=master)](https://github.com/learning-process/parallel_programming_course/actions/workflows/pages.yml)
 [![CodeQL](https://github.com/learning-process/ppc-2026-threads/actions/workflows/codeql.yml/badge.svg?branch=master)](https://github.com/learning-process/ppc-2026-threads/actions/workflows/codeql.yml)
 [![codecov](https://codecov.io/gh/learning-process/ppc-2026-threads/graph/badge.svg?token=qCOtqeFyIz)](https://codecov.io/gh/learning-process/ppc-2026-threads)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/learning-process/ppc-2026-threads/badge)](https://scorecard.dev/viewer/?uri=github.com/learning-process/ppc-2026-threads)
 
 Welcome to the Parallel Programming Course!
 
