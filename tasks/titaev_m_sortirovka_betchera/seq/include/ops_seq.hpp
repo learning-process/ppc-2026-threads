@@ -25,8 +25,7 @@ class TitaevSortirovkaBetcheraSEQ : public BaseTask {
   static void RadixSort(std::vector<uint64_t> &keys);
   static void ConvertFromKeys(const std::vector<uint64_t> &keys, OutType &output);
   void BatcherSort();
-
-  static void BatcherStep(OutType &result, size_t n, size_t step, size_t stage);
+  static void BatcherStage(OutType &result, std::size_t array_size, std::size_t block, std::size_t step);
 };
 
 }  // namespace titaev_m_sortirovka_betchera

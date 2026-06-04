@@ -12,33 +12,29 @@ namespace titaev_m_sortirovka_betchera {
 namespace {
 
 uint64_t DoubleToOrderedUint(double value) {
-  uint64_t x = 0;
-  std::memcpy(&x, &value, sizeof(double));
-
+  uint64_t bits = 0;
+  std::memcpy(&bits, &value, sizeof(double));
   constexpr uint64_t kSignMask = (1ULL << 63);
-
-  if ((x & kSignMask) != 0ULL) {
-    x = ~x;
+  if ((bits & kSignMask) != 0ULL) {
+    bits = ~bits;
   } else {
-    x ^= kSignMask;
+    bits ^= kSignMask;
   }
-
-  return x;
+  return bits;
 }
 
-double OrderedUintToDouble(uint64_t x) {
+double OrderedUintToDouble(uint64_t bits) {
   constexpr uint64_t kSignMask = (1ULL << 63);
-
-  if ((x & kSignMask) != 0ULL) {
-    x ^= kSignMask;
+  if ((bits & kSignMask) != 0ULL) {
+    bits ^= kSignMask;
   } else {
-    x = ~x;
+    bits = ~bits;
   }
-
   double result = 0.0;
-  std::memcpy(&result, &x, sizeof(double));
+  std::memcpy(&result, &bits, sizeof(double));
   return result;
 }
+
 }  // namespace
 
 TitaevSortirovkaBetcheraSEQ::TitaevSortirovkaBetcheraSEQ(const InType &in) {
@@ -57,14 +53,14 @@ bool TitaevSortirovkaBetcheraSEQ::PreProcessingImpl() {
 }
 
 void TitaevSortirovkaBetcheraSEQ::ConvertToKeys(const InType &input, std::vector<uint64_t> &keys) {
-  const size_t n = input.size();
-  for (size_t i = 0; i < n; i++) {
+  const std::size_t n = input.size();
+  for (std::size_t i = 0; i < n; i++) {
     keys[i] = DoubleToOrderedUint(input[i]);
   }
 }
 
 void TitaevSortirovkaBetcheraSEQ::RadixSort(std::vector<uint64_t> &keys) {
-  const size_t n = keys.size();
+  const std::size_t n = keys.size();
   if (n <= 1) {
     return;
   }
@@ -76,10 +72,10 @@ void TitaevSortirovkaBetcheraSEQ::RadixSort(std::vector<uint64_t> &keys) {
   std::vector<uint64_t> tmp(n);
 
   for (int pass = 0; pass < kPasses; pass++) {
-    std::vector<size_t> count(kBuckets, 0);
+    std::vector<std::size_t> count(kBuckets, 0);
 
-    for (size_t i = 0; i < n; i++) {
-      size_t bucket = (keys[i] >> (pass * kBits)) & (kBuckets - 1);
+    for (std::size_t i = 0; i < n; i++) {
+      const std::size_t bucket = (keys[i] >> (pass * kBits)) & (kBuckets - 1);
       count[bucket]++;
     }
 
@@ -87,8 +83,8 @@ void TitaevSortirovkaBetcheraSEQ::RadixSort(std::vector<uint64_t> &keys) {
       count[i] += count[i - 1];
     }
 
-    for (size_t i = n; i-- > 0;) {
-      size_t bucket = (keys[i] >> (pass * kBits)) & (kBuckets - 1);
+    for (std::size_t i = n; i-- > 0;) {
+      const std::size_t bucket = (keys[i] >> (pass * kBits)) & (kBuckets - 1);
       tmp[--count[bucket]] = keys[i];
     }
 
@@ -97,42 +93,44 @@ void TitaevSortirovkaBetcheraSEQ::RadixSort(std::vector<uint64_t> &keys) {
 }
 
 void TitaevSortirovkaBetcheraSEQ::ConvertFromKeys(const std::vector<uint64_t> &keys, OutType &output) {
-  const size_t n = keys.size();
+  const std::size_t n = keys.size();
   output.resize(n);
-  for (size_t i = 0; i < n; i++) {
+  for (std::size_t i = 0; i < n; i++) {
     output[i] = OrderedUintToDouble(keys[i]);
   }
 }
 
-void TitaevSortirovkaBetcheraSEQ::BatcherStep(OutType &result, size_t n, size_t step, size_t stage) {
-  for (size_t i = 0; i < n; i++) {
-    size_t j = i ^ stage;
-    if (j <= i || j >= n) {
+void TitaevSortirovkaBetcheraSEQ::BatcherStage(OutType &result, std::size_t array_size, std::size_t block,
+                                               std::size_t step) {
+  for (std::size_t i = 0; i < array_size; i++) {
+    const std::size_t partner = i ^ step;
+    if (partner <= i) {
       continue;
     }
-
-    const bool ascending = (i & step) == 0;
-    const bool need_swap = ascending ? result[i] > result[j] : result[i] < result[j];
+    const bool ascending = ((i & block) == 0);
+    const bool need_swap = ascending ? (result[i] > result[partner]) : (result[i] < result[partner]);
     if (need_swap) {
-      std::swap(result[i], result[j]);
+      std::swap(result[i], result[partner]);
     }
   }
 }
 
 void TitaevSortirovkaBetcheraSEQ::BatcherSort() {
   auto &result = GetOutput();
-  const size_t n = result.size();
-
-  for (size_t step = 1; step < n; step <<= 1) {
-    for (size_t stage = step; stage > 0; stage >>= 1) {
-      BatcherStep(result, n, step, stage);
+  const std::size_t n = result.size();
+  if (n < 2) {
+    return;
+  }
+  for (std::size_t block = 2; block <= n; block <<= 1) {
+    for (std::size_t step = block >> 1; step > 0; step >>= 1) {
+      BatcherStage(result, n, block, step);
     }
   }
 }
 
 bool TitaevSortirovkaBetcheraSEQ::RunImpl() {
   auto &input = GetInput();
-  const size_t n = input.size();
+  const std::size_t n = input.size();
   if (n <= 1) {
     return true;
   }

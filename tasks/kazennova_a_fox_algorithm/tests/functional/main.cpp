@@ -7,9 +7,11 @@
 #include <tuple>
 #include <vector>
 
+#include "kazennova_a_fox_algorithm/all/include/ops_all.hpp"
 #include "kazennova_a_fox_algorithm/common/include/common.hpp"
 #include "kazennova_a_fox_algorithm/omp/include/ops_omp.hpp"
 #include "kazennova_a_fox_algorithm/seq/include/ops_seq.hpp"
+#include "kazennova_a_fox_algorithm/stl/include/ops_stl.hpp"
 #include "kazennova_a_fox_algorithm/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -71,7 +73,9 @@ const std::array<TestType, 4> kTestParam = {std::make_tuple(2, "2x2"), std::make
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KazennovaATestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_kazennova_a_fox_algorithm),
     ppc::util::AddFuncTask<KazennovaATestTaskOMP, InType>(kTestParam, PPC_SETTINGS_kazennova_a_fox_algorithm),
-    ppc::util::AddFuncTask<KazennovaATestTaskTBB, InType>(kTestParam, PPC_SETTINGS_kazennova_a_fox_algorithm));
+    ppc::util::AddFuncTask<KazennovaATestTaskTBB, InType>(kTestParam, PPC_SETTINGS_kazennova_a_fox_algorithm),
+    ppc::util::AddFuncTask<KazennovaATestTaskSTL, InType>(kTestParam, PPC_SETTINGS_kazennova_a_fox_algorithm),
+    ppc::util::AddFuncTask<KazennovaATestTaskALL, InType>(kTestParam, PPC_SETTINGS_kazennova_a_fox_algorithm));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = KazennovaAFuncTestSeq::PrintFuncTestName<KazennovaAFuncTestSeq>;

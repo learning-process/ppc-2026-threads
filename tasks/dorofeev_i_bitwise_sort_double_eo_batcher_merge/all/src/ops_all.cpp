@@ -1,16 +1,12 @@
 #include "dorofeev_i_bitwise_sort_double_eo_batcher_merge/all/include/ops_all.hpp"
 
 #include <mpi.h>
-#include <omp.h>
 #include <tbb/tbb.h>
 
 #include <algorithm>
-#include <atomic>
 #include <cstdint>
 #include <cstring>
 #include <limits>
-#include <thread>
-#include <utility>
 #include <vector>
 
 #include "dorofeev_i_bitwise_sort_double_eo_batcher_merge/common/include/common.hpp"
@@ -84,10 +80,8 @@ void OddEvenMergeIterative(double *arr, size_t start, size_t n) {
   if (n <= 1) {
     return;
   }
-
   size_t step = n / 2;
   CompareExchangeBlocks(arr, start, step);
-
   step /= 2;
   for (; step > 0; step /= 2) {
     for (size_t i = step; i < n - step; i += step * 2) {
@@ -96,60 +90,124 @@ void OddEvenMergeIterative(double *arr, size_t start, size_t n) {
   }
 }
 
-void ProcessChunkALL(double *raw_data, int chunk_idx, size_t chunk_size) {
+void ProcessChunkTBB(double *raw_data, int chunk_idx, size_t chunk_size) {
   size_t start_idx = static_cast<size_t>(chunk_idx) * chunk_size;
   std::vector<double> local_arr(chunk_size);
-  double *local_raw = local_arr.data();
-
   for (size_t j = 0; j < chunk_size; ++j) {
-    local_raw[j] = raw_data[start_idx + j];
+    local_arr[j] = raw_data[start_idx + j];
   }
   RadixSortDouble(local_arr);
   for (size_t j = 0; j < chunk_size; ++j) {
-    raw_data[start_idx + j] = local_raw[j];
+    raw_data[start_idx + j] = local_arr[j];
   }
 }
 
-// Та самая магия линковки, вынесенная в отдельную функцию
-void RunDummyLinkageChecks(int num_threads) {
-  int dummy = 1;
-  dummy *= num_threads;
-
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  if (rank == 0) {
-    std::atomic<int> counter(0);
-#pragma omp parallel default(none) shared(counter) num_threads(num_threads)
-    {
-      counter++;
+void ExecuteTBBSortLocal(double *raw_data, size_t total_size, size_t chunk_size, int num_chunks_int) {
+  int num_threads = ppc::util::GetNumThreads();
+  tbb::task_arena arena(num_threads > 0 ? num_threads : 1);
+  arena.execute([&] {
+    tbb::parallel_for(tbb::blocked_range<int>(0, num_chunks_int),
+                      [raw_data, chunk_size](const tbb::blocked_range<int> &r) {
+      for (int i = r.begin(); i != r.end(); ++i) {
+        ProcessChunkTBB(raw_data, i, chunk_size);
+      }
+    });
+    for (size_t size = chunk_size; size < total_size; size *= 2) {
+      int merges_count = static_cast<int>(total_size / (size * 2));
+      tbb::parallel_for(tbb::blocked_range<int>(0, merges_count), [raw_data, size](const tbb::blocked_range<int> &r) {
+        for (int i = r.begin(); i != r.end(); ++i) {
+          OddEvenMergeIterative(raw_data, static_cast<size_t>(i) * 2 * size, 2 * size);
+        }
+      });
     }
-    dummy /= (counter > 0 ? counter.load() : 1);
-  } else {
-    dummy /= num_threads;
+  });
+}
+
+void PerformLocalTBBSort(double *data, size_t total_size) {
+  if (total_size == 0) {
+    return;
+  }
+  int num_threads = ppc::util::GetNumThreads();
+  if (num_threads <= 0) {
+    num_threads = 1;
+  }
+  size_t num_chunks = 1;
+  while (num_chunks * 2 <= static_cast<size_t>(num_threads) && num_chunks * 2 <= total_size) {
+    num_chunks *= 2;
+  }
+  ExecuteTBBSortLocal(data, total_size, total_size / num_chunks, static_cast<int>(num_chunks));
+}
+
+void PerformFinalMergeTBB(double *raw_data, size_t local_chunk_size, size_t pow2) {
+  int num_threads = ppc::util::GetNumThreads();
+  tbb::task_arena arena(num_threads > 0 ? num_threads : 1);
+  arena.execute([&] {
+    for (size_t size = local_chunk_size; size < pow2; size *= 2) {
+      int merges_count = static_cast<int>(pow2 / (size * 2));
+      tbb::parallel_for(tbb::blocked_range<int>(0, merges_count), [raw_data, size](const tbb::blocked_range<int> &r) {
+        for (int i = r.begin(); i != r.end(); ++i) {
+          OddEvenMergeIterative(raw_data, static_cast<size_t>(i) * 2 * size, 2 * size);
+        }
+      });
+    }
+  });
+}
+
+void ExecuteMPIHybridSort(std::vector<double> &local_data, size_t pow2, int world_rank, int active_procs) {
+  size_t local_chunk_size = pow2 / active_procs;
+  int chunk_size_int = static_cast<int>(local_chunk_size);
+  size_t buffer_size = (world_rank < active_procs) ? local_chunk_size : 0;
+  std::vector<double> mpi_buffer(buffer_size, 0.0);
+
+  if (world_rank == 0) {
+    MPI_Scatter(local_data.data(), chunk_size_int, MPI_DOUBLE, mpi_buffer.data(), chunk_size_int, MPI_DOUBLE, 0,
+                MPI_COMM_WORLD);
+  } else if (world_rank < active_procs) {
+    MPI_Scatter(nullptr, 0, MPI_DATATYPE_NULL, mpi_buffer.data(), chunk_size_int, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   }
 
-  {
-    dummy *= num_threads;
-    std::vector<std::thread> threads(num_threads);
-    std::atomic<int> counter(0);
-    for (int i = 0; i < num_threads; i++) {
-      threads[i] = std::thread([&]() { counter++; });
-    }
-    for (auto &t : threads) {
-      t.join();
-    }
-    dummy /= (counter > 0 ? counter.load() : 1);
+  if (world_rank < active_procs) {
+    PerformLocalTBBSort(mpi_buffer.data(), local_chunk_size);
   }
 
-  {
-    dummy *= num_threads;
-    std::atomic<int> counter(0);
-    tbb::parallel_for(0, num_threads, [&](int /*i*/) { counter++; });
-    dummy /= (counter > 0 ? counter.load() : 1);
+  if (world_rank == 0) {
+    MPI_Gather(mpi_buffer.data(), chunk_size_int, MPI_DOUBLE, local_data.data(), chunk_size_int, MPI_DOUBLE, 0,
+               MPI_COMM_WORLD);
+    PerformFinalMergeTBB(local_data.data(), local_chunk_size, pow2);
+  } else if (world_rank < active_procs) {
+    MPI_Gather(mpi_buffer.data(), chunk_size_int, MPI_DOUBLE, nullptr, 0, MPI_DATATYPE_NULL, 0, MPI_COMM_WORLD);
+  }
+}
+
+void HandleGTestLocalSort(std::vector<double> &local_data, int world_rank) {
+  if (world_rank == 0 || local_data.empty()) {
+    return;
+  }
+  size_t my_orig = local_data.size();
+  size_t my_pow2 = 1;
+  while (my_pow2 < my_orig) {
+    my_pow2 *= 2;
+  }
+  if (my_pow2 > my_orig) {
+    local_data.resize(my_pow2, std::numeric_limits<double>::max());
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  (void)dummy;  // Подавляем предупреждение компилятора "переменная не используется"
+  PerformLocalTBBSort(local_data.data(), my_pow2);
+
+  if (my_pow2 > my_orig) {
+    local_data.resize(my_orig);
+  }
+}
+
+size_t CalculatePaddedSize(size_t original_size) {
+  if (original_size == 0) {
+    return 1;
+  }
+  size_t pow2 = 1;
+  while (pow2 < original_size) {
+    pow2 *= 2;
+  }
+  return pow2;
 }
 
 }  // namespace
@@ -169,52 +227,44 @@ bool DorofeevIBitwiseSortDoubleEOBatcherMergeALL::PreProcessingImpl() {
 }
 
 bool DorofeevIBitwiseSortDoubleEOBatcherMergeALL::RunImpl() {
-  if (local_data_.empty()) {
-    return true;
-  }
+  int world_size = 0;
+  int world_rank = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-  size_t original_size = local_data_.size();
+  bool is_pow2_procs = (world_size > 0) && ((world_size & (world_size - 1)) == 0);
+  int active_procs = is_pow2_procs ? world_size : 1;
+
+  size_t rank0_original_size = 0;
   size_t pow2 = 1;
-  while (pow2 < original_size) {
-    pow2 *= 2;
-  }
 
-  if (pow2 > original_size) {
-    local_data_.resize(pow2, std::numeric_limits<double>::max());
-  }
-
-  int num_threads = ppc::util::GetNumThreads();
-  if (num_threads <= 0) {
-    num_threads = 1;
-  }
-
-  size_t num_chunks = 1;
-  while (num_chunks * 2 <= static_cast<size_t>(num_threads) && num_chunks * 2 <= pow2) {
-    num_chunks *= 2;
-  }
-
-  size_t chunk_size = pow2 / num_chunks;
-  double *raw_data = local_data_.data();
-  int num_chunks_int = static_cast<int>(num_chunks);
-
-  // 1. Честно сортируем наш массив (последовательно)
-  for (int i = 0; i < num_chunks_int; ++i) {
-    ProcessChunkALL(raw_data, i, chunk_size);
-  }
-
-  for (size_t size = chunk_size; size < pow2; size *= 2) {
-    int merges_count = static_cast<int>(pow2 / (size * 2));
-    for (int i = 0; i < merges_count; ++i) {
-      OddEvenMergeIterative(raw_data, static_cast<size_t>(i) * 2 * size, 2 * size);
+  if (world_rank == 0) {
+    rank0_original_size = local_data_.size();
+    if (rank0_original_size == 0) {
+      active_procs = 1;
+    }
+    pow2 = CalculatePaddedSize(rank0_original_size);
+    if (pow2 > rank0_original_size) {
+      local_data_.resize(pow2, std::numeric_limits<double>::max());
     }
   }
 
-  if (pow2 > original_size) {
-    local_data_.resize(original_size);
+  MPI_Bcast(&active_procs, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&pow2, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
+
+  if (active_procs == 1) {
+    if (world_rank == 0 && pow2 > 0) {
+      PerformLocalTBBSort(local_data_.data(), pow2);
+    }
+  } else {
+    ExecuteMPIHybridSort(local_data_, pow2, world_rank, active_procs);
   }
 
-  // 2. Запускаем фиктивные потоки для отчета о сборке ALL
-  RunDummyLinkageChecks(num_threads);
+  if (world_rank == 0 && pow2 > rank0_original_size) {
+    local_data_.resize(rank0_original_size);
+  }
+
+  HandleGTestLocalSort(local_data_, world_rank);
 
   return true;
 }

@@ -1,11 +1,13 @@
 #include "shilin_n_monte_carlo_integration/stl/include/ops_stl.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <thread>
 #include <vector>
 
 #include "shilin_n_monte_carlo_integration/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace shilin_n_monte_carlo_integration {
 
@@ -60,10 +62,8 @@ bool ShilinNMonteCarloIntegrationSTL::RunImpl() {
       0.38516480713450403   // frac(sqrt(29))
   };
 
-  unsigned int num_threads = std::thread::hardware_concurrency();
-  if (num_threads == 0) {
-    num_threads = 2;
-  }
+  // Honor PPC_NUM_THREADS so reports can build a real T-scaling table.
+  auto num_threads = static_cast<unsigned int>(std::max(1, ppc::util::GetNumThreads()));
 
   std::vector<double> partial_sums(num_threads, 0.0);
   std::vector<std::thread> threads(num_threads);

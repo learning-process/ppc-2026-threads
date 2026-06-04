@@ -3,9 +3,12 @@
 #include <algorithm>
 #include <tuple>
 
+#include "fatehov_k_gaussian/all/include/ops_all.hpp"
 #include "fatehov_k_gaussian/common/include/common.hpp"
 #include "fatehov_k_gaussian/omp/include/ops_omp.hpp"
 #include "fatehov_k_gaussian/seq/include/ops_seq.hpp"
+#include "fatehov_k_gaussian/stl/include/ops_stl.hpp"
+#include "fatehov_k_gaussian/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace fatehov_k_gaussian {
@@ -36,7 +39,10 @@ TEST_P(FatehovKGaussianPerfTests, RunPerfModes) {
 namespace {
 const auto kAllPerfTasks =
     std::tuple_cat(ppc::util::MakeAllPerfTasks<InType, FatehovKGaussianSEQ>(PPC_SETTINGS_fatehov_k_gaussian),
-                   ppc::util::MakeAllPerfTasks<InType, FatehovKGaussianOMP>(PPC_SETTINGS_fatehov_k_gaussian));
+                   ppc::util::MakeAllPerfTasks<InType, FatehovKGaussianOMP>(PPC_SETTINGS_fatehov_k_gaussian),
+                   ppc::util::MakeAllPerfTasks<InType, FatehovKGaussianTBB>(PPC_SETTINGS_fatehov_k_gaussian),
+                   ppc::util::MakeAllPerfTasks<InType, FatehovKGaussianSTL>(PPC_SETTINGS_fatehov_k_gaussian),
+                   ppc::util::MakeAllPerfTasks<InType, FatehovKGaussianALL>(PPC_SETTINGS_fatehov_k_gaussian));
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 INSTANTIATE_TEST_SUITE_P(FatehovKPerfTests, FatehovKGaussianPerfTests, kGtestValues,

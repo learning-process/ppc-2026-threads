@@ -2,9 +2,12 @@
 
 #include <cstddef>
 
+#include "morozova_s_strassen_multiplication/all/include/ops_all.hpp"
 #include "morozova_s_strassen_multiplication/common/include/common.hpp"
 #include "morozova_s_strassen_multiplication/omp/include/ops_omp.hpp"
 #include "morozova_s_strassen_multiplication/seq/include/ops_seq.hpp"
+#include "morozova_s_strassen_multiplication/stl/include/ops_stl.hpp"
+#include "morozova_s_strassen_multiplication/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace morozova_s_strassen_multiplication {
@@ -91,4 +94,61 @@ const auto kPerfTestNameOMP = MorozovaSStrassenMultiplicationOMPPerfTest::Custom
 namespace {
 INSTANTIATE_TEST_SUITE_P(StrassenMultiplicationOMPPerfTests, MorozovaSStrassenMultiplicationOMPPerfTest,
                          kGtestValuesOMP, kPerfTestNameOMP);
+}  // namespace
+
+using MorozovaSStrassenMultiplicationTBBPerfTest =
+    MorozovaSStrassenMultiplicationPerfTest<morozova_s_strassen_multiplication::MorozovaSStrassenMultiplicationTBB>;
+
+TEST_P(MorozovaSStrassenMultiplicationTBBPerfTest, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
+
+const auto kAllPerfTasksTBB =
+    ppc::util::MakeAllPerfTasks<InType, morozova_s_strassen_multiplication::MorozovaSStrassenMultiplicationTBB>(
+        PPC_SETTINGS_morozova_s_strassen_multiplication);
+
+const auto kGtestValuesTBB = ppc::util::TupleToGTestValues(kAllPerfTasksTBB);
+const auto kPerfTestNameTBB = MorozovaSStrassenMultiplicationTBBPerfTest::CustomPerfTestName;
+
+namespace {
+INSTANTIATE_TEST_SUITE_P(StrassenMultiplicationTBBPerfTests, MorozovaSStrassenMultiplicationTBBPerfTest,
+                         kGtestValuesTBB, kPerfTestNameTBB);
+}  // namespace
+
+using MorozovaSStrassenMultiplicationSTLPerfTest =
+    MorozovaSStrassenMultiplicationPerfTest<morozova_s_strassen_multiplication::MorozovaSStrassenMultiplicationSTL>;
+
+TEST_P(MorozovaSStrassenMultiplicationSTLPerfTest, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
+
+const auto kAllPerfTasksSTL =
+    ppc::util::MakeAllPerfTasks<InType, morozova_s_strassen_multiplication::MorozovaSStrassenMultiplicationSTL>(
+        PPC_SETTINGS_morozova_s_strassen_multiplication);
+
+const auto kGtestValuesSTL = ppc::util::TupleToGTestValues(kAllPerfTasksSTL);
+const auto kPerfTestNameSTL = MorozovaSStrassenMultiplicationSTLPerfTest::CustomPerfTestName;
+
+namespace {
+INSTANTIATE_TEST_SUITE_P(StrassenMultiplicationSTLPerfTests, MorozovaSStrassenMultiplicationSTLPerfTest,
+                         kGtestValuesSTL, kPerfTestNameSTL);
+}  // namespace
+
+using MorozovaSStrassenMultiplicationALLPerfTest =
+    MorozovaSStrassenMultiplicationPerfTest<morozova_s_strassen_multiplication::MorozovaSStrassenMultiplicationAll>;
+
+TEST_P(MorozovaSStrassenMultiplicationALLPerfTest, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
+
+const auto kAllPerfTasksALL =
+    ppc::util::MakeAllPerfTasks<InType, morozova_s_strassen_multiplication::MorozovaSStrassenMultiplicationAll>(
+        PPC_SETTINGS_morozova_s_strassen_multiplication);
+
+const auto kGtestValuesALL = ppc::util::TupleToGTestValues(kAllPerfTasksALL);
+const auto kPerfTestNameALL = MorozovaSStrassenMultiplicationALLPerfTest::CustomPerfTestName;
+
+namespace {
+INSTANTIATE_TEST_SUITE_P(StrassenMultiplicationALLPerfTests, MorozovaSStrassenMultiplicationALLPerfTest,
+                         kGtestValuesALL, kPerfTestNameALL);
 }  // namespace
