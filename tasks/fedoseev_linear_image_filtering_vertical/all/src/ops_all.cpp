@@ -57,8 +57,8 @@ void ExchangeGhostRows(int rank, int size, int w, int local_rows, std::vector<in
   }
 
   if (rank < size - 1) {
-    MPI_Sendrecv(local_data.data() + ((static_cast<ptrdiff_t>(local_rows) - 1) * w), w, MPI_INT, rank + 1, 0,
-                 ghost_src.data() + ((static_cast<ptrdiff_t>(local_rows) + 1) * w), w, MPI_INT, rank + 1, 0,
+    MPI_Sendrecv(local_data.data() + (static_cast<ptrdiff_t>(local_rows) - 1) * w, w, MPI_INT, rank + 1, 0,
+                 ghost_src.data() + (static_cast<ptrdiff_t>(local_rows) + 1) * w, w, MPI_INT, rank + 1, 0,
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   } else {
     std::copy(local_data.begin() + (static_cast<ptrdiff_t>(local_rows) - 1) * w,
@@ -140,23 +140,25 @@ void LinearImageFilteringVerticalAll::LocalProcessing(int rank, int size, int nu
   ExchangeGhostRows(rank, size, w_, local_rows, local_data_, ghost_src);
 
   local_result_.resize(static_cast<size_t>(local_rows) * static_cast<size_t>(w_), 0);
+  int width = w_;
+  std::vector<int> &result = local_result_;
 #pragma omp parallel for num_threads(num_threads) default(none) \
-    shared(ghost_src, local_result_, local_rows, ghost_rows, w_, kKernel, kKernelSum)
+    shared(ghost_src, result, local_rows, ghost_rows, width, kKernel, kKernelSum)
   for (int i = 0; i < local_rows; ++i) {
     int row_in_ghost = i + 1;
-    for (int col = 0; col < w_; ++col) {
+    for (int col = 0; col < width; ++col) {
       int sum = 0;
       for (int ky = -1; ky <= 1; ++ky) {
         for (int kx = -1; kx <= 1; ++kx) {
           int px = col + kx;
           int py = row_in_ghost + ky;
-          px = std::clamp(px, 0, w_ - 1);
+          px = std::clamp(px, 0, width - 1);
           py = std::clamp(py, 0, ghost_rows - 1);
-          sum += ghost_src[(static_cast<size_t>(py) * static_cast<size_t>(w_)) + static_cast<size_t>(px)] *
+          sum += ghost_src[(static_cast<size_t>(py) * static_cast<size_t>(width)) + static_cast<size_t>(px)] *
                  kKernel.at(ky + 1).at(kx + 1);
         }
       }
-      local_result_[(static_cast<size_t>(i) * static_cast<size_t>(w_)) + static_cast<size_t>(col)] = sum / kKernelSum;
+      result[(static_cast<size_t>(i) * static_cast<size_t>(width)) + static_cast<size_t>(col)] = sum / kKernelSum;
     }
   }
 }
