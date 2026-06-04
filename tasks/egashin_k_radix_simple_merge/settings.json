@@ -1,5 +1,6 @@
 {
   "tasks": {
+    "seq": "enabled",
     "stl": "enabled"
   },
   "tasks_type": "threads"
