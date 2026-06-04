@@ -62,7 +62,7 @@ class NalitovDDijkstrasAlgorithmSTL : public BaseTask {
   std::vector<std::thread> pool_;
   std::vector<ShardResult> shard_results_;
 
-  std::atomic<NodeId> pivot_{};
+  std::atomic<NodeId> pivot_;
 
   std::atomic<WorkMode> mode_{WorkMode::kParked};
   std::atomic<bool> shutdown_{false};
