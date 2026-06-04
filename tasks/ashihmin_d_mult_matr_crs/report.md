@@ -5,6 +5,7 @@
 * Variant: 4
 
 ## 1. Introduction
+
 Работа посвящена реализации высокопроизводительного алгоритма умножения разреженных матриц,
 хранящихся в строковом формате CRS. Этот формат является стандартом для работы с большими
 разреженными системами, так как позволяет хранить только ненулевые элементы. В работе реализованы
@@ -15,7 +16,9 @@ OpenMP, TBB, STL и гибридной схемы ALL (MPI + Threads).
 технологий параллелизма при масштабировании на 6-ядерном процессоре.
 
 ## 2. Problem Statement
+
 Входные данные задаются типом `InType = std::pair<CRSMatrix, CRSMatrix>`:
+
 * matrix_a — левый операнд;
 * matrix_b — правый операнд.
 
@@ -26,8 +29,10 @@ OpenMP, TBB, STL и гибридной схемы ALL (MPI + Threads).
 равно числу строк матрицы B (`matrix_a.cols == matrix_b.rows`). Элементы имеют тип `double`.
 
 ## 3. Baseline Algorithm (Sequential)
+
 Последовательная версия служит baseline для всех параллельных реализаций. Алгоритм реализует
 схему «строка на матрицу». Для каждой строки $i$ матрицы A:
+
 1. Используется временный аккумулятор `std::unordered_map<int, double>` для накопления значений.
 2. Просматриваются ненулевые элементы $A_{ik}$.
 3. Для каждого $A_{ik}$ выбирается соответствующая строка $k$ матрицы B.
@@ -37,6 +42,7 @@ OpenMP, TBB, STL и гибридной схемы ALL (MPI + Threads).
 в итоговую структуру. Время выполнения SEQ считается базовым (speedup = 1.0).
 
 ## 4. Parallelization Scheme
+
 * **SEQ**: один поток, параллелизм не используется.
 * **OMP**: параллельный цикл по строкам матрицы A с использованием `#pragma omp parallel for`.
   Каждый поток имеет локальный аккумулятор `std::map`.
@@ -49,7 +55,9 @@ OpenMP, TBB, STL и гибридной схемы ALL (MPI + Threads).
   метаданных. Глобальная сборка разреженной матрицы выполняется через `MPI_Allgatherv`.
 
 ## 5. Implementation Details
+
 Код задачи расположен в папке `tasks/ashihmin_d_mult_matr_crs`:
+
 * `common/include/common.hpp` — структуры данных и типы;
 * `seq/src/ops_seq.cpp` — последовательный baseline;
 * `omp/src/ops_omp.cpp` — OpenMP реализация;
@@ -62,30 +70,38 @@ OpenMP, TBB, STL и гибридной схемы ALL (MPI + Threads).
 автоматическую сортировку столбцов согласно спецификации CRS.
 
 ## 6. Experimental Setup
+
 Аппаратное обеспечение:
+
 * CPU: AMD Ryzen 5 3500X (3.60 GHz, 6 ядер / 6 потоков)
 * RAM: 16 ГБ
 * OS: Windows 11 Pro / Linux (CI)
 
 Инструменты:
+
 * Сборка: CMake
 * Компилятор: GCC / Clang / MSVC
 * Конфигурация: Release
 
 Окружение:
+
 * `PPC_NUM_THREADS`: задает число потоков (1–6).
 * `PPC_NUM_PROC`: задает число MPI-процессов для ALL.
 
 Генерация данных:
+
 * Используются ленточные матрицы размера 40,000x40,000 с шириной полосы 30.
 
 ## 7. Results and Discussion
+
 ### 7.1 Correctness
+
 Корректность проверялась функциональными тестами. Вычисленное произведение сравнивается с
 эталонным результатом (полученным последовательно) для единичных, прямоугольных и разреженных
 ленточных матриц. Допустимая погрешность: $10^{-10}$.
 
 ### 7.2 Performance
+
 Mode | Count | Time, s | Speedup | Efficiency
 --- | --- | --- | --- | ---
 seq | 1 | 0.852412 | 1.00 | N/A
@@ -95,21 +111,25 @@ stl | 6 | 0.181245 | 4.70 | 78.33%
 all | 2 x 3 | 0.192451 | 4.43 | 73.83%
 
 ## 8. Conclusions
+
 Все параллельные реализации продемонстрировали существенное ускорение. Наилучший результат
 показала технология TBB за счет балансировки нагрузки. Основное ограничение масштабируемости
 связано с накладными расходами на выделение памяти для локальных аккумуляторов строк и
 финальную последовательную сборку CRS-структуры в общей памяти.
 
 ## 9. References
+
 * OpenMP Architecture Review Board. OpenMP Application Programming Interface.
 * oneAPI Threading Building Blocks Documentation.
 * Microsoft MPI Documentation.
 * ISO C++ Standard Library Documentation: std::thread, std::async.
 
 ## Appendix (Optional)
+
 Ниже приведены основные фрагменты RunImpl() для всех реализаций.
 
 ### SEQ RunImpl
+
 ```cpp
 for (int row_index = 0; row_index < matrix_a.rows; ++row_index) {
   std::unordered_map<int, double> accumulator;
@@ -122,7 +142,9 @@ for (int row_index = 0; row_index < matrix_a.rows; ++row_index) {
   }
 }
 ```
+
 ### OMP RunImpl
+
 ```cpp
 #pragma omp parallel for default(none) shared(matrix_a, matrix_b, local_cols, local_vals, rows_a)
 for (int i = 0; i < rows_a; ++i) {
@@ -135,7 +157,9 @@ for (int i = 0; i < rows_a; ++i) {
   }
 }
 ```
+
 ### TBB RunImpl
+
 ```cpp
 tbb::parallel_for(0, rows_a, [&](int i) {
   std::map<int, double> row_accumulator;
@@ -147,7 +171,9 @@ tbb::parallel_for(0, rows_a, [&](int i) {
   }
 });
 ```
+
 ### STL RunImpl
+
 ```cpp
 for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
   futures.push_back(std::async(std::launch::async, [=, &matrix_a, &matrix_b, &local_cols, &local_vals] {
@@ -157,7 +183,9 @@ for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
   }));
 }
 ```
+
 ### ALL RunImpl
+
 ```cpp
 MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 MPI_Comm_size(MPI_COMM_WORLD, &size);
