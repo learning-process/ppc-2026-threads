@@ -18,7 +18,15 @@ class LinearImageFilteringVerticalAll : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  OutType local_out_;
+  void DistributeData(int rank, int size, int &h);
+  void LocalProcessing(int rank, int size, int num_threads);
+  void GatherData(int rank, int size);
+
+  std::vector<int> counts_;
+  std::vector<int> displs_;
+  std::vector<int> local_data_;
+  std::vector<int> local_result_;
+  int w_ = 0;
 };
 
 }  // namespace fedoseev_linear_image_filtering_vertical
