@@ -124,7 +124,7 @@ void NalitovDDijkstrasAlgorithmSTL::PartitionScanBest(int slot) {
 }
 
 void NalitovDDijkstrasAlgorithmSTL::PartitionPushDist(int slot) {
-  const auto hub = static_cast<std::size_t>(pivot_);
+  const auto hub = static_cast<std::size_t>(pivot_.load(std::memory_order_acquire));
   const auto &bundle = graph_[hub];
   const std::size_t m = bundle.size();
   if (m == 0) {
@@ -218,6 +218,7 @@ bool NalitovDDijkstrasAlgorithmSTL::PreProcessingImpl() {
 
   shutdown_.store(false, std::memory_order_relaxed);
   mode_.store(WorkMode::kParked, std::memory_order_relaxed);
+  pivot_.store(-1, std::memory_order_relaxed);
 
   const int total_parties = worker_slots_ + 1;
   bar_start_ = std::make_unique<std::barrier<>>(total_parties);
@@ -252,8 +253,10 @@ bool NalitovDDijkstrasAlgorithmSTL::RunImpl() {
     if (!ReduceShardResults(shard_results_, worker_slots_, &pick_c, &pick_v)) {
       break;
     }
+
     visited_[static_cast<std::size_t>(pick_v)] = 1;
-    pivot_ = pick_v;
+    pivot_.store(pick_v, std::memory_order_release);
+    std::atomic_thread_fence(std::memory_order_release);
 
     mode_.store(WorkMode::kPushDist, std::memory_order_release);
     bar_start_->arrive_and_wait();
