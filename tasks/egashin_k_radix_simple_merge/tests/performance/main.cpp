@@ -47,12 +47,10 @@ TEST_P(EgashinKRunPerfTestsThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, EgashinKRadixSimpleMergeSEQ,
-                                                       EgashinKRadixSimpleMergeOMP,
-                                                       EgashinKRadixSimpleMergeTBB,
-                                                       EgashinKRadixSimpleMergeSTL,
-                                                       EgashinKRadixSimpleMergeALL>(
-    PPC_SETTINGS_egashin_k_radix_simple_merge);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, EgashinKRadixSimpleMergeSEQ, EgashinKRadixSimpleMergeOMP,
+                                EgashinKRadixSimpleMergeTBB, EgashinKRadixSimpleMergeSTL, EgashinKRadixSimpleMergeALL>(
+        PPC_SETTINGS_egashin_k_radix_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

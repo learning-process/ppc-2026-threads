@@ -87,13 +87,13 @@ PPC_NUM_THREADS=2 PPC_NUM_PROC=2 scripts/run_tests.py --running-type=performance
 
 ## 8. Агрегированные результаты
 
-| Backend | Configuration       | Time, s | Speedup vs seq | Efficiency |
-| ------- | ------------------- | ------- | -------------- | ---------- |
-| seq     | 1 worker            | 0.035714 | 1.00           | N/A        |
-| omp     | 2 threads           | 0.024104 | 1.48           | 0.74       |
-| tbb     | 2 workers           | 0.023022 | 1.55           | 0.78       |
-| stl     | 2 threads           | 0.024620 | 1.45           | 0.73       |
-| all     | 2 ранга, 2 потока   | 0.030749 | 1.16           | 0.29       |
+| Backend | Configuration     | Time, s  | Speedup vs seq | Efficiency |
+| ------- | ----------------- | -------- | -------------- | ---------- |
+| seq     | 1 worker          | 0.035714 | 1.00           | N/A        |
+| omp     | 2 threads         | 0.024104 | 1.48           | 0.74       |
+| tbb     | 2 workers         | 0.023022 | 1.55           | 0.78       |
+| stl     | 2 threads         | 0.024620 | 1.45           | 0.73       |
+| all     | 2 ранга, 2 потока | 0.030749 | 1.16           | 0.29       |
 
 ## 9. Интерпретация
 

@@ -70,8 +70,8 @@ PPC_NUM_THREADS=2 PPC_NUM_PROC=2 scripts/run_tests.py --running-type=performance
 
 ## 9. Результаты
 
-| Ранги | Потоки на ранг | Total workers | Time, s | Speedup vs seq | Efficiency |
-| ----- | -------------- | ------------- | ------- | -------------- | ---------- |
+| Ранги | Потоки на ранг | Total workers | Time, s  | Speedup vs seq | Efficiency |
+| ----- | -------------- | ------------- | -------- | -------------- | ---------- |
 | 2     | 2              | 4             | 0.030749 | 1.16           | 0.29       |
 
 ## 10. Вывод

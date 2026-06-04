@@ -68,8 +68,8 @@ PPC_NUM_THREADS=2 PPC_NUM_PROC=2 scripts/run_tests.py --running-type=performance
 
 ## 8. Результаты
 
-| Threads | Time, s | Speedup vs seq | Efficiency |
-| ------- | ------- | -------------- | ---------- |
+| Threads | Time, s  | Speedup vs seq | Efficiency |
+| ------- | -------- | -------------- | ---------- |
 | 2       | 0.024104 | 1.48           | 0.74       |
 
 ## 9. Вывод

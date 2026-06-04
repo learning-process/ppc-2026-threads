@@ -68,8 +68,8 @@ PPC_NUM_THREADS=2 PPC_NUM_PROC=2 scripts/run_tests.py --running-type=performance
 
 ## 7. Результаты
 
-| Backend | Workers | Time, s |
-| ------- | ------- | ------- |
+| Backend | Workers | Time, s  |
+| ------- | ------- | -------- |
 | seq     | 1       | 0.035714 |
 
 ## 8. Вывод
